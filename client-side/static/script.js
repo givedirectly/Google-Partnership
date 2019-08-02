@@ -30,8 +30,22 @@ scriptScope.damageScales =
     ee.Dictionary(['NOD', 0, 'UNK', 0, 'AFF', 1, 'MIN', 1, 'MAJ', 2, 'DES', 3,]);
 scriptScope.zero = ee.Number(0);
 scriptScope.priorityDisplayCap = ee.Number(99);
+// TODO(janakr): this number probably needs to be user-adjusted, based on
+// dataset.
+scriptScope.scalingFactor = 4;
 
-scriptScope.colorAndRate = function(feature, scale, povertyThreshold) {
+// Processes a feature corresponding to a geographic area and returns a new one,
+// with just the GEOID and PRIORITY properties set, and a style attribute that
+// sets the color/opacity based on the priority, with all priorities past 99
+// equally opaque.
+//
+// povertyThreshold is used to filter out areas that are not poor enough (as
+// determined by the areas SNAP and TOTAL properties).
+//
+// scalingFactor divides the raw priority, it can be adjusted to make sure that
+// there are not too many priorities >99 (which all display the same on the
+// map).
+scriptScope.colorAndRate = function(feature, scalingFactor, povertyThreshold) {
   const rawRatio = ee.Number(feature.get('SNAP')).divide(feature.get('TOTAL'));
   const priority = ee.Number(ee.Algorithms.If(
     rawRatio.lte(povertyThreshold),
@@ -72,7 +86,8 @@ scriptScope.run = function(map) {
   const defaultPovertyThreshold = 0.1;
   scriptScope.addLayer(map, damage);
   const processedData =
-      scriptScope.processJoinedData(joinedSnap, 4, defaultPovertyThreshold);
+      scriptScope.processJoinedData(
+          joinedSnap, scriptScope.scalingFactor, defaultPovertyThreshold);
   scriptScope.addLayer(
       map,
       processedData.style({styleProperty: "style"}),
