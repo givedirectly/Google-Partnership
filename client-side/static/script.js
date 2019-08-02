@@ -1,42 +1,56 @@
-// Wrap our code in a self-executing anonymous function to isolate scope.
-(function() {
+'use strict';
 
+// Effective "namespace" for this script. See
+// https://stackoverflow.com/questions/881515/how-do-i-declare-a-namespace-in-javascript
+// for a number of approaches, including this one.
+// TODO(janakr): verify that Google style guide actually sanctions this: I think
+// maybe we're supposed to use modules, but I'm not sure yet.
+const script_scope = {};
+
+// Adds an EarthEngine layer (from EEObject.getMap()) to the given Google Map
+// and returns the "overlay" that was added, in case the caller wants to add
+// callbacks or similar to that overlay.
+script_scope.addLayer = function(map, layerId) {
+  const overlay = new ee.MapLayerOverlay(
+      'https://earthengine.googleapis.com/map',
+      layerId.mapid, layerId.token, {});
+  // Show the EE map on the Google Map.
+  map.overlayMapTypes.push(overlay);
+  return overlay;
+}
+
+// Basic main function that initializes EarthEngine library and adds an image
+// layer to the Google Map.
+script_scope.run = function(map) {
+   ee.initialize();
+   const overlay = script_scope.addLayer(map, ee.Image('srtm90_v4').getMap({'min': 0, 'max': 1000}));
+   // Show a count of the number of map tiles remaining.
+   overlay.addTileCallback(function(event) {
+     $('.tiles-loading').text(event.count + ' tiles remaining.');
+     if (event.count === 0) {
+       $('.tiles-loading').empty();
+     }
+   });
+}
+
+// Runs immediately (before document may have fully loaded). Adds a hook so that
+// when the document is loaded, Google Map is initialized, and on successful
+// login, EE data is overlayed.
+// TODO(janakr): authentication seems buggy, investigate.
+script_scope.setup = function() {
   // The client ID from the Google Developers Console.
   // TODO(#13): This is from janakr's console. Should use one for GiveDirectly.
-  var CLIENT_ID = '634162034024-oodhl7ngkg63hd9ha9ho9b3okcb0bp8s.apps.googleusercontent.com';
-
-  // Our Google map.
-  var map;
-
-  // Runs a simple EE analysis and output the results to the web page.
-  var runAnalysis = function() {
-    ee.initialize();
-    var mapId = ee.Image('srtm90_v4').getMap({'min': 0, 'max': 1000});
-    var overlay = new ee.MapLayerOverlay(
-        'https://earthengine.googleapis.com/map',
-        mapId.mapid, mapId.token, {});
-
-    // Show a count of the number of map tiles remaining.
-    overlay.addTileCallback(function(event) {
-      $('.tiles-loading').text(event.count + ' tiles remaining.');
-      if (event.count === 0) {
-        $('.tiles-loading').empty();
-      }
-    });
-
-    // Show the EE map on the Google Map.
-    map.overlayMapTypes.push(overlay);
-  };
+  const CLIENT_ID = '634162034024-oodhl7ngkg63hd9ha9ho9b3okcb0bp8s.apps.googleusercontent.com';
 
   $(document).ready(function() {
     // Create the base Google Map.
-    map = new google.maps.Map($('.map').get(0), {
+    const map = new google.maps.Map($('.map').get(0), {
           center: { lat: -34.397, lng: 150.644},
           zoom: 8
         });
 
     // Shows a button prompting the user to log in.
-    var onImmediateFailed = function() {
+    const onImmediateFailed = function() {
       $('.g-sign-in').removeClass('hidden');
       $('.output').text('(Log in to see the result.)');
       $('.g-sign-in .button').click(function() {
@@ -49,6 +63,8 @@
     };
 
     // Attempt to authenticate using existing credentials.
-    ee.data.authenticate(CLIENT_ID, runAnalysis, null, null, onImmediateFailed);
+    ee.data.authenticate(CLIENT_ID, function() {script_scope.run(map)}, null, null, onImmediateFailed);
   });
-})();
+};
+
+script_scope.setup();
