@@ -2,7 +2,8 @@
 (function() {
 
   // The client ID from the Google Developers Console.
-  var CLIENT_ID = '<your-client-id>';
+  // TODO(#13): This is from janakr's console. Should use one for GiveDirectly.
+  var CLIENT_ID = '634162034024-oodhl7ngkg63hd9ha9ho9b3okcb0bp8s.apps.googleusercontent.com';
 
   // Our Google map.
   var map;
