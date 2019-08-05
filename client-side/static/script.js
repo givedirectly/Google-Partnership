@@ -1,4 +1,4 @@
-'use strict';
+import setUpPolygonDrawing from './polygon_draw.js';
 
 // Effective "namespace" for this script. See
 // https://stackoverflow.com/questions/881515/how-do-i-declare-a-namespace-in-javascript
@@ -56,7 +56,7 @@ scriptScope.colorAndRate = function(feature, scalingFactor, povertyThreshold) {
               return ee.Number(scriptScope.damageScales.get(type))
                   .multiply(feature.get(type));
             })
-        .reduce(ee.Reducer.sum())))).divide(scale).round();
+        .reduce(ee.Reducer.sum())))).divide(scalingFactor).round();
     return ee.Feature(
         feature.geometry(),
         ee.Dictionary(['GEOID', feature.get('GEOID'), 'PRIORITY', priority]))
@@ -77,6 +77,7 @@ scriptScope.processJoinedData = function(joinedData, scale, povertyThreshold) {
 // layer to the Google Map.
 scriptScope.run = function(map) {
   ee.initialize();
+  setUpPolygonDrawing(map);
   const damage =
       ee.FeatureCollection(
           'users/janak/FEMA_Damage_Assessments_Harvey_20170829');
