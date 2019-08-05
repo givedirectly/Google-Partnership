@@ -113,7 +113,7 @@ scriptScope.setup = function() {
         });
 
     const runOnSuccess = function() {scriptScope.run(map)};
-    
+
     // Shows a button prompting the user to log in.
     const onImmediateFailed = function() {
       $('.g-sign-in').removeClass('hidden');
