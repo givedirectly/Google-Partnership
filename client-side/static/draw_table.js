@@ -9,7 +9,7 @@ export {drawTable as default};
  */
 // TODO(juliexxia); take in a list of properties not just one
 function drawTable(features, id, property) {
-	//TODO: make this settable via ui widget
+	//TODO(#5): make this settable via ui widget
 	const MAX_ENTRIES = 25
 
 	const sortedAndLimited = features.limit(MAX_ENTRIES, property, false /* descending order */);
