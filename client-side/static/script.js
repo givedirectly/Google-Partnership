@@ -112,10 +112,10 @@ scriptScope.setup = function() {
   // const CLIENT_ID = '634162034024-oodhl7ngkg63hd9ha9ho9b3okcb0bp8s.apps.googleusercontent.com';
   // TODO(#13): This is from juliexxia's console. Should use one for GiveDirectly.
   const CLIENT_ID = '628350592927-tmcoolr3fv4mdbodurhainqobc6d6ibd.apps.googleusercontent.com';
+  
+  google.charts.load('current', {packages: ['table']});   
 
   $(document).ready(function() {
-    google.charts.load('current', {packages: ['table']});   
-
     // Create the base Google Map.
     const map = new google.maps.Map($('.map').get(0), {
           center: { lat: 29.76, lng: -95.36},
@@ -138,6 +138,7 @@ scriptScope.setup = function() {
     };
 
     // Attempt to authenticate using existing credentials.
+    // TODO(#21): Fix buggy authentification.
     //ee.data.authenticate(CLIENT_ID, runOnSuccess, null, null, onImmediateFailed);
     scriptScope.run(map);
   });

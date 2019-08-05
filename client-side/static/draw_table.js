@@ -20,9 +20,14 @@ function drawTable(features, id, property) {
 			return ee.List(list).add([feature.get(id), feature.get(property)]);
 		},
 		headings));
-	const data = google.visualization.arrayToDataTable(list.getInfo(), false);
-
-	// Instantiate and draw the chart.
-	const chart = new google.visualization.Table(document.getElementById('chart_div'));
-	chart.draw(data, null /* styleOptions */);
+	list.evaluate(function(success, failure) {
+		if (typeof failure !== 'undefined') {
+			console.log(failure);
+		} else {
+			const data = google.visualization.arrayToDataTable(success, false);
+			// Instantiate and draw the chart.
+			const chart = new google.visualization.Table(document.getElementById('chart_div'));
+			chart.draw(data, null /* styleOptions */);
+		}
+	});
 }
