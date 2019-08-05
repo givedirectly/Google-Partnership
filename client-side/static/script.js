@@ -1,5 +1,3 @@
-'use strict';
-
 import setUpPolygonDrawing from './polygon_draw.js';
 
 // Effective "namespace" for this script. See
