@@ -109,8 +109,7 @@ scriptScope.setup = function() {
     // Create the base Google Map.
     const map = new google.maps.Map($('.map').get(0), {
           center: { lat: 29.76, lng: -95.36},
-          zoom: 8,
-          streetViewControl: false
+          zoom: 8
         });
 
     // Shows a button prompting the user to log in.
