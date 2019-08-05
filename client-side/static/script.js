@@ -1,4 +1,5 @@
-import drawTable from './drawTable.js'
+import drawTable from './draw_table.js'
+import setUpPolygonDrawing from './polygon_draw.js';
 
 // Effective "namespace" for this script. See
 // https://stackoverflow.com/questions/881515/how-do-i-declare-a-namespace-in-javascript
@@ -79,6 +80,7 @@ scriptScope.processJoinedData = function(joinedData, scale, povertyThreshold) {
 // layer to the Google Map.
 scriptScope.run = function(map) {
   ee.initialize();
+  setUpPolygonDrawing(map);
   const damage =
       ee.FeatureCollection(
           'users/janak/FEMA_Damage_Assessments_Harvey_20170829');
@@ -119,6 +121,8 @@ scriptScope.setup = function() {
           zoom: 8
         });
 
+    const runOnSuccess = function() {scriptScope.run(map)};
+
     // Shows a button prompting the user to log in.
     const onImmediateFailed = function() {
       $('.g-sign-in').removeClass('hidden');
@@ -127,13 +131,13 @@ scriptScope.setup = function() {
         ee.data.authenticateViaPopup(function() {
           // If the login succeeds, hide the login button and run the analysis.
           $('.g-sign-in').addClass('hidden');
-          runAnalysis();
+          runOnSuccess();
         });
       });
     };
 
     // Attempt to authenticate using existing credentials.
-    // ee.data.authenticate(CLIENT_ID, function() {scriptScope.run(map)}, null, null, onImmediateFailed);
+    //ee.data.authenticate(CLIENT_ID, runOnSuccess, null, null, onImmediateFailed);
     scriptScope.run(map);
   });
 };
