@@ -62,7 +62,8 @@ scriptScope.colorAndRate = function(feature, scalingFactor, povertyThreshold) {
         .reduce(ee.Reducer.sum())))).divide(scalingFactor).round();
     return ee.Feature(
         feature.geometry(),
-        ee.Dictionary([scriptScope.geoidTag, feature.get(scriptScope.geoidTag), scriptScope.priorityTag, priority]))
+        ee.Dictionary(
+          [scriptScope.geoidTag, feature.get(scriptScope.geoidTag), scriptScope.priorityTag, priority]))
             .set(
                 {style: {color:
                           priority.min(scriptScope.priorityDisplayCap)
