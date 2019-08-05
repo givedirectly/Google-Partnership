@@ -112,6 +112,8 @@ scriptScope.setup = function() {
           zoom: 8
         });
 
+    const runOnSuccess = function() {scriptScope.run(map)};
+    
     // Shows a button prompting the user to log in.
     const onImmediateFailed = function() {
       $('.g-sign-in').removeClass('hidden');
@@ -120,13 +122,13 @@ scriptScope.setup = function() {
         ee.data.authenticateViaPopup(function() {
           // If the login succeeds, hide the login button and run the analysis.
           $('.g-sign-in').addClass('hidden');
-          runAnalysis();
+          runOnSuccess();
         });
       });
     };
 
     // Attempt to authenticate using existing credentials.
-    ee.data.authenticate(CLIENT_ID, function() {scriptScope.run(map)}, null, null, onImmediateFailed);
+    ee.data.authenticate(CLIENT_ID, runOnSuccess, null, null, onImmediateFailed);
   });
 };
 
