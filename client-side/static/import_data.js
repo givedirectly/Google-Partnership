@@ -10,8 +10,7 @@
 const damage =
     ee.FeatureCollection('users/janak/FEMA_Damage_Assessments_Harvey_20170829');
 
-// TODO(#22): get raw Census data, and do the snap join in this
-// script as well.
+// TODO(#22): get raw Census data, and do the snap join in this script as well.
 const rawSnap =
     ee.FeatureCollection('users/janak/texas-snap')
         .filterBounds(damage.geometry());
@@ -63,8 +62,8 @@ function countBuildings(feature) {
   return ee.Feature(
       feature.geometry(),
       ee.Dictionary([
-          // TODO(#22): when we're processing data from scratch, this won't
-          // be a string on the other side, so we can leave it as is here.
+          // TODO(#22): when we're processing data from scratch, this won't be a
+          // string on the other side, so we can leave it as is here.
           'GEOID', ee.String(feature.get('GEOid2')),
           'BUILDING_COUNT', totalBuildings]));
 }
