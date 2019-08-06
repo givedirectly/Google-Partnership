@@ -1,7 +1,16 @@
+/**
+ * Joins Texas Census block-group-level SNAP/population data with building
+ * counts and damage, and creates a FeatureCollection. Requires that all of
+ * the source assets are already uploaded. Uploading a Census table can be done
+ * with something like the command line:
+ * `earthengine upload table --asset_id users/janak/census_building_data \
+ *      gs://noaa-michael-data/ACS_16_5YR_B25024_with_ann.csv`
+ * (assuming the file has already been uploaded into Google Cloud Storage).
+ */
 const damage =
     ee.FeatureCollection('users/janak/FEMA_Damage_Assessments_Harvey_20170829');
 
-// TODO(janakr): get raw Census data, and do the snap join in this
+// TODO(#22): get raw Census data, and do the snap join in this
 // script as well.
 const rawSnap =
     ee.FeatureCollection('users/janak/texas-snap')
@@ -54,7 +63,7 @@ function countBuildings(feature) {
   return ee.Feature(
       feature.geometry(),
       ee.Dictionary([
-          // TODO(janakr): when we're processing data from scratch, this won't
+          // TODO(#22): when we're processing data from scratch, this won't
           // be a string on the other side, so we can leave it as is here.
           'GEOID', ee.String(feature.get('GEOid2')),
           'BUILDING_COUNT', totalBuildings]));
@@ -71,7 +80,7 @@ function run() {
   const task = ee.batch.Export.table.toAsset(
       joinedSnap.map(countDamage),
       'texas-snap-join-damage',
-      'users/janak/texas-snap-join-damage-test-lists-2');
+      'users/janak/texas-snap-join-damage');
   task.start();
   $('.upload-status')
       .text('Check Code Editor console for progress. Task: ' + task.id);
@@ -91,7 +100,6 @@ function setup() {
   // The client ID from the Google Developers Console.
   // TODO(#13): This is from janakr's console. Should use one for GiveDirectly.
   const CLIENT_ID = '634162034024-oodhl7ngkg63hd9ha9ho9b3okcb0bp8s.apps.googleusercontent.com';
-  // const CLIENT_ID = '628350592927-tmcoolr3fv4mdbodurhainqobc6d6ibd.apps.googleusercontent.com';
 
   $(document).ready(function() {
     // Shows a button prompting the user to log in.
