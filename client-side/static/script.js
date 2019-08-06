@@ -1,3 +1,4 @@
+import drawTable from './draw_table.js'
 import setUpPolygonDrawing from './polygon_draw.js';
 
 // Effective "namespace" for this script. See
@@ -33,6 +34,8 @@ scriptScope.priorityDisplayCap = ee.Number(99);
 // TODO(janakr): this number probably needs to be user-adjusted, based on
 // dataset.
 scriptScope.scalingFactor = 4;
+scriptScope.geoidTag = 'GEOID';
+scriptScope.priorityTag = 'PRIORITY';
 
 // Processes a feature corresponding to a geographic area and returns a new one,
 // with just the GEOID and PRIORITY properties set, and a style attribute that
@@ -59,7 +62,8 @@ scriptScope.colorAndRate = function(feature, scalingFactor, povertyThreshold) {
         .reduce(ee.Reducer.sum())))).divide(scalingFactor).round();
     return ee.Feature(
         feature.geometry(),
-        ee.Dictionary(['GEOID', feature.get('GEOID'), 'PRIORITY', priority]))
+        ee.Dictionary(
+          [scriptScope.geoidTag, feature.get(scriptScope.geoidTag), scriptScope.priorityTag, priority]))
             .set(
                 {style: {color:
                           priority.min(scriptScope.priorityDisplayCap)
@@ -94,6 +98,8 @@ scriptScope.run = function(map) {
       processedData.style({styleProperty: "style"}),
           {},
           'Damage data for high poverty');
+  google.charts.setOnLoadCallback(
+    function(){drawTable(processedData, scriptScope.geoidTag, scriptScope.priorityTag)});
 }
 
 // Runs immediately (before document may have fully loaded). Adds a hook so that
@@ -103,7 +109,11 @@ scriptScope.run = function(map) {
 scriptScope.setup = function() {
   // The client ID from the Google Developers Console.
   // TODO(#13): This is from janakr's console. Should use one for GiveDirectly.
-  const CLIENT_ID = '634162034024-oodhl7ngkg63hd9ha9ho9b3okcb0bp8s.apps.googleusercontent.com';
+  // const CLIENT_ID = '634162034024-oodhl7ngkg63hd9ha9ho9b3okcb0bp8s.apps.googleusercontent.com';
+  // TODO(#13): This is from juliexxia's console. Should use one for GiveDirectly.
+  const CLIENT_ID = '628350592927-tmcoolr3fv4mdbodurhainqobc6d6ibd.apps.googleusercontent.com';
+  
+  google.charts.load('current', {packages: ['table']});   
 
   $(document).ready(function() {
     // Create the base Google Map.
@@ -128,7 +138,9 @@ scriptScope.setup = function() {
     };
 
     // Attempt to authenticate using existing credentials.
-    ee.data.authenticate(CLIENT_ID, runOnSuccess, null, null, onImmediateFailed);
+    // TODO(#21): Fix buggy authentification.
+    //ee.data.authenticate(CLIENT_ID, runOnSuccess, null, null, onImmediateFailed);
+    scriptScope.run(map);
   });
 };
 
