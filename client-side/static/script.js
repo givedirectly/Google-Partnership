@@ -1,4 +1,4 @@
-import drawTable from './draw_table.js'
+import drawDashboard from './draw_dashboard.js'
 import setUpPolygonDrawing from './polygon_draw.js';
 
 // Effective "namespace" for this script. See
@@ -37,6 +37,9 @@ scriptScope.scalingFactor = 4;
 scriptScope.geoidTag = 'GEOID';
 scriptScope.priorityTag = 'PRIORITY';
 
+const snapTag = 'SNAP PERCENTAGE';
+export {snapTag};
+
 // Processes a feature corresponding to a geographic area and returns a new one,
 // with just the GEOID and PRIORITY properties set, and a style attribute that
 // sets the color/opacity based on the priority, with all priorities past 99
@@ -63,7 +66,9 @@ scriptScope.colorAndRate = function(feature, scalingFactor, povertyThreshold) {
     return ee.Feature(
         feature.geometry(),
         ee.Dictionary(
-          [scriptScope.geoidTag, feature.get(scriptScope.geoidTag), scriptScope.priorityTag, priority]))
+          [scriptScope.geoidTag, feature.get(scriptScope.geoidTag), 
+          scriptScope.priorityTag, priority, 
+          snapTag, ee.Number(100).multiply(rawRatio)]))
             .set(
                 {style: {color:
                           priority.min(scriptScope.priorityDisplayCap)
@@ -99,7 +104,7 @@ scriptScope.run = function(map) {
           {},
           'Damage data for high poverty');
   google.charts.setOnLoadCallback(
-    function(){drawTable(processedData, scriptScope.geoidTag, scriptScope.priorityTag)});
+    function(){drawDashboard(processedData, scriptScope.geoidTag, scriptScope.priorityTag)});
 }
 
 // Runs immediately (before document may have fully loaded). Adds a hook so that
@@ -113,7 +118,7 @@ scriptScope.setup = function() {
   // TODO(#13): This is from juliexxia's console. Should use one for GiveDirectly.
   const CLIENT_ID = '628350592927-tmcoolr3fv4mdbodurhainqobc6d6ibd.apps.googleusercontent.com';
   
-  google.charts.load('current', {packages: ['table']});   
+  google.charts.load('current', {packages: ['table', 'controls']});   
 
   $(document).ready(function() {
     // Create the base Google Map.
