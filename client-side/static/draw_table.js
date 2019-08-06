@@ -22,11 +22,12 @@ function drawTable(features, id, property) {
 		headings));
 	list.evaluate(function(success, failure) {
 		if (typeof failure !== 'undefined') {
+			// TODO(juliexxia): more robust error
 			console.log(failure);
 		} else {
 			const data = google.visualization.arrayToDataTable(success, false);
 			// Instantiate and draw the chart.
-			const chart = new google.visualization.Table(document.getElementById('chart_div'));
+			const chart = new google.visualization.Table(document.getElementById('chart-div'));
 			chart.draw(data, null /* styleOptions */);
 		}
 	});
