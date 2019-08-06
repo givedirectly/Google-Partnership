@@ -1,5 +1,5 @@
-import drawTable from './draw_table.js'
-import setUpPolygonDrawing from './polygon_draw.js'
+import drawTable from './draw_table.js';
+import setUpPolygonDrawing from './polygon_draw.js';
 
 // Adds an EarthEngine layer (from EEObject.getMap()) to the given Google Map
 // and returns the "overlay" that was added, in case the caller wants to add
