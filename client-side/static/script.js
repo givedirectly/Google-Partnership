@@ -1,41 +1,37 @@
 import drawTable from './draw_table.js'
-import setUpPolygonDrawing from './polygon_draw.js';
-
-// Effective "namespace" for this script. See
-// https://stackoverflow.com/questions/881515/how-do-i-declare-a-namespace-in-javascript
-// for a number of approaches, including this one.
-// TODO(janakr): verify that Google style guide actually sanctions this: I think
-// maybe we're supposed to use modules, but I'm not sure yet.
-const scriptScope = {};
+import setUpPolygonDrawing from './polygon_draw.js'
 
 // Adds an EarthEngine layer (from EEObject.getMap()) to the given Google Map
 // and returns the "overlay" that was added, in case the caller wants to add
 // callbacks or similar to that overlay.
-scriptScope.addLayerFromId = function(map, layerId) {
-  const overlay = new ee.MapLayerOverlay(
-      'https://earthengine.googleapis.com/map',
-      layerId.mapid, layerId.token, {});
+function addLayerFromId(map, layerId) {
+  const overlay =
+      new ee.MapLayerOverlay(
+          'https://earthengine.googleapis.com/map',
+          layerId.mapid,
+          layerId.token,
+          {});
   // Show the EE map on the Google Map.
   map.overlayMapTypes.push(overlay);
   return overlay;
 }
 
-// Convenience wrapper for addLayerFromId that calls getMap().
-scriptScope.addLayer = function(map, layer) {
-  return scriptScope.addLayerFromId(map, layer.getMap());
+// Asynchronous wrapper for addLayerFromId that calls getMap() with a callback
+// to avoid blocking on the result.
+function addLayer(map, layer) {
+  layer.getMap({callback: function(layerId) {addLayerFromId(map, layerId)}});
 }
 
-scriptScope.damageLevels = ee.List(['NOD', 'UNK', 'AFF', 'MIN', 'MAJ', 'DES']);
-// TODO(janakr): figure out why ee.Dictionary.fromLists is not defined here.
-scriptScope.damageScales =
-    ee.Dictionary(['NOD', 0, 'UNK', 0, 'AFF', 1, 'MIN', 1, 'MAJ', 2, 'DES', 3,]);
-scriptScope.zero = ee.Number(0);
-scriptScope.priorityDisplayCap = ee.Number(99);
+const damageLevels = ee.List(['NOD', 'UNK', 'AFF', 'MIN', 'MAJ', 'DES']);
+// Initialized lazily, after ee.initialize() creates necessary function.
+let damageScales = null;
+const zero = ee.Number(0);
+const priorityDisplayCap = ee.Number(99);
 // TODO(janakr): this number probably needs to be user-adjusted, based on
 // dataset.
-scriptScope.scalingFactor = 4;
-scriptScope.geoidTag = 'GEOID';
-scriptScope.priorityTag = 'PRIORITY';
+const scalingFactor = 4;
+const geoidTag = 'GEOID';
+const priorityTag = 'PRIORITY';
 
 // Processes a feature corresponding to a geographic area and returns a new one,
 // with just the GEOID and PRIORITY properties set, and a style attribute that
@@ -48,39 +44,41 @@ scriptScope.priorityTag = 'PRIORITY';
 // scalingFactor divides the raw priority, it can be adjusted to make sure that
 // there are not too many priorities >99 (which all display the same on the
 // map).
-scriptScope.colorAndRate = function(feature, scalingFactor, povertyThreshold) {
+function colorAndRate(feature, scalingFactor, povertyThreshold) {
   const rawRatio = ee.Number(feature.get('SNAP')).divide(feature.get('TOTAL'));
   const priority = ee.Number(ee.Algorithms.If(
     rawRatio.lte(povertyThreshold),
-    scriptScope.zero,
+    zero,
     ee.Number(
-        scriptScope.damageLevels.map(
+        damageLevels.map(
             function (type) {
-              return ee.Number(scriptScope.damageScales.get(type))
+              return ee.Number(damageScales.get(type))
                   .multiply(feature.get(type));
             })
         .reduce(ee.Reducer.sum())))).divide(scalingFactor).round();
     return ee.Feature(
         feature.geometry(),
         ee.Dictionary(
-          [scriptScope.geoidTag, feature.get(scriptScope.geoidTag), scriptScope.priorityTag, priority]))
+          [geoidTag, feature.get(geoidTag), priorityTag, priority]))
             .set(
                 {style: {color:
-                          priority.min(scriptScope.priorityDisplayCap)
+                          priority.min(priorityDisplayCap)
                               .format('ff00ff%02d')}});
 }
 
-scriptScope.processJoinedData = function(joinedData, scale, povertyThreshold) {
+function processJoinedData(joinedData, scale, povertyThreshold) {
   return joinedData.map(
       function (feature) {
-        return scriptScope.colorAndRate(feature, scale, povertyThreshold);
+        return colorAndRate(feature, scale, povertyThreshold);
       });
 }
 
 // Basic main function that initializes EarthEngine library and adds an image
 // layer to the Google Map.
-scriptScope.run = function(map) {
+function run(map) {
+  // TODO(#24): Takes ~50 ms to load. Can this be done asynchronously?
   ee.initialize();
+  damageScales = ee.Dictionary.fromLists(damageLevels, [0, 0, 1, 1, 2, 3]);
   setUpPolygonDrawing(map);
   const damage =
       ee.FeatureCollection(
@@ -89,24 +87,25 @@ scriptScope.run = function(map) {
   const joinedSnap = ee.FeatureCollection('users/janak/texas-snap-join-damage');
 
   const defaultPovertyThreshold = 0.1;
-  scriptScope.addLayer(map, damage);
+  // TODO(#24): Following three calls all take at least 5 ms. Just EE overhead?
+  addLayer(map, damage);
   const processedData =
-      scriptScope.processJoinedData(
-          joinedSnap, scriptScope.scalingFactor, defaultPovertyThreshold);
-  scriptScope.addLayer(
+      processJoinedData(
+          joinedSnap, scalingFactor, defaultPovertyThreshold);
+  addLayer(
       map,
       processedData.style({styleProperty: "style"}),
           {},
           'Damage data for high poverty');
   google.charts.setOnLoadCallback(
-    function(){drawTable(processedData, scriptScope.geoidTag, scriptScope.priorityTag)});
+    function(){drawTable(processedData, geoidTag, priorityTag)});
 }
 
 // Runs immediately (before document may have fully loaded). Adds a hook so that
 // when the document is loaded, Google Map is initialized, and on successful
 // login, EE data is overlayed.
 // TODO(janakr): authentication seems buggy, investigate.
-scriptScope.setup = function() {
+function setup() {
   // The client ID from the Google Developers Console.
   // TODO(#13): This is from janakr's console. Should use one for GiveDirectly.
   // const CLIENT_ID = '634162034024-oodhl7ngkg63hd9ha9ho9b3okcb0bp8s.apps.googleusercontent.com';
@@ -116,13 +115,13 @@ scriptScope.setup = function() {
   google.charts.load('current', {packages: ['table']});   
 
   $(document).ready(function() {
-    // Create the base Google Map.
+    // Create the base Google Map. Takes ~7 ms to execute this step..
     const map = new google.maps.Map($('.map').get(0), {
           center: { lat: 29.76, lng: -95.36},
           zoom: 8
         });
 
-    const runOnSuccess = function() {scriptScope.run(map)};
+    const runOnSuccess = function() {run(map)};
 
     // Shows a button prompting the user to log in.
     const onImmediateFailed = function() {
@@ -140,8 +139,8 @@ scriptScope.setup = function() {
     // Attempt to authenticate using existing credentials.
     // TODO(#21): Fix buggy authentification.
     //ee.data.authenticate(CLIENT_ID, runOnSuccess, null, null, onImmediateFailed);
-    scriptScope.run(map);
+    run(map);
   });
 };
 
-scriptScope.setup();
+setup();
