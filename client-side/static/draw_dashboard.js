@@ -8,6 +8,7 @@ const headings = [geoidTag, priorityTag, snapTag]
 const MAX_ENTRIES = 25	
 
 function drawDashboard(features) {
+	console.log("drawing dashboard " + features.size().getInfo());
     const dashboard = new google.visualization.Dashboard(document.getElementById('dashboard'));
     const table = new google.visualization.ChartWrapper({
         'chartType': 'Table',
@@ -28,6 +29,7 @@ function drawDashboard(features) {
             const data = google.visualization.arrayToDataTable(success, false);
             // Instantiate and draw the chart.
             if (typeof data !== 'undefined') {
+            	console.log("drawing! me!");
                 dashboard.draw(data);
             }
         }
@@ -43,7 +45,6 @@ function drawDashboard(features) {
  */
 // TODO(juliexxia); take in a list of properties not just one
 function getTableData(features) {
-	console.log(features.size().getInfo());
     const sorted = features.sort(priorityTag, false);
     const list = ee.List(sorted.iterate(
         function(feature, list) {
