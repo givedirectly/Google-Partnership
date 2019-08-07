@@ -9,7 +9,7 @@ export {run as default};
 // and returns the "overlay" that was added, in case the caller wants to add
 // callbacks or similar to that overlay.
 function addLayerFromId(map, layerId) {
-const overlay =
+  const overlay =
       new ee.MapLayerOverlay(
           'https://earthengine.googleapis.com/map',
           layerId.mapid,
