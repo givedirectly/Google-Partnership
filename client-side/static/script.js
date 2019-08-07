@@ -1,3 +1,4 @@
+
 import drawtable from './draw_table.js';
 import setUpPolygonDrawing from './polygon_draw.js';
 
@@ -8,23 +9,35 @@ export {run as default};
 // and returns the "overlay" that was added, in case the caller wants to add
 // callbacks or similar to that overlay.
 function addLayerFromId(map, layerId) {
-  const overlay = new ee.MapLayerOverlay(
-      'https://earthengine.googleapis.com/map',
-      layerId.mapid, layerId.token, {});
+
+const overlay =
+      new ee.MapLayerOverlay(
+          'https://earthengine.googleapis.com/map',
+          layerId.mapid,
+          layerId.token,
+          {});
+
   // Show the EE map on the Google Map.
   map.overlayMapTypes.push(overlay);
   return overlay;
 }
 
-// Convenience wrapper for addLayerFromId that calls getMap().
+// Asynchronous wrapper for addLayerFromId that calls getMap() with a callback
+// to avoid blocking on the result.
 function addLayer(map, layer) {
-  return addLayerFromId(map, layer.getMap());
+  layer.getMap({
+        callback: function(layerId, failure) {
+            if (layerId) {
+              addLayerFromId(map, layerId);
+            } else {
+              createError('getting id')(failure);
+            }
+    }});
 }
 
- const damageLevels = ee.List(['NOD', 'UNK', 'AFF', 'MIN', 'MAJ', 'DES']);
-// TODO(janakr): figure out why ee.Dictionary.fromLists is not defined here.
-const damageScales =
-    ee.Dictionary(['NOD', 0, 'UNK', 0, 'AFF', 1, 'MIN', 1, 'MAJ', 2, 'DES', 3,]);
+const damageLevels = ee.List(['NOD', 'UNK', 'AFF', 'MIN', 'MAJ', 'DES']);
+// Initialized lazily, after ee.initialize() creates necessary function.
+let damageScales = null;
 const zero = ee.Number(0);
 const priorityDisplayCap = ee.Number(99);
 // TODO(janakr): this number probably needs to be user-adjusted, based on
@@ -36,6 +49,7 @@ const snapTag = 'SNAP PERCENTAGE';
 
 // Cutoff for SNAP reciepients/population
 const defaultPovertyThreshold = 0.3;
+
 
 // Processes a feature corresponding to a geographic area and returns a new one,
 // with just the GEOID and PRIORITY properties set, and a style attribute that
@@ -88,14 +102,13 @@ function run(povertyThreshold) {
         center: { lat: 29.76, lng: -95.36},
         zoom: 8
       });
-
+  damageScales = ee.Dictionary.fromLists(damageLevels, [0, 0, 1, 1, 2, 3]);
   setUpPolygonDrawing(map);
   const damage =
       ee.FeatureCollection(
           'users/janak/FEMA_Damage_Assessments_Harvey_20170829');
 
   const joinedSnap = ee.FeatureCollection('users/janak/texas-snap-join-damage');
-
   addLayer(map, damage);
   const processedData =
       processJoinedData(
@@ -116,15 +129,23 @@ function run(povertyThreshold) {
 function setup() {
   // The client ID from the Google Developers Console.
   // TODO(#13): This is from janakr's console. Should use one for GiveDirectly.
-  // const CLIENT_ID = '634162034024-oodhl7ngkg63hd9ha9ho9b3okcb0bp8s.apps.googleusercontent.com';
-  // TODO(#13): This is from juliexxia's console. Should use one for GiveDirectly.
-  const CLIENT_ID = '628350592927-tmcoolr3fv4mdbodurhainqobc6d6ibd.apps.googleusercontent.com';
+  const CLIENT_ID = '634162034024-oodhl7ngkg63hd9ha9ho9b3okcb0bp8s.apps.googleusercontent.com';
+  // TODO(#13): This is from juliexxia's console. Should use one for
+  // GiveDirectly. Also, this client id has not been properly configured yet.
+  // const CLIENT_ID = '628350592927-tmcoolr3fv4mdbodurhainqobc6d6ibd.apps.googleusercontent.com';
   
   google.charts.load('current', {packages: ['table', 'controls']});   
 
   $(document).ready(function() {
     ee.initialize();
-    const runOnSuccess = function() {run(map, defaultPovertyThreshold)};
+    const runWithMap = function() {run(map)};
+    const runOnSuccess = function() {
+      ee.initialize(
+          /*opt_baseurl=*/null,
+          /*opt_tileurl=*/null,
+          runWithMap,
+          createError('initializing EE'));
+    };
 
     // Shows a button prompting the user to log in.
     const onImmediateFailed = function() {
@@ -141,9 +162,21 @@ function setup() {
 
     // Attempt to authenticate using existing credentials.
     // TODO(#21): Fix buggy authentification.
-    //ee.data.authenticate(CLIENT_ID, runOnSuccess, null, null, onImmediateFailed);
-    run(defaultPovertyThreshold);
+    ee.data.authenticate(
+        CLIENT_ID,
+        runOnSuccess,
+        createError('authenticating'),
+        null,
+        onImmediateFailed);
+    // runWithMap();
   });
 };
+
+// TODO(janakr): use some standard error library?
+function createError(message) {
+  return function(error) {
+    console.error('Error ' + message + ': ' + error);
+  }
+}
 
 setup();
