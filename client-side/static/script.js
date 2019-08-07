@@ -1,4 +1,3 @@
-
 import drawTable from './draw_table.js';
 import setUpPolygonDrawing from './polygon_draw.js';
 
