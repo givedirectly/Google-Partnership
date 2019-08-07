@@ -24,7 +24,7 @@ function addLayer(map, layer) {
             if (layerId) {
               addLayerFromId(map, layerId);
             } else {
-              console.log("Error getting id: " + failure);
+              createError('getting id')(failure);
             }
     }});
 }
@@ -83,8 +83,6 @@ function processJoinedData(joinedData, scale, povertyThreshold) {
 // Basic main function that initializes EarthEngine library and adds an image
 // layer to the Google Map.
 function run(map) {
-  // TODO(#24): Takes ~50 ms to load. Can this be done asynchronously?
-  ee.initialize();
   damageScales = ee.Dictionary.fromLists(damageLevels, [0, 0, 1, 1, 2, 3]);
   setUpPolygonDrawing(map);
   const damage =
@@ -129,7 +127,14 @@ function setup() {
           zoom: 8
         });
 
-    const runOnSuccess = function() {run(map)};
+    const runWithMap = function() {run(map)};
+    const runOnSuccess = function() {
+      ee.initialize(
+          /*opt_baseurl=*/null,
+          /*opt_tileurl=*/null,
+          runWithMap,
+          createError('initializing EE'));
+    };
 
     // Shows a button prompting the user to log in.
     const onImmediateFailed = function() {
@@ -146,11 +151,20 @@ function setup() {
 
     // Attempt to authenticate using existing credentials.
     // TODO(#21): Fix buggy authentification.
-    // ee.data.authenticate(CLIENT_ID, runOnSuccess,
-    //  function (error) {console.log('Failed auth with ' + error)},
-    //  null, onImmediateFailed);
-    run(map);
+    ee.data.authenticate(
+        CLIENT_ID,
+        runOnSuccess,
+        createError('authenticating'),
+        null,
+        onImmediateFailed);
+    // runWithMap();
   });
 };
+
+function createError(message) {
+  return function(error) {
+    console.error('Error ' + message + ': ' + error);
+  }
+}
 
 setup();
