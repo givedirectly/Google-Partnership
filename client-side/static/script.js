@@ -1,4 +1,4 @@
-import drawDashboard from './draw_dashboard.js';
+import drawtable from './draw_table.js';
 import setUpPolygonDrawing from './polygon_draw.js';
 
 export {geoidTag, priorityTag, snapTag};
