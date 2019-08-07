@@ -161,6 +161,7 @@ function setup() {
   });
 };
 
+// TODO(janakr): use some standard error library?
 function createError(message) {
   return function(error) {
     console.error('Error ' + message + ': ' + error);
