@@ -2,7 +2,7 @@ import {geoidTag, priorityTag, snapTag} from './script.js';
 
 export {drawDashboard as default };
 
-function drawDashboard(features, povertyThreshold) {
+function drawTable(features, povertyThreshold) {
     const sortedAboveThreshold = features.filter(ee.Filter.gte(snapTag, povertyThreshold)).sort(priorityTag, false);
     const headings = [geoidTag, priorityTag, snapTag]
     const asListWithHeadings = ee.List(sortedAboveThreshold.iterate(
