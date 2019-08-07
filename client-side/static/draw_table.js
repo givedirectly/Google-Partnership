@@ -1,6 +1,6 @@
 import {geoidTag, priorityTag, snapTag} from './script.js';
 
-export {drawDashboard as default };
+export {drawTable as default };
 
 function drawTable(features, povertyThreshold) {
     const sortedAboveThreshold = features.filter(ee.Filter.gte(snapTag, povertyThreshold)).sort(priorityTag, false);
@@ -21,7 +21,6 @@ function drawTable(features, povertyThreshold) {
             const data = google.visualization.arrayToDataTable(success, false);
             // Instantiate and draw the chart.
             if (typeof data !== 'undefined') {
-            	console.log("drawing! me!");
         	    const table = new google.visualization.ChartWrapper({
         			'chartType': 'Table',
         			'containerId': 'table',

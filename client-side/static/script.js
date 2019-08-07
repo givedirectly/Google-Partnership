@@ -62,7 +62,7 @@ function colorAndRate(feature, scalingFactor, povertyThreshold) {
         .reduce(ee.Reducer.sum())))).divide(scalingFactor).round();
     return ee.Feature(
         feature.geometry(),
-        // Keep key order same as @const headings in ./draw_dashboard.js
+        // Keep key order same as @const headings in ./draw_table.js
         ee.Dictionary(
           [geoidTag, feature.get(geoidTag),
           priorityTag, priority,
@@ -106,7 +106,7 @@ function run(povertyThreshold) {
       processedData.style({styleProperty: "style"}),
           {},
           'Damage data for high poverty');
-  google.charts.setOnLoadCallback(function(){drawDashboard(processedData, povertyThreshold)});
+  google.charts.setOnLoadCallback(function(){drawTable(processedData, povertyThreshold)});
 }
 
 // Runs immediately (before document may have fully loaded). Adds a hook so that
