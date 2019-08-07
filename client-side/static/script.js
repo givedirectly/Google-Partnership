@@ -19,7 +19,14 @@ function addLayerFromId(map, layerId) {
 // Asynchronous wrapper for addLayerFromId that calls getMap() with a callback
 // to avoid blocking on the result.
 function addLayer(map, layer) {
-  layer.getMap({callback: function(layerId) {addLayerFromId(map, layerId)}});
+  layer.getMap({
+        callback: function(layerId, failure) {
+            if (layerId) {
+              addLayerFromId(map, layerId);
+            } else {
+              createError('getting id')(failure);
+            }
+    }});
 }
 
 const damageLevels = ee.List(['NOD', 'UNK', 'AFF', 'MIN', 'MAJ', 'DES']);
@@ -76,8 +83,6 @@ function processJoinedData(joinedData, scale, povertyThreshold) {
 // Basic main function that initializes EarthEngine library and adds an image
 // layer to the Google Map.
 function run(map) {
-  // TODO(#24): Takes ~50 ms to load. Can this be done asynchronously?
-  ee.initialize();
   damageScales = ee.Dictionary.fromLists(damageLevels, [0, 0, 1, 1, 2, 3]);
   setUpPolygonDrawing(map);
   const damage =
@@ -108,9 +113,10 @@ function run(map) {
 function setup() {
   // The client ID from the Google Developers Console.
   // TODO(#13): This is from janakr's console. Should use one for GiveDirectly.
-  // const CLIENT_ID = '634162034024-oodhl7ngkg63hd9ha9ho9b3okcb0bp8s.apps.googleusercontent.com';
-  // TODO(#13): This is from juliexxia's console. Should use one for GiveDirectly.
-  const CLIENT_ID = '628350592927-tmcoolr3fv4mdbodurhainqobc6d6ibd.apps.googleusercontent.com';
+  const CLIENT_ID = '634162034024-oodhl7ngkg63hd9ha9ho9b3okcb0bp8s.apps.googleusercontent.com';
+  // TODO(#13): This is from juliexxia's console. Should use one for
+  // GiveDirectly. Also, this client id has not been properly configured yet.
+  // const CLIENT_ID = '628350592927-tmcoolr3fv4mdbodurhainqobc6d6ibd.apps.googleusercontent.com';
   
   google.charts.load('current', {packages: ['table']});   
 
@@ -121,7 +127,14 @@ function setup() {
           zoom: 8
         });
 
-    const runOnSuccess = function() {run(map)};
+    const runWithMap = function() {run(map)};
+    const runOnSuccess = function() {
+      ee.initialize(
+          /*opt_baseurl=*/null,
+          /*opt_tileurl=*/null,
+          runWithMap,
+          createError('initializing EE'));
+    };
 
     // Shows a button prompting the user to log in.
     const onImmediateFailed = function() {
@@ -138,9 +151,21 @@ function setup() {
 
     // Attempt to authenticate using existing credentials.
     // TODO(#21): Fix buggy authentification.
-    //ee.data.authenticate(CLIENT_ID, runOnSuccess, null, null, onImmediateFailed);
-    run(map);
+    ee.data.authenticate(
+        CLIENT_ID,
+        runOnSuccess,
+        createError('authenticating'),
+        null,
+        onImmediateFailed);
+    // runWithMap();
   });
 };
+
+// TODO(janakr): use some standard error library?
+function createError(message) {
+  return function(error) {
+    console.error('Error ' + message + ': ' + error);
+  }
+}
 
 setup();
