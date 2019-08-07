@@ -29,7 +29,7 @@ const zero = ee.Number(0);
 const priorityDisplayCap = ee.Number(99);
 // TODO(janakr): this number probably needs to be user-adjusted, based on
 // dataset.
-const scalingFactor = 100;
+const scalingFactor = ee.Number(100);
 const geoidTag = 'GEOID';
 const priorityTag = 'PRIORITY';
 
