@@ -9,14 +9,12 @@ export {run as default};
 // and returns the "overlay" that was added, in case the caller wants to add
 // callbacks or similar to that overlay.
 function addLayerFromId(map, layerId) {
-
 const overlay =
       new ee.MapLayerOverlay(
           'https://earthengine.googleapis.com/map',
           layerId.mapid,
           layerId.token,
           {});
-
   // Show the EE map on the Google Map.
   map.overlayMapTypes.push(overlay);
   return overlay;
@@ -43,11 +41,9 @@ const priorityDisplayCap = ee.Number(99);
 // TODO(janakr): this number probably needs to be user-adjusted, based on
 // dataset.
 const scalingFactor = 4;
-const geoidTag= 'GEOID';
+const geoidTag = 'GEOID';
 const priorityTag = 'PRIORITY';
 const snapTag = 'SNAP PERCENTAGE';
-
-// Cutoff for SNAP reciepients/population
 const defaultPovertyThreshold = 0.3;
 
 
@@ -97,7 +93,8 @@ function processJoinedData(joinedData, scale, povertyThreshold) {
 // Basic main function that initializes EarthEngine library and adds an image
 // layer to the Google Map.
 function run(povertyThreshold) {
-  // Create the base Google Map.
+  // Create the base Google Map (we could also keep this around as a global 
+  // variable - not sure which is better)
   const map = new google.maps.Map($('.map').get(0), {
         center: { lat: 29.76, lng: -95.36},
         zoom: 8
@@ -113,7 +110,6 @@ function run(povertyThreshold) {
   const processedData =
       processJoinedData(
           joinedSnap, scalingFactor, povertyThreshold);
-  console.log(processedData.size().getInfo());
   addLayer(
       map,
       processedData.style({styleProperty: "style"}),
