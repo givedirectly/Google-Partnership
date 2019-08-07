@@ -19,6 +19,7 @@ const buildings = ee.FeatureCollection('users/janak/census_building_data');
 
 const censusSnapKey = 'ACS_16_5_4';
 const censusTotalKey = 'ACS_16_5_2';
+const censusBuildingKeyPrefix = 'HD01_VD';
 
 const damageKey = 'DMG_LEVEL';
 
@@ -53,11 +54,13 @@ function countDamage(feature) {
 
 function countBuildings(feature) {
   let totalBuildings = zero;
-  // Columns in Census data: coming from inspection.
+  // Columns in Census data. HD01_VD{i} is the number of buildings in category
+  // i, where category 1 is single homes, category 2 is attached, etc. See
+  // Census table B25024 for details.
   for (let i = 1; i <= 11; i++) {
-    // Let's not talk about padding with leading zeros.
     totalBuildings =
-        totalBuildings.add(feature.get('HD01_VD' + (i < 10 ? '0' + i : i)));
+        totalBuildings.add(
+            feature.get(censusBuildingKeyPrefix + padToTwoDigits(i)));
   }
   return ee.Feature(
       feature.geometry(),
@@ -66,6 +69,11 @@ function countBuildings(feature) {
           // string on the other side, so we can leave it as is here.
           'GEOID', ee.String(feature.get('GEOid2')),
           'BUILDING_COUNT', totalBuildings]));
+}
+
+// Only valid for 0 <= 0 < 100.
+function padToTwoDigits(i) {
+  return i < 10 ? '0' + i : i;
 }
 
 function run() {
