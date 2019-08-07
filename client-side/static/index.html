@@ -34,9 +34,6 @@
     <h1>Houston damage/poverty map</h1>
 
     <div class="map"></div>
-    <div id = "dashboard">
-      <div id="table"></div>
-    </div>
     <!-- TODO: link this to the defaultPovertyThreshold -->
     <p id="current-threshold">Current poverty threshold: 0.3</p>
     <form id="update-threshold" onClick = "return false">
@@ -48,6 +45,7 @@
         document.getElementById('mybutton').onclick = update;
       </script>
     </form>
+    <div id="table"></div>  
     <div class="g-sign-in hidden">
       <span class="label">Sign in with:</span>
       <div class="button">

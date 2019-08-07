@@ -66,7 +66,7 @@ function colorAndRate(feature, scalingFactor, povertyThreshold) {
         ee.Dictionary(
           [geoidTag, feature.get(geoidTag),
           priorityTag, priority,
-          snapTag, ee.Number(100).multiply(rawRatio)]))
+          snapTag, rawRatio]))
             .set(
                 {style: {color:
                           priority.min(priorityDisplayCap)
@@ -106,7 +106,7 @@ function run(povertyThreshold) {
       processedData.style({styleProperty: "style"}),
           {},
           'Damage data for high poverty');
-  google.charts.setOnLoadCallback(function(){drawDashboard(processedData)});
+  google.charts.setOnLoadCallback(function(){drawDashboard(processedData, povertyThreshold)});
 }
 
 // Runs immediately (before document may have fully loaded). Adds a hook so that
