@@ -1,5 +1,5 @@
 
-import drawtable from './draw_table.js';
+import drawTable from './draw_table.js';
 import setUpPolygonDrawing from './polygon_draw.js';
 
 export {geoidTag, priorityTag, snapTag};
@@ -44,8 +44,6 @@ const scalingFactor = 4;
 const geoidTag = 'GEOID';
 const priorityTag = 'PRIORITY';
 const snapTag = 'SNAP PERCENTAGE';
-const defaultPovertyThreshold = 0.3;
-
 
 // Processes a feature corresponding to a geographic area and returns a new one,
 // with just the GEOID and PRIORITY properties set, and a style attribute that
@@ -125,19 +123,20 @@ function run(povertyThreshold) {
 function setup() {
   // The client ID from the Google Developers Console.
   // TODO(#13): This is from janakr's console. Should use one for GiveDirectly.
-  const CLIENT_ID = '634162034024-oodhl7ngkg63hd9ha9ho9b3okcb0bp8s.apps.googleusercontent.com';
+  // const CLIENT_ID = '634162034024-oodhl7ngkg63hd9ha9ho9b3okcb0bp8s.apps.googleusercontent.com';
   // TODO(#13): This is from juliexxia's console. Should use one for
   // GiveDirectly. Also, this client id has not been properly configured yet.
-  // const CLIENT_ID = '628350592927-tmcoolr3fv4mdbodurhainqobc6d6ibd.apps.googleusercontent.com';
+  const CLIENT_ID = '628350592927-tmcoolr3fv4mdbodurhainqobc6d6ibd.apps.googleusercontent.com';
   
   google.charts.load('current', {packages: ['table', 'controls']});   
 
   $(document).ready(function() {
+    const defaultPovertyThreshold = 0.3;
     const runOnSuccess = function() {
       ee.initialize(
           /*opt_baseurl=*/null,
           /*opt_tileurl=*/null,
-          function() {run(map)},
+          function() {run(defaultPovertyThreshold)},
           createError('initializing EE'));
     };
 

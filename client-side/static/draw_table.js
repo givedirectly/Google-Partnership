@@ -5,7 +5,6 @@ export {drawTable as default };
 /*
  * Draw a ranked table of the given features that have a SNAP ratio over the given
  * threshold. 
- * 
  */
 function drawTable(features, povertyThreshold) {
     const sortedAboveThreshold = features.filter(ee.Filter.gte(snapTag, povertyThreshold)).sort(priorityTag, false);
@@ -34,7 +33,8 @@ function drawTable(features, povertyThreshold) {
     				'pageSize': 25,
     			}
 			});
-            table.draw();   
+            table.draw(); 
+            // console.timeEnd('update');  
         }
     });
 }
