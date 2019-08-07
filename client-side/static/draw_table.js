@@ -2,6 +2,11 @@ import {geoidTag, priorityTag, snapTag} from './script.js';
 
 export {drawTable as default };
 
+/*
+ * Draw a ranked table of the given features that have a SNAP ratio over the given
+ * threshold. 
+ * 
+ */
 function drawTable(features, povertyThreshold) {
     const sortedAboveThreshold = features.filter(ee.Filter.gte(snapTag, povertyThreshold)).sort(priorityTag, false);
     const headings = [geoidTag, priorityTag, snapTag]
@@ -20,18 +25,16 @@ function drawTable(features, povertyThreshold) {
         } else {
             const data = google.visualization.arrayToDataTable(success, false);
             // Instantiate and draw the chart.
-            if (typeof data !== 'undefined') {
-        	    const table = new google.visualization.ChartWrapper({
-        			'chartType': 'Table',
-        			'containerId': 'table',
-        			'dataTable': data,
-        			'options': {
-        				'page': 'enable',
-        				'pageSize': 25,
-        			}
-    			});
-                table.draw();
-            }
+    	    const table = new google.visualization.ChartWrapper({
+    			'chartType': 'Table',
+    			'containerId': 'table',
+    			'dataTable': data,
+    			'options': {
+    				'page': 'enable',
+    				'pageSize': 25,
+    			}
+			});
+            table.draw();   
         }
     });
 }
