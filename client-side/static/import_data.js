@@ -11,9 +11,8 @@ const damage =
     ee.FeatureCollection('users/janak/FEMA_Damage_Assessments_Harvey_20170829');
 
 // TODO(#22): get raw Census data, and do the snap join in this script as well.
-const rawSnap =
-    ee.FeatureCollection('users/janak/texas-snap')
-        .filterBounds(damage.geometry());
+const rawSnap = ee.FeatureCollection('users/janak/texas-snap')
+                    .filterBounds(damage.geometry());
 
 const buildings = ee.FeatureCollection('users/janak/census_building_data');
 
@@ -26,8 +25,9 @@ const damageKey = 'DMG_LEVEL';
 // TODO(janakr): move this list into a common module.
 const damageLevels = ee.List(['NOD', 'UNK', 'AFF', 'MIN', 'MAJ', 'DES']);
 
-const damageFilters = damageLevels.map(
-    function (type) {return ee.Filter.eq(damageKey, type)});
+const damageFilters = damageLevels.map(function(type) {
+  return ee.Filter.eq(damageKey, type)
+});
 
 const zero = ee.Number(0);
 
@@ -36,20 +36,18 @@ function countDamage(feature) {
   // TODO(janakr): #geometry() is deprecated?
   const geometry = mainFeature.geometry();
   const blockDamage = damage.filterBounds(geometry);
-  const attrDict = ee.Dictionary.fromLists(
-      damageLevels,
-      damageFilters.map(
-          function (type) {return blockDamage.filter(type).size()})
-  );
+  const attrDict =
+      ee.Dictionary.fromLists(damageLevels, damageFilters.map(function(type) {
+        return blockDamage.filter(type).size()
+      }));
   return ee.Feature(
-    geometry,
-    attrDict
-        .set('GEOID', mainFeature.get('GEOID'))
-        .set('SNAP', mainFeature.get(censusSnapKey))
-        .set('TOTAL', mainFeature.get(censusTotalKey))
-        .set(
-            'BUILDING_COUNT',
-            ee.Feature(feature.get('secondary')).get('BUILDING_COUNT')));
+      geometry,
+      attrDict.set('GEOID', mainFeature.get('GEOID'))
+          .set('SNAP', mainFeature.get(censusSnapKey))
+          .set('TOTAL', mainFeature.get(censusTotalKey))
+          .set(
+              'BUILDING_COUNT',
+              ee.Feature(feature.get('secondary')).get('BUILDING_COUNT')));
 }
 
 function countBuildings(feature) {
@@ -58,17 +56,14 @@ function countBuildings(feature) {
   // i, where category 1 is single homes, category 2 is attached, etc. See
   // Census table B25024 for details.
   for (let i = 1; i <= 11; i++) {
-    totalBuildings =
-        totalBuildings.add(
-            feature.get(censusBuildingKeyPrefix + padToTwoDigits(i)));
+    totalBuildings = totalBuildings.add(
+        feature.get(censusBuildingKeyPrefix + padToTwoDigits(i)));
   }
-  return ee.Feature(
-      feature.geometry(),
-      ee.Dictionary([
-          // TODO(#22): when we're processing data from scratch, this won't be a
-          // string on the other side, so we can leave it as is here.
-          'GEOID', ee.String(feature.get('GEOid2')),
-          'BUILDING_COUNT', totalBuildings]));
+  return ee.Feature(feature.geometry(), ee.Dictionary([
+    // TODO(#22): when we're processing data from scratch, this won't be a
+    // string on the other side, so we can leave it as is here.
+    'GEOID', ee.String(feature.get('GEOid2')), 'BUILDING_COUNT', totalBuildings
+  ]));
 }
 
 // Only valid for 0 <= 0 < 100.
@@ -79,25 +74,21 @@ function padToTwoDigits(i) {
 function run() {
   ee.initialize();
   const processedBuildings = buildings.map(countBuildings);
-  const joinedSnap =
-      ee.Join.inner().apply(rawSnap,
-                            processedBuildings,
-                            ee.Filter.equals(
-                                {leftField: 'GEOID', rightField: 'GEOID'}));
+  const joinedSnap = ee.Join.inner().apply(
+      rawSnap, processedBuildings,
+      ee.Filter.equals({leftField: 'GEOID', rightField: 'GEOID'}));
   const task = ee.batch.Export.table.toAsset(
-      joinedSnap.map(countDamage),
-      'texas-snap-join-damage',
+      joinedSnap.map(countDamage), 'texas-snap-join-damage',
       'users/janak/texas-snap-join-damage');
   task.start();
   $('.upload-status')
       .text('Check Code Editor console for progress. Task: ' + task.id);
-  joinedSnap.size().evaluate(
-      function (val, failure) {
-        if (val) {
-          $('.upload-status').append('\n<p>Found ' + val + ' elements');
-        } else {
-          $('.upload-status').append('\n<p>Error getting size: ' + failure);
-        }
+  joinedSnap.size().evaluate(function(val, failure) {
+    if (val) {
+      $('.upload-status').append('\n<p>Found ' + val + ' elements');
+    } else {
+      $('.upload-status').append('\n<p>Error getting size: ' + failure);
+    }
   });
 }
 
@@ -106,7 +97,8 @@ function run() {
 function setup() {
   // The client ID from the Google Developers Console.
   // TODO(#13): This is from janakr's console. Should use one for GiveDirectly.
-  const CLIENT_ID = '634162034024-oodhl7ngkg63hd9ha9ho9b3okcb0bp8s.apps.googleusercontent.com';
+  const CLIENT_ID =
+      '634162034024-oodhl7ngkg63hd9ha9ho9b3okcb0bp8s.apps.googleusercontent.com';
 
   $(document).ready(function() {
     // Shows a button prompting the user to log in.

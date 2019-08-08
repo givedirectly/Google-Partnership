@@ -1,61 +1,62 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>Houston damage/poverty map</title>
-    <!-- Load the Roboto font. -->
-    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet" type="text/css">
+<head>
+  <title>Houston damage/poverty map</title>
+  <!-- Load the Roboto font. -->
+  <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet" type="text/css">
 
-    <!-- Load the Google Maps API. -->
-    <!-- TODO(#13): This is janakr's API key: should be using one from
-      GiveDirectly. -->
-    <script src="https://maps.google.com/maps/api/js?libraries=drawing,places&key=AIzaSyCFPLkRaN7mhZs1yeCt82K0Osnmrn43NT8"></script>
+  <!-- Load the Google Maps API. -->
+  <!-- TODO(#13): This is janakr's API key: should be using one from
+    GiveDirectly. -->
+  <script
+      src="https://maps.google.com/maps/api/js?libraries=drawing,places&key=AIzaSyCFPLkRaN7mhZs1yeCt82K0Osnmrn43NT8"></script>
 
-    <!-- Load jQuery, a 3rd-party library. -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+  <!-- Load jQuery, a 3rd-party library. -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
 
-    <!-- Load debug Earth Engine JavaScript client library. -->
-    <!-- TODO(janakr): Switch back to compiled version in production. -->
-    <!-- TODO(janakr): Verify there's no downside to using relative paths here
-      and below. -->
-    <script src="./ee_api_js_debug.js"></script>
+  <!-- Load debug Earth Engine JavaScript client library. -->
+  <!-- TODO(janakr): Switch back to compiled version in production. -->
+  <!-- TODO(janakr): Verify there's no downside to using relative paths here and below. -->
+  <script src="./ee_api_js_debug.js"></script>
 
-    <!-- Load google charts loader -->
-    <script src="https://www.gstatic.com/charts/loader.js"></script>
+  <!-- Load google charts loader -->
+  <script src="https://www.gstatic.com/charts/loader.js"></script>
 
-    <!-- Load our script. -->
-    <script type="module" src="./highlight_feature.js"></script>
-    <script type="module" src="./polygon_draw.js"></script>
-    <script type="module" src="./create_map.js"></script>
-    <script type="module" src="./draw_table.js"></script>
-    <script type="module" src="./script.js"></script>
+  <!-- Load our script. -->
+  <script type="module" src="./highlight_feature.js"></script>
+  <script type="module" src="./polygon_draw.js"></script>
+  <script type="module" src="./create_map.js"></script>
+  <script type="module" src="./draw_table.js"></script>
+  <script type="module" src="./script.js"></script>
 
-    <!-- Load our styles. -->
-    <link rel="stylesheet" href="./style.css">
-  </head>
-  <body>
-    <h1>Houston damage/poverty map</h1>
+  <!-- Load our styles. -->
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<h1>Houston damage/poverty map</h1>
 
-    <div class="map"></div>
-    <!-- TODO: link this to the defaultPovertyThreshold -->
-    <p id="current-threshold">Current poverty threshold: 0.3</p>
-    <form id="update-threshold" onsubmit="return false;">
-      <label for="threshold">Poverty threshold</label>
-      <input type="number" id="threshold" step="0.01">
-      <input type="button" value="Update" id="mybutton">
-      <script type="module">
-        import update from './update.js';
-        document.getElementById('mybutton').onclick = update;
-      </script>
-    </form>
-    <div id="table"></div>  
-    <div class="g-sign-in hidden">
-      <span class="label">Sign in with:</span>
-      <div class="button">
-        <span class="icon"></span>
-        <span class="button-text">Google</span>
-      </div>
-    </div>
+<div class="map"></div>
+<!-- TODO: link this to the defaultPovertyThreshold -->
+<p id="current-threshold">Current poverty threshold: 0.3</p>
+<form id="update-threshold" onsubmit="return false;">
+  <label for="threshold">Poverty threshold</label>
+  <input type="number" id="threshold" step="0.01">
+  <input type="button" value="Update" id="mybutton">
+  <script type="module">
+    import update from './update.js';
 
-    <div class="tiles-loading"></div>
-  </body>
+    document.getElementById('mybutton').onclick = update;
+  </script>
+</form>
+<div id="table"></div>
+<div class="g-sign-in hidden">
+  <span class="label">Sign in with:</span>
+  <div class="button">
+    <span class="icon"></span>
+    <span class="button-text">Google</span>
+  </div>
+</div>
+
+<div class="tiles-loading"></div>
+</body>
 </html>
