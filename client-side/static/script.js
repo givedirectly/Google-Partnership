@@ -99,8 +99,7 @@ function processJoinedData(joinedData, scale, povertyThreshold) {
       });
 }
 
-// The base Google Map, Initialized lazily,
-// TODO: this is centered for Harvey right now - generalize.
+// The base Google Map, Initialized lazily to ensure doc is ready
 let map = null
 const joinedSnap = ee.FeatureCollection('users/janak/texas-snap-join-damage');
 
@@ -117,14 +116,13 @@ function updatePovertyThreshold(povertyThreshold) {
       map,
       processedData.style({styleProperty: "style"}),
       priorityLayerId);
-  // TODO: see if we can do earth engine calls needed in this method without waiting
-  // on google.charts to load + consider if this happens synchronously after the first time.
   google.charts.setOnLoadCallback(function(){drawTable(processedData, povertyThreshold)});
 }
 
 // Main function that processes the data (FEMA damage, SNAP) and creates/populates
 // the map and table with a new poverty threshold.
 function run(povertyThreshold) {
+  // TODO: this is centered for Harvey right now - generalize.
   map = new google.maps.Map($('.map').get(0), {
     center: { lat: 29.76, lng: -95.36},
     zoom: 8
