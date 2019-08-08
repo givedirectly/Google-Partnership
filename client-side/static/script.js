@@ -47,7 +47,7 @@ const zero = ee.Number(0);
 const priorityDisplayCap = ee.Number(99);
 // TODO(janakr): this number probably needs to be user-adjusted, based on
 // dataset.
-const scalingFactor = 4;
+const scalingFactor = ee.Number(100);
 const geoidTag = 'GEOID';
 const priorityTag = 'PRIORITY';
 const snapTag = 'SNAP PERCENTAGE';
@@ -65,9 +65,8 @@ const femaDamageLayerId = 'fema';
 // povertyThreshold is used to filter out areas that are not poor enough (as
 // determined by the areas SNAP and TOTAL properties).
 //
-// scalingFactor divides the raw priority, it can be adjusted to make sure that
-// there are not too many priorities >99 (which all display the same on the
-// map).
+// scalingFactor multiplies the raw priority, it can be adjusted to make sure
+// that the values span the desired range of ~0 to ~100.
 function colorAndRate(feature, scalingFactor, povertyThreshold) {
   const rawRatio = ee.Number(feature.get('SNAP')).divide(feature.get('TOTAL'));
   const priority = ee.Number(ee.Algorithms.If(
@@ -78,8 +77,10 @@ function colorAndRate(feature, scalingFactor, povertyThreshold) {
             function (type) {
               return ee.Number(damageScales.get(type))
                   .multiply(feature.get(type));
-            })
-        .reduce(ee.Reducer.sum())))).divide(scalingFactor).round();
+            }
+        ).reduce(ee.Reducer.sum()))
+        .divide(feature.get('BUILDING_COUNT'))))
+        .multiply(scalingFactor).round();
     return ee.Feature(
         feature.geometry(),
         ee.Dictionary(
@@ -103,11 +104,16 @@ function processJoinedData(joinedData, scale, povertyThreshold) {
 let map = null;
 const joinedSnap = ee.FeatureCollection('users/janak/texas-snap-join-damage');
 
+<<<<<<< HEAD
 // Removes the current score overlay on the map (if there is one).
 // Reprocesses scores with new povertyThreshold , overlays new score layer
 // and redraws table .
 function updatePovertyThreshold(povertyThreshold) {
   removeLayer(map, priorityLayerId)
+=======
+  const joinedSnap =
+      ee.FeatureCollection('users/janak/texas-snap-join-damage-with-buildings');
+>>>>>>> master
 
   const processedData =
       processJoinedData(
