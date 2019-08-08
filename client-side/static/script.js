@@ -1,5 +1,6 @@
 import drawTable from './draw_table.js';
 import setUpPolygonDrawing from './polygon_draw.js';
+import createMap from './create_map.js';
 
 export {geoidTag, priorityTag, snapTag, zero};
 export {updatePovertyThreshold as default};
@@ -104,16 +105,11 @@ function processJoinedData(joinedData, scale, povertyThreshold) {
 let map = null;
 const joinedSnap = ee.FeatureCollection('users/janak/texas-snap-join-damage');
 
-<<<<<<< HEAD
 // Removes the current score overlay on the map (if there is one).
 // Reprocesses scores with new povertyThreshold , overlays new score layer
 // and redraws table .
 function updatePovertyThreshold(povertyThreshold) {
   removeLayer(map, priorityLayerId)
-=======
-  const joinedSnap =
-      ee.FeatureCollection('users/janak/texas-snap-join-damage-with-buildings');
->>>>>>> master
 
   const processedData =
       processJoinedData(
@@ -158,6 +154,8 @@ function setup() {
 
   $(document).ready(function() {
     const defaultPovertyThreshold = 0.3;
+    map = createMap();
+
     const runOnSuccess = function() {
       ee.initialize(
           /*opt_baseurl=*/null,
@@ -181,13 +179,13 @@ function setup() {
 
     // Attempt to authenticate using existing credentials.
     // TODO(#21): Fix buggy authentification.
-    // ee.data.authenticate(
-    //     CLIENT_ID,
-    //     runOnSuccess,
-    //     createError('authenticating'),
-    //     null,
-    //     onImmediateFailed);
-    runOnSuccess();
+    ee.data.authenticate(
+        CLIENT_ID,
+        runOnSuccess,
+        createError('authenticating'),
+        null,
+        onImmediateFailed);
+//    runOnSuccess();
   });
 };
 
