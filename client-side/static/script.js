@@ -98,7 +98,7 @@ function processJoinedData(joinedData, scale, povertyThreshold) {
 
 // The base Google Map, Initialized lazily to ensure doc is ready
 let map = null;
-const joinedSnap = ee.FeatureCollection('users/janak/texas-snap-join-damage');
+const joinedSnap = ee.FeatureCollection('users/janak/texas-snap-join-damage-with-buildings');
 
 // Removes the current score overlay on the map (if there is one).
 // Reprocesses scores with new povertyThreshold , overlays new score layer
