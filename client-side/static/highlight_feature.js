@@ -1,8 +1,7 @@
 export {highlightFeature as default};
 
 function highlightFeature(feature, map) {
-  const firstGeometry = feature.geometry();
-  firstGeometry.evaluate(function(geo, failure) {
+  feature.geometry().evaluate(function(geo, failure) {
     if (geo) {
       const jsonGeometry = JSON.parse(ee.Geometry(geo).toGeoJSONString());
       const feature = {'type': 'Feature', 'geometry': jsonGeometry};
