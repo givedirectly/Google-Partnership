@@ -17,6 +17,9 @@ function createMap() {
   });
   setUpPolygonDrawing(map);
 
+  // Search box code roughly taken from
+  // https://developers.google.com/maps/documentation/javascript/examples/places-searchbox.
+
   // Create the search box.
   const input = document.createElement("INPUT");
   input.setAttribute("type", "text");
@@ -54,6 +57,7 @@ function createMap() {
       // Create a marker for each place.
       markers.push(new google.maps.Marker({
         map: map,
+        // Take the default params and add in the place-specific icon.
         icon: Object.assign({url: place.icon}, placeIconParams),
         title: place.name,
         position: place.geometry.location
