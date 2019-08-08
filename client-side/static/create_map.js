@@ -11,6 +11,7 @@ const placeIconParams = {
 
 function createMap() {
   // Create the base Google Map. Takes ~7 ms to execute this step..
+  // TODO: this is centered for Harvey right now - generalize.
   const map = new google.maps.Map($('.map').get(0), {
     center: { lat: 29.76, lng: -95.36},
     zoom: 8
@@ -21,6 +22,8 @@ function createMap() {
   // https://developers.google.com/maps/documentation/javascript/examples/places-searchbox.
 
   // Create the search box.
+  // Normally we would just steal this element from the html, but the map does
+  // weird grabby things with it, which don't seem worth working around.
   const input = document.createElement("INPUT");
   input.setAttribute("type", "text");
   input.setAttribute("placeholder", "Search");
