@@ -1,13 +1,13 @@
 import drawTable from './draw_table.js';
 import setUpPolygonDrawing from './polygon_draw.js';
 
-export {geoidTag, priorityTag, snapTag};
+export {geoidTag, priorityTag, snapTag, zero};
 export {run as default};
 
 // Adds an EarthEngine layer (from EEObject.getMap()) to the given Google Map
 // and returns the "overlay" that was added, in case the caller wants to add
 // callbacks or similar to that overlay.
-function addLayerFromId(map, layerId) {
+function addLayerFromId(map, layerId, layerName) {
   const overlay =
       new ee.MapLayerOverlay(
           'https://earthengine.googleapis.com/map',
@@ -15,21 +15,34 @@ function addLayerFromId(map, layerId) {
           layerId.token,
           {});
   // Show the EE map on the Google Map.
-  map.overlayMapTypes.push(overlay);
+  const numLayers = map.overlayMapTypes.push(overlay);
+  layerIndexMap.set(layerName, numLayers-1);
+  console.log(layerIndexMap);
   return overlay;
 }
 
 // Asynchronous wrapper for addLayerFromId that calls getMap() with a callback
 // to avoid blocking on the result.
-function addLayer(map, layer) {
+function addLayer(map, layer, layerName) {
   layer.getMap({
         callback: function(layerId, failure) {
             if (layerId) {
-              addLayerFromId(map, layerId);
+              addLayerFromId(map, layerId, layerName);
+              console.log(layerId);
             } else {
               createError('getting id')(failure);
             }
     }});
+}
+
+function removeLayer(map, layerName) {
+  const index = layerIndexMap.get(layerName);
+  if (typeof index !== 'undefined') {
+    console.log("removing layer " + layerName + " at index " + index);
+    map.overlayMapTypes.removeAt(index);
+  } else {
+    console.log("layer removal failed - no layer by name " + layerName + " stored in layer index map");
+  }
 }
 
 const damageLevels = ee.List(['NOD', 'UNK', 'AFF', 'MIN', 'MAJ', 'DES']);
@@ -43,6 +56,12 @@ const scalingFactor = 4;
 const geoidTag = 'GEOID';
 const priorityTag = 'PRIORITY';
 const snapTag = 'SNAP PERCENTAGE';
+
+// we keep a map of layer name to array position in overlayMapTypes for easy removal
+const priorityLayerId = 'priority';
+const femaDamageLayerId = 'fema';
+
+const layerIndexMap = new Map();
 
 // Processes a feature corresponding to a geographic area and returns a new one,
 // with just the GEOID and PRIORITY properties set, and a style attribute that
@@ -69,7 +88,6 @@ function colorAndRate(feature, scalingFactor, povertyThreshold) {
         .reduce(ee.Reducer.sum())))).divide(scalingFactor).round();
     return ee.Feature(
         feature.geometry(),
-        // Keep key order same as @const headings in ./draw_table.js
         ee.Dictionary(
           [geoidTag, feature.get(geoidTag),
           priorityTag, priority,
@@ -87,32 +105,39 @@ function processJoinedData(joinedData, scale, povertyThreshold) {
       });
 }
 
-// Basic main function that initializes EarthEngine library and adds an image
-// layer to the Google Map.
-function run(povertyThreshold) {
-  // Create the base Google Map (we could also keep this around as a global 
-  // variable - not sure which is better)
-  const map = new google.maps.Map($('.map').get(0), {
-        center: { lat: 29.76, lng: -95.36},
-        zoom: 8
-      });
-  damageScales = ee.Dictionary.fromLists(damageLevels, [0, 0, 1, 1, 2, 3]);
-  setUpPolygonDrawing(map);
-  const damage =
-      ee.FeatureCollection(
-          'users/janak/FEMA_Damage_Assessments_Harvey_20170829');
+// The base Google Map
+// TODO: this is centered for Harvey right now - generalize.
+const map = new google.maps.Map($('.map').get(0), {
+  center: { lat: 29.76, lng: -95.36},
+  zoom: 8
+});
+const joinedSnap = ee.FeatureCollection('users/janak/texas-snap-join-damage');
 
-  const joinedSnap = ee.FeatureCollection('users/janak/texas-snap-join-damage');
-  addLayer(map, damage);
+function update(povertyThreshold) {
+  removeLayer(map, priorityLayerId)
+
   const processedData =
       processJoinedData(
           joinedSnap, scalingFactor, povertyThreshold);
   addLayer(
       map,
       processedData.style({styleProperty: "style"}),
-          {},
-          'Damage data for high poverty');
+      priorityLayerId);
+          // {},
+          // 'Damage data for high poverty');
   google.charts.setOnLoadCallback(function(){drawTable(processedData, povertyThreshold)});
+}
+
+// Main function that processes the data (FEMA damage, SNAP) and creates/populates
+// the map and table with a new poverty threshold.
+function run(povertyThreshold) {
+  setUpPolygonDrawing(map);
+  damageScales = ee.Dictionary.fromLists(damageLevels, [0, 0, 1, 1, 2, 3]);
+  const damage =
+      ee.FeatureCollection(
+          'users/janak/FEMA_Damage_Assessments_Harvey_20170829');
+  addLayer(map, damage, femaDamageLayerId);
+  update(povertyThreshold);
 }
 
 // Runs immediately (before document may have fully loaded). Adds a hook so that
@@ -122,10 +147,10 @@ function run(povertyThreshold) {
 function setup() {
   // The client ID from the Google Developers Console.
   // TODO(#13): This is from janakr's console. Should use one for GiveDirectly.
-  // const CLIENT_ID = '634162034024-oodhl7ngkg63hd9ha9ho9b3okcb0bp8s.apps.googleusercontent.com';
+  const CLIENT_ID = '634162034024-oodhl7ngkg63hd9ha9ho9b3okcb0bp8s.apps.googleusercontent.com';
   // TODO(#13): This is from juliexxia's console. Should use one for
   // GiveDirectly. Also, this client id has not been properly configured yet.
-  const CLIENT_ID = '628350592927-tmcoolr3fv4mdbodurhainqobc6d6ibd.apps.googleusercontent.com';
+  // const CLIENT_ID = '628350592927-tmcoolr3fv4mdbodurhainqobc6d6ibd.apps.googleusercontent.com';
   
   google.charts.load('current', {packages: ['table', 'controls']});   
 

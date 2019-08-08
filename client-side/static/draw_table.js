@@ -1,4 +1,4 @@
-import {geoidTag, priorityTag, snapTag} from './script.js';
+import {geoidTag, priorityTag, snapTag, zero} from './script.js';
 
 export {drawTable as default};
 
@@ -6,11 +6,11 @@ export {drawTable as default};
  * Draw a ranked table of the given features that have a SNAP ratio over the
  * given threshold.
  */
-function drawTable(features, povertyThreshold) {
-  const sortedAboveThreshold =
-      features.filter(ee.Filter.gte(snapTag, povertyThreshold))
-          .sort(priorityTag, false);
-  const headings = [geoidTag, priorityTag, snapTag] const asListWithHeadings =
+function drawTable(features) {
+  const sortedNonZeroPriority = features.filter(ee.Filter.gt(priorityTag, zero))
+      .sort(priorityTag, false);
+  const headings = [geoidTag, priorityTag, snapTag];
+  const asListWithHeadings =
       ee.List(sortedAboveThreshold.iterate(function(feature, list) {
         // Keep key order same as @const headings
         return ee.List(list).add([
@@ -35,7 +35,6 @@ function drawTable(features, povertyThreshold) {
         }
       });
       table.draw();
-      // console.timeEnd('update');
     }
   });
 }
