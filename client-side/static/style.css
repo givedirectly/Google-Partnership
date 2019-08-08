@@ -2,9 +2,11 @@ body {
   /* Use the Roboto font that is loaded in the <head> */
   font-family: 'Roboto', sans-serif;
 }
+
 .hidden {
   display: none;
 }
+
 .g-sign-in .button {
   display: inline-block;
   background: #4285f4;
@@ -13,12 +15,15 @@ body {
   border-radius: 5px;
   white-space: nowrap;
 }
+
 .g-sign-in .button:hover {
   cursor: pointer;
 }
+
 .g-sign-in .label {
   font-weight: bold;
 }
+
 .g-sign-in .icon {
   background: url('/g-icon.png') transparent 5px 50% no-repeat;
   display: inline-block;
@@ -27,6 +32,7 @@ body {
   height: 42px;
   border-right: #2265d4 1px solid;
 }
+
 .g-sign-in .button-text {
   display: inline-block;
   vertical-align: middle;
@@ -35,6 +41,7 @@ body {
   font-size: 14px;
   font-weight: bold;
 }
+
 .map {
   width: 640px;
   height: 480px;

@@ -5,12 +5,13 @@ export {drawTable as default};
 /*
  * Draw a ranked table of the given features that have a SNAP ratio over the
  * given threshold.
- */ 
-// TODO(juliexxia): see if we can do earth engine calls needed in this method without waiting
-// on google.charts to load + consider if this happens synchronously after the first time.
+ */
+// TODO(juliexxia): see if we can do earth engine calls needed in this method
+// without waiting on google.charts to load + consider if this happens
+// synchronously after the first time.
 function drawTable(features) {
-  const sortedNonZeroPriority = features.filter(ee.Filter.gt(priorityTag, zero))
-      .sort(priorityTag, false);
+  const sortedNonZeroPriority =
+      features.filter(ee.Filter.gt(priorityTag, zero)).sort(priorityTag, false);
   const headings = [geoidTag, priorityTag, snapTag];
   const asListWithHeadings =
       ee.List(sortedNonZeroPriority.iterate(function(feature, list) {

@@ -12,10 +12,8 @@ const placeIconParams = {
 function createMap() {
   // Create the base Google Map. Takes ~7 ms to execute this step..
   // TODO: this is centered for Harvey right now - generalize.
-  const map = new google.maps.Map($('.map').get(0), {
-    center: { lat: 29.76, lng: -95.36},
-    zoom: 8
-  });
+  const map = new google.maps.Map(
+      $('.map').get(0), {center: {lat: 29.76, lng: -95.36}, zoom: 8});
   setUpPolygonDrawing(map);
 
   // Search box code roughly taken from
@@ -24,9 +22,9 @@ function createMap() {
   // Create the search box.
   // Normally we would just steal this element from the html, but the map does
   // weird grabby things with it, which don't seem worth working around.
-  const input = document.createElement("INPUT");
-  input.setAttribute("type", "text");
-  input.setAttribute("placeholder", "Search");
+  const input = document.createElement('INPUT');
+  input.setAttribute('type', 'text');
+  input.setAttribute('placeholder', 'Search');
   const searchBox = new google.maps.places.SearchBox(input);
   map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
 
@@ -53,7 +51,7 @@ function createMap() {
     const bounds = new google.maps.LatLngBounds();
     places.forEach(function(place) {
       if (!place.geometry) {
-        console.log("Returned place contains no geometry");
+        console.log('Returned place contains no geometry');
         return;
       }
 
