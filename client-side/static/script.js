@@ -27,7 +27,6 @@ function addLayer(map, layer, layerName) {
         callback: function(layerId, failure) {
             if (layerId) {
               addLayerFromId(map, layerId, layerName);
-              console.log(layerId);
             } else {
               createError('getting id')(failure);
             }
@@ -37,10 +36,7 @@ function addLayer(map, layer, layerName) {
 function removeLayer(map, layerName) {
   const index = layerIndexMap.get(layerName);
   if (typeof index !== 'undefined') {
-    console.log("removing layer " + layerName + " at index " + index);
     map.overlayMapTypes.removeAt(index);
-  } else {
-    console.log("layer removal failed - no layer by name " + layerName + " stored in layer index map");
   }
 }
 
@@ -103,12 +99,9 @@ function processJoinedData(joinedData, scale, povertyThreshold) {
       });
 }
 
-// The base Google Map
+// The base Google Map, Initialized lazily,
 // TODO: this is centered for Harvey right now - generalize.
-const map = new google.maps.Map($('.map').get(0), {
-  center: { lat: 29.76, lng: -95.36},
-  zoom: 8
-});
+let map = null
 const joinedSnap = ee.FeatureCollection('users/janak/texas-snap-join-damage');
 
 // Removes the current score overlay on the map (if there is one).
@@ -124,12 +117,18 @@ function updatePovertyThreshold(povertyThreshold) {
       map,
       processedData.style({styleProperty: "style"}),
       priorityLayerId);
+  // TODO: see if we can do earth engine calls needed in this method without waiting
+  // on google.charts to load + consider if this happens synchronously after the first time.
   google.charts.setOnLoadCallback(function(){drawTable(processedData, povertyThreshold)});
 }
 
 // Main function that processes the data (FEMA damage, SNAP) and creates/populates
 // the map and table with a new poverty threshold.
 function run(povertyThreshold) {
+  map = new google.maps.Map($('.map').get(0), {
+    center: { lat: 29.76, lng: -95.36},
+    zoom: 8
+  });
   setUpPolygonDrawing(map);
   damageScales = ee.Dictionary.fromLists(damageLevels, [0, 0, 1, 1, 2, 3]);
   const damage =
