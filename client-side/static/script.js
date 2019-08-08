@@ -1,5 +1,4 @@
 import drawTable from './draw_table.js';
-import setUpPolygonDrawing from './polygon_draw.js';
 import createMap from './create_map.js';
 
 export {geoidTag, priorityTag, snapTag, zero};
@@ -124,12 +123,6 @@ function updatePovertyThreshold(povertyThreshold) {
 // Main function that processes the data (FEMA damage, SNAP) and creates/populates
 // the map and table with a new poverty threshold.
 function run(povertyThreshold) {
-  // TODO: this is centered for Harvey right now - generalize.
-  map = new google.maps.Map($('.map').get(0), {
-    center: { lat: 29.76, lng: -95.36},
-    zoom: 8
-  });
-  setUpPolygonDrawing(map);
   damageScales = ee.Dictionary.fromLists(damageLevels, [0, 0, 1, 1, 2, 3]);
   const damage =
       ee.FeatureCollection(

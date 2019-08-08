@@ -1,3 +1,5 @@
+import setUpPolygonDrawing from './polygon_draw.js';
+
 export {createMap as default};
 
 const placeIconParams = {
@@ -13,12 +15,14 @@ function createMap() {
     center: { lat: 29.76, lng: -95.36},
     zoom: 8
   });
+  setUpPolygonDrawing(map);
 
-  // Create the search box and link it to the UI element.
-  const input = $('.map-input');
-  var searchBox = new google.maps.places.SearchBox(input);
+  // Create the search box.
+  const input = document.createElement("INPUT");
+  input.setAttribute("type", "text");
+  input.setAttribute("placeholder", "Search");
+  const searchBox = new google.maps.places.SearchBox(input);
   map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
-  input.removeClass('hidden');
 
   // Bias the SearchBox results towards current map's viewport.
   map.addListener('bounds_changed', function() {
