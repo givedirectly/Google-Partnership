@@ -11,7 +11,7 @@ function drawTable(features) {
       .sort(priorityTag, false);
   const headings = [geoidTag, priorityTag, snapTag];
   const asListWithHeadings =
-      ee.List(sortedAboveThreshold.iterate(function(feature, list) {
+      ee.List(sortedNonZeroPriority.iterate(function(feature, list) {
         // Keep key order same as @const headings
         return ee.List(list).add([
           feature.get(geoidTag), feature.get(priorityTag), feature.get(snapTag)

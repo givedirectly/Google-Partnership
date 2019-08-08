@@ -2,7 +2,7 @@ import drawTable from './draw_table.js';
 import setUpPolygonDrawing from './polygon_draw.js';
 
 export {geoidTag, priorityTag, snapTag, zero};
-export {run as default};
+export {updatePovertyThreshold as default};
 
 // Adds an EarthEngine layer (from EEObject.getMap()) to the given Google Map
 // and returns the "overlay" that was added, in case the caller wants to add
@@ -17,7 +17,6 @@ function addLayerFromId(map, layerId, layerName) {
   // Show the EE map on the Google Map.
   const numLayers = map.overlayMapTypes.push(overlay);
   layerIndexMap.set(layerName, numLayers-1);
-  console.log(layerIndexMap);
   return overlay;
 }
 
@@ -57,11 +56,10 @@ const geoidTag = 'GEOID';
 const priorityTag = 'PRIORITY';
 const snapTag = 'SNAP PERCENTAGE';
 
-// we keep a map of layer name to array position in overlayMapTypes for easy removal
+// Keep a map of layer name to array position in overlayMapTypes for easy removal
+const layerIndexMap = new Map();
 const priorityLayerId = 'priority';
 const femaDamageLayerId = 'fema';
-
-const layerIndexMap = new Map();
 
 // Processes a feature corresponding to a geographic area and returns a new one,
 // with just the GEOID and PRIORITY properties set, and a style attribute that
@@ -113,7 +111,10 @@ const map = new google.maps.Map($('.map').get(0), {
 });
 const joinedSnap = ee.FeatureCollection('users/janak/texas-snap-join-damage');
 
-function update(povertyThreshold) {
+// Removes the current score overlay on the map (if there is one).
+// Reprocesses scores with new povertyThreshold , overlays new score layer
+// and redraws table .
+function updatePovertyThreshold(povertyThreshold) {
   removeLayer(map, priorityLayerId)
 
   const processedData =
@@ -123,8 +124,6 @@ function update(povertyThreshold) {
       map,
       processedData.style({styleProperty: "style"}),
       priorityLayerId);
-          // {},
-          // 'Damage data for high poverty');
   google.charts.setOnLoadCallback(function(){drawTable(processedData, povertyThreshold)});
 }
 
@@ -137,7 +136,7 @@ function run(povertyThreshold) {
       ee.FeatureCollection(
           'users/janak/FEMA_Damage_Assessments_Harvey_20170829');
   addLayer(map, damage, femaDamageLayerId);
-  update(povertyThreshold);
+  updatePovertyThreshold(povertyThreshold);
 }
 
 // Runs immediately (before document may have fully loaded). Adds a hook so that
