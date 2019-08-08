@@ -1,5 +1,5 @@
 import drawTable from './draw_table.js';
-import setUpPolygonDrawing from './polygon_draw.js';
+import createMap from './create_map.js';
 
 export {geoidTag, priorityTag, snapTag, zero};
 export {updatePovertyThreshold as default};
@@ -104,16 +104,11 @@ function processJoinedData(joinedData, scale, povertyThreshold) {
 let map = null;
 const joinedSnap = ee.FeatureCollection('users/janak/texas-snap-join-damage');
 
-<<<<<<< HEAD
 // Removes the current score overlay on the map (if there is one).
 // Reprocesses scores with new povertyThreshold , overlays new score layer
 // and redraws table .
 function updatePovertyThreshold(povertyThreshold) {
   removeLayer(map, priorityLayerId)
-=======
-  const joinedSnap =
-      ee.FeatureCollection('users/janak/texas-snap-join-damage-with-buildings');
->>>>>>> master
 
   const processedData =
       processJoinedData(
@@ -128,12 +123,6 @@ function updatePovertyThreshold(povertyThreshold) {
 // Main function that processes the data (FEMA damage, SNAP) and creates/populates
 // the map and table with a new poverty threshold.
 function run(povertyThreshold) {
-  // TODO: this is centered for Harvey right now - generalize.
-  map = new google.maps.Map($('.map').get(0), {
-    center: { lat: 29.76, lng: -95.36},
-    zoom: 8
-  });
-  setUpPolygonDrawing(map);
   damageScales = ee.Dictionary.fromLists(damageLevels, [0, 0, 1, 1, 2, 3]);
   const damage =
       ee.FeatureCollection(
@@ -158,6 +147,8 @@ function setup() {
 
   $(document).ready(function() {
     const defaultPovertyThreshold = 0.3;
+    map = createMap();
+
     const runOnSuccess = function() {
       ee.initialize(
           /*opt_baseurl=*/null,
