@@ -3,9 +3,8 @@ export {setUpPolygonDrawing as default};
 const drawingOptions = {
   fillColor: '#ff0000',
   strokeColor: '#ff0000',
-  // TODO(janakr): is there a way to make this editable on
-  // clicking a button, so it's not that visually busy by
-  // default?
+  // TODO(janakr): is there a way to make this editable on clicking a button, so
+  //  it's not that visually busy by default?
   editable: true
 };
 

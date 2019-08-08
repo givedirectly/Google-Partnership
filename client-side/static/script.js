@@ -109,9 +109,8 @@ function updatePovertyThreshold(povertyThreshold) {
   const processedData =
       processJoinedData(joinedSnap, scalingFactor, povertyThreshold);
   addLayer(map, processedData.style({styleProperty: 'style'}), priorityLayerId);
-  google.charts.setOnLoadCallback(function() {
-    drawTable(processedData, povertyThreshold)
-  });
+  google.charts.setOnLoadCallback(
+      () => drawTable(processedData, povertyThreshold));
 }
 
 // Main function that processes the data (FEMA damage, SNAP) and
@@ -146,10 +145,8 @@ function setup() {
 
     const runOnSuccess = function() {
       ee.initialize(
-          /*opt_baseurl=*/ null,
-          /*opt_tileurl=*/ null, function() {
-            run(defaultPovertyThreshold)
-          }, createError('initializing EE'));
+          /*opt_baseurl=*/ null, /*opt_tileurl=*/ null,
+          () => run(defaultPovertyThreshold), createError('initializing EE'));
     };
 
     // Shows a button prompting the user to log in.
