@@ -25,21 +25,25 @@ const damageKey = 'DMG_LEVEL';
 // TODO(janakr): move this list into a common module.
 const damageLevels = ee.List(['NOD', 'UNK', 'AFF', 'MIN', 'MAJ', 'DES']);
 
-const damageFilters = damageLevels.map(function(type) {
-  return ee.Filter.eq(damageKey, type)
-});
+const damageFilters = damageLevels.map((type) => ee.Filter.eq(damageKey, type));
 
 const zero = ee.Number(0);
 
+/**
+ * Counts the number of damaged buildings within the boundaries of the given
+ * feature, categorized by type of damage.
+ *
+ * @param {ee.Feature} feature
+ * @return {ee.Feature}
+ */
 function countDamage(feature) {
   const mainFeature = ee.Feature(feature.get('primary'));
   // TODO(janakr): #geometry() is deprecated?
   const geometry = mainFeature.geometry();
   const blockDamage = damage.filterBounds(geometry);
-  const attrDict =
-      ee.Dictionary.fromLists(damageLevels, damageFilters.map(function(type) {
-        return blockDamage.filter(type).size()
-      }));
+  const attrDict = ee.Dictionary.fromLists(
+      damageLevels,
+      damageFilters.map((type) => blockDamage.filter(type).size()));
   return ee.Feature(
       geometry,
       attrDict.set('GEOID', mainFeature.get('GEOID'))
@@ -50,6 +54,13 @@ function countDamage(feature) {
               ee.Feature(feature.get('secondary')).get('BUILDING_COUNT')));
 }
 
+/**
+ * Count the total number of buildings in the given feature, which comes from a
+ * Census table that partitions buildings by types.
+ *
+ * @param {ee.Feature} feature
+ * @return {ee.Feature}
+ */
 function countBuildings(feature) {
   let totalBuildings = zero;
   // Columns in Census data. HD01_VD{i} is the number of buildings in category
@@ -62,15 +73,24 @@ function countBuildings(feature) {
   return ee.Feature(feature.geometry(), ee.Dictionary([
     // TODO(#22): when we're processing data from scratch, this won't be a
     // string on the other side, so we can leave it as is here.
-    'GEOID', ee.String(feature.get('GEOid2')), 'BUILDING_COUNT', totalBuildings
+    'GEOID',
+    ee.String(feature.get('GEOid2')),
+    'BUILDING_COUNT',
+    totalBuildings,
   ]));
 }
 
-// Only valid for 0 <= 0 < 100.
+/**
+ * Pads a 1- or 2-digit number to 2 digits. Only valid for 0 <= 0 < 100.
+ *
+ * @param {number} i
+ * @return {string}
+ */
 function padToTwoDigits(i) {
   return i < 10 ? '0' + i : i;
 }
 
+/** Performs operation of processing inputs and creating output asset. */
 function run() {
   ee.initialize();
   const processedBuildings = buildings.map(countBuildings);
@@ -92,13 +112,15 @@ function run() {
   });
 }
 
-// Runs immediately (before document may have fully loaded). Adds a hook so that
-// when the document is loaded, we do the work.
+/**
+ * Runs immediately (before document may have fully loaded). Adds a hook so that
+ * when the document is loaded, we do the work.
+ */
 function setup() {
   // The client ID from the Google Developers Console.
   // TODO(#13): This is from janakr's console. Should use one for GiveDirectly.
-  const CLIENT_ID =
-      '634162034024-oodhl7ngkg63hd9ha9ho9b3okcb0bp8s.apps.googleusercontent.com';
+  const CLIENT_ID = '634162034024-oodhl7ngkg63hd9ha9ho9b3okcb0bp8s' +
+      '.apps.googleusercontent.com';
 
   $(document).ready(function() {
     // Shows a button prompting the user to log in.
@@ -117,6 +139,6 @@ function setup() {
     // Attempt to authenticate using existing credentials.
     ee.data.authenticate(CLIENT_ID, run, null, null, onImmediateFailed);
   });
-};
+}
 
 setup();

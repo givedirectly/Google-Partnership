@@ -2,9 +2,11 @@ import {geoidTag, priorityTag, snapTag, zero} from './script.js';
 
 export {drawTable as default};
 
-/*
+/**
  * Draw a ranked table of the given features that have a SNAP ratio over the
  * given threshold.
+ *
+ * @param {FeatureCollection} features
  */
 function drawTable(features) {
   const sortedNonZeroPriority =
@@ -12,7 +14,7 @@ function drawTable(features) {
   const headings = [geoidTag, priorityTag, snapTag];
   const asListWithHeadings =
       ee.List(sortedNonZeroPriority.iterate(function(feature, list) {
-        return ee.List(list).add(headings.map(col => feature.get(col)));
+        return ee.List(list).add(headings.map((col) => feature.get(col)));
       }, [headings]));
   // TODO(#37): These callbacks could be executed out of order, and the table
   //  might not reflect the user's latest request.
@@ -29,6 +31,11 @@ function drawTable(features) {
   });
 }
 
+/**
+ * Renders the actual table on the page.
+ *
+ * @param {Array} evaluatedTable
+ */
 function renderTable(evaluatedTable) {
   const data = google.visualization.arrayToDataTable(evaluatedTable, false);
   // Instantiate and draw the chart.
@@ -39,7 +46,7 @@ function renderTable(evaluatedTable) {
     'options': {
       'page': 'enable',
       'pageSize': 25,
-    }
+    },
   });
   table.draw();
 }
