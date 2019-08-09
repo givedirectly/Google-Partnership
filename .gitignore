@@ -2,5 +2,6 @@ client-side/node_modules
 client-side/yarn.lock
 client-side/npm-debug.log
 client-side/cypress/plugins
+client-side/cypress/screenshots
 client-side/cypress/support
 client-side/cypress/videos
