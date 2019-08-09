@@ -109,7 +109,7 @@ function updatePovertyThreshold(povertyThreshold) {
   const processedData =
       processJoinedData(joinedSnap, scalingFactor, povertyThreshold);
   addLayer(map, processedData.style({styleProperty: 'style'}), priorityLayerId);
-  drawTable(processedData, povertyThreshold);
+  drawTable(processedData);
 }
 
 // Main function that processes the data (FEMA damage, SNAP) and
