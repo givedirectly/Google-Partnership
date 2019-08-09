@@ -25,6 +25,7 @@ function addNewLayerFromId(map, layerId, assetName) {
   label.innerHTML = assetName;
   document.body.appendChild(label);
 
+  // Show the EE map on the Google Map.
   const numLayers = map.overlayMapTypes.push(overlay);
   layerIndexMap.set(assetName, new LayerMapValue(overlay, numLayers - 1));
   return overlay;
@@ -44,7 +45,7 @@ function addNewLayer(map, layer, assetName) {
   });
 }
 
-function remove(map, layerName) {
+function removeLayer(map, layerName) {
   const layerMapValue = layerIndexMap.get(layerName);
   if (typeof layerMapValue !== 'undefined') {
     if (layerMapValue.index !== -1) {
@@ -66,7 +67,7 @@ const geoidTag = 'GEOID';
 const priorityTag = 'PRIORITY';
 const snapTag = 'SNAP PERCENTAGE';
 
-// Keep a map of asset -> overlay and current index in overlayMapTypes.
+// Keep a map of asset name -> overlay and current index in overlayMapTypes.
 // Currently assume we're only working with one map.
 const layerIndexMap = new Map();
 const priorityLayerId = 'priority';
@@ -126,7 +127,7 @@ const joinedSnap = ee.FeatureCollection('users/janak/texas-snap-join-damage-with
 // Reprocesses scores with new povertyThreshold , overlays new score layer
 // and redraws table .
 function updatePovertyThreshold(povertyThreshold) {
-  remove(map, priorityLayerId)
+  removeLayer(map, priorityLayerId)
   const processedData =
       processJoinedData(joinedSnap, scalingFactor, povertyThreshold);
   addNewLayer(map, processedData.style({styleProperty: 'style'}), priorityLayerId);
