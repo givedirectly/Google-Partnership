@@ -1,7 +1,7 @@
-client-side/static/node_modules
-client-side/static/yarn.lock
-client-side/static/npm-debug.log
-client-side/static/cypress/plugins
-client-side/static/cypress/support
-client-side/static/cypress/videos
+client-side/node_modules
+client-side/yarn.lock
+client-side/npm-debug.log
+client-side/cypress/plugins
+client-side/cypress/support
+client-side/cypress/videos
 
