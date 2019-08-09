@@ -83,11 +83,10 @@ const femaDamageLayerId = 'fema';
  *
  * @param {ee.Feature} feature
  * @param {ee.Number} scalingFactor multiplies the raw priority, it can be
- *     adjusted to make sure
- * that the values span the desired range of ~0 to ~100.
+ *     adjusted to make sure that the values span the desired range of ~0 to
+ * ~100.
  * @param {number} povertyThreshold  used to filter out areas that are not poor
- *     enough (as
- * determined by the areas SNAP and TOTAL properties).
+ *     enough (as determined by the areas SNAP and TOTAL properties).
  *
  * @return {ee.Feature}
  */
@@ -227,7 +226,7 @@ function setup() {
  * @return {Function}
  */
 function createError(message) {
-// TODO(janakr): use some standard error library?
+  // TODO(janakr): use some standard error library?
   return (error) => console.error('Error ' + message + ': ' + error);
 }
 
