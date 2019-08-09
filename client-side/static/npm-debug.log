@@ -1,0 +1,261 @@
+0 info it worked if it ends with ok
+1 verbose cli [ '/usr/bin/node', '/usr/bin/npm', 'install', 'cypress' ]
+2 info using npm@1.4.21
+3 info using node@v10.15.2
+4 warn package.json givedirectly@0.0.0 No description
+5 warn package.json givedirectly@0.0.0 No repository field.
+6 warn package.json givedirectly@0.0.0 No README data
+7 verbose readDependencies using package.json deps
+8 verbose cache add [ 'cypress', null ]
+9 verbose cache add name=undefined spec="cypress" args=["cypress",null]
+10 verbose parsed url Url {
+10 verbose parsed url   protocol: null,
+10 verbose parsed url   slashes: null,
+10 verbose parsed url   auth: null,
+10 verbose parsed url   host: null,
+10 verbose parsed url   port: null,
+10 verbose parsed url   hostname: null,
+10 verbose parsed url   hash: null,
+10 verbose parsed url   search: null,
+10 verbose parsed url   query: null,
+10 verbose parsed url   pathname: 'cypress',
+10 verbose parsed url   path: 'cypress',
+10 verbose parsed url   href: 'cypress' }
+11 silly lockFile b5e13a91-cypress cypress
+12 verbose lock cypress /usr/local/google/home/janakr/.npm/b5e13a91-cypress.lock
+13 silly lockFile b5e13a91-cypress cypress
+14 silly lockFile b5e13a91-cypress cypress
+15 verbose addNamed [ 'cypress', '' ]
+16 verbose addNamed [ null, '*' ]
+17 silly lockFile 1e6b0af1-cypress cypress@
+18 verbose lock cypress@ /usr/local/google/home/janakr/.npm/1e6b0af1-cypress.lock
+19 silly addNameRange { name: 'cypress', range: '*', hasData: false }
+20 verbose request where is /cypress
+21 verbose request registry https://registry.npmjs.org/
+22 verbose request id 8591d264b8da3c70
+23 verbose url raw /cypress
+24 verbose url resolving [ 'https://registry.npmjs.org/', './cypress' ]
+25 verbose url resolved https://registry.npmjs.org/cypress
+26 verbose request where is https://registry.npmjs.org/cypress
+27 info trying registry request attempt 1 at 2:20:55 PM
+28 verbose etag W/"b5846717d1523d7a538eee654b566d4e"
+29 http GET https://registry.npmjs.org/cypress
+30 http 304 https://registry.npmjs.org/cypress
+31 silly registry.get cb [ 304,
+31 silly registry.get   { date: 'Fri, 09 Aug 2019 18:20:55 GMT',
+31 silly registry.get     connection: 'close',
+31 silly registry.get     'set-cookie':
+31 silly registry.get      [ '__cfduid=da86e62e1d7afe972f9a3e77180a428fc1565374855; expires=Sat, 08-Aug-20 18:20:55 GMT; path=/; domain=.npmjs.org; HttpOnly' ],
+31 silly registry.get     'cf-cache-status': 'HIT',
+31 silly registry.get     'cache-control': 'max-age=300',
+31 silly registry.get     'cf-ray': '503bbf2e4c50c5fc-EWR',
+31 silly registry.get     age: '4826',
+31 silly registry.get     etag: '"b5846717d1523d7a538eee654b566d4e"',
+31 silly registry.get     'expect-ct':
+31 silly registry.get      'max-age=604800, report-uri="https://report-uri.cloudflare.com/cdn-cgi/beacon/expect-ct"',
+31 silly registry.get     'last-modified': 'Mon, 29 Jul 2019 19:41:39 GMT',
+31 silly registry.get     vary: 'accept-encoding, accept',
+31 silly registry.get     'x-amz-meta-rev': '162-bef00ca1e6782885392e1d760bfa4cfa',
+31 silly registry.get     server: 'cloudflare' } ]
+32 verbose etag https://registry.npmjs.org/cypress from cache
+33 silly addNameRange number 2 { name: 'cypress', range: '*', hasData: true }
+34 silly addNameRange versions [ 'cypress',
+34 silly addNameRange   [ '0.0.1',
+34 silly addNameRange     '0.1.0',
+34 silly addNameRange     '0.2.0',
+34 silly addNameRange     '0.3.0',
+34 silly addNameRange     '0.3.1',
+34 silly addNameRange     '0.4.0',
+34 silly addNameRange     '0.5.0',
+34 silly addNameRange     '0.5.1',
+34 silly addNameRange     '0.5.2',
+34 silly addNameRange     '0.6.0',
+34 silly addNameRange     '0.7.0',
+34 silly addNameRange     '0.7.1',
+34 silly addNameRange     '0.7.2',
+34 silly addNameRange     '0.7.3',
+34 silly addNameRange     '0.7.4',
+34 silly addNameRange     '0.7.5',
+34 silly addNameRange     '0.8.0',
+34 silly addNameRange     '0.8.1',
+34 silly addNameRange     '0.8.2',
+34 silly addNameRange     '0.9.0',
+34 silly addNameRange     '0.9.1',
+34 silly addNameRange     '0.10.0',
+34 silly addNameRange     '0.10.1',
+34 silly addNameRange     '0.20.0-dev.20170620.121030',
+34 silly addNameRange     '0.20.0-dev.20170630.152549',
+34 silly addNameRange     '0.20.0-dev.20170705.151156',
+34 silly addNameRange     '0.20.0-dev.20170831.154819',
+34 silly addNameRange     '0.20.0-dev.20170901.10522',
+34 silly addNameRange     '0.20.0-dev.20170902.155600',
+34 silly addNameRange     '0.20.0-dev.20170905.13807',
+34 silly addNameRange     '0.20.0-dev.20170910.172358',
+34 silly addNameRange     '0.20.0',
+34 silly addNameRange     '0.20.1-dev.20170914.162644',
+34 silly addNameRange     '0.20.1-dev.20170916.192340',
+34 silly addNameRange     '0.20.1',
+34 silly addNameRange     '0.20.2-dev.20170919.120653',
+34 silly addNameRange     '0.20.3',
+34 silly addNameRange     '1.0.0',
+34 silly addNameRange     '1.0.1',
+34 silly addNameRange     '1.0.2',
+34 silly addNameRange     '1.0.3',
+34 silly addNameRange     '1.1.0',
+34 silly addNameRange     '1.1.1',
+34 silly addNameRange     '1.1.2',
+34 silly addNameRange     '1.1.3',
+34 silly addNameRange     '1.1.4',
+34 silly addNameRange     '1.2.0',
+34 silly addNameRange     '1.3.0',
+34 silly addNameRange     '1.4.0',
+34 silly addNameRange     '1.4.1',
+34 silly addNameRange     '1.4.2',
+34 silly addNameRange     '2.0.0',
+34 silly addNameRange     '2.0.1',
+34 silly addNameRange     '2.0.2',
+34 silly addNameRange     '2.0.3',
+34 silly addNameRange     '2.0.4',
+34 silly addNameRange     '2.1.0',
+34 silly addNameRange     '3.0.0',
+34 silly addNameRange     '3.0.1',
+34 silly addNameRange     '3.0.2',
+34 silly addNameRange     '3.0.3',
+34 silly addNameRange     '3.1.0',
+34 silly addNameRange     '3.1.1',
+34 silly addNameRange     '3.1.2',
+34 silly addNameRange     '3.1.3',
+34 silly addNameRange     '3.1.4',
+34 silly addNameRange     '3.1.5',
+34 silly addNameRange     '3.2.0',
+34 silly addNameRange     '3.3.0',
+34 silly addNameRange     '3.3.1',
+34 silly addNameRange     '3.3.2',
+34 silly addNameRange     '3.4.0',
+34 silly addNameRange     '3.4.1' ] ]
+35 verbose addNamed [ 'cypress', '3.4.1' ]
+36 verbose addNamed [ '3.4.1', '3.4.1' ]
+37 silly lockFile 24cbed0d-cypress-3-4-1 cypress@3.4.1
+38 verbose lock cypress@3.4.1 /usr/local/google/home/janakr/.npm/24cbed0d-cypress-3-4-1.lock
+39 silly lockFile 24cbed0d-cypress-3-4-1 cypress@3.4.1
+40 silly lockFile 24cbed0d-cypress-3-4-1 cypress@3.4.1
+41 silly lockFile 1e6b0af1-cypress cypress@
+42 silly lockFile 1e6b0af1-cypress cypress@
+43 silly resolved [ { name: 'cypress',
+43 silly resolved     version: '3.4.1',
+43 silly resolved     main: 'index.js',
+43 silly resolved     scripts:
+43 silly resolved      { postinstall: 'node index.js --exec install',
+43 silly resolved        size:
+43 silly resolved         't="$(npm pack .)"; wc -c "${t}"; tar tvf "${t}"; rm "${t}";' },
+43 silly resolved     dependencies:
+43 silly resolved      { '@cypress/listr-verbose-renderer': '0.4.1',
+43 silly resolved        '@cypress/xvfb': '1.2.4',
+43 silly resolved        arch: '2.1.1',
+43 silly resolved        bluebird: '3.5.0',
+43 silly resolved        cachedir: '1.3.0',
+43 silly resolved        chalk: '2.4.2',
+43 silly resolved        'check-more-types': '2.24.0',
+43 silly resolved        commander: '2.15.1',
+43 silly resolved        'common-tags': '1.8.0',
+43 silly resolved        debug: '3.2.6',
+43 silly resolved        execa: '0.10.0',
+43 silly resolved        executable: '4.1.1',
+43 silly resolved        'extract-zip': '1.6.7',
+43 silly resolved        'fs-extra': '5.0.0',
+43 silly resolved        getos: '3.1.1',
+43 silly resolved        'is-ci': '1.2.1',
+43 silly resolved        'is-installed-globally': '0.1.0',
+43 silly resolved        'lazy-ass': '1.6.0',
+43 silly resolved        listr: '0.12.0',
+43 silly resolved        lodash: '4.17.15',
+43 silly resolved        'log-symbols': '2.2.0',
+43 silly resolved        minimist: '1.2.0',
+43 silly resolved        moment: '2.24.0',
+43 silly resolved        ramda: '0.24.1',
+43 silly resolved        request: '2.88.0',
+43 silly resolved        'request-progress': '3.0.0',
+43 silly resolved        'supports-color': '5.5.0',
+43 silly resolved        tmp: '0.1.0',
+43 silly resolved        url: '0.11.0',
+43 silly resolved        yauzl: '2.10.0' },
+43 silly resolved     bin: { cypress: 'bin/cypress' },
+43 silly resolved     engines: { node: '>=4.0.0' },
+43 silly resolved     types: 'types',
+43 silly resolved     description: 'Cypress.io end to end testing tool',
+43 silly resolved     author: { name: 'Brian Mann' },
+43 silly resolved     homepage: 'https://github.com/cypress-io/cypress',
+43 silly resolved     license: 'MIT',
+43 silly resolved     bugs: { url: 'https://github.com/cypress-io/cypress/issues' },
+43 silly resolved     repository:
+43 silly resolved      { type: 'git',
+43 silly resolved        url: 'git+https://github.com/cypress-io/cypress.git' },
+43 silly resolved     keywords:
+43 silly resolved      [ 'automation',
+43 silly resolved        'browser',
+43 silly resolved        'cypress',
+43 silly resolved        'cypress.io',
+43 silly resolved        'e2e',
+43 silly resolved        'end-to-end',
+43 silly resolved        'integration',
+43 silly resolved        'mocks',
+43 silly resolved        'runner',
+43 silly resolved        'spies',
+43 silly resolved        'stubs',
+43 silly resolved        'test',
+43 silly resolved        'testing' ],
+43 silly resolved     _resolved: 'https://registry.npmjs.org/cypress/-/cypress-3.4.1.tgz',
+43 silly resolved     _integrity: '',
+43 silly resolved     _from: 'cypress@',
+43 silly resolved     readme:
+43 silly resolved      '# Cypress\n\n## What is this?\n\nCypress comes packaged as an `npm` module, which is all you need to get started.\n\nAfter installing you\'ll be able to:\n\n- Open Cypress from the CLI\n- Run Cypress from the CLI\n- `require` Cypress as a module\n\n## Install\n\nRequires Node version >= 4.0.0\n\n```sh\nnpm install --save-dev cypress\n```\n\n## Documentation\n\nPlease [visit our documentation](https://on.cypress.io/cli) for a full list of commands and examples.\n',
+43 silly resolved     readmeFilename: 'README.md',
+43 silly resolved     _id: 'cypress@3.4.1',
+43 silly resolved     _nodeVersion: '8.9.3',
+43 silly resolved     _npmVersion: '6.9.0',
+43 silly resolved     _npmUser: { name: 'brian-mann', email: 'brian.mann86@gmail.com' },
+43 silly resolved     dist:
+43 silly resolved      { integrity:
+43 silly resolved         'sha512-1HBS7t9XXzkt6QHbwfirWYty8vzxNMawGj1yI+Fu6C3/VZJ8UtUngMW6layqwYZzLTZV8tiDpdCNBypn78V4Dg==',
+43 silly resolved        shasum: 'ca2e4e9864679da686c6a6189603efd409664c30',
+43 silly resolved        tarball: 'https://registry.npmjs.org/cypress/-/cypress-3.4.1.tgz',
+43 silly resolved        fileCount: 766,
+43 silly resolved        unpackedSize: 2185731,
+43 silly resolved        'npm-signature':
+43 silly resolved         '-----BEGIN PGP SIGNATURE-----\r\nVersion: OpenPGP.js v3.0.4\r\nComment: https://openpgpjs.org\r\n\r\nwsFcBAEBCAAQBQJdP0X9CRA9TVsSAnZWagAAr+8P/j+P4SHX+f70DJk0YvyX\nsEboCFWI/tGFEortoEqq6AbSmV+buoM6W+o9d6HTUpf7aKr1rKc4E8y2ZAkB\n7Rpxg0t1UXGlnDx7ah56y43KaxqjumiS3Xyt/vdMp1t1ENW4WIn1wyPlxaH/\nxVNGHylVT4spwjN/jGkbjVHx16ER/rWvxOC/qV7YclFdOcBoPZ6h7WDPVJ3D\nXTfC+kUT/VOJ89MaExRzkEtzXDdy6YN90rnfwHiRlNIJLuJZopo8XJAKGyPu\nZEZ/cmGJXFCoJzSzWD1ljyiLKdLZ+PcS4X9UMglojWq1ThnbbakrfIjv8nCM\nMj9afpOTwOohSkTT1ivhbNiIwCUOpS+wmkRPPgjU79KVQ0HvUZDgnqZb3Prk\nYpBJ+rgoLfh50OSQFJ8Ozzxl2XQX/9UNZyL2oFD03COdRMjl9xO0nQQgMiWA\n28Hyw6GqrOJyU6lcactX0GawGx1PaIX9MrP/oVNQS8DPDbpktHUplCXK85Ch\nE4CeYGBKnpuN8rMN6V0aaQHGtWh68r4y74Pb564u6cWlog/7CgC1vjr7+gJD\nwf9/iq8goKFPXJeCJGcYuIknn73pJhbUHpnbJDtCeBXoY6B9VXCqknayEOeV\nYb/+WDt7bbOi1Nj2N+GYQuEt5SWDVsTLTHQi4RE42YYEskEMVQgF44EzIOQA\nnibw\r\n=1J0X\r\n-----END PGP SIGNATURE-----\r\n' },
+43 silly resolved     maintainers: [ [Object], [Object], [Object] ],
+43 silly resolved     directories: {},
+43 silly resolved     _npmOperationalInternal:
+43 silly resolved      { host: 's3://npm-registry-packages',
+43 silly resolved        tmp: 'tmp/cypress_3.4.1_1564427773078_0.4025106247019734' },
+43 silly resolved     _hasShrinkwrap: false,
+43 silly resolved     _shasum: 'ca2e4e9864679da686c6a6189603efd409664c30' } ]
+44 info install cypress@3.4.1 into /usr/local/google/home/janakr/givedirectly/github/client-side/static
+45 info installOne cypress@3.4.1
+46 verbose node_modules/cypress unbuild
+47 verbose tar unpack /usr/local/google/home/janakr/.npm/cypress/3.4.1/package.tgz
+48 silly lockFile 671869d6-side-static-node-modules-cypress tar:///usr/local/google/home/janakr/givedirectly/github/client-side/static/node_modules/cypress
+49 verbose lock tar:///usr/local/google/home/janakr/givedirectly/github/client-side/static/node_modules/cypress /usr/local/google/home/janakr/.npm/671869d6-side-static-node-modules-cypress.lock
+50 silly lockFile 884bad9c-kr-npm-cypress-3-4-1-package-tgz tar:///usr/local/google/home/janakr/.npm/cypress/3.4.1/package.tgz
+51 verbose lock tar:///usr/local/google/home/janakr/.npm/cypress/3.4.1/package.tgz /usr/local/google/home/janakr/.npm/884bad9c-kr-npm-cypress-3-4-1-package-tgz.lock
+52 silly gunzTarPerm modes [ '755', '644' ]
+53 error TypeError: Cannot read property 'match' of undefined
+53 error     at Unpack.extractOpts.filter (/usr/share/npm/lib/utils/tar.js:245:19)
+53 error     at Unpack.[consumeHeader] (/usr/lib/nodejs/tar/lib/parse.js:134:48)
+53 error     at Unpack.[consumeChunkSub] (/usr/lib/nodejs/tar/lib/parse.js:385:30)
+53 error     at Unpack.[consumeChunk] (/usr/lib/nodejs/tar/lib/parse.js:362:30)
+53 error     at Unpack.write (/usr/lib/nodejs/tar/lib/parse.js:309:25)
+53 error     at Unzip.ondata (_stream_readable.js:667:20)
+53 error     at Unzip.emit (events.js:189:13)
+53 error     at addChunk (_stream_readable.js:284:12)
+53 error     at readableAddChunk (_stream_readable.js:265:11)
+53 error     at Unzip.Readable.push (_stream_readable.js:220:10)
+54 error If you need help, you may report this *entire* log,
+54 error including the npm and node versions, at:
+54 error     <http://github.com/npm/npm/issues>
+55 error System Linux 4.19.37-5rodete4-amd64
+56 error command "/usr/bin/node" "/usr/bin/npm" "install" "cypress"
+57 error cwd /usr/local/google/home/janakr/givedirectly/github/client-side/static
+58 error node -v v10.15.2
+59 error npm -v 1.4.21
+60 verbose exit [ 1, true ]
