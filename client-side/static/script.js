@@ -4,9 +4,16 @@ import drawTable from './draw_table.js';
 export {geoidTag, priorityTag, snapTag, zero};
 export {updatePovertyThreshold as default};
 
-// Adds an EarthEngine layer (from EEObject.getMap()) to the given Google Map
-// and returns the "overlay" that was added, in case the caller wants to add
-// callbacks or similar to that overlay.
+/**
+ * Adds an EarthEngine layer (from EEObject.getMap()) to the given Google Map
+ * and returns the "overlay" that was added, in case the caller wants to add
+ * callbacks or similar to that overlay.
+ *
+ * @param {ee.Element} map
+ * @param {Object} layerId
+ * @param {string} layerName
+ * @return {ee.MapLayerOverlay}
+ */
 function addLayerFromId(map, layerId, layerName) {
   const overlay = new ee.MapLayerOverlay(
       'https://earthengine.googleapis.com/map', layerId.mapid, layerId.token,
@@ -17,8 +24,14 @@ function addLayerFromId(map, layerId, layerName) {
   return overlay;
 }
 
-// Asynchronous wrapper for addLayerFromId that calls getMap() with a callback
-// to avoid blocking on the result.
+/**
+ * Asynchronous wrapper for addLayerFromId that calls getMap() with a callback
+ * to avoid blocking on the result.
+ *
+ * @param {google.maps.Map} map
+ * @param {ee.Element} layer
+ * @param {string} layerName
+ */
 function addLayer(map, layer, layerName) {
   layer.getMap({
     callback: function(layerId, failure) {
@@ -27,10 +40,16 @@ function addLayer(map, layer, layerName) {
       } else {
         createError('getting id')(failure);
       }
-    }
+    },
   });
 }
 
+/**
+ * Remove layerName from the map.
+ *
+ * @param {google.maps.Map} map
+ * @param {string} layerName
+ */
 function removeLayer(map, layerName) {
   const index = layerIndexMap.get(layerName);
   if (typeof index !== 'undefined') {
@@ -38,6 +57,7 @@ function removeLayer(map, layerName) {
   }
 }
 
+/* eslint-disable new-cap */
 const damageLevels = ee.List(['NOD', 'UNK', 'AFF', 'MIN', 'MAJ', 'DES']);
 // Initialized lazily, after ee.initialize() creates necessary function.
 let damageScales = null;
@@ -56,16 +76,22 @@ const layerIndexMap = new Map();
 const priorityLayerId = 'priority';
 const femaDamageLayerId = 'fema';
 
-// Processes a feature corresponding to a geographic area and returns a new one,
-// with just the GEOID and PRIORITY properties set, and a style attribute that
-// sets the color/opacity based on the priority, with all priorities past 99
-// equally opaque.
-//
-// povertyThreshold is used to filter out areas that are not poor enough (as
-// determined by the areas SNAP and TOTAL properties).
-//
-// scalingFactor multiplies the raw priority, it can be adjusted to make sure
-// that the values span the desired range of ~0 to ~100.
+/**
+ * Processes a feature corresponding to a geographic area and returns a new one,
+ * with just the GEOID and PRIORITY properties set, and a style attribute that
+ * sets the color/opacity based on the priority, with all priorities past 99
+ * equally opaque.
+ *
+ * @param {ee.Feature} feature
+ * @param {ee.Number} scalingFactor multiplies the raw priority, it can be
+ *     adjusted to make sure
+ * that the values span the desired range of ~0 to ~100.
+ * @param {number} povertyThreshold  used to filter out areas that are not poor
+ *     enough (as
+ * determined by the areas SNAP and TOTAL properties).
+ *
+ * @return {ee.Feature}
+ */
 function colorAndRate(feature, scalingFactor, povertyThreshold) {
   const rawRatio = ee.Number(feature.get('SNAP')).divide(feature.get('TOTAL'));
   const priority =
@@ -177,7 +203,7 @@ function setup() {
 function createError(message) {
   return function(error) {
     console.error('Error ' + message + ': ' + error);
-  }
+  };
 }
 
 setup();
