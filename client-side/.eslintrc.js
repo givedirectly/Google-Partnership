@@ -15,6 +15,9 @@ module.exports = {
     'sourceType': 'module',
   },
   'rules': {
+    'new-cap': [2, {
+      capIsNewExceptionPattern: 'ee\..*',
+      capIsNewExceptions: ['Feature']}],
     'indent': ['error', 2, {'CallExpression': {'arguments': 2}, 'ignoredNodes': ['CallExpression > CallExpression', 'CallExpression > MemberExpression']}]
   },
 };

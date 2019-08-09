@@ -57,7 +57,6 @@ function removeLayer(map, layerName) {
   }
 }
 
-/* eslint-disable new-cap */
 const damageLevels = ee.List(['NOD', 'UNK', 'AFF', 'MIN', 'MAJ', 'DES']);
 // Initialized lazily, after ee.initialize() creates necessary function.
 let damageScales = null;
