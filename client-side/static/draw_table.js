@@ -32,7 +32,6 @@ function drawTable(features) {
 function renderTable(evaluatedTable) {
   const data = google.visualization.arrayToDataTable(evaluatedTable, false);
   // Instantiate and draw the chart.
-
   const table = new google.visualization.ChartWrapper({
     'chartType': 'Table',
     'containerId': 'table',
