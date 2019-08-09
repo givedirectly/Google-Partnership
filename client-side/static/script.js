@@ -47,11 +47,9 @@ function addNewLayer(map, layer, assetName) {
 
 function removeLayer(map, layerName) {
   const layerMapValue = layerIndexMap.get(layerName);
-  if (typeof layerMapValue !== 'undefined') {
-    if (layerMapValue.index !== -1) {
+  if (typeof layerMapValue !== 'undefined' && layerMapValue.index !== -1) {
       map.overlayMapTypes.removeAt(layerMapValue.index);
       layerIndexMap.get(layerName).index = -1;
-    }
   }
 }
 
