@@ -1,2 +1,7 @@
 client-side/static/node_modules
 client-side/static/yarn.lock
+client-side/static/npm-debug.log
+client-side/static/cypress/plugins
+client-side/static/cypress/support
+client-side/static/cypress/videos
+
