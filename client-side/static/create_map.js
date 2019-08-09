@@ -66,7 +66,7 @@ function createMap() {
         // Take the default params and add in the place-specific icon.
         icon: Object.assign({url: place.icon}, placeIconParams),
         title: place.name,
-        position: place  .geometry.location,
+        position: place.geometry.location,
       }));
 
       if (place.geometry.viewport) {
