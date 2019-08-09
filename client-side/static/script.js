@@ -4,36 +4,39 @@ import drawTable from './draw_table.js';
 export {geoidTag, priorityTag, snapTag, zero};
 export {updatePovertyThreshold as default};
 
-function GDOverlay(url, layerId, layerName, {}) {
-  ee.MapLayerOverlay.call(this, url, layerId, layerName, {});
-}
-GDOverlay.prototype = Object.create(ee.MapLayerOverlay.prototype);
-
 // Adds an EarthEngine layer (from EEObject.getMap()) to the given Google Map
 // and returns the "overlay" that was added, in case the caller wants to add
 // callbacks or similar to that overlay.
-function addLayerFromId(map, layerId, layerName) {
+function addNewLayerFromId(map, layerId, assetName) {
   // create overlay
-  const overlay = new GDOverlay(
+  const overlay = new ee.MapLayerOverlay(
       'https://earthengine.googleapis.com/map', layerId.mapid, layerId.token,
       {});
-  // create + display div element checkbox
 
-  document.getElementById("checkboxes").appendChild(newToggle);
-  // newToggle.onclick = function()
-  // Show the EE map on the Google Map.
+  // TODO: these probably shouldn't just sit at the bottom of the page - move to
+  // a better place.
+  // TODO: add events on click.
+  const newToggle = document.createElement("INPUT");
+  newToggle.type = 'checkbox';
+  newToggle.id = assetName;
+  document.body.appendChild(newToggle);
+  const label = document.createElement("LABEL");
+  label.for = assetName;
+  label.innerHTML = assetName;
+  document.body.appendChild(label);
+
   const numLayers = map.overlayMapTypes.push(overlay);
-  layerIndexMap.set(layerName, numLayers - 1);
+  layerIndexMap.set(assetName, new LayerMapValue(overlay, numLayers - 1));
   return overlay;
 }
 
 // Asynchronous wrapper for addLayerFromId that calls getMap() with a callback
 // to avoid blocking on the result.
-function addLayer(map, layer, layerName) {
+function addNewLayer(map, layer, assetName) {
   layer.getMap({
     callback: function(layerId, failure) {
       if (layerId) {
-        addLayerFromId(map, layerId, layerName);
+        addNewLayerFromId(map, layerId, assetName);
       } else {
         createError('getting id')(failure);
       }
@@ -41,10 +44,13 @@ function addLayer(map, layer, layerName) {
   });
 }
 
-function removeLayer(map, layerName) {
-  const index = layerIndexMap.get(layerName);
-  if (typeof index !== 'undefined') {
-    map.overlayMapTypes.removeAt(index);
+function remove(map, layerName) {
+  const layerMapValue = layerIndexMap.get(layerName);
+  if (typeof layerMapValue !== 'undefined') {
+    if (layerMapValue.index !== -1) {
+      map.overlayMapTypes.removeAt(layerMapValue.index);
+      layerIndexMap.get(layerName).index = -1;
+    }
   }
 }
 
@@ -60,11 +66,17 @@ const geoidTag = 'GEOID';
 const priorityTag = 'PRIORITY';
 const snapTag = 'SNAP PERCENTAGE';
 
-// Keep a map of layer name to array position in overlayMapTypes for easy
-// removal
+// Keep a map of asset -> overlay and current index in overlayMapTypes.
+// Currently assume we're only working with one map.
 const layerIndexMap = new Map();
 const priorityLayerId = 'priority';
-const femaDamageLayerId = 'fema';
+
+// Values of layerIndexMap
+function LayerMapValue(overlay, index) {
+  this.overlay = overlay;
+  // index in map.overlayMapTypes (-1 if not displayed right now);
+  this.index = index;
+}
 
 // Processes a feature corresponding to a geographic area and returns a new one,
 // with just the GEOID and PRIORITY properties set, and a style attribute that
@@ -114,11 +126,10 @@ const joinedSnap = ee.FeatureCollection('users/janak/texas-snap-join-damage-with
 // Reprocesses scores with new povertyThreshold , overlays new score layer
 // and redraws table .
 function updatePovertyThreshold(povertyThreshold) {
-  removeLayer(map, priorityLayerId)
-
+  remove(map, priorityLayerId)
   const processedData =
       processJoinedData(joinedSnap, scalingFactor, povertyThreshold);
-  addLayer(map, processedData.style({styleProperty: 'style'}), priorityLayerId);
+  addNewLayer(map, processedData.style({styleProperty: 'style'}), priorityLayerId);
   google.charts.setOnLoadCallback(
       () => drawTable(processedData, povertyThreshold));
 }
@@ -127,23 +138,9 @@ function updatePovertyThreshold(povertyThreshold) {
 // creates/populates the map and table with a new poverty threshold.
 function run(povertyThreshold) {
   damageScales = ee.Dictionary.fromLists(damageLevels, [0, 0, 1, 1, 2, 3]);
-  const damage = ee.FeatureCollection(
-      'users/janak/FEMA_Damage_Assessments_Harvey_20170829');
-  addLayer(map, damage, femaDamageLayerId);
+  const femaAsset = 'users/janak/FEMA_Damage_Assessments_Harvey_20170829';
+  addNewLayer(map, ee.FeatureCollection(femaAsset), femaAsset);
   updatePovertyThreshold(povertyThreshold);
-
-  const newToggle = document.createElement("checkbox");
-  newToggle.type = 'checkbox';
-  newToggle.name = 'name';
-  newToggle.id = 'id';
-  // newToggle.setAttribute("type", "checkbox");
-  // newToggle.setAttribute("name", "name");
-  // newToggle.setAttribute("value", "value");
-  // newToggle.setAttribute("id", "id");
-  // newToggle.innerHTML = "CLICK";
-  console.log(newToggle);
-
-
 }
 
 // Runs immediately (before document may have fully loaded). Adds a hook so that
