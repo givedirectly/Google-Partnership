@@ -4,13 +4,23 @@ import drawTable from './draw_table.js';
 export {geoidTag, priorityTag, snapTag, zero};
 export {updatePovertyThreshold as default};
 
+function GDOverlay(url, layerId, layerName, {}) {
+  ee.MapLayerOverlay.call(this, url, layerId, layerName, {});
+}
+GDOverlay.prototype = Object.create(ee.MapLayerOverlay.prototype);
+
 // Adds an EarthEngine layer (from EEObject.getMap()) to the given Google Map
 // and returns the "overlay" that was added, in case the caller wants to add
 // callbacks or similar to that overlay.
 function addLayerFromId(map, layerId, layerName) {
-  const overlay = new ee.MapLayerOverlay(
+  // create overlay
+  const overlay = new GDOverlay(
       'https://earthengine.googleapis.com/map', layerId.mapid, layerId.token,
       {});
+  // create + display div element checkbox
+
+  document.getElementById("checkboxes").appendChild(newToggle);
+  // newToggle.onclick = function()
   // Show the EE map on the Google Map.
   const numLayers = map.overlayMapTypes.push(overlay);
   layerIndexMap.set(layerName, numLayers - 1);
@@ -121,6 +131,19 @@ function run(povertyThreshold) {
       'users/janak/FEMA_Damage_Assessments_Harvey_20170829');
   addLayer(map, damage, femaDamageLayerId);
   updatePovertyThreshold(povertyThreshold);
+
+  const newToggle = document.createElement("checkbox");
+  newToggle.type = 'checkbox';
+  newToggle.name = 'name';
+  newToggle.id = 'id';
+  // newToggle.setAttribute("type", "checkbox");
+  // newToggle.setAttribute("name", "name");
+  // newToggle.setAttribute("value", "value");
+  // newToggle.setAttribute("id", "id");
+  // newToggle.innerHTML = "CLICK";
+  console.log(newToggle);
+
+
 }
 
 // Runs immediately (before document may have fully loaded). Adds a hook so that
