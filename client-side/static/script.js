@@ -72,7 +72,7 @@ const snapTag = 'SNAP PERCENTAGE';
 // Keep a map of layer name to array position in overlayMapTypes for easy
 // removal
 const layerIndexMap = new Map();
-const priorityLayerId = 'priority';
+const priorityLayerName = 'priority';
 const femaDamageLayerId = 'fema';
 
 /**
@@ -143,13 +143,17 @@ const joinedSnap =
  * @param {number}povertyThreshold
  */
 function updatePovertyThreshold(povertyThreshold) {
-  removeLayer(map, priorityLayerId);
+  removeLayer(map, priorityLayerName);
 
   const processedData =
       processJoinedData(joinedSnap, scalingFactor, povertyThreshold);
-  addLayer(map, processedData.style({styleProperty: 'style'}), priorityLayerId);
+  addLayer(map, processedData.style({styleProperty: 'style'}), priorityLayerName);
   drawTable(processedData);
 }
+
+// Dictionary of known assets -> whether they should be displayed by default
+// TODO(juliexxia): don't initially display assets that have false values here.
+const assets = {'users/janak/FEMA_Damage_Assessments_Harvey_20170829': true};
 
 /**
  * Main function that processes the data (FEMA damage, SNAP) and
@@ -163,6 +167,27 @@ function run(povertyThreshold) {
       'users/janak/FEMA_Damage_Assessments_Harvey_20170829');
   addLayer(map, damage, femaDamageLayerId);
   updatePovertyThreshold(povertyThreshold);
+
+  createAssetCheckboxes();
+}
+
+function createAssetCheckboxes() {
+  // TODO: these probably shouldn't just sit at the bottom of the page - move to
+  // a better place.
+  // TODO: add events on click.
+  Object.keys(assets).forEach(assetName => createNewCheckbox(assetName));
+  createNewCheckbox(priorityLayerName);
+}
+
+function createNewCheckbox(assetName) {
+  let newBox = document.createElement('input');
+  newBox.type = 'checkbox';
+  newBox.id = assetName;
+  document.body.appendChild(newBox);
+  let label = document.createElement('label');
+  label.for = assetName;
+  label.innerHTML = assetName;
+  document.body.appendChild(label);
 }
 
 /**
