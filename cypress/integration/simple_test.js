@@ -10,9 +10,9 @@ describe('Integration test', () => {
     cy.get(
         'div[style*="cursor: url(\\"https://maps.gstatic.com/mapfiles/crosshair.cur\\") 7 7, crosshair;"]');
     drawPointAndPrepareForNext(50, 250);
-    // TODO(janakr): test seems to fail reliably on command line without this
+    // TODO(janakr): test seems to fail reliably on command line without these
     // and pass with it. Figure out what to actually test for on the page and
-    // remove this wait.
+    // remove these waits.
     cy.wait(200);
     drawPointAndPrepareForNext(400, 50);
     cy.wait(200);
