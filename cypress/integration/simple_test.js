@@ -9,7 +9,7 @@ describe('Integration test', () => {
     // Fragile, but ensures that "clicking" layer is present.
     cy.get(
         'div[style*="cursor: url(\\"https://maps.gstatic.com/mapfiles/crosshair.cur\\") 7 7, crosshair;"]');
-    drawPointAndPrepareForNext(50, 250, 0);
+    drawPointAndPrepareForNext(50, 250);
     drawPointAndPrepareForNext(400, 50);
     drawPointAndPrepareForNext(450, 150);
     drawPointAndPrepareForNext(50, 250);
@@ -19,13 +19,16 @@ describe('Integration test', () => {
 });
 
 /**
- * Draws a point on the map and mouses over to simulate moving to the next one.
+ * Mouses over to point, clicks on it, and checks that point is drawn.
  *
  * @param {number} x x-coordinate of the point in Cypress's scheme.
  * @param {number} y y-coordinate of the point in Cypress's scheme.
  */
 function drawPointAndPrepareForNext(x, y) {
+  // mouse-move on map to simulate moving to next point seems necessary.
+  cy.get('.map').trigger('mousemove', {clientX: x, clientY: y});
   cy.get('.map').click(x, y);
-  // mouse-over on map to simulate moving to next point seems necessary.
-  cy.get('.map').trigger('mouseover');
+  // Ensure that element from click is present. Also seems necessary to
+  // make sure polygon is drawn successfully.
+  cy.get('div[style*="left: ' + (x - 325) + 'px; top: ' + (y - 245) + 'px;"');
 }
