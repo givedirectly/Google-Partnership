@@ -4,26 +4,32 @@ import drawTable from './draw_table.js';
 export {geoidTag, priorityTag, snapTag, zero};
 export {updatePriorityLayer as default};
 
-// Adds an EarthEngine layer (from EEObject.getMap()) to the given Google Map
-// and returns the "overlay" that was added, in case the caller wants to add
-// callbacks or similar to that overlay.
-function addNewLayerFromId(map, layerId) {
+/**
+ * Initializes a new overlay and adds it to the map if it's supposed to be
+ * visible by default (assets is source of truth).
+ *
+ * @param layerId
+ * @param assetName
+ * @param index {int}
+ * @param display {boolean}
+ * @return {ee.MapLayerOverlay}
+ */
+function newOverlayFromId(layerId, assetName, index, display) {
   // create overlay
   const overlay = new ee.MapLayerOverlay(
       'https://earthengine.googleapis.com/map', layerId.mapid, layerId.token,
       {});
-  // Show the EE map on the Google Map.
-  const numLayers = map.overlayMapTypes.push(overlay);
+  map.overlayMapTypes.setAt(index, overlay);
   return overlay;
 }
 
-// Asynchronous wrapper for addLayerFromId that calls getMap() with a callback
+// Asynchronous wrapper for newOverlayFromId that calls getMap() with a callback
 // to avoid blocking on the result.
-function createLayer(map, layer) {
+function newOverlay(layer, assetName, index) {
   layer.getMap({
-    callback: function (layerId, failure) {
+    callback: function(layerId, failure) {
       if (layerId) {
-        return addNewLayerFromId(map, layerId);
+        newOverlayFromId(layerId, assetName, index);
       } else {
         // TODO: if there's an error, disable checkbox.
         createError('getting id')(failure);
@@ -32,31 +38,46 @@ function createLayer(map, layer) {
   });
 }
 
-function createAssetLayers(map) {
+/**
+ * Runs through asset map, for those that we auto-display on page load, creates
+ * overlays and displays. Also populates the layerMap.
+ *
+ * @param map {google.maps.Map} main map
+ */
+function initializeAssetLayers(map) {
   // This is the standard way to iterate over a dictionary according to
   // https://stackoverflow.com/questions/34448724/iterating-over-a-dictionary-in-javascript
   Object.keys(assets).forEach(function(assetName, index) {
-    // TODO: generalize for ImageCollections (and Features/Images?)
-    let overlay = createLayer(map, ee.FeatureCollection(assetName));
-    layerMap[assetName] = new layerMapValue(overlay, index, assets[assetName]);
+    // TODO(juliexxia): generalize for ImageCollections (and Features/Images?)
+    if (assets[assetName]) {
+      newOverlay(
+          ee.FeatureCollection(assetName), assetName, index, assets[assetName]);
+      layerMap[assetName] = new LayerMapValue(overlay, index, true);
+    } else {
+      layerMap[assetName] = new LayerMapValue(null, index, false);
+    }
   });
 }
 
-function createPriorityLayer(map, layer) {
-  let overlay = createLayer(map, layer);
-  // If we ever allow dynamic addition of new assets, this may need to
-  // change.
-  layerMap[priorityLayerId] =
-      new layerMapValue(overlay, Object.keys(assets).length - 1, true);
+/**
+ * Creates and displays overlay for priority + add layerMap entry. The priority
+ * layer sits at the index of (# regular assets) i.e. the last index. Once we
+ * add dynamically addable layers, it might be easier book keeping to have
+ * priority sit at index 0, but having it last ensures it displays on top.
+ *
+ * @param map {google.maps.Map} main map
+ * @param layer {FeatureCollection} the computed priority features
+ */
+function initializePriorityLayer(map, layer) {
+  newOverlay(layer.style({styleProperty: 'style'}), priorityLayerName, priorityIndex);
 }
 
-
-function removeLayer(map, layerName) {
-  const layerMapValue = layerMap.get(layerName);
-  if (typeof layerMapValue !== 'undefined' && layerMapValue.index !== -1) {
-      map.overlayMapTypes.removeAt(layerMapValue.index);
-      layerMapValue.index = -1;
-  }
+/**
+ * Hides the given overlay on the map and marks it not displayed in layerMap.
+ */
+function removeLayer(map, assetName) {
+  map.overlayMapTypes.setAt(layerMap[assetName].index, null);
+  layerMap[assetName].displayed = false;
 }
 
 const damageLevels = ee.List(['NOD', 'UNK', 'AFF', 'MIN', 'MAJ', 'DES']);
@@ -71,10 +92,18 @@ const geoidTag = 'GEOID';
 const priorityTag = 'PRIORITY';
 const snapTag = 'SNAP PERCENTAGE';
 
-// Keep a map of asset name -> overlay, index, display status
+// Dictionary of known assets -> whether they should be displayed by default
+const assets = {
+  'users/janak/FEMA_Damage_Assessments_Harvey_20170829': true
+};
+let priorityIndex = Object.keys(assets).length;
+// Keep a map of asset name -> overlay, index, display status. Overlays are
+// lazily generated so pre-known assets that aren't supposed to display by default
+// will have an entry in this map, but the LayerMapValue will have a null
+// overlay field until we do want to display it.
 // Currently assume we're only working with one map.
 const layerMap = {};
-const priorityLayerId = 'priority';
+const priorityLayerName = 'priority';
 
 /**
  * Values of layerMap
@@ -84,7 +113,7 @@ const priorityLayerId = 'priority';
  * @param {int} index - position in list of assets (does not change)
  * @param {boolean} displayed - whether the layer is currently displayed
  */
-function layerMapValue(overlay, index, displayed) {
+function LayerMapValue(overlay, index, displayed) {
   this.overlay = overlay;
   // index in map.overlayMapTypes (-1 if not displayed right now);
   this.index = index;
@@ -133,49 +162,51 @@ function processJoinedData(joinedData, scale, povertyThreshold) {
 
 // The base Google Map, Initialized lazily to ensure doc is ready
 let map = null;
-const joinedSnap = ee.FeatureCollection('users/janak/texas-snap-join-damage-with-buildings');
+const joinedSnap =
+    ee.FeatureCollection('users/janak/texas-snap-join-damage-with-buildings');
 
 // Removes the current score overlay on the map (if there is one).
 // Reprocesses scores with new povertyThreshold , overlays new score layer
 // and redraws table .
 function updatePriorityLayer(povertyThreshold) {
+  removeLayer(map, priorityLayerName);
+
   const processedData =
       processJoinedData(joinedSnap, scalingFactor, povertyThreshold);
-  layerMap[priorityLayerId].overlay = createLayer(map, processedData);
+  initializePriorityLayer(map, processedData);
   google.charts.setOnLoadCallback(
       () => drawTable(processedData, povertyThreshold));
 }
-
-// Dictionary of known assets -> whether they should be displayed by default
-const assets = {'users/janak/FEMA_Damage_Assessments_Harvey_20170829': true};
 
 // Main function that processes the data (FEMA damage, SNAP) and
 // creates/populates the map and table with a new poverty threshold.
 function run() {
   damageScales = ee.Dictionary.fromLists(damageLevels, [0, 0, 1, 1, 2, 3]);
-  const defaultPovertyThreshold = 0.3;
 
   createAssetCheckboxes();
-  createAssetLayers(map);
+  initializeAssetLayers(map);
+  const defaultPovertyThreshold = 0.3;
   const processedData =
       processJoinedData(joinedSnap, scalingFactor, defaultPovertyThreshold);
-  createPriorityLayer(map, processedData);
+  initializePriorityLayer(map, processedData);
+  google.charts.setOnLoadCallback(
+      () => drawTable(processedData, defaultPovertyThreshold));
 }
 
 function createAssetCheckboxes() {
   // TODO: these probably shouldn't just sit at the bottom of the page - move to
   // a better place.
-  // TODO: add events on click.
+  // TODO(juliexxia): add events on click.
   Object.keys(assets).forEach(assetName => createNewCheckbox(assetName));
   createNewCheckbox('priority');
 }
 
 function createNewCheckbox(assetName) {
-  let newBox = document.createElement('input');
+  const newBox = document.createElement('input');
   newBox.type = 'checkbox';
   newBox.id = assetName;
   document.body.appendChild(newBox);
-  let label = document.createElement('label');
+  const label = document.createElement('label');
   label.for = assetName;
   label.innerHTML = assetName;
   document.body.appendChild(label);
@@ -202,8 +233,8 @@ function setup() {
 
     const runOnSuccess = function() {
       ee.initialize(
-          /*opt_baseurl=*/ null, /*opt_tileurl=*/ null,
-          () => run(), createError('initializing EE'));
+          /*opt_baseurl=*/ null, /*opt_tileurl=*/ null, () => run(),
+          createError('initializing EE'));
     };
 
     // Shows a button prompting the user to log in.
