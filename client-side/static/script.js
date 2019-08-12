@@ -4,9 +4,16 @@ import drawTable from './draw_table.js';
 export {geoidTag, priorityTag, snapTag, zero};
 export {updatePovertyThreshold as default};
 
-// Adds an EarthEngine layer (from EEObject.getMap()) to the given Google Map
-// and returns the "overlay" that was added, in case the caller wants to add
-// callbacks or similar to that overlay.
+/**
+ * Adds an EarthEngine layer (from EEObject.getMap()) to the given Google Map
+ * and returns the "overlay" that was added, in case the caller wants to add
+ * callbacks or similar to that overlay.
+ *
+ * @param {ee.Element} map
+ * @param {Object} layerId
+ * @param {string} layerName
+ * @return {ee.MapLayerOverlay}
+ */
 function addLayerFromId(map, layerId, layerName) {
   const overlay = new ee.MapLayerOverlay(
       'https://earthengine.googleapis.com/map', layerId.mapid, layerId.token,
@@ -17,8 +24,14 @@ function addLayerFromId(map, layerId, layerName) {
   return overlay;
 }
 
-// Asynchronous wrapper for addLayerFromId that calls getMap() with a callback
-// to avoid blocking on the result.
+/**
+ * Asynchronous wrapper for addLayerFromId that calls getMap() with a callback
+ * to avoid blocking on the result.
+ *
+ * @param {google.maps.Map} map
+ * @param {ee.Element} layer
+ * @param {string} layerName
+ */
 function addLayer(map, layer, layerName) {
   layer.getMap({
     callback: function(layerId, failure) {
@@ -27,10 +40,16 @@ function addLayer(map, layer, layerName) {
       } else {
         createError('getting id')(failure);
       }
-    }
+    },
   });
 }
 
+/**
+ * Remove layerName from the map.
+ *
+ * @param {google.maps.Map} map
+ * @param {string} layerName
+ */
 function removeLayer(map, layerName) {
   const index = layerIndexMap.get(layerName);
   if (typeof index !== 'undefined') {
@@ -56,16 +75,21 @@ const layerIndexMap = new Map();
 const priorityLayerName = 'priority';
 const femaDamageLayerId = 'fema';
 
-// Processes a feature corresponding to a geographic area and returns a new one,
-// with just the GEOID and PRIORITY properties set, and a style attribute that
-// sets the color/opacity based on the priority, with all priorities past 99
-// equally opaque.
-//
-// povertyThreshold is used to filter out areas that are not poor enough (as
-// determined by the areas SNAP and TOTAL properties).
-//
-// scalingFactor multiplies the raw priority, it can be adjusted to make sure
-// that the values span the desired range of ~0 to ~100.
+/**
+ * Processes a feature corresponding to a geographic area and returns a new one,
+ * with just the GEOID and PRIORITY properties set, and a style attribute that
+ * sets the color/opacity based on the priority, with all priorities past 99
+ * equally opaque.
+ *
+ * @param {ee.Feature} feature
+ * @param {ee.Number} scalingFactor multiplies the raw priority, it can be
+ *     adjusted to make sure that the values span the desired range of ~0 to
+ * ~100.
+ * @param {number} povertyThreshold  used to filter out areas that are not poor
+ *     enough (as determined by the areas SNAP and TOTAL properties).
+ *
+ * @return {ee.Feature}
+ */
 function colorAndRate(feature, scalingFactor, povertyThreshold) {
   const rawRatio = ee.Number(feature.get('SNAP')).divide(feature.get('TOTAL'));
   const priority =
@@ -82,14 +106,24 @@ function colorAndRate(feature, scalingFactor, povertyThreshold) {
           .round();
   return ee
       .Feature(feature.geometry(), ee.Dictionary([
-        geoidTag, feature.get(geoidTag), priorityTag, priority, snapTag,
-        rawRatio
+        geoidTag,
+        feature.get(geoidTag),
+        priorityTag,
+        priority,
+        snapTag,
+        rawRatio,
       ]))
       .set({
-        style: {color: priority.min(priorityDisplayCap).format('ff00ff%02d')}
+        style: {color: priority.min(priorityDisplayCap).format('ff00ff%02d')},
       });
 }
 
+/**
+ * @param {ee.FeatureCollection} joinedData
+ * @param {ee.Number} scale
+ * @param {number} povertyThreshold
+ * @return {ee.FeatureCollection}
+ */
 function processJoinedData(joinedData, scale, povertyThreshold) {
   return joinedData.map(function(feature) {
     return colorAndRate(feature, scale, povertyThreshold);
@@ -98,11 +132,16 @@ function processJoinedData(joinedData, scale, povertyThreshold) {
 
 // The base Google Map, Initialized lazily to ensure doc is ready
 let map = null;
-const joinedSnap = ee.FeatureCollection('users/janak/texas-snap-join-damage-with-buildings');
+const joinedSnap =
+    ee.FeatureCollection('users/janak/texas-snap-join-damage-with-buildings');
 
-// Removes the current score overlay on the map (if there is one).
-// Reprocesses scores with new povertyThreshold , overlays new score layer
-// and redraws table .
+/**
+ * Removes the current score overlay on the map (if there is one).
+ * Reprocesses scores with new povertyThreshold, overlays new score layer
+ * and redraws table.
+ *
+ * @param {number}povertyThreshold
+ */
 function updatePovertyThreshold(povertyThreshold) {
   removeLayer(map, priorityLayerName);
 
@@ -116,8 +155,12 @@ function updatePovertyThreshold(povertyThreshold) {
 // TODO(juliexxia): don't initially display assets that have false values here.
 const assets = {'users/janak/FEMA_Damage_Assessments_Harvey_20170829': true};
 
-// Main function that processes the data (FEMA damage, SNAP) and
-// creates/populates the map and table with a new poverty threshold.
+/**
+ * Main function that processes the data (FEMA damage, SNAP) and
+ * creates/populates the map and table with a new poverty threshold.
+ *
+ * @param {number} povertyThreshold
+ */
 function run(povertyThreshold) {
   damageScales = ee.Dictionary.fromLists(damageLevels, [0, 0, 1, 1, 2, 3]);
   const damage = ee.FeatureCollection(
@@ -147,16 +190,17 @@ function createNewCheckbox(assetName) {
   document.body.appendChild(label);
 }
 
-
-// Runs immediately (before document may have fully loaded). Adds a hook so that
-// when the document is loaded, Google Map is initialized, and on successful
-// login, EE data is overlayed.
-// TODO(janakr): authentication seems buggy, investigate.
+/**
+ * Runs immediately (before document may have fully loaded). Adds a hook so that
+ * when the document is loaded, Google Map is initialized, and on successful
+ * login, EE data is overlayed.
+ */
 function setup() {
   // The client ID from the Google Developers Console.
   // TODO(#13): This is from janakr's console. Should use one for GiveDirectly.
-  const CLIENT_ID =
-      '634162034024-oodhl7ngkg63hd9ha9ho9b3okcb0bp8s.apps.googleusercontent.com';
+  // eslint-disable-next-line no-unused-vars
+  const CLIENT_ID = '634162034024-oodhl7ngkg63hd9ha9ho9b3okcb0bp8s' +
+      '.apps.googleusercontent.com';
   // TODO(#13): This is from juliexxia's console. Should use one for
   // GiveDirectly. Also, this client id has not been properly configured yet.
   // const CLIENT_ID =
@@ -170,11 +214,12 @@ function setup() {
 
     const runOnSuccess = function() {
       ee.initialize(
-          /*opt_baseurl=*/ null, /*opt_tileurl=*/ null,
+          /* opt_baseurl=*/ null, /* opt_tileurl=*/ null,
           () => run(defaultPovertyThreshold), createError('initializing EE'));
     };
 
     // Shows a button prompting the user to log in.
+    // eslint-disable-next-line no-unused-vars
     const onImmediateFailed = function() {
       $('.g-sign-in').removeClass('hidden');
       $('.output').text('(Log in to see the result.)');
@@ -199,11 +244,15 @@ function setup() {
   });
 }
 
-// TODO(janakr): use some standard error library?
+/**
+ * Simple function that returns a lambda to print an error to console.
+ *
+ * @param {string} message
+ * @return {Function}
+ */
 function createError(message) {
-  return function(error) {
-    console.error('Error ' + message + ': ' + error);
-  }
+  // TODO(janakr): use some standard error library?
+  return (error) => console.error('Error ' + message + ': ' + error);
 }
 
 setup();
