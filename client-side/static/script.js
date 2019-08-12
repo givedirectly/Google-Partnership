@@ -120,9 +120,9 @@ const layerMap = {};
  * Values of layerMap
  *
  * @constructor
- * @param {MapType} overlay - the actual layer
+ * @param {MapType} overlay - the actual layer (null if not created yet)
  * @param {int} index - position in list of assets (does not change)
- * @param {boolean} displayed - whether the layer is currently displayed
+ * @param {boolean} displayed - true if layer is currently displayed
  */
 function LayerMapValue(overlay, index, displayed) {
   this.overlay = overlay;
