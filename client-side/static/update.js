@@ -1,4 +1,4 @@
-import updatePovertyThreshold from './script.js';
+import updatePriorityLayer from './script.js';
 
 export {update as default};
 
@@ -7,5 +7,5 @@ function update() {
   const t = document.getElementById('threshold').value;
   document.getElementById('current-threshold').innerHTML =
       'Current poverty threshold: ' + t;
-  updatePovertyThreshold(ee.Number.parse(t));
+  updatePriorityLayer(ee.Number.parse(t));
 }

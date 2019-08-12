@@ -2,51 +2,57 @@ import createMap from './create_map.js';
 import drawTable from './draw_table.js';
 
 export {geoidTag, priorityTag, snapTag, zero};
-export {updatePovertyThreshold as default};
+export {updatePriorityLayer as default};
 
 // Adds an EarthEngine layer (from EEObject.getMap()) to the given Google Map
 // and returns the "overlay" that was added, in case the caller wants to add
 // callbacks or similar to that overlay.
-function addNewLayerFromId(map, layerId, assetName) {
+function addNewLayerFromId(map, layerId) {
   // create overlay
   const overlay = new ee.MapLayerOverlay(
       'https://earthengine.googleapis.com/map', layerId.mapid, layerId.token,
       {});
-
-  // TODO: these probably shouldn't just sit at the bottom of the page - move to
-  // a better place.
-  // TODO: add events on click.
-  const newToggle = document.createElement("INPUT");
-  newToggle.type = 'checkbox';
-  newToggle.id = assetName;
-  document.body.appendChild(newToggle);
-  const label = document.createElement("LABEL");
-  label.for = assetName;
-  label.innerHTML = assetName;
-  document.body.appendChild(label);
-
   // Show the EE map on the Google Map.
   const numLayers = map.overlayMapTypes.push(overlay);
-  layerIndexMap.set(assetName, new LayerMapValue(overlay, numLayers - 1));
   return overlay;
 }
 
 // Asynchronous wrapper for addLayerFromId that calls getMap() with a callback
 // to avoid blocking on the result.
-function addNewLayer(map, layer, assetName) {
+function createLayer(map, layer) {
   layer.getMap({
-    callback: function(layerId, failure) {
+    callback: function (layerId, failure) {
       if (layerId) {
-        addNewLayerFromId(map, layerId, assetName);
+        return addNewLayerFromId(map, layerId);
       } else {
+        // TODO: if there's an error, disable checkbox.
         createError('getting id')(failure);
       }
     }
   });
 }
 
+function createAssetLayers(map) {
+  // This is the standard way to iterate over a dictionary according to
+  // https://stackoverflow.com/questions/34448724/iterating-over-a-dictionary-in-javascript
+  Object.keys(assets).forEach(function(assetName, index) {
+    // TODO: generalize for ImageCollections (and Features/Images?)
+    let overlay = createLayer(map, ee.FeatureCollection(assetName));
+    layerMap[assetName] = new layerMapValue(overlay, index, assets[assetName]);
+  });
+}
+
+function createPriorityLayer(map, layer) {
+  let overlay = createLayer(map, layer);
+  // If we ever allow dynamic addition of new assets, this may need to
+  // change.
+  layerMap[priorityLayerId] =
+      new layerMapValue(overlay, Object.keys(assets).length - 1, true);
+}
+
+
 function removeLayer(map, layerName) {
-  const layerMapValue = layerIndexMap.get(layerName);
+  const layerMapValue = layerMap.get(layerName);
   if (typeof layerMapValue !== 'undefined' && layerMapValue.index !== -1) {
       map.overlayMapTypes.removeAt(layerMapValue.index);
       layerMapValue.index = -1;
@@ -65,16 +71,24 @@ const geoidTag = 'GEOID';
 const priorityTag = 'PRIORITY';
 const snapTag = 'SNAP PERCENTAGE';
 
-// Keep a map of asset name -> overlay and current index in overlayMapTypes.
+// Keep a map of asset name -> overlay, index, display status
 // Currently assume we're only working with one map.
-const layerIndexMap = new Map();
+const layerMap = {};
 const priorityLayerId = 'priority';
 
-// Values of layerIndexMap
-function LayerMapValue(overlay, index) {
+/**
+ * Values of layerMap
+ *
+ * @constructor
+ * @param {MapType} overlay - the actual layer
+ * @param {int} index - position in list of assets (does not change)
+ * @param {boolean} displayed - whether the layer is currently displayed
+ */
+function layerMapValue(overlay, index, displayed) {
   this.overlay = overlay;
   // index in map.overlayMapTypes (-1 if not displayed right now);
   this.index = index;
+  this.displayed = displayed;
 }
 
 // Processes a feature corresponding to a geographic area and returns a new one,
@@ -124,22 +138,47 @@ const joinedSnap = ee.FeatureCollection('users/janak/texas-snap-join-damage-with
 // Removes the current score overlay on the map (if there is one).
 // Reprocesses scores with new povertyThreshold , overlays new score layer
 // and redraws table .
-function updatePovertyThreshold(povertyThreshold) {
-  removeLayer(map, priorityLayerId)
+function updatePriorityLayer(povertyThreshold) {
   const processedData =
       processJoinedData(joinedSnap, scalingFactor, povertyThreshold);
-  addNewLayer(map, processedData.style({styleProperty: 'style'}), priorityLayerId);
+  layerMap[priorityLayerId].overlay = createLayer(map, processedData);
   google.charts.setOnLoadCallback(
       () => drawTable(processedData, povertyThreshold));
 }
 
+// Dictionary of known assets -> whether they should be displayed by default
+const assets = {'users/janak/FEMA_Damage_Assessments_Harvey_20170829': true};
+
 // Main function that processes the data (FEMA damage, SNAP) and
 // creates/populates the map and table with a new poverty threshold.
-function run(povertyThreshold) {
+function run() {
   damageScales = ee.Dictionary.fromLists(damageLevels, [0, 0, 1, 1, 2, 3]);
-  const femaAsset = 'users/janak/FEMA_Damage_Assessments_Harvey_20170829';
-  addNewLayer(map, ee.FeatureCollection(femaAsset), femaAsset);
-  updatePovertyThreshold(povertyThreshold);
+  const defaultPovertyThreshold = 0.3;
+
+  createAssetCheckboxes();
+  createAssetLayers(map);
+  const processedData =
+      processJoinedData(joinedSnap, scalingFactor, defaultPovertyThreshold);
+  createPriorityLayer(map, processedData);
+}
+
+function createAssetCheckboxes() {
+  // TODO: these probably shouldn't just sit at the bottom of the page - move to
+  // a better place.
+  // TODO: add events on click.
+  Object.keys(assets).forEach(assetName => createNewCheckbox(assetName));
+  createNewCheckbox('priority');
+}
+
+function createNewCheckbox(assetName) {
+  let newBox = document.createElement('input');
+  newBox.type = 'checkbox';
+  newBox.id = assetName;
+  document.body.appendChild(newBox);
+  let label = document.createElement('label');
+  label.for = assetName;
+  label.innerHTML = assetName;
+  document.body.appendChild(label);
 }
 
 // Runs immediately (before document may have fully loaded). Adds a hook so that
@@ -159,13 +198,12 @@ function setup() {
   google.charts.load('current', {packages: ['table', 'controls']});
 
   $(document).ready(function() {
-    const defaultPovertyThreshold = 0.3;
     map = createMap();
 
     const runOnSuccess = function() {
       ee.initialize(
           /*opt_baseurl=*/ null, /*opt_tileurl=*/ null,
-          () => run(defaultPovertyThreshold), createError('initializing EE'));
+          () => run(), createError('initializing EE'));
     };
 
     // Shows a button prompting the user to log in.
