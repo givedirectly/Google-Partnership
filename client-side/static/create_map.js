@@ -6,9 +6,14 @@ const placeIconParams = {
   size: new google.maps.Size(71, 71),
   origin: new google.maps.Point(0, 0),
   anchor: new google.maps.Point(17, 34),
-  scaledSize: new google.maps.Size(25, 25)
+  scaledSize: new google.maps.Size(25, 25),
 };
 
+/**
+ * Creates, initializes and returns a map with search box and drawing tools.
+ *
+ * @return {google.maps.Map}
+ */
 function createMap() {
   // Create the base Google Map. Takes ~7 ms to execute this step..
   // TODO: this is centered for Harvey right now - generalize.
@@ -44,7 +49,7 @@ function createMap() {
     }
 
     // Clear out the old markers.
-    markers.forEach(marker => marker.setMap(null));
+    markers.forEach((marker) => marker.setMap(null));
     markers = [];
 
     // For each place, get the icon, name and location.
@@ -61,7 +66,7 @@ function createMap() {
         // Take the default params and add in the place-specific icon.
         icon: Object.assign({url: place.icon}, placeIconParams),
         title: place.name,
-        position: place.geometry.location
+        position: place.geometry.location,
       }));
 
       if (place.geometry.viewport) {
