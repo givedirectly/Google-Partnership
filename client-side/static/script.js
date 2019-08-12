@@ -2,60 +2,39 @@ import createMap from './create_map.js';
 import drawTable from './draw_table.js';
 
 export {geoidTag, priorityTag, snapTag, zero};
-export {updatePriorityLayer as default};
+export {updatePovertyThreshold as default};
 
 // Adds an EarthEngine layer (from EEObject.getMap()) to the given Google Map
 // and returns the "overlay" that was added, in case the caller wants to add
 // callbacks or similar to that overlay.
-function addNewLayerFromId(map, layerId) {
-  // create overlay
+function addLayerFromId(map, layerId, layerName) {
   const overlay = new ee.MapLayerOverlay(
       'https://earthengine.googleapis.com/map', layerId.mapid, layerId.token,
       {});
   // Show the EE map on the Google Map.
   const numLayers = map.overlayMapTypes.push(overlay);
+  layerIndexMap.set(layerName, numLayers - 1);
   return overlay;
 }
 
 // Asynchronous wrapper for addLayerFromId that calls getMap() with a callback
 // to avoid blocking on the result.
-function createLayer(map, layer) {
+function addLayer(map, layer, layerName) {
   layer.getMap({
-    callback: function (layerId, failure) {
+    callback: function(layerId, failure) {
       if (layerId) {
-        return addNewLayerFromId(map, layerId);
+        addLayerFromId(map, layerId, layerName);
       } else {
-        // TODO: if there's an error, disable checkbox.
         createError('getting id')(failure);
       }
     }
   });
 }
 
-function createAssetLayers(map) {
-  // This is the standard way to iterate over a dictionary according to
-  // https://stackoverflow.com/questions/34448724/iterating-over-a-dictionary-in-javascript
-  Object.keys(assets).forEach(function(assetName, index) {
-    // TODO: generalize for ImageCollections (and Features/Images?)
-    let overlay = createLayer(map, ee.FeatureCollection(assetName));
-    layerMap[assetName] = new layerMapValue(overlay, index, assets[assetName]);
-  });
-}
-
-function createPriorityLayer(map, layer) {
-  let overlay = createLayer(map, layer);
-  // If we ever allow dynamic addition of new assets, this may need to
-  // change.
-  layerMap[priorityLayerId] =
-      new layerMapValue(overlay, Object.keys(assets).length - 1, true);
-}
-
-
 function removeLayer(map, layerName) {
-  const layerMapValue = layerMap.get(layerName);
-  if (typeof layerMapValue !== 'undefined' && layerMapValue.index !== -1) {
-      map.overlayMapTypes.removeAt(layerMapValue.index);
-      layerMapValue.index = -1;
+  const index = layerIndexMap.get(layerName);
+  if (typeof index !== 'undefined') {
+    map.overlayMapTypes.removeAt(index);
   }
 }
 
@@ -71,25 +50,11 @@ const geoidTag = 'GEOID';
 const priorityTag = 'PRIORITY';
 const snapTag = 'SNAP PERCENTAGE';
 
-// Keep a map of asset name -> overlay, index, display status
-// Currently assume we're only working with one map.
-const layerMap = {};
+// Keep a map of layer name to array position in overlayMapTypes for easy
+// removal
+const layerIndexMap = new Map();
 const priorityLayerId = 'priority';
-
-/**
- * Values of layerMap
- *
- * @constructor
- * @param {MapType} overlay - the actual layer
- * @param {int} index - position in list of assets (does not change)
- * @param {boolean} displayed - whether the layer is currently displayed
- */
-function layerMapValue(overlay, index, displayed) {
-  this.overlay = overlay;
-  // index in map.overlayMapTypes (-1 if not displayed right now);
-  this.index = index;
-  this.displayed = displayed;
-}
+const femaDamageLayerId = 'fema';
 
 // Processes a feature corresponding to a geographic area and returns a new one,
 // with just the GEOID and PRIORITY properties set, and a style attribute that
@@ -138,28 +103,29 @@ const joinedSnap = ee.FeatureCollection('users/janak/texas-snap-join-damage-with
 // Removes the current score overlay on the map (if there is one).
 // Reprocesses scores with new povertyThreshold , overlays new score layer
 // and redraws table .
-function updatePriorityLayer(povertyThreshold) {
+function updatePovertyThreshold(povertyThreshold) {
+  removeLayer(map, priorityLayerId);
+
   const processedData =
       processJoinedData(joinedSnap, scalingFactor, povertyThreshold);
-  layerMap[priorityLayerId].overlay = createLayer(map, processedData);
-  google.charts.setOnLoadCallback(
-      () => drawTable(processedData, povertyThreshold));
+  addLayer(map, processedData.style({styleProperty: 'style'}), priorityLayerId);
+  drawTable(processedData);
 }
 
 // Dictionary of known assets -> whether they should be displayed by default
+// TODO(juliexxia): don't initially display assets that have false values here.
 const assets = {'users/janak/FEMA_Damage_Assessments_Harvey_20170829': true};
 
 // Main function that processes the data (FEMA damage, SNAP) and
 // creates/populates the map and table with a new poverty threshold.
-function run() {
+function run(povertyThreshold) {
   damageScales = ee.Dictionary.fromLists(damageLevels, [0, 0, 1, 1, 2, 3]);
-  const defaultPovertyThreshold = 0.3;
+  const damage = ee.FeatureCollection(
+      'users/janak/FEMA_Damage_Assessments_Harvey_20170829');
+  addLayer(map, damage, femaDamageLayerId);
+  updatePovertyThreshold(povertyThreshold);
 
   createAssetCheckboxes();
-  createAssetLayers(map);
-  const processedData =
-      processJoinedData(joinedSnap, scalingFactor, defaultPovertyThreshold);
-  createPriorityLayer(map, processedData);
 }
 
 function createAssetCheckboxes() {
@@ -181,6 +147,7 @@ function createNewCheckbox(assetName) {
   document.body.appendChild(label);
 }
 
+
 // Runs immediately (before document may have fully loaded). Adds a hook so that
 // when the document is loaded, Google Map is initialized, and on successful
 // login, EE data is overlayed.
@@ -198,12 +165,13 @@ function setup() {
   google.charts.load('current', {packages: ['table', 'controls']});
 
   $(document).ready(function() {
+    const defaultPovertyThreshold = 0.3;
     map = createMap();
 
     const runOnSuccess = function() {
       ee.initialize(
           /*opt_baseurl=*/ null, /*opt_tileurl=*/ null,
-          () => run(), createError('initializing EE'));
+          () => run(defaultPovertyThreshold), createError('initializing EE'));
     };
 
     // Shows a button prompting the user to log in.
@@ -229,7 +197,7 @@ function setup() {
     //     onImmediateFailed);
     runOnSuccess();
   });
-};
+}
 
 // TODO(janakr): use some standard error library?
 function createError(message) {
