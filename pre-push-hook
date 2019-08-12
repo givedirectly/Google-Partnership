@@ -10,6 +10,8 @@ set -e
 # standard input in the form:
 #
 #   <local ref> <local sha1> <remote ref> <remote sha1>
+#
+# TODO(janakr): add configuration to disable individual checks.
 
 z40=0000000000000000000000000000000000000000
 
