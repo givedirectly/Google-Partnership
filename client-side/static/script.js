@@ -11,10 +11,10 @@ export {updatePriorityLayer as default};
  *
  * @param {ee.Element} map
  * @param {Object} layerId
- * @param {string} layerName
+ * @param {int} index
  * @return {ee.MapLayerOverlay}
  */
-function addLayerFromId(map, layerId, layerName, index) {
+function addLayerFromId(map, layerId, index) {
   const overlay = new ee.MapLayerOverlay(
       'https://earthengine.googleapis.com/map', layerId.mapid, layerId.token,
       {});
@@ -24,17 +24,18 @@ function addLayerFromId(map, layerId, layerName, index) {
 
 /**
  * Asynchronous wrapper for addLayerFromId that calls getMap() with a callback
- * to avoid blocking on the result.
+ * to avoid blocking on the result. This also populates layerMap.
  *
  * @param {google.maps.Map} map
  * @param {ee.Element} layer
- * @param {string} layerName
+ * @param {string} assetName
+ * @param {int} index
  */
 function addLayer(map, layer, assetName, index) {
   layer.getMap({
     callback: function (layerId, failure) {
       if (layerId) {
-        const overlay = addLayerFromId(map, layerId, assetName, index);
+        const overlay = addLayerFromId(map, layerId, index);
         layerMap[assetName] = new LayerMapValue(overlay, index, true);
       } else {
         // TODO: if there's an error, disable checkbox.
@@ -83,7 +84,7 @@ function initializePriorityLayer(map, layer) {
 * Records it is no longer being displayed in layerMap.
 *
 * @param {google.maps.Map} map
-* @param {string} layerName
+* @param {string} assetName
 */
 function removeLayer(map, assetName) {
   map.overlayMapTypes.setAt(layerMap[assetName].index, null);
@@ -208,10 +209,8 @@ function updatePriorityLayer(povertyThreshold) {
 }
 
 /**
- * Main function that processes the data (FEMA damage, SNAP) and
- * creates/populates the map and table with a new poverty threshold.
- *
- * @param {number} povertyThreshold
+ * Main function that processes the known assets (FEMA damage, etc., SNAP) and
+ * creates/populates the map and table.
  */
 function run() {
   damageScales = ee.Dictionary.fromLists(damageLevels, [0, 0, 1, 1, 2, 3]);
@@ -225,6 +224,9 @@ function run() {
       () => drawTable(processedData, defaultPovertyThreshold));
 }
 
+/**
+ * Creates checkboxes for all known assets and the priority overlay
+ */
 function createAssetCheckboxes() {
   // TODO: these probably shouldn't just sit at the bottom of the page - move to
   // a better place.
