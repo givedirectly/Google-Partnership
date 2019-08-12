@@ -5,5 +5,5 @@ cypress/plugins
 cypress/screenshots
 cypress/support
 cypress/videos
-idea/
+.idea/
 Google-Partnership.iml
