@@ -1,6 +1,6 @@
 const host = 'http://localhost:8081/';
 // Run via `yarn run cypress run`. Make sure you're using the right yarn!
-describe('Integration test',() => {
+describe('Integration test', () => {
   // it('Opens the page', () => {
   //   cy.visit(host);
   // });
@@ -10,7 +10,8 @@ describe('Integration test',() => {
     polygonButton.click();
     // Wait for polygon selection overlay to appear.
     // Fragile, but ensures that "clicking" layer is present.
-    cy.get('div[style*="cursor: url(\\"https://maps.gstatic.com/mapfiles/crosshair.cur\\") 7 7, crosshair;"]');
+    cy.get(
+        'div[style*="cursor: url(\\"https://maps.gstatic.com/mapfiles/crosshair.cur\\") 7 7, crosshair;"]');
     drawPointAndWait(50, 250, 0);
     drawPointAndWait(400, 50);
     drawPointAndWait(450, 150);
