@@ -53,7 +53,7 @@ const snapTag = 'SNAP PERCENTAGE';
 // Keep a map of layer name to array position in overlayMapTypes for easy
 // removal
 const layerIndexMap = new Map();
-const priorityLayerId = 'priority';
+const priorityLayerName = 'priority';
 const femaDamageLayerId = 'fema';
 
 // Processes a feature corresponding to a geographic area and returns a new one,
@@ -104,11 +104,11 @@ const joinedSnap = ee.FeatureCollection('users/janak/texas-snap-join-damage-with
 // Reprocesses scores with new povertyThreshold , overlays new score layer
 // and redraws table .
 function updatePovertyThreshold(povertyThreshold) {
-  removeLayer(map, priorityLayerId);
+  removeLayer(map, priorityLayerName);
 
   const processedData =
       processJoinedData(joinedSnap, scalingFactor, povertyThreshold);
-  addLayer(map, processedData.style({styleProperty: 'style'}), priorityLayerId);
+  addLayer(map, processedData.style({styleProperty: 'style'}), priorityLayerName);
   drawTable(processedData);
 }
 
@@ -133,7 +133,7 @@ function createAssetCheckboxes() {
   // a better place.
   // TODO: add events on click.
   Object.keys(assets).forEach(assetName => createNewCheckbox(assetName));
-  createNewCheckbox('priority');
+  createNewCheckbox(priorityLayerName);
 }
 
 function createNewCheckbox(assetName) {
