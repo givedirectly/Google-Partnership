@@ -14,7 +14,7 @@ export {updatePriorityLayer as default};
  * @param {string} layerName
  * @return {ee.MapLayerOverlay}
  */
-function newOverlayFromId(map, layerId, layerName, index) {
+function addLayerFromId(map, layerId, layerName, index) {
   const overlay = new ee.MapLayerOverlay(
       'https://earthengine.googleapis.com/map', layerId.mapid, layerId.token,
       {});
@@ -30,11 +30,11 @@ function newOverlayFromId(map, layerId, layerName, index) {
  * @param {ee.Element} layer
  * @param {string} layerName
  */
-function newOverlay(map, layer, assetName, index) {
+function addLayer(map, layer, assetName, index) {
   layer.getMap({
     callback: function (layerId, failure) {
       if (layerId) {
-        const overlay = newOverlayFromId(map, layerId, assetName, index);
+        const overlay = addLayerFromId(map, layerId, assetName, index);
         layerMap[assetName] = new LayerMapValue(overlay, index, true);
       } else {
         // TODO: if there's an error, disable checkbox.
@@ -56,7 +56,7 @@ function initializeAssetLayers(map) {
   Object.keys(assets).forEach(function (assetName, index) {
     // TODO(juliexxia): generalize for ImageCollections (and Features/Images?)
     if (assets[assetName]) {
-      newOverlay(map,
+      addLayer(map,
           ee.FeatureCollection(assetName), assetName, index);
     } else {
       layerMap[assetName] = new LayerMapValue(null, index, false);
@@ -74,12 +74,13 @@ function initializeAssetLayers(map) {
  * @param layer {FeatureCollection} the computed priority features
  */
 function initializePriorityLayer(map, layer) {
-  newOverlay(map, layer.style({styleProperty: 'style'}), priorityLayerName,
+  addLayer(map, layer.style({styleProperty: 'style'}), priorityLayerName,
       priorityIndex);
 }
 
 /*
-* Remove layerName from the map.
+* Removes an overlay from the map by setting its index in overlayMapTypes to null.
+* Records it is no longer being displayed in layerMap.
 *
 * @param {google.maps.Map} map
 * @param {string} layerName
@@ -105,14 +106,14 @@ const snapTag = 'SNAP PERCENTAGE';
 const assets = {
   'users/janak/FEMA_Damage_Assessments_Harvey_20170829': true
 };
-let priorityIndex = Object.keys(assets).length;
+const priorityIndex = Object.keys(assets).length;
+const priorityLayerName = 'priority';
 // Keep a map of asset name -> overlay, index, display status. Overlays are
 // lazily generated so pre-known assets that aren't supposed to display by default
 // will have an entry in this map, but the LayerMapValue will have a null
 // overlay field until we do want to display it.
 // Currently assume we're only working with one map.
 const layerMap = {};
-const priorityLayerName = 'priority';
 
 /**
  * Values of layerMap
