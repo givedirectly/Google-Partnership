@@ -1,0 +1,9 @@
+node_modules
+yarn.lock
+npm-debug.log
+cypress/plugins
+cypress/screenshots
+cypress/support
+cypress/videos
+.idea/
+Google-Partnership.iml

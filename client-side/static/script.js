@@ -5,17 +5,16 @@ export {geoidTag, priorityTag, snapTag, zero};
 export {updatePriorityLayer as default};
 
 /**
- * Initializes a new overlay and adds it to the map if it's supposed to be
- * visible by default (assets is source of truth).
+ * Adds an EarthEngine layer (from EEObject.getMap()) to the given Google Map
+ * and returns the "overlay" that was added, in case the caller wants to add
+ * callbacks or similar to that overlay.
  *
- * @param layerId
- * @param assetName
- * @param index {int}
- * @param display {boolean}
+ * @param {ee.Element} map
+ * @param {Object} layerId
+ * @param {string} layerName
  * @return {ee.MapLayerOverlay}
  */
-function newOverlayFromId(layerId, assetName, index, display) {
-  // create overlay
+function newOverlayFromId(map, layerId, layerName, index) {
   const overlay = new ee.MapLayerOverlay(
       'https://earthengine.googleapis.com/map', layerId.mapid, layerId.token,
       {});
@@ -23,18 +22,25 @@ function newOverlayFromId(layerId, assetName, index, display) {
   return overlay;
 }
 
-// Asynchronous wrapper for newOverlayFromId that calls getMap() with a callback
-// to avoid blocking on the result.
-function newOverlay(layer, assetName, index) {
+/**
+ * Asynchronous wrapper for addLayerFromId that calls getMap() with a callback
+ * to avoid blocking on the result.
+ *
+ * @param {google.maps.Map} map
+ * @param {ee.Element} layer
+ * @param {string} layerName
+ */
+function newOverlay(map, layer, assetName, index) {
   layer.getMap({
-    callback: function(layerId, failure) {
+    callback: function (layerId, failure) {
       if (layerId) {
-        newOverlayFromId(layerId, assetName, index);
+        const overlay = newOverlayFromId(map, layerId, assetName, index);
+        layerMap[assetName] = new LayerMapValue(overlay, index, true);
       } else {
         // TODO: if there's an error, disable checkbox.
         createError('getting id')(failure);
       }
-    }
+    },
   });
 }
 
@@ -47,12 +53,11 @@ function newOverlay(layer, assetName, index) {
 function initializeAssetLayers(map) {
   // This is the standard way to iterate over a dictionary according to
   // https://stackoverflow.com/questions/34448724/iterating-over-a-dictionary-in-javascript
-  Object.keys(assets).forEach(function(assetName, index) {
+  Object.keys(assets).forEach(function (assetName, index) {
     // TODO(juliexxia): generalize for ImageCollections (and Features/Images?)
     if (assets[assetName]) {
-      newOverlay(
-          ee.FeatureCollection(assetName), assetName, index, assets[assetName]);
-      layerMap[assetName] = new LayerMapValue(overlay, index, true);
+      newOverlay(map,
+          ee.FeatureCollection(assetName), assetName, index);
     } else {
       layerMap[assetName] = new LayerMapValue(null, index, false);
     }
@@ -69,12 +74,16 @@ function initializeAssetLayers(map) {
  * @param layer {FeatureCollection} the computed priority features
  */
 function initializePriorityLayer(map, layer) {
-  newOverlay(layer.style({styleProperty: 'style'}), priorityLayerName, priorityIndex);
+  newOverlay(map, layer.style({styleProperty: 'style'}), priorityLayerName,
+      priorityIndex);
 }
 
-/**
- * Hides the given overlay on the map and marks it not displayed in layerMap.
- */
+/*
+* Remove layerName from the map.
+*
+* @param {google.maps.Map} map
+* @param {string} layerName
+*/
 function removeLayer(map, assetName) {
   map.overlayMapTypes.setAt(layerMap[assetName].index, null);
   layerMap[assetName].displayed = false;
@@ -120,16 +129,21 @@ function LayerMapValue(overlay, index, displayed) {
   this.displayed = displayed;
 }
 
-// Processes a feature corresponding to a geographic area and returns a new one,
-// with just the GEOID and PRIORITY properties set, and a style attribute that
-// sets the color/opacity based on the priority, with all priorities past 99
-// equally opaque.
-//
-// povertyThreshold is used to filter out areas that are not poor enough (as
-// determined by the areas SNAP and TOTAL properties).
-//
-// scalingFactor multiplies the raw priority, it can be adjusted to make sure
-// that the values span the desired range of ~0 to ~100.
+/**
+ * Processes a feature corresponding to a geographic area and returns a new one,
+ * with just the GEOID and PRIORITY properties set, and a style attribute that
+ * sets the color/opacity based on the priority, with all priorities past 99
+ * equally opaque.
+ *
+ * @param {ee.Feature} feature
+ * @param {ee.Number} scalingFactor multiplies the raw priority, it can be
+ *     adjusted to make sure that the values span the desired range of ~0 to
+ * ~100.
+ * @param {number} povertyThreshold  used to filter out areas that are not poor
+ *     enough (as determined by the areas SNAP and TOTAL properties).
+ *
+ * @return {ee.Feature}
+ */
 function colorAndRate(feature, scalingFactor, povertyThreshold) {
   const rawRatio = ee.Number(feature.get('SNAP')).divide(feature.get('TOTAL'));
   const priority =
@@ -146,16 +160,26 @@ function colorAndRate(feature, scalingFactor, povertyThreshold) {
           .round();
   return ee
       .Feature(feature.geometry(), ee.Dictionary([
-        geoidTag, feature.get(geoidTag), priorityTag, priority, snapTag,
-        rawRatio
+        geoidTag,
+        feature.get(geoidTag),
+        priorityTag,
+        priority,
+        snapTag,
+        rawRatio,
       ]))
       .set({
-        style: {color: priority.min(priorityDisplayCap).format('ff00ff%02d')}
+        style: {color: priority.min(priorityDisplayCap).format('ff00ff%02d')},
       });
 }
 
+/**
+ * @param {ee.FeatureCollection} joinedData
+ * @param {ee.Number} scale
+ * @param {number} povertyThreshold
+ * @return {ee.FeatureCollection}
+ */
 function processJoinedData(joinedData, scale, povertyThreshold) {
-  return joinedData.map(function(feature) {
+  return joinedData.map(function (feature) {
     return colorAndRate(feature, scale, povertyThreshold);
   });
 }
@@ -165,9 +189,13 @@ let map = null;
 const joinedSnap =
     ee.FeatureCollection('users/janak/texas-snap-join-damage-with-buildings');
 
-// Removes the current score overlay on the map (if there is one).
-// Reprocesses scores with new povertyThreshold , overlays new score layer
-// and redraws table .
+/**
+ * Removes the current score overlay on the map (if there is one).
+ * Reprocesses scores with new povertyThreshold, overlays new score layer
+ * and redraws table.
+ *
+ * @param {number}povertyThreshold
+ */
 function updatePriorityLayer(povertyThreshold) {
   removeLayer(map, priorityLayerName);
 
@@ -178,11 +206,14 @@ function updatePriorityLayer(povertyThreshold) {
       () => drawTable(processedData, povertyThreshold));
 }
 
-// Main function that processes the data (FEMA damage, SNAP) and
-// creates/populates the map and table with a new poverty threshold.
+/**
+ * Main function that processes the data (FEMA damage, SNAP) and
+ * creates/populates the map and table with a new poverty threshold.
+ *
+ * @param {number} povertyThreshold
+ */
 function run() {
   damageScales = ee.Dictionary.fromLists(damageLevels, [0, 0, 1, 1, 2, 3]);
-
   createAssetCheckboxes();
   initializeAssetLayers(map);
   const defaultPovertyThreshold = 0.3;
@@ -198,29 +229,31 @@ function createAssetCheckboxes() {
   // a better place.
   // TODO(juliexxia): add events on click.
   Object.keys(assets).forEach(assetName => createNewCheckbox(assetName));
-  createNewCheckbox('priority');
+  createNewCheckbox(priorityLayerName);
 }
 
 function createNewCheckbox(assetName) {
-  const newBox = document.createElement('input');
+  let newBox = document.createElement('input');
   newBox.type = 'checkbox';
   newBox.id = assetName;
   document.body.appendChild(newBox);
-  const label = document.createElement('label');
+  let label = document.createElement('label');
   label.for = assetName;
   label.innerHTML = assetName;
   document.body.appendChild(label);
 }
 
-// Runs immediately (before document may have fully loaded). Adds a hook so that
-// when the document is loaded, Google Map is initialized, and on successful
-// login, EE data is overlayed.
-// TODO(janakr): authentication seems buggy, investigate.
+/**
+ * Runs immediately (before document may have fully loaded). Adds a hook so that
+ * when the document is loaded, Google Map is initialized, and on successful
+ * login, EE data is overlayed.
+ */
 function setup() {
   // The client ID from the Google Developers Console.
   // TODO(#13): This is from janakr's console. Should use one for GiveDirectly.
-  const CLIENT_ID =
-      '634162034024-oodhl7ngkg63hd9ha9ho9b3okcb0bp8s.apps.googleusercontent.com';
+  // eslint-disable-next-line no-unused-vars
+  const CLIENT_ID = '634162034024-oodhl7ngkg63hd9ha9ho9b3okcb0bp8s' +
+      '.apps.googleusercontent.com';
   // TODO(#13): This is from juliexxia's console. Should use one for
   // GiveDirectly. Also, this client id has not been properly configured yet.
   // const CLIENT_ID =
@@ -228,16 +261,17 @@ function setup() {
 
   google.charts.load('current', {packages: ['table', 'controls']});
 
-  $(document).ready(function() {
+  $(document).ready(function () {
     map = createMap();
 
     const runOnSuccess = function() {
       ee.initialize(
-          /*opt_baseurl=*/ null, /*opt_tileurl=*/ null, () => run(),
-          createError('initializing EE'));
+          /* opt_baseurl=*/ null, /* opt_tileurl=*/ null,
+          () => run(), createError('initializing EE'));
     };
 
     // Shows a button prompting the user to log in.
+    // eslint-disable-next-line no-unused-vars
     const onImmediateFailed = function() {
       $('.g-sign-in').removeClass('hidden');
       $('.output').text('(Log in to see the result.)');
@@ -260,13 +294,17 @@ function setup() {
     //     onImmediateFailed);
     runOnSuccess();
   });
-};
+}
 
-// TODO(janakr): use some standard error library?
+/**
+ * Simple function that returns a lambda to print an error to console.
+ *
+ * @param {string} message
+ * @return {Function}
+ */
 function createError(message) {
-  return function(error) {
-    console.error('Error ' + message + ': ' + error);
-  }
+  // TODO(janakr): use some standard error library?
+  return (error) => console.error('Error ' + message + ': ' + error);
 }
 
 setup();
