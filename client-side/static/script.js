@@ -187,7 +187,11 @@ function setup() {
     const defaultPovertyThreshold = 0.3;
     map = createMap();
 
-    const runOnSuccess = () => {};
+    const runOnSuccess = function() {
+      ee.initialize(
+          /* opt_baseurl=*/ null, /* opt_tileurl=*/ null,
+          () => run(defaultPovertyThreshold), createError('initializing EE'));
+    };
 
     // Shows a button prompting the user to log in.
     // eslint-disable-next-line no-unused-vars
