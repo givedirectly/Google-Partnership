@@ -1,7 +1,7 @@
 import createMap from './create_map.js';
 import drawTable from './draw_table.js';
+import processJoinedData from './process_joined_data.js';
 
-export {geoidTag, priorityTag, snapTag, zero};
 export {updatePriorityLayer as default};
 
 /**
@@ -91,17 +91,9 @@ function removeLayer(map, assetName) {
   layerMap[assetName].displayed = false;
 }
 
-const damageLevels = ee.List(['NOD', 'UNK', 'AFF', 'MIN', 'MAJ', 'DES']);
-// Initialized lazily, after ee.initialize() creates necessary function.
-let damageScales = null;
-const zero = ee.Number(0);
-const priorityDisplayCap = ee.Number(99);
 // TODO(janakr): this number probably needs to be user-adjusted, based on
 // dataset.
 const scalingFactor = ee.Number(100);
-const geoidTag = 'GEOID';
-const priorityTag = 'PRIORITY';
-const snapTag = 'SNAP PERCENTAGE';
 
 // Dictionary of known assets -> whether they should be displayed by default
 const assets = {
@@ -132,60 +124,6 @@ class LayerMapValue{
   }
 }
 
-/**
- * Processes a feature corresponding to a geographic area and returns a new one,
- * with just the GEOID and PRIORITY properties set, and a style attribute that
- * sets the color/opacity based on the priority, with all priorities past 99
- * equally opaque.
- *
- * @param {ee.Feature} feature
- * @param {ee.Number} scalingFactor multiplies the raw priority, it can be
- *     adjusted to make sure that the values span the desired range of ~0 to
- * ~100.
- * @param {number} povertyThreshold  used to filter out areas that are not poor
- *     enough (as determined by the areas SNAP and TOTAL properties).
- *
- * @return {ee.Feature}
- */
-function colorAndRate(feature, scalingFactor, povertyThreshold) {
-  const rawRatio = ee.Number(feature.get('SNAP')).divide(feature.get('TOTAL'));
-  const priority =
-      ee.Number(ee.Algorithms.If(
-                    rawRatio.lte(povertyThreshold), zero,
-                    ee.Number(damageLevels
-                                  .map(function(type) {
-                                    return ee.Number(damageScales.get(type))
-                                        .multiply(feature.get(type));
-                                  })
-                                  .reduce(ee.Reducer.sum()))
-                        .divide(feature.get('BUILDING_COUNT'))))
-          .multiply(scalingFactor)
-          .round();
-  return ee
-      .Feature(feature.geometry(), ee.Dictionary([
-        geoidTag,
-        feature.get(geoidTag),
-        priorityTag,
-        priority,
-        snapTag,
-        rawRatio,
-      ]))
-      .set({
-        style: {color: priority.min(priorityDisplayCap).format('ff00ff%02d')},
-      });
-}
-
-/**
- * @param {ee.FeatureCollection} joinedData
- * @param {ee.Number} scale
- * @param {number} povertyThreshold
- * @return {ee.FeatureCollection}
- */
-function processJoinedData(joinedData, scale, povertyThreshold) {
-  return joinedData.map(
-    (feature) => colorAndRate(feature, scale, povertyThreshold));
-}
-
 // The base Google Map, Initialized lazily to ensure doc is ready
 let map = null;
 const joinedSnap =
@@ -213,7 +151,6 @@ function updatePriorityLayer(povertyThreshold) {
  * creates/populates the map and table.
  */
 function run() {
-  damageScales = ee.Dictionary.fromLists(damageLevels, [0, 0, 1, 1, 2, 3]);
   createAssetCheckboxes();
   initializeAssetLayers(map);
   const defaultPovertyThreshold = 0.3;
@@ -233,12 +170,17 @@ function createAssetCheckboxes() {
   createNewCheckbox(priorityLayerName);
 }
 
+/**
+ * Creates a new checkbox for the given asset.
+ *
+ * @param {string} assetName
+ */
 function createNewCheckbox(assetName) {
-  let newBox = document.createElement('input');
+  const newBox = document.createElement('input');
   newBox.type = 'checkbox';
   newBox.id = assetName;
   document.body.appendChild(newBox);
-  let label = document.createElement('label');
+  const label = document.createElement('label');
   label.for = assetName;
   label.innerHTML = assetName;
   document.body.appendChild(label);
