@@ -1,4 +1,4 @@
-const host = 'http://localhost:8080/';
+const host = 'http://localhost:8081/';
 // Run via `yarn run cypress run`. Make sure you're using the right yarn!
 describe('Integration test', () => {
   it('Draws a polygon', () => {
@@ -7,6 +7,12 @@ describe('Integration test', () => {
     polygonButton.click();
     // Wait for polygon selection overlay to appear.
     // Fragile, but ensures that "clicking" layer is present.
+    // Explanation of string: 'div' means we're searching for elements that are
+    // divs. The [] indicate we're searching for an attribute of these elements.
+    // 'style' means that we are inspecting the style attribute in particular.
+    // The '*=' means we're searching for a substring, as opposed to the full
+    // attribute (contrast the 'title=' above). The remainder of the string was
+    // derived by inspecting the page after starting to draw a polygon.
     cy.get(
         'div[style*="cursor: url(\\"https://maps.gstatic.com/mapfiles/crosshair.cur\\") 7 7, crosshair;"]');
     drawPointAndPrepareForNext(50, 250);
@@ -30,6 +36,7 @@ describe('Integration test', () => {
  * @param {number} y y-coordinate of the point in Cypress's scheme.
  */
 function drawPointAndPrepareForNext(x, y) {
+  // TODO(janakr): delete these lines or uncomment them if they're needed.
   // mouse-move on map to simulate moving to next point might be necessary?
   // const clientX = x + 5;
   // const clientY = y + 81;
