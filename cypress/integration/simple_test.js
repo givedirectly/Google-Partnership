@@ -10,7 +10,12 @@ describe('Integration test', () => {
     cy.get(
         'div[style*="cursor: url(\\"https://maps.gstatic.com/mapfiles/crosshair.cur\\") 7 7, crosshair;"]');
     drawPointAndPrepareForNext(50, 250);
+    // TODO(janakr): test seems to fail reliably on command line without this
+    // and pass with it. Figure out what to actually test for on the page and
+    // remove this wait.
+    cy.wait(200);
     drawPointAndPrepareForNext(400, 50);
+    cy.wait(200);
     drawPointAndPrepareForNext(450, 150);
     drawPointAndPrepareForNext(50, 250);
     // Is the draggable edge present?
@@ -19,16 +24,17 @@ describe('Integration test', () => {
 });
 
 /**
- * Mouses over to point, clicks on it, and checks that point is drawn.
+ * Clicks on point and checks that point is drawn.
  *
  * @param {number} x x-coordinate of the point in Cypress's scheme.
  * @param {number} y y-coordinate of the point in Cypress's scheme.
  */
 function drawPointAndPrepareForNext(x, y) {
-  // mouse-move on map to simulate moving to next point seems necessary.
-  cy.get('.map').trigger('mousemove', {clientX: x, clientY: y});
+  // mouse-move on map to simulate moving to next point might be necessary?
+  // const clientX = x + 5;
+  // const clientY = y + 81;
+  // cy.get('.map').trigger('mousemove', {clientX: clientX, clientY: clientY});
   cy.get('.map').click(x, y);
-  // Ensure that element from click is present. Also seems necessary to
-  // make sure polygon is drawn successfully.
+  // Ensure that element from click is present.
   cy.get('div[style*="left: ' + (x - 325) + 'px; top: ' + (y - 245) + 'px;"');
 }
