@@ -41,7 +41,7 @@ function addLayer(map, layer, assetName, index) {
         // TODO: if there's an error, disable checkbox.
         createError('getting id')(failure);
       }
-    }
+    },
   });
 }
 
@@ -49,7 +49,7 @@ function addLayer(map, layer, assetName, index) {
  * Runs through asset map. For those that we auto-display on page load, creates
  * overlays and displays. Also populates the layerMap.
  *
- * @param map {google.maps.Map} main map
+ * @param {google.maps.Map} map main map
  */
 function initializeAssetLayers(map) {
   // This is the standard way to iterate over a dictionary according to
@@ -70,8 +70,8 @@ function initializeAssetLayers(map) {
  * add dynamically addable layers, it might be easier book keeping to have
  * priority sit at index 0, but having it last ensures it displays on top.
  *
- * @param map {google.maps.Map} main map
- * @param layer {FeatureCollection} the computed priority features
+ * @param {google.maps.Map} map main map
+ * @param {FeatureCollection} layer the computed priority features
  */
 function initializePriorityLayer(map, layer) {
   addLayer(
@@ -79,7 +79,7 @@ function initializePriorityLayer(map, layer) {
       priorityIndex);
 }
 
-/*
+/**
  * Removes an overlay from the map by setting its index in overlayMapTypes to
  * null. Records it is no longer being displayed in layerMap.
  *
@@ -97,7 +97,7 @@ const scalingFactor = ee.Number(100);
 
 // Dictionary of known assets -> whether they should be displayed by default
 const assets = {
-  'users/janak/FEMA_Damage_Assessments_Harvey_20170829': true
+  'users/janak/FEMA_Damage_Assessments_Harvey_20170829': true,
 };
 const priorityIndex = Object.keys(assets).length;
 const priorityLayerName = 'priority';
@@ -108,6 +108,7 @@ const priorityLayerName = 'priority';
 // only working with one map.
 const layerMap = {};
 
+/** TODO(juliexxia): add jsdoc */
 class LayerMapValue {
   /**
    * Values of layerMap
@@ -166,7 +167,7 @@ function createAssetCheckboxes() {
   // TODO: these probably shouldn't just sit at the bottom of the page - move to
   // a better place.
   // TODO(juliexxia): add events on click.
-  Object.keys(assets).forEach(assetName => createNewCheckbox(assetName));
+  Object.keys(assets).forEach((assetName) => createNewCheckbox(assetName));
   createNewCheckbox(priorityLayerName);
 }
 
