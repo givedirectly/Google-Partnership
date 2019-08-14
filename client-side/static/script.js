@@ -54,11 +54,10 @@ function addLayer(map, layer, assetName, index) {
 function initializeAssetLayers(map) {
   // This is the standard way to iterate over a dictionary according to
   // https://stackoverflow.com/questions/34448724/iterating-over-a-dictionary-in-javascript
-  Object.keys(assets).forEach(function (assetName, index) {
+  Object.keys(assets).forEach(function(assetName, index) {
     // TODO(juliexxia): generalize for ImageCollections (and Features/Images?)
     if (assets[assetName]) {
-      addLayer(map,
-          ee.FeatureCollection(assetName), assetName, index);
+      addLayer(map, ee.FeatureCollection(assetName), assetName, index);
     } else {
       layerMap[assetName] = new LayerMapValue(null, index, false);
     }
@@ -75,17 +74,18 @@ function initializeAssetLayers(map) {
  * @param layer {FeatureCollection} the computed priority features
  */
 function initializePriorityLayer(map, layer) {
-  addLayer(map, layer.style({styleProperty: 'style'}), priorityLayerName,
+  addLayer(
+      map, layer.style({styleProperty: 'style'}), priorityLayerName,
       priorityIndex);
 }
 
 /*
-* Removes an overlay from the map by setting its index in overlayMapTypes to null.
-* Records it is no longer being displayed in layerMap.
-*
-* @param {google.maps.Map} map
-* @param {string} assetName
-*/
+ * Removes an overlay from the map by setting its index in overlayMapTypes to
+ * null. Records it is no longer being displayed in layerMap.
+ *
+ * @param {google.maps.Map} map
+ * @param {string} assetName
+ */
 function removeLayer(map, assetName) {
   map.overlayMapTypes.setAt(layerMap[assetName].index, null);
   layerMap[assetName].displayed = false;
@@ -102,14 +102,14 @@ const assets = {
 const priorityIndex = Object.keys(assets).length;
 const priorityLayerName = 'priority';
 // Keep a map of asset name -> overlay, index, display status. Overlays are
-// lazily generated so pre-known assets that aren't supposed to display by default
-// will have an entry in this map, but the LayerMapValue will have a null
-// overlay field until we do want to display it.
-// Currently assume we're only working with one map.
+// lazily generated so pre-known assets that aren't supposed to display by
+// default will have an entry in this map, but the LayerMapValue will have a
+// null overlay field until we do want to display it. Currently assume we're
+// only working with one map.
 const layerMap = {};
 
-class LayerMapValue{
-  /** 
+class LayerMapValue {
+  /**
    * Values of layerMap
    *
    * @param {MapType} overlay - the actual layer (null if not created yet)
@@ -204,13 +204,13 @@ function setup() {
 
   google.charts.load('current', {packages: ['table', 'controls']});
 
-  $(document).ready(function () {
+  $(document).ready(function() {
     map = createMap();
 
     const runOnSuccess = function() {
       ee.initialize(
-          /* opt_baseurl=*/ null, /* opt_tileurl=*/ null,
-          run, createError('initializing EE'));
+          /* opt_baseurl=*/ null, /* opt_tileurl=*/ null, run,
+          createError('initializing EE'));
     };
 
     // Shows a button prompting the user to log in.
