@@ -76,21 +76,21 @@ class EeNumber {
   /**
    * Multiplies this value by value. Returns the product.
    *
-   * @param {number} value
+   * @param {EeNumber} value
    * @return {EeNumber}
    */
   multiply(value) {
-    return new EeNumber(this._myNumberValue * value);
+    return new EeNumber(this._myNumberValue * value._myNumberValue);
   }
 
   /**
    * Divides this value by value. Returns the result.
    *
-   * @param {number} value
+   * @param {EeNumber} value
    * @return {EeNumber}
    */
   divide(value) {
-    return new EeNumber(this._myNumberValue / value);
+    return new EeNumber(this._myNumberValue / value._myNumberValue);
   }
 
   /**

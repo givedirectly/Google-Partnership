@@ -1,4 +1,4 @@
-const host = 'http://localhost:8080/';
+const host = 'http://localhost:8081/';
 // Run via `yarn run cypress run`. Make sure you're using the right yarn!
 describe('Integration test', () => {
   it('Draws a polygon', () => {

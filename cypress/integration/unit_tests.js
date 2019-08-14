@@ -2,13 +2,10 @@ import processJoinedData from '../../client-side/static/process_joined_data.js';
 
 describe('Unit test', () => {
   it('Process joined data functions', () => {
-    // Assertion here to prevent "unused" warnings.
-    expect(ee).to.not.eql(null);
-    const joinedData = {};
     const featureProperties = new Map();
     featureProperties.set('SNAP', 2);
     featureProperties.set('TOTAL', 4);
-    featureProperties.set('BUILDING_COUNT', 75);
+    featureProperties.set('BUILDING_COUNT', ee.Number(75));
     featureProperties.set('GEOID', 'geoid');
     featureProperties.set('AFF', 1);
     featureProperties.set('MIN', 10);
@@ -18,10 +15,13 @@ describe('Unit test', () => {
     feature.get = (prop) => featureProperties.get(prop);
     const geometryObject = {};
     feature.geometry = () => geometryObject;
+    const joinedData = {};
     joinedData.map = (lambda) => {
       return [lambda(feature)];
     };
-    const result = processJoinedData(joinedData, 100, 0.3);
+    const result = processJoinedData(
+        joinedData, ee.Number(100) /*scalingFactor */,
+        0.3 /* povertyThreshold */);
     expect(result).to.be.an('array');
     expect(result.length).to.equal(1);
     const returnedFeature = result[0];
