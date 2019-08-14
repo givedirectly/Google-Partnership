@@ -12,4 +12,13 @@ $ gcloud info --format="value(installation.sdk_root)"
 # run dev_appserver.py from same directory as the .yaml file
 $ cd dir/with/yaml/file
 $ path/from/last/command/bin/dev_appserver.py .
+
+# Test changes. yarn must already be installed.
+$ cd this/directory
+$ yarn run cypress run
+
+# Set up auto-test-and-lint. yarn, eslint, clang-format, and cypress must
+# already be installed.
+$ cd this/directory
+$ cp pre-push-hook .git/hooks/pre-push
 </code></pre>
