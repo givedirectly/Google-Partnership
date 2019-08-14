@@ -5,8 +5,10 @@ describe('Unit test', () => {
     const featureProperties = new Map();
     featureProperties.set('SNAP', 2);
     featureProperties.set('TOTAL', 4);
-    featureProperties.set('BUILDING_COUNT', ee.Number(75));
+    featureProperties.set('BUILDING_COUNT', 75);
     featureProperties.set('GEOID', 'geoid');
+    featureProperties.set('NOD', 0);
+    featureProperties.set('UNK', 0);
     featureProperties.set('AFF', 1);
     featureProperties.set('MIN', 10);
     featureProperties.set('MAJ', 2);

@@ -76,21 +76,27 @@ class EeNumber {
   /**
    * Multiplies this value by value. Returns the product.
    *
-   * @param {EeNumber} value
+   * @param {EeNumber|number} value
    * @return {EeNumber}
    */
   multiply(value) {
-    return new EeNumber(this._myNumberValue * value._myNumberValue);
+    if (isEeNumber(value)) {
+      value = value._myNumberValue;
+    }
+    return new EeNumber(this._myNumberValue * value);
   }
 
   /**
    * Divides this value by value. Returns the result.
    *
-   * @param {EeNumber} value
+   * @param {EeNumber|number} value
    * @return {EeNumber}
    */
   divide(value) {
-    return new EeNumber(this._myNumberValue / value._myNumberValue);
+    if (isEeNumber(value)) {
+      value = value._myNumberValue;
+    }
+    return new EeNumber(this._myNumberValue / value);
   }
 
   /**
@@ -198,7 +204,6 @@ class Dictionary {
    *     array, has each key followed by each value.
    */
   constructor(dict) {
-    console.log('init dict with ', dict);
     if (isMap(dict)) {
       this.dict = dict;
     } else {
