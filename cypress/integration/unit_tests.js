@@ -20,7 +20,7 @@ describe('Unit test', () => {
       return [lambda(feature)];
     };
     const result = processJoinedData(
-        joinedData, ee.Number(100) /*scalingFactor */,
+        joinedData, ee.Number(100) /* scalingFactor */,
         0.3 /* povertyThreshold */);
     expect(result).to.be.an('array');
     expect(result.length).to.equal(1);
