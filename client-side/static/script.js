@@ -11,7 +11,7 @@ export {updatePriorityLayer as default};
  *
  * @param {ee.Element} map
  * @param {Object} layerId
- * @param {int} index
+ * @param {number} index
  * @return {ee.MapLayerOverlay}
  */
 function addLayerFromId(map, layerId, index) {
@@ -29,11 +29,11 @@ function addLayerFromId(map, layerId, index) {
  * @param {google.maps.Map} map
  * @param {ee.Element} layer
  * @param {string} assetName
- * @param {int} index
+ * @param {number} index
  */
 function addLayer(map, layer, assetName, index) {
   layer.getMap({
-    callback: function (layerId, failure) {
+    callback: (layerId, failure) => {
       if (layerId) {
         const overlay = addLayerFromId(map, layerId, index);
         layerMap[assetName] = new LayerMapValue(overlay, index, true);
@@ -41,12 +41,12 @@ function addLayer(map, layer, assetName, index) {
         // TODO: if there's an error, disable checkbox.
         createError('getting id')(failure);
       }
-    },
+    }
   });
 }
 
 /**
- * Runs through asset map, for those that we auto-display on page load, creates
+ * Runs through asset map. For those that we auto-display on page load, creates
  * overlays and displays. Also populates the layerMap.
  *
  * @param map {google.maps.Map} main map
@@ -116,19 +116,20 @@ const priorityLayerName = 'priority';
 // Currently assume we're only working with one map.
 const layerMap = {};
 
-/**
- * Values of layerMap
- *
- * @constructor
- * @param {MapType} overlay - the actual layer (null if not created yet)
- * @param {int} index - position in list of assets (does not change)
- * @param {boolean} displayed - true if layer is currently displayed
- */
-function LayerMapValue(overlay, index, displayed) {
-  this.overlay = overlay;
-  // index in map.overlayMapTypes (-1 if not displayed right now);
-  this.index = index;
-  this.displayed = displayed;
+class LayerMapValue{
+  /** 
+   * Values of layerMap
+   *
+   * @param {MapType} overlay - the actual layer (null if not created yet)
+   * @param {number} index - position in list of assets (does not change)
+   * @param {boolean} displayed - true if layer is currently displayed
+   */
+  constructor(overlay, index, displayed) {
+    this.overlay = overlay;
+    /** @const */
+    this.index = index;
+    this.displayed = displayed;
+  }
 }
 
 /**
@@ -181,9 +182,8 @@ function colorAndRate(feature, scalingFactor, povertyThreshold) {
  * @return {ee.FeatureCollection}
  */
 function processJoinedData(joinedData, scale, povertyThreshold) {
-  return joinedData.map(function (feature) {
-    return colorAndRate(feature, scale, povertyThreshold);
-  });
+  return joinedData.map(
+    (feature) => colorAndRate(feature, scale, povertyThreshold));
 }
 
 // The base Google Map, Initialized lazily to ensure doc is ready
@@ -224,9 +224,7 @@ function run() {
       () => drawTable(processedData, defaultPovertyThreshold));
 }
 
-/**
- * Creates checkboxes for all known assets and the priority overlay
- */
+/** Creates checkboxes for all known assets and the priority overlay. */
 function createAssetCheckboxes() {
   // TODO: these probably shouldn't just sit at the bottom of the page - move to
   // a better place.
@@ -270,7 +268,7 @@ function setup() {
     const runOnSuccess = function() {
       ee.initialize(
           /* opt_baseurl=*/ null, /* opt_tileurl=*/ null,
-          () => run(), createError('initializing EE'));
+          run, createError('initializing EE'));
     };
 
     // Shows a button prompting the user to log in.
