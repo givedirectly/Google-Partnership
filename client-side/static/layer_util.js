@@ -6,7 +6,7 @@ export {addLayer, removeLayer};
  * and returns the "overlay" that was added, in case the caller wants to add
  * callbacks or similar to that overlay.
  *
- * @param {ee.Element} map
+ * @param {google.maps.Map} map
  * @param {Object} layerId
  * @param {number} index
  * @return {ee.MapLayerOverlay}
@@ -23,7 +23,6 @@ function addLayerFromId(map, layerId, index) {
  * Asynchronous wrapper for addLayerFromId that calls getMap() with a callback
  * to avoid blocking on the result. This also populates layerMap.
  *
- * @param {google.maps.Map} map
  * @param {ee.Element} layer
  * @param {string} assetName
  * @param {number} index

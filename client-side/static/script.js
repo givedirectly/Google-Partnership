@@ -1,11 +1,13 @@
+import createEeConstants from './ee_constants.js';
 import createMap from './create_map.js';
 import run from './run.js';
-import createEeConstants from './ee_constants.js';
 
-export {map, eeConstants};
+export {eeConstants, map};
 
 // The base Google Map, Initialized lazily to ensure doc is ready
 let map = null;
+// Earth engine constants shared by multiple files. Initialized lazily to
+// prevent having top level objects that use ee.
 let eeConstants = null;
 
 /**

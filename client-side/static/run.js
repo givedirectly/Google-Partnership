@@ -1,7 +1,7 @@
 import drawTable from './draw_table.js';
 import processJoinedData from './process_joined_data.js';
 import {addLayer} from './layer_util.js';
-import {map, eeConstants} from './script.js';
+import {eeConstants, map} from './script.js';
 
 export {
   run as default,
