@@ -11,16 +11,16 @@ export {drawTable as default};
  */
 function drawTable(features) {
   const sortedNonZeroPriority =
-      features.filter(ee.Filter.gt(priorityTag, eeConstants.zero)).sort(
-          priorityTag, false);
+      features.filter(ee.Filter.gt(priorityTag, eeConstants.zero))
+          .sort(priorityTag, false);
   const headings = [geoidTag, priorityTag, snapTag];
   const asListWithHeadings =
-      ee.List(sortedNonZeroPriority.iterate(function (feature, list) {
+      ee.List(sortedNonZeroPriority.iterate(function(feature, list) {
         return ee.List(list).add(headings.map((col) => feature.get(col)));
       }, [headings]));
   // TODO(#37): These callbacks could be executed out of order, and the table
   //  might not reflect the user's latest request.
-  asListWithHeadings.evaluate(function (evaluatedTable, failure) {
+  asListWithHeadings.evaluate(function(evaluatedTable, failure) {
     if (typeof failure !== 'undefined') {
       // TODO(juliexxia): more robust error reporting
       // https://developers.google.com/chart/interactive/docs/reference#errordisplay

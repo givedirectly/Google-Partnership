@@ -1,14 +1,14 @@
 import drawTable from './draw_table.js';
-import processJoinedData from './process_joined_data.js';
 import {addLayer} from './layer_util.js';
+import processJoinedData from './process_joined_data.js';
 import {eeConstants, map} from './script.js';
 
 export {
-  run as default,
   initializePriorityLayer,
   layerMap,
   LayerMapValue,
   priorityLayerName,
+  run as default,
 };
 
 // Dictionary of known assets -> whether they should be displayed by default
@@ -28,7 +28,8 @@ const layerMap = {};
 /** Values of layerMap. */
 class LayerMapValue {
   /**
-   * @param {google.maps.MapType} overlay - the actual layer (null if not created yet)
+   * @param {google.maps.MapType} overlay - the actual layer (null if not
+   *     created yet)
    * @param {number} index - position in list of assets (does not change)
    * @param {boolean} displayed - true if layer is currently displayed
    */
@@ -50,9 +51,9 @@ function run() {
   const defaultPovertyThreshold = 0.3;
   // TODO(janakr): this number probably needs to be user-adjusted, based on
   // dataset.
-  const processedData =
-      processJoinedData(eeConstants.joinedSnap, eeConstants.scalingFactor,
-          defaultPovertyThreshold);
+  const processedData = processJoinedData(
+      eeConstants.joinedSnap, eeConstants.scalingFactor,
+      defaultPovertyThreshold);
   initializePriorityLayer(map, processedData);
   google.charts.setOnLoadCallback(
       () => drawTable(processedData, defaultPovertyThreshold));
@@ -92,7 +93,7 @@ function createNewCheckbox(assetName) {
 function initializeAssetLayers(map) {
   // This is the standard way to iterate over a dictionary according to
   // https://stackoverflow.com/questions/34448724/iterating-over-a-dictionary-in-javascript
-  Object.keys(assets).forEach(function (assetName, index) {
+  Object.keys(assets).forEach(function(assetName, index) {
     // TODO(juliexxia): generalize for ImageCollections (and Features/Images?)
     if (assets[assetName]) {
       addLayer(map, ee.FeatureCollection(assetName), assetName, index);

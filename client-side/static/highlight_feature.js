@@ -7,7 +7,7 @@ export {highlightFeature as default};
  * @param {google.maps.Map} map
  */
 function highlightFeature(feature, map) {
-  feature.geometry().evaluate(function (geo, failure) {
+  feature.geometry().evaluate(function(geo, failure) {
     if (geo) {
       const jsonGeometry = JSON.parse(ee.Geometry(geo).toGeoJSONString());
       // This is a JSON object representing a Google Maps API feature.

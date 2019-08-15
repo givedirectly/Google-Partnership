@@ -23,13 +23,12 @@ const damageKey = 'DMG_LEVEL';
  * @return {ee.Feature}
  */
 function countDamage(feature) {
-  const damage =
-      ee.FeatureCollection(
-          'users/janak/FEMA_Damage_Assessments_Harvey_20170829');
+  const damage = ee.FeatureCollection(
+      'users/janak/FEMA_Damage_Assessments_Harvey_20170829');
   // TODO(janakr): move this list into a common module.
   const damageLevels = ee.List(['NOD', 'UNK', 'AFF', 'MIN', 'MAJ', 'DES']);
-  const damageFilters = damageLevels.map(
-      (type) => ee.Filter.eq(damageKey, type));
+  const damageFilters =
+      damageLevels.map((type) => ee.Filter.eq(damageKey, type));
 
   const mainFeature = ee.Feature(feature.get('primary'));
   // TODO(janakr): #geometry() is deprecated?
@@ -88,9 +87,10 @@ function padToTwoDigits(i) {
 function run() {
   ee.initialize();
 
-  // TODO(#22): get raw Census data, and do the snap join in this script as well.
+  // TODO(#22): get raw Census data, and do the snap join in this script as
+  // well.
   const rawSnap = ee.FeatureCollection('users/janak/texas-snap')
-      .filterBounds(damage.geometry());
+                      .filterBounds(damage.geometry());
   const buildings = ee.FeatureCollection('users/janak/census_building_data');
 
   const processedBuildings = buildings.map(countBuildings);
@@ -103,7 +103,7 @@ function run() {
   task.start();
   $('.upload-status')
       .text('Check Code Editor console for progress. Task: ' + task.id);
-  joinedSnap.size().evaluate(function (val, failure) {
+  joinedSnap.size().evaluate(function(val, failure) {
     if (val) {
       $('.upload-status').append('\n<p>Found ' + val + ' elements');
     } else {
@@ -122,13 +122,13 @@ function setup() {
   const CLIENT_ID = '634162034024-oodhl7ngkg63hd9ha9ho9b3okcb0bp8s' +
       '.apps.googleusercontent.com';
 
-  $(document).ready(function () {
+  $(document).ready(function() {
     // Shows a button prompting the user to log in.
-    const onImmediateFailed = function () {
+    const onImmediateFailed = function() {
       $('.g-sign-in').removeClass('hidden');
       $('.output').text('(Log in to see the result.)');
-      $('.g-sign-in .button').click(function () {
-        ee.data.authenticateViaPopup(function () {
+      $('.g-sign-in .button').click(function() {
+        ee.data.authenticateViaPopup(function() {
           // If the login succeeds, hide the login button and run the analysis.
           $('.g-sign-in').addClass('hidden');
           run();

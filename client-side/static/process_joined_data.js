@@ -29,11 +29,11 @@ function colorAndRate(feature, scalingFactor, povertyThreshold, damageLevels) {
   const priority = ee.Number(ee.Algorithms.If(
       rawRatio.lte(povertyThreshold), eeConstants.zero,
       ee.Number(damageLevels
-          .map(function (type) {
-            return ee.Number(damageScales.get(type))
-                .multiply(feature.get(type));
-          })
-          .reduce(ee.Reducer.sum()))
+                    .map(function(type) {
+                      return ee.Number(damageScales.get(type))
+                          .multiply(feature.get(type));
+                    })
+                    .reduce(ee.Reducer.sum()))
           .multiply(scalingFactor)
           .divide(feature.get('BUILDING_COUNT'))
           .round()));
@@ -63,7 +63,7 @@ function processJoinedData(joinedData, scale, povertyThreshold) {
   if (damageScales == null) {
     damageScales = ee.Dictionary.fromLists(damageLevels, [0, 0, 1, 1, 2, 3]);
   }
-  return joinedData.map(function (feature) {
+  return joinedData.map(function(feature) {
     return colorAndRate(feature, scale, povertyThreshold, damageLevels);
   });
 }

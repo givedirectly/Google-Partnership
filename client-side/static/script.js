@@ -1,5 +1,5 @@
-import createEeConstants from './ee_constants.js';
 import createMap from './create_map.js';
+import createEeConstants from './ee_constants.js';
 import run from './run.js';
 
 export {eeConstants, map};
