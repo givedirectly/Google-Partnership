@@ -1,8 +1,6 @@
-import drawTable from './draw_table.js';
 import {removeLayer} from './layer_util.js';
-import processJoinedData from './process_joined_data.js';
-import {initializePriorityLayer, priorityLayerName} from './run.js';
-import {eeConstants, map} from './script.js';
+import {createAndDisplayJoinedData, priorityLayerName} from './run.js';
+import {map} from './script.js';
 
 export {update as default};
 
@@ -27,10 +25,5 @@ function update() {
  */
 function updatePriorityLayer(povertyThreshold) {
   removeLayer(map, priorityLayerName);
-
-  const processedData = processJoinedData(
-      eeConstants.joinedSnap, eeConstants.scalingFactor, povertyThreshold);
-  initializePriorityLayer(map, processedData);
-  google.charts.setOnLoadCallback(
-      () => drawTable(processedData, povertyThreshold));
+  createAndDisplayJoinedData(povertyThreshold);
 }

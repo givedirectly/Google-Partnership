@@ -1,10 +1,10 @@
 import drawTable from './draw_table.js';
 import {addLayer} from './layer_util.js';
 import processJoinedData from './process_joined_data.js';
-import {eeConstants, map} from './script.js';
+import {map} from './script.js';
 
 export {
-  initializePriorityLayer,
+  createAndDisplayJoinedData,
   layerMap,
   LayerMapValue,
   priorityLayerName,
@@ -16,6 +16,8 @@ const assets = {
   'users/janak/FEMA_Damage_Assessments_Harvey_20170829': true,
 };
 
+const joinedSnapAsset = 'users/janak/texas-snap-join-damage-with-buildings';
+const scalingFactor = 100;
 const priorityIndex = Object.keys(assets).length;
 const priorityLayerName = 'priority';
 // Keep a map of asset name -> overlay, index, display status. Overlays are
@@ -49,14 +51,15 @@ function run() {
   createAssetCheckboxes();
   initializeAssetLayers(map);
   const defaultPovertyThreshold = 0.3;
-  // TODO(janakr): this number probably needs to be user-adjusted, based on
-  // dataset.
+  createAndDisplayJoinedData(defaultPovertyThreshold);
+}
+
+function createAndDisplayJoinedData(povertyThreshold) {
   const processedData = processJoinedData(
-      eeConstants.joinedSnap, eeConstants.scalingFactor,
-      defaultPovertyThreshold);
+      ee.FeatureCollection(joinedSnapAsset), ee.Number(scalingFactor),
+      povertyThreshold);
   initializePriorityLayer(map, processedData);
-  google.charts.setOnLoadCallback(
-      () => drawTable(processedData, defaultPovertyThreshold));
+  google.charts.setOnLoadCallback(() => drawTable(processedData));
 }
 
 /** Creates checkboxes for all known assets and the priority overlay. */
@@ -110,7 +113,7 @@ function initializeAssetLayers(map) {
  * priority sit at index 0, but having it last ensures it displays on top.
  *
  * @param {google.maps.Map} map main map
- * @param {FeatureCollection} layer the computed priority features
+ * @param {ee.FeatureCollection} layer the computed priority features
  */
 function initializePriorityLayer(map, layer) {
   addLayer(

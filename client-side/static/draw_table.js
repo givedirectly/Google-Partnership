@@ -1,5 +1,4 @@
 import {geoidTag, priorityTag, snapTag} from './process_joined_data.js';
-import {eeConstants} from './script.js';
 
 export {drawTable as default};
 
@@ -7,11 +6,11 @@ export {drawTable as default};
  * Draw a ranked table of the given features that have a SNAP ratio over the
  * given threshold.
  *
- * @param {FeatureCollection} features
+ * @param {ee.FeatureCollection} features
  */
 function drawTable(features) {
   const sortedNonZeroPriority =
-      features.filter(ee.Filter.gt(priorityTag, eeConstants.zero))
+      features.filter(ee.Filter.gt(priorityTag, ee.Number(0)))
           .sort(priorityTag, false);
   const headings = [geoidTag, priorityTag, snapTag];
   const asListWithHeadings =

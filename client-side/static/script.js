@@ -1,14 +1,10 @@
 import createMap from './create_map.js';
-import createEeConstants from './ee_constants.js';
 import run from './run.js';
 
-export {eeConstants, map};
+export {map};
 
 // The base Google Map, Initialized lazily to ensure doc is ready
 let map = null;
-// Earth engine constants shared by multiple files. Initialized lazily to
-// prevent having top level objects that use ee.
-let eeConstants = null;
 
 /**
  * Runs immediately (before document may have fully loaded). Adds a hook so that
@@ -30,7 +26,6 @@ function setup() {
 
   $(document).ready(function() {
     map = createMap();
-    eeConstants = createEeConstants();
 
     const runOnSuccess = function() {
       ee.initialize(

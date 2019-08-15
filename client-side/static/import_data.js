@@ -1,5 +1,3 @@
-import {eeConstants} from './script.js';
-
 /**
  * Joins Texas Census block-group-level SNAP/population data with building
  * counts and damage, and creates a FeatureCollection. Requires that all of
@@ -14,6 +12,10 @@ const censusTotalKey = 'ACS_16_5_2';
 const censusBuildingKeyPrefix = 'HD01_VD';
 
 const damageKey = 'DMG_LEVEL';
+const damageLevelsList = ['NOD', 'UNK', 'AFF', 'MIN', 'MAJ', 'DES'];
+const damageAsset = 'users/janak/FEMA_Damage_Assessments_Harvey_20170829';
+const rawSnapAsset = 'users/janak/texas-snap';
+const buildingsAsset = 'users/janak/census_building_data';
 
 /**
  * Counts the number of damaged buildings within the boundaries of the given
@@ -23,10 +25,9 @@ const damageKey = 'DMG_LEVEL';
  * @return {ee.Feature}
  */
 function countDamage(feature) {
-  const damage = ee.FeatureCollection(
-      'users/janak/FEMA_Damage_Assessments_Harvey_20170829');
+  const damage = ee.FeatureCollection(damageAsset);
   // TODO(janakr): move this list into a common module.
-  const damageLevels = ee.List(['NOD', 'UNK', 'AFF', 'MIN', 'MAJ', 'DES']);
+  const damageLevels = ee.List(damageLevelsList);
   const damageFilters =
       damageLevels.map((type) => ee.Filter.eq(damageKey, type));
 
@@ -55,7 +56,7 @@ function countDamage(feature) {
  * @return {ee.Feature}
  */
 function countBuildings(feature) {
-  let totalBuildings = eeConstants.zero;
+  let totalBuildings = ee.Number(0);
   // Columns in Census data. HD01_VD{i} is the number of buildings in category
   // i, where category 1 is single homes, category 2 is attached, etc. See
   // Census table B25024 for details.
@@ -89,9 +90,9 @@ function run() {
 
   // TODO(#22): get raw Census data, and do the snap join in this script as
   // well.
-  const rawSnap = ee.FeatureCollection('users/janak/texas-snap')
-                      .filterBounds(damage.geometry());
-  const buildings = ee.FeatureCollection('users/janak/census_building_data');
+  const rawSnap =
+      ee.FeatureCollection(rawSnapAsset).filterBounds(damage.geometry());
+  const buildings = ee.FeatureCollection(buildingsAsset);
 
   const processedBuildings = buildings.map(countBuildings);
   const joinedSnap = ee.Join.inner().apply(
