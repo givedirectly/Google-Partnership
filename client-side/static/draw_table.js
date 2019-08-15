@@ -1,4 +1,4 @@
-import {geoidTag, priorityTag, snapTag, zero} from './script.js';
+import {geoidTag, priorityTag, snapTag, zero} from './process_joined_data.js';
 
 export {drawTable as default};
 
