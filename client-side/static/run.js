@@ -54,6 +54,7 @@ function run() {
   createAndDisplayJoinedData(defaultPovertyThreshold);
 }
 
+/** Creates the priority overlay and draws the table */
 function createAndDisplayJoinedData(povertyThreshold) {
   const processedData = processJoinedData(
       ee.FeatureCollection(joinedSnapAsset), ee.Number(scalingFactor),

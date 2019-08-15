@@ -21,9 +21,10 @@ const priorityDisplayCap = 99;
  * @param {ee.Feature} feature
  * @param {ee.Number} scalingFactor multiplies the raw priority, it can be
  *     adjusted to make sure that the values span the desired range of ~0 to
- * ~100.
+ *     ~100.
  * @param {number} povertyThreshold  used to filter out areas that are not poor
  *     enough (as determined by the areas SNAP and TOTAL properties).
+ * @param {ee.List} damageLevels
  *
  * @return {ee.Feature}
  */
@@ -52,7 +53,7 @@ function colorAndRate(feature, scalingFactor, povertyThreshold, damageLevels) {
       .set({
         style: {
           color:
-              priority.min(ee.Number(priorityDisplayCap)).format('ff00ff%02d')
+              priority.min(ee.Number(priorityDisplayCap)).format('ff00ff%02d'),
         },
       });
 }
