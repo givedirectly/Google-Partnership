@@ -1,5 +1,5 @@
 import {removePriorityLayer} from './layer_util.js';
-import {createAndDisplayJoinedData, priorityLayerName} from './run.js';
+import {createAndDisplayJoinedData} from './run.js';
 import {map} from './script.js';
 
 export {update as default};
