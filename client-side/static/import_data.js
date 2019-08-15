@@ -1,3 +1,5 @@
+import damageLevelsList from './fema_damage_levels.js';
+
 /**
  * Joins Texas Census block-group-level SNAP/population data with building
  * counts and damage, and creates a FeatureCollection. Requires that all of
@@ -12,7 +14,6 @@ const censusTotalKey = 'ACS_16_5_2';
 const censusBuildingKeyPrefix = 'HD01_VD';
 
 const damageKey = 'DMG_LEVEL';
-const damageLevelsList = ['NOD', 'UNK', 'AFF', 'MIN', 'MAJ', 'DES'];
 const damageAsset = 'users/janak/FEMA_Damage_Assessments_Harvey_20170829';
 const rawSnapAsset = 'users/janak/texas-snap';
 const buildingsAsset = 'users/janak/census_building_data';
@@ -26,7 +27,6 @@ const buildingsAsset = 'users/janak/census_building_data';
  */
 function countDamage(feature) {
   const damage = ee.FeatureCollection(damageAsset);
-  // TODO(janakr): move this list into a common module.
   const damageLevels = ee.List(damageLevelsList);
   const damageFilters =
       damageLevels.map((type) => ee.Filter.eq(damageKey, type));

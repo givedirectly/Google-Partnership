@@ -1,9 +1,7 @@
+import damageLevelsList from './fema_damage_levels.js';
+
 export {geoidTag, priorityTag, processJoinedData as default, snapTag};
 
-// Initialized lazily, after ee.initialize() creates necessary function.
-let damageScales = null;
-// TODO: combine with list in import_data?
-const damageLevelsList = ['NOD', 'UNK', 'AFF', 'MIN', 'MAJ', 'DES'];
 const damageLevelMultipliers = [0, 0, 1, 1, 2, 3];
 
 const geoidTag = 'GEOID';
@@ -25,10 +23,12 @@ const priorityDisplayCap = 99;
  * @param {number} povertyThreshold  used to filter out areas that are not poor
  *     enough (as determined by the areas SNAP and TOTAL properties).
  * @param {ee.List} damageLevels
+ * @param {ee.Dictionary} damageScales
  *
  * @return {ee.Feature}
  */
-function colorAndRate(feature, scalingFactor, povertyThreshold, damageLevels) {
+function colorAndRate(
+    feature, scalingFactor, povertyThreshold, damageLevels, damageScales) {
   const rawRatio = ee.Number(feature.get('SNAP')).divide(feature.get('TOTAL'));
   const priority = ee.Number(ee.Algorithms.If(
       rawRatio.lte(povertyThreshold), ee.Number(0),
@@ -66,11 +66,10 @@ function colorAndRate(feature, scalingFactor, povertyThreshold, damageLevels) {
  */
 function processJoinedData(joinedData, scale, povertyThreshold) {
   const damageLevels = ee.List(damageLevelsList);
-  if (damageScales == null) {
-    damageScales =
-        ee.Dictionary.fromLists(damageLevels, damageLevelMultipliers);
-  }
+  const damageScales =
+      ee.Dictionary.fromLists(damageLevels, damageLevelMultipliers);
   return joinedData.map(function(feature) {
-    return colorAndRate(feature, scale, povertyThreshold, damageLevels);
+    return colorAndRate(
+        feature, scale, povertyThreshold, damageLevels, damageScales);
   });
 }

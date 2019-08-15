@@ -1,7 +1,6 @@
 import drawTable from './draw_table.js';
 import {addLayer, addNullLayer} from './layer_util.js';
 import processJoinedData from './process_joined_data.js';
-import {map} from './script.js';
 
 export {
   createAndDisplayJoinedData,
@@ -22,20 +21,23 @@ const priorityLayerName = 'priority';
 /**
  * Main function that processes the known assets (FEMA damage, etc., SNAP) and
  * creates/populates the map and table.
+ *
+ * @param {google.maps.Map} map main map
  */
-function run() {
+function run(map) {
   createAssetCheckboxes();
   initializeAssetLayers(map);
-  const defaultPovertyThreshold = 0.3;
-  createAndDisplayJoinedData(defaultPovertyThreshold);
+  createAndDisplayJoinedData(map, /* defaultPovertyThreshold=*/ 0.3);
 }
 
 /**
  * Creates the priority overlay and draws the table
+ *
+ * @param {google.maps.Map} map main map
  * @param {number} povertyThreshold a number between 0 and 1 representing what
  *     fraction of the population must be SNAP eligible to be considered.
  */
-function createAndDisplayJoinedData(povertyThreshold) {
+function createAndDisplayJoinedData(map, povertyThreshold) {
   const processedData = processJoinedData(
       ee.FeatureCollection(joinedSnapAsset), ee.Number(scalingFactor),
       povertyThreshold);

@@ -29,7 +29,7 @@ function setup() {
 
     const runOnSuccess = function() {
       ee.initialize(
-          /* opt_baseurl=*/ null, /* opt_tileurl=*/ null, run,
+          /* opt_baseurl=*/ null, /* opt_tileurl=*/ null, () => run(map),
           createError('initializing EE'));
     };
 
