@@ -1,6 +1,30 @@
-import {layerMap, LayerMapValue} from './run.js';
+import {priorityLayerName} from './run.js';
 
-export {addLayer, removeLayer};
+export {addLayer, addNullLayer, removeLayer, removePriorityLayer};
+
+// Keep a map of asset name -> overlay, index, display status. Overlays are
+// lazily generated i.e. pre-known assets that don't display by
+// default will have an entry in this map, but the LayerMapValue will have a
+// null overlay field until we do want to display it. Currently assume we're
+// only working with one map.
+const layerMap = {};
+
+/** Values of layerMap. */
+class LayerMapValue {
+  /**
+   * @param {google.maps.MapType} overlay - the actual layer (null if not
+   *     created yet)
+   * @param {number} index - position in list of assets (does not change)
+   * @param {boolean} displayed - true if layer is currently displayed
+   */
+  constructor(overlay, index, displayed) {
+    this.overlay = overlay;
+    /** @const */
+    this.index = index;
+    this.displayed = displayed;
+  }
+}
+
 
 /**
  * Adds an EarthEngine layer (from EEObject.getMap()) to the given Google Map
@@ -44,6 +68,17 @@ function addLayer(map, layer, assetName, index) {
 }
 
 /**
+ * Adds an entry to layerMap when we haven't actually generated the overlay
+ * yet. Useful for assets that we don't want to display by default.
+ *
+ * @param {string} assetName
+ * @param {number} index
+ */
+function addNullLayer(assetName, index) {
+  layerMap[assetName] = new LayerMapValue(null, index, false);
+}
+
+/**
  * Removes an overlay from the map by setting its index in overlayMapTypes to
  * null. Records it is no longer being displayed in layerMap.
  *
@@ -53,4 +88,12 @@ function addLayer(map, layer, assetName, index) {
 function removeLayer(map, assetName) {
   map.overlayMapTypes.setAt(layerMap[assetName].index, null);
   layerMap[assetName].displayed = false;
+}
+
+/**
+ * Removes the priority layer overlay.
+ * @param {google.maps.Map} map
+ */
+function removePriorityLayer(map) {
+  removeLayer(map, priorityLayerName);
 }
