@@ -24,6 +24,7 @@ function addLayerFromId(map, layerId, index) {
  * Asynchronous wrapper for addLayerFromId that calls getMap() with a callback
  * to avoid blocking on the result. This also populates layerMap.
  *
+ * @param {google.maps.Map} map
  * @param {ee.Element} layer
  * @param {string} assetName
  * @param {number} index
