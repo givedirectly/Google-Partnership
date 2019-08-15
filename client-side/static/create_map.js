@@ -34,14 +34,14 @@ function createMap() {
   map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
 
   // Bias the SearchBox results towards current map's viewport.
-  map.addListener('bounds_changed', function() {
+  map.addListener('bounds_changed', function () {
     searchBox.setBounds(map.getBounds());
   });
 
   let markers = [];
   // Listen for the event fired when the user selects a prediction and retrieve
   // more details for that place.
-  searchBox.addListener('places_changed', function() {
+  searchBox.addListener('places_changed', function () {
     const places = searchBox.getPlaces();
 
     if (!places.length) {
@@ -54,7 +54,7 @@ function createMap() {
 
     // For each place, get the icon, name and location.
     const bounds = new google.maps.LatLngBounds();
-    places.forEach(function(place) {
+    places.forEach(function (place) {
       if (!place.geometry) {
         console.log('Returned place contains no geometry');
         return;
