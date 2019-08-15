@@ -54,7 +54,11 @@ function run() {
   createAndDisplayJoinedData(defaultPovertyThreshold);
 }
 
-/** Creates the priority overlay and draws the table */
+/**
+ * Creates the priority overlay and draws the table
+ * @param {number} povertyThreshold a number between 0 and 1 representing what
+ *     fraction of the population must be SNAP eligible to be considered.
+ */
 function createAndDisplayJoinedData(povertyThreshold) {
   const processedData = processJoinedData(
       ee.FeatureCollection(joinedSnapAsset), ee.Number(scalingFactor),
