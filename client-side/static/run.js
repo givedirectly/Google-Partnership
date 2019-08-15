@@ -1,12 +1,15 @@
-import drawTable from './draw_table';
-import processJoinedData from './process_joined_data';
+import drawTable from './draw_table.js';
+import processJoinedData from './process_joined_data.js';
 import {addLayer} from './layer_util.js';
+import {map, eeConstants} from './script.js';
 
-export {run as default};
-
-// TODO(janakr): this number probably needs to be user-adjusted, based on
-// dataset.
-const scalingFactor = ee.Number(100);
+export {
+  run as default,
+  initializePriorityLayer,
+  layerMap,
+  LayerMapValue,
+  priorityLayerName,
+};
 
 // Dictionary of known assets -> whether they should be displayed by default
 const assets = {
@@ -21,11 +24,10 @@ const priorityLayerName = 'priority';
 // null overlay field until we do want to display it. Currently assume we're
 // only working with one map.
 const layerMap = {};
-
 /** Values of layerMap. */
 class LayerMapValue {
   /**
-   * @param {MapType} overlay - the actual layer (null if not created yet)
+   * @param {google.maps.MapType} overlay - the actual layer (null if not created yet)
    * @param {number} index - position in list of assets (does not change)
    * @param {boolean} displayed - true if layer is currently displayed
    */
@@ -37,21 +39,18 @@ class LayerMapValue {
   }
 }
 
-const joinedSnap =
-    ee.FeatureCollection('users/janak/texas-snap-join-damage-with-buildings');
-
 /**
  * Main function that processes the known assets (FEMA damage, etc., SNAP) and
  * creates/populates the map and table.
- *
- * @param {google.maps.Map} map main map
  */
-function run(map) {
+function run() {
   createAssetCheckboxes();
   initializeAssetLayers(map);
   const defaultPovertyThreshold = 0.3;
+  // TODO(janakr): this number probably needs to be user-adjusted, based on
+  // dataset.
   const processedData =
-      processJoinedData(joinedSnap, scalingFactor, defaultPovertyThreshold);
+      processJoinedData(eeConstants.joinedSnap, eeConstants.scalingFactor, defaultPovertyThreshold);
   initializePriorityLayer(map, processedData);
   google.charts.setOnLoadCallback(
       () => drawTable(processedData, defaultPovertyThreshold));

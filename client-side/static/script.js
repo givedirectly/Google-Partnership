@@ -1,8 +1,12 @@
 import createMap from './create_map.js';
 import run from './run.js';
+import createEeConstants from './ee_constants.js';
+
+export {map, eeConstants};
 
 // The base Google Map, Initialized lazily to ensure doc is ready
 let map = null;
+let eeConstants = null;
 
 /**
  * Runs immediately (before document may have fully loaded). Adds a hook so that
@@ -24,10 +28,11 @@ function setup() {
 
   $(document).ready(function() {
     map = createMap();
+    eeConstants = createEeConstants();
 
     const runOnSuccess = function() {
       ee.initialize(
-          /* opt_baseurl=*/ null, /* opt_tileurl=*/ null, () => run(map),
+          /* opt_baseurl=*/ null, /* opt_tileurl=*/ null, run,
           createError('initializing EE'));
     };
 

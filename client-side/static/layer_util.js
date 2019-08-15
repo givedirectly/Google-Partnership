@@ -1,3 +1,5 @@
+import {layerMap, LayerMapValue} from './run.js';
+
 export {addLayer, removeLayer};
 /**
  * Adds an EarthEngine layer (from EEObject.getMap()) to the given Google Map

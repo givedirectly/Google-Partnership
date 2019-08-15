@@ -1,11 +1,9 @@
-export {geoidTag, priorityTag, processJoinedData as default, snapTag, zero};
+import {eeConstants} from './script.js';
 
-const damageLevels = ee.List(['NOD', 'UNK', 'AFF', 'MIN', 'MAJ', 'DES']);
+export {geoidTag, priorityTag, processJoinedData as default, snapTag};
+
 // Initialized lazily, after ee.initialize() creates necessary function.
 let damageScales = null;
-
-const zero = ee.Number(0);
-const priorityDisplayCap = ee.Number(99);
 
 const geoidTag = 'GEOID';
 const priorityTag = 'PRIORITY';
@@ -26,10 +24,10 @@ const snapTag = 'SNAP PERCENTAGE';
  *
  * @return {ee.Feature}
  */
-function colorAndRate(feature, scalingFactor, povertyThreshold) {
+function colorAndRate(feature, scalingFactor, povertyThreshold, damageLevels) {
   const rawRatio = ee.Number(feature.get('SNAP')).divide(feature.get('TOTAL'));
   const priority = ee.Number(ee.Algorithms.If(
-      rawRatio.lte(povertyThreshold), zero,
+      rawRatio.lte(povertyThreshold), eeConstants.zero,
       ee.Number(damageLevels
                     .map(function(type) {
                       return ee.Number(damageScales.get(type))
@@ -39,6 +37,7 @@ function colorAndRate(feature, scalingFactor, povertyThreshold) {
           .multiply(scalingFactor)
           .divide(feature.get('BUILDING_COUNT'))
           .round()));
+  const priorityDisplayCap = ee.Number(99);
   return ee
       .Feature(feature.geometry(), ee.Dictionary([
         geoidTag,
@@ -60,10 +59,11 @@ function colorAndRate(feature, scalingFactor, povertyThreshold) {
  * @return {ee.FeatureCollection}
  */
 function processJoinedData(joinedData, scale, povertyThreshold) {
+  const damageLevels = ee.List(['NOD', 'UNK', 'AFF', 'MIN', 'MAJ', 'DES']);
   if (damageScales == null) {
     damageScales = ee.Dictionary.fromLists(damageLevels, [0, 0, 1, 1, 2, 3]);
   }
   return joinedData.map(function(feature) {
-    return colorAndRate(feature, scale, povertyThreshold);
+    return colorAndRate(feature, scale, povertyThreshold, damageLevels);
   });
 }

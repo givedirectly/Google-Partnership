@@ -1,5 +1,5 @@
-import {geoidTag, priorityTag, snapTag, zero} from './process_joined_data.js';
-
+import {geoidTag, priorityTag, snapTag} from './process_joined_data.js';
+import {eeConstants} from './script.js';
 export {drawTable as default};
 
 /**
@@ -10,7 +10,8 @@ export {drawTable as default};
  */
 function drawTable(features) {
   const sortedNonZeroPriority =
-      features.filter(ee.Filter.gt(priorityTag, zero)).sort(priorityTag, false);
+      features.filter(ee.Filter.gt(priorityTag, eeConstants.zero)).sort(
+          priorityTag, false);
   const headings = [geoidTag, priorityTag, snapTag];
   const asListWithHeadings =
       ee.List(sortedNonZeroPriority.iterate(function(feature, list) {

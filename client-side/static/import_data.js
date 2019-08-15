@@ -1,3 +1,5 @@
+import {eeConstants} from './script.js';
+
 /**
  * Joins Texas Census block-group-level SNAP/population data with building
  * counts and damage, and creates a FeatureCollection. Requires that all of
@@ -7,27 +9,11 @@
  *      gs://noaa-michael-data/ACS_16_5YR_B25024_with_ann.csv`
  * (assuming the file has already been uploaded into Google Cloud Storage).
  */
-const damage =
-    ee.FeatureCollection('users/janak/FEMA_Damage_Assessments_Harvey_20170829');
-
-// TODO(#22): get raw Census data, and do the snap join in this script as well.
-const rawSnap = ee.FeatureCollection('users/janak/texas-snap')
-                    .filterBounds(damage.geometry());
-
-const buildings = ee.FeatureCollection('users/janak/census_building_data');
-
 const censusSnapKey = 'ACS_16_5_4';
 const censusTotalKey = 'ACS_16_5_2';
 const censusBuildingKeyPrefix = 'HD01_VD';
 
 const damageKey = 'DMG_LEVEL';
-
-// TODO(janakr): move this list into a common module.
-const damageLevels = ee.List(['NOD', 'UNK', 'AFF', 'MIN', 'MAJ', 'DES']);
-
-const damageFilters = damageLevels.map((type) => ee.Filter.eq(damageKey, type));
-
-const zero = ee.Number(0);
 
 /**
  * Counts the number of damaged buildings within the boundaries of the given
@@ -37,6 +23,12 @@ const zero = ee.Number(0);
  * @return {ee.Feature}
  */
 function countDamage(feature) {
+  const damage =
+      ee.FeatureCollection('users/janak/FEMA_Damage_Assessments_Harvey_20170829');
+  // TODO(janakr): move this list into a common module.
+  const damageLevels = ee.List(['NOD', 'UNK', 'AFF', 'MIN', 'MAJ', 'DES']);
+  const damageFilters = damageLevels.map((type) => ee.Filter.eq(damageKey, type));
+
   const mainFeature = ee.Feature(feature.get('primary'));
   // TODO(janakr): #geometry() is deprecated?
   const geometry = mainFeature.geometry();
@@ -62,7 +54,7 @@ function countDamage(feature) {
  * @return {ee.Feature}
  */
 function countBuildings(feature) {
-  let totalBuildings = zero;
+  let totalBuildings = eeConstants.zero;
   // Columns in Census data. HD01_VD{i} is the number of buildings in category
   // i, where category 1 is single homes, category 2 is attached, etc. See
   // Census table B25024 for details.
@@ -93,6 +85,12 @@ function padToTwoDigits(i) {
 /** Performs operation of processing inputs and creating output asset. */
 function run() {
   ee.initialize();
+
+  // TODO(#22): get raw Census data, and do the snap join in this script as well.
+  const rawSnap = ee.FeatureCollection('users/janak/texas-snap')
+      .filterBounds(damage.geometry());
+  const buildings = ee.FeatureCollection('users/janak/census_building_data');
+
   const processedBuildings = buildings.map(countBuildings);
   const joinedSnap = ee.Join.inner().apply(
       rawSnap, processedBuildings,
