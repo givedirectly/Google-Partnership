@@ -28,7 +28,7 @@ const priorityDisplayCap = 99;
  * @return {ee.Feature}
  */
 function colorAndRate(
-  feature, scalingFactor, povertyThreshold, damageLevels, damageScales) {
+    feature, scalingFactor, povertyThreshold, damageLevels, damageScales) {
   const rawRatio = ee.Number(feature.get('SNAP')).divide(feature.get('TOTAL'));
   const priority = ee.Number(ee.Algorithms.If(
       rawRatio.lte(povertyThreshold), ee.Number(0),

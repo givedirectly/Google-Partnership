@@ -24,6 +24,7 @@ module.exports = {
     {
       'CallExpression': {'arguments': 2},
       'MemberExpression': 2,
+      'FunctionDeclaration': {'parameters': 2},
       'ignoredNodes': [
           'CallExpression > CallExpression',
           'CallExpression > MemberExpression',],
