@@ -22,8 +22,8 @@ describe('Unit test', () => {
       return [lambda(feature)];
     };
     const result = processJoinedData(
-        joinedData,  /* scalingFactor= */ee.Number(100),
-        /* povertyThreshold= */0.3);
+        joinedData, /* scalingFactor= */ ee.Number(100),
+        /* povertyThreshold= */ 0.3);
     expect(result).to.be.an('array');
     expect(result.length).to.equal(1);
     const returnedFeature = result[0];
