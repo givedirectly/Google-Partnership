@@ -24,6 +24,7 @@ const priorityLayerName = 'priority';
 // null overlay field until we do want to display it. Currently assume we're
 // only working with one map.
 const layerMap = {};
+
 /** Values of layerMap. */
 class LayerMapValue {
   /**
@@ -50,7 +51,8 @@ function run() {
   // TODO(janakr): this number probably needs to be user-adjusted, based on
   // dataset.
   const processedData =
-      processJoinedData(eeConstants.joinedSnap, eeConstants.scalingFactor, defaultPovertyThreshold);
+      processJoinedData(eeConstants.joinedSnap, eeConstants.scalingFactor,
+          defaultPovertyThreshold);
   initializePriorityLayer(map, processedData);
   google.charts.setOnLoadCallback(
       () => drawTable(processedData, defaultPovertyThreshold));
@@ -90,7 +92,7 @@ function createNewCheckbox(assetName) {
 function initializeAssetLayers(map) {
   // This is the standard way to iterate over a dictionary according to
   // https://stackoverflow.com/questions/34448724/iterating-over-a-dictionary-in-javascript
-  Object.keys(assets).forEach(function(assetName, index) {
+  Object.keys(assets).forEach(function (assetName, index) {
     // TODO(juliexxia): generalize for ImageCollections (and Features/Images?)
     if (assets[assetName]) {
       addLayer(map, ee.FeatureCollection(assetName), assetName, index);

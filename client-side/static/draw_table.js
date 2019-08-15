@@ -1,5 +1,6 @@
 import {geoidTag, priorityTag, snapTag} from './process_joined_data.js';
 import {eeConstants} from './script.js';
+
 export {drawTable as default};
 
 /**
@@ -14,12 +15,12 @@ function drawTable(features) {
           priorityTag, false);
   const headings = [geoidTag, priorityTag, snapTag];
   const asListWithHeadings =
-      ee.List(sortedNonZeroPriority.iterate(function(feature, list) {
+      ee.List(sortedNonZeroPriority.iterate(function (feature, list) {
         return ee.List(list).add(headings.map((col) => feature.get(col)));
       }, [headings]));
   // TODO(#37): These callbacks could be executed out of order, and the table
   //  might not reflect the user's latest request.
-  asListWithHeadings.evaluate(function(evaluatedTable, failure) {
+  asListWithHeadings.evaluate(function (evaluatedTable, failure) {
     if (typeof failure !== 'undefined') {
       // TODO(juliexxia): more robust error reporting
       // https://developers.google.com/chart/interactive/docs/reference#errordisplay
