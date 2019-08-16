@@ -32,6 +32,7 @@ path/from/last/command/bin/dev_appserver.py .
 
 ```shell
 cd the/directory/this/README/is/in
+yarn # To make sure everything is installed.
 yarn run cypress run
 ```
 
