@@ -19,7 +19,7 @@ gcloud info --format="value(installation.sdk_root)"
 
 ```
 
-* Run `dev_appserver.py` from `client-side/`, which contains the `.yaml` file
+* Run `dev_appserver.py` from `client-side/`, which contains the `.yaml` file:
 
 ```shell
 cd client-side/
