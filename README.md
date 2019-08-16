@@ -1,4 +1,4 @@
-# Google-Partnership
+#Google - Partnership
 Repository to store the work done by Google Fellows during 2019 
 
 ## Workflow for locally staging this work
@@ -14,8 +14,8 @@ available. However, if you work for Google and get a failed command when you run
 
 * dev_appserver.py lives wherever cloud SDK was downloaded so find it
 
-```shell
-gcloud info --format="value(installation.sdk_root)"
+```console
+$ gcloud info --format="value(installation.sdk_root)"
 
 ```
 
@@ -41,4 +41,3 @@ yarn run cypress run
 cd this/directory
 cp pre-push-hook .git/hooks/pre-push
 ```
-
