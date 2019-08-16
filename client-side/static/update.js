@@ -1,4 +1,3 @@
-// import createError from './create_error.js';
 import {removePriorityLayer} from './layer_util.js';
 import {createAndDisplayJoinedData} from './run.js';
 import {map} from './script.js';
