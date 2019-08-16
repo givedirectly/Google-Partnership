@@ -31,7 +31,7 @@ path/from/last/command/bin/dev_appserver.py .
 * Test changes.
 
 ```shell
-cd this/directory
+cd the/directory/this/README/is/in
 yarn run cypress run
 ```
 
