@@ -12,7 +12,6 @@ export {update as default};
  */
 function update() {
   const t = document.getElementById('threshold').value;
-  let newThreshold;
   ee.Number.parse(t).evaluate((number, failure) => {
     if (typeof failure !== 'undefined' || number < 0.0 || number > 1.0) {
       const errorMessage = document.getElementById('threshold-error-message');
