@@ -38,6 +38,8 @@ available. However, if you work for Google and get a failed command when you run
     yarn run cypress run
     ```
 
+* Install `clang-format`, probably using [`brew install clang-format`](https://brew.sh).
+
 * Set up auto-test-and-lint.
 
     ```shell
