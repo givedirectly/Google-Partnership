@@ -14,8 +14,8 @@ available. However, if you work for Google and get a failed command when you run
 
 * dev_appserver.py lives wherever cloud SDK was downloaded so find it
 
-```console
-$ gcloud info --format="value(installation.sdk_root)"
+```shell
+gcloud info --format="value(installation.sdk_root)"
 
 ```
 
