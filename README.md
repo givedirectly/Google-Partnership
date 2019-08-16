@@ -2,23 +2,43 @@
 Repository to store the work done by Google Fellows during 2019 
 
 ## Workflow for locally staging this work
-<pre><code>
-# download Google Cloud SDK
-# https://cloud.google.com/sdk/docs/quickstarts
+* Download Google Cloud SDK. You may have to create a new project.
+https://cloud.google.com/sdk/docs/quickstarts
 
-# dev_appserver.py lives wherever cloud SDK was downloaded so find it
-$ gcloud info --format="value(installation.sdk_root)"
+* Download this git repository. You will probably have to add ssh keys to your
+account so that you can access this repository. Googling "github add ssh keys"
+is good enough. [Current instructions](https://help.github.com/en/articles/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent)
+available. However, if you work for Google and get a failed command when you run
+`ssh-add`, try specifying `/usr/bin/ssh-add`, since there is a Google-specific
+`ssh-add` binary that otherwise gets invoked.
 
-# run dev_appserver.py from same directory as the .yaml file
-$ cd dir/with/yaml/file
-$ path/from/last/command/bin/dev_appserver.py .
+* dev_appserver.py lives wherever cloud SDK was downloaded so find it
 
-# Test changes. yarn must already be installed.
-$ cd this/directory
-$ yarn run cypress run
+```shell
+gcloud info --format="value(installation.sdk_root)"
 
-# Set up auto-test-and-lint. yarn, eslint, clang-format, and cypress must
-# already be installed.
-$ cd this/directory
-$ cp pre-push-hook .git/hooks/pre-push
-</code></pre>
+```
+
+* Run dev_appserver.py from `client-side`, which contains the `.yaml` file
+
+```shell
+cd client-side/
+path/from/last/command/bin/dev_appserver.py .
+```
+
+* Install [yarn](http://yarnpkg.com/).
+
+* Test changes.
+
+```shell
+cd this/directory
+yarn run cypress run
+```
+
+* Set up auto-test-and-lint.
+
+```shell
+cd this/directory
+cp pre-push-hook .git/hooks/pre-push
+```
+
