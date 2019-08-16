@@ -1,15 +1,14 @@
-export {geoidTag, priorityTag, processJoinedData as default, snapTag, zero};
+import damageLevelsList from './fema_damage_levels.js';
 
-const damageLevels = ee.List(['NOD', 'UNK', 'AFF', 'MIN', 'MAJ', 'DES']);
-// Initialized lazily, after ee.initialize() creates necessary function.
-let damageScales = null;
+export {geoidTag, priorityTag, processJoinedData as default, snapTag};
 
-const zero = ee.Number(0);
-const priorityDisplayCap = ee.Number(99);
+const damageLevelMultipliers = [0, 0, 1, 1, 2, 3];
 
 const geoidTag = 'GEOID';
 const priorityTag = 'PRIORITY';
 const snapTag = 'SNAP PERCENTAGE';
+
+const priorityDisplayCap = 99;
 
 /**
  * Processes a feature corresponding to a geographic area and returns a new one,
@@ -20,16 +19,19 @@ const snapTag = 'SNAP PERCENTAGE';
  * @param {ee.Feature} feature
  * @param {ee.Number} scalingFactor multiplies the raw priority, it can be
  *     adjusted to make sure that the values span the desired range of ~0 to
- * ~100.
+ *     ~100.
  * @param {number} povertyThreshold  used to filter out areas that are not poor
  *     enough (as determined by the areas SNAP and TOTAL properties).
+ * @param {ee.List} damageLevels
+ * @param {ee.Dictionary} damageScales
  *
  * @return {ee.Feature}
  */
-function colorAndRate(feature, scalingFactor, povertyThreshold) {
+function colorAndRate(
+    feature, scalingFactor, povertyThreshold, damageLevels, damageScales) {
   const rawRatio = ee.Number(feature.get('SNAP')).divide(feature.get('TOTAL'));
   const priority = ee.Number(ee.Algorithms.If(
-      rawRatio.lte(povertyThreshold), zero,
+      rawRatio.lte(povertyThreshold), ee.Number(0),
       ee.Number(damageLevels
                     .map(function(type) {
                       return ee.Number(damageScales.get(type))
@@ -49,7 +51,10 @@ function colorAndRate(feature, scalingFactor, povertyThreshold) {
         rawRatio,
       ]))
       .set({
-        style: {color: priority.min(priorityDisplayCap).format('ff00ff%02d')},
+        style: {
+          color:
+              priority.min(ee.Number(priorityDisplayCap)).format('ff00ff%02d'),
+        },
       });
 }
 
@@ -60,10 +65,11 @@ function colorAndRate(feature, scalingFactor, povertyThreshold) {
  * @return {ee.FeatureCollection}
  */
 function processJoinedData(joinedData, scale, povertyThreshold) {
-  if (damageScales == null) {
-    damageScales = ee.Dictionary.fromLists(damageLevels, [0, 0, 1, 1, 2, 3]);
-  }
+  const damageLevels = ee.List(damageLevelsList);
+  const damageScales =
+      ee.Dictionary.fromLists(damageLevels, damageLevelMultipliers);
   return joinedData.map(function(feature) {
-    return colorAndRate(feature, scale, povertyThreshold);
+    return colorAndRate(
+        feature, scale, povertyThreshold, damageLevels, damageScales);
   });
 }
