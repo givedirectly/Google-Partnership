@@ -14,31 +14,33 @@ available. However, if you work for Google and get a failed command when you run
 
 * `dev_appserver.py` lives wherever cloud SDK was downloaded so find it
 
-```shell
-gcloud info --format="value(installation.sdk_root)"
+    ```shell
+    gcloud info --format="value(installation.sdk_root)"
 
-```
+    ```
 
 * Run `dev_appserver.py` from `client-side/`, which contains the `.yaml` file:
 
-```shell
-cd client-side/
-path/from/last/command/bin/dev_appserver.py .
-```
+    ```shell
+    cd client-side/
+    path/from/last/command/bin/dev_appserver.py .
+    ```
+
+  Keep this running in your shell for all future steps.
 
 * Install [yarn](http://yarnpkg.com/).
 
 * Test changes.
 
-```shell
-cd the/directory/this/README/is/in
-yarn # To make sure everything is installed.
-yarn run cypress run
-```
+    ```shell
+    cd the/directory/this/README/is/in
+    yarn # To make sure everything is installed.
+    yarn run cypress run
+    ```
 
 * Set up auto-test-and-lint.
 
-```shell
-cd this/directory
-cp pre-push-hook .git/hooks/pre-push
-```
+    ```shell
+    cd this/directory
+    cp pre-push-hook .git/hooks/pre-push
+    ```
