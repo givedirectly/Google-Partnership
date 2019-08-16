@@ -44,9 +44,8 @@ function createAndDisplayJoinedData(map, povertyThreshold) {
       povertyThreshold);
   initializePriorityLayer(map, processedData);
   google.charts.setOnLoadCallback(
-      () =>
-          drawTable(
-              processedData, (features) => highlightFeatures(features, map)));
+      () => drawTable(
+          processedData, (features) => highlightFeatures(features, map)));
 }
 
 /** Creates checkboxes for all known assets and the priority overlay. */
