@@ -12,14 +12,14 @@ available. However, if you work for Google and get a failed command when you run
 `ssh-add`, try specifying `/usr/bin/ssh-add`, since there is a Google-specific
 `ssh-add` binary that otherwise gets invoked.
 
-* dev_appserver.py lives wherever cloud SDK was downloaded so find it
+* `dev_appserver.py` lives wherever cloud SDK was downloaded so find it
 
 ```shell
 gcloud info --format="value(installation.sdk_root)"
 
 ```
 
-* Run dev_appserver.py from `client-side`, which contains the `.yaml` file
+* Run dev_appserver.py from `client-side/`, which contains the `.yaml` file
 
 ```shell
 cd client-side/
