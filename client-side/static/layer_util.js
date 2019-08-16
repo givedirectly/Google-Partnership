@@ -1,3 +1,4 @@
+import createError from './create_error.js';
 import {priorityLayerName} from './run.js';
 
 export {addLayer, addNullLayer, removeLayer, removePriorityLayer};
@@ -87,6 +88,7 @@ function addNullLayer(assetName, index) {
  */
 function removeLayer(map, assetName) {
   map.overlayMapTypes.setAt(layerMap[assetName].index, null);
+  console.log(layerMap[assetName]);
   layerMap[assetName].displayed = false;
 }
 
