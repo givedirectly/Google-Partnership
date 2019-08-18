@@ -4,7 +4,8 @@ describe('Integration tests for highlighting chosen districts', () => {
   it('Clicks on list and highlights district', () => {
     cy.visit(host);
     // Actually verifying that the element appears is difficult, because the
-    // drawing happens on a canvas, which doesn't expose its contents.
+    // drawing happens on a canvas, which doesn't expose its contents. So we
+    // don't do it, instead just verifying that nothing terrible happens.
     getTable().get('tr').eq(1).click();
     // Shift-click to select a range.
     cy.get('body').type('{shift}', {release: false});
