@@ -46,3 +46,15 @@ available. However, if you work for Google and get a failed command when you run
     cd this/directory
     cp pre-push-hook .git/hooks/pre-push
     ```
+
+* Run `clang-format` or `eslint` on all relevant files:
+
+    ```shell
+    # Following two lines only need to be run once per shell.
+    shopt -s extglob
+    SOURCE_FILES='client-side/static/!(ee_api_js_debug).js \
+        cypress/integration/*.js cypress/support/!(commands).js'
+    clang-format -i --style=Google $SOURCE_FILES
+    yarn run eslint $SOURCE_FILES
+    ```
+
