@@ -7,8 +7,7 @@ describe('Unit test for highlight_features.js', () => {
       remove: (feature) => {},
       overrideStyle: (feature, style) => {},
     };
-    const map = {};
-    map.data = dataApi;
+    const map = {data: dataApi};
     let mockData = Cypress.sinon.mock(dataApi);
     mockData.expects('addGeoJson').never();
     mockData.expects('remove').never();
