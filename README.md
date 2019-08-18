@@ -54,6 +54,7 @@ available. However, if you work for Google and get a failed command when you run
     shopt -s extglob
     SOURCE_FILES='client-side/static/!(ee_api_js_debug).js \
         cypress/integration/*.js cypress/support/!(commands).js'
+
     clang-format -i --style=Google $SOURCE_FILES
     yarn run eslint $SOURCE_FILES
     ```
