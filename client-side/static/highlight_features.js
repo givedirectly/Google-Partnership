@@ -8,6 +8,9 @@ export {highlightFeatures as default};
 
 // Keep track of displayed features so that we can remove them if deselected.
 // Keys are geoids, values are DataFeature objects returned by the map.
+// We expect one DataFeature object per geoid/feature, but the Maps interface
+// returns a list, so we keep the list here unaltered to stay robust to any
+// edge cases like disconnected districts or the like.
 const currentFeatures = new Map();
 
 /**
