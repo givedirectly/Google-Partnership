@@ -62,7 +62,7 @@ describe('Integration test', () => {
 
     const numPages = cy.get('.google-visualization-table-page-numbers')
                          .find('*')
-                         .then(elm => elm.length);
+                         .then((elm) => elm.length);
     numPages.should('gt', 0);
 
     cy.get('#threshold').type('1.0');
@@ -70,7 +70,11 @@ describe('Integration test', () => {
 
     cy.wait(200);
 
-    cy.get(tableClass).find('.google-visualization-table-page-numbers').should('not.exist');
-    cy.get(tableClass).find('.google-visualization-table-tr-even').should('not.exist');;
+    cy.get(tableClass)
+        .find('.google-visualization-table-page-numbers')
+        .should('not.exist');
+    cy.get(tableClass)
+        .find('.google-visualization-table-tr-even')
+        .should('not.exist');
   });
 });
