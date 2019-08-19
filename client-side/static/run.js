@@ -1,4 +1,5 @@
 import drawTable from './draw_table.js';
+import highlightFeatures from './highlight_features.js';
 import {addLayer, addNullLayer} from './layer_util.js';
 import processJoinedData from './process_joined_data.js';
 
@@ -42,7 +43,9 @@ function createAndDisplayJoinedData(map, povertyThreshold) {
       ee.FeatureCollection(joinedSnapAsset), ee.Number(scalingFactor),
       povertyThreshold);
   initializePriorityLayer(map, processedData);
-  google.charts.setOnLoadCallback(() => drawTable(processedData));
+  google.charts.setOnLoadCallback(
+      () => drawTable(
+          processedData, (features) => highlightFeatures(features, map)));
 }
 
 /** Creates checkboxes for all known assets and the priority overlay. */

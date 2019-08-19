@@ -1,6 +1,6 @@
-import processJoinedData from '../../client-side/static/process_joined_data.js';
+import processJoinedData from '../../../client-side/static/process_joined_data.js';
 
-describe('Unit test', () => {
+describe('Unit test for processed_joined_data.js', () => {
   it('Process joined data functions', () => {
     const featureProperties = new Map();
     featureProperties.set('SNAP', 2);
@@ -22,8 +22,8 @@ describe('Unit test', () => {
       return [lambda(feature)];
     };
     const result = processJoinedData(
-        joinedData, /* scalingFactor= */ ee.Number(100),
-        /* povertyThreshold= */ 0.3);
+        joinedData, ee.Number(100) /* scalingFactor */,
+        0.3 /* povertyThreshold */);
     expect(result).to.be.an('array');
     expect(result.length).to.equal(1);
     const returnedFeature = result[0];

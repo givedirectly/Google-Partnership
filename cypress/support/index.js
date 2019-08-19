@@ -19,3 +19,5 @@ import './mock_ee';
 
 // Alternatively you can use CommonJS syntax:
 // require('./commands')
+
+global.host = 'http://localhost:8080/';
