@@ -21,3 +21,4 @@ import './mock_ee';
 // require('./commands')
 
 global.host = 'http://localhost:8080/';
+global.tableClass = '.google-visualization-table-table';

@@ -37,6 +37,16 @@ available. However, if you work for Google and get a failed command when you run
     yarn # To make sure everything is installed.
     yarn run cypress run
     ```
+* Test changes using [Cypress dashboard](https://www.cypress.io/dashboard/). To find the
+record key for this project go to the Google-Partnership project at https://dashboard.cypress.io
+in the "Runs" tab under "Settings".
+  
+    ```shell
+    cypress run --record --key <record-key>
+    # or set record key as environment variable
+    export CYPRESS_RECORD_KEY=<record key>
+    cypress run --record
+    ```
 
 * Install `clang-format`, probably using [`brew install clang-format`](https://brew.sh).
 

@@ -88,7 +88,6 @@ function addNullLayer(assetName, index) {
  */
 function removeLayer(map, assetName) {
   map.overlayMapTypes.setAt(layerMap[assetName].index, null);
-  console.log(layerMap[assetName]);
   layerMap[assetName].displayed = false;
 }
 
