@@ -19,6 +19,12 @@ module.exports = {
       capIsNewExceptionPattern: 'ee\..*',
       // TODO(janakr): for some reason ee\n    .Feature isn't matched.
       capIsNewExceptions: ['Feature']}],
+    'max-len': [2, {
+      'ignorePattern': '^import .*',
+      // TODO(janakr): this is true by default, why does it have to be specified
+      // as soon as I start setting max-len explicitly?
+      'ignoreUrls': true,
+    }],
     // TODO(https://github.com/google/eslint-config-google/issues/58):
     'indent': ['error', 2,
     {

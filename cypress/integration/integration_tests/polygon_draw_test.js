@@ -1,6 +1,4 @@
-const host = 'http://localhost:8080/';
-// Run via `yarn run cypress run`. Make sure you're using the right yarn!
-describe('Integration test', () => {
+describe('Integration tests for drawing polygons', () => {
   it('Draws a polygon', () => {
     cy.visit(host);
     const polygonButton = cy.get('[title="Draw a shape"]');
