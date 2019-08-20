@@ -13,7 +13,7 @@ describe('Unit test for toggleLayer.js', () => {
       setAt: (index, overlay) => {},
     };
     const map = {overlayMapTypes: overlayMapTypesApi};
-    let mockOverlayMapTypes = Cypress.sinon.mock(overlayMapTypesApi);
+    const mockOverlayMapTypes = Cypress.sinon.mock(overlayMapTypesApi);
 
     mockOverlayMapTypes.expects('setAt').once().withArgs(0, null);
     toggleLayer(map, 'asset0');
@@ -28,7 +28,7 @@ describe('Unit test for toggleLayer.js', () => {
       setAt: (index, overlay) => {},
     };
     const map = {overlayMapTypes: overlayMapTypesApi};
-    let mockOverlayMapTypes = Cypress.sinon.mock(overlayMapTypesApi);
+    const mockOverlayMapTypes = Cypress.sinon.mock(overlayMapTypesApi);
 
     mockOverlayMapTypes.expects('setAt').once().withArgs(1, mockOverlay);
     toggleLayer(map, 'asset1');
@@ -43,7 +43,7 @@ describe('Unit test for toggleLayer.js', () => {
       setAt: (index, overlay) => {},
     };
     const map = {overlayMapTypes: overlayMapTypesApi};
-    let mockOverlayMapTypes = Cypress.sinon.mock(overlayMapTypesApi);
+    const mockOverlayMapTypes = Cypress.sinon.mock(overlayMapTypesApi);
 
     mockOverlayMapTypes.expects('setAt').once().withArgs(
         2, new ee.MapLayerOverlay());

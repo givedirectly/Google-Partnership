@@ -28,7 +28,7 @@ const priorityLayerName = 'priority';
 function run(map) {
   createAssetCheckboxes(map);
   initializeAssetLayers(map);
-  createAndDisplayJoinedData(map, /* defaultPovertyThreshold=*/ 0.3);
+  createAndDisplayJoinedData(/* map=*/ map, /* defaultPovertyThreshold=*/ 0.3);
 }
 
 /**
@@ -48,7 +48,11 @@ function createAndDisplayJoinedData(map, povertyThreshold) {
           processedData, (features) => highlightFeatures(features, map)));
 }
 
-/** Creates checkboxes for all known assets and the priority overlay. */
+/**
+ * Creates checkboxes for all known assets and the priority overlay.
+ *
+ * @param {google.maps.Map} map main map
+ */
 function createAssetCheckboxes(map) {
   // TODO: these probably shouldn't just sit at the bottom of the page - move to
   // a better place.
@@ -61,6 +65,7 @@ function createAssetCheckboxes(map) {
  * Creates a new checkbox for the given asset.
  *
  * @param {string} assetName
+ * @param {google.maps.Map} map main map
  */
 function createNewCheckbox(assetName, map) {
   const mapDiv = document.getElementsByClassName('map').item(0);
