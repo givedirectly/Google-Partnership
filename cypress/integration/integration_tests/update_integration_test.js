@@ -60,6 +60,10 @@ describe('Integration test', () => {
     cy.get('#threshold').type('0.0');
     cy.get('#update-button').click();
 
+    // Wait for table to reload properly.
+    // TODO: implement loading element and replace this with a find for that.
+    cy.wait(200);
+
     const numPages = cy.get('.google-visualization-table-page-numbers')
                          .find('*')
                          .then((elm) => elm.length);
@@ -68,7 +72,9 @@ describe('Integration test', () => {
     cy.get('#threshold').type('1.0');
     cy.get('#update-button').click();
 
-    cy.wait(200);
+    // Wait for table to reload properly.
+    // TODO: implement loading element and replace this with a find for that.
+    cy.wait(500);
 
     cy.get(tableClass)
         .find('.google-visualization-table-page-numbers')
