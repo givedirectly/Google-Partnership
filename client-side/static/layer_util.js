@@ -28,6 +28,12 @@ class LayerMapValue {
   }
 }
 
+/**
+ * Given an asset, toggles whether it's displayed or not in the map.
+ *
+ * @param {google.map.Maps} map
+ * @param {string} assetName
+ */
 function toggleLayer(map, assetName) {
   const currentLayerMapValue = layerMap[assetName];
   if (currentLayerMapValue === undefined) {

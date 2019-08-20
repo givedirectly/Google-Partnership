@@ -28,7 +28,7 @@ const priorityLayerName = 'priority';
 function run(map) {
   createAssetCheckboxes(map);
   initializeAssetLayers(map);
-  createAndDisplayJoinedData(/* map=*/ map, /* defaultPovertyThreshold=*/ 0.3);
+  createAndDisplayJoinedData(map, /* defaultPovertyThreshold=*/ 0.3);
 }
 
 /**
