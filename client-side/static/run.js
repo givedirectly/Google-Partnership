@@ -1,6 +1,6 @@
 import drawTable from './draw_table.js';
 import highlightFeatures from './highlight_features.js';
-import {addLayer, addNullLayer} from './layer_util.js';
+import {addLayer, addNullLayer, toggleLayer} from './layer_util.js';
 import processJoinedData from './process_joined_data.js';
 
 export {
@@ -26,7 +26,7 @@ const priorityLayerName = 'priority';
  * @param {google.maps.Map} map main map
  */
 function run(map) {
-  createAssetCheckboxes();
+  createAssetCheckboxes(map);
   initializeAssetLayers(map);
   createAndDisplayJoinedData(map, /* defaultPovertyThreshold=*/ 0.3);
 }
@@ -49,12 +49,12 @@ function createAndDisplayJoinedData(map, povertyThreshold) {
 }
 
 /** Creates checkboxes for all known assets and the priority overlay. */
-function createAssetCheckboxes() {
+function createAssetCheckboxes(map) {
   // TODO: these probably shouldn't just sit at the bottom of the page - move to
   // a better place.
   // TODO(juliexxia): add events on click.
-  Object.keys(assets).forEach((assetName) => createNewCheckbox(assetName));
-  createNewCheckbox(priorityLayerName);
+  Object.keys(assets).forEach((assetName) => createNewCheckbox(assetName, map));
+  createNewCheckbox(priorityLayerName, map);
 }
 
 /**
@@ -62,15 +62,22 @@ function createAssetCheckboxes() {
  *
  * @param {string} assetName
  */
-function createNewCheckbox(assetName) {
+function createNewCheckbox(assetName, map) {
+  const mapDiv = document.getElementsByClassName('map').item(0);
   const newBox = document.createElement('input');
   newBox.type = 'checkbox';
   newBox.id = assetName;
-  document.body.appendChild(newBox);
+  if (assets[assetName] || assetName === priorityLayerName) {
+    newBox.checked = true;
+  }
+  newBox.onclick = () => {
+    toggleLayer(map, assetName);
+  };
+  mapDiv.parentNode.appendChild(newBox);
   const label = document.createElement('label');
   label.for = assetName;
   label.innerHTML = assetName;
-  document.body.appendChild(label);
+  mapDiv.parentNode.appendChild(label);
 }
 
 /**
@@ -105,4 +112,5 @@ function initializePriorityLayer(map, layer) {
   addLayer(
       map, layer.style({styleProperty: 'style'}), priorityLayerName,
       priorityIndex);
+  document.getElementById(priorityLayerName).checked = true;
 }

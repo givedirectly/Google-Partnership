@@ -1,7 +1,10 @@
 import createError from './create_error.js';
 import {priorityLayerName} from './run.js';
 
-export {addLayer, addNullLayer, removeLayer, removePriorityLayer};
+export {addLayer, addNullLayer, removeLayer, removePriorityLayer, toggleLayer};
+
+// @VisibleForTesting
+export {LayerMapValue, layerMap};
 
 // Keep a map of asset name -> overlay, index, display status. Overlays are
 // lazily generated i.e. pre-known assets that don't display by
@@ -26,6 +29,28 @@ class LayerMapValue {
   }
 }
 
+function toggleLayer(map, assetName) {
+  const currentLayerMapValue = layerMap[assetName];
+  if (currentLayerMapValue === undefined) {
+    console.log(
+        'Asset not found in layerMap. If this error is happening during a ' +
+        'test, you might need to wait for the page to load.');
+    return;
+  }
+  if (currentLayerMapValue.displayed) {
+    removeLayer(map, assetName);
+  } else {
+    if (currentLayerMapValue.overlay === null) {
+      addLayer(
+          map, ee.FeatureCollection(assetName), assetName,
+          currentLayerMapValue.index);
+    } else {
+      map.overlayMapTypes.setAt(
+          currentLayerMapValue.index, currentLayerMapValue.overlay);
+      currentLayerMapValue.displayed = true;
+    }
+  }
+}
 
 /**
  * Adds an EarthEngine layer (from EEObject.getMap()) to the given Google Map

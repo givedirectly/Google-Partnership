@@ -30,6 +30,10 @@ ee.Reducer.sum = () => sumMarker;
 
 ee.Feature = (geometry, properties) => new Feature(geometry, properties);
 
+ee.FeatureCollection = (url) => new FeatureCollection(url);
+
+ee.MapLayerOverlay = (url, mapId, token, init) => new MapLayerOverlay();
+
 const sumMarker = {
   'sum': true,
 };
@@ -262,4 +266,18 @@ class Feature {
     }
     return this;
   }
+}
+
+class FeatureCollection {
+  constructor(url) {
+    this.url = url;
+  }
+
+  getMap(args) {
+      args['callback']('foo', null);
+  }
+}
+
+class MapLayerOverlay {
+  constructor() {}
 }

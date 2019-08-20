@@ -36,6 +36,10 @@ describe('Integration test', () => {
 describe('Integration test', () => {
   it('Submits an invalid, then valid value ', () => {
     cy.visit(host);
+
+    // Wait for page to load.
+    cy.wait(300);
+
     cy.get('#update-button').click();
 
     cy.get('#threshold').type('0.5');
