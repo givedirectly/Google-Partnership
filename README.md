@@ -37,6 +37,7 @@ available. However, if you work for Google and get a failed command when you run
     yarn # To make sure everything is installed.
     yarn run cypress run
     ```
+
 * Save and share test results in a web interface using
 [Cypress dashboard](https://www.cypress.io/dashboard/). The dashboard also
 provides easy access to output files, footage of the test being run, etc. To find
