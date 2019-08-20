@@ -68,6 +68,8 @@ describe('Integration test', () => {
     cy.get('#threshold').type('1.0');
     cy.get('#update-button').click();
 
+    // Wait for table to reload properly.
+    // TODO: implement loading element and replace this with a find for that.
     cy.wait(200);
 
     cy.get(tableClass)
