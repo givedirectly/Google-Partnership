@@ -9,7 +9,6 @@ layerMap['asset2'] = new LayerMapValue(null, 2, false);
 
 describe('Unit test for toggleLayer.js', () => {
   it('hides a displayed layer', () => {
-
     const overlayMapTypesApi = {
       setAt: (index, overlay) => {},
     };
@@ -46,7 +45,8 @@ describe('Unit test for toggleLayer.js', () => {
     const map = {overlayMapTypes: overlayMapTypesApi};
     let mockOverlayMapTypes = Cypress.sinon.mock(overlayMapTypesApi);
 
-    mockOverlayMapTypes.expects('setAt').once().withArgs(2, new ee.MapLayerOverlay());
+    mockOverlayMapTypes.expects('setAt').once().withArgs(
+        2, new ee.MapLayerOverlay());
     toggleLayer(map, 'asset2');
     mockOverlayMapTypes.verify();
     expect(layerMap['asset2'].displayed).to.equals(true);

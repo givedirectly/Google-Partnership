@@ -274,7 +274,7 @@ class FeatureCollection {
   }
 
   getMap(args) {
-      args['callback']('foo', null);
+    args['callback']('foo', null);
   }
 }
 

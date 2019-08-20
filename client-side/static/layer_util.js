@@ -2,9 +2,8 @@ import createError from './create_error.js';
 import {priorityLayerName} from './run.js';
 
 export {addLayer, addNullLayer, removeLayer, removePriorityLayer, toggleLayer};
-
 // @VisibleForTesting
-export {LayerMapValue, layerMap};
+export {layerMap, LayerMapValue};
 
 // Keep a map of asset name -> overlay, index, display status. Overlays are
 // lazily generated i.e. pre-known assets that don't display by
