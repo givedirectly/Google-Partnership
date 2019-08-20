@@ -6,8 +6,7 @@ layerMap['asset0'] = new LayerMapValue(mockOverlay, 0, true);
 layerMap['asset1'] = new LayerMapValue(mockOverlay, 1, false);
 layerMap['asset2'] = new LayerMapValue(null, 2, false);
 
-
-describe('Unit test for toggleLayer.js', () => {
+describe('Unit test for toggleLayer', () => {
   it('hides a displayed layer', () => {
     const overlayMapTypesApi = {
       setAt: (index, overlay) => {},
@@ -22,7 +21,7 @@ describe('Unit test for toggleLayer.js', () => {
   });
 });
 
-describe('Unit test for toggleLayer.js', () => {
+describe('Unit test for toggleLayer', () => {
   it('displays a hidden but loaded layer', () => {
     const overlayMapTypesApi = {
       setAt: (index, overlay) => {},
@@ -37,7 +36,7 @@ describe('Unit test for toggleLayer.js', () => {
   });
 });
 
-describe('Unit test for toggleLayer.js', () => {
+describe('Unit test for toggleLayer', () => {
   it('loads a hidden layer and displays', () => {
     const overlayMapTypesApi = {
       setAt: (index, overlay) => {},
