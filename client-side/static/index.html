@@ -35,14 +35,15 @@
 <div class="map"></div>
 <!-- TODO: link this to the defaultPovertyThreshold -->
 <p id="current-threshold">Current poverty threshold: 0.3</p>
+<p id="threshold-error-message"></p>
 <form id="update-threshold" onsubmit="return false;">
   <label for="threshold">Poverty threshold</label>
   <input type="number" id="threshold" step="0.01">
-  <input type="button" value="Update" id="mybutton">
+  <input type="button" value="Update" id="update-button">
   <script type="module">
     import update from './update.js';
 
-    document.getElementById('mybutton').onclick = update;
+    document.getElementById('update-button').onclick = update;
   </script>
 </form>
 <div id="table"></div>

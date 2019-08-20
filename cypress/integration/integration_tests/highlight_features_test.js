@@ -1,5 +1,3 @@
-const tableClass = '.google-visualization-table-table';
-
 describe('Integration tests for highlighting chosen districts', () => {
   it('Clicks on list and highlights district', () => {
     cy.visit(host);

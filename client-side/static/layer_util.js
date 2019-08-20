@@ -1,3 +1,4 @@
+import createError from './create_error.js';
 import {priorityLayerName} from './run.js';
 
 export {addLayer, addNullLayer, removeLayer, removePriorityLayer};

@@ -1,3 +1,4 @@
+import createError from './create_error.js';
 import createMap from './create_map.js';
 import run from './run.js';
 
@@ -57,17 +58,6 @@ function setup() {
     //     onImmediateFailed);
     runOnSuccess();
   });
-}
-
-/**
- * Simple function that returns a lambda to print an error to console.
- *
- * @param {string} message
- * @return {Function}
- */
-function createError(message) {
-  // TODO(janakr): use some standard error library?
-  return (error) => console.error('Error ' + message + ': ' + error);
 }
 
 setup();
