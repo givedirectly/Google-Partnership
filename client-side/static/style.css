@@ -84,6 +84,7 @@ tr {
 .sidebar-content {
   height: 100%;
   min-height: 200px;
+  padding: 10px;
   position: relative;
   width: 100%;
 }
@@ -91,9 +92,11 @@ tr {
 .sidebar-heading {
   color: #fff;
   background-color: #9DBCB5;
-  height: 50px;
+  height: 40px;
   width:100%;
   font-size: 16px;
+  padding-top: 15px;
+  text-align: center;
   text-transform: uppercase;
 }
 
