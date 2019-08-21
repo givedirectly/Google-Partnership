@@ -1,9 +1,16 @@
 import damageLevelsList from './fema_damage_levels.js';
 
-export {geoidTag, priorityTag, processJoinedData as default, snapTag};
+export {
+  damageTag,
+  geoidTag,
+  priorityTag,
+  processJoinedData as default,
+  snapTag
+};
 
 const damageLevelMultipliers = [0, 0, 1, 1, 2, 3];
 
+const damageTag = 'DAMAGE PERCENTAGE';
 const geoidTag = 'GEOID';
 const priorityTag = 'PRIORITY';
 const snapTag = 'SNAP PERCENTAGE';
@@ -24,14 +31,55 @@ const priorityDisplayCap = 99;
  *     enough (as determined by the areas SNAP and TOTAL properties).
  * @param {ee.List} damageLevels
  * @param {ee.Dictionary} damageScales
+ * @param {number} damageThreshold
  *
  * @return {ee.Feature}
  */
+// function colorAndRate(
+//     feature, scalingFactor, povertyThreshold, damageLevels, damageScales) {
+//   const rawRatio =
+//   ee.Number(feature.get('SNAP')).divide(feature.get('TOTAL')); const priority
+//   = ee.Number(ee.Algorithms.If(
+//       rawRatio.lte(povertyThreshold), ee.Number(0),
+//       ee.Number(damageLevels
+//                     .map(function(type) {
+//                       return ee.Number(damageScales.get(type))
+//                           .multiply(feature.get(type));
+//                     })
+//                     .reduce(ee.Reducer.sum()))
+//           .multiply(scalingFactor)
+//           .divide(feature.get('BUILDING_COUNT'))
+//           .round()));
+//   console.log(ee.Number.parse(feature.get('BUILDING_COUNT')));
+//   return ee
+//       .Feature(feature.geometry(), ee.Dictionary([
+//         geoidTag,
+//         feature.get(geoidTag),
+//         priorityTag,
+//         priority,
+//         snapTag,
+//         rawRatio,
+//       ]))
+//       .set({
+//         style: {
+//           color:
+//               priority.min(ee.Number(priorityDisplayCap)).format('ff00ff%02d'),
+//         },
+//       });
+// }
+
 function colorAndRate(
-    feature, scalingFactor, povertyThreshold, damageLevels, damageScales) {
+    feature, scalingFactor, povertyThreshold, damageLevels, damageScales,
+    damageThreshold) {
   const rawRatio = ee.Number(feature.get('SNAP')).divide(feature.get('TOTAL'));
-  const priority = ee.Number(ee.Algorithms.If(
-      rawRatio.lte(povertyThreshold), ee.Number(0),
+  const numBuildingsDamaged = ee.Number(damageLevels
+                                            .map(function(type) {
+                                              return feature.get(type);
+                                            })
+                                            .reduce(ee.Reducer.sum()));
+  const numBuildingsTotal = feature.get('BUILDING_COUNT');
+  const ratioBuildingsDamaged = numBuildingsDamaged.divide(numBuildingsTotal);
+  const potentialPriority =
       ee.Number(damageLevels
                     .map(function(type) {
                       return ee.Number(damageScales.get(type))
@@ -39,16 +87,20 @@ function colorAndRate(
                     })
                     .reduce(ee.Reducer.sum()))
           .multiply(scalingFactor)
-          .divide(feature.get('BUILDING_COUNT'))
-          .round()));
+          .divide(numBuildingsTotal)
+          .round();
+  // const bool = ratioBuildingsDamaged.lte(damageThreshold) ||
+  // rawRatio.lte(povertyThreshold);
+  const bool = rawRatio.lte(povertyThreshold) ||
+      ratioBuildingsDamaged.lte(damageThreshold);
+
+  const priority =
+      ee.Number(ee.Algorithms.If(bool, ee.Number(0), potentialPriority));
   return ee
       .Feature(feature.geometry(), ee.Dictionary([
-        geoidTag,
-        feature.get(geoidTag),
-        priorityTag,
-        priority,
-        snapTag,
-        rawRatio,
+        geoidTag, feature.get(geoidTag), priorityTag, priority, snapTag,
+        rawRatio, damageTag, ratioBuildingsDamaged, '#Damaged',
+        numBuildingsDamaged, 'TOTAL NUM', feature.get('BUILDING_COUNT')
       ]))
       .set({
         style: {
@@ -62,14 +114,18 @@ function colorAndRate(
  * @param {ee.FeatureCollection} joinedData
  * @param {ee.Number} scale
  * @param {number} povertyThreshold
+ * @param {number} damageThreshold a number between 0 and 1 representing what
+ *     fraction of a block group's building must be damaged to be considered.
  * @return {ee.FeatureCollection}
  */
-function processJoinedData(joinedData, scale, povertyThreshold) {
+function processJoinedData(
+    joinedData, scale, povertyThreshold, damageThreshold) {
   const damageLevels = ee.List(damageLevelsList);
   const damageScales =
       ee.Dictionary.fromLists(damageLevels, damageLevelMultipliers);
   return joinedData.map(function(feature) {
     return colorAndRate(
-        feature, scale, povertyThreshold, damageLevels, damageScales);
+        feature, scale, povertyThreshold, damageLevels, damageScales,
+        damageThreshold);
   });
 }
