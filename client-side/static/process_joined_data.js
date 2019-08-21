@@ -5,7 +5,7 @@ export {
   geoidTag,
   priorityTag,
   processJoinedData as default,
-  snapTag
+  snapTag,
 };
 
 const damageLevelMultipliers = [0, 0, 1, 1, 2, 3];
@@ -35,39 +35,6 @@ const priorityDisplayCap = 99;
  *
  * @return {ee.Feature}
  */
-// function colorAndRate(
-//     feature, scalingFactor, povertyThreshold, damageLevels, damageScales) {
-//   const rawRatio =
-//   ee.Number(feature.get('SNAP')).divide(feature.get('TOTAL')); const priority
-//   = ee.Number(ee.Algorithms.If(
-//       rawRatio.lte(povertyThreshold), ee.Number(0),
-//       ee.Number(damageLevels
-//                     .map(function(type) {
-//                       return ee.Number(damageScales.get(type))
-//                           .multiply(feature.get(type));
-//                     })
-//                     .reduce(ee.Reducer.sum()))
-//           .multiply(scalingFactor)
-//           .divide(feature.get('BUILDING_COUNT'))
-//           .round()));
-//   console.log(ee.Number.parse(feature.get('BUILDING_COUNT')));
-//   return ee
-//       .Feature(feature.geometry(), ee.Dictionary([
-//         geoidTag,
-//         feature.get(geoidTag),
-//         priorityTag,
-//         priority,
-//         snapTag,
-//         rawRatio,
-//       ]))
-//       .set({
-//         style: {
-//           color:
-//               priority.min(ee.Number(priorityDisplayCap)).format('ff00ff%02d'),
-//         },
-//       });
-// }
-
 function colorAndRate(
     feature, scalingFactor, povertyThreshold, damageLevels, damageScales,
     damageThreshold) {
@@ -89,18 +56,35 @@ function colorAndRate(
           .multiply(scalingFactor)
           .divide(numBuildingsTotal)
           .round();
+
+  /** ****************/
+  // Weirdness HERE. Dependening on which of these lines of code is uncommented,
+  // the result of bool changes. Isn't that strange? My evidence is that
+  // the number of entries in the table is different depending on which
+  // statement and the results seem to only take into account the truthiness of
+  // the first statement.
+
   // const bool = ratioBuildingsDamaged.lte(damageThreshold) ||
   // rawRatio.lte(povertyThreshold);
   const bool = rawRatio.lte(povertyThreshold) ||
       ratioBuildingsDamaged.lte(damageThreshold);
-
+  /** ****************/
   const priority =
       ee.Number(ee.Algorithms.If(bool, ee.Number(0), potentialPriority));
   return ee
       .Feature(feature.geometry(), ee.Dictionary([
-        geoidTag, feature.get(geoidTag), priorityTag, priority, snapTag,
-        rawRatio, damageTag, ratioBuildingsDamaged, '#Damaged',
-        numBuildingsDamaged, 'TOTAL NUM', feature.get('BUILDING_COUNT')
+        geoidTag,
+        feature.get(geoidTag),
+        priorityTag,
+        priority,
+        snapTag,
+        rawRatio,
+        damageTag,
+        ratioBuildingsDamaged,
+        '#Damaged',
+        numBuildingsDamaged,
+        'TOTAL NUM',
+        feature.get('BUILDING_COUNT'),
       ]))
       .set({
         style: {
