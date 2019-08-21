@@ -52,13 +52,13 @@ tr {
 }
 
 .title-text {
-    font-size: 24px;
-    padding-top: 16px;
+  font-size: 24px;
+  padding-top: 16px;
 }
 
 .main-content {
   box-sizing: border-box;
-  padding: 16px;
+  padding: 10px;
   position: absolute;
   right: 0;
   width: 75%;
@@ -93,7 +93,7 @@ tr {
   color: #fff;
   background-color: #9DBCB5;
   height: 40px;
-  width:100%;
+  width: 100%;
   font-size: 16px;
   padding-top: 15px;
   text-align: center;
@@ -104,7 +104,6 @@ tr {
 
 @media (max-width: 768px) { 
   .sidebar {
-    bottom: 0;
     box-shadow: none;
     max-width: none;
     position: relative;
