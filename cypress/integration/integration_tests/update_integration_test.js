@@ -12,6 +12,9 @@ describe('Integration test', () => {
     cy.get('#threshold').type('0.5');
     cy.get('#update-button').click();
 
+    // TODO: implement loading element and replace this with a find for that.
+    cy.wait(200);
+
     cy.get('#current-threshold')
         .should('have.text', 'Current poverty threshold: 0.5');
     cy.get('#threshold-error-message').should('have.text', '');
