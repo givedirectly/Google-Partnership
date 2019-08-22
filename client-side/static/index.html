@@ -33,17 +33,57 @@
 <h1>Houston damage/poverty map</h1>
 
 <div class="map"></div>
-<!-- TODO: link this to the defaultPovertyThreshold -->
-<p id="current-threshold">Current poverty threshold: 0.3</p>
-<p id="threshold-error-message"></p>
-<form id="update-threshold" onsubmit="return false;">
-  <label for="threshold">Poverty threshold</label>
-  <input type="number" id="threshold" step="0.01">
-  <input type="button" value="Update" id="update-button">
+<!-- poverty threshold toggle -->
+<!-- TODO: Read from constants somewhere in the javascript? -->
+<p id="current-pt">Current poverty threshold: 0.3</p>
+<p id="pt-error-message"></p>
+<form id="update-pt" onsubmit="return false;">
+  <label for="p-threshold">Poverty threshold</label>
+  <input type="number" id="p-threshold" step="0.01">
+  <input type="button" value="Update" id="pt-button">
   <script type="module">
-    import update from './update.js';
+    import {updatePovertyThreshold} from './update.js';
 
-    document.getElementById('update-button').onclick = update;
+    document.getElementById('pt-button').onclick = updatePovertyThreshold;
+  </script>
+<!-- damage threshold toggle -->
+</form>
+<p id="current-dt">Current damage threshold: 0.5</p>
+<p id="dt-error-message"></p>
+<form id="update-dt" onsubmit="return false;">
+  <label for="d-threshold">Damage threshold</label>
+  <input type="number" id="d-threshold" step="0.01">
+  <input type="button" value="Update" id="dt-button">
+  <script type="module">
+    import {updateDamageThreshold} from './update.js';
+
+    document.getElementById('dt-button').onclick = updateDamageThreshold;
+  </script>
+</form>
+<!-- poverty weight toggle -->
+<p id="current-pw">Current poverty weight threshold: 0.5</p>
+<p id="pw-error-message"></p>
+<form id="update-pw" onsubmit="return false;">
+  <label for="p-weight">Damage threshold</label>
+  <input type="number" id="p-weight" step="0.01">
+  <input type="button" value="Update" id="pw-button">
+  <script type="module">
+    import {updatePovertyWeight} from './update.js';
+
+    document.getElementById('pw-button').onclick = updatePovertyWeight;
+  </script>
+</form>
+<!-- damage weight toggle -->
+<p id="current-dw">Current poverty weight threshold: 0.5</p>
+<p id="dw-error-message"></p>
+<form id="update-dw" onsubmit="return false;">
+  <label for="d-weight">Damage threshold</label>
+  <input type="number" id="d-weight" step="0.01">
+  <input type="button" value="Update" id="dw-button">
+  <script type="module">
+    import {updateDamageWeight} from './update.js';
+
+    document.getElementById('dw-button').onclick = updateDamageWeight;
   </script>
 </form>
 <div id="table"></div>

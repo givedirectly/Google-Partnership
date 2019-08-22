@@ -28,7 +28,8 @@ const priorityLayerName = 'priority';
 function run(map) {
   createAssetCheckboxes();
   initializeAssetLayers(map);
-  createAndDisplayJoinedData(map, /* defaultPovertyThreshold=*/ 0.3, 0.5);
+  createAndDisplayJoinedData(
+      map, /* defaultPovertyThreshold=*/ 0.3, 0.5, 0.5, 0.5);
 }
 
 /**
@@ -39,11 +40,14 @@ function run(map) {
  *     fraction of the population must be SNAP eligible to be considered.
  * @param {number} damageThreshold a number between 0 and 1 representing what
  *     fraction of a block group's building must be damaged to be considered.
+ * @param {number} povertyWeight
+ * @param {number} damageWeight
  */
-function createAndDisplayJoinedData(map, povertyThreshold, damageThreshold) {
+function createAndDisplayJoinedData(
+    map, povertyThreshold, damageThreshold, povertyWeight, damageWeight) {
   const processedData = processJoinedData(
       ee.FeatureCollection(joinedSnapAsset), ee.Number(scalingFactor),
-      povertyThreshold, damageThreshold);
+      povertyThreshold, damageThreshold, povertyWeight, damageWeight);
   initializePriorityLayer(map, processedData);
   google.charts.setOnLoadCallback(
       () => drawTable(

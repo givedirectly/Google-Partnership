@@ -32,12 +32,19 @@ const priorityDisplayCap = 99;
  * @param {ee.List} damageLevels
  * @param {ee.Dictionary} damageScales
  * @param {number} damageThreshold
+ * @param {number} povertyWeight
+ * @param {number} damageWeight
  *
  * @return {ee.Feature}
  */
 function colorAndRate(
     feature, scalingFactor, povertyThreshold, damageLevels, damageScales,
-    damageThreshold) {
+    damageThreshold, povertyWeight, damageWeight) {
+  console.log(povertyThreshold);
+  console.log(damageThreshold);
+  console.log(povertyWeight);
+  console.log(damageWeight);
+
   const rawRatio = ee.Number(feature.get('SNAP')).divide(feature.get('TOTAL'));
   const numBuildingsDamaged = ee.Number(damageLevels
                                             .map(function(type) {
@@ -46,45 +53,22 @@ function colorAndRate(
                                             .reduce(ee.Reducer.sum()));
   const numBuildingsTotal = feature.get('BUILDING_COUNT');
   const ratioBuildingsDamaged = numBuildingsDamaged.divide(numBuildingsTotal);
-  const potentialPriority =
-      ee.Number(damageLevels
-                    .map(function(type) {
-                      return ee.Number(damageScales.get(type))
-                          .multiply(feature.get(type));
-                    })
-                    .reduce(ee.Reducer.sum()))
-          .multiply(scalingFactor)
-          .divide(numBuildingsTotal)
-          .round();
+  const bool = ee.Number(rawRatio.lte(povertyThreshold))
+                   .or(ee.Number(ratioBuildingsDamaged.lte(damageThreshold)));
 
-  /** ****************/
-  // Weirdness HERE. Dependening on which of these lines of code is uncommented,
-  // the result of bool changes. Isn't that strange? My evidence is that
-  // the number of entries in the table is different depending on which
-  // statement and the results seem to only take into account the truthiness of
-  // the first statement.
+  const weightedDamage = ratioBuildingsDamaged.multiply(damageWeight);
+  const weightedPoverty = rawRatio.multiply(povertyWeight);
+  const potentialPriority = ee.Number(
+      weightedDamage.add(weightedPoverty).multiply(scalingFactor).round());
 
-  // const bool = ratioBuildingsDamaged.lte(damageThreshold) ||
-  // rawRatio.lte(povertyThreshold);
-  const bool = rawRatio.lte(povertyThreshold) ||
-      ratioBuildingsDamaged.lte(damageThreshold);
-  /** ****************/
   const priority =
       ee.Number(ee.Algorithms.If(bool, ee.Number(0), potentialPriority));
   return ee
       .Feature(feature.geometry(), ee.Dictionary([
-        geoidTag,
-        feature.get(geoidTag),
-        priorityTag,
-        priority,
-        snapTag,
-        rawRatio,
-        damageTag,
-        ratioBuildingsDamaged,
-        '#Damaged',
-        numBuildingsDamaged,
-        'TOTAL NUM',
-        feature.get('BUILDING_COUNT'),
+        geoidTag, feature.get(geoidTag), priorityTag, priority, snapTag,
+        rawRatio, damageTag, ratioBuildingsDamaged,
+        // '#Damaged',
+        // numBuildingsDamaged, '#Total', numBuildingsTotal
       ]))
       .set({
         style: {
@@ -100,16 +84,19 @@ function colorAndRate(
  * @param {number} povertyThreshold
  * @param {number} damageThreshold a number between 0 and 1 representing what
  *     fraction of a block group's building must be damaged to be considered.
+ * @param {number} povertyWeight
+ * @param {number} damageWeight
  * @return {ee.FeatureCollection}
  */
 function processJoinedData(
-    joinedData, scale, povertyThreshold, damageThreshold) {
+    joinedData, scale, povertyThreshold, damageThreshold, povertyWeight,
+    damageWeight) {
   const damageLevels = ee.List(damageLevelsList);
   const damageScales =
       ee.Dictionary.fromLists(damageLevels, damageLevelMultipliers);
   return joinedData.map(function(feature) {
     return colorAndRate(
         feature, scale, povertyThreshold, damageLevels, damageScales,
-        damageThreshold);
+        damageThreshold, povertyWeight, damageWeight);
   });
 }
