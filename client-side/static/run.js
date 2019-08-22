@@ -56,9 +56,10 @@ function createAndDisplayJoinedData(map, povertyThreshold) {
 function createAssetCheckboxes(map) {
   // TODO: these probably shouldn't just sit at the bottom of the page - move to
   // a better place.
-  // TODO(juliexxia): add events on click.
-  Object.keys(assets).forEach((assetName) => createNewCheckbox(assetName, map));
-  createNewCheckbox(priorityLayerName, map);
+  const mapDiv = document.getElementsByClassName('map').item(0);
+  Object.keys(assets).forEach(
+      (assetName) => createNewCheckbox(assetName, map, mapDiv));
+  createNewCheckbox(priorityLayerName, map, mapDiv);
 }
 
 /**
@@ -66,9 +67,9 @@ function createAssetCheckboxes(map) {
  *
  * @param {string} assetName
  * @param {google.maps.Map} map main map
+ * @param {Element} mapDiv
  */
-function createNewCheckbox(assetName, map) {
-  const mapDiv = document.getElementsByClassName('map').item(0);
+function createNewCheckbox(assetName, map, mapDiv) {
   const newBox = document.createElement('input');
   newBox.type = 'checkbox';
   newBox.id = assetName;
@@ -117,5 +118,4 @@ function initializePriorityLayer(map, layer) {
   addLayer(
       map, layer.style({styleProperty: 'style'}), priorityLayerName,
       priorityIndex);
-  document.getElementById(priorityLayerName).checked = true;
 }

@@ -268,16 +268,31 @@ class Feature {
   }
 }
 
+/** A thin stub of ee.FeatureCollection. */
 class FeatureCollection {
+  /**
+   * Constructor.
+   *
+   * @param {string} url
+   */
   constructor(url) {
     this.url = url;
   }
 
+  /**
+   * Accepts a callback param as expected and calls it with nonsense vars.
+   *
+   * @param {Dictionary} args
+   */
   getMap(args) {
     args['callback']('foo', null);
   }
 }
 
+/** An empty stub of ee.MapLayerOverlay. */
 class MapLayerOverlay {
+  /**
+   * Constructor.
+   */
   constructor() {}
 }

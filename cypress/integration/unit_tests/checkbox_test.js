@@ -19,9 +19,7 @@ describe('Unit test for toggleLayer', () => {
     mockOverlayMapTypes.verify();
     expect(layerMap['asset0'].displayed).to.equals(false);
   });
-});
 
-describe('Unit test for toggleLayer', () => {
   it('displays a hidden but loaded layer', () => {
     const overlayMapTypesApi = {
       setAt: (index, overlay) => {},
@@ -34,9 +32,7 @@ describe('Unit test for toggleLayer', () => {
     mockOverlayMapTypes.verify();
     expect(layerMap['asset1'].displayed).to.equals(true);
   });
-});
 
-describe('Unit test for toggleLayer', () => {
   it('loads a hidden layer and displays', () => {
     const overlayMapTypesApi = {
       setAt: (index, overlay) => {},
