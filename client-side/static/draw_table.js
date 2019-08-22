@@ -13,7 +13,7 @@ function drawTable(features, selectCallback) {
       features.filter(ee.Filter.gt(priorityTag, ee.Number(0)))
           .sort(priorityTag, false);
   const headings =
-      [geoidTag, priorityTag, snapTag, damageTag];  // , '#Damaged', '#Total'];
+      [geoidTag, priorityTag, snapTag, damageTag];
   const pairOfListAndFeaturesComputation =
       sortedNonZeroPriority.iterate((feature, result) => {
         const listResult = ee.List(result);
