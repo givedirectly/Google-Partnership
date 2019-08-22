@@ -12,8 +12,7 @@ function drawTable(features, selectCallback) {
   const sortedNonZeroPriority =
       features.filter(ee.Filter.gt(priorityTag, ee.Number(0)))
           .sort(priorityTag, false);
-  const headings =
-      [geoidTag, priorityTag, snapTag, damageTag];
+  const headings = [geoidTag, priorityTag, snapTag, damageTag];
   const pairOfListAndFeaturesComputation =
       sortedNonZeroPriority.iterate((feature, result) => {
         const listResult = ee.List(result);
