@@ -118,4 +118,5 @@ function initializePriorityLayer(map, layer) {
   addLayer(
       map, layer.style({styleProperty: 'style'}), priorityLayerName,
       priorityIndex);
+  document.getElementById(priorityLayerName).checked = true;
 }
