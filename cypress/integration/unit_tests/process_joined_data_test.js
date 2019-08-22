@@ -37,7 +37,8 @@ describe('Unit test for processed_joined_data.js', () => {
     // expect(priority._myNumberValue)
     //     .to.equal(Math.round(100 * (1 * 1 + 10 * 1 + 2 * 2 + 1 * 3) / 75));
     expect(priority._myNumberValue)
-        .to.equals(Math.round(100 * (0.5*((12 + 10 + 2 + 1)/45) + 0.5*(2/4))));
+        .to.equals(
+            Math.round(100 * (0.5 * ((12 + 10 + 2 + 1) / 45) + 0.5 * (2 / 4))));
     expect(resultProperties.get('style')).to.eql({color: 'ff00ff53'});
   });
 });

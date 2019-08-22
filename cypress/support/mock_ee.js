@@ -101,7 +101,7 @@ class EeNumber {
 
   /**
    *
-   * @param value
+   * @param {number} value
    * @return {EeNumber}
    */
   add(value) {
@@ -161,7 +161,7 @@ class EeNumber {
    * @return {number|Object}
    */
   or(value) {
-    return this._myNumberValue || value._myNumberValue
+    return this._myNumberValue || value._myNumberValue;
   }
 }
 
