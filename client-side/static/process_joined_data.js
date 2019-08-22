@@ -48,11 +48,13 @@ function colorAndRate(
   const rawRatio = ee.Number(feature.get('SNAP')).divide(feature.get('TOTAL'));
   const numBuildingsDamaged = ee.Number(damageLevels
                                             .map(function(type) {
-                                              return feature.get(type);
+                                              return ee.Number(feature.get(type));
                                             })
                                             .reduce(ee.Reducer.sum()));
   const numBuildingsTotal = feature.get('BUILDING_COUNT');
   const ratioBuildingsDamaged = numBuildingsDamaged.divide(numBuildingsTotal);
+
+
   const bool = ee.Number(rawRatio.lte(povertyThreshold))
                    .or(ee.Number(ratioBuildingsDamaged.lte(damageThreshold)));
 
