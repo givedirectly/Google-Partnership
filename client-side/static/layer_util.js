@@ -71,15 +71,15 @@ function toggleLayerOff(map, assetName) {
  * @param {google.maps.Map} map
  * @param {Object} layerId
  * @param {number} index
- * @param {string} assetName
+ * @param {boolean} displayed
  * @return {ee.MapLayerOverlay}
  */
-function addLayerFromId(map, layerId, index, assetName) {
+function addLayerFromId(map, layerId, index, displayed) {
   const overlay = new ee.MapLayerOverlay(
       'https://earthengine.googleapis.com/map', layerId.mapid, layerId.token,
       {});
   // Check in case the status has changed while the callback was running.
-  if (layerMap[assetName].displayed) {
+  if (displayed) {
     map.overlayMapTypes.setAt(index, overlay);
   }
   return overlay;
@@ -106,7 +106,7 @@ function addLayer(map, layer, assetName, index) {
     callback: (layerId, failure) => {
       if (layerId) {
         layerMap[assetName].overlay =
-            addLayerFromId(map, layerId, index, assetName);
+            addLayerFromId(map, layerId, index, layerMap[assetName].displayed);
       } else {
         // TODO: if there's an error, disable checkbox, add tests for this.
         layerMap[assetName].displayed = false;
