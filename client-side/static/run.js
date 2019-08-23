@@ -63,15 +63,14 @@ function createAssetCheckboxes() {
  * @param {string} assetName
  */
 function createNewCheckbox(assetName) {
-  const mainContent = document.getElementsByClassName('main-content')[0];
   const newBox = document.createElement('input');
   newBox.type = 'checkbox';
   newBox.id = assetName;
-  mainContent.appendChild(newBox);
+  document.body.appendChild(newBox);
   const label = document.createElement('label');
   label.for = assetName;
   label.innerHTML = assetName;
-  mainContent.appendChild(label);
+  document.body.appendChild(label);
 }
 
 /**
