@@ -7,9 +7,13 @@ const mockOverlay = {};
 // layerMap['asset2'] = new LayerMapValue(null, 2, false);
 
 describe('Unit test for toggleLayerOn', () => {
-  it('displays a hidden but loaded layer', () => {
+  beforeEach(() => {
+    layerMap['asset0'] = new LayerMapValue(mockOverlay, 0, true);
     layerMap['asset1'] = new LayerMapValue(mockOverlay, 1, false);
+    layerMap['asset2'] = new LayerMapValue(null, 2, false);
+  });
 
+  it('displays a hidden but loaded layer', () => {
     expect(layerMap['asset1'].displayed).to.equals(false);
     expect(layerMap['asset1'].overlay).to.not.be.null;
 
@@ -26,7 +30,6 @@ describe('Unit test for toggleLayerOn', () => {
   });
 
   it('loads a hidden layer and displays', () => {
-    layerMap['asset2'] = new LayerMapValue(null, 2, false);
     expect(layerMap['asset2'].displayed).to.equals(false);
     expect(layerMap['asset2'].overlay).to.be.null;
 
@@ -55,8 +58,6 @@ describe('Unit test for toggleLayerOn', () => {
   });
 
   it.only('check hidden layer, then uncheck before getMapCallback', () => {
-    layerMap['asset2'] = new LayerMapValue(null, 2, false);
-
     expect(layerMap['asset2'].displayed).to.equals(false);
     expect(layerMap['asset2'].overlay).to.be.null;
 
@@ -80,8 +81,6 @@ describe('Unit test for toggleLayerOn', () => {
 
 describe('Unit test for toggleLayerOff', () => {
   it('hides a displayed layer', () => {
-    layerMap['asset0'] = new LayerMapValue(mockOverlay, 0, true);
-
     expect(layerMap['asset1'].displayed).to.equals(true);
     expect(layerMap['asset1'].overlay).to.not.be.null;
 
