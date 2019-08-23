@@ -18,9 +18,6 @@ const damageAsset = 'users/janak/FEMA_Damage_Assessments_Harvey_20170829';
 const rawSnapAsset = 'users/janak/texas-snap';
 const buildingsAsset = 'users/janak/census_building_data';
 
-const michaelDamageAsset = 'users/juliexxia/...';
-
-
 /**
  * Counts the number of damaged buildings within the boundaries of the given
  * feature, categorized by type of damage.
