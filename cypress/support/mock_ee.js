@@ -288,7 +288,6 @@ class FeatureCollection {
    */
   getMap(args) {
     ee.callback = args['callback'];
-    // args['callback']('foo', null);
   }
 }
 

@@ -45,8 +45,10 @@ describe('Unit test for toggleLayerOn', () => {
 
     mockOverlayMapTypes.expects('setAt').once().withArgs(
         2, new ee.MapLayerOverlay());
+
     toggleLayerOn(map, 'asset2');
     ee.callback('foo', null);
+
     mockOverlayMapTypes.verify();
     expect(layerMap['asset2'].displayed).to.equals(true);
     expect(layerMap['asset2'].overlay).to.not.be.null;
