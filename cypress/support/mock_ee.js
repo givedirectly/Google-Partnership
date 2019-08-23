@@ -268,6 +268,8 @@ class Feature {
   }
 }
 
+ee.callback = null;
+
 /** A thin stub of ee.FeatureCollection. */
 class FeatureCollection {
   /**
@@ -285,7 +287,8 @@ class FeatureCollection {
    * @param {Dictionary} args
    */
   getMap(args) {
-    args['callback']('foo', null);
+    ee.callback = args['callback'];
+    // args['callback']('foo', null);
   }
 }
 
