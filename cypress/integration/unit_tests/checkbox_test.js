@@ -37,7 +37,7 @@ describe('Unit test for toggleLayerOn', () => {
     const mockOverlayMapTypes = Cypress.sinon.mock(overlayMapTypesApi);
 
     // Oddly, if you print layerMap['asset2'] to console here, and also print
-    // just layerMap and manually inspect ofr 'asset2', they give different
+    // just layerMap and manually inspect it forov 'asset2', they give different
     // results (layerMap['asset2'] giving the correct results. Leaving here
     // as a warning/hint for future test issues.
     // console.log(layerMap);
@@ -47,14 +47,14 @@ describe('Unit test for toggleLayerOn', () => {
         2, new ee.MapLayerOverlay());
 
     toggleLayerOn(map, 'asset2');
-    ee.callback('foo', null);
+    ee.getMapCallback('foo', null);
 
     mockOverlayMapTypes.verify();
     expect(layerMap['asset2'].displayed).to.equals(true);
     expect(layerMap['asset2'].overlay).to.not.be.null;
   });
 
-  it.only('check hiden layer, then uncheck before callback', () => {
+  it.only('check hidden layer, then uncheck before getMapCallback', () => {
     layerMap['asset2'] = new LayerMapValue(null, 2, false);
 
     expect(layerMap['asset2'].displayed).to.equals(false);
@@ -70,7 +70,7 @@ describe('Unit test for toggleLayerOn', () => {
 
     toggleLayerOn(map, 'asset2');
     toggleLayerOff(map, 'asset2');
-    ee.callback('foo', null);
+    ee.getMapCallback('foo', null);
 
     mockOverlayMapTypes.verify();
     expect(layerMap['asset2'].displayed).to.equals(false);

@@ -268,7 +268,7 @@ class Feature {
   }
 }
 
-ee.callback = null;
+ee.getMapCallback = null;
 
 /** A thin stub of ee.FeatureCollection. */
 class FeatureCollection {
@@ -282,12 +282,14 @@ class FeatureCollection {
   }
 
   /**
-   * Accepts a callback param as expected and calls it with nonsense vars.
+   * Accepts a callback param as expected and stores it so it can be manually
+   * called from tests (helpful for simulating varied lengths of time before
+   * callback calling).
    *
    * @param {Dictionary} args
    */
   getMap(args) {
-    ee.callback = args['callback'];
+    ee.getMapCallback = args['callback'];
   }
 }
 

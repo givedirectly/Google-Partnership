@@ -1,4 +1,7 @@
 // Disabled for now until we get it unflaky.
+// Flakes with error
+//    CypressError: Timed out retrying: Expected to find element:
+//    '.google-visualization-table-table', but never found it.
 
 // describe('Integration tests for highlighting chosen districts', () => {
 //   it('Clicks on list and highlights district', () => {

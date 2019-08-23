@@ -89,7 +89,7 @@ function addLayerFromId(map, layerId, index, assetName) {
  * Asynchronous wrapper for addLayerFromId that calls getMap() with a callback
  * to avoid blocking on the result. This also populates layerMap.
  *
- * This should only be called once per asset when it's overlay is initialized
+ * This should only be called once per asset when its overlay is initialized
  * for the first time. After the overlay is non-null in layerMap, any displaying
  * should be able to call {@code map.overlayMapTypes.setAt(...)}.
  *
@@ -108,7 +108,8 @@ function addLayer(map, layer, assetName, index) {
         layerMap[assetName].overlay =
             addLayerFromId(map, layerId, index, assetName);
       } else {
-        // TODO: if there's an error, disable checkbox.
+        // TODO: if there's an error, disable checkbox, add tests for this.
+        layerMap[assetName].displayed = false;
         createError('getting id')(failure);
       }
     },

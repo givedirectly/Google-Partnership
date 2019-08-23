@@ -26,8 +26,8 @@ const priorityLayerName = 'priority';
  * @param {google.maps.Map} map main map
  */
 function run(map) {
-  createAssetCheckboxes(map);
   initializeAssetLayers(map);
+  createAssetCheckboxes(map);
   createAndDisplayJoinedData(map, /* defaultPovertyThreshold=*/ 0.3);
 }
 

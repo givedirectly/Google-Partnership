@@ -41,6 +41,7 @@ describe('Integration test', () => {
     cy.visit(host);
 
     // Wait for page to load.
+    // TODO(#53): implement loading element and replace with call to it.
     cy.wait(300);
 
     cy.get('#update-button').click();
