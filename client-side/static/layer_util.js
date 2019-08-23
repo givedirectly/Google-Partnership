@@ -1,7 +1,13 @@
 import createError from './create_error.js';
 import {priorityLayerName} from './run.js';
 
-export {addLayer, addNullLayer, removeLayer, removePriorityLayer, toggleLayer};
+export {
+  addLayer,
+  addNullLayer,
+  removePriorityLayer,
+  toggleLayerOff,
+  toggleLayerOn,
+};
 // @VisibleForTesting
 export {layerMap, LayerMapValue};
 
@@ -29,49 +35,53 @@ class LayerMapValue {
 }
 
 /**
- * Given an asset, toggles whether it's displayed or not in the map.
+ * Toggles on displaying an asset on the map.
  *
  * @param {google.map.Maps} map
  * @param {string} assetName
  */
-function toggleLayer(map, assetName) {
+function toggleLayerOn(map, assetName) {
   const currentLayerMapValue = layerMap[assetName];
-  if (currentLayerMapValue === undefined) {
-    console.log(
-        'Asset not found in layerMap. If this error is happening during a ' +
-        'test, you might need to wait for the page to load.');
-    return;
-  }
-  if (currentLayerMapValue.displayed) {
-    removeLayer(map, assetName);
+  if (currentLayerMapValue.overlay === null) {
+    addLayer(
+        map, ee.FeatureCollection(assetName), assetName,
+        currentLayerMapValue.index);
   } else {
-    if (currentLayerMapValue.overlay === null) {
-      addLayer(
-          map, ee.FeatureCollection(assetName), assetName,
-          currentLayerMapValue.index);
-    } else {
-      map.overlayMapTypes.setAt(
-          currentLayerMapValue.index, currentLayerMapValue.overlay);
-      currentLayerMapValue.displayed = true;
-    }
+    map.overlayMapTypes.setAt(
+        currentLayerMapValue.index, currentLayerMapValue.overlay);
+    currentLayerMapValue.displayed = true;
   }
 }
 
 /**
- * Adds an EarthEngine layer (from EEObject.getMap()) to the given Google Map
- * and returns the "overlay" that was added, in case the caller wants to add
+ * Toggles off displaying an asset on the map.
+ *
+ * @param {google.map.Maps} map
+ * @param {string} assetName
+ */
+function toggleLayerOff(map, assetName) {
+  removeLayer(map, assetName);
+}
+
+/**
+ * Create an EarthEngine layer (from EEObject.getMap()), potentially add to the
+ * given Google Map and returns the overlay, in case the caller wants to add
  * callbacks or similar to that overlay.
  *
  * @param {google.maps.Map} map
  * @param {Object} layerId
  * @param {number} index
+ * @param {string} assetName
  * @return {ee.MapLayerOverlay}
  */
-function addLayerFromId(map, layerId, index) {
+function addLayerFromId(map, layerId, index, assetName) {
   const overlay = new ee.MapLayerOverlay(
       'https://earthengine.googleapis.com/map', layerId.mapid, layerId.token,
       {});
-  map.overlayMapTypes.setAt(index, overlay);
+  // Check in case the status has changed while the callback was running.
+  if (layerMap[assetName].displayed) {
+    map.overlayMapTypes.setAt(index, overlay);
+  }
   return overlay;
 }
 
@@ -79,17 +89,24 @@ function addLayerFromId(map, layerId, index) {
  * Asynchronous wrapper for addLayerFromId that calls getMap() with a callback
  * to avoid blocking on the result. This also populates layerMap.
  *
+ * This should only be called once per asset when it's overlay is initialized
+ * for the first time. After the overlay is non-null in layerMap, any displaying
+ * should be able to call {@code map.overlayMapTypes.setAt(...)}.
+ *
  * @param {google.maps.Map} map
  * @param {ee.Element} layer
  * @param {string} assetName
  * @param {number} index
  */
 function addLayer(map, layer, assetName, index) {
+  // Add a null-overlay entry to layerMap while waiting for the callback to
+  // finish.
+  layerMap[assetName] = new LayerMapValue(null, index, true);
   layer.getMap({
     callback: (layerId, failure) => {
       if (layerId) {
-        const overlay = addLayerFromId(map, layerId, index);
-        layerMap[assetName] = new LayerMapValue(overlay, index, true);
+        layerMap[assetName].overlay =
+            addLayerFromId(map, layerId, index, assetName);
       } else {
         // TODO: if there's an error, disable checkbox.
         createError('getting id')(failure);

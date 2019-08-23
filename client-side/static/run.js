@@ -1,6 +1,6 @@
 import drawTable from './draw_table.js';
 import highlightFeatures from './highlight_features.js';
-import {addLayer, addNullLayer, toggleLayer} from './layer_util.js';
+import {addLayer, addNullLayer, toggleLayerOff, toggleLayerOn} from './layer_util.js';
 import processJoinedData from './process_joined_data.js';
 
 export {
@@ -59,6 +59,7 @@ function createAssetCheckboxes(map) {
   const mapDiv = document.getElementsByClassName('map').item(0);
   Object.keys(assets).forEach(
       (assetName) => createNewCheckbox(assetName, map, mapDiv));
+  // priority checkbox gets checked during initializePriorityLayer
   createNewCheckbox(priorityLayerName, map, mapDiv);
 }
 
@@ -73,11 +74,15 @@ function createNewCheckbox(assetName, map, mapDiv) {
   const newBox = document.createElement('input');
   newBox.type = 'checkbox';
   newBox.id = assetName;
-  if (assets[assetName] || assetName === priorityLayerName) {
+  if (assets[assetName]) {
     newBox.checked = true;
   }
   newBox.onclick = () => {
-    toggleLayer(map, assetName);
+    if (newBox.checked) {
+      toggleLayerOn(map, assetName);
+    } else {
+      toggleLayerOff(map, assetName);
+    }
   };
   mapDiv.parentNode.appendChild(newBox);
   const label = document.createElement('label');
