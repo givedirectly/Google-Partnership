@@ -30,6 +30,10 @@ ee.Reducer.sum = () => sumMarker;
 
 ee.Feature = (geometry, properties) => new Feature(geometry, properties);
 
+ee.FeatureCollection = (url) => new FeatureCollection(url);
+
+ee.MapLayerOverlay = (url, mapId, token, init) => new MapLayerOverlay();
+
 const sumMarker = {
   'sum': true,
 };
@@ -262,4 +266,37 @@ class Feature {
     }
     return this;
   }
+}
+
+ee.getMapCallback = null;
+
+/** A thin stub of ee.FeatureCollection. */
+class FeatureCollection {
+  /**
+   * Constructor.
+   *
+   * @param {string} url
+   */
+  constructor(url) {
+    this.url = url;
+  }
+
+  /**
+   * Accepts a callback param as expected and stores it so it can be manually
+   * called from tests (helpful for simulating varied lengths of time before
+   * callback calling).
+   *
+   * @param {Dictionary} args
+   */
+  getMap(args) {
+    ee.getMapCallback = args['callback'];
+  }
+}
+
+/** An empty stub of ee.MapLayerOverlay. */
+class MapLayerOverlay {
+  /**
+   * Constructor.
+   */
+  constructor() {}
 }

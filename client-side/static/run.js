@@ -1,6 +1,6 @@
 import drawTable from './draw_table.js';
 import highlightFeatures from './highlight_features.js';
-import {addLayer, addNullLayer} from './layer_util.js';
+import {addLayer, addNullLayer, toggleLayerOff, toggleLayerOn} from './layer_util.js';
 import processJoinedData from './process_joined_data.js';
 
 export {
@@ -26,8 +26,8 @@ const priorityLayerName = 'priority';
  * @param {google.maps.Map} map main map
  */
 function run(map) {
-  createAssetCheckboxes();
   initializeAssetLayers(map);
+  createAssetCheckboxes(map);
   createAndDisplayJoinedData(map, /* defaultPovertyThreshold=*/ 0.3);
 }
 
@@ -48,29 +48,47 @@ function createAndDisplayJoinedData(map, povertyThreshold) {
           processedData, (features) => highlightFeatures(features, map)));
 }
 
-/** Creates checkboxes for all known assets and the priority overlay. */
-function createAssetCheckboxes() {
+/**
+ * Creates checkboxes for all known assets and the priority overlay.
+ *
+ * @param {google.maps.Map} map main map
+ */
+function createAssetCheckboxes(map) {
   // TODO: these probably shouldn't just sit at the bottom of the page - move to
   // a better place.
-  // TODO(juliexxia): add events on click.
-  Object.keys(assets).forEach((assetName) => createNewCheckbox(assetName));
-  createNewCheckbox(priorityLayerName);
+  const mapDiv = document.getElementsByClassName('map').item(0);
+  Object.keys(assets).forEach(
+      (assetName) => createNewCheckbox(assetName, map, mapDiv));
+  // priority checkbox gets checked during initializePriorityLayer
+  createNewCheckbox(priorityLayerName, map, mapDiv);
 }
 
 /**
  * Creates a new checkbox for the given asset.
  *
  * @param {string} assetName
+ * @param {google.maps.Map} map main map
+ * @param {Element} mapDiv
  */
-function createNewCheckbox(assetName) {
+function createNewCheckbox(assetName, map, mapDiv) {
   const newBox = document.createElement('input');
   newBox.type = 'checkbox';
   newBox.id = assetName;
-  document.body.appendChild(newBox);
+  if (assets[assetName]) {
+    newBox.checked = true;
+  }
+  newBox.onclick = () => {
+    if (newBox.checked) {
+      toggleLayerOn(map, assetName);
+    } else {
+      toggleLayerOff(map, assetName);
+    }
+  };
+  mapDiv.parentNode.appendChild(newBox);
   const label = document.createElement('label');
   label.for = assetName;
   label.innerHTML = assetName;
-  document.body.appendChild(label);
+  mapDiv.parentNode.appendChild(label);
 }
 
 /**
@@ -105,4 +123,5 @@ function initializePriorityLayer(map, layer) {
   addLayer(
       map, layer.style({styleProperty: 'style'}), priorityLayerName,
       priorityIndex);
+  document.getElementById(priorityLayerName).checked = true;
 }
