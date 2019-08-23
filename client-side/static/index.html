@@ -30,31 +30,38 @@
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
-<h1>Houston damage/poverty map</h1>
 
-<div class="map"></div>
-<!-- TODO: link this to the defaultPovertyThreshold -->
-<p id="current-threshold">Current poverty threshold: 0.3</p>
-<p id="threshold-error-message"></p>
-<form id="update-threshold" onsubmit="return false;">
-  <label for="threshold">Poverty threshold</label>
-  <input type="number" id="threshold" step="0.01">
-  <input type="button" value="Update" id="update-button">
-  <script type="module">
-    import update from './update.js';
+<div class="wrapper">
+  <div class="main-content">
+    <h1>Houston damage/poverty map</h1>
+    <div class="map"></div>
+    <div id="table" class="gd-table"></div>
+    <div class="g-sign-in hidden">
+      <span class="label">Sign in with:</span>
+      <div class="button">
+        <span class="icon"></span>
+        <span class="button-text">Google</span>
+      </div>
+    </div>
+  </div>
+  <div class="sidebar">
+    <div class="sidebar-heading">Adjust Thresholds</div>
+    <div class="sidebar-content">
+    <!-- TODO: link this to the defaultPovertyThreshold -->
+      <p id="current-threshold">Current poverty threshold: 0.3</p>
+      <form id="update-threshold" onsubmit="return false;">
+        <label for="threshold">Poverty threshold</label>
+        <input type="number" id="threshold" step="0.01" class="input-field">
+        <input type="button" value="Update" class="small-button" id="updateThresholdsButton">
+        <script type="module">
+          import update from './update.js';
 
-    document.getElementById('update-button').onclick = update;
-  </script>
-</form>
-<div id="table"></div>
-<div class="g-sign-in hidden">
-  <span class="label">Sign in with:</span>
-  <div class="button">
-    <span class="icon"></span>
-    <span class="button-text">Google</span>
+          document.getElementById('updateThresholdsButton').onclick = update;
+        </script>
+      </form>
+    </div>
   </div>
 </div>
-
 <div class="tiles-loading"></div>
 </body>
 </html>
