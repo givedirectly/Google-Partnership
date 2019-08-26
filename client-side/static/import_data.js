@@ -8,6 +8,8 @@ import damageLevelsList from './fema_damage_levels.js';
  * `earthengine upload table --asset_id users/janak/census_building_data \
  *      gs://noaa-michael-data/ACS_16_5YR_B25024_with_ann.csv`
  * (assuming the file has already been uploaded into Google Cloud Storage).
+ *
+ * This script can be run locally by visiting http://localhost:8080/import_data.html
  */
 const censusSnapKey = 'ACS_16_5_4';
 const censusTotalKey = 'ACS_16_5_2';
