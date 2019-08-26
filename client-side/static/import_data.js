@@ -9,9 +9,6 @@ import oldImportData from './old_import_data.js';
  *      gs://noaa-michael-data/ACS_16_5YR_B25024_with_ann.csv`
  * (assuming the file has already been uploaded into Google Cloud Storage).
  *
- * This script can be run locally by visiting
- * http://localhost:8080/import_data.html
- *
  * Current workflow for a new disaster
  *
  * 0) download SNAP data from american fact finder
@@ -39,7 +36,6 @@ const disasters = new Map();
 /** Constants for {@code disasters} map. */
 class DisasterMapValue {
   /**
-   *
    * @param {string} damageKey property name for # damaged buildings
    * @param {string} damageAsset ee asset path
    * @param {string} rawSnapAsset ee asset path
@@ -81,8 +77,6 @@ function countDamageAndBuildings(feature) {
   const damageLevels = ee.List(['no-damage', 'minor-damage', 'major-damage']);
   const damageFilters =
       damageLevels.map((type) => ee.Filter.eq(resources.damageKey, type));
-
-
   const geometry = feature.geometry();
   const blockDamage = damage.filterBounds(geometry);
 
@@ -110,9 +104,10 @@ function run() {
     oldImportData();
   } else {
     const resources = disasters.get(disaster);
-    const damage = ee.FeatureCollection(resources.damageAsset);
-    const rawSnap = ee.FeatureCollection(resources.rawSnapAsset)
-                        .filterBounds(damage.geometry());
+    const rawSnap =
+        ee.FeatureCollection(resources.rawSnapAsset)
+            .filterBounds(
+                ee.FeatureCollection(resources.damageAsset).geometry());
     const assetName = disaster + '-snap-and-damage';
 
     const task = ee.batch.Export.table.toAsset(
