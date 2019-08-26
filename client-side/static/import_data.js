@@ -90,6 +90,7 @@ function run() {
 
   // TODO(#22): get raw Census data, and do the snap join in this script as
   // well.
+  const damage = ee.FeatureCollection(damageAsset);
   const rawSnap =
       ee.FeatureCollection(rawSnapAsset).filterBounds(damage.geometry());
   const buildings = ee.FeatureCollection(buildingsAsset);
