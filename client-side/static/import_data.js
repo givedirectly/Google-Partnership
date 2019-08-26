@@ -1,7 +1,10 @@
 import oldImportData from './old_import_data.js';
 
+/** @VisibleForTesting */
+export {countDamageAndBuildings, disaster, DisasterMapValue, disasters};
+
 /**
- * Joins Texas Census block-group-level SNAP/population data with building
+ * Joins a state's census block-group-level SNAP/population data with building
  * counts and damage, and creates a FeatureCollection. Requires that all of
  * the source assets are already uploaded. Uploading a Census table can be done
  * with something like the command line:
@@ -30,6 +33,8 @@ import oldImportData from './old_import_data.js';
 /** The current disaster to import data for*/
 const disaster = 'michael';
 
+const damageLevelsList = ['no-damage', 'minor-damage', 'major-damage'];
+
 /** Disaster asset names and other constants. */
 const disasters = new Map();
 
@@ -54,7 +59,7 @@ class DisasterMapValue {
 disasters.set(
     'michael',
     new DisasterMapValue(
-        // TODO: make constant
+        // TODO: make constant - check with crowd ai folks about name.
         'descriptio' /* damageKey */,
         'users/juliexxia/crowd_ai_michael' /* damageAsset */,
         'users/juliexxia/florida_snap' /* rawSnapAsset */,
@@ -64,17 +69,17 @@ disasters.set(
         'ACS_16_5_2' /* totalKey */));
 
 /**
- * Given a feature the snap-shapefile joined feature collection, returns a new
- * feature with GEOID, SNAP #, Total pop #, total building count and
+ * Given a feature from the SNAP census data, returns a new
+ * feature with GEOID, SNAP #, total pop #, total building count and
  * building counts for all damage categories.
  *
  * @param {ee.Feature} feature
- * @return {Feature|undefined}
+ * @return {Feature}
  */
 function countDamageAndBuildings(feature) {
   const resources = disasters.get(disaster);
   const damage = ee.FeatureCollection(resources.damageAsset);
-  const damageLevels = ee.List(['no-damage', 'minor-damage', 'major-damage']);
+  const damageLevels = ee.List(damageLevelsList);
   const damageFilters =
       damageLevels.map((type) => ee.Filter.eq(resources.damageKey, type));
   const geometry = feature.geometry();
@@ -96,8 +101,6 @@ function countDamageAndBuildings(feature) {
 
 /** Performs operation of processing inputs and creating output asset. */
 function run() {
-  console.log('run');
-
   ee.initialize();
 
   if (disaster === 'harvey') {
@@ -110,13 +113,16 @@ function run() {
                 ee.FeatureCollection(resources.damageAsset).geometry());
     const assetName = disaster + '-snap-and-damage';
 
+    // TODO(#61): parameterize ee user account to write assets to or make GD
+    // account.
+    // TODO: delete existing asset with same name if it exists.
     const task = ee.batch.Export.table.toAsset(
         rawSnap.map(countDamageAndBuildings), assetName,
         'users/juliexxia/' + assetName);
     task.start();
     $('.upload-status')
         .text('Check Code Editor console for progress. Task: ' + task.id);
-    rawSnap.size().evaluate(function(val, failure) {
+    rawSnap.size().evaluate((val, failure) => {
       if (val) {
         $('.upload-status').append('\n<p>Found ' + val + ' elements');
       } else {
