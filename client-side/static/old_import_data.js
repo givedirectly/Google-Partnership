@@ -1,4 +1,4 @@
-import damageLevelsList from './fema_damage_levels';
+import damageLevelsList from './fema_damage_levels.js';
 
 export {import_data as default};
 

@@ -12,12 +12,12 @@ import old_import_data from './old_import_data.js';
  * This script can be run locally by visiting
  * http://localhost:8080/import_data.html
  *
- * Workflow for a new disaster
+ * Current workflow for a new disaster
  *
  * 0) download SNAP data from american fact finder
  * 1) download TIGER shapefile from census website
  * 2) join in gGIS
- * // TODO: preprocess SNAP so property names only include A-Z, a-z, 0-9, '_'
+ // TODO: preprocess SNAP so property names only include A-Z, a-z, 0-9, '_'
  * 3) make sure no property names have illegal names
  // TODO(#22): get raw Census data, and do the snap join in this script as
  // well.
@@ -28,7 +28,6 @@ import old_import_data from './old_import_data.js';
  * 7) update the {@code disaster} constant
  * 6) visit http://localhost:8080/import_data.html
  */
-// TODO: script GCS upload of SNAP csv, TIGER, crowdAI
 // TODO: factor in margins of error?
 
 /** The current disaster to import data for*/
@@ -54,11 +53,12 @@ disasters.set(
         'users/juliexxia/crowd_ai_michael' /* damageAsset */,
         'users/juliexxia/florida_snap' /* rawSnapAsset */,
         // TODO: make constant?
-        'HDO1_VD02' /* snapKey */,
+        'ACS_16_5_4' /* snapKey */,
         // TODO: make constant?
-        'HD01_VD01' /* totalKey */));
+        'ACS_16_5_2' /* totalKey */));
 
-function countDamageAndBuildings(feature, resources) {
+function countDamageAndBuildings(feature) {
+  const resources = disasters.get(disaster);
   const damage = ee.FeatureCollection(resources.damageAsset);
   const damageLevels = ee.List(['no-damage', 'minor-damage', 'major-damage']);
   const damageFilters =
@@ -66,13 +66,13 @@ function countDamageAndBuildings(feature, resources) {
 
 
   const geometry = feature.geometry();
-  const blockDamage = damage.filterBounds(geomtry);
+  const blockDamage = damage.filterBounds(geometry);
 
-  const attrDict = ee.Dictionary.fromlists(
+  const attrDict = ee.Dictionary.fromLists(
       damageLevels,
       damageFilters.map((type) => blockDamage.filter(type).size()));
   const totalBuildings = damageLevels.iterate((current, lastResult) => {
-    return lastResult.add(ee.Number(attrDict.get(current)));
+    return ee.Number(lastResult).add(ee.Number(attrDict.get(current)));
   }, ee.Number(0));
   return ee.Feature(
       geometry,
@@ -84,26 +84,25 @@ function countDamageAndBuildings(feature, resources) {
 
 /** Performs operation of processing inputs and creating output asset. */
 function run() {
+  console.log('run');
+
   ee.initialize();
 
-  console.log('zero');
-
-
   if (disaster === 'harvey') {
-    console.log('zero');
     old_import_data();
+    console.log('bad news bears');
   } else {
-    console.log('one');
     const resources = disasters.get(disaster);
-    console.log('two');
     const damage = ee.FeatureCollection(resources.damageAsset);
     const rawSnap =
         ee.FeatureCollection(resources.rawSnapAsset).filterBounds(
             damage.geometry());
     const assetName = disaster + '-snap-and-damage';
+
     const task = ee.batch.Export.table.toAsset(
-        rawSnap.map(countDamageAndBuildings()), assetName,
+        rawSnap.map(countDamageAndBuildings), assetName,
         'users/juliexxia/' + assetName);
+    console.log('starting task');
     task.start();
     $('.upload-status')
         .text('Check Code Editor console for progress. Task: ' + task.id);
@@ -142,7 +141,10 @@ function setup() {
     };
 
     // Attempt to authenticate using existing credentials.
-    // ee.data.authenticate(CLIENT_ID, run, null, null, onImmediateFailed);
+    // TODO: deprecated, use ee.data.authenticateViaOauth()
+    ee.data.authenticate(CLIENT_ID, run, 'error', null, onImmediateFailed);
+
+    // run();
   });
 }
 
