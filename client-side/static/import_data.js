@@ -1,4 +1,4 @@
-import damageLevelsList from './fema_damage_levels.js';
+import old_import_data from './old_import_data.js';
 
 /**
  * Joins Texas Census block-group-level SNAP/population data with building
@@ -11,110 +11,110 @@ import damageLevelsList from './fema_damage_levels.js';
  *
  * This script can be run locally by visiting
  * http://localhost:8080/import_data.html
- */
-const censusSnapKey = 'ACS_16_5_4';
-const censusTotalKey = 'ACS_16_5_2';
-const censusBuildingKeyPrefix = 'HD01_VD';
-
-const damageKey = 'DMG_LEVEL';
-const damageAsset = 'users/janak/FEMA_Damage_Assessments_Harvey_20170829';
-const rawSnapAsset = 'users/janak/texas-snap';
-const buildingsAsset = 'users/janak/census_building_data';
-
-/**
- * Counts the number of damaged buildings within the boundaries of the given
- * feature, categorized by type of damage.
  *
- * @param {ee.Feature} feature
- * @return {ee.Feature}
+ * Workflow for a new disaster
+ *
+ * 0) download SNAP data from american fact finder
+ * 1) download TIGER shapefile from census website
+ * 2) join in gGIS
+ * // TODO: preprocess SNAP so property names only include A-Z, a-z, 0-9, '_'
+ * 3) make sure no property names have illegal names
+ // TODO(#22): get raw Census data, and do the snap join in this script as
+ // well.
+ * 3) download crowd ai damage data
+ * 4) upload results of (2) and (3) to GCS
+ * 5) upload results of (4) to earth engine (see instructions above)
+ * 6) add a new entry to {@code disasters}
+ * 7) update the {@code disaster} constant
+ * 6) visit http://localhost:8080/import_data.html
  */
-function countDamage(feature) {
-  const damage = ee.FeatureCollection(damageAsset);
-  const damageLevels = ee.List(damageLevelsList);
-  const damageFilters =
-      damageLevels.map((type) => ee.Filter.eq(damageKey, type));
+// TODO: script GCS upload of SNAP csv, TIGER, crowdAI
+// TODO: factor in margins of error?
 
-  const mainFeature = ee.Feature(feature.get('primary'));
-  // TODO(janakr): #geometry() is deprecated?
-  const geometry = mainFeature.geometry();
-  const blockDamage = damage.filterBounds(geometry);
-  const attrDict = ee.Dictionary.fromLists(
+/** The current disaster to import data for*/
+const disaster = 'michael';
+
+const disasters = new Map();
+
+class DisasterMapValue {
+  constructor(damageKey, damageAsset, rawSnapAsset, snapKey, totalKey, buildingAsset, buildingKey) {
+    this.damageKey = damageKey;
+    this.damageAsset = damageAsset;
+    this.rawSnapAsset = rawSnapAsset;
+    this.snapKey = snapKey;
+    this.totalKey = totalKey;
+  }
+}
+
+disasters.set(
+    'michael',
+    new DisasterMapValue(
+        // TODO: make constant
+        'descriptio' /* damageKey */,
+        'users/juliexxia/crowd_ai_michael' /* damageAsset */,
+        'users/juliexxia/florida_snap' /* rawSnapAsset */,
+        // TODO: make constant?
+        'HDO1_VD02' /* snapKey */,
+        // TODO: make constant?
+        'HD01_VD01' /* totalKey */));
+
+function countDamageAndBuildings(feature, resources) {
+  const damage = ee.FeatureCollection(resources.damageAsset);
+  const damageLevels = ee.List(['no-damage', 'minor-damage', 'major-damage']);
+  const damageFilters =
+      damageLevels.map((type) => ee.Filter.eq(resources.damageKey, type));
+
+
+  const geometry = feature.geometry();
+  const blockDamage = damage.filterBounds(geomtry);
+
+  const attrDict = ee.Dictionary.fromlists(
       damageLevels,
       damageFilters.map((type) => blockDamage.filter(type).size()));
+  const totalBuildings = damageLevels.iterate((current, lastResult) => {
+    return lastResult.add(ee.Number(attrDict.get(current)));
+  }, ee.Number(0));
   return ee.Feature(
       geometry,
-      attrDict.set('GEOID', mainFeature.get('GEOID'))
-          .set('SNAP', mainFeature.get(censusSnapKey))
-          .set('TOTAL', mainFeature.get(censusTotalKey))
-          .set(
-              'BUILDING_COUNT',
-              ee.Feature(feature.get('secondary')).get('BUILDING_COUNT')));
-}
-
-/**
- * Count the total number of buildings in the given feature, which comes from a
- * Census table that partitions buildings by types.
- *
- * @param {ee.Feature} feature
- * @return {ee.Feature}
- */
-function countBuildings(feature) {
-  let totalBuildings = ee.Number(0);
-  // Columns in Census data. HD01_VD{i} is the number of buildings in category
-  // i, where category 1 is single homes, category 2 is attached, etc. See
-  // Census table B25024 for details.
-  for (let i = 1; i <= 11; i++) {
-    totalBuildings = totalBuildings.add(
-        feature.get(censusBuildingKeyPrefix + padToTwoDigits(i)));
-  }
-  return ee.Feature(feature.geometry(), ee.Dictionary([
-    // TODO(#22): when we're processing data from scratch, this won't be a
-    // string on the other side, so we can leave it as is here.
-    'GEOID',
-    ee.String(feature.get('GEOid2')),
-    'BUILDING_COUNT',
-    totalBuildings,
-  ]));
-}
-
-/**
- * Pads a 1- or 2-digit number to 2 digits. Only valid for 0 <= 0 < 100.
- *
- * @param {number} i
- * @return {string}
- */
-function padToTwoDigits(i) {
-  return i < 10 ? '0' + i : i;
+      attrDict.set('GEOID', feature.get('GEOID'))
+          .set('SNAP', feature.get(resources.snapKey))
+          .set('TOTAL', feature.get(resources.totalKey))
+          .set('BUILDING_COUNT', totalBuildings));
 }
 
 /** Performs operation of processing inputs and creating output asset. */
 function run() {
   ee.initialize();
 
-  // TODO(#22): get raw Census data, and do the snap join in this script as
-  // well.
-  const damage = ee.FeatureCollection(damageAsset);
-  const rawSnap =
-      ee.FeatureCollection(rawSnapAsset).filterBounds(damage.geometry());
-  const buildings = ee.FeatureCollection(buildingsAsset);
+  console.log('zero');
 
-  const processedBuildings = buildings.map(countBuildings);
-  const joinedSnap = ee.Join.inner().apply(
-      rawSnap, processedBuildings,
-      ee.Filter.equals({leftField: 'GEOID', rightField: 'GEOID'}));
-  const task = ee.batch.Export.table.toAsset(
-      joinedSnap.map(countDamage), 'texas-snap-join-damage',
-      'users/janak/texas-snap-join-damage');
-  task.start();
-  $('.upload-status')
-      .text('Check Code Editor console for progress. Task: ' + task.id);
-  joinedSnap.size().evaluate(function(val, failure) {
-    if (val) {
-      $('.upload-status').append('\n<p>Found ' + val + ' elements');
-    } else {
-      $('.upload-status').append('\n<p>Error getting size: ' + failure);
-    }
-  });
+
+  if (disaster === 'harvey') {
+    console.log('zero');
+    old_import_data();
+  } else {
+    console.log('one');
+    const resources = disasters.get(disaster);
+    console.log('two');
+    const damage = ee.FeatureCollection(resources.damageAsset);
+    const rawSnap =
+        ee.FeatureCollection(resources.rawSnapAsset).filterBounds(
+            damage.geometry());
+    const assetName = disaster + '-snap-and-damage';
+    const task = ee.batch.Export.table.toAsset(
+        rawSnap.map(countDamageAndBuildings()), assetName,
+        'users/juliexxia/' + assetName);
+    task.start();
+    $('.upload-status')
+        .text('Check Code Editor console for progress. Task: ' + task.id);
+    rawSnap.size().evaluate(function (val, failure) {
+      if (val) {
+        $('.upload-status').append('\n<p>Found ' + val + ' elements');
+      } else {
+        $('.upload-status').append('\n<p>Error getting size: ' + failure);
+      }
+    });
+  }
 }
 
 /**
@@ -142,7 +142,7 @@ function setup() {
     };
 
     // Attempt to authenticate using existing credentials.
-    ee.data.authenticate(CLIENT_ID, run, null, null, onImmediateFailed);
+    // ee.data.authenticate(CLIENT_ID, run, null, null, onImmediateFailed);
   });
 }
 
