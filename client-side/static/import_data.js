@@ -1,4 +1,4 @@
-import old_import_data from './old_import_data.js';
+import oldImportData from './old_import_data.js';
 
 /**
  * Joins Texas Census block-group-level SNAP/population data with building
@@ -33,10 +33,21 @@ import old_import_data from './old_import_data.js';
 /** The current disaster to import data for*/
 const disaster = 'michael';
 
+/** Disaster asset names and other constants. */
 const disasters = new Map();
 
+/** Constants for {@code disasters} map. */
 class DisasterMapValue {
-  constructor(damageKey, damageAsset, rawSnapAsset, snapKey, totalKey, buildingAsset, buildingKey) {
+  /**
+   *
+   * @param {string} damageKey property name for # damaged buildings
+   * @param {string} damageAsset ee asset path
+   * @param {string} rawSnapAsset ee asset path
+   * @param {string} snapKey property name for # snap recipients
+   * @param {string} totalKey property name for # total population
+   */
+  constructor(
+    damageKey, damageAsset, rawSnapAsset, snapKey, totalKey) {
     this.damageKey = damageKey;
     this.damageAsset = damageAsset;
     this.rawSnapAsset = rawSnapAsset;
@@ -57,6 +68,14 @@ disasters.set(
         // TODO: make constant?
         'ACS_16_5_2' /* totalKey */));
 
+/**
+ * Given a feature the snap-shapefile joined feature collection, returns a new
+ * feature with GEOID, SNAP #, Total pop #, total building count and
+ * building counts for all damage categories.
+ *
+ * @param {ee.Feature} feature
+ * @return {Feature|undefined}
+ */
 function countDamageAndBuildings(feature) {
   const resources = disasters.get(disaster);
   const damage = ee.FeatureCollection(resources.damageAsset);
@@ -89,24 +108,21 @@ function run() {
   ee.initialize();
 
   if (disaster === 'harvey') {
-    old_import_data();
-    console.log('bad news bears');
+    oldImportData();
   } else {
     const resources = disasters.get(disaster);
     const damage = ee.FeatureCollection(resources.damageAsset);
-    const rawSnap =
-        ee.FeatureCollection(resources.rawSnapAsset).filterBounds(
-            damage.geometry());
+    const rawSnap = ee.FeatureCollection(resources.rawSnapAsset)
+                        .filterBounds(damage.geometry());
     const assetName = disaster + '-snap-and-damage';
 
     const task = ee.batch.Export.table.toAsset(
         rawSnap.map(countDamageAndBuildings), assetName,
         'users/juliexxia/' + assetName);
-    console.log('starting task');
     task.start();
     $('.upload-status')
         .text('Check Code Editor console for progress. Task: ' + task.id);
-    rawSnap.size().evaluate(function (val, failure) {
+    rawSnap.size().evaluate(function(val, failure) {
       if (val) {
         $('.upload-status').append('\n<p>Found ' + val + ' elements');
       } else {

@@ -1,8 +1,8 @@
 import damageLevelsList from './fema_damage_levels.js';
 
-export {import_data as default};
+export {importData as default};
 
-// HARVEY
+/** Harvey */
 const damageKey = 'DMG_LEVEL';
 const damageAsset = 'users/janak/FEMA_Damage_Assessments_Harvey_20170829';
 const rawSnapAsset = 'users/janak/texas-snap';
@@ -11,7 +11,12 @@ const censusSnapKey = 'ACS_16_5_4';
 const censusTotalKey = 'ACS_16_5_2';
 const censusBuildingKeyPrefix = 'HD01_VD';
 
-function import_data() {
+/**
+ * Export a full-properties feature collection for hurrican harvey. This differs
+ * from the current set up because it uses FEMA damage data and census data for
+ * building counts.
+ */
+function importData() {
   const damage = ee.FeatureCollection(damageAsset);
   const rawSnap =
       ee.FeatureCollection(rawSnapAsset).filterBounds(damage.geometry());
