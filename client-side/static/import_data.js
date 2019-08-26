@@ -46,8 +46,7 @@ class DisasterMapValue {
    * @param {string} snapKey property name for # snap recipients
    * @param {string} totalKey property name for # total population
    */
-  constructor(
-    damageKey, damageAsset, rawSnapAsset, snapKey, totalKey) {
+  constructor(damageKey, damageAsset, rawSnapAsset, snapKey, totalKey) {
     this.damageKey = damageKey;
     this.damageAsset = damageAsset;
     this.rawSnapAsset = rawSnapAsset;
