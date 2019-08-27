@@ -16,13 +16,9 @@ export {countDamageAndBuildings, disaster, DisasterMapValue, disasters};
  *
  * 0) download SNAP data from american fact finder
  * 1) download TIGER shapefile from census website
- * 2) join in gGIS
- // TODO: preprocess SNAP so property names only include A-Z, a-z, 0-9, '_'
+ * 2) download crowd ai damage data
  * 3) make sure no property names have illegal names
- // TODO(#22): get raw Census data, and do the snap join in this script as
- // well.
- * 3) download crowd ai damage data
- * 4) upload results of (2) and (3) to GCS
+ * 4) upload results of (1) (2) and (3) to GCS
  * 5) upload results of (4) to earth engine (see instructions above)
  * 6) add a new entry to {@code disasters}
  * 7) update the {@code disaster} constant
@@ -30,10 +26,17 @@ export {countDamageAndBuildings, disaster, DisasterMapValue, disasters};
  */
 // TODO: factor in margins of error?
 
-/** The current disaster to import data for*/
+/** The current disaster for which to import data. */
 const disaster = 'michael';
 
 const damageLevelsList = ['no-damage', 'minor-damage', 'major-damage'];
+
+// I (juliexxia) manually changed the name of the GEO.id2 property since earth
+// engine doesn't like '.'s in their property names.
+// TODO: script preprocessing SNAP so property names only include A-Z, a-z, 0-9,
+// '_'
+const modifiedCensusGeoidName = 'GEOid2';
+const tigerGeoidName = 'GEOID';
 
 /** Disaster asset names and other constants. */
 const disasters = new Map();
@@ -43,14 +46,16 @@ class DisasterMapValue {
   /**
    * @param {string} damageKey property name for # damaged buildings
    * @param {string} damageAsset ee asset path
-   * @param {string} rawSnapAsset ee asset path
+   * @param {string} snapAsset ee asset path to snap info
+   * @param {string} bgAsset ee asset path to block group info
    * @param {string} snapKey property name for # snap recipients
    * @param {string} totalKey property name for # total population
    */
-  constructor(damageKey, damageAsset, rawSnapAsset, snapKey, totalKey) {
+  constructor(damageKey, damageAsset, snapAsset, bgAsset, snapKey, totalKey) {
     this.damageKey = damageKey;
     this.damageAsset = damageAsset;
-    this.rawSnapAsset = rawSnapAsset;
+    this.rawSnapAsset = snapAsset;
+    this.bgAsset = bgAsset;
     this.snapKey = snapKey;
     this.totalKey = totalKey;
   }
@@ -62,11 +67,12 @@ disasters.set(
         // TODO: make constant - check with crowd ai folks about name.
         'descriptio' /* damageKey */,
         'users/juliexxia/crowd_ai_michael' /* damageAsset */,
-        'users/juliexxia/florida_snap' /* rawSnapAsset */,
+        'users/juliexxia/ACS_16_5YR_B22010_with_ann' /* rawSnapAsset */,
+        'users/juliexxia/tiger_florida' /* bgAsset */,
         // TODO: make constant?
-        'ACS_16_5_4' /* snapKey */,
+        'HD01_VD02' /* snapKey */,
         // TODO: make constant?
-        'ACS_16_5_2' /* totalKey */));
+        'HD01_VD01' /* totalKey */));
 
 /**
  * Given a feature from the SNAP census data, returns a new
@@ -82,7 +88,7 @@ function countDamageAndBuildings(feature) {
   const damageLevels = ee.List(damageLevelsList);
   const damageFilters =
       damageLevels.map((type) => ee.Filter.eq(resources.damageKey, type));
-  const geometry = feature.geometry();
+  const geometry = ee.Feature(feature.get('secondary')).geometry();
   const blockDamage = damage.filterBounds(geometry);
 
   const attrDict = ee.Dictionary.fromLists(
@@ -91,12 +97,25 @@ function countDamageAndBuildings(feature) {
   const totalBuildings = damageLevels.iterate((current, lastResult) => {
     return ee.Number(lastResult).add(ee.Number(attrDict.get(current)));
   }, ee.Number(0));
+  const snapFeature = ee.Feature(feature.get('primary'));
   return ee.Feature(
       geometry,
-      attrDict.set('GEOID', feature.get('GEOID'))
-          .set('SNAP', feature.get(resources.snapKey))
-          .set('TOTAL', feature.get(resources.totalKey))
+      attrDict.set('GEOID', snapFeature.get(modifiedCensusGeoidName))
+          .set('SNAP', snapFeature.get(resources.snapKey))
+          .set('TOTAL', snapFeature.get(resources.totalKey))
           .set('BUILDING_COUNT', totalBuildings));
+}
+
+/**
+ * Convert the GEOid2 column into a string column for sake of matching to
+ * TIGER data.
+ *
+ * @param {ee.Feature} feature
+ * @return {ee.Feature}
+ */
+function stringifyGeoid(feature) {
+  return feature.set(
+      modifiedCensusGeoidName, ee.String(feature.get(modifiedCensusGeoidName)));
 }
 
 /** Performs operation of processing inputs and creating output asset. */
@@ -107,22 +126,28 @@ function run() {
     oldImportData();
   } else {
     const resources = disasters.get(disaster);
-    const rawSnap =
-        ee.FeatureCollection(resources.rawSnapAsset)
+    const snapAsset =
+        ee.FeatureCollection(resources.rawSnapAsset).map(stringifyGeoid);
+    const blockGroupAsset =
+        ee.FeatureCollection(resources.bgAsset)
             .filterBounds(
                 ee.FeatureCollection(resources.damageAsset).geometry());
-    const assetName = disaster + '-snap-and-damage';
+    const joinedSnap = ee.Join.inner().apply(
+        snapAsset, blockGroupAsset,
+        ee.Filter.equals(
+            {leftField: modifiedCensusGeoidName, rightField: tigerGeoidName}));
 
+    const assetName = disaster + '-snap-and-damage';
     // TODO(#61): parameterize ee user account to write assets to or make GD
     // account.
     // TODO: delete existing asset with same name if it exists.
     const task = ee.batch.Export.table.toAsset(
-        rawSnap.map(countDamageAndBuildings), assetName,
-        'users/janak/' + assetName);
+        joinedSnap.map(countDamageAndBuildings), assetName,
+        'users/juliexxia/' + assetName);
     task.start();
     $('.upload-status')
         .text('Check Code Editor console for progress. Task: ' + task.id);
-    rawSnap.size().evaluate((val, failure) => {
+    joinedSnap.size().evaluate((val, failure) => {
       if (val) {
         $('.upload-status').append('\n<p>Found ' + val + ' elements');
       } else {
