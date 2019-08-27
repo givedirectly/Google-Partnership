@@ -26,7 +26,7 @@ export {countDamageAndBuildings, disaster, DisasterMapValue, disasters};
  */
 // TODO: factor in margins of error?
 
-/** The current disaster for which to import data. */
+/** The current disaster. */
 const disaster = 'michael';
 
 const damageLevelsList = ['no-damage', 'minor-damage', 'major-damage'];
