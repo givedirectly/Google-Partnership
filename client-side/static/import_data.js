@@ -118,7 +118,7 @@ function run() {
     // TODO: delete existing asset with same name if it exists.
     const task = ee.batch.Export.table.toAsset(
         rawSnap.map(countDamageAndBuildings), assetName,
-        'users/juliexxia/' + assetName);
+        'users/janak/' + assetName);
     task.start();
     $('.upload-status')
         .text('Check Code Editor console for progress. Task: ' + task.id);
