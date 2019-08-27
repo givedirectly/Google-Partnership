@@ -18,7 +18,7 @@ export {countDamageAndBuildings, disaster, DisasterMapValue, disasters};
  * 1) download TIGER shapefile from census website
  * 2) download crowd ai damage data
  * 3) make sure no property names have illegal names
- * 4) upload results of (1) (2) and (3) to GCS
+ * 4) upload results of (0) (1) and (2) to GCS
  * 5) upload results of (4) to earth engine (see instructions above)
  * 6) add a new entry to {@code disasters}
  * 7) update the {@code disaster} constant
