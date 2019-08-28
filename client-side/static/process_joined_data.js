@@ -8,8 +8,6 @@ export {
   snapTag,
 };
 
-const damageLevelMultipliers = [0, 0, 1, 1, 2, 3];
-
 const damageTag = 'DAMAGE PERCENTAGE';
 const geoidTag = 'GEOID';
 const priorityTag = 'PRIORITY';
@@ -30,7 +28,6 @@ const priorityDisplayCap = 99;
  * @param {number} povertyThreshold  used to filter out areas that are not poor
  *     enough (as determined by the areas SNAP and TOTAL properties).
  * @param {ee.List} damageLevels
- * @param {ee.Dictionary} damageScales
  * @param {number} damageThreshold
  * @param {number} povertyWeight
  * @param {number} damageWeight
@@ -38,13 +35,8 @@ const priorityDisplayCap = 99;
  * @return {ee.Feature}
  */
 function colorAndRate(
-    feature, scalingFactor, povertyThreshold, damageLevels, damageScales,
-    damageThreshold, povertyWeight, damageWeight) {
-  console.log(povertyThreshold);
-  console.log(damageThreshold);
-  console.log(povertyWeight);
-  console.log(damageWeight);
-
+    feature, scalingFactor, povertyThreshold, damageLevels, damageThreshold,
+    povertyWeight, damageWeight) {
   const rawRatio = ee.Number(feature.get('SNAP')).divide(feature.get('TOTAL'));
   const numBuildingsDamaged =
       ee.Number(damageLevels
@@ -54,24 +46,24 @@ function colorAndRate(
                     .reduce(ee.Reducer.sum()));
   const numBuildingsTotal = feature.get('BUILDING_COUNT');
   const ratioBuildingsDamaged = numBuildingsDamaged.divide(numBuildingsTotal);
-
-
   const bool = ee.Number(rawRatio.lte(povertyThreshold))
                    .or(ee.Number(ratioBuildingsDamaged.lte(damageThreshold)));
-
   const weightedDamage = ratioBuildingsDamaged.multiply(damageWeight);
   const weightedPoverty = rawRatio.multiply(povertyWeight);
   const potentialPriority = ee.Number(
       weightedDamage.add(weightedPoverty).multiply(scalingFactor).round());
-
   const priority =
       ee.Number(ee.Algorithms.If(bool, ee.Number(0), potentialPriority));
   return ee
       .Feature(feature.geometry(), ee.Dictionary([
-        geoidTag, feature.get(geoidTag), priorityTag, priority, snapTag,
-        rawRatio, damageTag, ratioBuildingsDamaged,
-        // '#Damaged',
-        // numBuildingsDamaged, '#Total', numBuildingsTotal
+        geoidTag,
+        feature.get(geoidTag),
+        priorityTag,
+        priority,
+        snapTag,
+        rawRatio,
+        damageTag,
+        ratioBuildingsDamaged,
       ]))
       .set({
         style: {
@@ -95,11 +87,9 @@ function processJoinedData(
     joinedData, scale, povertyThreshold, damageThreshold, povertyWeight,
     damageWeight) {
   const damageLevels = ee.List(damageLevelsList);
-  const damageScales =
-      ee.Dictionary.fromLists(damageLevels, damageLevelMultipliers);
   return joinedData.map(function(feature) {
     return colorAndRate(
-        feature, scale, povertyThreshold, damageLevels, damageScales,
-        damageThreshold, povertyWeight, damageWeight);
+        feature, scale, povertyThreshold, damageLevels, damageThreshold,
+        povertyWeight, damageWeight);
   });
 }

@@ -8,17 +8,24 @@ export {
   updatePovertyThreshold,
   updatePovertyWeight,
 };
+/** @VisibleForTesting */
+export {
+  currentDamageWeight,
+  currentPovertyWeight,
+}
 
 let currentPovertyThreshold = 0.3;
+
 let currentDamageThreshold = 0.5;
 let currentPovertyWeight = 0.5;
 let currentDamageWeight = 0.5;
 
 /**
- *
+ * Given a new damage weight, updates the current damage and poverty weights,
+ * redraws priority layer and table.
  */
 function updateDamageWeight() {
-  const dw = Number(document.getElementById('d-weight').value);
+  const dw = Number(getValue('d-weight'));
   if (hasErrors(dw, 'dw-error-message')) {
     return;
   }
@@ -26,28 +33,30 @@ function updateDamageWeight() {
   currentDamageWeight = dw;
   currentPovertyWeight = 1.0 - dw;
 
-  document.getElementById('d-weight').value = '';
+  setValue('d-weight', '');
   updateWeights();
 }
 
 /**
- *
+ * Given a new poverty weight, updates the current poverty and damage weights,
+ * redraws priority layer and table.
  */
 function updatePovertyWeight() {
-  const pw = Number(document.getElementById('p-weight').value);
-  if (hasErrors(pw, 'dw-error-message')) {
+  const pw = Number(getValue('p-weight'));
+  if (hasErrors(pw, 'pw-error-message')) {
     return;
   }
 
   currentPovertyWeight = pw;
   currentDamageWeight = 1.0 - pw;
 
-  document.getElementById('p-weight').value = '';
+  setValue('p-weight', '');
   updateWeights();
 }
 
 /**
- *
+ * Clears error messages, updates current weight messages, redraws priority
+ * layer and list.
  */
 function updateWeights() {
   setInnerHtml('pw-error-message', '');
@@ -68,7 +77,7 @@ function updateWeights() {
  * and redraws table.
  */
 function updatePovertyThreshold() {
-  const pt = Number(document.getElementById('p-threshold').value);
+  const pt = Number(getValue('p-threshold'));
 
   if (hasErrors(pt, 'pt-error-message')) {
     return;
@@ -79,7 +88,7 @@ function updatePovertyThreshold() {
   setInnerHtml('pt-error-message', '');
   setInnerHtml(
       'current-pt', 'Current poverty threshold: ' + currentPovertyThreshold);
-  document.getElementById('p-threshold').value = '';
+  setValue('p-threshold', '');
   removePriorityLayer(map);
   createAndDisplayJoinedData(
       map, currentPovertyThreshold, currentDamageThreshold,
@@ -87,10 +96,12 @@ function updatePovertyThreshold() {
 }
 
 /**
- *
+ * Removes the current score overlay on the map (if there is one).
+ * Reprocesses scores with new damageThreshold, overlays new score layer
+ * and redraws table.
  */
 function updateDamageThreshold() {
-  const dt = Number(document.getElementById('d-threshold').value);
+  const dt = Number(getValue('d-threshold'));
 
   if (hasErrors(dt, 'dt-error-message')) {
     return;
@@ -101,7 +112,7 @@ function updateDamageThreshold() {
   setInnerHtml('dt-error-message', '');
   setInnerHtml(
       'current-dt', 'Current damage threshold: ' + currentDamageThreshold);
-  document.getElementById('d-threshold').value = '';
+  setValue('d-threshold', '');
   removePriorityLayer(map);
   createAndDisplayJoinedData(
       map, currentPovertyThreshold, currentDamageThreshold,
@@ -116,17 +127,35 @@ function updateDamageThreshold() {
  */
 function hasErrors(threshold, errorId) {
   if (Number.isNaN(threshold) || threshold < 0.0 || threshold > 1.0) {
-    setInnerHtml(errorId, 'threshold must be between 0.00 and 1.00');
+    setInnerHtml(errorId, 'Threshold must be between 0.00 and 1.00');
     return true;
   }
   return false;
 }
 
 /**
- *
+ * Sets the innerHTML of the element with the given id.
  * @param {string} id
  * @param {string} value
  */
 function setInnerHtml(id, value) {
   document.getElementById(id).innerHTML = value;
+}
+
+/**
+ * Gets the value of the element with the given id.
+ * @param id
+ * @return {*}
+ */
+function getValue(id) {
+  return document.getElementById(id).value;
+}
+
+/**
+ * Sets the value of the element with the given id.
+ * @param id
+ * @param value
+ */
+function setValue(id, value) {
+  document.getElementById(id).value = value;
 }
