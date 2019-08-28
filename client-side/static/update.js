@@ -12,7 +12,7 @@ export {
 export {
   currentDamageWeight,
   currentPovertyWeight,
-}
+};
 
 let currentPovertyThreshold = 0.3;
 
@@ -144,8 +144,8 @@ function setInnerHtml(id, value) {
 
 /**
  * Gets the value of the element with the given id.
- * @param id
- * @return {*}
+ * @param {string} id
+ * @return {string}
  */
 function getValue(id) {
   return document.getElementById(id).value;
@@ -153,8 +153,8 @@ function getValue(id) {
 
 /**
  * Sets the value of the element with the given id.
- * @param id
- * @param value
+ * @param {string} id
+ * @param {string} value
  */
 function setValue(id, value) {
   document.getElementById(id).value = value;
