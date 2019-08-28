@@ -11,8 +11,8 @@ describe('Integration test', () => {
     cy.wait(500);
     cy.get('#priority').uncheck();
 
-    cy.get('#threshold').type('1.0');
-    cy.get('#update-button').click();
+    cy.get('#p-threshold').type('1.0');
+    cy.get('#pt-button').click();
 
     // Wait for update.
     // TODO(#53): check for loading bar element to finish instead of waiting.
