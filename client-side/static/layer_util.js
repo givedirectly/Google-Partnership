@@ -1,7 +1,15 @@
 import createError from './create_error.js';
 import {priorityLayerName} from './run.js';
 
-export {addLayer, addNullLayer, removeLayer, removePriorityLayer};
+export {
+  addLayer,
+  addNullLayer,
+  removePriorityLayer,
+  toggleLayerOff,
+  toggleLayerOn,
+};
+// @VisibleForTesting
+export {layerMap, LayerMapValue};
 
 // Keep a map of asset name -> overlay, index, display status. Overlays are
 // lazily generated i.e. pre-known assets that don't display by
@@ -26,22 +34,54 @@ class LayerMapValue {
   }
 }
 
+/**
+ * Toggles on displaying an asset on the map.
+ *
+ * @param {google.map.Maps} map
+ * @param {string} assetName
+ */
+function toggleLayerOn(map, assetName) {
+  const currentLayerMapValue = layerMap[assetName];
+  if (currentLayerMapValue.overlay === null) {
+    addLayer(
+        map, ee.FeatureCollection(assetName), assetName,
+        currentLayerMapValue.index);
+  } else {
+    map.overlayMapTypes.setAt(
+        currentLayerMapValue.index, currentLayerMapValue.overlay);
+    currentLayerMapValue.displayed = true;
+  }
+}
 
 /**
- * Adds an EarthEngine layer (from EEObject.getMap()) to the given Google Map
- * and returns the "overlay" that was added, in case the caller wants to add
+ * Toggles off displaying an asset on the map.
+ *
+ * @param {google.map.Maps} map
+ * @param {string} assetName
+ */
+function toggleLayerOff(map, assetName) {
+  removeLayer(map, assetName);
+}
+
+/**
+ * Create an EarthEngine layer (from EEObject.getMap()), potentially add to the
+ * given Google Map and returns the overlay, in case the caller wants to add
  * callbacks or similar to that overlay.
  *
  * @param {google.maps.Map} map
  * @param {Object} layerId
  * @param {number} index
+ * @param {boolean} displayed
  * @return {ee.MapLayerOverlay}
  */
-function addLayerFromId(map, layerId, index) {
+function addLayerFromId(map, layerId, index, displayed) {
   const overlay = new ee.MapLayerOverlay(
       'https://earthengine.googleapis.com/map', layerId.mapid, layerId.token,
       {});
-  map.overlayMapTypes.setAt(index, overlay);
+  // Check in case the status has changed while the callback was running.
+  if (displayed) {
+    map.overlayMapTypes.setAt(index, overlay);
+  }
   return overlay;
 }
 
@@ -49,19 +89,27 @@ function addLayerFromId(map, layerId, index) {
  * Asynchronous wrapper for addLayerFromId that calls getMap() with a callback
  * to avoid blocking on the result. This also populates layerMap.
  *
+ * This should only be called once per asset when its overlay is initialized
+ * for the first time. After the overlay is non-null in layerMap, any displaying
+ * should be able to call {@code map.overlayMapTypes.setAt(...)}.
+ *
  * @param {google.maps.Map} map
  * @param {ee.Element} layer
  * @param {string} assetName
  * @param {number} index
  */
 function addLayer(map, layer, assetName, index) {
+  // Add a null-overlay entry to layerMap while waiting for the callback to
+  // finish.
+  layerMap[assetName] = new LayerMapValue(null, index, true);
   layer.getMap({
     callback: (layerId, failure) => {
       if (layerId) {
-        const overlay = addLayerFromId(map, layerId, index);
-        layerMap[assetName] = new LayerMapValue(overlay, index, true);
+        layerMap[assetName].overlay =
+            addLayerFromId(map, layerId, index, layerMap[assetName].displayed);
       } else {
-        // TODO: if there's an error, disable checkbox.
+        // TODO: if there's an error, disable checkbox, add tests for this.
+        layerMap[assetName].displayed = false;
         createError('getting id')(failure);
       }
     },
