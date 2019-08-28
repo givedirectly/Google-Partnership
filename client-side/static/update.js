@@ -2,144 +2,142 @@ import {removePriorityLayer} from './layer_util.js';
 import {createAndDisplayJoinedData} from './run.js';
 import {map} from './script.js';
 
-export {
-  updateDamageThreshold,
-  updateDamageWeight,
-  updatePovertyThreshold,
-  updatePovertyWeight,
-};
-/** @VisibleForTesting */
-export {
-  currentDamageWeight,
-  currentPovertyWeight,
+export {createToggles};
+
+const toggles = {
+  'poverty threshold': 0.3,
+  'damage threshold': 0.5,
+  'poverty weight': 0.5,
+  'damage weight': 0.5
 };
 
-let currentPovertyThreshold = 0.3;
+function update() {
+  console.log('hello?');
+  const rawPovertyWeight = getValue('poverty weight');
+  const rawDamageWeight = getValue('damage weight');
 
-let currentDamageThreshold = 0.5;
-let currentPovertyWeight = 0.5;
-let currentDamageWeight = 0.5;
+  // console.log(rawPovertyWeight !== '');
 
-/**
- * Given a new damage weight, updates the current damage and poverty weights,
- * redraws priority layer and table.
- */
-function updateDamageWeight() {
-  const dw = Number(getValue('d-weight'));
-  if (hasErrors(dw, 'dw-error-message')) {
+  if (rawPovertyWeight !== '' && rawDamageWeight !== '' &&
+      Number(rawPovertyWeight) + Number(rawDamageWeight) !== 1.0) {
+    setErrorMessage('poverty weight and damage weight must add up to 1.0');
     return;
   }
 
-  currentDamageWeight = dw;
-  currentPovertyWeight = 1.0 - dw;
+  const newToggleValues = {};
 
-  setValue('d-weight', '');
-  updateWeights();
-}
-
-/**
- * Given a new poverty weight, updates the current poverty and damage weights,
- * redraws priority layer and table.
- */
-function updatePovertyWeight() {
-  const pw = Number(getValue('p-weight'));
-  if (hasErrors(pw, 'pw-error-message')) {
-    return;
+  for (var toggle in toggles) {
+    if (!toggles.hasOwnProperty(toggle)) {
+      continue;
+    }
+    const rawValue = getValue(toggle);
+    if (rawValue !== '') {
+      const newValue = Number(rawValue);
+      if (hasErrors(newValue, toggle)) {
+        return;
+      } else {
+        newToggleValues[toggle] = newValue;
+      }
+      setValue(toggle, '');
+    }
   }
 
-  currentPovertyWeight = pw;
-  currentDamageWeight = 1.0 - pw;
+  if (newToggleValues.hasOwnProperty('poverty weight') &&
+      !newToggleValues.hasOwnProperty('damage weight')) {
+    newToggleValues['damage weight'] = 1 - newToggleValues['poverty weight'];
+  } else if (
+      newToggleValues.hasOwnProperty('damage weight') &&
+      !newToggleValues.hasOwnProperty('poverty weight')) {
+    newToggleValues['poverty weight'] = 1 - newToggleValues['damage weight'];
+  }
 
-  setValue('p-weight', '');
-  updateWeights();
-}
-
-/**
- * Clears error messages, updates current weight messages, redraws priority
- * layer and list.
- */
-function updateWeights() {
-  setInnerHtml('pw-error-message', '');
-  setInnerHtml('dw-error-message', '');
-
-  setInnerHtml('current-pw', 'Current poverty weight: ' + currentPovertyWeight);
-  setInnerHtml('current-dw', 'Current damage weight: ' + currentDamageWeight);
+  for (var toggle in newToggleValues) {
+    if (!newToggleValues.hasOwnProperty(toggle)) {
+      continue;
+    }
+    toggles[toggle] = newToggleValues[toggle];
+    setInnerHtml(
+        'current ' + toggle,
+        'current ' + toggle + ': ' + newToggleValues[toggle]);
+  }
 
   removePriorityLayer(map);
   createAndDisplayJoinedData(
-      map, currentPovertyThreshold, currentDamageThreshold,
-      currentPovertyWeight, currentDamageWeight);
+      map, toggles['poverty threshold'], toggles['damage threshold'],
+      toggles['poverty weight'], toggles['damage weight']);
 }
 
-/**
- * Removes the current score overlay on the map (if there is one).
- * Reprocesses scores with new povertyThreshold, overlays new score layer
- * and redraws table.
- */
-function updatePovertyThreshold() {
-  const pt = Number(getValue('p-threshold'));
+function createToggles() {
+  const form = document.createElement('form');
+  form.id = 'toggles';
+  form.onsubmit = () => {
+    return false
+  };
+  const errorMessage = document.createElement('p');
+  errorMessage.id = 'error';
+  form.append(errorMessage);
+  for (var toggle in toggles) {
+    if (!toggles.hasOwnProperty(toggle)) {
+      continue;
+    }
+    const currentValueMessage = document.createElement('p');
+    currentValueMessage.id = 'current ' + toggle;
+    currentValueMessage.innerHTML =
+        currentValueMessage.id + ': ' + toggles[toggle];
+    form.appendChild(currentValueMessage);
 
-  if (hasErrors(pt, 'pt-error-message')) {
-    return;
+    const label = document.createElement('label');
+    label.for = toggle;
+    label.id = 'for ' + toggle;
+    label.innerHTML = toggle;
+    form.appendChild(label);
+
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.id = toggle;
+    input.step = '0.01';
+    form.appendChild(input);
   }
-
-  currentPovertyThreshold = pt;
-
-  setInnerHtml('pt-error-message', '');
-  setInnerHtml(
-      'current-pt', 'Current poverty threshold: ' + currentPovertyThreshold);
-  setValue('p-threshold', '');
-  removePriorityLayer(map);
-  createAndDisplayJoinedData(
-      map, currentPovertyThreshold, currentDamageThreshold,
-      currentPovertyWeight, currentDamageWeight);
-}
-
-/**
- * Removes the current score overlay on the map (if there is one).
- * Reprocesses scores with new damageThreshold, overlays new score layer
- * and redraws table.
- */
-function updateDamageThreshold() {
-  const dt = Number(getValue('d-threshold'));
-
-  if (hasErrors(dt, 'dt-error-message')) {
-    return;
-  }
-
-  currentDamageThreshold = dt;
-
-  setInnerHtml('dt-error-message', '');
-  setInnerHtml(
-      'current-dt', 'Current damage threshold: ' + currentDamageThreshold);
-  setValue('d-threshold', '');
-  removePriorityLayer(map);
-  createAndDisplayJoinedData(
-      map, currentPovertyThreshold, currentDamageThreshold,
-      currentPovertyWeight, currentDamageWeight);
+  form.appendChild(document.createElement('br'));
+  const submitButton = document.createElement('input');
+  submitButton.type = 'button';
+  submitButton.value = 'update';
+  submitButton.id = 'update';
+  submitButton.onclick = update;
+  form.appendChild(submitButton);
+  document.getElementsByClassName('form').item(0).appendChild(form);
 }
 
 /**
  *
  * @param {Number} threshold
- * @param {String} errorId
+ * @param {string} toggle
  * @return {boolean} true if there are any errors parsing the new threshold.
  */
-function hasErrors(threshold, errorId) {
+// TODO: implement ability to show multiple errors at once?
+function hasErrors(threshold, toggle) {
   if (Number.isNaN(threshold) || threshold < 0.0 || threshold > 1.0) {
-    setInnerHtml(errorId, 'Threshold must be between 0.00 and 1.00');
+    setErrorMessage(toggle + ' must be between 0.00 and 1.00');
     return true;
   }
   return false;
 }
 
 /**
- * Sets the innerHTML of the element with the given id.
- * @param {string} id
- * @param {string} value
+ *
+ * @param message
  */
-function setInnerHtml(id, value) {
-  document.getElementById(id).innerHTML = value;
+function setErrorMessage(message) {
+  setInnerHtml('error', 'ERROR: ' + message);
+}
+
+/**
+ *
+ * @param id
+ * @param message
+ */
+function setInnerHtml(id, message) {
+  document.getElementById(id).innerHTML = message;
 }
 
 /**

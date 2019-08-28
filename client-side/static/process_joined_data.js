@@ -38,22 +38,24 @@ function colorAndRate(
     feature, scalingFactor, povertyThreshold, damageLevels, damageThreshold,
     povertyWeight, damageWeight) {
   const rawRatio = ee.Number(feature.get('SNAP')).divide(feature.get('TOTAL'));
-  const numBuildingsDamaged =
+  const ratioBuildingsDamaged =
       ee.Number(damageLevels
                     .map(function(type) {
                       return ee.Number(feature.get(type));
                     })
-                    .reduce(ee.Reducer.sum()));
-  const numBuildingsTotal = feature.get('BUILDING_COUNT');
-  const ratioBuildingsDamaged = numBuildingsDamaged.divide(numBuildingsTotal);
-  const bool = ee.Number(rawRatio.lte(povertyThreshold))
-                   .or(ee.Number(ratioBuildingsDamaged.lte(damageThreshold)));
-  const weightedDamage = ratioBuildingsDamaged.multiply(damageWeight);
-  const weightedPoverty = rawRatio.multiply(povertyWeight);
-  const potentialPriority = ee.Number(
-      weightedDamage.add(weightedPoverty).multiply(scalingFactor).round());
-  const priority =
-      ee.Number(ee.Algorithms.If(bool, ee.Number(0), potentialPriority));
+                    .reduce(ee.Reducer.sum()))
+          .divide(feature.get('BUILDING_COUNT'));
+  const belowThresholds =
+      ee.Number(rawRatio.lte(povertyThreshold))
+          .or(ee.Number(ratioBuildingsDamaged.lte(damageThreshold)));
+  const potentialPriority =
+      ee.Number(ratioBuildingsDamaged.multiply(damageWeight)
+                    .add(rawRatio.multiply(povertyWeight))
+                    .multiply(scalingFactor)
+                    .round());
+  const priority = ee.Number(
+      ee.Algorithms.If(belowThresholds, ee.Number(0), potentialPriority));
+  // TODO: also include raw priority (requested by GD team).
   return ee
       .Feature(feature.geometry(), ee.Dictionary([
         geoidTag,

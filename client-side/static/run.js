@@ -3,6 +3,9 @@ import highlightFeatures from './highlight_features.js';
 import {addLayer, addNullLayer, toggleLayerOff, toggleLayerOn} from './layer_util.js';
 import processJoinedData from './process_joined_data.js';
 
+// TODO: break circles.
+import {createToggles} from './update.js';
+
 export {
   createAndDisplayJoinedData,
   priorityLayerName,
@@ -27,9 +30,11 @@ const priorityLayerName = 'priority';
  */
 function run(map) {
   initializeAssetLayers(map);
+  createToggles();
   createAssetCheckboxes(map);
   createAndDisplayJoinedData(
-      map, /* defaultPovertyThreshold=*/ 0.3, 0.5, 0.5, 0.5);
+      map, 0.3 /*povertyThreshold*/, 0.5 /*damageThreshold*/,
+      0.5 /*povertyWeight*/, 0.5 /*damageWeight*/);
 }
 
 /**
