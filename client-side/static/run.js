@@ -33,8 +33,8 @@ function run(map) {
   createToggles();
   createAssetCheckboxes(map);
   createAndDisplayJoinedData(
-      map, 0.3 /*povertyThreshold*/, 0.5 /*damageThreshold*/,
-      0.5 /*povertyWeight*/, 0.5 /*damageWeight*/);
+      map, 0.3 /* povertyThreshold*/, 0.5 /* damageThreshold*/,
+      0.5 /* povertyWeight*/, 0.5 /* damageWeight*/);
 }
 
 /**

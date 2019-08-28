@@ -8,9 +8,10 @@ const toggles = {
   'poverty threshold': 0.3,
   'damage threshold': 0.5,
   'poverty weight': 0.5,
-  'damage weight': 0.5
+  'damage weight': 0.5,
 };
 
+/** Updates the priority layer and table based on new info. */
 function update() {
   console.log('hello?');
   const rawPovertyWeight = getValue('poverty weight');
@@ -26,7 +27,7 @@ function update() {
 
   const newToggleValues = {};
 
-  for (var toggle in toggles) {
+  for (const toggle in toggles) {
     if (!toggles.hasOwnProperty(toggle)) {
       continue;
     }
@@ -51,7 +52,7 @@ function update() {
     newToggleValues['poverty weight'] = 1 - newToggleValues['damage weight'];
   }
 
-  for (var toggle in newToggleValues) {
+  for (const toggle in newToggleValues) {
     if (!newToggleValues.hasOwnProperty(toggle)) {
       continue;
     }
@@ -67,16 +68,17 @@ function update() {
       toggles['poverty weight'], toggles['damage weight']);
 }
 
+/** Creates the form for toggling the equation. */
 function createToggles() {
   const form = document.createElement('form');
   form.id = 'toggles';
   form.onsubmit = () => {
-    return false
+    return false;
   };
   const errorMessage = document.createElement('p');
   errorMessage.id = 'error';
   form.append(errorMessage);
-  for (var toggle in toggles) {
+  for (const toggle in toggles) {
     if (!toggles.hasOwnProperty(toggle)) {
       continue;
     }
@@ -109,12 +111,12 @@ function createToggles() {
 }
 
 /**
- *
+ * Checks if a number is a valid toggle value.
+ * TODO: implement ability to show multiple errors at once?
  * @param {Number} threshold
  * @param {string} toggle
  * @return {boolean} true if there are any errors parsing the new threshold.
  */
-// TODO: implement ability to show multiple errors at once?
 function hasErrors(threshold, toggle) {
   if (Number.isNaN(threshold) || threshold < 0.0 || threshold > 1.0) {
     setErrorMessage(toggle + ' must be between 0.00 and 1.00');
@@ -124,17 +126,17 @@ function hasErrors(threshold, toggle) {
 }
 
 /**
- *
- * @param message
+ * Set the error message
+ * @param {string} message
  */
 function setErrorMessage(message) {
   setInnerHtml('error', 'ERROR: ' + message);
 }
 
 /**
- *
- * @param id
- * @param message
+ * Set the displayed text of an element
+ * @param {string} id
+ * @param {string} message
  */
 function setInnerHtml(id, message) {
   document.getElementById(id).innerHTML = message;
