@@ -1,5 +1,6 @@
 // /**
-//  * Checks correct initial value of poverty threshold and checks it updates when
+//  * Checks correct initial value of poverty threshold and checks it updates
+//  when
 //  * updated with valid value
 //  */
 // describe('Integration test', () => {
@@ -54,7 +55,8 @@
 // });
 //
 // /**
-//  * Checks that by setting the threshold to 100% the list and page number empty.
+//  * Checks that by setting the threshold to 100% the list and page number
+//  empty.
 //  * This is somewhat brittle in that if we ever worked with some poverty data
 //  * that did have 100% poverty in any areas, this would break.
 //  *
