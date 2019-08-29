@@ -114,8 +114,7 @@ function countDamageAndBuildings(feature) {
  * @return {ee.Feature}
  */
 function stringifyGeoid(feature) {
-  return feature.set(
-      censusGeoidKey, ee.String(feature.get(censusGeoidKey)));
+  return feature.set(censusGeoidKey, ee.String(feature.get(censusGeoidKey)));
 }
 
 /** Performs operation of processing inputs and creating output asset. */
