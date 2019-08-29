@@ -1,6 +1,5 @@
 import {removePriorityLayer} from './layer_util.js';
 import {createAndDisplayJoinedData} from './run.js';
-import {map} from './script.js';
 
 export {createToggles};
 
@@ -12,8 +11,7 @@ const toggles = {
 };
 
 /** Updates the priority layer and table based on new info. */
-function update() {
-  console.log('hello?');
+function update(map) {
   const rawPovertyWeight = getValue('poverty weight');
   const rawDamageWeight = getValue('damage weight');
 
@@ -69,7 +67,7 @@ function update() {
 }
 
 /** Creates the form for toggling the equation. */
-function createToggles() {
+function createToggles(map) {
   const form = document.createElement('form');
   form.id = 'toggles';
   form.onsubmit = () => {
@@ -105,7 +103,7 @@ function createToggles() {
   submitButton.type = 'button';
   submitButton.value = 'update';
   submitButton.id = 'update';
-  submitButton.onclick = update;
+  submitButton.onclick = () => {update(map)};
   form.appendChild(submitButton);
   document.getElementsByClassName('form').item(0).appendChild(form);
 }
@@ -159,3 +157,5 @@ function getValue(id) {
 function setValue(id, value) {
   document.getElementById(id).value = value;
 }
+
+
