@@ -10,7 +10,10 @@ const toggles = {
   'damage weight': 0.5,
 };
 
-/** Updates the priority layer and table based on new info. */
+/**
+ * Updates the priority layer and table based on new info.
+ * @param {google.map.Maps} map
+ */
 function update(map) {
   const rawPovertyWeight = getValue('poverty weight');
   const rawDamageWeight = getValue('damage weight');
@@ -66,7 +69,10 @@ function update(map) {
       toggles['poverty weight'], toggles['damage weight']);
 }
 
-/** Creates the form for toggling the equation. */
+/**
+ * Creates the form for toggling the equation.
+ * @param {google.map.Maps} map
+ */
 function createToggles(map) {
   const form = document.createElement('form');
   form.id = 'toggles';
@@ -103,7 +109,9 @@ function createToggles(map) {
   submitButton.type = 'button';
   submitButton.value = 'update';
   submitButton.id = 'update';
-  submitButton.onclick = () => {update(map)};
+  submitButton.onclick = () => {
+    update(map);
+  };
   form.appendChild(submitButton);
   document.getElementsByClassName('form').item(0).appendChild(form);
 }
@@ -157,5 +165,3 @@ function getValue(id) {
 function setValue(id, value) {
   document.getElementById(id).value = value;
 }
-
-

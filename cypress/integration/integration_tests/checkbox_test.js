@@ -9,15 +9,15 @@ describe('Integration test', () => {
     // Wait for page to fully load. Needed to ensure that layerMap is populated.
     // TODO(#53): check for loading bar element to finish instead of waiting.
     cy.wait(500);
-    cy.get('#priority').uncheck();
+    cy.get('[id="priority"]').uncheck();
 
-    cy.get('#p-threshold').type('1.0');
-    cy.get('#pt-button').click();
+    cy.get('[id="poverty threshold"]').type('1.0');
+    cy.get('[id="update"]').click();
 
     // Wait for update.
     // TODO(#53): check for loading bar element to finish instead of waiting.
     cy.wait(200);
 
-    cy.get('#priority').should('be.checked');
+    cy.get('[id="priority"]').should('be.checked');
   });
 });

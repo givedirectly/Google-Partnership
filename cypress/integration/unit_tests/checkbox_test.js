@@ -81,8 +81,8 @@ describe('Unit test for toggleLayerOn', () => {
 
 describe('Unit test for toggleLayerOff', () => {
   it('hides a displayed layer', () => {
-    expect(layerMap['asset1'].displayed).to.equals(true);
-    expect(layerMap['asset1'].overlay).to.not.be.null;
+    expect(layerMap['asset0'].displayed).to.equals(true);
+    expect(layerMap['asset0'].overlay).to.not.be.null;
 
     const overlayMapTypesApi = {
       setAt: (index, overlay) => {},

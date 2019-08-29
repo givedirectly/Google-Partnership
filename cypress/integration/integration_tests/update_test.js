@@ -16,7 +16,7 @@ describe('Integration test', () => {
   });
 
   /** Ensures that setting one weight also sets the other one */
-  it.only('Submits a new weight', () => {
+  it('Submits a new weight', () => {
     cy.visit(host);
 
     cy.get('[id="poverty weight"]').type('0.2');
@@ -97,7 +97,7 @@ describe('Integration test', () => {
   //    CypressError: Timed out retrying: Expected to find element:
   //    '.google-visualization-table-page-numbers', but never found it.
 
-  it.only('Checks list size updates with higher threshold', () => {
+  it('Checks list size updates with higher threshold', () => {
     cy.visit(host);
 
     cy.get('[id="damage threshold"]').type('0.0');
