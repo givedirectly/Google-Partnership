@@ -39,8 +39,10 @@ const damageLevelsList = ['no-damage', 'minor-damage', 'major-damage'];
 // engine doesn't like '.'s in their property names.
 // TODO: script preprocessing SNAP so property names only include A-Z, a-z, 0-9,
 // '_'
-const modifiedCensusGeoidName = 'GEOid2';
-const tigerGeoidName = 'GEOID';
+const censusGeoidKey = 'GEOid2';
+const tigerGeoidKey = 'GEOID';
+const snapKey = 'HD01_VD02';
+const totalKey = 'HD01_VD01';
 
 /** Disaster asset names and other constants. */
 const disasters = new Map();
@@ -60,8 +62,6 @@ class DisasterMapValue {
     this.damageAsset = damageAsset;
     this.rawSnapAsset = snapAsset;
     this.bgAsset = bgAsset;
-    this.snapKey = snapKey;
-    this.totalKey = totalKey;
   }
 }
 
@@ -72,11 +72,7 @@ disasters.set(
         'descriptio' /* damageKey */,
         'users/juliexxia/crowd_ai_michael' /* damageAsset */,
         'users/juliexxia/ACS_16_5YR_B22010_with_ann' /* rawSnapAsset */,
-        'users/juliexxia/tiger_florida' /* bgAsset */,
-        // TODO: make constant?
-        'HD01_VD02' /* snapKey */,
-        // TODO: make constant?
-        'HD01_VD01' /* totalKey */));
+        'users/juliexxia/tiger_florida' /* bgAsset */));
 
 /**
  * Given a feature from the SNAP census data, returns a new
@@ -104,9 +100,9 @@ function countDamageAndBuildings(feature) {
   const snapFeature = ee.Feature(feature.get('primary'));
   return ee.Feature(
       geometry,
-      attrDict.set('GEOID', snapFeature.get(modifiedCensusGeoidName))
-          .set('SNAP', snapFeature.get(acsSnapKey))
-          .set('TOTAL', snapFeature.get(acsTotalKey))
+      attrDict.set('GEOID', snapFeature.get(censusGeoidKey))
+          .set('SNAP', snapFeature.get(snapKey))
+          .set('TOTAL', snapFeature.get(totalKey))
           .set('BUILDING_COUNT', totalBuildings));
 }
 
@@ -119,7 +115,7 @@ function countDamageAndBuildings(feature) {
  */
 function stringifyGeoid(feature) {
   return feature.set(
-      modifiedCensusGeoidName, ee.String(feature.get(modifiedCensusGeoidName)));
+      censusGeoidKey, ee.String(feature.get(censusGeoidKey)));
 }
 
 /** Performs operation of processing inputs and creating output asset. */
@@ -139,7 +135,7 @@ function run() {
     const joinedSnap = ee.Join.inner().apply(
         snapAsset, blockGroupAsset,
         ee.Filter.equals(
-            {leftField: modifiedCensusGeoidName, rightField: tigerGeoidName}));
+            {leftField: censusGeoidKey, rightField: tigerGeoidKey}));
 
     const assetName = disaster + '-snap-and-damage';
     // TODO(#61): parameterize ee user account to write assets to or make GD
