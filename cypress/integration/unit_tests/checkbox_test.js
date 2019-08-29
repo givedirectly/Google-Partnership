@@ -57,7 +57,7 @@ describe('Unit test for toggleLayerOn', () => {
     expect(layerMap['asset2'].overlay).to.not.be.null;
   });
 
-  it.only('check hidden layer, then uncheck before getMapCallback', () => {
+  it('check hidden layer, then uncheck before getMapCallback', () => {
     expect(layerMap['asset2'].displayed).to.equals(false);
     expect(layerMap['asset2'].overlay).to.be.null;
 
