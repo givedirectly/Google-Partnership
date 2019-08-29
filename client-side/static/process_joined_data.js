@@ -55,7 +55,6 @@ function colorAndRate(
                     .round());
   const priority = ee.Number(
       ee.Algorithms.If(belowThresholds, ee.Number(0), potentialPriority));
-  // TODO: also include raw priority (requested by GD team).
   return ee
       .Feature(feature.geometry(), ee.Dictionary([
         geoidTag,
