@@ -14,10 +14,14 @@ export {countDamageAndBuildings, disaster, DisasterMapValue, disasters};
  *
  * Current workflow for a new disaster
  *
- * 0) download SNAP data from american fact finder
+ * 0) download SNAP data from american fact finder (2016 ACS 5-year estimates)
+ *      https://factfinder.census.gov/faces/nav/jsf/pages/download_center.xhtml
+ * 0a) clean up illegal property names by running ./cleanup_acs.sh
+ *    /path/to/snap/data.csv
  * 1) download TIGER shapefile from census website
+ *      https://www.census.gov/cgi-bin/geo/shapefiles/index.php
  * 2) download crowd ai damage data
- * 3) make sure no property names have illegal names
+ * 3) convert from KML -> shapefile
  * 4) upload results of (0) (1) and (2) to GCS
  * 5) upload results of (4) to earth engine (see instructions above)
  * 6) add a new entry to {@code disasters}
@@ -101,8 +105,8 @@ function countDamageAndBuildings(feature) {
   return ee.Feature(
       geometry,
       attrDict.set('GEOID', snapFeature.get(modifiedCensusGeoidName))
-          .set('SNAP', snapFeature.get(resources.snapKey))
-          .set('TOTAL', snapFeature.get(resources.totalKey))
+          .set('SNAP', snapFeature.get(acsSnapKey))
+          .set('TOTAL', snapFeature.get(acsTotalKey))
           .set('BUILDING_COUNT', totalBuildings));
 }
 
