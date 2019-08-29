@@ -18,8 +18,6 @@ function update(map) {
   const rawPovertyWeight = getValue('poverty weight');
   const rawDamageWeight = getValue('damage weight');
 
-  // console.log(rawPovertyWeight !== '');
-
   if (rawPovertyWeight !== '' && rawDamageWeight !== '' &&
       Number(rawPovertyWeight) + Number(rawDamageWeight) !== 1.0) {
     setErrorMessage('poverty weight and damage weight must add up to 1.0');
