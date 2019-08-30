@@ -93,12 +93,21 @@ function createToggles(map) {
   form.appendChild(damageWeight);
   form.appendChild(document.createElement('br'));
 
-  form.appendChild(createButton('update', () => {update(map)}));
+  form.appendChild(createButton('update', () => {
+    update(map);
+  }));
   form.appendChild(createButton('current settings', reset));
 
   document.getElementsByClassName('form').item(0).appendChild(form);
 }
 
+/**
+ * Create a basic input element with the given id for the key name in {@code
+ * toggles}
+ *
+ * @param {string} id
+ * @return {HTMLInputElement}
+ */
 function createBasicToggleInputElement(id) {
   const input = document.createElement('input');
   input.id = id;
@@ -107,6 +116,13 @@ function createBasicToggleInputElement(id) {
   return input;
 }
 
+/**
+ * Create a generic button.
+ *
+ * @param {string} id
+ * @param {function} onclick
+ * @return {HTMLInputElement}
+ */
 function createButton(id, onclick) {
   const submitButton = document.createElement('input');
   submitButton.type = 'button';
@@ -116,6 +132,9 @@ function createButton(id, onclick) {
   return submitButton;
 }
 
+/**
+ * Resets the toggles to their current value as displayed in the map and list
+ */
 function reset() {
   console.log(toggles);
   for (const [toggle, value] of toggles) {
@@ -126,6 +145,7 @@ function reset() {
       'd', 'damage weight: '.concat(1 - toggles.get('poverty weight')));
 }
 
+/** Update the displayed weights based on a new poverty weight. */
 function updateWeights() {
   const newPovertyWeight =
       Number(document.getElementById('poverty weight').value);

@@ -92,11 +92,12 @@ function colorAndRate(
  * @return {ee.FeatureCollection}
  */
 function processJoinedData(
-    joinedData, scale, povertyThreshold, damageThreshold, povertyWeight) {
+    joinedData, scalingFactor, povertyThreshold, damageThreshold,
+    povertyWeight) {
   const damageLevels = ee.List(damageLevelsList);
   return joinedData.map(function(feature) {
     return colorAndRate(
-        feature, scale, damageLevels, povertyThreshold, damageThreshold,
+        feature, scalingFactor, damageLevels, povertyThreshold, damageThreshold,
         povertyWeight);
   });
 }
