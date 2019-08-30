@@ -16,17 +16,18 @@ export {countDamageAndBuildings, disaster, DisasterMapValue, disasters};
  *
  * 0) download SNAP data from american fact finder (2016 ACS 5-year estimates)
  *      https://factfinder.census.gov/faces/nav/jsf/pages/download_center.xhtml
- * 0a) clean up illegal property names by running ./cleanup_acs.sh
+ * 1) clean up illegal property names in (0) by running ./cleanup_acs.sh
  *    /path/to/snap/data.csv
- * 1) download TIGER shapefile from census website
+ * 2) download TIGER shapefile from census website
  *      https://www.census.gov/cgi-bin/geo/shapefiles/index.php
- * 2) download crowd ai damage data
- * 3) convert from KML -> shapefile
- * 4) upload results of (0) (1) and (2) to GCS
- * 5) upload results of (4) to earth engine (see instructions above)
- * 6) add a new entry to {@code disasters}
- * 7) update the {@code disaster} constant
- * 6) visit http://localhost:8080/import_data.html
+ * 3) download crowd ai damage data
+ * 4) convert (3) from KML/geojson -> shapefile using something like
+ *      https://mygeodata.cloud/converter/kml-to-shp
+ * 5) upload results of (1) (2) and (4) to GCS
+ * 6) upload results of (4) to earth engine (see instructions above)
+ * 7) add a new entry to {@code disasters}
+ * 8) update the {@code disaster} constant
+ * 9) visit http://localhost:8080/import_data.html
  */
 // TODO: factor in margins of error?
 
@@ -35,10 +36,6 @@ const disaster = 'michael';
 
 const damageLevelsList = ['no-damage', 'minor-damage', 'major-damage'];
 
-// I (juliexxia) manually changed the name of the GEO.id2 property since earth
-// engine doesn't like '.'s in their property names.
-// TODO: script preprocessing SNAP so property names only include A-Z, a-z, 0-9,
-// '_'
 const censusGeoidKey = 'GEOid2';
 const tigerGeoidKey = 'GEOID';
 const snapKey = 'HD01_VD02';
