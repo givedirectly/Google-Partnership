@@ -21,26 +21,29 @@ const priorityDisplayCap = 99;
  * sets the color/opacity based on the priority, with all priorities past 99
  * equally opaque.
  *
+ *
  * @param {ee.Feature} feature
  * @param {ee.Number} scalingFactor multiplies the raw priority, it can be
  *     adjusted to make sure that the values span the desired range of ~0 to
  *     ~100.
- * @param {number} povertyThreshold  used to filter out areas that are not poor
- *     enough (as determined by the areas SNAP and TOTAL properties).
  * @param {ee.List} damageLevels
- * @param {number} damageThreshold
- * @param {number} povertyWeight
- * @param {number} damageWeight
+ * @param {number} povertyThreshold between 0 and 1 representing what
+ *     fraction of a population must be SNAP eligible to be considered.
+ * @param {number} damageThreshold a number between 0 and 1 representing what
+ *     fraction of a block group's building must be damaged to be considered.
+ * @param {number} povertyWeight float between 0 and 1 that describes what
+ *     percentage of the score should be based on poverty (this is also a proxy
+ *     for damageWeight which is 1-this value).
  *
  * @return {ee.Feature}
  */
 function colorAndRate(
-    feature, scalingFactor, povertyThreshold, damageLevels, damageThreshold,
-    povertyWeight, damageWeight) {
+    feature, scalingFactor, damageLevels, povertyThreshold, damageThreshold,
+    povertyWeight) {
   const rawRatio = ee.Number(feature.get('SNAP')).divide(feature.get('TOTAL'));
   const ratioBuildingsDamaged =
       ee.Number(damageLevels
-                    .map(function(type) {
+                    .map((type) => {
                       return ee.Number(feature.get(type));
                     })
                     .reduce(ee.Reducer.sum()))
@@ -49,7 +52,7 @@ function colorAndRate(
       ee.Number(rawRatio.lte(povertyThreshold))
           .or(ee.Number(ratioBuildingsDamaged.lte(damageThreshold)));
   const potentialPriority =
-      ee.Number(ratioBuildingsDamaged.multiply(damageWeight)
+      ee.Number(ratioBuildingsDamaged.multiply(1 - povertyWeight)
                     .add(rawRatio.multiply(povertyWeight))
                     .multiply(scalingFactor)
                     .round());
@@ -76,21 +79,24 @@ function colorAndRate(
 
 /**
  * @param {ee.FeatureCollection} joinedData
- * @param {ee.Number} scale
- * @param {number} povertyThreshold
+ * @param {ee.Number} scalingFactor multiplies the raw priority, it can be
+ *     adjusted to make sure that the values span the desired range of ~0 to
+ *     ~100.
+ * @param {number} povertyThreshold between 0 and 1 representing what
+ *     fraction of a population must be SNAP eligible to be considered.
  * @param {number} damageThreshold a number between 0 and 1 representing what
  *     fraction of a block group's building must be damaged to be considered.
- * @param {number} povertyWeight
- * @param {number} damageWeight
+ * @param {number} povertyWeight float between 0 and 1 that describes what
+ *     percentage of the score should be based on poverty (this is also a proxy
+ *     for damageWeight which is 1-this value).
  * @return {ee.FeatureCollection}
  */
 function processJoinedData(
-    joinedData, scale, povertyThreshold, damageThreshold, povertyWeight,
-    damageWeight) {
+    joinedData, scale, povertyThreshold, damageThreshold, povertyWeight) {
   const damageLevels = ee.List(damageLevelsList);
   return joinedData.map(function(feature) {
     return colorAndRate(
-        feature, scale, povertyThreshold, damageLevels, damageThreshold,
-        povertyWeight, damageWeight);
+        feature, scale, damageLevels, povertyThreshold, damageThreshold,
+        povertyWeight);
   });
 }

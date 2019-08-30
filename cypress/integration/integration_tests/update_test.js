@@ -2,66 +2,65 @@ describe('Integration test', () => {
   it('Submits multiple new values at once', () => {
     cy.visit(host);
 
-    cy.get('[id="poverty weight"]').type('0.2');
-    cy.get('[id="damage threshold"]').type('0.5');
+    cy.get('[id="poverty weight"]').invoke('val', '0.2').trigger('input');
+    cy.get('[id="damage threshold"]').clear().type('0.5');
     cy.get('[id="update"]').click();
 
     // TODO(#53): implement loading element and replace with call to it.
     cy.wait(200);
 
-    cy.get('[id="current poverty weight"]')
-        .should('have.text', 'current poverty weight: 0.2');
-    cy.get('[id="current damage threshold"]')
-        .should('have.text', 'current damage threshold: 0.5');
+    cy.get('[id="p"]').should('have.text', 'poverty weight: 0.2');
+    cy.get('[id="damage threshold"]').should('have.value', '0.5');
   });
 
   /** Ensures that setting one weight also sets the other one */
   it('Submits a new weight', () => {
     cy.visit(host);
 
-    cy.get('[id="poverty weight"]').type('0.2');
+    cy.get('[id="poverty weight"]').invoke('val', '0.2').trigger('input');
     cy.get('[id="update"]').click();
 
     // TODO(#53): implement loading element and replace with call to it.
     cy.wait(200);
 
-    cy.get('[id="current poverty weight"]')
-        .should('have.text', 'current poverty weight: 0.2');
-    cy.get('[id="current damage weight"]')
-        .should('have.text', 'current damage weight: 0.8');
+    cy.get('[id="p"]').should('have.text', 'poverty weight: 0.2');
+    cy.get('[id="d"]').should('have.text', 'damage weight: 0.8');
   });
 
-  it('Submits new weights that do not add to 1', () => {
+  it('Types new values then resets', () => {
     cy.visit(host);
 
-    cy.get('[id="poverty weight"]').type('0.2');
-    cy.get('[id="damage weight"]').type('0.2');
+    cy.get('[id="poverty weight"]').invoke('val', '0.2').trigger('input');
+    cy.get('[id="damage threshold"]').clear().type('0.5');
     cy.get('[id="update"]').click();
 
-    cy.get('[id="error"]')
-        .should(
-            'have.text',
-            'ERROR: poverty weight and damage weight must add up to 1.0');
+    cy.wait(200);
+
+    cy.get('[id="poverty weight"]').invoke('val', '0.1').trigger('input');
+    cy.get('[id="damage threshold"]').clear().type('0.7');
+
+    cy.get('[id="current settings"]').click();
+
+    cy.get('[id="poverty weight"]').should('have.value', '0.2');
+    cy.get('[id="damage threshold"]').should('have.value', '0.5');
   });
 
   it('Submits a new threshold value', () => {
     cy.visit(host);
 
-    cy.get('[id="current poverty threshold"]')
-        .should('have.text', 'current poverty threshold: 0.3');
+    cy.get('[id="poverty threshold"]').should('have.value', '0.3');
 
-    cy.get('[id="poverty threshold"]').type('0.5');
+    cy.get('[id="poverty threshold"]').clear().type(0.5);
     cy.get('[id="update"]').click();
 
-    cy.get('[id="current poverty threshold"]')
-        .should('have.text', 'current poverty threshold: 0.5');
+    cy.get('[id="poverty threshold"]').should('have.value', '0.5');
     cy.get('[id="error"]').should('have.text', '');
   });
 
-  it('Submits an invalid threshold value (empty)', () => {
+  it('Submits an invalid threshold value', () => {
     cy.visit(host);
 
-    cy.get('[id="poverty threshold"]').type('-0.1');
+    cy.get('[id="poverty threshold"]').clear().type('-0.1');
     cy.get('[id="update"]').click();
 
     cy.get('[id="error"]')

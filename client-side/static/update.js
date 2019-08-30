@@ -1,70 +1,43 @@
 import {removePriorityLayer} from './layer_util.js';
 import {createAndDisplayJoinedData} from './run.js';
 
-export {createToggles};
-
-const toggles = {
-  'poverty threshold': 0.3,
-  'damage threshold': 0.5,
-  'poverty weight': 0.5,
-  'damage weight': 0.5,
+export {
+  createToggles,
+  initialDamageThreshold,
+  initialPovertyThreshold,
+  initialPovertyWeight,
 };
+
+const initialPovertyThreshold = 0.3;
+const initialDamageThreshold = 0.5;
+// The initial damage weight is 1-this value.
+const initialPovertyWeight = 0.5;
+
+const toggles = new Map([
+  ['poverty threshold', initialPovertyThreshold],
+  ['damage threshold', initialDamageThreshold],
+  ['poverty weight', initialPovertyWeight],
+]);
 
 /**
  * Updates the priority layer and table based on new info.
  * @param {google.map.Maps} map
  */
 function update(map) {
-  const rawPovertyWeight = getValue('poverty weight');
-  const rawDamageWeight = getValue('damage weight');
-
-  if (rawPovertyWeight !== '' && rawDamageWeight !== '' &&
-      Number(rawPovertyWeight) + Number(rawDamageWeight) !== 1.0) {
-    setErrorMessage('poverty weight and damage weight must add up to 1.0');
-    return;
-  }
-
-  const newToggleValues = {};
-
-  for (const toggle in toggles) {
-    if (!toggles.hasOwnProperty(toggle)) {
-      continue;
+  for (const toggle of toggles.keys()) {
+    const newValue = Number(getValue(toggle));
+    if (hasErrors(newValue, toggle)) {
+      return;
+    } else {
+      toggles.set(toggle, newValue);
+      setValue(toggle, newValue);
     }
-    const rawValue = getValue(toggle);
-    if (rawValue !== '') {
-      const newValue = Number(rawValue);
-      if (hasErrors(newValue, toggle)) {
-        return;
-      } else {
-        newToggleValues[toggle] = newValue;
-      }
-      setValue(toggle, '');
-    }
-  }
-
-  if (newToggleValues.hasOwnProperty('poverty weight') &&
-      !newToggleValues.hasOwnProperty('damage weight')) {
-    newToggleValues['damage weight'] = 1 - newToggleValues['poverty weight'];
-  } else if (
-      newToggleValues.hasOwnProperty('damage weight') &&
-      !newToggleValues.hasOwnProperty('poverty weight')) {
-    newToggleValues['poverty weight'] = 1 - newToggleValues['damage weight'];
-  }
-
-  for (const toggle in newToggleValues) {
-    if (!newToggleValues.hasOwnProperty(toggle)) {
-      continue;
-    }
-    toggles[toggle] = newToggleValues[toggle];
-    setInnerHtml(
-        'current ' + toggle,
-        'current ' + toggle + ': ' + newToggleValues[toggle]);
   }
 
   removePriorityLayer(map);
   createAndDisplayJoinedData(
-      map, toggles['poverty threshold'], toggles['damage threshold'],
-      toggles['poverty weight'], toggles['damage weight']);
+      map, toggles.get('poverty threshold'), toggles.get('damage threshold'),
+      toggles.get('poverty weight'));
 }
 
 /**
@@ -80,38 +53,84 @@ function createToggles(map) {
   const errorMessage = document.createElement('p');
   errorMessage.id = 'error';
   form.append(errorMessage);
-  for (const toggle in toggles) {
-    if (!toggles.hasOwnProperty(toggle)) {
+
+  // threshold toggles
+  for (const toggle of toggles.keys()) {
+    if (!toggle.endsWith('threshold')) {
       continue;
     }
-    const currentValueMessage = document.createElement('p');
-    currentValueMessage.id = 'current ' + toggle;
-    currentValueMessage.innerHTML =
-        currentValueMessage.id + ': ' + toggles[toggle];
-    form.appendChild(currentValueMessage);
+    const input = createBasicToggleInputElement(toggle);
+    input.type = 'number';
+    form.appendChild(input);
 
     const label = document.createElement('label');
     label.for = toggle;
     label.id = 'for ' + toggle;
-    label.innerHTML = toggle;
+    label.innerHTML = ' ' + toggle;
     form.appendChild(label);
 
-    const input = document.createElement('input');
-    input.type = 'number';
-    input.id = toggle;
-    input.step = '0.01';
-    form.appendChild(input);
+    form.appendChild(document.createElement('br'));
   }
+
+  // weight toggle
+  const povertyWeight = document.createElement('label');
+  povertyWeight.id = 'p';
+  povertyWeight.innerHTML =
+      'poverty weight: '.concat(toggles.get('poverty weight'));
+  form.appendChild(povertyWeight);
+
+  const weightInput = createBasicToggleInputElement('poverty weight');
+  weightInput.type = 'range';
+  weightInput.min = '0.00';
+  weightInput.max = '1.00';
+  weightInput.oninput = updateWeights;
+  form.appendChild(weightInput);
+
+  const damageWeight = document.createElement('label');
+  damageWeight.id = 'd';
+  damageWeight.innerHTML =
+      'damage weight: '.concat(1 - toggles.get('poverty weight'));
+  form.appendChild(damageWeight);
   form.appendChild(document.createElement('br'));
+
+  form.appendChild(createButton('update', () => {update(map)}));
+  form.appendChild(createButton('current settings', reset));
+
+  document.getElementsByClassName('form').item(0).appendChild(form);
+}
+
+function createBasicToggleInputElement(id) {
+  const input = document.createElement('input');
+  input.id = id;
+  input.step = '0.01';
+  input.value = toggles.get(id);
+  return input;
+}
+
+function createButton(id, onclick) {
   const submitButton = document.createElement('input');
   submitButton.type = 'button';
-  submitButton.value = 'update';
-  submitButton.id = 'update';
-  submitButton.onclick = () => {
-    update(map);
-  };
-  form.appendChild(submitButton);
-  document.getElementsByClassName('form').item(0).appendChild(form);
+  submitButton.value = id;
+  submitButton.id = id;
+  submitButton.onclick = onclick;
+  return submitButton;
+}
+
+function reset() {
+  console.log(toggles);
+  for (const [toggle, value] of toggles) {
+    setValue(toggle, value);
+  }
+  setInnerHtml('p', 'poverty weight: ' + toggles.get('poverty weight'));
+  setInnerHtml(
+      'd', 'damage weight: '.concat(1 - toggles.get('poverty weight')));
+}
+
+function updateWeights() {
+  const newPovertyWeight =
+      Number(document.getElementById('poverty weight').value);
+  setInnerHtml('p', 'poverty weight: '.concat(newPovertyWeight));
+  setInnerHtml('d', 'damage weight: '.concat(1 - newPovertyWeight));
 }
 
 /**

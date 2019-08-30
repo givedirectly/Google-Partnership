@@ -2,8 +2,7 @@ import drawTable from './draw_table.js';
 import highlightFeatures from './highlight_features.js';
 import {addLayer, addNullLayer, toggleLayerOff, toggleLayerOn} from './layer_util.js';
 import processJoinedData from './process_joined_data.js';
-
-import {createToggles} from './update.js';
+import {createToggles, initialDamageThreshold, initialPovertyThreshold, initialPovertyWeight} from './update.js';
 
 export {
   createAndDisplayJoinedData,
@@ -32,8 +31,8 @@ function run(map) {
   createToggles(map);
   createAssetCheckboxes(map);
   createAndDisplayJoinedData(
-      map, 0.3 /* povertyThreshold*/, 0.5 /* damageThreshold*/,
-      0.5 /* povertyWeight*/, 0.5 /* damageWeight*/);
+      map, initialPovertyThreshold, initialDamageThreshold,
+      initialPovertyWeight);
 }
 
 /**
@@ -44,14 +43,15 @@ function run(map) {
  *     fraction of the population must be SNAP eligible to be considered.
  * @param {number} damageThreshold a number between 0 and 1 representing what
  *     fraction of a block group's building must be damaged to be considered.
- * @param {number} povertyWeight
- * @param {number} damageWeight
+ * @param {number} povertyWeight float between 0 and 1 that describes what
+ *     percentage of the score should be based on poverty (this is also a proxy
+ *     for damageWeight which is 1-this value).
  */
 function createAndDisplayJoinedData(
-    map, povertyThreshold, damageThreshold, povertyWeight, damageWeight) {
+    map, povertyThreshold, damageThreshold, povertyWeight) {
   const processedData = processJoinedData(
       ee.FeatureCollection(joinedSnapAsset), ee.Number(scalingFactor),
-      povertyThreshold, damageThreshold, povertyWeight, damageWeight);
+      povertyThreshold, damageThreshold, povertyWeight);
   initializePriorityLayer(map, processedData);
   google.charts.setOnLoadCallback(
       () => drawTable(
