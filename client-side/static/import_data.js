@@ -14,15 +14,20 @@ export {countDamageAndBuildings, disaster, DisasterMapValue, disasters};
  *
  * Current workflow for a new disaster
  *
- * 0) download SNAP data from american fact finder
- * 1) download TIGER shapefile from census website
- * 2) download crowd ai damage data
- * 3) make sure no property names have illegal names
- * 4) upload results of (0) (1) and (2) to GCS
- * 5) upload results of (4) to earth engine (see instructions above)
- * 6) add a new entry to {@code disasters}
- * 7) update the {@code disaster} constant
- * 6) visit http://localhost:8080/import_data.html
+ * 0) download SNAP data from american fact finder (2016 ACS 5-year estimates)
+ *      https://factfinder.census.gov/faces/nav/jsf/pages/download_center.xhtml
+ * 1) clean up illegal property names in (0) by running ./cleanup_acs.sh
+ *    /path/to/snap/data.csv
+ * 2) download TIGER shapefile from census website
+ *      https://www.census.gov/cgi-bin/geo/shapefiles/index.php
+ * 3) download crowd ai damage data
+ * 4) convert (3) from KML/geojson -> shapefile using something like
+ *      https://mygeodata.cloud/converter/kml-to-shp
+ * 5) upload results of (1) (2) and (4) to GCS
+ * 6) upload results of (4) to earth engine (see instructions above)
+ * 7) add a new entry to {@code disasters}
+ * 8) update the {@code disaster} constant
+ * 9) visit http://localhost:8080/import_data.html
  */
 // TODO: factor in margins of error?
 
@@ -31,12 +36,10 @@ const disaster = 'michael';
 
 const damageLevelsList = ['no-damage', 'minor-damage', 'major-damage'];
 
-// I (juliexxia) manually changed the name of the GEO.id2 property since earth
-// engine doesn't like '.'s in their property names.
-// TODO: script preprocessing SNAP so property names only include A-Z, a-z, 0-9,
-// '_'
-const modifiedCensusGeoidName = 'GEOid2';
-const tigerGeoidName = 'GEOID';
+const censusGeoidKey = 'GEOid2';
+const tigerGeoidKey = 'GEOID';
+const snapKey = 'HD01_VD02';
+const totalKey = 'HD01_VD01';
 
 /** Disaster asset names and other constants. */
 const disasters = new Map();
@@ -56,8 +59,6 @@ class DisasterMapValue {
     this.damageAsset = damageAsset;
     this.rawSnapAsset = snapAsset;
     this.bgAsset = bgAsset;
-    this.snapKey = snapKey;
-    this.totalKey = totalKey;
   }
 }
 
@@ -68,11 +69,7 @@ disasters.set(
         'descriptio' /* damageKey */,
         'users/juliexxia/crowd_ai_michael' /* damageAsset */,
         'users/juliexxia/ACS_16_5YR_B22010_with_ann' /* rawSnapAsset */,
-        'users/juliexxia/tiger_florida' /* bgAsset */,
-        // TODO: make constant?
-        'HD01_VD02' /* snapKey */,
-        // TODO: make constant?
-        'HD01_VD01' /* totalKey */));
+        'users/juliexxia/tiger_florida' /* bgAsset */));
 
 /**
  * Given a feature from the SNAP census data, returns a new
@@ -100,9 +97,9 @@ function countDamageAndBuildings(feature) {
   const snapFeature = ee.Feature(feature.get('primary'));
   return ee.Feature(
       geometry,
-      attrDict.set('GEOID', snapFeature.get(modifiedCensusGeoidName))
-          .set('SNAP', snapFeature.get(resources.snapKey))
-          .set('TOTAL', snapFeature.get(resources.totalKey))
+      attrDict.set('GEOID', snapFeature.get(censusGeoidKey))
+          .set('SNAP', snapFeature.get(snapKey))
+          .set('TOTAL', snapFeature.get(totalKey))
           .set('BUILDING_COUNT', totalBuildings));
 }
 
@@ -114,8 +111,7 @@ function countDamageAndBuildings(feature) {
  * @return {ee.Feature}
  */
 function stringifyGeoid(feature) {
-  return feature.set(
-      modifiedCensusGeoidName, ee.String(feature.get(modifiedCensusGeoidName)));
+  return feature.set(censusGeoidKey, ee.String(feature.get(censusGeoidKey)));
 }
 
 /** Performs operation of processing inputs and creating output asset. */
@@ -135,7 +131,7 @@ function run() {
     const joinedSnap = ee.Join.inner().apply(
         snapAsset, blockGroupAsset,
         ee.Filter.equals(
-            {leftField: modifiedCensusGeoidName, rightField: tigerGeoidName}));
+            {leftField: censusGeoidKey, rightField: tigerGeoidKey}));
 
     const assetName = disaster + '-snap-and-damage';
     // TODO(#61): parameterize ee user account to write assets to or make GD
