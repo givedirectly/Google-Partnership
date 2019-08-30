@@ -21,7 +21,6 @@ const priorityDisplayCap = 99;
  * sets the color/opacity based on the priority, with all priorities past 99
  * equally opaque.
  *
- *
  * @param {ee.Feature} feature
  * @param {ee.Number} scalingFactor multiplies the raw priority, it can be
  *     adjusted to make sure that the values span the desired range of ~0 to

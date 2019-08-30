@@ -93,6 +93,7 @@ function createToggles(map) {
   form.appendChild(damageWeight);
   form.appendChild(document.createElement('br'));
 
+  // buttons
   form.appendChild(createButton('update', () => {
     update(map);
   }));
