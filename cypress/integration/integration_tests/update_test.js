@@ -9,7 +9,8 @@ describe('Integration test', () => {
     // TODO(#53): implement loading element and replace with call to it.
     cy.wait(200);
 
-    cy.get('[id="p"]').should('have.text', 'poverty weight: 0.2');
+    cy.get('[id="poverty weight label"]')
+        .should('have.text', 'poverty weight: 0.20');
     cy.get('[id="damage threshold"]').should('have.value', '0.5');
   });
 
@@ -23,8 +24,10 @@ describe('Integration test', () => {
     // TODO(#53): implement loading element and replace with call to it.
     cy.wait(200);
 
-    cy.get('[id="p"]').should('have.text', 'poverty weight: 0.2');
-    cy.get('[id="d"]').should('have.text', 'damage weight: 0.8');
+    cy.get('[id="poverty weight label"]')
+        .should('have.text', 'poverty weight: 0.20');
+    cy.get('[id="damage weight label"]')
+        .should('have.text', 'damage weight: 0.80');
   });
 
   it('Types new values then resets', () => {

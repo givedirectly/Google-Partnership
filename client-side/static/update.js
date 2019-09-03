@@ -7,6 +7,13 @@ export {
   initialPovertyThreshold,
   initialPovertyWeight,
 };
+/* @VisibleForTesting */
+export {
+  reset,
+  toggles,
+  updateToggles,
+  updateWeights,
+};
 
 const initialPovertyThreshold = 0.3;
 const initialDamageThreshold = 0.5;
@@ -27,6 +34,18 @@ const damageWeightLabelId = 'damage weight label';
  * @param {google.map.Maps} map
  */
 function update(map) {
+  updateToggles();
+  removePriorityLayer(map);
+  createAndDisplayJoinedData(
+      map, toggles.get('poverty threshold'), toggles.get('damage threshold'),
+      toggles.get('poverty weight'));
+}
+
+/**
+ * Pulls values from HTML controls into our local toggles map and checks for
+ * erroneous values.
+ */
+function updateToggles() {
   for (const toggle of toggles.keys()) {
     const newValue = Number(getValue(toggle));
     if (hasErrors(newValue, toggle)) {
@@ -36,11 +55,6 @@ function update(map) {
       setValue(toggle, newValue);
     }
   }
-
-  removePriorityLayer(map);
-  createAndDisplayJoinedData(
-      map, toggles.get('poverty threshold'), toggles.get('damage threshold'),
-      toggles.get('poverty weight'));
 }
 
 /**
@@ -99,7 +113,6 @@ function createToggles(map) {
   form.appendChild(createButton('current settings', reset));
 
   document.getElementsByClassName('form').item(0).appendChild(form);
-
   updateWeights();
 }
 
@@ -149,9 +162,11 @@ function updateWeights() {
   const newPovertyWeight =
       Number(document.getElementById('poverty weight').value);
   setInnerHtml(
-      povertyWeightLabelId, 'poverty weight: '.concat(newPovertyWeight));
+      povertyWeightLabelId,
+      'poverty weight: '.concat(newPovertyWeight.toFixed(2)));
   setInnerHtml(
-      damageWeightLabelId, 'damage weight: '.concat(1 - newPovertyWeight));
+      damageWeightLabelId,
+      'damage weight: '.concat((1 - newPovertyWeight).toFixed(2)));
 }
 
 /**
