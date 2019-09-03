@@ -19,6 +19,9 @@ const toggles = new Map([
   ['poverty weight', initialPovertyWeight],
 ]);
 
+const povertyWeightLabelId = 'poverty weight label';
+const damageWeightLabelId = 'damage weight label';
+
 /**
  * Updates the priority layer and table based on new info.
  * @param {google.map.Maps} map
@@ -74,9 +77,7 @@ function createToggles(map) {
 
   // weight toggle
   const povertyWeight = document.createElement('label');
-  povertyWeight.id = 'p';
-  povertyWeight.innerHTML =
-      'poverty weight: '.concat(toggles.get('poverty weight'));
+  povertyWeight.id = povertyWeightLabelId;
   form.appendChild(povertyWeight);
 
   const weightInput = createBasicToggleInputElement('poverty weight');
@@ -87,9 +88,7 @@ function createToggles(map) {
   form.appendChild(weightInput);
 
   const damageWeight = document.createElement('label');
-  damageWeight.id = 'd';
-  damageWeight.innerHTML =
-      'damage weight: '.concat(1 - toggles.get('poverty weight'));
+  damageWeight.id = damageWeightLabelId;
   form.appendChild(damageWeight);
   form.appendChild(document.createElement('br'));
 
@@ -100,6 +99,8 @@ function createToggles(map) {
   form.appendChild(createButton('current settings', reset));
 
   document.getElementsByClassName('form').item(0).appendChild(form);
+
+  updateWeights();
 }
 
 /**
@@ -137,21 +138,20 @@ function createButton(id, onclick) {
  * Resets the toggles to their current value as displayed in the map and list
  */
 function reset() {
-  console.log(toggles);
   for (const [toggle, value] of toggles) {
     setValue(toggle, value);
   }
-  setInnerHtml('p', 'poverty weight: ' + toggles.get('poverty weight'));
-  setInnerHtml(
-      'd', 'damage weight: '.concat(1 - toggles.get('poverty weight')));
+  updateWeights();
 }
 
 /** Update the displayed weights based on a new poverty weight. */
 function updateWeights() {
   const newPovertyWeight =
       Number(document.getElementById('poverty weight').value);
-  setInnerHtml('p', 'poverty weight: '.concat(newPovertyWeight));
-  setInnerHtml('d', 'damage weight: '.concat(1 - newPovertyWeight));
+  setInnerHtml(
+      povertyWeightLabelId, 'poverty weight: '.concat(newPovertyWeight));
+  setInnerHtml(
+      damageWeightLabelId, 'damage weight: '.concat(1 - newPovertyWeight));
 }
 
 /**
