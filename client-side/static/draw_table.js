@@ -1,4 +1,4 @@
-import {geoidTag, scoreTag, snapTag} from './process_joined_data.js';
+import {damageTag, geoidTag, scoreTag, snapTag} from './process_joined_data.js';
 
 export {drawTable as default};
 
@@ -12,7 +12,7 @@ function drawTable(features, selectCallback) {
   const sortedNonZeroScores =
       features.filter(ee.Filter.gt(scoreTag, ee.Number(0)))
           .sort(scoreTag, false);
-  const headings = [geoidTag, scoreTag, snapTag];
+  const headings = [geoidTag, scoreTag, snapTag, damageTag];
   const pairOfListAndFeaturesComputation =
       sortedNonZeroScores.iterate((feature, result) => {
         const listResult = ee.List(result);

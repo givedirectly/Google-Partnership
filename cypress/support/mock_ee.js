@@ -104,6 +104,18 @@ class EeNumber {
   }
 
   /**
+   *
+   * @param {number} value
+   * @return {EeNumber}
+   */
+  add(value) {
+    if (isEeNumber(value)) {
+      value = value._myNumberValue;
+    }
+    return new EeNumber(this._myNumberValue + value);
+  }
+
+  /**
    * Returns if this value is <= the given value.
    *
    * @param {number} value
@@ -145,6 +157,15 @@ class EeNumber {
     } else {
       throw new Error('Format strings other than \'ff00ff%02d\' not supported');
     }
+  }
+
+  /**
+   *
+   * @param {EeNumber} value
+   * @return {number|Object}
+   */
+  or(value) {
+    return this._myNumberValue || value._myNumberValue;
   }
 }
 

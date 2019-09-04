@@ -31,22 +31,9 @@
 </head>
 <body>
 <h1>Houston damage/poverty map</h1>
-<div class="map-class">
-  <div class="map"></div>
-</div>
-<!-- TODO: link this to the defaultPovertyThreshold -->
-<p id="current-threshold">Current poverty threshold: 0.3</p>
-<p id="threshold-error-message"></p>
-<form id="update-threshold" onsubmit="return false;">
-  <label for="threshold">Poverty threshold</label>
-  <input type="number" id="threshold" step="0.01">
-  <input type="button" value="Update" id="update-button">
-  <script type="module">
-    import update from './update.js';
 
-    document.getElementById('update-button').onclick = update;
-  </script>
-</form>
+<div class="map"></div>
+<div class="form" id="form-div"></div>
 <div id="table"></div>
 <div class="g-sign-in hidden">
   <span class="label">Sign in with:</span>
