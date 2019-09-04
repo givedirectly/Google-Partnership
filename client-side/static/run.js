@@ -5,8 +5,8 @@ import processJoinedData from './process_joined_data.js';
 
 export {
   createAndDisplayJoinedData,
-  priorityLayerName,
   run as default,
+  scoreLayerName,
 };
 
 // Dictionary of known assets -> whether they should be displayed by default
@@ -16,8 +16,8 @@ const assets = {
 
 const joinedSnapAsset = 'users/janak/texas-snap-join-damage-with-buildings';
 const scalingFactor = 100;
-const priorityIndex = Object.keys(assets).length;
-const priorityLayerName = 'priority';
+const scoreIndex = Object.keys(assets).length;
+const scoreLayerName = 'score';
 
 /**
  * Main function that processes the known assets (FEMA damage, etc., SNAP) and
@@ -32,7 +32,7 @@ function run(map) {
 }
 
 /**
- * Creates the priority overlay and draws the table
+ * Creates the score overlay and draws the table
  *
  * @param {google.maps.Map} map main map
  * @param {number} povertyThreshold a number between 0 and 1 representing what
@@ -42,14 +42,14 @@ function createAndDisplayJoinedData(map, povertyThreshold) {
   const processedData = processJoinedData(
       ee.FeatureCollection(joinedSnapAsset), ee.Number(scalingFactor),
       povertyThreshold);
-  initializePriorityLayer(map, processedData);
+  initializeScoreLayer(map, processedData);
   google.charts.setOnLoadCallback(
       () => drawTable(
           processedData, (features) => highlightFeatures(features, map)));
 }
 
 /**
- * Creates checkboxes for all known assets and the priority overlay.
+ * Creates checkboxes for all known assets and the score overlay.
  *
  * @param {google.maps.Map} map main map
  */
@@ -59,8 +59,8 @@ function createAssetCheckboxes(map) {
   const mapDiv = document.getElementsByClassName('map').item(0);
   Object.keys(assets).forEach(
       (assetName) => createNewCheckbox(assetName, map, mapDiv));
-  // priority checkbox gets checked during initializePriorityLayer
-  createNewCheckbox(priorityLayerName, map, mapDiv);
+  // score checkbox gets checked during initializeScoreLayer
+  createNewCheckbox(scoreLayerName, map, mapDiv);
 }
 
 /**
@@ -111,17 +111,16 @@ function initializeAssetLayers(map) {
 }
 
 /**
- * Creates and displays overlay for priority + adds layerMap entry. The priority
+ * Creates and displays overlay for score + adds layerMap entry. The score
  * layer sits at the index of (# regular assets) i.e. the last index. Once we
  * add dynamically addable layers, it might be easier book keeping to have
- * priority sit at index 0, but having it last ensures it displays on top.
+ * score sit at index 0, but having it last ensures it displays on top.
  *
  * @param {google.maps.Map} map main map
- * @param {ee.FeatureCollection} layer the computed priority features
+ * @param {ee.FeatureCollection} layer the computed score features
  */
-function initializePriorityLayer(map, layer) {
+function initializeScoreLayer(map, layer) {
   addLayer(
-      map, layer.style({styleProperty: 'style'}), priorityLayerName,
-      priorityIndex);
-  document.getElementById(priorityLayerName).checked = true;
+      map, layer.style({styleProperty: 'style'}), scoreLayerName, scoreIndex);
+  document.getElementById(scoreLayerName).checked = true;
 }

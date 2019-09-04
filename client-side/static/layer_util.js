@@ -1,10 +1,10 @@
 import createError from './create_error.js';
-import {priorityLayerName} from './run.js';
+import {scoreLayerName} from './run.js';
 
 export {
   addLayer,
   addNullLayer,
-  removePriorityLayer,
+  removeScoreLayer,
   toggleLayerOff,
   toggleLayerOn,
 };
@@ -140,9 +140,9 @@ function removeLayer(map, assetName) {
 }
 
 /**
- * Removes the priority layer overlay.
+ * Removes the score layer overlay.
  * @param {google.maps.Map} map
  */
-function removePriorityLayer(map) {
-  removeLayer(map, priorityLayerName);
+function removeScoreLayer(map) {
+  removeLayer(map, scoreLayerName);
 }

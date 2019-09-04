@@ -1,23 +1,23 @@
 import damageLevelsList from './fema_damage_levels.js';
 
-export {geoidTag, priorityTag, processJoinedData as default, snapTag};
+export {geoidTag, processJoinedData as default, scoreTag, snapTag};
 
 const damageLevelMultipliers = [0, 0, 1, 1, 2, 3];
 
 const geoidTag = 'GEOID';
-const priorityTag = 'PRIORITY';
+const scoreTag = 'SCORE';
 const snapTag = 'SNAP PERCENTAGE';
 
-const priorityDisplayCap = 99;
+const scoreDisplayCap = 99;
 
 /**
  * Processes a feature corresponding to a geographic area and returns a new one,
- * with just the GEOID and PRIORITY properties set, and a style attribute that
- * sets the color/opacity based on the priority, with all priorities past 99
+ * with just the GEOID and SCORE properties set, and a style attribute that
+ * sets the color/opacity based on the score, with all priorities past 99
  * equally opaque.
  *
  * @param {ee.Feature} feature
- * @param {ee.Number} scalingFactor multiplies the raw priority, it can be
+ * @param {ee.Number} scalingFactor multiplies the raw score, it can be
  *     adjusted to make sure that the values span the desired range of ~0 to
  *     ~100.
  * @param {number} povertyThreshold  used to filter out areas that are not poor
@@ -30,7 +30,7 @@ const priorityDisplayCap = 99;
 function colorAndRate(
     feature, scalingFactor, povertyThreshold, damageLevels, damageScales) {
   const rawRatio = ee.Number(feature.get('SNAP')).divide(feature.get('TOTAL'));
-  const priority = ee.Number(ee.Algorithms.If(
+  const score = ee.Number(ee.Algorithms.If(
       rawRatio.lte(povertyThreshold), ee.Number(0),
       ee.Number(damageLevels
                     .map(function(type) {
@@ -45,15 +45,14 @@ function colorAndRate(
       .Feature(feature.geometry(), ee.Dictionary([
         geoidTag,
         feature.get(geoidTag),
-        priorityTag,
-        priority,
+        scoreTag,
+        score,
         snapTag,
         rawRatio,
       ]))
       .set({
         style: {
-          color:
-              priority.min(ee.Number(priorityDisplayCap)).format('ff00ff%02d'),
+          color: score.min(ee.Number(scoreDisplayCap)).format('ff00ff%02d'),
         },
       });
 }

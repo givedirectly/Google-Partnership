@@ -1,4 +1,4 @@
-import {removePriorityLayer} from './layer_util.js';
+import {removeScoreLayer} from './layer_util.js';
 import {createAndDisplayJoinedData} from './run.js';
 import {map} from './script.js';
 
@@ -21,7 +21,7 @@ function update() {
 
       document.getElementById('current-threshold').innerHTML =
           'Current poverty threshold: ' + t;
-      removePriorityLayer(map);
+      removeScoreLayer(map);
       createAndDisplayJoinedData(map, number);
     }
   });
