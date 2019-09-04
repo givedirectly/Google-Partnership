@@ -5,8 +5,8 @@ import processJoinedData from './process_joined_data.js';
 
 export {
   createAndDisplayJoinedData,
-  scoreLayerName,
   run as default,
+  scoreLayerName,
 };
 
 // Dictionary of known assets -> whether they should be displayed by default
@@ -121,7 +121,6 @@ function initializeAssetLayers(map) {
  */
 function initializeScoreLayer(map, layer) {
   addLayer(
-      map, layer.style({styleProperty: 'style'}), scoreLayerName,
-      scoreIndex);
+      map, layer.style({styleProperty: 'style'}), scoreLayerName, scoreIndex);
   document.getElementById(scoreLayerName).checked = true;
 }

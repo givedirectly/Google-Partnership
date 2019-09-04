@@ -1,6 +1,6 @@
 import damageLevelsList from './fema_damage_levels.js';
 
-export {geoidTag, scoreTag, processJoinedData as default, snapTag};
+export {geoidTag, processJoinedData as default, scoreTag, snapTag};
 
 const damageLevelMultipliers = [0, 0, 1, 1, 2, 3];
 
@@ -52,8 +52,7 @@ function colorAndRate(
       ]))
       .set({
         style: {
-          color:
-              score.min(ee.Number(scoreDisplayCap)).format('ff00ff%02d'),
+          color: score.min(ee.Number(scoreDisplayCap)).format('ff00ff%02d'),
         },
       });
 }
