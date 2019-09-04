@@ -89,6 +89,8 @@ function createToggles(map) {
   weightInput.type = 'range';
   weightInput.min = '0.00';
   weightInput.max = '1.00';
+  // Since poverty is on left, make slider max be left side, min right.
+  weightInput.style = 'direction: rtl';
   weightInput.oninput = updateWeights;
   form.appendChild(weightInput);
 
