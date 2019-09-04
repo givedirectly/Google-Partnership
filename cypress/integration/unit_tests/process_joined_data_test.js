@@ -33,9 +33,9 @@ describe('Unit test for processed_joined_data.js', () => {
     expect(returnedFeature).to.haveOwnProperty('properties');
     const resultProperties = returnedFeature.properties;
     expect(resultProperties.get('GEOID')).to.equal('geoid');
-    const priority = resultProperties.get('PRIORITY');
-    expect(priority).to.haveOwnProperty('_myNumberValue');
-    expect(priority._myNumberValue)
+    const score = resultProperties.get('SCORE');
+    expect(score).to.haveOwnProperty('_myNumberValue');
+    expect(score._myNumberValue)
         .to.equals(
             Math.round(100 * (0.5 * ((12 + 10 + 2 + 1) / 45) + 0.5 * (2 / 4))));
     expect(resultProperties.get('style')).to.eql({color: 'ff00ff53'});
@@ -53,9 +53,9 @@ describe('Unit test for processed_joined_data.js', () => {
     expect(returnedFeature).to.haveOwnProperty('properties');
     const resultProperties = returnedFeature.properties;
     expect(resultProperties.get('GEOID')).to.equal('geoid');
-    const priority = resultProperties.get('PRIORITY');
-    expect(priority).to.haveOwnProperty('_myNumberValue');
-    expect(priority._myNumberValue)
+    const score = resultProperties.get('SCORE');
+    expect(score).to.haveOwnProperty('_myNumberValue');
+    expect(score._myNumberValue)
         .to.equals(
             Math.round(100 * (0.1 * ((12 + 10 + 2 + 1) / 45) + 0.9 * (2 / 4))));
     expect(resultProperties.get('style')).to.eql({color: 'ff00ff51'});
@@ -67,8 +67,8 @@ describe('Unit test for processed_joined_data.js', () => {
         0.9 /* povertyThreshold */, 0.5 /* damageThreshold */,
         0.5 /* povertyWeight */);
     const resultProperties = result[0].properties;
-    const priority = resultProperties.get('PRIORITY');
-    expect(priority._myNumberValue).to.equals(0);
+    const score = resultProperties.get('SCORE');
+    expect(score._myNumberValue).to.equals(0);
     expect(resultProperties.get('style')).to.eql({color: 'ff00ff00'});
   });
 });

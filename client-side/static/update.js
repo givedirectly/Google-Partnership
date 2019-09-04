@@ -1,4 +1,4 @@
-import {removePriorityLayer} from './layer_util.js';
+import {removeScoreLayer} from './layer_util.js';
 import {createAndDisplayJoinedData} from './run.js';
 
 export {
@@ -39,6 +39,7 @@ function update(map) {
     }
   }
 
+<<<<<<< HEAD
   removePriorityLayer(map);
   createAndDisplayJoinedData(
       map, toggles.get('poverty threshold'), toggles.get('damage threshold'),
@@ -63,6 +64,12 @@ function createToggles(map) {
   for (const toggle of toggles.keys()) {
     if (!toggle.endsWith('threshold')) {
       continue;
+=======
+      document.getElementById('current-threshold').innerHTML =
+          'Current poverty threshold: ' + t;
+      removeScoreLayer(map);
+      createAndDisplayJoinedData(map, number);
+>>>>>>> master
     }
     const input = createBasicToggleInputElement(toggle);
     input.type = 'number';

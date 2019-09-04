@@ -3,26 +3,26 @@ import damageLevelsList from './fema_damage_levels.js';
 export {
   damageTag,
   geoidTag,
-  priorityTag,
+  scoreTag,
   processJoinedData as default,
   snapTag,
 };
 
 const damageTag = 'DAMAGE PERCENTAGE';
 const geoidTag = 'GEOID';
-const priorityTag = 'PRIORITY';
+const scoreTag = 'SCORE';
 const snapTag = 'SNAP PERCENTAGE';
 
-const priorityDisplayCap = 99;
+const scoreDisplayCap = 99;
 
 /**
  * Processes a feature corresponding to a geographic area and returns a new one,
- * with just the GEOID and PRIORITY properties set, and a style attribute that
- * sets the color/opacity based on the priority, with all priorities past 99
+ * with just the GEOID and SCORE properties set, and a style attribute that
+ * sets the color/opacity based on the score, with all scores past 99
  * equally opaque.
  *
  * @param {ee.Feature} feature
- * @param {ee.Number} scalingFactor multiplies the raw priority, it can be
+ * @param {ee.Number} scalingFactor multiplies the raw score, it can be
  *     adjusted to make sure that the values span the desired range of ~0 to
  *     ~100.
  * @param {ee.List} damageLevels
@@ -51,19 +51,19 @@ function colorAndRate(
   const belowThresholds =
       ee.Number(povertyRatio.lte(povertyThreshold))
           .or(ee.Number(ratioBuildingsDamaged.lte(damageThreshold)));
-  const potentialPriority =
+  const potentialScore =
       ee.Number(ratioBuildingsDamaged.multiply(1 - povertyWeight)
                     .add(povertyRatio.multiply(povertyWeight))
                     .multiply(scalingFactor)
                     .round());
-  const priority = ee.Number(
-      ee.Algorithms.If(belowThresholds, ee.Number(0), potentialPriority));
+  const score = ee.Number(
+      ee.Algorithms.If(belowThresholds, ee.Number(0), potentialScore));
   return ee
       .Feature(feature.geometry(), ee.Dictionary([
         geoidTag,
         feature.get(geoidTag),
-        priorityTag,
-        priority,
+        scoreTag,
+        score,
         snapTag,
         povertyRatio,
         damageTag,
@@ -71,15 +71,14 @@ function colorAndRate(
       ]))
       .set({
         style: {
-          color:
-              priority.min(ee.Number(priorityDisplayCap)).format('ff00ff%02d'),
+          color: score.min(ee.Number(scoreDisplayCap)).format('ff00ff%02d'),
         },
       });
 }
 
 /**
  * @param {ee.FeatureCollection} joinedData
- * @param {ee.Number} scalingFactor multiplies the raw priority, it can be
+ * @param {ee.Number} scalingFactor multiplies the raw score, it can be
  *     adjusted to make sure that the values span the desired range of ~0 to
  *     ~100.
  * @param {number} povertyThreshold between 0 and 1 representing what
