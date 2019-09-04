@@ -38,10 +38,10 @@ describe('Unit test for updates.js', () => {
 
     slider.oninput();
 
-    expect(document.getElementById('poverty weight label').innerHTML)
-        .to.equals('poverty weight: 0.01');
-    expect(document.getElementById('damage weight label').innerHTML)
-        .to.equals('damage weight: 0.99');
+    expect(document.getElementById('poverty weight value').innerHTML)
+        .to.equals('0.01');
+    expect(document.getElementById('damage weight value').innerHTML)
+        .to.equals('0.99');
   });
 
   it('updates toggles', () => {
@@ -76,10 +76,10 @@ describe('Unit test for updates.js', () => {
 
     document.getElementById('current settings').click();
 
-    expect(document.getElementById('poverty weight label').innerHTML)
-        .to.equals('poverty weight: 0.77');
-    expect(document.getElementById('damage weight label').innerHTML)
-        .to.equals('damage weight: 0.23');
+    expect(document.getElementById('poverty weight value').innerHTML)
+        .to.equals('0.77');
+    expect(document.getElementById('damage weight value').innerHTML)
+        .to.equals('0.23');
     expect(document.getElementById('damage threshold').value).to.equals('0.77');
     expect(document.getElementById('poverty weight').value).to.equals('0.77');
   });
