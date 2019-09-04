@@ -21,8 +21,8 @@ const toggles = new Map([
   ['poverty weight', initialPovertyWeight],
 ]);
 
-const povertyWeightLabelId = 'poverty weight label';
-const damageWeightLabelId = 'damage weight label';
+const povertyWeightValueId = 'poverty weight value';
+const damageWeightValueId = 'damage weight value';
 
 /**
  * Updates the score layer and table based on current toggle values.
@@ -79,7 +79,10 @@ function createToggles(map) {
 
   // weight toggle
   const povertyWeight = document.createElement('label');
-  povertyWeight.id = povertyWeightLabelId;
+  povertyWeight.innerHTML = 'poverty weight: ';
+  const povertyWeightValue = document.createElement('span');
+  povertyWeightValue.id = povertyWeightValueId;
+  povertyWeight.appendChild(povertyWeightValue);
   form.appendChild(povertyWeight);
 
   const weightInput = createBasicToggleInputElement('poverty weight');
@@ -90,8 +93,12 @@ function createToggles(map) {
   form.appendChild(weightInput);
 
   const damageWeight = document.createElement('label');
-  damageWeight.id = damageWeightLabelId;
+  damageWeight.innerHTML = 'damage weight: ';
+  const damageWeightValue = document.createElement('span');
+  damageWeightValue.id = damageWeightValueId;
+  damageWeight.appendChild(damageWeightValue);
   form.appendChild(damageWeight);
+
   form.appendChild(document.createElement('br'));
 
   // buttons
@@ -149,12 +156,8 @@ function reset() {
 function updateWeights() {
   const newPovertyWeight =
       Number(document.getElementById('poverty weight').value);
-  setInnerHtml(
-      povertyWeightLabelId,
-      'poverty weight: '.concat(newPovertyWeight.toFixed(2)));
-  setInnerHtml(
-      damageWeightLabelId,
-      'damage weight: '.concat((1 - newPovertyWeight).toFixed(2)));
+  setInnerHtml(povertyWeightValueId, newPovertyWeight.toFixed(2));
+  setInnerHtml(damageWeightValueId, (1 - newPovertyWeight).toFixed(2));
 }
 
 /**
