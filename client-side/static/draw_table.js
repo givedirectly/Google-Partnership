@@ -9,12 +9,12 @@ export {drawTable as default};
  * @param {Object} selectCallback Callback to be invoked for selected features.
  */
 function drawTable(features, selectCallback) {
-  const sortedNonZeroScore =
+  const sortedNonZeroScores =
       features.filter(ee.Filter.gt(scoreTag, ee.Number(0)))
           .sort(scoreTag, false);
   const headings = [geoidTag, scoreTag, snapTag];
   const pairOfListAndFeaturesComputation =
-      sortedNonZeroScore.iterate((feature, result) => {
+      sortedNonZeroScores.iterate((feature, result) => {
         const listResult = ee.List(result);
         return ee.List([
           ee.List(listResult.get(0))
