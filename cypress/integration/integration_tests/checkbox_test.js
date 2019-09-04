@@ -9,11 +9,7 @@ describe('Integration test', () => {
     // Wait for page to fully load. Needed to ensure that layerMap is populated.
     // TODO(#53): check for loading bar element to finish instead of waiting.
     cy.wait(500);
-<<<<<<< HEAD
-    cy.get('[id="priority"]').uncheck();
-=======
-    cy.get('#score').uncheck();
->>>>>>> master
+    cy.get('[id="score"]').uncheck();
 
     cy.get('[id="poverty threshold"]').type('1.0');
     cy.get('[id="update"]').click();
@@ -22,10 +18,6 @@ describe('Integration test', () => {
     // TODO(#53): check for loading bar element to finish instead of waiting.
     cy.wait(200);
 
-<<<<<<< HEAD
-    cy.get('[id="priority"]').should('be.checked');
-=======
-    cy.get('#score').should('be.checked');
->>>>>>> master
+    cy.get('[id="score"]').should('be.checked');
   });
 });

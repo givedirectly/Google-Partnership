@@ -25,7 +25,7 @@ const povertyWeightLabelId = 'poverty weight label';
 const damageWeightLabelId = 'damage weight label';
 
 /**
- * Updates the priority layer and table based on current toggle values.
+ * Updates the score layer and table based on current toggle values.
  * @param {google.map.Maps} map
  */
 function update(map) {
@@ -39,8 +39,7 @@ function update(map) {
     }
   }
 
-<<<<<<< HEAD
-  removePriorityLayer(map);
+  removeScoreLayer(map);
   createAndDisplayJoinedData(
       map, toggles.get('poverty threshold'), toggles.get('damage threshold'),
       toggles.get('poverty weight'));
@@ -64,12 +63,6 @@ function createToggles(map) {
   for (const toggle of toggles.keys()) {
     if (!toggle.endsWith('threshold')) {
       continue;
-=======
-      document.getElementById('current-threshold').innerHTML =
-          'Current poverty threshold: ' + t;
-      removeScoreLayer(map);
-      createAndDisplayJoinedData(map, number);
->>>>>>> master
     }
     const input = createBasicToggleInputElement(toggle);
     input.type = 'number';

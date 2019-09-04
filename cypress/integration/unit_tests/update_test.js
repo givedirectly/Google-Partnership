@@ -17,7 +17,7 @@ describe('Unit test for updates.js', () => {
           lastPassedPovertyWeight = povertyWeight;
         });
 
-    cy.stub(LayerUtil, 'removePriorityLayer', (map) => {});
+    cy.stub(LayerUtil, 'removeScoreLayer', (map) => {});
 
     const formDiv = document.createElement('div');
     formDiv.class = 'form';

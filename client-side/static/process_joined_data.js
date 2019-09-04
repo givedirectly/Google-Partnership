@@ -3,8 +3,8 @@ import damageLevelsList from './fema_damage_levels.js';
 export {
   damageTag,
   geoidTag,
-  scoreTag,
   processJoinedData as default,
+  scoreTag,
   snapTag,
 };
 
