@@ -31,9 +31,9 @@ describe('Unit test for processed_joined_data.js', () => {
     expect(returnedFeature).to.haveOwnProperty('properties');
     const resultProperties = returnedFeature.properties;
     expect(resultProperties.get('GEOID')).to.equal('geoid');
-    const priority = resultProperties.get('PRIORITY');
-    expect(priority).to.haveOwnProperty('_myNumberValue');
-    expect(priority._myNumberValue)
+    const score = resultProperties.get('SCORE');
+    expect(score).to.haveOwnProperty('_myNumberValue');
+    expect(score._myNumberValue)
         .to.equal(Math.round(100 * (1 * 1 + 10 * 1 + 2 * 2 + 1 * 3) / 75));
     expect(resultProperties.get('style')).to.eql({color: 'ff00ff24'});
   });

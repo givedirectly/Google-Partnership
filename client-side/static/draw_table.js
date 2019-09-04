@@ -1,20 +1,20 @@
-import {geoidTag, priorityTag, snapTag} from './process_joined_data.js';
+import {geoidTag, scoreTag, snapTag} from './process_joined_data.js';
 
 export {drawTable as default};
 
 /**
- * Display a ranked table of the given features that have non-zero priority.
+ * Display a ranked table of the given features that have non-zero score.
  *
  * @param {ee.FeatureCollection} features
  * @param {Object} selectCallback Callback to be invoked for selected features.
  */
 function drawTable(features, selectCallback) {
-  const sortedNonZeroPriority =
-      features.filter(ee.Filter.gt(priorityTag, ee.Number(0)))
-          .sort(priorityTag, false);
-  const headings = [geoidTag, priorityTag, snapTag];
+  const sortedNonZeroScore =
+      features.filter(ee.Filter.gt(scoreTag, ee.Number(0)))
+          .sort(scoreTag, false);
+  const headings = [geoidTag, scoreTag, snapTag];
   const pairOfListAndFeaturesComputation =
-      sortedNonZeroPriority.iterate((feature, result) => {
+      sortedNonZeroScore.iterate((feature, result) => {
         const listResult = ee.List(result);
         return ee.List([
           ee.List(listResult.get(0))
