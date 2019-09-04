@@ -8,12 +8,7 @@ export {
   initialPovertyWeight,
 };
 /* @VisibleForTesting */
-export {
-  reset,
-  toggles,
-  updateToggles,
-  updateWeights,
-};
+export {toggles};
 
 const initialPovertyThreshold = 0.3;
 const initialDamageThreshold = 0.5;
@@ -30,22 +25,10 @@ const povertyWeightLabelId = 'poverty weight label';
 const damageWeightLabelId = 'damage weight label';
 
 /**
- * Updates the priority layer and table based on new info.
+ * Updates the priority layer and table based on current toggle values.
  * @param {google.map.Maps} map
  */
 function update(map) {
-  updateToggles();
-  removePriorityLayer(map);
-  createAndDisplayJoinedData(
-      map, toggles.get('poverty threshold'), toggles.get('damage threshold'),
-      toggles.get('poverty weight'));
-}
-
-/**
- * Pulls values from HTML controls into our local toggles map and checks for
- * erroneous values.
- */
-function updateToggles() {
   for (const toggle of toggles.keys()) {
     const newValue = Number(getValue(toggle));
     if (hasErrors(newValue, toggle)) {
@@ -55,6 +38,11 @@ function updateToggles() {
       setValue(toggle, newValue);
     }
   }
+
+  removePriorityLayer(map);
+  createAndDisplayJoinedData(
+      map, toggles.get('poverty threshold'), toggles.get('damage threshold'),
+      toggles.get('poverty weight'));
 }
 
 /**
@@ -112,7 +100,7 @@ function createToggles(map) {
   }));
   form.appendChild(createButton('current settings', reset));
 
-  document.getElementsByClassName('form').item(0).appendChild(form);
+  document.getElementById('form-div').appendChild(form);
   updateWeights();
 }
 

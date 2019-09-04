@@ -1,92 +1,4 @@
-describe('Integration test', () => {
-  it('Submits multiple new values at once', () => {
-    cy.visit(host);
-
-    cy.get('[id="poverty weight"]').invoke('val', '0.2').trigger('input');
-    cy.get('[id="damage threshold"]').clear().type('0.5');
-    cy.get('[id="update"]').click();
-
-    // TODO(#53): implement loading element and replace with call to it.
-    cy.wait(200);
-
-    cy.get('[id="poverty weight label"]')
-        .should('have.text', 'poverty weight: 0.20');
-    cy.get('[id="damage threshold"]').should('have.value', '0.5');
-  });
-
-  /** Ensures that setting one weight also sets the other one */
-  it('Submits a new weight', () => {
-    cy.visit(host);
-
-    cy.get('[id="poverty weight"]').invoke('val', '0.2').trigger('input');
-    cy.get('[id="update"]').click();
-
-    // TODO(#53): implement loading element and replace with call to it.
-    cy.wait(200);
-
-    cy.get('[id="poverty weight label"]')
-        .should('have.text', 'poverty weight: 0.20');
-    cy.get('[id="damage weight label"]')
-        .should('have.text', 'damage weight: 0.80');
-  });
-
-  it('Types new values then resets', () => {
-    cy.visit(host);
-
-    cy.get('[id="poverty weight"]').invoke('val', '0.2').trigger('input');
-    cy.get('[id="damage threshold"]').clear().type('0.5');
-    cy.get('[id="update"]').click();
-
-    cy.wait(200);
-
-    cy.get('[id="poverty weight"]').invoke('val', '0.1').trigger('input');
-    cy.get('[id="damage threshold"]').clear().type('0.7');
-
-    cy.get('[id="current settings"]').click();
-
-    cy.get('[id="poverty weight"]').should('have.value', '0.2');
-    cy.get('[id="damage threshold"]').should('have.value', '0.5');
-  });
-
-  it('Submits a new threshold value', () => {
-    cy.visit(host);
-
-    cy.get('[id="poverty threshold"]').should('have.value', '0.3');
-
-    cy.get('[id="poverty threshold"]').clear().type(0.5);
-    cy.get('[id="update"]').click();
-
-    cy.get('[id="poverty threshold"]').should('have.value', '0.5');
-    cy.get('[id="error"]').should('have.text', '');
-  });
-
-  it('Submits an invalid threshold value', () => {
-    cy.visit(host);
-
-    cy.get('[id="poverty threshold"]').clear().type('-0.1');
-    cy.get('[id="update"]').click();
-
-    cy.get('[id="error"]')
-        .should(
-            'have.text',
-            'ERROR: poverty threshold must be between 0.00 and 1.00');
-  });
-
-  it('Submits an invalid, then valid value ', () => {
-    cy.visit(host);
-
-    // Wait for page to load.
-    // TODO(#53): implement loading element and replace with call to it.
-    cy.wait(300);
-
-    cy.get('[id="update"]').click();
-
-    cy.get('[id="poverty threshold"]').type('0.5');
-    cy.get('[id="update"]').click();
-
-    cy.get('[id="error"]').should('have.text', '');
-  });
-
+describe('Integration test for update.js', () => {
   /**
    * Checks that by setting the threshold to 100% the list and page number
    * empty. This is somewhat brittle in that if we ever worked with some poverty
@@ -95,7 +7,7 @@ describe('Integration test', () => {
    * On conditional testing:
    * https://docs.cypress.io/guides/core-concepts/conditional-testing.html#Definition
    */
-  // Disabling for flakiness
+  // Has been historically disabled for flakiness
   //    CypressError: Timed out retrying: Expected to find element:
   //    '.google-visualization-table-page-numbers', but never found it.
 
