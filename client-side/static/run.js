@@ -55,8 +55,8 @@ function run(map) {
 function createAndDisplayJoinedData(
     map, povertyThreshold, damageThreshold, povertyWeight) {
   const processedData = processJoinedData(
-      ee.FeatureCollection(joinedSnapAsset), ee.Number(scalingFactor), povertyThreshold, damageThreshold,
-      povertyWeight);
+      ee.FeatureCollection(joinedSnapAsset), ee.Number(scalingFactor),
+      povertyThreshold, damageThreshold, povertyWeight);
   initializeScoreLayer(map, processedData);
   google.charts.setOnLoadCallback(
       () => drawTable(
