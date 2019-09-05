@@ -13,8 +13,6 @@ export {clickFeature as default};
  * @param {google.maps.Map} map
  * @param {string} joinedSnapAsset
  */
-// TODO: flip to page of the list the highlighted area is on if not current
-// page.
 function clickFeature(event, map, joinedSnapAsset) {
   const point = ee.Geometry.Point(event.latLng.lng(), event.latLng.lat());
   const blockGroups = ee.FeatureCollection(joinedSnapAsset).filterBounds(point);
@@ -39,15 +37,16 @@ function clickFeature(event, map, joinedSnapAsset) {
       highlightFeatures([feature], map);
       const geoid = feature.properties[geoidTag];
       let rowNumber = null;
-      for (var i = 0; i < tableData.length; i++) {
+      for (let i = 0; i < tableData.length; i++) {
         if (tableData[i][0] === geoid) {
           // underlaying data does not include header row.
           rowNumber = i - 1;
           break;
         }
       }
-      currentTable.getChart().setSelection(
-          [{row: rowNumberInUnderlyingData, column: null}]);
+      // TODO: flip to page of the list the highlighted area is on if not
+      // current page.
+      currentTable.getChart().setSelection([{row: rowNumber, column: null}]);
     });
   });
 }

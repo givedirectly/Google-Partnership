@@ -34,11 +34,10 @@ function run(map) {
   createAndDisplayJoinedData(
       map, initialPovertyThreshold, initialDamageThreshold,
       initialPovertyWeight);
-  google.maps.event.addListener(
-      map, 'click', (event) => {clickFeature(event, map, joinedSnapAsset)});
+  google.maps.event.addListener(map, 'click', (event) => {
+    clickFeature(event, map, joinedSnapAsset);
+  });
 }
-
-
 
 /**
  * Creates the score overlay and draws the table
