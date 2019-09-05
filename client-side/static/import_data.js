@@ -24,7 +24,7 @@ export {countDamageAndBuildings, disaster, DisasterMapValue, disasters};
  * 4) convert (3) from KML/geojson -> shapefile using something like
  *      https://mygeodata.cloud/converter/kml-to-shp
  * 5) upload results of (1) (2) and (4) to GCS
- * 6) upload results of (4) to earth engine (see instructions above)
+ * 6) upload results of (5) to earth engine (see instructions above)
  * 7) add a new entry to {@code disasters}
  * 8) update the {@code disaster} constant
  * 9) visit http://localhost:8080/import_data.html
@@ -37,6 +37,7 @@ const disaster = 'michael';
 const damageLevelsList = ['no-damage', 'minor-damage', 'major-damage'];
 
 const censusGeoidKey = 'GEOid2';
+const censusBlockGroupKey = 'GEOdisplay-label';
 const tigerGeoidKey = 'GEOID';
 const snapKey = 'HD01_VD02';
 const totalKey = 'HD01_VD01';
@@ -98,6 +99,7 @@ function countDamageAndBuildings(feature) {
   return ee.Feature(
       geometry,
       attrDict.set('GEOID', snapFeature.get(censusGeoidKey))
+          .set('BLOCK_GROUP', snapFeature.get(censusBlockGroupKey))
           .set('SNAP', snapFeature.get(snapKey))
           .set('TOTAL', snapFeature.get(totalKey))
           .set('BUILDING_COUNT', totalBuildings));
