@@ -1,4 +1,5 @@
-import drawTable from './draw_table.js';
+import clickFeature from './click_feature.js';
+import {drawTable} from './draw_table.js';
 import highlightFeatures from './highlight_features.js';
 import {addLayer, addNullLayer, toggleLayerOff, toggleLayerOn} from './layer_util.js';
 import processJoinedData from './process_joined_data.js';
@@ -33,7 +34,11 @@ function run(map) {
   createAndDisplayJoinedData(
       map, initialPovertyThreshold, initialDamageThreshold,
       initialPovertyWeight);
+  google.maps.event.addListener(
+      map, 'click', (event) => {clickFeature(event, map, joinedSnapAsset)});
 }
+
+
 
 /**
  * Creates the score overlay and draws the table
@@ -50,8 +55,8 @@ function run(map) {
 function createAndDisplayJoinedData(
     map, povertyThreshold, damageThreshold, povertyWeight) {
   const processedData = processJoinedData(
-      ee.FeatureCollection(joinedSnapAsset), ee.Number(scalingFactor),
-      povertyThreshold, damageThreshold, povertyWeight);
+      ee.FeatureCollection(joinedSnapAsset), ee.Number(scalingFactor), povertyThreshold, damageThreshold,
+      povertyWeight);
   initializeScoreLayer(map, processedData);
   google.charts.setOnLoadCallback(
       () => drawTable(

@@ -1,6 +1,9 @@
 import {damageTag, geoidTag, scoreTag, snapTag} from './process_joined_data.js';
 
-export {drawTable as default};
+export {currentTable, drawTable, tableData};
+
+let tableData = null;
+let currentTable = null;
 
 /**
  * Display a ranked table of the given features that have non-zero score.
@@ -9,12 +12,10 @@ export {drawTable as default};
  * @param {Object} selectCallback Callback to be invoked for selected features.
  */
 function drawTable(features, selectCallback) {
-  const sortedNonZeroScores =
-      features.filter(ee.Filter.gt(scoreTag, ee.Number(0)))
-          .sort(scoreTag, false);
+  const nonZeroScores = features.filter(ee.Filter.gt(scoreTag, ee.Number(0)));
   const headings = [geoidTag, scoreTag, snapTag, damageTag];
   const pairOfListAndFeaturesComputation =
-      sortedNonZeroScores.iterate((feature, result) => {
+      nonZeroScores.iterate((feature, result) => {
         const listResult = ee.List(result);
         return ee.List([
           ee.List(listResult.get(0))
@@ -31,6 +32,7 @@ function drawTable(features, selectCallback) {
           // https://developers.google.com/chart/interactive/docs/reference#errordisplay
           console.error(failure);
         } else {
+          tableData = pairOfListAndFeatures[0];
           // Multiple calls to this are fine:
           // https://developers.google.com/chart/interactive/docs/basic_load_libs#Callback
           google.charts.setOnLoadCallback(
@@ -59,8 +61,11 @@ function renderTable(pairOfListAndFeatures, selectCallback) {
     'options': {
       'page': 'enable',
       'pageSize': 25,
+      'sortColumn': 1,
+      'sortAscending': false,
     },
   });
+  currentTable = table;
   google.visualization.events.addListener(table, 'select', () => {
     const selection = table.getChart().getSelection();
     selectCallback(selection.map((elt) => features[elt.row]));
