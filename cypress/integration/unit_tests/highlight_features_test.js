@@ -1,4 +1,4 @@
-import highlightFeatures from '../../../client-side/static/highlight_features.js';
+import {highlightFeatures} from '../../../client-side/static/highlight_features.js';
 
 describe('Unit test for highlight_features.js', () => {
   it('Show feature, then hide', () => {

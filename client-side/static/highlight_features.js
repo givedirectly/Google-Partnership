@@ -1,6 +1,6 @@
 import {geoidTag} from './process_joined_data.js';
 
-export {highlightFeatures as default};
+export {highlightFeatures};
 
 // TODO(janakr): should highlighted features be cleared when map is redrawn?
 // Probably, but user might also want to keep track of highlighted districts

@@ -1,11 +1,9 @@
-import clickFeature from './click_feature.js';
+import {clickFeature} from './click_feature.js';
 import {damageTag, geoidTag, scoreTag, snapTag} from './process_joined_data.js';
 
-export {currentTable, drawTable, tableData};
+export {drawTable, headings};
 
-let tableData = null;
-let currentTable = null;
-
+const headings = [geoidTag, scoreTag, snapTag, damageTag];
 /**
  * Display a ranked table of the given features that have non-zero score.
  *
@@ -16,7 +14,6 @@ let currentTable = null;
  */
 function drawTable(features, selectCallback, map, joinedSnapAsset) {
   const nonZeroScores = features.filter(ee.Filter.gt(scoreTag, ee.Number(0)));
-  const headings = [geoidTag, scoreTag, snapTag, damageTag];
   const pairOfListAndFeaturesComputation =
       nonZeroScores.iterate((feature, result) => {
         const listResult = ee.List(result);
@@ -35,7 +32,6 @@ function drawTable(features, selectCallback, map, joinedSnapAsset) {
           // https://developers.google.com/chart/interactive/docs/reference#errordisplay
           console.error(failure);
         } else {
-          tableData = pairOfListAndFeatures[0];
           // Multiple calls to this are fine:
           // https://developers.google.com/chart/interactive/docs/basic_load_libs#Callback
           google.charts.setOnLoadCallback(
@@ -74,7 +70,6 @@ function renderTable(
       'sortAscending': false,
     },
   });
-  currentTable = table;
   google.visualization.events.addListener(table, 'select', () => {
     const selection = table.getChart().getSelection();
     selectCallback(selection.map((elt) => features[elt.row]));
@@ -82,6 +77,8 @@ function renderTable(
   table.draw();
   // TODO: handle ctrl+click situations
   google.maps.event.addListener(map, 'click', (event) => {
-    clickFeature(event, map, joinedSnapAsset);
+    clickFeature(
+        event.latLng.lng(), event.latLng.lat(), map, joinedSnapAsset,
+        table.getChart(), pairOfListAndFeatures[0]);
   });
 }

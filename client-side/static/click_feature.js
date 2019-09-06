@@ -1,19 +1,22 @@
-import {currentTable, tableData} from './draw_table.js';
-import highlightFeatures from './highlight_features.js';
+import {highlightFeatures} from './highlight_features.js';
 import {geoidTag} from './process_joined_data.js';
 
-export {clickFeature as default};
+export {clickFeature};
 
 /**
  * Fiven a click event, finds the feature and highlights it in the list and on
  * the map.
  *
- * @param {Event} event click event
+ * @param {number} lng longitude of the click
+ * @param {number} lat latitude of the click
  * @param {google.maps.Map} map
- * @param {string} joinedSnapAsset
+ * @param {string} joinedSnapAsset asset path of block groups
+ * @param {google.visualization.TableChart} table the actual table object
+ * @param {array} tableData 2-d array with inner arrays of form {@code headings}
+ *        in draw_table.js where the first inner array is {@code headings}.
  */
-function clickFeature(event, map, joinedSnapAsset) {
-  const point = ee.Geometry.Point(event.latLng.lng(), event.latLng.lat());
+function clickFeature(lng, lat, map, joinedSnapAsset, table, tableData) {
+  const point = ee.Geometry.Point(lng, lat);
   const blockGroups = ee.FeatureCollection(joinedSnapAsset).filterBounds(point);
   blockGroups.size().evaluate((size, failure) => {
     if (failure) {
@@ -39,14 +42,16 @@ function clickFeature(event, map, joinedSnapAsset) {
       let rowNumber = null;
       for (let i = 1; i < tableData.length; i++) {
         if (tableData[i][0] === geoid) {
-          // underlaying data does not include header row.
+          // underlaying data does not include headings row.
           rowNumber = i - 1;
           break;
         }
       }
       // TODO: flip to page of the list the highlighted area is on if not
       // current page.
-      currentTable.getChart().setSelection([{row: rowNumber, column: null}]);
+      if (rowNumber !== null) {
+        table.setSelection([{row: rowNumber, column: null}]);
+      }
     });
   });
 }

@@ -25,6 +25,9 @@ ee.Algorithms.If = (cond, ifTrue, ifFalse) => {
   return cond ? ifTrue : ifFalse;
 };
 
+ee.Geometry = {};
+ee.Geometry.Point = (lng, lat) => new Point();
+
 ee.Reducer = {};
 ee.Reducer.sum = () => sumMarker;
 
@@ -167,6 +170,15 @@ class EeNumber {
   or(value) {
     return this._myNumberValue || value._myNumberValue;
   }
+
+  /**
+   * Calls the given callback with the raw number represented by this number
+   * and a null failure return value.
+   * @param {function} callback
+   */
+  evaluate(callback) {
+    callback(this._myNumberValue, null);
+  }
 }
 
 const eeNumberString = getTypeOf(new EeNumber(0));
@@ -287,6 +299,14 @@ class Feature {
     }
     return this;
   }
+
+  /**
+   * Calls the given callback with a null failure return value.
+   * @param {function} callback
+   */
+  evaluate(callback) {
+    callback(this, null);
+  }
 }
 
 ee.getMapCallback = null;
@@ -312,10 +332,45 @@ class FeatureCollection {
   getMap(args) {
     ee.getMapCallback = args['callback'];
   }
+
+  /**
+   * Doesn't actually do any filtering, returns same feature collection.
+   * @param {ee.Geometry} geometry
+   * @return {ee.FeatureCollection}
+   */
+  filterBounds(geometry) {
+    return this;
+  }
+
+  /**
+   * Assumes size of this feature collection is 1.
+   * @return {EeNumber}
+   */
+  size() {
+    return ee.Number(1);
+  }
+
+  /**
+   * Returns a basic feature with GEOID of 0.
+   * @return {Feature}
+   */
+  first() {
+    return new Feature({id: 0}, {'GEOID': 0});
+  }
 }
 
 /** An empty stub of ee.MapLayerOverlay. */
 class MapLayerOverlay {
+  /**
+   * Constructor.
+   */
+  constructor() {}
+}
+
+/**
+ *  An empty stub of ee.Geometry.Point.
+ */
+class Point {
   /**
    * Constructor.
    */

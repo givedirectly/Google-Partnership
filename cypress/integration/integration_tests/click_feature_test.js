@@ -1,6 +1,6 @@
 /**
- * This test relies on the FEMA damage data for Hurricane Michale and the
- * relevant starting thresholds.
+ * This test relies on the FEMA damage data for Hurricane Michael and the
+ * starting thresholds of poverty 0.3 and damage 0.5
  */
 describe('Integration test for clicking feature', () => {
   it('clicks a feature in the list', () => {
