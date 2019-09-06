@@ -11,6 +11,8 @@ let currentTable = null;
  *
  * @param {ee.FeatureCollection} features
  * @param {Object} selectCallback Callback to be invoked for selected features.
+ * @param {google.maps.Map} map
+ * @param {string} joinedSnapAsset
  */
 function drawTable(features, selectCallback, map, joinedSnapAsset) {
   const nonZeroScores = features.filter(ee.Filter.gt(scoreTag, ee.Number(0)));
@@ -44,12 +46,16 @@ function drawTable(features, selectCallback, map, joinedSnapAsset) {
 }
 
 /**
- * Renders the actual table on the page.
+ * Renders the actual table on the page and adds a callback to the map to
+ * highlight rows in the table if the corresponding feature is clicked on the
+ * map.
  *
  * @param {Array} pairOfListAndFeatures An array with two elements. The first is
  * the data to display in the chart. The second is the list of features
  * corresponding to that data.
  * @param {Object} selectCallback Callback to be invoked for selected features.
+ * @param {google.maps.Map} map
+ * @param {string} joinedSnapAsset
  */
 function renderTable(
     pairOfListAndFeatures, selectCallback, map, joinedSnapAsset) {
