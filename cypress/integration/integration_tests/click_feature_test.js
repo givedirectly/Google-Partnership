@@ -10,9 +10,7 @@ describe('Integration test for clicking feature', () => {
     // TODO(#53): check for loading bar element to finish instead of waiting.
     cy.wait(4000);
     cy.get('.map').click(343, 184);
-    cy.get(
-          '[class="google-visualization-table-tr-odd' +
-          ' google-visualization-table-tr-sel"]')
+    cy.get('.google-visualization-table-tr-sel')
         .find('[class="google-visualization-table-td"]')
         .should('have.text', '482012511004');
   });
@@ -26,9 +24,7 @@ describe('Integration test for clicking feature', () => {
     // Sort by GEOID
     cy.get('.google-visualization-table-tr-head > :nth-child(1)').click();
     cy.get('.map').click(343, 184);
-    cy.get(
-          '[class="google-visualization-table-tr-odd' +
-          ' google-visualization-table-tr-sel"]')
+    cy.get('.google-visualization-table-tr-sel')
         .find('[class="google-visualization-table-td"]')
         .should('have.text', '482012511004');
   });
