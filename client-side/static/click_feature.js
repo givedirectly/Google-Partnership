@@ -4,7 +4,6 @@ import {geoidTag} from './process_joined_data.js';
 
 export {clickFeature as default};
 
-
 /**
  * Fiven a click event, finds the feature and highlights it in the list and on
  * the map.
@@ -26,7 +25,8 @@ function clickFeature(event, map, joinedSnapAsset) {
       return;
     }
     if (size !== 1) {
-      console.log('unexpected state: click returned > 1 block group');
+      console.error('unexpected state: click returned > 1 block group');
+      return;
     }
     const selected = blockGroups.first();
     selected.evaluate((feature, failure) => {
@@ -37,7 +37,7 @@ function clickFeature(event, map, joinedSnapAsset) {
       highlightFeatures([feature], map);
       const geoid = feature.properties[geoidTag];
       let rowNumber = null;
-      for (let i = 0; i < tableData.length; i++) {
+      for (let i = 1; i < tableData.length; i++) {
         if (tableData[i][0] === geoid) {
           // underlaying data does not include header row.
           rowNumber = i - 1;

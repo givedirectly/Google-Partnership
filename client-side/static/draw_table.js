@@ -1,3 +1,4 @@
+import clickFeature from './click_feature.js';
 import {damageTag, geoidTag, scoreTag, snapTag} from './process_joined_data.js';
 
 export {currentTable, drawTable, tableData};
@@ -11,7 +12,7 @@ let currentTable = null;
  * @param {ee.FeatureCollection} features
  * @param {Object} selectCallback Callback to be invoked for selected features.
  */
-function drawTable(features, selectCallback) {
+function drawTable(features, selectCallback, map, joinedSnapAsset) {
   const nonZeroScores = features.filter(ee.Filter.gt(scoreTag, ee.Number(0)));
   const headings = [geoidTag, scoreTag, snapTag, damageTag];
   const pairOfListAndFeaturesComputation =
@@ -36,7 +37,8 @@ function drawTable(features, selectCallback) {
           // Multiple calls to this are fine:
           // https://developers.google.com/chart/interactive/docs/basic_load_libs#Callback
           google.charts.setOnLoadCallback(
-              () => renderTable(pairOfListAndFeatures, selectCallback));
+              () => renderTable(
+                  pairOfListAndFeatures, selectCallback, map, joinedSnapAsset));
         }
       });
 }
@@ -49,7 +51,8 @@ function drawTable(features, selectCallback) {
  * corresponding to that data.
  * @param {Object} selectCallback Callback to be invoked for selected features.
  */
-function renderTable(pairOfListAndFeatures, selectCallback) {
+function renderTable(
+    pairOfListAndFeatures, selectCallback, map, joinedSnapAsset) {
   const data =
       google.visualization.arrayToDataTable(pairOfListAndFeatures[0], false);
   const features = pairOfListAndFeatures[1];
@@ -71,4 +74,8 @@ function renderTable(pairOfListAndFeatures, selectCallback) {
     selectCallback(selection.map((elt) => features[elt.row]));
   });
   table.draw();
+  // TODO: handle ctrl+click situations
+  google.maps.event.addListener(map, 'click', (event) => {
+    clickFeature(event, map, joinedSnapAsset);
+  });
 }

@@ -1,4 +1,3 @@
-import clickFeature from './click_feature.js';
 import {drawTable} from './draw_table.js';
 import highlightFeatures from './highlight_features.js';
 import {addLayer, addNullLayer, toggleLayerOff, toggleLayerOn} from './layer_util.js';
@@ -34,9 +33,6 @@ function run(map) {
   createAndDisplayJoinedData(
       map, initialPovertyThreshold, initialDamageThreshold,
       initialPovertyWeight);
-  google.maps.event.addListener(map, 'click', (event) => {
-    clickFeature(event, map, joinedSnapAsset);
-  });
 }
 
 /**
@@ -59,7 +55,8 @@ function createAndDisplayJoinedData(
   initializeScoreLayer(map, processedData);
   google.charts.setOnLoadCallback(
       () => drawTable(
-          processedData, (features) => highlightFeatures(features, map)));
+          processedData, (features) => highlightFeatures(features, map), map,
+          joinedSnapAsset));
 }
 
 /**
