@@ -11,7 +11,7 @@ describe('Integration test for clicking feature', () => {
     cy.wait(4000);
     cy.get('.map').click(343, 184);
     cy.get(
-        '[class="google-visualization-table-tr-odd' +
+          '[class="google-visualization-table-tr-odd' +
           ' google-visualization-table-tr-sel"]')
         .find('[class="google-visualization-table-td"]')
         .should('have.text', '482012511004');
@@ -27,7 +27,7 @@ describe('Integration test for clicking feature', () => {
     cy.get('.google-visualization-table-tr-head > :nth-child(1)').click();
     cy.get('.map').click(343, 184);
     cy.get(
-        '[class="google-visualization-table-tr-odd' +
+          '[class="google-visualization-table-tr-odd' +
           ' google-visualization-table-tr-sel"]')
         .find('[class="google-visualization-table-td"]')
         .should('have.text', '482012511004');
