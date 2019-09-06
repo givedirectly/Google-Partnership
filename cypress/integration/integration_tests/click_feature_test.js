@@ -3,7 +3,7 @@
  * starting thresholds of poverty 0.3 and damage 0.5
  */
 describe('Integration test for clicking feature', () => {
-  it('clicks a feature in the list', () => {
+  it('clicks a feature on the map highlights feature in list', () => {
     cy.visit(host);
     // Wait for table to fully load. Needed to ensure that layerMap is
     // populated.
