@@ -60,9 +60,9 @@ function processUserRegions(map) {
 /**
  * Adds an onclick listener to polygon, popping up the given notes.
  *
- * @param polygon {google.maps.Polygon}
- * @param notes {String} notes for this polygon.
- * @param map {google.maps.Map} map that polygon will be/is attached to.
+ * @param {google.maps.Polygon} polygon Polygon to add listener to
+ * @param {String} notes Notes for this polygon
+ * @param {google.maps.Map} map Map that polygon will be/is attached to
  */
 function addListener(polygon, notes, map) {
   polygon.addListener('click', (event) => {
@@ -81,7 +81,7 @@ function addListener(polygon, notes, map) {
  * Helper function that actually does drawing on map when Firestore query
  * completes.
  *
- * @param querySnapshot {firebase.firestore.QuerySnapshot} result of query
+ * @param {firebase.firestore.QuerySnapshot} querySnapshot result of query
  * @param {google.maps.Map} map Map to display regions on
  */
 function drawRegionsFromFirebaseQuery(querySnapshot, map) {
@@ -98,6 +98,12 @@ function drawRegionsFromFirebaseQuery(querySnapshot, map) {
   });
 }
 
+/**
+ * Converts Firestore geopoint into Google Maps LatLng pair.
+ *
+ * @param {firebase.firestore.GeoPoint} geopoint point to convert
+ * @return {Object}
+ */
 function geoPointToLatLng(geopoint) {
   return {lat: geopoint.latitude, lng: geopoint.longitude};
 }
