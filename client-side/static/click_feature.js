@@ -10,21 +10,21 @@ export {clickFeature};
  * @param {number} lng longitude of the click
  * @param {number} lat latitude of the click
  * @param {google.maps.Map} map
- * @param {string} joinedSnapAsset asset path of block groups
+ * @param {string} featuresAsset asset path of features which could be clicked.
  * @param {google.visualization.TableChart} table the actual table object
  * @param {array} tableData 2-d array with inner arrays of form {@code headings}
  *        in draw_table.js where the first inner array is {@code headings}.
  */
-function clickFeature(lng, lat, map, joinedSnapAsset, table, tableData) {
+function clickFeature(lng, lat, map, featuresAsset, table, tableData) {
   const point = ee.Geometry.Point(lng, lat);
-  const blockGroups = ee.FeatureCollection(joinedSnapAsset).filterBounds(point);
+  const blockGroups = ee.FeatureCollection(featuresAsset).filterBounds(point);
   blockGroups.size().evaluate((size, failure) => {
     if (failure) {
       console.error(failure);
       return;
     }
     if (size === 0) {
-      // clicked on a block group with no damage.
+      // clicked on a block group with no damage data.
       return;
     }
     if (size !== 1) {

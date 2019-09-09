@@ -7,13 +7,14 @@ const headings = [geoidTag, scoreTag, snapTag, damageTag];
 /**
  * Display a ranked table of the given features that have non-zero score.
  *
- * @param {ee.FeatureCollection} features
+ * @param {ee.FeatureCollection} scoredFeatures
  * @param {Object} selectCallback Callback to be invoked for selected features.
  * @param {google.maps.Map} map
- * @param {string} joinedSnapAsset
+ * @param {string} featuresAsset asset path of features which could be clicked.
  */
-function drawTable(features, selectCallback, map, joinedSnapAsset) {
-  const nonZeroScores = features.filter(ee.Filter.gt(scoreTag, ee.Number(0)));
+function drawTable(scoredFeatures, selectCallback, map, featuresAsset) {
+  const nonZeroScores =
+      scoredFeatures.filter(ee.Filter.gt(scoreTag, ee.Number(0)));
   const pairOfListAndFeaturesComputation =
       nonZeroScores.iterate((feature, result) => {
         const listResult = ee.List(result);
@@ -36,7 +37,7 @@ function drawTable(features, selectCallback, map, joinedSnapAsset) {
           // https://developers.google.com/chart/interactive/docs/basic_load_libs#Callback
           google.charts.setOnLoadCallback(
               () => renderTable(
-                  pairOfListAndFeatures, selectCallback, map, joinedSnapAsset));
+                  pairOfListAndFeatures, selectCallback, map, scoredFeatures));
         }
       });
 }
@@ -51,10 +52,10 @@ function drawTable(features, selectCallback, map, joinedSnapAsset) {
  * corresponding to that data.
  * @param {Object} selectCallback Callback to be invoked for selected features.
  * @param {google.maps.Map} map
- * @param {string} joinedSnapAsset
+ * @param {string} featuresAsset asset path of features which could be clicked.
  */
 function renderTable(
-    pairOfListAndFeatures, selectCallback, map, joinedSnapAsset) {
+    pairOfListAndFeatures, selectCallback, map, featuresAsset) {
   const data =
       google.visualization.arrayToDataTable(pairOfListAndFeatures[0], false);
   const features = pairOfListAndFeatures[1];
@@ -78,7 +79,7 @@ function renderTable(
   // TODO: handle ctrl+click situations
   google.maps.event.addListener(map, 'click', (event) => {
     clickFeature(
-        event.latLng.lng(), event.latLng.lat(), map, joinedSnapAsset,
+        event.latLng.lng(), event.latLng.lat(), map, featuresAsset,
         table.getChart(), pairOfListAndFeatures[0]);
   });
 }
