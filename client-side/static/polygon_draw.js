@@ -9,7 +9,7 @@ const firebaseConfig = {
   projectId: 'givedirectly',
   storageBucket: '',
   messagingSenderId: '634162034024',
-  appId: '1:634162034024:web:c5f5b82327ba72f46d52dd'
+  appId: '1:634162034024:web:c5f5b82327ba72f46d52dd',
 };
 
 const appearance = {
@@ -55,6 +55,8 @@ function processUserRegions(map) {
           (querySnapshot) => drawRegionsFromFirebaseQuery(querySnapshot, map));
 }
 
+// TODO(#18): pop notes up as editable field, save modified notes
+// to backend. Also save new bounds of polygon to backend.
 /**
  * Adds an onclick listener to polygon, popping up the given notes.
  *
@@ -62,10 +64,7 @@ function processUserRegions(map) {
  * @param notes {String} notes for this polygon.
  * @param map {google.maps.Map} map that polygon will be/is attached to.
  */
-// TODO(#18): pop notes up as editable field, save modified notes
-// to backend. Also save new bounds of polygon to backend.
 function addListener(polygon, notes, map) {
-  console.log(polygon);
   polygon.addListener('click', (event) => {
     const infoWindow = new google.maps.InfoWindow();
     infoWindow.setContent(notes);
