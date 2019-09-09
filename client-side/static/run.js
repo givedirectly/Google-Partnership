@@ -102,6 +102,7 @@ function createNewCheckbox(assetName, map, mapDiv) {
   label.innerHTML = assetName;
   mapDiv.parentNode.appendChild(label);
 }
+
 /**
  * Runs through asset map. For those that we auto-display on page load, creates
  * overlays and displays. Also populates the layerMap.

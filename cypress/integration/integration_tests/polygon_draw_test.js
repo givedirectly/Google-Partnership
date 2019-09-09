@@ -28,7 +28,7 @@ describe('Integration tests for drawing polygons', () => {
     // presence here.
   });
 
-  it('Clicks on a user region and verifies notes pop up', () => {
+  it('Clicks on a region and verifies notes pop up', () => {
     cy.visit(host);
     // TODO(#53): check for loading bar element to finish instead of waiting.
     cy.wait(4000);

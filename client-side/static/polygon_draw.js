@@ -34,7 +34,7 @@ function setUpPolygonDrawing(map) {
   // TODO(#18): persist drawn polygon to backend.
   google.maps.event.addListener(
       drawingManager, 'overlaycomplete',
-      (event) => addListener(event.overlay, 'no notes yet', map));
+      (event) => addListener(event.overlay, '', map));
 
   drawingManager.setMap(map);
 }
@@ -52,7 +52,7 @@ function processUserRegions(map) {
   db.collection('usershapes')
       .get()
       .then(
-          (querySnapshot) => drawRegionsFromFirebaseQuery(querySnapshot, map));
+          (querySnapshot) => drawRegionsFromFirestoreQuery(querySnapshot, map));
 }
 
 // TODO(#18): pop notes up as editable field, save modified notes
@@ -84,7 +84,7 @@ function addListener(polygon, notes, map) {
  * @param {firebase.firestore.QuerySnapshot} querySnapshot result of query
  * @param {google.maps.Map} map Map to display regions on
  */
-function drawRegionsFromFirebaseQuery(querySnapshot, map) {
+function drawRegionsFromFirestoreQuery(querySnapshot, map) {
   querySnapshot.forEach((doc) => {
     const storedGeometry = doc.get('geometry');
     const coordinates = [];
