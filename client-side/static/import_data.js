@@ -28,6 +28,8 @@ export {countDamageAndBuildings, disaster, DisasterMapValue, disasters};
  * 7) add a new entry to {@code disasters}
  * 8) update the {@code disaster} constant
  * 9) visit http://localhost:8080/import_data.html
+ * 10) make the new <disaster>-snap-and-damage asset readable by all in code
+ * editor.
  */
 // TODO: factor in margins of error?
 
@@ -68,7 +70,6 @@ disasters.set(
         'users/juliexxia/ACS_16_5YR_B22010_with_ann' /* rawSnapAsset */,
         'users/juliexxia/tiger_florida' /* bgAsset */));
 
-
 disasters.set(
     'harvey',
     new DisasterMapValue(
@@ -104,9 +105,9 @@ function countDamageAndBuildings(feature) {
       geometry,
       attrDict.set('GEOID', snapFeature.get(censusGeoidKey))
           .set('BLOCK_GROUP', snapFeature.get(censusBlockGroupKey))
-          .set('SNAP', snapFeature.get(snapKey))
-          .set('TOTAL', snapFeature.get(totalKey))
-          .set('BUILDING_COUNT', totalBuildings));
+          .set('SNAP', ee.Number(snapFeature.get(snapKey)))
+          .set('TOTAL', ee.Number(snapFeature.get(totalKey)))
+          .set('BUILDING_COUNT', ee.Number(totalBuildings)));
 }
 
 /**
@@ -116,8 +117,8 @@ function countDamageAndBuildings(feature) {
  * @param {ee.Feature} feature
  * @return {ee.Feature}
  */
-function stringifyGeoid(feature) {
-  return feature.set(censusGeoidKey, ee.String(feature.get(censusGeoidKey)));
+function castProperties(feature) {
+  return feature.set(censusGeoidKey, ee.String(feature.get(censusGeoidKey))).set(snapKey, ee.Number(feature.get(snapKey))).set(totalKey, ee.Number(feature.get(totalKey)));
 }
 
 /** Performs operation of processing inputs and creating output asset. */
