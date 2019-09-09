@@ -3,13 +3,13 @@ export {processUserRegions, setUpPolygonDrawing as default};
 // TODO(#13): use proper keys associated to GiveDirectly account,
 // and lock down security (right now database is global read-write).
 const firebaseConfig = {
-  apiKey: "AIzaSyAbNHe9B0Wo4MV8rm3qEdy8QzFeFWZERHs",
-  authDomain: "givedirectly.firebaseapp.com",
-  databaseURL: "https://givedirectly.firebaseio.com",
-  projectId: "givedirectly",
-  storageBucket: "",
-  messagingSenderId: "634162034024",
-  appId: "1:634162034024:web:c5f5b82327ba72f46d52dd"
+  apiKey: 'AIzaSyAbNHe9B0Wo4MV8rm3qEdy8QzFeFWZERHs',
+  authDomain: 'givedirectly.firebaseapp.com',
+  databaseURL: 'https://givedirectly.firebaseio.com',
+  projectId: 'givedirectly',
+  storageBucket: '',
+  messagingSenderId: '634162034024',
+  appId: '1:634162034024:web:c5f5b82327ba72f46d52dd'
 };
 
 const appearance = {
@@ -27,16 +27,14 @@ const appearance = {
 function setUpPolygonDrawing(map) {
   const drawingManager = new google.maps.drawing.DrawingManager({
     drawingControl: true,
-    drawingControlOptions: {
-      drawingModes: ['marker', 'polygon']
-    },
+    drawingControlOptions: {drawingModes: ['marker', 'polygon']},
     polygonOptions: appearance,
   });
 
   // TODO(#18): persist drawn polygon to backend.
-  google.maps.event.addListener(drawingManager, 'overlaycomplete',
-      (event) => addListener(event.overlay, 'no notes yet', map)
-      );
+  google.maps.event.addListener(
+      drawingManager, 'overlaycomplete',
+      (event) => addListener(event.overlay, 'no notes yet', map));
 
   drawingManager.setMap(map);
 }
@@ -51,7 +49,10 @@ function setUpPolygonDrawing(map) {
 function processUserRegions(map) {
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
-  db.collection('usershapes').get().then((querySnapshot) => drawRegionsFromFirebaseQuery(querySnapshot, map));
+  db.collection('usershapes')
+      .get()
+      .then(
+          (querySnapshot) => drawRegionsFromFirebaseQuery(querySnapshot, map));
 }
 
 /**
@@ -88,7 +89,8 @@ function drawRegionsFromFirebaseQuery(querySnapshot, map) {
   querySnapshot.forEach((doc) => {
     const storedGeometry = doc.get('geometry');
     const coordinates = [];
-    storedGeometry.forEach((geopoint) => coordinates.push(geoPointToLatLng(geopoint)));
+    storedGeometry.forEach(
+        (geopoint) => coordinates.push(geoPointToLatLng(geopoint)));
     const properties = Object.assign({}, appearance);
     properties.paths = coordinates;
     const polygon = new google.maps.Polygon(properties);
