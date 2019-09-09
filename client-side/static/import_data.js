@@ -1,5 +1,3 @@
-import oldImportData from './old_import_data.js';
-
 export {crowdAiDamageKey};
 
 /** @VisibleForTesting */
@@ -90,8 +88,8 @@ function countDamageAndBuildings(feature) {
   const resources = disasters.get(disaster);
   const damage = ee.FeatureCollection(resources.damageAsset);
   const damageLevels = ee.List(damageLevelsList);
-  const damageFilters = damageLevels.map(
-      (type) => ee.Filter.eq(crowdAiDamageKey, type));
+  const damageFilters =
+      damageLevels.map((type) => ee.Filter.eq(crowdAiDamageKey, type));
   const geometry = ee.Feature(feature.get('secondary')).geometry();
   const blockDamage = damage.filterBounds(geometry);
 
@@ -131,12 +129,10 @@ function run() {
       ee.FeatureCollection(resources.rawSnapAsset).map(stringifyGeoid);
   const blockGroupAsset =
       ee.FeatureCollection(resources.bgAsset)
-          .filterBounds(
-              ee.FeatureCollection(resources.damageAsset).geometry());
+          .filterBounds(ee.FeatureCollection(resources.damageAsset).geometry());
   const joinedSnap = ee.Join.inner().apply(
       snapAsset, blockGroupAsset,
-      ee.Filter.equals(
-          {leftField: censusGeoidKey, rightField: tigerGeoidKey}));
+      ee.Filter.equals({leftField: censusGeoidKey, rightField: tigerGeoidKey}));
 
   const assetName = disaster + '-snap-and-damage';
   // TODO(#61): parameterize ee user account to write assets to or make GD
