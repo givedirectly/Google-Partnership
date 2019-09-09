@@ -24,6 +24,17 @@ describe('Integration tests for drawing polygons', () => {
     drawPointAndPrepareForNext(50, 250);
     // Is the draggable edge present?
     cy.get('div[style*="left: -100px; top: -95px;"');
+    // TODO(#18): when pop-up contains editable notes field, assert on
+    // presence here.
+  });
+
+  it('Clicks on a user region and verifies notes pop up', () => {
+    cy.visit(host);
+    // TODO(#53): check for loading bar element to finish instead of waiting.
+    cy.wait(4000);
+    // Experimented to find point on map within second triangle.
+    cy.get('.map').click(407, 250);
+    cy.get('.map').contains('second notes');
   });
 });
 

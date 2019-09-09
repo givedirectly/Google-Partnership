@@ -1,6 +1,7 @@
 import drawTable from './draw_table.js';
 import highlightFeatures from './highlight_features.js';
 import {addLayer, addNullLayer, toggleLayerOff, toggleLayerOn} from './layer_util.js';
+import {processUserRegions} from './polygon_draw.js';
 import processJoinedData from './process_joined_data.js';
 import {createToggles, initialDamageThreshold, initialPovertyThreshold, initialPovertyWeight} from './update.js';
 
@@ -33,6 +34,7 @@ function run(map) {
   createAndDisplayJoinedData(
       map, initialPovertyThreshold, initialDamageThreshold,
       initialPovertyWeight);
+  processUserRegions(map);
 }
 
 /**
@@ -100,7 +102,6 @@ function createNewCheckbox(assetName, map, mapDiv) {
   label.innerHTML = assetName;
   mapDiv.parentNode.appendChild(label);
 }
-
 /**
  * Runs through asset map. For those that we auto-display on page load, creates
  * overlays and displays. Also populates the layerMap.
