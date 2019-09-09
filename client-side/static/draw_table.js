@@ -35,6 +35,8 @@ function drawTable(features, selectCallback) {
           // https://developers.google.com/chart/interactive/docs/basic_load_libs#Callback
           google.charts.setOnLoadCallback(
               () => renderTable(pairOfListAndFeatures, selectCallback));
+          // Set download button to visible once table data is loaded.
+          document.getElementById('downloadButton').style.visibility = 'visible';
         }
       });
 }
@@ -66,4 +68,33 @@ function renderTable(pairOfListAndFeatures, selectCallback) {
     selectCallback(selection.map((elt) => features[elt.row]));
   });
   table.draw();
+
+  const downloadButton =document.getElementById('downloadButton');
+  // Generate content and download on click.
+  downloadButton.addEventListener("click", function(){
+    // Get column headers from data and add to front of string.
+    let columnHeaders = '';
+    for (let i = 0; i < data.getNumberOfColumns(); i++) {
+        columnHeaders += data.getColumnLabel(i);
+        if (i < data.getNumberOfColumns() - 1) {
+            columnHeaders += ',';
+        }
+    }
+    const content = columnHeaders + '\n' + google.visualization.dataTableToCsv(data);
+    downloadContent(content);
+  });
+}
+
+/**
+ * Generates a file with the content passed and downloads it. 
+ *
+ * @param {String} content Content to be downloaded in file.
+ */
+function downloadContent(content){
+  const downloadLink = document.createElement('a');
+  downloadLink.href = URL.createObjectURL(new Blob([content], {type: 'text/csv'}));
+  downloadLink.download = 'data.csv';
+
+  downloadLink.click();
+  document.body.removeChild(downloadLink);
 }
