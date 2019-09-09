@@ -1,5 +1,7 @@
 import oldImportData from './old_import_data.js';
 
+export {crowdAiDamageKey};
+
 /** @VisibleForTesting */
 export {countDamageAndBuildings, disaster, DisasterMapValue, disasters};
 
@@ -41,6 +43,8 @@ const censusBlockGroupKey = 'GEOdisplay-label';
 const tigerGeoidKey = 'GEOID';
 const snapKey = 'HD01_VD02';
 const totalKey = 'HD01_VD01';
+// check with crowd ai folks about name.
+const crowdAiDamageKey = 'descriptio';
 
 /** Disaster asset names and other constants. */
 const disasters = new Map();
@@ -48,15 +52,11 @@ const disasters = new Map();
 /** Constants for {@code disasters} map. */
 class DisasterMapValue {
   /**
-   * @param {string} damageKey property name for # damaged buildings
    * @param {string} damageAsset ee asset path
    * @param {string} snapAsset ee asset path to snap info
    * @param {string} bgAsset ee asset path to block group info
-   * @param {string} snapKey property name for # snap recipients
-   * @param {string} totalKey property name for # total population
    */
-  constructor(damageKey, damageAsset, snapAsset, bgAsset, snapKey, totalKey) {
-    this.damageKey = damageKey;
+  constructor(damageAsset, snapAsset, bgAsset) {
     this.damageAsset = damageAsset;
     this.rawSnapAsset = snapAsset;
     this.bgAsset = bgAsset;
@@ -66,8 +66,6 @@ class DisasterMapValue {
 disasters.set(
     'michael',
     new DisasterMapValue(
-        // TODO: make constant - check with crowd ai folks about name.
-        'descriptio' /* damageKey */,
         'users/juliexxia/crowd_ai_michael' /* damageAsset */,
         'users/juliexxia/ACS_16_5YR_B22010_with_ann' /* rawSnapAsset */,
         'users/juliexxia/tiger_florida' /* bgAsset */));
@@ -84,8 +82,8 @@ function countDamageAndBuildings(feature) {
   const resources = disasters.get(disaster);
   const damage = ee.FeatureCollection(resources.damageAsset);
   const damageLevels = ee.List(damageLevelsList);
-  const damageFilters =
-      damageLevels.map((type) => ee.Filter.eq(resources.damageKey, type));
+  const damageFilters = damageLevels.map(
+      (type) => ee.Filter.eq(resources.crowdAiDamageKey, type));
   const geometry = ee.Feature(feature.get('secondary')).geometry();
   const blockDamage = damage.filterBounds(geometry);
 
