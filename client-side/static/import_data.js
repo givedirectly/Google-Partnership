@@ -8,7 +8,7 @@ export {countDamageAndBuildings, disaster, DisasterMapValue, disasters};
 /**
  * Joins a state's census block-group-level SNAP/population data with building
  * counts and damage, and creates a FeatureCollection. Requires that all of
- * the source assets are already uploaded. Uploading a Census table can be done
+ * the source assets are already uploaded. Uploading a .csv or .shp can be done
  * with something like the command line:
  * `earthengine upload table --asset_id users/janak/census_building_data \
  *      gs://noaa-michael-data/ACS_16_5YR_B25024_with_ann.csv`
@@ -20,7 +20,7 @@ export {countDamageAndBuildings, disaster, DisasterMapValue, disasters};
  *      https://factfinder.census.gov/faces/nav/jsf/pages/download_center.xhtml
  * 1) clean up illegal property names in (0) by running ./cleanup_acs.sh
  *    /path/to/snap/data.csv
- * 2) download TIGER shapefile from census website
+ * 2) download TIGER block group shapefile from census website
  *      https://www.census.gov/cgi-bin/geo/shapefiles/index.php
  * 3) download crowd ai damage data
  * 4) convert (3) from KML/geojson -> shapefile using something like
@@ -34,7 +34,7 @@ export {countDamageAndBuildings, disaster, DisasterMapValue, disasters};
 // TODO: factor in margins of error?
 
 /** The current disaster. */
-const disaster = 'michael';
+const disaster = 'harvey';
 
 const damageLevelsList = ['no-damage', 'minor-damage', 'major-damage'];
 
@@ -70,6 +70,14 @@ disasters.set(
         'users/juliexxia/ACS_16_5YR_B22010_with_ann' /* rawSnapAsset */,
         'users/juliexxia/tiger_florida' /* bgAsset */));
 
+
+disasters.set(
+    'harvey',
+    new DisasterMapValue(
+        'users/juliexxia/harvey-damage-crowdai-format' /* damageAsset */,
+        'users/juliexxia/snap_texas' /* rawSnapAsset */,
+        'users/juliexxia/tiger_texas' /* bgAsset */));
+
 /**
  * Given a feature from the SNAP census data, returns a new
  * feature with GEOID, SNAP #, total pop #, total building count and
@@ -83,7 +91,7 @@ function countDamageAndBuildings(feature) {
   const damage = ee.FeatureCollection(resources.damageAsset);
   const damageLevels = ee.List(damageLevelsList);
   const damageFilters = damageLevels.map(
-      (type) => ee.Filter.eq(resources.crowdAiDamageKey, type));
+      (type) => ee.Filter.eq(crowdAiDamageKey, type));
   const geometry = ee.Feature(feature.get('secondary')).geometry();
   const blockDamage = damage.filterBounds(geometry);
 
@@ -118,39 +126,35 @@ function stringifyGeoid(feature) {
 function run() {
   ee.initialize();
 
-  if (disaster === 'harvey') {
-    oldImportData();
-  } else {
-    const resources = disasters.get(disaster);
-    const snapAsset =
-        ee.FeatureCollection(resources.rawSnapAsset).map(stringifyGeoid);
-    const blockGroupAsset =
-        ee.FeatureCollection(resources.bgAsset)
-            .filterBounds(
-                ee.FeatureCollection(resources.damageAsset).geometry());
-    const joinedSnap = ee.Join.inner().apply(
-        snapAsset, blockGroupAsset,
-        ee.Filter.equals(
-            {leftField: censusGeoidKey, rightField: tigerGeoidKey}));
+  const resources = disasters.get(disaster);
+  const snapAsset =
+      ee.FeatureCollection(resources.rawSnapAsset).map(stringifyGeoid);
+  const blockGroupAsset =
+      ee.FeatureCollection(resources.bgAsset)
+          .filterBounds(
+              ee.FeatureCollection(resources.damageAsset).geometry());
+  const joinedSnap = ee.Join.inner().apply(
+      snapAsset, blockGroupAsset,
+      ee.Filter.equals(
+          {leftField: censusGeoidKey, rightField: tigerGeoidKey}));
 
-    const assetName = disaster + '-snap-and-damage';
-    // TODO(#61): parameterize ee user account to write assets to or make GD
-    // account.
-    // TODO: delete existing asset with same name if it exists.
-    const task = ee.batch.Export.table.toAsset(
-        joinedSnap.map(countDamageAndBuildings), assetName,
-        'users/juliexxia/' + assetName);
-    task.start();
-    $('.upload-status')
-        .text('Check Code Editor console for progress. Task: ' + task.id);
-    joinedSnap.size().evaluate((val, failure) => {
-      if (val) {
-        $('.upload-status').append('\n<p>Found ' + val + ' elements');
-      } else {
-        $('.upload-status').append('\n<p>Error getting size: ' + failure);
-      }
-    });
-  }
+  const assetName = disaster + '-snap-and-damage';
+  // TODO(#61): parameterize ee user account to write assets to or make GD
+  // account.
+  // TODO: delete existing asset with same name if it exists.
+  const task = ee.batch.Export.table.toAsset(
+      joinedSnap.map(countDamageAndBuildings), assetName,
+      'users/juliexxia/' + assetName);
+  task.start();
+  $('.upload-status')
+      .text('Check Code Editor console for progress. Task: ' + task.id);
+  joinedSnap.size().evaluate((val, failure) => {
+    if (val) {
+      $('.upload-status').append('\n<p>Found ' + val + ' elements');
+    } else {
+      $('.upload-status').append('\n<p>Error getting size: ' + failure);
+    }
+  });
 }
 
 /**
