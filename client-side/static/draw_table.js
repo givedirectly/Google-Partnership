@@ -75,7 +75,7 @@ function renderTable(pairOfListAndFeatures, selectCallback) {
   // Generate content and download on click.
   downloadButton.addEventListener('click', function() {
     // Add column headers to front of string content.
-    let columnHeaders = tableHeadings.join(',');
+    const columnHeaders = tableHeadings.join(',');
     const content =
         columnHeaders + '\n' + google.visualization.dataTableToCsv(data);
     downloadContent(content);
@@ -85,7 +85,7 @@ function renderTable(pairOfListAndFeatures, selectCallback) {
 /**
  * Generates a file with the content passed and downloads it.
  *
- * @param {String} content Content to be downloaded in file.
+ * @param {string} content Content to be downloaded in file.
  */
 function downloadContent(content) {
   const downloadLink = document.getElementById('downloadLink');
