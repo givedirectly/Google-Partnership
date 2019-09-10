@@ -23,6 +23,18 @@ function drawTable(features, selectCallback) {
           ee.List(listResult.get(1)).add(feature),
         ]);
       }, ee.List([ee.List([tableHeadings]), ee.List([])]));
+
+
+  // Create download button.
+  const downloadButton = document.createElement('button');
+  downloadButton.style.visibility = 'hidden';
+  downloadButton.id = 'downloadButton';
+  downloadButton.innerHTML = 'Download';
+  document.getElementById('tableContainer').appendChild(downloadButton);
+  const downloadLink = document.createElement('a');
+  downloadLink.id = 'downloadLink';
+  downloadButton.appendChild(downloadLink);
+
   // TODO(#37): These callbacks could be executed out of order, and the table
   //  might not reflect the user's latest request.
   pairOfListAndFeaturesComputation.evaluate(
@@ -37,8 +49,7 @@ function drawTable(features, selectCallback) {
           google.charts.setOnLoadCallback(
               () => renderTable(pairOfListAndFeatures, selectCallback));
           // Set download button to visible once table data is loaded.
-          document.getElementById('downloadButton').style.visibility =
-              'visible';
+          document.getElementById('downloadButton').style.visibility = 'visible';
         }
       });
 }
@@ -71,7 +82,6 @@ function renderTable(pairOfListAndFeatures, selectCallback) {
   });
   table.draw();
 
-  // Create download button
   const downloadButton = document.getElementById('downloadButton');
   // Generate content and download on click.
   downloadButton.addEventListener('click', function() {
