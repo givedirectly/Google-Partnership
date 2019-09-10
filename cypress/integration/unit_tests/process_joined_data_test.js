@@ -33,8 +33,7 @@ describe('Unit test for processed_joined_data.js', () => {
     const score = resultProperties.get('SCORE');
     expect(score).to.haveOwnProperty('_myNumberValue');
     expect(score._myNumberValue)
-        .to.equals(
-            Math.round(100 * (0.5 * ((10+5) / 27) + 0.5 * (2 / 4))));
+        .to.equals(Math.round(100 * (0.5 * ((10 + 5) / 27) + 0.5 * (2 / 4))));
     expect(resultProperties.get('style')).to.eql({color: 'ff00ff53'});
   });
 
@@ -53,8 +52,7 @@ describe('Unit test for processed_joined_data.js', () => {
     const score = resultProperties.get('SCORE');
     expect(score).to.haveOwnProperty('_myNumberValue');
     expect(score._myNumberValue)
-        .to.equals(
-            Math.round(100 * (0.1 * ((10+5) / 27) + 0.9 * (2 / 4))));
+        .to.equals(Math.round(100 * (0.1 * ((10 + 5) / 27) + 0.9 * (2 / 4))));
     expect(resultProperties.get('style')).to.eql({color: 'ff00ff51'});
   });
 
