@@ -28,4 +28,16 @@ describe('Integration test for clicking feature', () => {
         .find('[class="google-visualization-table-td"]')
         .should('have.text', '482012511004');
   });
+
+  it.only('clicks a place where there is no damage -> no feature', () => {
+    //https://github.com/cypress-io/cypress/issues/300#issuecomment-321587149
+    // having a hard time asserting on what was logged though
+    cy.window().then((win) => {
+      cy.spy(win.console, "log")
+    });
+
+    cy.visit(host);
+    cy.wait(4000);
+    cy.get('.map').click(25, 25);
+  });
 });
