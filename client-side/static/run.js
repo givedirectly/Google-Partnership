@@ -1,6 +1,3 @@
-/**
- *
- */
 import drawTable from './draw_table.js';
 import highlightFeatures from './highlight_features.js';
 import {addLayer, addNullLayer, toggleLayerOff, toggleLayerOn} from './layer_util.js';
