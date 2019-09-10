@@ -49,7 +49,8 @@ function drawTable(features, selectCallback) {
           google.charts.setOnLoadCallback(
               () => renderTable(pairOfListAndFeatures, selectCallback));
           // Set download button to visible once table data is loaded.
-          document.getElementById('downloadButton').style.visibility = 'visible';
+          document.getElementById('downloadButton').style.visibility =
+              'visible';
         }
       });
 }
