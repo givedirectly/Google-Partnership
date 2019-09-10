@@ -1,3 +1,6 @@
+// import {run} from './fema_to_crowdai.js';
+import damageLevelsList from './damage_levels.js';
+
 export {crowdAiDamageKey};
 
 /** @VisibleForTesting */
@@ -18,7 +21,7 @@ export {countDamageAndBuildings, disaster, DisasterMapValue, disasters};
  *      https://factfinder.census.gov/faces/nav/jsf/pages/download_center.xhtml
  * 1) clean up illegal property names in (0) by running ./cleanup_acs.sh
  *    /path/to/snap/data.csv
- * 2) download TIGER block group shapefile from census website
+ * 2) download TIGER block group .shp from census website
  *      https://www.census.gov/cgi-bin/geo/shapefiles/index.php
  * 3) download crowd ai damage data
  * 4) convert (3) from KML/geojson -> shapefile using something like
@@ -35,8 +38,6 @@ export {countDamageAndBuildings, disaster, DisasterMapValue, disasters};
 
 /** The current disaster. */
 const disaster = 'harvey';
-
-const damageLevelsList = ['no-damage', 'minor-damage', 'major-damage'];
 
 const censusGeoidKey = 'GEOid2';
 const censusBlockGroupKey = 'GEOdisplay-label';
@@ -105,9 +106,9 @@ function countDamageAndBuildings(feature) {
       geometry,
       attrDict.set('GEOID', snapFeature.get(censusGeoidKey))
           .set('BLOCK_GROUP', snapFeature.get(censusBlockGroupKey))
-          .set('SNAP', ee.Number(snapFeature.get(snapKey)))
-          .set('TOTAL', ee.Number(snapFeature.get(totalKey)))
-          .set('BUILDING_COUNT', ee.Number(totalBuildings)));
+          .set('SNAP', ee.Number.parse(snapFeature.get(snapKey)).long())
+          .set('TOTAL', ee.Number.parse(snapFeature.get(totalKey)).long())
+          .set('BUILDING_COUNT', totalBuildings));
 }
 
 /**
@@ -117,8 +118,8 @@ function countDamageAndBuildings(feature) {
  * @param {ee.Feature} feature
  * @return {ee.Feature}
  */
-function castProperties(feature) {
-  return feature.set(censusGeoidKey, ee.String(feature.get(censusGeoidKey))).set(snapKey, ee.Number(feature.get(snapKey))).set(totalKey, ee.Number(feature.get(totalKey)));
+function stringifyGeoid(feature) {
+  return feature.set(censusGeoidKey, ee.String(feature.get(censusGeoidKey)));
 }
 
 /** Performs operation of processing inputs and creating output asset. */

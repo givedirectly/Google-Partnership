@@ -24,6 +24,9 @@ ee.Algorithms = {};
 ee.Algorithms.If = (cond, ifTrue, ifFalse) => {
   return cond ? ifTrue : ifFalse;
 };
+ee.Algorithms.IsEqual = (left, right) => {
+  return left === right;
+};
 
 ee.Reducer = {};
 ee.Reducer.sum = () => sumMarker;

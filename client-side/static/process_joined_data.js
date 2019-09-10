@@ -1,4 +1,4 @@
-import damageLevelsList from './fema_damage_levels.js';
+import damageLevelsList from './damage_levels.js';
 
 export {
   damageTag,
@@ -44,7 +44,9 @@ function colorAndRate(
   const ratioBuildingsDamaged =
       ee.Number(damageLevels
                     .map((type) => {
-                      return ee.Number(feature.get(type));
+                      return ee.Algorithms.If(
+                          ee.Algorithms.IsEqual(type, 'no-damage'),
+                          ee.Number(0), ee.Number(feature.get(type)));
                     })
                     .reduce(ee.Reducer.sum()))
           .divide(feature.get('BUILDING_COUNT'));
