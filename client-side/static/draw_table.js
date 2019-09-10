@@ -2,6 +2,8 @@ import {damageTag, geoidTag, scoreTag, snapTag} from './process_joined_data.js';
 
 export {drawTable as default};
 
+const tableHeadings = [geoidTag, scoreTag, snapTag, damageTag];
+
 /**
  * Display a ranked table of the given features that have non-zero score.
  *
@@ -12,16 +14,15 @@ function drawTable(features, selectCallback) {
   const sortedNonZeroScores =
       features.filter(ee.Filter.gt(scoreTag, ee.Number(0)))
           .sort(scoreTag, false);
-  const headings = [geoidTag, scoreTag, snapTag, damageTag];
   const pairOfListAndFeaturesComputation =
       sortedNonZeroScores.iterate((feature, result) => {
         const listResult = ee.List(result);
         return ee.List([
           ee.List(listResult.get(0))
-              .add(headings.map((col) => feature.get(col))),
+              .add(tableHeadings.map((col) => feature.get(col))),
           ee.List(listResult.get(1)).add(feature),
         ]);
-      }, ee.List([ee.List([headings]), ee.List([])]));
+      }, ee.List([ee.List([tableHeadings]), ee.List([])]));
   // TODO(#37): These callbacks could be executed out of order, and the table
   //  might not reflect the user's latest request.
   pairOfListAndFeaturesComputation.evaluate(
@@ -36,8 +37,7 @@ function drawTable(features, selectCallback) {
           google.charts.setOnLoadCallback(
               () => renderTable(pairOfListAndFeatures, selectCallback));
           // Set download button to visible once table data is loaded.
-          document.getElementById('downloadButton').style.visibility =
-              'visible';
+          document.getElementById('downloadButton').style.visibility = 'visible';
         }
       });
 }
@@ -70,17 +70,12 @@ function renderTable(pairOfListAndFeatures, selectCallback) {
   });
   table.draw();
 
+  // Create download button
   const downloadButton = document.getElementById('downloadButton');
   // Generate content and download on click.
   downloadButton.addEventListener('click', function() {
-    // Get column headers from data and add to front of string.
-    let columnHeaders = '';
-    for (let i = 0; i < data.getNumberOfColumns(); i++) {
-      columnHeaders += data.getColumnLabel(i);
-      if (i < data.getNumberOfColumns() - 1) {
-        columnHeaders += ',';
-      }
-    }
+    // Add column headers to front of string content.
+    let columnHeaders = tableHeadings.join(',');
     const content =
         columnHeaders + '\n' + google.visualization.dataTableToCsv(data);
     downloadContent(content);
@@ -93,11 +88,10 @@ function renderTable(pairOfListAndFeatures, selectCallback) {
  * @param {String} content Content to be downloaded in file.
  */
 function downloadContent(content) {
-  const downloadLink = document.createElement('a');
+  const downloadLink = document.getElementById('downloadLink');
   downloadLink.href =
       URL.createObjectURL(new Blob([content], {type: 'text/csv'}));
   downloadLink.download = 'data.csv';
 
   downloadLink.click();
-  document.body.removeChild(downloadLink);
 }
