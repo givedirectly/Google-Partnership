@@ -30,11 +30,9 @@ describe('Integration test for clicking feature', () => {
   });
 
   it.only('clicks a place where there is no damage -> no feature', () => {
-    //https://github.com/cypress-io/cypress/issues/300#issuecomment-321587149
+    // https://github.com/cypress-io/cypress/issues/300#issuecomment-321587149
     // having a hard time asserting on what was logged though
-    cy.window().then((win) => {
-      cy.spy(win.console, "log")
-    });
+    cy.window().then((win) => {cy.spy(win.console, 'log')});
 
     cy.visit(host);
     cy.wait(4000);
