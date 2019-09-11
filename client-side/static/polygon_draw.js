@@ -15,7 +15,7 @@ const firebaseConfig = {
 const appearance = {
   fillColor: '#FF0000',
   strokeColor: '#FF0000',
-  // TODO(#13): make editable by choosing polygon and clicking button.
+  // TODO(#18): make editable by choosing polygon and clicking button.
   editable: true,
 };
 
@@ -64,13 +64,18 @@ function processUserRegions(map) {
  * @param {String} notes Notes for this polygon
  * @param {google.maps.Map} map Map that polygon will be/is attached to
  */
-function addListener(polygon, notes, map) {
-  polygon.addListener('click', (event) => {
+function addPopUpListener(polygon, notes, map) {
+  const listener = polygon.addListener('click', (event) => {
+    // Remove the listener so that duplicate windows don't pop up on another
+    // click, and the cursor doesn't become a "clicking hand" over this shape.
+    google.maps.event.removeListener(listener);
     const infoWindow = new google.maps.InfoWindow();
     infoWindow.setContent(notes);
     // TODO(janakr): is there a better place to pop this window up?
     const popupCoords = polygon.getPath().getAt(0);
     infoWindow.setPosition(popupCoords);
+    // Reinstall the pop-up listener when the window is closed.
+    infoWindow.addListener('closeclick', (event) => {addPopUpListener(polygon, notes, map)});
     infoWindow.open(map);
   });
 }
@@ -85,15 +90,15 @@ function addListener(polygon, notes, map) {
  * @param {google.maps.Map} map Map to display regions on
  */
 function drawRegionsFromFirestoreQuery(querySnapshot, map) {
-  querySnapshot.forEach((doc) => {
-    const storedGeometry = doc.get('geometry');
+  querySnapshot.forEach((userDefinedRegion) => {
+    const storedGeometry = userDefinedRegion.get('geometry');
     const coordinates = [];
     storedGeometry.forEach(
         (geopoint) => coordinates.push(geoPointToLatLng(geopoint)));
     const properties = Object.assign({}, appearance);
     properties.paths = coordinates;
     const polygon = new google.maps.Polygon(properties);
-    addListener(polygon, doc.get('notes'), map);
+    addPopUpListener(polygon, userDefinedRegion.get('notes'), map);
     polygon.setMap(map);
   });
 }

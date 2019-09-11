@@ -1,5 +1,5 @@
 describe('Integration tests for drawing polygons', () => {
-  it('Draws a polygon', () => {
+  xit('Draws a polygon', () => {
     cy.visit(host);
     const polygonButton = cy.get('[title="Draw a shape"]');
     polygonButton.click();
@@ -31,12 +31,30 @@ describe('Integration tests for drawing polygons', () => {
   it('Clicks on a region and verifies notes pop up', () => {
     cy.visit(host);
     // TODO(#53): check for loading bar element to finish instead of waiting.
-    cy.wait(4000);
+    cy.wait(1000);
     // Experimented to find point on map within second triangle.
-    cy.get('.map').click(407, 250);
+    cy.get('.map').click(447, 250);
+    cy.get('.map').contains('second notes');
+    cy.wait(1000);
+    cy.get('.map').click(447, 250);
+    assertExactlyPopUps(1);
+    // TODO(janakr): Why does Cypress claim to find two identical buttons?
+    cy.get('button[title="Close"]').first().click();
+    assertExactlyPopUps(0);
+    cy.get('.map').click(447, 250);
     cy.get('.map').contains('second notes');
   });
 });
+
+function assertExactlyPopUps(expectedFound) {
+  let foundElements = 0;
+  cy.get('div').each(($elt, index, collection) =>
+  {
+    if ($elt.html() === 'second notes') {
+      expect(foundElements++).to.equal(0);
+    }
+  }).then(() => expect(foundElements).to.equal(expectedFound));
+}
 
 /**
  * Clicks on point and checks that point is drawn.
