@@ -1,8 +1,6 @@
-// import {crowdAiDamageKey} from './import_data.js';
-
 export {run};
 /**
- * The run script run to generate /users/juliexxia/harvey-damage-crowdai-format.
+ * The script run to generate /users/juliexxia/harvey-damage-crowdai-format.
  */
 
 /**
@@ -60,5 +58,3 @@ function run() {
     }
   });
 }
-
-// run();

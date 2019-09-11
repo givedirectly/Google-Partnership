@@ -1,4 +1,3 @@
-// import {run} from './fema_to_crowdai.js';
 import damageLevelsList from './damage_levels.js';
 
 export {crowdAiDamageKey};
