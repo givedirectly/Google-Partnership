@@ -1,4 +1,4 @@
-import {geoidTag} from './property_names.js';
+import {blockGroupTag} from './property_names.js';
 
 export {highlightFeatures as default};
 
@@ -25,7 +25,7 @@ const currentFeatures = new Map();
 function highlightFeatures(features, map) {
   const newFeatures = new Map();
   for (const feature of features) {
-    newFeatures.set(feature.properties[geoidTag], feature);
+    newFeatures.set(feature.properties[blockGroupTag], feature);
   }
   // Remove any features that are not in the new set.
   const keys = currentFeatures.keys();

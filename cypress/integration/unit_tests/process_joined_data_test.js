@@ -3,8 +3,8 @@ import processJoinedData from '../../../client-side/static/process_joined_data.j
 const featureProperties = new Map();
 featureProperties.set('SNAP', 2);
 featureProperties.set('TOTAL', 4);
-featureProperties.set('BUILDING_COUNT', 27);
-featureProperties.set('GEOID', 'geoid');
+featureProperties.set('BUILDING COUNT', 27);
+featureProperties.set('BLOCK GROUP', 'block group');
 featureProperties.set('no-damage', 12);
 featureProperties.set('minor-damage', 10);
 featureProperties.set('major-damage', 5);
@@ -29,7 +29,7 @@ describe('Unit test for processed_joined_data.js', () => {
     expect(returnedFeature).to.have.property('geometry', geometryObject);
     expect(returnedFeature).to.haveOwnProperty('properties');
     const resultProperties = returnedFeature.properties;
-    expect(resultProperties.get('GEOID')).to.equal('geoid');
+    expect(resultProperties.get('BLOCK GROUP')).to.equal('block group');
     const score = resultProperties.get('SCORE');
     expect(score).to.haveOwnProperty('_myNumberValue');
     expect(score._myNumberValue)
@@ -48,7 +48,7 @@ describe('Unit test for processed_joined_data.js', () => {
     expect(returnedFeature).to.have.property('geometry', geometryObject);
     expect(returnedFeature).to.haveOwnProperty('properties');
     const resultProperties = returnedFeature.properties;
-    expect(resultProperties.get('GEOID')).to.equal('geoid');
+    expect(resultProperties.get('BLOCK GROUP')).to.equal('block group');
     const score = resultProperties.get('SCORE');
     expect(score).to.haveOwnProperty('_myNumberValue');
     expect(score._myNumberValue)
