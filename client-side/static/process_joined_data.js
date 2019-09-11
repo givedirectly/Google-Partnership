@@ -1,5 +1,5 @@
 import damageLevelsList from './damage_levels.js';
-import {blockGroupTag, buildingCountTag, damageTag, scoreTag, snapPercentageTag, snapTag, totalPopTag} from './property_names.js';
+import {blockGroupTag, buildingCountTag, damageTag, scoreTag, snapPercentageTag, snapPopTag, totalPopTag} from './property_names.js';
 
 export {processJoinedData as default};
 
@@ -30,7 +30,7 @@ function colorAndRate(
     feature, scalingFactor, damageLevels, povertyThreshold, damageThreshold,
     povertyWeight) {
   const povertyRatio =
-      ee.Number(feature.get(snapTag)).divide(feature.get(totalPopTag));
+      ee.Number(feature.get(snapPopTag)).divide(feature.get(totalPopTag));
   const ratioBuildingsDamaged =
       ee.Number(damageLevels
                     .map((type) => {

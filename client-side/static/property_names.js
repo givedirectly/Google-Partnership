@@ -5,7 +5,7 @@ export {
   geoidTag,
   scoreTag,
   snapPercentageTag,
-  snapTag,
+  snapPopTag,
   totalPopTag,
 };
 
@@ -14,6 +14,6 @@ const damageTag = 'DAMAGE PERCENTAGE';
 const geoidTag = 'GEOID';
 const scoreTag = 'SCORE';
 const snapPercentageTag = 'SNAP PERCENTAGE';
-const snapTag = 'SNAP';
+const snapPopTag = 'SNAP';
 const totalPopTag = 'TOTAL';
 const buildingCountTag = 'BUILDING COUNT';
