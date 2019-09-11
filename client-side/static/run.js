@@ -57,7 +57,7 @@ function createAndDisplayJoinedData(
   google.charts.setOnLoadCallback(
       () => drawTable(
           processedData, (features) => highlightFeatures(features, map), map,
-          joinedSnapAsset));
+          snapAndDamageAsset));
 }
 
 /**
