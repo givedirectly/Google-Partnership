@@ -24,7 +24,7 @@ function clickFeature(lng, lat, map, featuresAsset, table, tableData) {
       return;
     }
     if (size === 0) {
-      // clicked on a block group with no damage data.
+      // clicked on a point not in any district.
       return;
     }
     if (size !== 1) {
