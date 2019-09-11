@@ -48,12 +48,13 @@ describe('Integration tests for drawing polygons', () => {
 
 function assertExactlyPopUps(expectedFound) {
   let foundElements = 0;
-  cy.get('div').each(($elt, index, collection) =>
-  {
-    if ($elt.html() === 'second notes') {
-      expect(foundElements++).to.equal(0);
-    }
-  }).then(() => expect(foundElements).to.equal(expectedFound));
+  cy.get('div')
+      .each(($elt, index, collection) => {
+        if ($elt.html() === 'second notes') {
+          expect(foundElements++).to.equal(0);
+        }
+      })
+      .then(() => expect(foundElements).to.equal(expectedFound));
 }
 
 /**
