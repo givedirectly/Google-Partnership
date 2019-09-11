@@ -1,9 +1,10 @@
 import {clickFeature} from './click_feature.js';
 import {damageTag, geoidTag, scoreTag, snapTag} from './process_joined_data.js';
 
-export {drawTable, headings};
+export {drawTable, tableHeadings};
 
-const headings = [geoidTag, scoreTag, snapTag, damageTag];
+const tableHeadings = [geoidTag, scoreTag, snapTag, damageTag];
+
 /**
  * Display a ranked table of the given features that have non-zero score.
  *
@@ -20,10 +21,22 @@ function drawTable(scoredFeatures, selectCallback, map, featuresAsset) {
         const listResult = ee.List(result);
         return ee.List([
           ee.List(listResult.get(0))
-              .add(headings.map((col) => feature.get(col))),
+              .add(tableHeadings.map((col) => feature.get(col))),
           ee.List(listResult.get(1)).add(feature),
         ]);
-      }, ee.List([ee.List([headings]), ee.List([])]));
+      }, ee.List([ee.List([tableHeadings]), ee.List([])]));
+
+
+  // Create download button.
+  const downloadButton = document.createElement('button');
+  downloadButton.style.visibility = 'hidden';
+  downloadButton.id = 'downloadButton';
+  downloadButton.innerHTML = 'Download';
+  document.getElementById('tableContainer').appendChild(downloadButton);
+  const downloadLink = document.createElement('a');
+  downloadLink.id = 'downloadLink';
+  downloadButton.appendChild(downloadLink);
+
   // TODO(#37): These callbacks could be executed out of order, and the table
   //  might not reflect the user's latest request.
   pairOfListAndFeaturesComputation.evaluate(
@@ -36,8 +49,10 @@ function drawTable(scoredFeatures, selectCallback, map, featuresAsset) {
           // Multiple calls to this are fine:
           // https://developers.google.com/chart/interactive/docs/basic_load_libs#Callback
           google.charts.setOnLoadCallback(
-              () => renderTable(
-                  pairOfListAndFeatures, selectCallback, map, scoredFeatures));
+              () => renderTable(pairOfListAndFeatures, selectCallback));
+          // Set download button to visible once table data is loaded.
+          document.getElementById('downloadButton').style.visibility =
+              'visible';
         }
       });
 }
@@ -76,10 +91,35 @@ function renderTable(
     selectCallback(selection.map((elt) => features[elt.row]));
   });
   table.draw();
+
   // TODO: handle ctrl+click situations
   google.maps.event.addListener(map, 'click', (event) => {
     clickFeature(
         event.latLng.lng(), event.latLng.lat(), map, featuresAsset,
         table.getChart(), pairOfListAndFeatures[0]);
   });
+
+  const downloadButton = document.getElementById('downloadButton');
+  // Generate content and download on click.
+  downloadButton.addEventListener('click', function() {
+    // Add column headers to front of string content.
+    const columnHeaders = tableHeadings.join(',');
+    const content =
+        columnHeaders + '\n' + google.visualization.dataTableToCsv(data);
+    downloadContent(content);
+  });
+}
+
+/**
+ * Generates a file with the content passed and downloads it.
+ *
+ * @param {string} content Content to be downloaded in file.
+ */
+function downloadContent(content) {
+  const downloadLink = document.getElementById('downloadLink');
+  downloadLink.href =
+      URL.createObjectURL(new Blob([content], {type: 'text/csv'}));
+  downloadLink.download = 'data.csv';
+
+  downloadLink.click();
 }

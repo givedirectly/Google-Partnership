@@ -24,6 +24,9 @@ ee.Algorithms = {};
 ee.Algorithms.If = (cond, ifTrue, ifFalse) => {
   return cond ? ifTrue : ifFalse;
 };
+ee.Algorithms.IsEqual = (left, right) => {
+  return left === right;
+};
 
 ee.Geometry = {};
 ee.Geometry.Point = (lng, lat) => new Point();

@@ -12,10 +12,11 @@ export {
 
 // Dictionary of known assets -> whether they should be displayed by default
 const assets = {
-  'users/janak/FEMA_Damage_Assessments_Harvey_20170829': true,
+  'users/juliexxia/harvey-damage-crowdai-format': true,
 };
 
-const joinedSnapAsset = 'users/janak/texas-snap-join-damage-with-buildings';
+// TODO: infer this from disaster const in import_data.js?
+const snapAndDamageAsset = 'users/juliexxia/harvey-snap-and-damage';
 const scalingFactor = 100;
 const scoreIndex = Object.keys(assets).length;
 const scoreLayerName = 'score';
@@ -50,7 +51,7 @@ function run(map) {
 function createAndDisplayJoinedData(
     map, povertyThreshold, damageThreshold, povertyWeight) {
   const processedData = processJoinedData(
-      ee.FeatureCollection(joinedSnapAsset), ee.Number(scalingFactor),
+      ee.FeatureCollection(snapAndDamageAsset), ee.Number(scalingFactor),
       povertyThreshold, damageThreshold, povertyWeight);
   initializeScoreLayer(map, processedData);
   google.charts.setOnLoadCallback(
