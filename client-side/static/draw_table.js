@@ -48,7 +48,8 @@ function drawTable(scoredFeatures, selectCallback, map, featuresAsset) {
           // Multiple calls to this are fine:
           // https://developers.google.com/chart/interactive/docs/basic_load_libs#Callback
           google.charts.setOnLoadCallback(
-              () => renderTable(pairOfListAndFeatures, selectCallback, map, featuresAsset));
+              () => renderTable(
+                  pairOfListAndFeatures, selectCallback, map, featuresAsset));
           // Set download button to visible once table data is loaded.
           document.getElementById('downloadButton').style.visibility =
               'visible';
