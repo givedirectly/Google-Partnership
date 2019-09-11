@@ -17,9 +17,9 @@ describe('Integration tests for drawing polygons', () => {
     // TODO(janakr): test seems to fail reliably on command line without these
     // and pass with it. Figure out what to actually test for on the page and
     // remove these waits.
-    cy.wait(200);
+    cy.wait(400);
     drawPointAndPrepareForNext(400, 50);
-    cy.wait(200);
+    cy.wait(400);
     drawPointAndPrepareForNext(450, 150);
     drawPointAndPrepareForNext(50, 250);
     // Is the draggable edge present?
