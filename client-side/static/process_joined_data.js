@@ -86,14 +86,9 @@ function processJoinedData(
     joinedData, scalingFactor, povertyThreshold, damageThreshold,
     povertyWeight) {
   const damageLevels = ee.List(damageLevelsList);
-  const toReturn = joinedData.map(function(feature) {
+  return joinedData.map(function(feature) {
     return colorAndRate(
         feature, scalingFactor, damageLevels, povertyThreshold, damageThreshold,
         povertyWeight);
   });
-  toReturn.first().evaluate((yes, no) => {
-    console.log(yes);
-    console.log(no);
-  });
-  return toReturn;
 }
