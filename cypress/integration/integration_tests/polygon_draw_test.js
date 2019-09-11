@@ -1,5 +1,5 @@
 describe('Integration tests for drawing polygons', () => {
-  xit('Draws a polygon', () => {
+  it('Draws a polygon', () => {
     cy.visit(host);
     const polygonButton = cy.get('[title="Draw a shape"]');
     polygonButton.click();
