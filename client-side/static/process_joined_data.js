@@ -1,17 +1,7 @@
 import damageLevelsList from './damage_levels.js';
+import {blockGroupTag, buildingCountTag, damageTag, scoreTag, snapTag, snapPercentageTag, totalPopTag} from './property_names.js';
 
-export {
-  damageTag,
-  geoidTag,
-  processJoinedData as default,
-  scoreTag,
-  snapTag,
-};
-
-const damageTag = 'DAMAGE PERCENTAGE';
-const geoidTag = 'GEOID';
-const scoreTag = 'SCORE';
-const snapTag = 'SNAP PERCENTAGE';
+export {processJoinedData as default};
 
 const scoreDisplayCap = 99;
 
@@ -40,7 +30,7 @@ function colorAndRate(
     feature, scalingFactor, damageLevels, povertyThreshold, damageThreshold,
     povertyWeight) {
   const povertyRatio =
-      ee.Number(feature.get('SNAP')).divide(feature.get('TOTAL'));
+      ee.Number(feature.get(snapTag)).divide(feature.get(totalPopTag));
   const ratioBuildingsDamaged =
       ee.Number(damageLevels
                     .map((type) => {
@@ -49,7 +39,7 @@ function colorAndRate(
                           ee.Number(0), ee.Number(feature.get(type)));
                     })
                     .reduce(ee.Reducer.sum()))
-          .divide(feature.get('BUILDING_COUNT'));
+          .divide(feature.get(buildingCountTag));
   const belowThresholds =
       ee.Number(povertyRatio.lte(povertyThreshold))
           .or(ee.Number(ratioBuildingsDamaged.lte(damageThreshold)));
@@ -62,11 +52,11 @@ function colorAndRate(
       ee.Algorithms.If(belowThresholds, ee.Number(0), potentialScore));
   return ee
       .Feature(feature.geometry(), ee.Dictionary([
-        geoidTag,
-        feature.get(geoidTag),
+        blockGroupTag,
+        feature.get(blockGroupTag),
         scoreTag,
         score,
-        snapTag,
+        snapPercentageTag,
         povertyRatio,
         damageTag,
         ratioBuildingsDamaged,
@@ -96,9 +86,14 @@ function processJoinedData(
     joinedData, scalingFactor, povertyThreshold, damageThreshold,
     povertyWeight) {
   const damageLevels = ee.List(damageLevelsList);
-  return joinedData.map(function(feature) {
+  const toReturn = joinedData.map(function(feature) {
     return colorAndRate(
         feature, scalingFactor, damageLevels, povertyThreshold, damageThreshold,
         povertyWeight);
   });
+  toReturn.first().evaluate((yes, no) => {
+    console.log(yes);
+    console.log(no);
+  })
+  return toReturn;
 }

@@ -1,4 +1,4 @@
-import {geoidTag} from './process_joined_data.js';
+import {geoidTag} from './property_names.js';
 
 export {highlightFeatures as default};
 

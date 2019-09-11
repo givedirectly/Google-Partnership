@@ -1,4 +1,6 @@
 import damageLevelsList from './damage_levels.js';
+import {blockGroupTag, buildingCountTag, geoidTag, snapTag, totalPopTag} from './property_names.js';
+
 
 export {crowdAiDamageKey};
 
@@ -103,11 +105,11 @@ function countDamageAndBuildings(feature) {
   const snapFeature = ee.Feature(feature.get('primary'));
   return ee.Feature(
       geometry,
-      attrDict.set('GEOID', snapFeature.get(censusGeoidKey))
-          .set('BLOCK_GROUP', snapFeature.get(censusBlockGroupKey))
-          .set('SNAP', ee.Number.parse(snapFeature.get(snapKey)).long())
-          .set('TOTAL', ee.Number.parse(snapFeature.get(totalKey)).long())
-          .set('BUILDING_COUNT', totalBuildings));
+      attrDict.set(geoidTag, snapFeature.get(censusGeoidKey))
+          .set(blockGroupTag, snapFeature.get(censusBlockGroupKey))
+          .set(snapTag, ee.Number.parse(snapFeature.get(snapKey)).long())
+          .set(totalPopTag, ee.Number.parse(snapFeature.get(totalKey)).long())
+          .set(buildingCountTag, totalBuildings));
 }
 
 /**
