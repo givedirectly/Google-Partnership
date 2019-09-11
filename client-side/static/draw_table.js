@@ -1,9 +1,9 @@
 import {clickFeature} from './click_feature.js';
-import {damageTag, geoidTag, scoreTag, snapTag} from './process_joined_data.js';
+import {blockGroupTag, damageTag, scoreTag, snapPercentageTag} from './property_names.js';
 
 export {drawTable, tableHeadings};
 
-const tableHeadings = [geoidTag, scoreTag, snapTag, damageTag];
+const tableHeadings = [blockGroupTag, scoreTag, snapPercentageTag, damageTag];
 
 /**
  * Display a ranked table of the given features that have non-zero score.
@@ -25,7 +25,6 @@ function drawTable(scoredFeatures, selectCallback, map, featuresAsset) {
           ee.List(listResult.get(1)).add(feature),
         ]);
       }, ee.List([ee.List([tableHeadings]), ee.List([])]));
-
 
   // Create download button.
   const downloadButton = document.createElement('button');
