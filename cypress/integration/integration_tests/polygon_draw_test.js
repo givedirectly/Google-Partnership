@@ -35,8 +35,11 @@ describe('Integration tests for drawing polygons', () => {
     // Experimented to find point on map within second triangle.
     cy.get('.map').click(447, 250);
     cy.get('.map').contains('second notes');
+    // Click again. Wait a little bit because it seems like without the wait the
+    // page may not register the second click?
     cy.wait(1000);
     cy.get('.map').click(447, 250);
+    // Make sure that even though we clicked twice, there's only one pop-up.
     assertExactlyPopUps(1);
     // TODO(janakr): Why does Cypress claim to find two identical buttons?
     cy.get('button[title="Close"]').first().click();
