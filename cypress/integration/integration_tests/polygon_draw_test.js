@@ -47,10 +47,10 @@ describe('Integration tests for drawing polygons', () => {
 });
 
 /**
- * Asserts that a div with innerHtml 'second notes' is found exactly expectedFound
- * times. Cypress' normal #contains() function doesn't count occurrences, and
- * can't be used to assert there are no matches, and Cypress' #get() function
- * doesn't allow selecting on contents.
+ * Asserts that a div with innerHtml 'second notes' is found exactly
+ * expectedFound times. Cypress' normal #contains() function doesn't count
+ * occurrences, and can't be used to assert there are no matches, and Cypress'
+ * #get() function doesn't allow selecting on contents.
  *
  * @param {Number} expectedFound how many divs with content 'second notes' are
  *             expected
