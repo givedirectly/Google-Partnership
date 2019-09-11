@@ -3,14 +3,11 @@ import processJoinedData from '../../../client-side/static/process_joined_data.j
 const featureProperties = new Map();
 featureProperties.set('SNAP', 2);
 featureProperties.set('TOTAL', 4);
-featureProperties.set('BUILDING_COUNT', 45);
+featureProperties.set('BUILDING_COUNT', 27);
 featureProperties.set('GEOID', 'geoid');
-featureProperties.set('NOD', 0);
-featureProperties.set('UNK', 0);
-featureProperties.set('AFF', 12);
-featureProperties.set('MIN', 10);
-featureProperties.set('MAJ', 2);
-featureProperties.set('DES', 1);
+featureProperties.set('no-damage', 12);
+featureProperties.set('minor-damage', 10);
+featureProperties.set('major-damage', 5);
 const feature = {};
 feature.get = (prop) => featureProperties.get(prop);
 const geometryObject = {};
@@ -36,8 +33,7 @@ describe('Unit test for processed_joined_data.js', () => {
     const score = resultProperties.get('SCORE');
     expect(score).to.haveOwnProperty('_myNumberValue');
     expect(score._myNumberValue)
-        .to.equals(
-            Math.round(100 * (0.5 * ((12 + 10 + 2 + 1) / 45) + 0.5 * (2 / 4))));
+        .to.equals(Math.round(100 * (0.5 * ((10 + 5) / 27) + 0.5 * (2 / 4))));
     expect(resultProperties.get('style')).to.eql({color: 'ff00ff53'});
   });
 
@@ -56,8 +52,7 @@ describe('Unit test for processed_joined_data.js', () => {
     const score = resultProperties.get('SCORE');
     expect(score).to.haveOwnProperty('_myNumberValue');
     expect(score._myNumberValue)
-        .to.equals(
-            Math.round(100 * (0.1 * ((12 + 10 + 2 + 1) / 45) + 0.9 * (2 / 4))));
+        .to.equals(Math.round(100 * (0.1 * ((10 + 5) / 27) + 0.9 * (2 / 4))));
     expect(resultProperties.get('style')).to.eql({color: 'ff00ff51'});
   });
 
