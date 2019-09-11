@@ -76,7 +76,7 @@ function addPopUpListener(polygon, notes, map) {
     infoWindow.setPosition(popupCoords);
     // Reinstall the pop-up listener when the window is closed.
     infoWindow.addListener(
-        'closeclick', (event) => {addPopUpListener(polygon, notes, map)});
+        'closeclick', (event) => addPopUpListener(polygon, notes, map));
     infoWindow.open(map);
   });
 }
