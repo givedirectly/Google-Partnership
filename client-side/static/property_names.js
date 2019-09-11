@@ -4,8 +4,8 @@ export {
   damageTag,
   geoidTag,
   scoreTag,
-  snapTag,
   snapPercentageTag,
+  snapTag,
   totalPopTag,
 };
 

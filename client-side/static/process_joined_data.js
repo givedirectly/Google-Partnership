@@ -1,5 +1,5 @@
 import damageLevelsList from './damage_levels.js';
-import {blockGroupTag, buildingCountTag, damageTag, scoreTag, snapTag, snapPercentageTag, totalPopTag} from './property_names.js';
+import {blockGroupTag, buildingCountTag, damageTag, scoreTag, snapPercentageTag, snapTag, totalPopTag} from './property_names.js';
 
 export {processJoinedData as default};
 
@@ -94,6 +94,6 @@ function processJoinedData(
   toReturn.first().evaluate((yes, no) => {
     console.log(yes);
     console.log(no);
-  })
+  });
   return toReturn;
 }
