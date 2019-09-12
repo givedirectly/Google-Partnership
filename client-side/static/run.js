@@ -67,6 +67,8 @@ function createAndDisplayJoinedData(
               event.latLng.lng(), event.latLng.lat(), map, snapAndDamageAsset,
               table, tableData);
         });
+        // map.data covers clicks to map areas underneat map.data so we need two
+        // listeners
         map.data.addListener('click', (event) => {
           clickFeature(
               event.latLng.lng(), event.latLng.lat(), map, snapAndDamageAsset,
