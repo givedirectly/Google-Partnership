@@ -18,10 +18,10 @@ export {clickFeature};
 function clickFeature(lng, lat, map, featuresAsset, table, tableData) {
   const point = ee.Geometry.Point(lng, lat);
   const blockGroups = ee.FeatureCollection(featuresAsset).filterBounds(point);
-  const selected = blockGroups.first();
-  if (selected === null) {
+  if (blockGroups.size() === 0) {
     return;
   }
+  const selected = blockGroups.first();
   selected.evaluate((feature, failure) => {
     if (failure) {
       console.error(failure);
