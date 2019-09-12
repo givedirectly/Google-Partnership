@@ -1,4 +1,3 @@
-import {selectHighlightedFeatures} from './click_feature.js';
 import {removeScoreLayer} from './layer_util.js';
 import {createAndDisplayJoinedData} from './run.js';
 

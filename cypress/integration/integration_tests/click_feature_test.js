@@ -55,5 +55,5 @@ describe('Integration test for clicking feature', () => {
         .should(
             'have.text',
             'Block Group 4, Census Tract 2511, Harris County, Texas');
-  })
+  });
 });
