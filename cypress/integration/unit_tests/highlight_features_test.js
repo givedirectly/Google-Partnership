@@ -68,5 +68,5 @@ describe('Unit test for highlight_features.js', () => {
  * @return {Object}
  */
 function makeFeature(geoid, geometry) {
-  return {properties: {'BLOCK GROUP': geoid}, geometry: geometry};
+  return {properties: {'GEOID': geoid}, geometry: geometry};
 }

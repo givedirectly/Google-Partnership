@@ -1,5 +1,5 @@
 import damageLevelsList from './damage_levels.js';
-import {blockGroupTag, buildingCountTag, damageTag, scoreTag, snapPercentageTag, snapPopTag, totalPopTag} from './property_names.js';
+import {blockGroupTag, buildingCountTag, damageTag, geoidTag, scoreTag, snapPercentageTag, snapPopTag, totalPopTag} from './property_names.js';
 
 export {processJoinedData as default};
 
@@ -52,6 +52,8 @@ function colorAndRate(
       ee.Algorithms.If(belowThresholds, ee.Number(0), potentialScore));
   return ee
       .Feature(feature.geometry(), ee.Dictionary([
+        geoidTag,
+        feature.get(geoidTag),
         blockGroupTag,
         feature.get(blockGroupTag),
         scoreTag,
@@ -86,14 +88,9 @@ function processJoinedData(
     joinedData, scalingFactor, povertyThreshold, damageThreshold,
     povertyWeight) {
   const damageLevels = ee.List(damageLevelsList);
-  const toReturn = joinedData.map(function(feature) {
+  return joinedData.map(function(feature) {
     return colorAndRate(
         feature, scalingFactor, damageLevels, povertyThreshold, damageThreshold,
         povertyWeight);
   });
-  toReturn.first().evaluate((yes, no) => {
-    console.log(yes);
-    console.log(no);
-  });
-  return toReturn;
 }

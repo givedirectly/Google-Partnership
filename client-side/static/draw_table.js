@@ -1,19 +1,20 @@
-import {clickFeature} from './click_feature.js';
-import {blockGroupTag, damageTag, scoreTag, snapPercentageTag} from './property_names.js';
+import {blockGroupTag, damageTag, geoidTag, scoreTag, snapPercentageTag} from './property_names.js';
 
 export {drawTable, tableHeadings};
 
-const tableHeadings = [blockGroupTag, scoreTag, snapPercentageTag, damageTag];
+const tableHeadings =
+    [geoidTag, blockGroupTag, scoreTag, snapPercentageTag, damageTag];
 
 /**
  * Display a ranked table of the given features that have non-zero score.
  *
  * @param {ee.FeatureCollection} scoredFeatures
- * @param {Object} selectCallback Callback to be invoked for selected features.
- * @param {google.maps.Map} map
- * @param {string} featuresAsset asset path of features which could be clicked.
+ * @param {Object} selectTableCallback Callback to be invoked for selected table
+ *     row
+ * @param {Object} selectMapCallback Callback to be invoked for selected map
+ *     feature
  */
-function drawTable(scoredFeatures, selectCallback, map, featuresAsset) {
+function drawTable(scoredFeatures, selectTableCallback, selectMapCallback) {
   const nonZeroScores =
       scoredFeatures.filter(ee.Filter.gt(scoreTag, ee.Number(0)));
   const pairOfListAndFeaturesComputation =
@@ -49,7 +50,8 @@ function drawTable(scoredFeatures, selectCallback, map, featuresAsset) {
           // https://developers.google.com/chart/interactive/docs/basic_load_libs#Callback
           google.charts.setOnLoadCallback(
               () => renderTable(
-                  pairOfListAndFeatures, selectCallback, map, featuresAsset));
+                  pairOfListAndFeatures, selectTableCallback,
+                  selectMapCallback));
           // Set download button to visible once table data is loaded.
           document.getElementById('downloadButton').style.visibility =
               'visible';
@@ -65,20 +67,24 @@ function drawTable(scoredFeatures, selectCallback, map, featuresAsset) {
  * @param {Array} pairOfListAndFeatures An array with two elements. The first is
  * the data to display in the chart. The second is the list of features
  * corresponding to that data.
- * @param {Object} selectCallback Callback to be invoked for selected features.
- * @param {google.maps.Map} map
- * @param {string} featuresAsset asset path of features which could be clicked.
+ * @param {Object} selectTableCallback Callback to be invoked for selected table
+ *     row
+ * @param {Object} selectMapCallback Callback to be invoked for selected map
+ *     feature
  */
 function renderTable(
-    pairOfListAndFeatures, selectCallback, map, featuresAsset) {
+    pairOfListAndFeatures, selectTableCallback, selectMapCallback) {
   const data =
       google.visualization.arrayToDataTable(pairOfListAndFeatures[0], false);
+  const dataView = new google.visualization.DataView(data);
+  // don't display geoid
+  dataView.hideColumns([0]);
   const features = pairOfListAndFeatures[1];
   // Instantiate and draw the chart.
   const table = new google.visualization.ChartWrapper({
     'chartType': 'Table',
     'containerId': 'table',
-    'dataTable': data,
+    'dataTable': dataView,
     'options': {
       'page': 'enable',
       'pageSize': 25,
@@ -88,16 +94,11 @@ function renderTable(
   });
   google.visualization.events.addListener(table, 'select', () => {
     const selection = table.getChart().getSelection();
-    selectCallback(selection.map((elt) => features[elt.row]));
+    selectTableCallback(selection.map((elt) => features[elt.row]));
   });
   table.draw();
 
-  // TODO: handle ctrl+click situations
-  google.maps.event.addListener(map, 'click', (event) => {
-    clickFeature(
-        event.latLng.lng(), event.latLng.lat(), map, featuresAsset,
-        table.getChart(), pairOfListAndFeatures[0]);
-  });
+  selectMapCallback(table.getChart(), pairOfListAndFeatures[0]);
 
   const downloadButton = document.getElementById('downloadButton');
   // Generate content and download on click.

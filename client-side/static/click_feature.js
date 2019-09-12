@@ -1,10 +1,10 @@
-import {highlightFeatures} from './highlight_features.js';
-import {geoidTag} from './process_joined_data.js';
+import {currentFeatures, highlightFeatures} from './highlight_features.js';
+import {geoidTag} from './property_names.js';
 
 export {clickFeature};
 
 /**
- * Fiven a click event, finds the feature and highlights it in the list and on
+ * Given a click event, finds the feature and highlights it in the list and on
  * the map.
  *
  * @param {number} lng longitude of the click
@@ -18,27 +18,24 @@ export {clickFeature};
 function clickFeature(lng, lat, map, featuresAsset, table, tableData) {
   const point = ee.Geometry.Point(lng, lat);
   const blockGroups = ee.FeatureCollection(featuresAsset).filterBounds(point);
-  blockGroups.size().evaluate((size, failure) => {
+  const selected = blockGroups.first();
+  selected.evaluate((feature, failure) => {
     if (failure) {
       console.error(failure);
       return;
     }
-    if (size === 0) {
-      // clicked on a point not in any district.
+    if (feature === null) {
       return;
     }
-    if (size !== 1) {
-      console.error('unexpected state: click returned > 1 block group');
-      return;
-    }
-    const selected = blockGroups.first();
-    selected.evaluate((feature, failure) => {
-      if (failure) {
-        console.error(failure);
-        return;
-      }
+    const geoid = feature.properties[geoidTag];
+    const currentKeys = Array.from(currentFeatures.keys());
+    // Check for length 1 because if we've selected a group in the list then
+    // select just the one on the map, we should still highlight the one.
+    if (currentKeys.length === 1 && currentKeys.includes(geoid)) {
+      highlightFeatures([], map);
+      table.setSelection([]);
+    } else {
       highlightFeatures([feature], map);
-      const geoid = feature.properties[geoidTag];
       let rowNumber = null;
       for (let i = 1; i < tableData.length; i++) {
         if (tableData[i][0] === geoid) {
@@ -52,6 +49,6 @@ function clickFeature(lng, lat, map, featuresAsset, table, tableData) {
       if (rowNumber !== null) {
         table.setSelection([{row: rowNumber, column: null}]);
       }
-    });
+    }
   });
 }

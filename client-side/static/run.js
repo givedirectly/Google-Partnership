@@ -1,3 +1,4 @@
+import {clickFeature} from './click_feature.js';
 import {drawTable} from './draw_table.js';
 import {highlightFeatures} from './highlight_features.js';
 import {addLayer, addNullLayer, toggleLayerOff, toggleLayerOn} from './layer_util.js';
@@ -54,10 +55,21 @@ function createAndDisplayJoinedData(
       ee.FeatureCollection(snapAndDamageAsset), ee.Number(scalingFactor),
       povertyThreshold, damageThreshold, povertyWeight);
   initializeScoreLayer(map, processedData);
-  google.charts.setOnLoadCallback(
-      () => drawTable(
-          processedData, (features) => highlightFeatures(features, map), map,
-          snapAndDamageAsset));
+  drawTable(
+      processedData, (features) => highlightFeatures(features, map),
+      (table, tableData) => {
+        // TODO: handle ctrl+click situations
+        map.addListener('click', (event) => {
+          clickFeature(
+              event.latLng.lng(), event.latLng.lat(), map, snapAndDamageAsset,
+              table, tableData);
+        });
+        map.data.addListener('click', (event) => {
+          clickFeature(
+              event.latLng.lng(), event.latLng.lat(), map, snapAndDamageAsset,
+              table, tableData);
+        });
+      });
 }
 
 /**
