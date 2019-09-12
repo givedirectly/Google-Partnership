@@ -19,12 +19,12 @@ function clickFeature(lng, lat, map, featuresAsset, table, tableData) {
   const point = ee.Geometry.Point(lng, lat);
   const blockGroups = ee.FeatureCollection(featuresAsset).filterBounds(point);
   const selected = blockGroups.first();
+  if (selected === null) {
+    return;
+  }
   selected.evaluate((feature, failure) => {
     if (failure) {
       console.error(failure);
-      return;
-    }
-    if (feature === null) {
       return;
     }
     const geoid = feature.properties[geoidTag];
