@@ -11,10 +11,11 @@ const tableHeadings =
  * @param {ee.FeatureCollection} scoredFeatures
  * @param {Object} selectTableCallback Callback to be invoked for selected table
  *     row
- * @param {Object} selectMapCallback Callback to be invoked for selected map
- *     feature
+ * @param {Object} chartAndFeaturesReceiver receiver for chart and contents
+ *     when they are ready.
  */
-function drawTable(scoredFeatures, selectTableCallback, selectMapCallback) {
+function drawTable(
+    scoredFeatures, selectTableCallback, chartAndFeaturesReceiver) {
   const nonZeroScores =
       scoredFeatures.filter(ee.Filter.gt(scoreTag, ee.Number(0)));
   const pairOfListAndFeaturesComputation =
@@ -51,7 +52,7 @@ function drawTable(scoredFeatures, selectTableCallback, selectMapCallback) {
           google.charts.setOnLoadCallback(
               () => renderTable(
                   pairOfListAndFeatures, selectTableCallback,
-                  selectMapCallback));
+                  chartAndFeaturesReceiver));
           // Set download button to visible once table data is loaded.
           document.getElementById('downloadButton').style.visibility =
               'visible';
@@ -69,11 +70,11 @@ function drawTable(scoredFeatures, selectTableCallback, selectMapCallback) {
  * corresponding to that data.
  * @param {Object} selectTableCallback Callback to be invoked for selected table
  *     row
- * @param {Object} selectMapCallback Callback to be invoked for selected map
- *     feature
+ * @param {Object} chartAndFeaturesReceiver receiver for chart and contents
+ *     when they are ready.
  */
 function renderTable(
-    pairOfListAndFeatures, selectTableCallback, selectMapCallback) {
+    pairOfListAndFeatures, selectTableCallback, chartAndFeaturesReceiver) {
   const data =
       google.visualization.arrayToDataTable(pairOfListAndFeatures[0], false);
   const dataView = new google.visualization.DataView(data);
@@ -98,7 +99,7 @@ function renderTable(
   });
   table.draw();
 
-  selectMapCallback(table.getChart(), pairOfListAndFeatures[0]);
+  chartAndFeaturesReceiver(table.getChart(), pairOfListAndFeatures[0]);
 
   const downloadButton = document.getElementById('downloadButton');
   // Generate content and download on click.

@@ -33,7 +33,7 @@ describe('Unit test for click_feature.js', () => {
 
   it('clicks on a block group not in list', () => {
     const tableData = [tableHeadings, [1, 99, 0.46, 0.52]];
-    mockTable.expects('setSelection').never();
+    mockTable.expects('setSelection').once().withArgs([]);
 
     clickFeature(null, null, null, null, tableApi, tableData);
 

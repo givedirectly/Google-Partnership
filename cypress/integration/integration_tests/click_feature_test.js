@@ -8,11 +8,13 @@ describe('Integration test for clicking feature', () => {
     // Wait for table to fully load. Needed to ensure that layerMap is
     // populated.
     // TODO(#53): check for loading bar element to finish instead of waiting.
-    cy.wait(4000);
+    cy.wait(4500);
     cy.get('.map').click(343, 184);
     cy.get('.google-visualization-table-tr-sel')
         .find('[class="google-visualization-table-td"]')
-        .should('have.text', '482012511004');
+        .should(
+            'have.text',
+            'Block Group 4, Census Tract 2511, Harris County, Texas');
   });
 
   it('click highlights correct feature even after resort', () => {
@@ -20,22 +22,38 @@ describe('Integration test for clicking feature', () => {
     // Wait for table to fully load. Needed to ensure that layerMap is
     // populated.
     // TODO(#53): check for loading bar element to finish instead of waiting.
-    cy.wait(4000);
-    // Sort by GEOID
-    cy.get('.google-visualization-table-tr-head > :nth-child(1)').click();
+    cy.wait(4500);
+    // Sort descending by damage percentage
+    cy.get('.google-visualization-table-tr-head > :nth-child(4)').click();
+    cy.get('.google-visualization-table-tr-head > :nth-child(4)').click();
+
     cy.get('.map').click(343, 184);
     cy.get('.google-visualization-table-tr-sel')
         .find('[class="google-visualization-table-td"]')
-        .should('have.text', '482012511004');
+        .should(
+            'have.text',
+            'Block Group 4, Census Tract 2511, Harris County, Texas');
   });
 
-  it.only('clicks a place where there is no damage -> no feature', () => {
-    // https://github.com/cypress-io/cypress/issues/300#issuecomment-321587149
-    // having a hard time asserting on what was logged though
-    // cy.window().then((win) => {cy.spy(win.console, 'log')});
-
+  it('clicks a place where there is no damage -> no feature', () => {
     cy.visit(host);
-    cy.wait(4000);
+    cy.wait(4500);
     cy.get('.map').click(25, 25);
+    cy.get('.google-visualization-table-tr-sel').should('not.exist');
   });
+
+  // Was running into an error with this before I realized I needed to clear
+  // listeners everytime drawTable was called.
+  it('click highlights correct feature even after update', () => {
+    cy.visit(host);
+    cy.wait(4500);
+    cy.get('.map').click(343, 184);
+    cy.get('[id="damage threshold"]').type('0.9');
+    cy.get('[id="update"]').click();
+    cy.get('.google-visualization-table-tr-sel')
+        .find('[class="google-visualization-table-td"]')
+        .should(
+            'have.text',
+            'Block Group 4, Census Tract 2511, Harris County, Texas');
+  })
 });

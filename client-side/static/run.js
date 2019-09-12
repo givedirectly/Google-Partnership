@@ -1,4 +1,4 @@
-import {clickFeature} from './click_feature.js';
+import {clickFeature, selectHighlightedFeatures} from './click_feature.js';
 import {drawTable} from './draw_table.js';
 import {highlightFeatures} from './highlight_features.js';
 import {addLayer, addNullLayer, toggleLayerOff, toggleLayerOn} from './layer_util.js';
@@ -58,6 +58,9 @@ function createAndDisplayJoinedData(
   drawTable(
       processedData, (features) => highlightFeatures(features, map),
       (table, tableData) => {
+        // everytime we get a new table and data, reselect on the table the
+        // current selection on the map.
+        selectHighlightedFeatures(table, tableData);
         // TODO: handle ctrl+click situations
         map.addListener('click', (event) => {
           clickFeature(

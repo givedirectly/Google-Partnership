@@ -1,7 +1,7 @@
 import {currentFeatures, highlightFeatures} from './highlight_features.js';
 import {geoidTag} from './property_names.js';
 
-export {clickFeature};
+export {clickFeature, selectHighlightedFeatures};
 
 /**
  * Given a click event, finds the feature and highlights it in the list and on
@@ -18,37 +18,66 @@ export {clickFeature};
 function clickFeature(lng, lat, map, featuresAsset, table, tableData) {
   const point = ee.Geometry.Point(lng, lat);
   const blockGroups = ee.FeatureCollection(featuresAsset).filterBounds(point);
-  if (blockGroups.size() === 0) {
-    return;
-  }
   const selected = blockGroups.first();
   selected.evaluate((feature, failure) => {
     if (failure) {
       console.error(failure);
       return;
     }
+    if (feature === null) {
+      return;
+    }
     const geoid = feature.properties[geoidTag];
     const currentKeys = Array.from(currentFeatures.keys());
-    // Check for length 1 because if we've selected a group in the list then
-    // select just the one on the map, we should still highlight the one.
+    // Allow unselecting via the map.
     if (currentKeys.length === 1 && currentKeys.includes(geoid)) {
       highlightFeatures([], map);
       table.setSelection([]);
     } else {
       highlightFeatures([feature], map);
-      let rowNumber = null;
-      for (let i = 1; i < tableData.length; i++) {
-        if (tableData[i][0] === geoid) {
-          // underlaying data does not include headings row.
-          rowNumber = i - 1;
-          break;
-        }
-      }
+      const rowNumber = findRowNumber(geoid, tableData);
       // TODO: flip to page of the list the highlighted area is on if not
       // current page.
-      if (rowNumber !== null) {
+      if (rowNumber === null) {
+        table.setSelection([]);
+      } else {
         table.setSelection([{row: rowNumber, column: null}]);
       }
     }
   });
+}
+
+/**
+ * Given the new table and data, reselect all the current features. This is
+ * meant to be called after an 'update';
+ *
+ * @param {google.visualization.TableChart} table the actual table object
+ * @param {array} tableData 2-d array with inner arrays of form {@code headings}
+ *        in draw_table.js where the first inner array is {@code headings}.
+ */
+function selectHighlightedFeatures(table, tableData) {
+  const selection = [];
+  for (const geoid of currentFeatures.keys()) {
+    const row = findRowNumber(geoid, tableData);
+    selection.push({row: row, column: null});
+  }
+  table.setSelection(selection);
+}
+
+/**
+ * Given a geoid, find it in the tableData
+ *
+ * @param geoid
+ * @param {array} tableData 2-d array with inner arrays of form {@code headings}
+ *        in draw_table.js where the first inner array is {@code headings}.
+ * @return {number|null}
+ */
+function findRowNumber(geoid, tableData) {
+  for (let i = 1; i < tableData.length; i++) {
+    if (tableData[i][0] === geoid) {
+      // underlaying data does not include headings row.
+      return i - 1;
+    }
+  }
+  return null;
 }
