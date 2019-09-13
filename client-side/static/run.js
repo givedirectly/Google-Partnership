@@ -1,5 +1,6 @@
-import drawTable from './draw_table.js';
-import highlightFeatures from './highlight_features.js';
+import {clickFeature, selectHighlightedFeatures} from './click_feature.js';
+import {drawTable} from './draw_table.js';
+import {highlightFeatures} from './highlight_features.js';
 import {addLayer, addNullLayer, toggleLayerOff, toggleLayerOn} from './layer_util.js';
 import {processUserRegions} from './polygon_draw.js';
 import processJoinedData from './process_joined_data.js';
@@ -38,6 +39,9 @@ function run(map) {
   processUserRegions(map);
 }
 
+let mapSelectListener = null;
+let featureSelectListener = null;
+
 /**
  * Creates the score overlay and draws the table
  *
@@ -52,13 +56,33 @@ function run(map) {
  */
 function createAndDisplayJoinedData(
     map, povertyThreshold, damageThreshold, povertyWeight) {
+  // clear old listeners
+  google.maps.event.removeListener(mapSelectListener);
+  google.maps.event.removeListener(featureSelectListener);
   const processedData = processJoinedData(
       ee.FeatureCollection(snapAndDamageAsset), ee.Number(scalingFactor),
       povertyThreshold, damageThreshold, povertyWeight);
   initializeScoreLayer(map, processedData);
-  google.charts.setOnLoadCallback(
-      () => drawTable(
-          processedData, (features) => highlightFeatures(features, map)));
+  drawTable(
+      processedData, (features) => highlightFeatures(features, map),
+      (table, tableData) => {
+        // every time we get a new table and data, reselect elements in the table
+        // based on {@code currentFeatures} in highlight_features.js.
+        selectHighlightedFeatures(table, tableData);
+        // TODO: handle ctrl+click situations
+        mapSelectListener = map.addListener('click', (event) => {
+          clickFeature(
+              event.latLng.lng(), event.latLng.lat(), map, snapAndDamageAsset,
+              table, tableData);
+        });
+        // map.data covers clicks to map areas underneath map.data so we need two
+        // listeners
+        featureSelectListener = map.data.addListener('click', (event) => {
+          clickFeature(
+              event.latLng.lng(), event.latLng.lat(), map, snapAndDamageAsset,
+              table, tableData);
+        });
+      });
 }
 
 /**

@@ -43,6 +43,9 @@ function update(map) {
   createAndDisplayJoinedData(
       map, toggles.get('poverty threshold'), toggles.get('damage threshold'),
       toggles.get('poverty weight'));
+  // clear old listeners
+  google.maps.event.clearListeners(map, 'click');
+  google.maps.event.clearListeners(map.data, 'click');
 }
 
 /**

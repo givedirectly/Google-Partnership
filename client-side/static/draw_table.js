@@ -1,21 +1,25 @@
-import {blockGroupTag, damageTag, scoreTag, snapPercentageTag} from './property_names.js';
+import {blockGroupTag, damageTag, geoidTag, scoreTag, snapPercentageTag} from './property_names.js';
 
-export {drawTable as default};
+export {drawTable, tableHeadings};
 
-const tableHeadings = [blockGroupTag, scoreTag, snapPercentageTag, damageTag];
+const tableHeadings =
+    [geoidTag, blockGroupTag, scoreTag, snapPercentageTag, damageTag];
 
 /**
  * Display a ranked table of the given features that have non-zero score.
  *
- * @param {ee.FeatureCollection} features
- * @param {Object} selectCallback Callback to be invoked for selected features.
+ * @param {ee.FeatureCollection} scoredFeatures
+ * @param {Object} selectTableCallback Callback to be invoked for selected table
+ *     row
+ * @param {Object} chartAndFeaturesReceiver receiver for chart and contents
+ *     when they are ready.
  */
-function drawTable(features, selectCallback) {
-  const sortedNonZeroScores =
-      features.filter(ee.Filter.gt(scoreTag, ee.Number(0)))
-          .sort(scoreTag, false);
+function drawTable(
+    scoredFeatures, selectTableCallback, chartAndFeaturesReceiver) {
+  const nonZeroScores =
+      scoredFeatures.filter(ee.Filter.gt(scoreTag, ee.Number(0)));
   const pairOfListAndFeaturesComputation =
-      sortedNonZeroScores.iterate((feature, result) => {
+      nonZeroScores.iterate((feature, result) => {
         const listResult = ee.List(result);
         return ee.List([
           ee.List(listResult.get(0))
@@ -46,7 +50,9 @@ function drawTable(features, selectCallback) {
           // Multiple calls to this are fine:
           // https://developers.google.com/chart/interactive/docs/basic_load_libs#Callback
           google.charts.setOnLoadCallback(
-              () => renderTable(pairOfListAndFeatures, selectCallback));
+              () => renderTable(
+                  pairOfListAndFeatures, selectTableCallback,
+                  chartAndFeaturesReceiver));
           // Set download button to visible once table data is loaded.
           document.getElementById('downloadButton').style.visibility =
               'visible';
@@ -55,32 +61,45 @@ function drawTable(features, selectCallback) {
 }
 
 /**
- * Renders the actual table on the page.
+ * Renders the actual table on the page and adds a callback to the map to
+ * highlight rows in the table if the corresponding feature is clicked on the
+ * map.
  *
  * @param {Array} pairOfListAndFeatures An array with two elements. The first is
  * the data to display in the chart. The second is the list of features
  * corresponding to that data.
- * @param {Object} selectCallback Callback to be invoked for selected features.
+ * @param {Object} selectTableCallback Callback to be invoked for selected table
+ *     row
+ * @param {Object} chartAndFeaturesReceiver receiver for chart and contents
+ *     when they are ready.
  */
-function renderTable(pairOfListAndFeatures, selectCallback) {
+function renderTable(
+    pairOfListAndFeatures, selectTableCallback, chartAndFeaturesReceiver) {
   const data =
       google.visualization.arrayToDataTable(pairOfListAndFeatures[0], false);
+  const dataView = new google.visualization.DataView(data);
+  // don't display geoid
+  dataView.hideColumns([0]);
   const features = pairOfListAndFeatures[1];
   // Instantiate and draw the chart.
   const table = new google.visualization.ChartWrapper({
     'chartType': 'Table',
     'containerId': 'table',
-    'dataTable': data,
+    'dataTable': dataView,
     'options': {
       'page': 'enable',
       'pageSize': 25,
+      'sortColumn': 1,
+      'sortAscending': false,
     },
   });
   google.visualization.events.addListener(table, 'select', () => {
     const selection = table.getChart().getSelection();
-    selectCallback(selection.map((elt) => features[elt.row]));
+    selectTableCallback(selection.map((elt) => features[elt.row]));
   });
   table.draw();
+
+  chartAndFeaturesReceiver(table.getChart(), pairOfListAndFeatures[0]);
 
   const downloadButton = document.getElementById('downloadButton');
   // Generate content and download on click.

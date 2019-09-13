@@ -1,4 +1,4 @@
-import highlightFeatures from '../../../client-side/static/highlight_features.js';
+import {highlightFeatures} from '../../../client-side/static/highlight_features.js';
 
 describe('Unit test for highlight_features.js', () => {
   it('Show feature, then hide', () => {
@@ -68,5 +68,5 @@ describe('Unit test for highlight_features.js', () => {
  * @return {Object}
  */
 function makeFeature(geoid, geometry) {
-  return {properties: {'BLOCK GROUP': geoid}, geometry: geometry};
+  return {properties: {'GEOID': geoid}, geometry: geometry};
 }

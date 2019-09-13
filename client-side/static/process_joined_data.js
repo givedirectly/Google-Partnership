@@ -1,5 +1,5 @@
 import damageLevelsList from './damage_levels.js';
-import {blockGroupTag, buildingCountTag, damageTag, scoreTag, snapPercentageTag, snapPopTag, totalPopTag} from './property_names.js';
+import {blockGroupTag, buildingCountTag, damageTag, geoidTag, scoreTag, snapPercentageTag, snapPopTag, totalPopTag} from './property_names.js';
 
 export {processJoinedData as default};
 
@@ -52,6 +52,8 @@ function colorAndRate(
       ee.Algorithms.If(belowThresholds, ee.Number(0), potentialScore));
   return ee
       .Feature(feature.geometry(), ee.Dictionary([
+        geoidTag,
+        feature.get(geoidTag),
         blockGroupTag,
         feature.get(blockGroupTag),
         scoreTag,

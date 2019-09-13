@@ -1,6 +1,6 @@
-import {blockGroupTag} from './property_names.js';
+import {geoidTag} from './property_names.js';
 
-export {highlightFeatures as default};
+export {currentFeatures, highlightFeatures};
 
 // TODO(janakr): should highlighted features be cleared when map is redrawn?
 // Probably, but user might also want to keep track of highlighted districts
@@ -25,7 +25,7 @@ const currentFeatures = new Map();
 function highlightFeatures(features, map) {
   const newFeatures = new Map();
   for (const feature of features) {
-    newFeatures.set(feature.properties[blockGroupTag], feature);
+    newFeatures.set(feature.properties[geoidTag], feature);
   }
   // Remove any features that are not in the new set.
   const keys = currentFeatures.keys();
