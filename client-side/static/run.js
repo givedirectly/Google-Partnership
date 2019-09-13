@@ -37,6 +37,9 @@ function run(map) {
       initialPovertyWeight);
 }
 
+let mapSelectListener = null;
+let featureSelectListener = null;
+
 /**
  * Creates the score overlay and draws the table
  *
@@ -51,6 +54,9 @@ function run(map) {
  */
 function createAndDisplayJoinedData(
     map, povertyThreshold, damageThreshold, povertyWeight) {
+  // clear old listeners
+  google.maps.event.removeListener(mapSelectListener);
+  google.maps.event.removeListener(featureSelectListener);
   const processedData = processJoinedData(
       ee.FeatureCollection(snapAndDamageAsset), ee.Number(scalingFactor),
       povertyThreshold, damageThreshold, povertyWeight);
@@ -58,18 +64,18 @@ function createAndDisplayJoinedData(
   drawTable(
       processedData, (features) => highlightFeatures(features, map),
       (table, tableData) => {
-        // everytime we get a new table and data, reselect on the table the
-        // current selection on the map.
+        // every time we get a new table and data, reselect elements in the table
+        // based on {@code currentFeatures} in highlight_features.js.
         selectHighlightedFeatures(table, tableData);
         // TODO: handle ctrl+click situations
-        map.addListener('click', (event) => {
+        mapSelectListener = map.addListener('click', (event) => {
           clickFeature(
               event.latLng.lng(), event.latLng.lat(), map, snapAndDamageAsset,
               table, tableData);
         });
-        // map.data covers clicks to map areas underneat map.data so we need two
+        // map.data covers clicks to map areas underneath map.data so we need two
         // listeners
-        map.data.addListener('click', (event) => {
+        featureSelectListener = map.data.addListener('click', (event) => {
           clickFeature(
               event.latLng.lng(), event.latLng.lat(), map, snapAndDamageAsset,
               table, tableData);

@@ -42,8 +42,8 @@ describe('Integration test for clicking feature', () => {
     cy.get('.google-visualization-table-tr-sel').should('not.exist');
   });
 
-  // Was running into an error with this before I realized I needed to clear
-  // listeners everytime drawTable was called.
+  // Ensures that listeners are cleared when table instance and data
+  // are updated.
   it('click highlights correct feature even after update', () => {
     cy.visit(host);
     cy.wait(4500);
