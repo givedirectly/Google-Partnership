@@ -23,15 +23,13 @@ export {countDamageAndBuildings, disaster, DisasterMapValue, disasters};
  *    /path/to/snap/data.csv
  * 2) download TIGER block group .shp from census website
  *      https://www.census.gov/cgi-bin/geo/shapefiles/index.php
- * 3) download crowd ai damage data
- * 4) convert (3) from KML/geojson -> shapefile using something like
- *      https://mygeodata.cloud/converter/kml-to-shp
- * 5) upload results of (1) (2) and (4) to GCS
- * 6) upload results of (5) to earth engine (see instructions above)
- * 7) add a new entry to {@code disasters}
- * 8) update the {@code disaster} constant
- * 9) visit http://localhost:8080/import_data.html
- * 10) make the new <disaster>-snap-and-damage asset readable by all in code
+ * 3) download crowd ai damage data .shp file
+ * 4) upload results of (1) (2) and (3) to GCS
+ * 5) upload results of (5) to earth engine (see instructions above)
+ * 6) add a new entry to {@code disasters}
+ * 7) update the {@code disaster} constant
+ * 8) visit http://localhost:8080/import_data.html
+ * 9) make the new <disaster>-snap-and-damage asset readable by all in code
  * editor.
  */
 // TODO: factor in margins of error?
