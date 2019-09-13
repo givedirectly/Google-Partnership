@@ -1,8 +1,8 @@
 import processJoinedData from '../../../client-side/static/process_joined_data.js';
 
 const featureProperties = new Map();
-featureProperties.set('SNAP', 2);
-featureProperties.set('TOTAL', 4);
+featureProperties.set('SNAP HOUSEHOLDS', 2);
+featureProperties.set('TOTAL HOUSEHOLDS', 4);
 featureProperties.set('BUILDING COUNT', 27);
 featureProperties.set('BLOCK GROUP', 'block group');
 featureProperties.set('no-damage', 12);
