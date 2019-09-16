@@ -97,7 +97,7 @@ function createAndDisplayJoinedData(
 function createAssetCheckboxes(map) {
   // TODO: these probably shouldn't just sit at the bottom of the page - move to
   // a better place.
-  const mapDiv = document.getElementsByClassName('map').item(0);
+  const mapDiv = document.getElementById('mapContainer');
   Object.keys(assets).forEach(
       (assetName) => createNewCheckbox(assetName, map, mapDiv));
   // score checkbox gets checked during initializeScoreLayer
