@@ -9,14 +9,14 @@ export {setLoading};
  */
 function setLoading(divId, loading) {
   if (loading) {
-    const overlay = $('#' + divId + '-loader');
+    const overlay = document.getElementById(divId + '-loader');
     if (overlay) {
-      overlay.css('opacity', '1');
+      overlay.style.opacity = 1;
     }
   } else {
-    const overlay = $('#' + divId + '-loader');
+    const overlay = document.getElementById(divId + '-loader');
     if (overlay) {
-      overlay.css('opacity', '0');
+      overlay.style.opacity = 0;
     }
   }
 }
