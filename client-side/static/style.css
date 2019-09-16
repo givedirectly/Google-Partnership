@@ -42,8 +42,80 @@ body {
   font-weight: bold;
 }
 
+.map-container {
+  position: relative;
+    width: 640px;
+  height: 480px;
+  margin-bottom: 10px;
+}
+
 .map {
+  position: relative;
   width: 640px;
   height: 480px;
   margin-bottom: 10px;
+}
+
+.table-container {
+  position: relative;
+  min-height: 200px;
+}
+
+.loader {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 100;
+  opacity: 1;
+  transition: opacity 0.5s ease-in-out;
+  -webkit-transition: opacity 0.5s ease-in-out;
+}
+
+.loader .spinner {
+  display: inline-block;
+  position: absolute;
+  width: 64px;
+  height: 64px;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  margin: auto;
+}
+
+.loader .spinner div {
+  box-sizing: border-box;
+  display: block;
+  position: absolute;
+  width: 51px;
+  height: 51px;
+  margin: 6px;
+  border: 6px solid #fff;
+  border-radius: 50%;
+  animation: loader-spinner 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+  border-color: #fff transparent transparent transparent;
+}
+
+.loader .spinner div:nth-child(1) {
+  animation-delay: -0.45s;
+}
+
+.loader .spinner div:nth-child(2) {
+  animation-delay: -0.3s;
+}
+
+.loader .spinner div:nth-child(3) {
+  animation-delay: -0.15s;
+}
+
+@keyframes loader-spinner {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
