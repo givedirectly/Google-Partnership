@@ -44,16 +44,15 @@ body {
 
 .map-container {
   position: relative;
-    width: 640px;
+  width: 640px;
   height: 480px;
   margin-bottom: 10px;
 }
 
 .map {
   position: relative;
-  width: 640px;
-  height: 480px;
-  margin-bottom: 10px;
+  width: 100%;
+  height: 100%;
 }
 
 .table-container {
