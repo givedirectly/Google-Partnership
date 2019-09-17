@@ -28,8 +28,8 @@ function drawTable(
 
   // TODO(#37): These callbacks could be executed out of order, and the table
   //  might not reflect the user's latest request.
-  scoredFeatures.filter(ee.Filter.gt(scoreTag, ee.Number(0))).evaluate(
-      (featureCollection, failure) => {
+  scoredFeatures.filter(ee.Filter.gt(scoreTag, ee.Number(0)))
+      .evaluate((featureCollection, failure) => {
         const features = featureCollection.features;
         if (typeof failure !== 'undefined') {
           // TODO(juliexxia): more robust error reporting
@@ -45,7 +45,7 @@ function drawTable(
           // https://developers.google.com/chart/interactive/docs/basic_load_libs#Callback
           google.charts.setOnLoadCallback(
               () => renderTable(
-          list, features, selectTableCallback,
+                  list, features, selectTableCallback,
                   chartAndFeaturesReceiver));
           // Set download button to visible once table data is loaded.
           document.getElementById('downloadButton').style.visibility =
@@ -68,8 +68,7 @@ function drawTable(
  */
 function renderTable(
     list, features, selectTableCallback, chartAndFeaturesReceiver) {
-  const data =
-      google.visualization.arrayToDataTable(list, false);
+  const data = google.visualization.arrayToDataTable(list, false);
   const dataView = new google.visualization.DataView(data);
   // don't display geoid
   dataView.hideColumns([0]);
