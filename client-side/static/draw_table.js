@@ -18,16 +18,6 @@ function drawTable(
     scoredFeatures, selectTableCallback, chartAndFeaturesReceiver) {
   const nonZeroScores =
       scoredFeatures.filter(ee.Filter.gt(scoreTag, ee.Number(0)));
-  const pairOfListAndFeaturesComputation =
-      nonZeroScores.iterate((feature, result) => {
-        const listResult = ee.List(result);
-        return ee.List([
-          ee.List(listResult.get(0))
-              .add(tableHeadings.map((col) => feature.get(col))),
-          ee.List(listResult.get(1)).add(feature),
-        ]);
-      }, ee.List([ee.List([tableHeadings]), ee.List([])]));
-
   // Create download button.
   const downloadButton = document.createElement('button');
   downloadButton.style.visibility = 'hidden';
@@ -40,18 +30,23 @@ function drawTable(
 
   // TODO(#37): These callbacks could be executed out of order, and the table
   //  might not reflect the user's latest request.
-  pairOfListAndFeaturesComputation.evaluate(
-      (pairOfListAndFeatures, failure) => {
+  nonZeroScores.evaluate(
+      (features, failure) => {
         if (typeof failure !== 'undefined') {
           // TODO(juliexxia): more robust error reporting
           // https://developers.google.com/chart/interactive/docs/reference#errordisplay
           console.error(failure);
         } else {
+          // Clone headings.
+          const list = [tableHeadings];
+          for (let feature of features.features) {
+            list.push(tableHeadings.map((col) => feature.properties[col]));
+          }
           // Multiple calls to this are fine:
           // https://developers.google.com/chart/interactive/docs/basic_load_libs#Callback
           google.charts.setOnLoadCallback(
               () => renderTable(
-                  pairOfListAndFeatures, selectTableCallback,
+          list, features, selectTableCallback,
                   chartAndFeaturesReceiver));
           // Set download button to visible once table data is loaded.
           document.getElementById('downloadButton').style.visibility =
@@ -74,13 +69,12 @@ function drawTable(
  *     when they are ready.
  */
 function renderTable(
-    pairOfListAndFeatures, selectTableCallback, chartAndFeaturesReceiver) {
+    list, features, selectTableCallback, chartAndFeaturesReceiver) {
   const data =
-      google.visualization.arrayToDataTable(pairOfListAndFeatures[0], false);
+      google.visualization.arrayToDataTable(list, false);
   const dataView = new google.visualization.DataView(data);
   // don't display geoid
   dataView.hideColumns([0]);
-  const features = pairOfListAndFeatures[1];
   // Instantiate and draw the chart.
   const table = new google.visualization.ChartWrapper({
     'chartType': 'Table',
@@ -99,7 +93,7 @@ function renderTable(
   });
   table.draw();
 
-  chartAndFeaturesReceiver(table.getChart(), pairOfListAndFeatures[0]);
+  chartAndFeaturesReceiver(table.getChart(), list);
 
   const downloadButton = document.getElementById('downloadButton');
   // Generate content and download on click.
