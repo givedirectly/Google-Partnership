@@ -30,12 +30,12 @@ function drawTable(
   //  might not reflect the user's latest request.
   scoredFeatures.filter(ee.Filter.gt(scoreTag, ee.Number(0)))
       .evaluate((featureCollection, failure) => {
-        const features = featureCollection.features;
         if (typeof failure !== 'undefined') {
           // TODO(juliexxia): more robust error reporting
           // https://developers.google.com/chart/interactive/docs/reference#errordisplay
           console.error(failure);
         } else {
+          const features = featureCollection.features;
           // Clone headings.
           const list = [tableHeadings];
           for (const feature of features) {
