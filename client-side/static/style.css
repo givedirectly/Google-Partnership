@@ -59,7 +59,7 @@ body {
   position: relative;
   display: table;
   min-height: 200px;
-  min-width: 400px;
+  width: 745px;
 }
 
 .loader {
