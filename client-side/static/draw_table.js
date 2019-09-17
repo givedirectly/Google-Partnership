@@ -38,7 +38,7 @@ function drawTable(
         } else {
           // Clone headings.
           const list = [tableHeadings];
-          for (let feature of features) {
+          for (const feature of features) {
             list.push(tableHeadings.map((col) => feature.properties[col]));
           }
           // Multiple calls to this are fine:
