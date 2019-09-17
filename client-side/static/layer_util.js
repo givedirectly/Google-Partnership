@@ -72,18 +72,29 @@ function toggleLayerOff(map, assetName) {
  * @param {Object} layerId
  * @param {number} index
  * @param {boolean} displayed
- * @param {function(): *} callback Function invoked when the layer is rendered
+ * @param {function(): *} loadingCallback Function invoked when the layer is
+ *     re-rendering. Please note that this may be invoked multiple times during
+ *     the loading period.
+ * @param {function(): *} endCallback Function invoked when the layer is
+ *     rendered.
  * @return {ee.MapLayerOverlay}
  */
-function addLayerFromId(map, layerId, index, displayed, callback) {
+function addLayerFromId(
+    map, layerId, index, displayed, loadingCallback, endCallback) {
   const overlay = new ee.MapLayerOverlay(
       'https://earthengine.googleapis.com/map', layerId.mapid, layerId.token,
       {});
-  // Detect when the layer finishes rendering and fire a callback accordingly.
-  if (callback) {
+  // Detect layer rendering state changes and fire callbacks accordingly.
+  if (loadingCallback || endCallback) {
     overlay.addTileCallback((tileEvent) => {
       if (tileEvent.count == 0) {
-        callback();
+        if (endCallback) {
+          endCallback();
+        }
+      } else {
+        if (loadingCallback) {
+          loadingCallback();
+        }
       }
     });
   }
@@ -106,9 +117,13 @@ function addLayerFromId(map, layerId, index, displayed, callback) {
  * @param {ee.Element} layer
  * @param {string} assetName
  * @param {number} index
- * @param {function(): *} callback Function invoked when the layer is rendered
+ * @param {function(): *} loadingCallback Function invoked when the layer is
+ *     re-rendering. Please note that this may be invoked multiple times during
+ *     the loading period.
+ * @param {function(): *} endCallback Function invoked when the layer is
+ *     rendered.
  */
-function addLayer(map, layer, assetName, index, callback) {
+function addLayer(map, layer, assetName, index, loadingCallback, endCallback) {
   // Add a null-overlay entry to layerMap while waiting for the callback to
   // finish.
   layerMap[assetName] = new LayerMapValue(null, index, true);
@@ -117,7 +132,8 @@ function addLayer(map, layer, assetName, index, callback) {
       if (layerId) {
         layerMap[assetName].overlay =
             addLayerFromId(
-                map, layerId, index, layerMap[assetName].displayed, callback);
+                map, layerId, index, layerMap[assetName].displayed,
+                loadingCallback, endCallback);
       } else {
         // TODO: if there's an error, disable checkbox, add tests for this.
         layerMap[assetName].displayed = false;

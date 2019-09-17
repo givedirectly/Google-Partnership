@@ -56,7 +56,6 @@ let featureSelectListener = null;
  */
 function createAndDisplayJoinedData(
     map, povertyThreshold, damageThreshold, povertyWeight) {
-  document.getElementById('mapContainer-loader').style.opacity = 1;
   document.getElementById('tableContainer-loader').style.opacity = 1;
   // clear old listeners
   google.maps.event.removeListener(mapSelectListener);
@@ -162,6 +161,9 @@ function initializeAssetLayers(map) {
 function initializeScoreLayer(map, layer) {
   addLayer(
       map, layer.style({styleProperty: 'style'}), scoreLayerName, scoreIndex,
+      () => {
+        document.getElementById('mapContainer-loader').style.opacity = 1;
+      },
       () => {
         document.getElementById('mapContainer-loader').style.opacity = 0;
       });
