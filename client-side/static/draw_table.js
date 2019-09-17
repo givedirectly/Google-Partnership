@@ -16,8 +16,6 @@ const tableHeadings =
  */
 function drawTable(
     scoredFeatures, selectTableCallback, chartAndFeaturesReceiver) {
-  const nonZeroScores =
-      scoredFeatures.filter(ee.Filter.gt(scoreTag, ee.Number(0)));
   // Create download button.
   const downloadButton = document.createElement('button');
   downloadButton.style.visibility = 'hidden';
@@ -30,8 +28,9 @@ function drawTable(
 
   // TODO(#37): These callbacks could be executed out of order, and the table
   //  might not reflect the user's latest request.
-  nonZeroScores.evaluate(
-      (features, failure) => {
+  scoredFeatures.filter(ee.Filter.gt(scoreTag, ee.Number(0))).evaluate(
+      (featureCollection, failure) => {
+        const features = featureCollection.features;
         if (typeof failure !== 'undefined') {
           // TODO(juliexxia): more robust error reporting
           // https://developers.google.com/chart/interactive/docs/reference#errordisplay
@@ -39,7 +38,7 @@ function drawTable(
         } else {
           // Clone headings.
           const list = [tableHeadings];
-          for (let feature of features.features) {
+          for (let feature of features) {
             list.push(tableHeadings.map((col) => feature.properties[col]));
           }
           // Multiple calls to this are fine:
@@ -60,9 +59,8 @@ function drawTable(
  * highlight rows in the table if the corresponding feature is clicked on the
  * map.
  *
- * @param {Array} pairOfListAndFeatures An array with two elements. The first is
- * the data to display in the chart. The second is the list of features
- * corresponding to that data.
+ * @param {Array} list The data to display in the chart, with headings
+ * @param {Array} features The list of features corresponding to that data
  * @param {Object} selectTableCallback Callback to be invoked for selected table
  *     row
  * @param {Object} chartAndFeaturesReceiver receiver for chart and contents
