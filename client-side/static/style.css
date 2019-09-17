@@ -57,7 +57,9 @@ body {
 
 .table-container {
   position: relative;
+  display: table;
   min-height: 200px;
+  min-width: 400px;
 }
 
 .loader {
