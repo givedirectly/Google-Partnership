@@ -65,6 +65,7 @@ function processUserRegions(map) {
  * @param {google.maps.Map} map Map that polygon will be/is attached to
  */
 function addPopUpListener(polygon, notes, map) {
+  console.error(polygon);
   const listener = polygon.addListener('click', (event) => {
     // Remove the listener so that duplicate windows don't pop up on another
     // click, and the cursor doesn't become a "clicking hand" over this shape.
