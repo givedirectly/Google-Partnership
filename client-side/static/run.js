@@ -12,10 +12,17 @@ export {
   scoreLayerName,
 };
 
+const assetTypes = {
+  FEATURE_COLLECTION: 1,
+};
+
 // Dictionary of known assets -> whether they should be displayed by default
 const assets = {
-  'users/juliexxia/harvey-damage-crowdai-format': true,
+  'users/juliexxia/harvey-damage-crowdai-format': {display: true, assetType: assetTypes.FEATURE_COLLECTION},
 };
+
+// Don't expect more than 100M data points in any collection.
+const collectionSizeLimit = 100000000;
 
 // TODO: infer this from disaster const in import_data.js?
 const snapAndDamageAsset = 'users/juliexxia/harvey-snap-and-damage';
@@ -37,6 +44,12 @@ function run(map) {
       map, initialPovertyThreshold, initialDamageThreshold,
       initialPovertyWeight);
   processUserRegions(map);
+
+  ee.FeatureCollection('users/juliexxia/harvey-damage-crowdai-format').toList().evaluate((features, failure) => {
+    const overlay = new deck.GoogleMapsOverlay({layers: [new deck.GeoJsonLayer({data: features,
+        pointRadiusScale: 100})]});
+    overlay.setMap(map);
+  })
 }
 
 let mapSelectListener = null;
@@ -137,7 +150,8 @@ function createNewCheckbox(assetName, map, mapDiv) {
 function initializeAssetLayers(map) {
   // This is the standard way to iterate over a dictionary according to
   // https://stackoverflow.com/questions/34448724/iterating-over-a-dictionary-in-javascript
-  Object.keys(assets).forEach(function(assetName, index) {
+  
+  Object.keys(assets).forEach((assetName, index) => {
     // TODO(juliexxia): generalize for ImageCollections (and Features/Images?)
     if (assets[assetName]) {
       addLayer(map, ee.FeatureCollection(assetName), assetName, index);
