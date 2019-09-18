@@ -32,8 +32,8 @@ function setUpPolygonDrawing(map) {
   });
 
   // TODO(#18): persist drawn polygon to backend.
-  google.maps.event.addListener(
-      drawingManager, 'overlaycomplete',
+  drawingManager.addListener(
+      'overlaycomplete',
       (event) => addPopUpListener(event.overlay, '', map));
 
   drawingManager.setMap(map);
