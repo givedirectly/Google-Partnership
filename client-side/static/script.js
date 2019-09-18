@@ -27,6 +27,10 @@ function setup() {
 
   $(document).ready(function() {
     map = createMap();
+    const overlay = new deck.GoogleMapsOverlay({});
+    overlay.setMap(map);
+//    map.overlayMapTypes.setAt(0, overlay);
+    return;
 
     const runOnSuccess = function() {
       ee.initialize(

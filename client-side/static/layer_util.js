@@ -63,6 +63,19 @@ function toggleLayerOff(map, assetName) {
   removeLayer(map, assetName);
 }
 
+function addLayerFromFeatures(map, features, index, displayed) {
+  const overlay =
+      new deck.GoogleMapsOverlay({layers: [new deck.GeoJsonLayer({data: features,
+      pointRadiusScale: 100})]});
+  console.log(overlay);
+  overlay.setMap(map);
+  // Check in case the status has changed while the callback was running.
+  if (displayed) {
+    map.overlayMapTypes.setAt(index, overlay);
+  }
+  return overlay;
+}
+
 /**
  * Create an EarthEngine layer (from EEObject.getMap()), potentially add to the
  * given Google Map and returns the overlay, in case the caller wants to add
@@ -99,21 +112,22 @@ function addLayerFromId(map, layerId, index, displayed) {
  * @param {number} index
  */
 function addLayer(map, layer, assetName, index) {
+  console.log(assetName);
+  console.error(layer);
   // Add a null-overlay entry to layerMap while waiting for the callback to
   // finish.
   layerMap[assetName] = new LayerMapValue(null, index, true);
-  layer.getMap({
-    callback: (layerId, failure) => {
-      if (layerId) {
+  ee.FeatureCollection(layer).toList(250000000).evaluate(
+      (features, failure) => {
+      if (features) {
         layerMap[assetName].overlay =
-            addLayerFromId(map, layerId, index, layerMap[assetName].displayed);
+            addLayerFromFeatures(map, features, index, layerMap[assetName].displayed);
       } else {
         // TODO: if there's an error, disable checkbox, add tests for this.
         layerMap[assetName].displayed = false;
-        createError('getting id')(failure);
+        createError('getting id' + assetName)(failure);
       }
-    },
-  });
+    });
 }
 
 /**

@@ -12,17 +12,10 @@ export {
   scoreLayerName,
 };
 
-const assetTypes = {
-  FEATURE_COLLECTION: 1,
-};
-
 // Dictionary of known assets -> whether they should be displayed by default
 const assets = {
-  'users/juliexxia/harvey-damage-crowdai-format': {display: true, assetType: assetTypes.FEATURE_COLLECTION},
+  'users/juliexxia/harvey-damage-crowdai-format': true,
 };
-
-// Don't expect more than 100M data points in any collection.
-const collectionSizeLimit = 100000000;
 
 // TODO: infer this from disaster const in import_data.js?
 const snapAndDamageAsset = 'users/juliexxia/harvey-snap-and-damage';
@@ -45,11 +38,11 @@ function run(map) {
       initialPovertyWeight);
   processUserRegions(map);
 
-  ee.FeatureCollection('users/juliexxia/harvey-damage-crowdai-format').toList().evaluate((features, failure) => {
-    const overlay = new deck.GoogleMapsOverlay({layers: [new deck.GeoJsonLayer({data: features,
-        pointRadiusScale: 100})]});
-    overlay.setMap(map);
-  })
+  // ee.FeatureCollection('users/juliexxia/harvey-damage-crowdai-format').toList().evaluate((features, failure) => {
+  //   const overlay = new deck.GoogleMapsOverlay({layers: [new deck.GeoJsonLayer({data: features,
+  //       pointRadiusScale: 100})]});
+  //   overlay.setMap(map);
+  // })
 }
 
 let mapSelectListener = null;
@@ -171,7 +164,6 @@ function initializeAssetLayers(map) {
  * @param {ee.FeatureCollection} layer the computed score features
  */
 function initializeScoreLayer(map, layer) {
-  addLayer(
-      map, layer.style({styleProperty: 'style'}), scoreLayerName, scoreIndex);
+  addLayer(map, layer, scoreLayerName, scoreIndex);
   document.getElementById(scoreLayerName).checked = true;
 }
