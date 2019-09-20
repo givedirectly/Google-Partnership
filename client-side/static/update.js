@@ -39,7 +39,7 @@ function update(map) {
     }
   }
 
-  removeScoreLayer(map);
+  removeScoreLayer();
   createAndDisplayJoinedData(
       map, toggles.get('poverty threshold'), toggles.get('damage threshold'),
       toggles.get('poverty weight'));

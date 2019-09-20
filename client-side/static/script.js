@@ -50,13 +50,13 @@ function setup() {
 
     // Attempt to authenticate using existing credentials.
     // TODO(#21): Fix buggy authentification.
-    // ee.data.authenticate(
-    //     CLIENT_ID,
-    //     runOnSuccess,
-    //     createError('authenticating'),
-    //     null,
-    //     onImmediateFailed);
-    runOnSuccess();
+    ee.data.authenticate(
+        CLIENT_ID,
+        runOnSuccess,
+        createError('authenticating'),
+        null,
+        onImmediateFailed);
+//    runOnSuccess();
   });
 }
 

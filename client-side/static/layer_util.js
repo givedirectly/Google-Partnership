@@ -5,8 +5,10 @@ export {
   addLayer,
   addNullLayer,
   removeScoreLayer,
+  setMap,
   toggleLayerOff,
   toggleLayerOn,
+    redrawLayers,
 };
 // @VisibleForTesting
 export {layerMap, LayerMapValue};
@@ -18,86 +20,73 @@ export {layerMap, LayerMapValue};
 // only working with one map.
 const layerMap = {};
 
+const layerArray = [];
+
+const deckGlOverlay = new deck.GoogleMapsOverlay();
+
 /** Values of layerMap. */
 class LayerMapValue {
   /**
-   * @param {google.maps.MapType} overlay - the actual layer (null if not
-   *     created yet)
    * @param {number} index - position in list of assets (does not change)
    * @param {boolean} displayed - true if layer is currently displayed
    */
-  constructor(overlay, index, displayed) {
-    this.overlay = overlay;
+  constructor(data, index, displayed) {
+    this.data = data;
     /** @const */
     this.index = index;
     this.displayed = displayed;
   }
 }
 
+let mymap = null;
+
+function setMap(map) {
+  deckGlOverlay.setMap(map);
+  mymap = map;
+}
+
 /**
  * Toggles on displaying an asset on the map.
  *
- * @param {google.map.Maps} map
  * @param {string} assetName
  */
-function toggleLayerOn(map, assetName) {
+function toggleLayerOn(assetName) {
   const currentLayerMapValue = layerMap[assetName];
-  if (currentLayerMapValue.overlay === null) {
-    addLayer(
-        map, ee.FeatureCollection(assetName), assetName,
-        currentLayerMapValue.index);
+  currentLayerMapValue.displayed = true;
+  if (currentLayerMapValue.data) {
+    addLayerFromFeatures(currentLayerMapValue, assetName);
   } else {
-    map.overlayMapTypes.setAt(
-        currentLayerMapValue.index, currentLayerMapValue.overlay);
-    currentLayerMapValue.displayed = true;
+    addLayer(ee.FeatureCollection(assetName), assetName, currentLayerMapValue.index);
   }
 }
 
 /**
  * Toggles off displaying an asset on the map.
  *
- * @param {google.map.Maps} map
  * @param {string} assetName
  */
-function toggleLayerOff(map, assetName) {
-  removeLayer(map, assetName);
+function toggleLayerOff(assetName) {
+  removeLayer(assetName);
 }
 
-function addLayerFromFeatures(map, features, index, displayed) {
-  const overlay =
-      new deck.GoogleMapsOverlay({layers: [new deck.GeoJsonLayer({data: features,
-      pointRadiusScale: 100})]});
-  console.log(overlay);
-  overlay.setMap(map);
-  // Check in case the status has changed while the callback was running.
-  if (displayed) {
-    map.overlayMapTypes.setAt(index, overlay);
+const coloring = (f) => showColor(f.properties['color']);
+
+function addLayerFromFeatures(layerMapValue, assetName) {
+  layerArray[layerMapValue.index] = new deck.GeoJsonLayer({id: assetName, data: layerMapValue.data, pointRadiusScale: 500,
+    getFillColor: coloring,
+    visible: layerMapValue.displayed,
+  });
+  redrawLayers();
+}
+
+const black = [0, 0, 0, 255];
+
+function showColor(color) {
+  if (color) {
+    return color;
   }
-  return overlay;
+  return black;
 }
-
-/**
- * Create an EarthEngine layer (from EEObject.getMap()), potentially add to the
- * given Google Map and returns the overlay, in case the caller wants to add
- * callbacks or similar to that overlay.
- *
- * @param {google.maps.Map} map
- * @param {Object} layerId
- * @param {number} index
- * @param {boolean} displayed
- * @return {ee.MapLayerOverlay}
- */
-function addLayerFromId(map, layerId, index, displayed) {
-  const overlay = new ee.MapLayerOverlay(
-      'https://earthengine.googleapis.com/map', layerId.mapid, layerId.token,
-      {});
-  // Check in case the status has changed while the callback was running.
-  if (displayed) {
-    map.overlayMapTypes.setAt(index, overlay);
-  }
-  return overlay;
-}
-
 /**
  * Asynchronous wrapper for addLayerFromId that calls getMap() with a callback
  * to avoid blocking on the result. This also populates layerMap.
@@ -106,26 +95,22 @@ function addLayerFromId(map, layerId, index, displayed) {
  * for the first time. After the overlay is non-null in layerMap, any displaying
  * should be able to call {@code map.overlayMapTypes.setAt(...)}.
  *
- * @param {google.maps.Map} map
  * @param {ee.Element} layer
  * @param {string} assetName
  * @param {number} index
  */
-function addLayer(map, layer, assetName, index) {
-  console.log(assetName);
-  console.error(layer);
-  // Add a null-overlay entry to layerMap while waiting for the callback to
-  // finish.
-  layerMap[assetName] = new LayerMapValue(null, index, true);
+function addLayer(layer, assetName, index) {
+  // Add entry to map.
+  const layerMapValue = new LayerMapValue(null, index, true);
+  layerMap[assetName] = layerMapValue;
   ee.FeatureCollection(layer).toList(250000000).evaluate(
       (features, failure) => {
       if (features) {
-        layerMap[assetName].overlay =
-            addLayerFromFeatures(map, features, index, layerMap[assetName].displayed);
+        layerMapValue.data = features;
+        addLayerFromFeatures(layerMapValue, assetName);
       } else {
         // TODO: if there's an error, disable checkbox, add tests for this.
-        layerMap[assetName].displayed = false;
-        createError('getting id' + assetName)(failure);
+        createError('getting id for ' + assetName)(failure);
       }
     });
 }
@@ -141,22 +126,28 @@ function addNullLayer(assetName, index) {
   layerMap[assetName] = new LayerMapValue(null, index, false);
 }
 
+const hasContent = (val) => val;
+
+function redrawLayers() {
+  console.log(layerArray);
+  deckGlOverlay.setProps({layers: layerArray.filter(hasContent)});
+}
+
 /**
  * Removes an overlay from the map by setting its index in overlayMapTypes to
  * null. Records it is no longer being displayed in layerMap.
  *
- * @param {google.maps.Map} map
  * @param {string} assetName
  */
-function removeLayer(map, assetName) {
-  map.overlayMapTypes.setAt(layerMap[assetName].index, null);
-  layerMap[assetName].displayed = false;
+function removeLayer(assetName) {
+  const layerMapValue = layerMap[assetName];
+  layerMapValue.displayed = false;
+  addLayerFromFeatures(layerMapValue, assetName);
 }
 
 /**
  * Removes the score layer overlay.
- * @param {google.maps.Map} map
  */
-function removeScoreLayer(map) {
-  removeLayer(map, scoreLayerName);
+function removeScoreLayer() {
+  removeLayer(scoreLayerName);
 }

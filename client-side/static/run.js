@@ -1,7 +1,7 @@
 import {clickFeature, selectHighlightedFeatures} from './click_feature.js';
 import {drawTable} from './draw_table.js';
 import {highlightFeatures} from './highlight_features.js';
-import {addLayer, addNullLayer, toggleLayerOff, toggleLayerOn} from './layer_util.js';
+import {setMap, addLayer, addNullLayer, toggleLayerOff, toggleLayerOn, redrawLayers} from './layer_util.js';
 import {processUserRegions} from './polygon_draw.js';
 import processJoinedData from './process_joined_data.js';
 import {createToggles, initialDamageThreshold, initialPovertyThreshold, initialPovertyWeight} from './update.js';
@@ -30,6 +30,7 @@ const scoreLayerName = 'score';
  * @param {google.maps.Map} map main map
  */
 function run(map) {
+  setMap(map);
   initializeAssetLayers(map);
   createToggles(map);
   createAssetCheckboxes(map);
@@ -37,12 +38,6 @@ function run(map) {
       map, initialPovertyThreshold, initialDamageThreshold,
       initialPovertyWeight);
   processUserRegions(map);
-
-  // ee.FeatureCollection('users/juliexxia/harvey-damage-crowdai-format').toList().evaluate((features, failure) => {
-  //   const overlay = new deck.GoogleMapsOverlay({layers: [new deck.GeoJsonLayer({data: features,
-  //       pointRadiusScale: 100})]});
-  //   overlay.setMap(map);
-  // })
 }
 
 let mapSelectListener = null;
@@ -122,9 +117,9 @@ function createNewCheckbox(assetName, map, mapDiv) {
   }
   newBox.onclick = () => {
     if (newBox.checked) {
-      toggleLayerOn(map, assetName);
+      toggleLayerOn(assetName);
     } else {
-      toggleLayerOff(map, assetName);
+      toggleLayerOff(assetName);
     }
   };
   mapDiv.parentNode.appendChild(newBox);
@@ -147,7 +142,7 @@ function initializeAssetLayers(map) {
   Object.keys(assets).forEach((assetName, index) => {
     // TODO(juliexxia): generalize for ImageCollections (and Features/Images?)
     if (assets[assetName]) {
-      addLayer(map, ee.FeatureCollection(assetName), assetName, index);
+      addLayer(ee.FeatureCollection(assetName), assetName, index);
     } else {
       addNullLayer(assetName, index);
     }
@@ -164,6 +159,6 @@ function initializeAssetLayers(map) {
  * @param {ee.FeatureCollection} layer the computed score features
  */
 function initializeScoreLayer(map, layer) {
-  addLayer(map, layer, scoreLayerName, scoreIndex);
+  addLayer(layer, scoreLayerName, scoreIndex);
   document.getElementById(scoreLayerName).checked = true;
 }

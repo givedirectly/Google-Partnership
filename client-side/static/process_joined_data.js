@@ -3,7 +3,7 @@ import {blockGroupTag, buildingCountTag, damageTag, geoidTag, scoreTag, snapPerc
 
 export {processJoinedData as default};
 
-const scoreDisplayCap = 99;
+const scoreDisplayCap = 255;
 
 /**
  * Processes a feature corresponding to a geographic area and returns a new one,
@@ -63,11 +63,7 @@ function colorAndRate(
         damageTag,
         ratioBuildingsDamaged,
       ]))
-      .set({
-        style: {
-          color: score.min(ee.Number(scoreDisplayCap)).format('ff00ff%02d'),
-        },
-      });
+      .set({color: [255, 0, 255, score.multiply(3).min(ee.Number(scoreDisplayCap))]});
 }
 
 /**

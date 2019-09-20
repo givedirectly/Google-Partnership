@@ -8,9 +8,9 @@ const mockOverlay = {};
 
 describe('Unit test for toggleLayerOn', () => {
   beforeEach(() => {
-    layerMap['asset0'] = new LayerMapValue(mockOverlay, 0, true);
-    layerMap['asset1'] = new LayerMapValue(mockOverlay, 1, false);
-    layerMap['asset2'] = new LayerMapValue(null, 2, false);
+    layerMap['asset0'] = new LayerMapValue(0, true);
+    layerMap['asset1'] = new LayerMapValue(1, false);
+    layerMap['asset2'] = new LayerMapValue(2, false);
   });
 
   it('displays a hidden but loaded layer', () => {
@@ -24,7 +24,7 @@ describe('Unit test for toggleLayerOn', () => {
     const mockOverlayMapTypes = Cypress.sinon.mock(overlayMapTypesApi);
 
     mockOverlayMapTypes.expects('setAt').once().withArgs(1, mockOverlay);
-    toggleLayerOn(map, 'asset1');
+    toggleLayerOn('asset1');
     mockOverlayMapTypes.verify();
     expect(layerMap['asset1'].displayed).to.equals(true);
   });
@@ -49,7 +49,7 @@ describe('Unit test for toggleLayerOn', () => {
     mockOverlayMapTypes.expects('setAt').once().withArgs(
         2, new ee.MapLayerOverlay());
 
-    toggleLayerOn(map, 'asset2');
+    toggleLayerOn('asset2');
     ee.getMapCallback('foo', null);
 
     mockOverlayMapTypes.verify();
@@ -69,8 +69,8 @@ describe('Unit test for toggleLayerOn', () => {
 
     mockOverlayMapTypes.expects('setAt').once().withArgs(2, null);
 
-    toggleLayerOn(map, 'asset2');
-    toggleLayerOff(map, 'asset2');
+    toggleLayerOn('asset2');
+    toggleLayerOff('asset2');
     ee.getMapCallback('foo', null);
 
     mockOverlayMapTypes.verify();
@@ -91,7 +91,7 @@ describe('Unit test for toggleLayerOff', () => {
     const mockOverlayMapTypes = Cypress.sinon.mock(overlayMapTypesApi);
 
     mockOverlayMapTypes.expects('setAt').once().withArgs(0, null);
-    toggleLayerOff(map, 'asset0');
+    toggleLayerOff('asset0');
     mockOverlayMapTypes.verify();
     expect(layerMap['asset0'].displayed).to.equals(false);
   });
