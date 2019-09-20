@@ -1,6 +1,7 @@
 import {clickFeature, selectHighlightedFeatures} from './click_feature.js';
 import {drawTable} from './draw_table.js';
 import {highlightFeatures} from './highlight_features.js';
+import {setLoading} from './loading.js';
 import {addLayer, addNullLayer, toggleLayerOff, toggleLayerOn} from './layer_util.js';
 import {processUserRegions} from './polygon_draw.js';
 import processJoinedData from './process_joined_data.js';
@@ -56,7 +57,7 @@ let featureSelectListener = null;
  */
 function createAndDisplayJoinedData(
     map, povertyThreshold, damageThreshold, povertyWeight) {
-  document.getElementById('tableContainer-loader').style.opacity = 1;
+  setLoading('tableContainer', true);
   // clear old listeners
   google.maps.event.removeListener(mapSelectListener);
   google.maps.event.removeListener(featureSelectListener);
@@ -67,7 +68,7 @@ function createAndDisplayJoinedData(
   drawTable(
       processedData, (features) => highlightFeatures(features, map),
       (table, tableData) => {
-        document.getElementById('tableContainer-loader').style.opacity = 0;
+        setLoading('tableContainer', false);
         // every time we get a new table and data, reselect elements in the table
         // based on {@code currentFeatures} in highlight_features.js.
         selectHighlightedFeatures(table, tableData);
@@ -161,11 +162,7 @@ function initializeAssetLayers(map) {
 function initializeScoreLayer(map, layer) {
   addLayer(
       map, layer.style({styleProperty: 'style'}), scoreLayerName, scoreIndex,
-      () => {
-        document.getElementById('mapContainer-loader').style.opacity = 1;
-      },
-      () => {
-        document.getElementById('mapContainer-loader').style.opacity = 0;
-      });
+      () => { setLoading('mapContainer', true); },
+      () => { setLoading('mapContainer', false); });
   document.getElementById(scoreLayerName).checked = true;
 }
