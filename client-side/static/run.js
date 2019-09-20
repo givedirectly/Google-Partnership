@@ -30,6 +30,7 @@ const scoreLayerName = 'score';
  * @param {google.maps.Map} map main map
  */
 function run(map) {
+  console.log('Run at ' + new Date());
   setMap(map);
   initializeAssetLayers(map);
   createToggles(map);

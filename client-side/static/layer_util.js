@@ -100,11 +100,13 @@ function showColor(color) {
  * @param {number} index
  */
 function addLayer(layer, assetName, index) {
+  const date = new Date();
   // Add entry to map.
   const layerMapValue = new LayerMapValue(null, index, true);
   layerMap[assetName] = layerMapValue;
-  ee.FeatureCollection(layer).toList(250000000).evaluate(
+  ee.FeatureCollection(layer).toList(250000).evaluate(
       (features, failure) => {
+        console.log('got features: ' + assetName + ', ' + (new Date() - date));
       if (features) {
         layerMapValue.data = features;
         addLayerFromFeatures(layerMapValue, assetName);
