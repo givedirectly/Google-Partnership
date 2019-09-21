@@ -31,7 +31,8 @@ const scoreLayerName = 'score';
  */
 function run(map) {
   setMap(map);
-  // initializeAssetLayers(map);
+  // Comment out to try local loading.
+  initializeAssetLayers(map);
   createToggles(map);
   createAssetCheckboxes(map);
   createAndDisplayJoinedData(

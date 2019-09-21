@@ -43,9 +43,10 @@ let mymap = null;
 function setMap(map) {
   deckGlOverlay.setMap(map);
   mymap = map;
-  const layerMapValue = new LayerMapValue(damageGeoJson, 0, true);
-  layerMap['users/juliexxia/harvey-damage-crowdai-format'] = layerMapValue;
-  addLayerFromFeatures(layerMapValue, 'users/juliexxia/harvey-damage-crowdai-format');
+  // Uncomment to try local loading.
+  // const layerMapValue = new LayerMapValue(damageGeoJson, 0, true);
+  // layerMap['users/juliexxia/harvey-damage-crowdai-format'] = layerMapValue;
+  // addLayerFromFeatures(layerMapValue, 'users/juliexxia/harvey-damage-crowdai-format');
 }
 
 /**
@@ -134,7 +135,6 @@ function addNullLayer(assetName, index) {
 const hasContent = (val) => val;
 
 function redrawLayers() {
-  console.log(layerArray);
   deckGlOverlay.setProps({layers: layerArray.filter(hasContent)});
 }
 
