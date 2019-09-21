@@ -43,6 +43,9 @@ let mymap = null;
 function setMap(map) {
   deckGlOverlay.setMap(map);
   mymap = map;
+  const layerMapValue = new LayerMapValue(damageGeoJson, 0, true);
+  layerMap['users/juliexxia/harvey-damage-crowdai-format'] = layerMapValue;
+  addLayerFromFeatures(layerMapValue, 'users/juliexxia/harvey-damage-crowdai-format');
 }
 
 /**
