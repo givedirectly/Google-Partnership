@@ -35,7 +35,7 @@ describe('Integration test for loading spinners', () => {
         .should('have.css', 'opacity').and('eq', '0');
     cy.get('#tableContainer-loader', {timeout: LOADING_TIMEOUT})
         .should('have.css', 'opacity').and('eq', '0');
- });
+  });
 
   it('Adds and removes the loading overlay on scroll', () => {
     cy.visit(host);

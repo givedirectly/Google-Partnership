@@ -162,7 +162,7 @@ function initializeAssetLayers(map) {
 function initializeScoreLayer(map, layer) {
   addLayer(
       map, layer.style({styleProperty: 'style'}), scoreLayerName, scoreIndex,
-      () => { setLoading('mapContainer', true); },
-      () => { setLoading('mapContainer', false); });
+      () => setLoading('mapContainer', true),
+      () => setLoading('mapContainer', false));
   document.getElementById(scoreLayerName).checked = true;
 }
