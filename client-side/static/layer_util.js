@@ -1,4 +1,5 @@
 import createError from './create_error.js';
+import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {scoreLayerName} from './run.js';
 
 export {
@@ -10,6 +11,8 @@ export {
 };
 // @VisibleForTesting
 export {layerMap, LayerMapValue};
+
+const mapContainerId = 'mapContainer';
 
 // Keep a map of asset name -> overlay, index, display status. Overlays are
 // lazily generated i.e. pre-known assets that don't display by
@@ -31,6 +34,7 @@ class LayerMapValue {
     /** @const */
     this.index = index;
     this.displayed = displayed;
+    this.loading = false;
   }
 }
 
@@ -69,35 +73,28 @@ function toggleLayerOff(map, assetName) {
  * callbacks or similar to that overlay.
  *
  * @param {google.maps.Map} map
+ * @param {Object} assetName
  * @param {Object} layerId
  * @param {number} index
  * @param {boolean} displayed
- * @param {function(): *} loadingCallback Function invoked when the layer is
- *     re-rendering. Please note that this may be invoked multiple times during
- *     the loading period.
- * @param {function(): *} endCallback Function invoked when the layer is
- *     rendered.
  * @return {ee.MapLayerOverlay}
  */
-function addLayerFromId(
-    map, layerId, index, displayed, loadingCallback, endCallback) {
+function addLayerFromId(map, assetName, layerId, index, displayed) {
   const overlay = new ee.MapLayerOverlay(
       'https://earthengine.googleapis.com/map', layerId.mapid, layerId.token,
       {});
-  // Detect layer rendering state changes and fire callbacks accordingly.
-  if (loadingCallback || endCallback) {
-    overlay.addTileCallback((tileEvent) => {
-      if (tileEvent.count == 0) {
-        if (endCallback) {
-          endCallback();
-        }
-      } else {
-        if (loadingCallback) {
-          loadingCallback();
-        }
-      }
-    });
-  }
+
+  // Update loading state according to layers.
+  overlay.addTileCallback((tileEvent) => {
+    if (tileEvent.count == 0) {
+      loadingElementFinished(mapContainerId);
+      layerMap[assetName].loading = false;
+    } else if (!layerMap[assetName].loading) {
+      layerMap[assetName].loading = true;
+      addLoadingElement(mapContainerId);
+    }
+  });
+
   // Check in case the status has changed while the callback was running.
   if (displayed) {
     map.overlayMapTypes.setAt(index, overlay);
@@ -117,13 +114,8 @@ function addLayerFromId(
  * @param {ee.Element} layer
  * @param {string} assetName
  * @param {number} index
- * @param {function(): *} loadingCallback Function invoked when the layer is
- *     re-rendering. Please note that this may be invoked multiple times during
- *     the loading period.
- * @param {function(): *} endCallback Function invoked when the layer is
- *     rendered.
  */
-function addLayer(map, layer, assetName, index, loadingCallback, endCallback) {
+function addLayer(map, layer, assetName, index) {
   // Add a null-overlay entry to layerMap while waiting for the callback to
   // finish.
   layerMap[assetName] = new LayerMapValue(null, index, true);
@@ -132,8 +124,7 @@ function addLayer(map, layer, assetName, index, loadingCallback, endCallback) {
       if (layerId) {
         layerMap[assetName].overlay =
             addLayerFromId(
-                map, layerId, index, layerMap[assetName].displayed,
-                loadingCallback, endCallback);
+                map, assetName, layerId, index, layerMap[assetName].displayed);
       } else {
         // TODO: if there's an error, disable checkbox, add tests for this.
         layerMap[assetName].displayed = false;

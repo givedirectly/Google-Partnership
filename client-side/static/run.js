@@ -1,7 +1,7 @@
 import {clickFeature, selectHighlightedFeatures} from './click_feature.js';
 import {drawTable} from './draw_table.js';
 import {highlightFeatures} from './highlight_features.js';
-import {setLoading} from './loading.js';
+import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {addLayer, addNullLayer, toggleLayerOff, toggleLayerOn} from './layer_util.js';
 import {processUserRegions} from './polygon_draw.js';
 import processJoinedData from './process_joined_data.js';
@@ -23,6 +23,8 @@ const snapAndDamageAsset = 'users/juliexxia/harvey-snap-and-damage';
 const scalingFactor = 100;
 const scoreIndex = Object.keys(assets).length;
 const scoreLayerName = 'score';
+
+const tableContainerId = 'tableContainer';
 
 /**
  * Main function that processes the known assets (FEMA damage, etc., SNAP) and
@@ -57,7 +59,7 @@ let featureSelectListener = null;
  */
 function createAndDisplayJoinedData(
     map, povertyThreshold, damageThreshold, povertyWeight) {
-  setLoading('tableContainer', true);
+  addLoadingElement(tableContainerId);
   // clear old listeners
   google.maps.event.removeListener(mapSelectListener);
   google.maps.event.removeListener(featureSelectListener);
@@ -68,7 +70,7 @@ function createAndDisplayJoinedData(
   drawTable(
       processedData, (features) => highlightFeatures(features, map),
       (table, tableData) => {
-        setLoading('tableContainer', false);
+        loadingElementFinished(tableContainerId);
         // every time we get a new table and data, reselect elements in the table
         // based on {@code currentFeatures} in highlight_features.js.
         selectHighlightedFeatures(table, tableData);
@@ -161,8 +163,6 @@ function initializeAssetLayers(map) {
  */
 function initializeScoreLayer(map, layer) {
   addLayer(
-      map, layer.style({styleProperty: 'style'}), scoreLayerName, scoreIndex,
-      () => setLoading('mapContainer', true),
-      () => setLoading('mapContainer', false));
+      map, layer.style({styleProperty: 'style'}), scoreLayerName, scoreIndex);
   document.getElementById(scoreLayerName).checked = true;
 }
