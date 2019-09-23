@@ -33,8 +33,6 @@ function addLoadingElement(divId) {
   const overlay = getLoadingOverlay(divId);
   if (!overlay) return;
 
-  console.log('Calling add on ' + loadingCounterMap[divId]);
-
   if (!loadingCounterMap[divId]) loadingCounterMap[divId] = 0;
   loadingCounterMap[divId]++;
 
@@ -50,8 +48,6 @@ function addLoadingElement(divId) {
 function loadingElementFinished(divId) {
   const overlay = getLoadingOverlay(divId);
   if (!overlay) return;
-
-  console.log('Calling finish on ' + loadingCounterMap[divId]);
 
   if (!loadingCounterMap[divId]) {
     console.error('Inaccurately marking a loading element as finished!');
