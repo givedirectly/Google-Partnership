@@ -41,7 +41,7 @@ function addLoadingElement(divId) {
 
 /**
  * Takes an id of a div, decrements that div's number of outstanding loading
- * elements, updates its UI loading state accordingly.
+ * elements, and updates its UI loading state accordingly.
  *
  * @param {Number} divId The id of the div that needs to update loading state
  */
