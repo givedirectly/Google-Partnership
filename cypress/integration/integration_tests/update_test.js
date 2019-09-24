@@ -1,3 +1,5 @@
+import {awaitLoad} from './loading_test_util.js';
+
 describe('Integration test for update.js', () => {
   /**
    * Checks that by setting the threshold to 100% the list and page number
@@ -13,13 +15,13 @@ describe('Integration test for update.js', () => {
 
   it('Checks list size updates with higher threshold', () => {
     cy.visit(host);
+    awaitLoad(cy);
 
     cy.get('[id="damage threshold"]').type('0.0');
     cy.get('[id="update"]').click();
 
     // Wait for table to reload properly.
-    // TODO(#53): implement loading element and replace with call to it.
-    cy.wait(500);
+    awaitLoad(cy, ['tableContainer']);
 
     const numPages = cy.get('.google-visualization-table-page-numbers')
                          .find('*')
@@ -33,8 +35,7 @@ describe('Integration test for update.js', () => {
     cy.get('[id="update"]').click();
 
     // Wait for table to reload properly.
-    // TODO(#53): implement loading element and replace with call to it.
-    cy.wait(500);
+    awaitLoad(cy, ['tableContainer']);
 
     cy.get(tableClass)
         .find('.google-visualization-table-page-numbers')
