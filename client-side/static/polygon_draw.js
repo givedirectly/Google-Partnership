@@ -1,4 +1,5 @@
 export {processUserRegions, setUpPolygonDrawing as default};
+import createError from './create_error.js';
 
 // TODO(#13): use proper keys associated to GiveDirectly account,
 // and lock down security (right now database is global read-write).
@@ -11,6 +12,28 @@ const firebaseConfig = {
   messagingSenderId: '634162034024',
   appId: '1:634162034024:web:c5f5b82327ba72f46d52dd',
 };
+
+const polygonData = new Map();
+
+class PolygonData {
+  constructor(id, notes) {
+    this.id = id;
+    this.notes = notes;
+  }
+}
+
+let pendingWriteCount = 0;
+
+// TODO(janakr): should this be initialized somewhere better?
+// Warning before leaving the page.
+window.onbeforeunload = () => {return pendingWriteCount > 0 ? true : null};
+
+// TODO(janakr): maybe not best practice to initialize outside of a function?
+// But doesn't take much/any time.
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+const userShapes = db.collection('usershapes');
 
 const appearance = {
   fillColor: '#FF0000',
@@ -31,9 +54,13 @@ function setUpPolygonDrawing(map) {
     polygonOptions: appearance,
   });
 
-  // TODO(#18): persist drawn polygon to backend.
   drawingManager.addListener(
-      'overlaycomplete', (event) => addPopUpListener(event.overlay, '', map));
+      'overlaycomplete', (event) => {
+        const polygon = event.overlay;
+        polygonData.set(polygon, new PolygonData(null, ''));
+        addPopUpListener(polygon, map);
+        persistToBackEnd(polygon);
+      });
 
   drawingManager.setMap(map);
 }
@@ -46,36 +73,54 @@ function setUpPolygonDrawing(map) {
  * @param {google.maps.Map} map Map to display regions on
  */
 function processUserRegions(map) {
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-  db.collection('usershapes')
+  userShapes
       .get()
       .then(
-          (querySnapshot) => drawRegionsFromFirestoreQuery(querySnapshot, map));
+          (querySnapshot) => drawRegionsFromFirestoreQuery(querySnapshot, map))
+      .catch(createError('Error retrieving user-drawn regions'));
+  ;
 }
 
-// TODO(#18): pop notes up as editable field, save modified notes
-// to backend. Also save new bounds of polygon to backend.
+function persistToBackEnd(polygon) {
+  const data = polygonData.get(polygon);
+  const geometry = [];
+  polygon.getPath().forEach((elt) => {geometry.push(latLngToGeoPoint(elt))});
+  const record = {geometry: geometry, notes: data.notes};
+  pendingWriteCount++;
+  if (data.id) {
+    userShapes.doc(data.id).set(record).then(() => pendingWriteCount--)
+        .catch((error) => {pendingWriteCount--; createError('writing polygon with id ' + data.id)(error)});
+  } else {
+    userShapes.add(record).then(
+        (docRef) => {
+          data.id = docRef.id;
+          pendingWriteCount--;
+        }
+        )
+        .catch((error) => {pendingWriteCount--; createError('writing polygon')(error)});
+  }
+}
+
+// TODO(#18): pop notes up as editable field, trigger save on modifications.
+// Also trigger save on modifying bounds.
 /**
  * Adds an onclick listener to polygon, popping up the given notes.
  *
  * @param {google.maps.Polygon} polygon Polygon to add listener to
- * @param {String} notes Notes for this polygon
  * @param {google.maps.Map} map Map that polygon will be/is attached to
  */
-function addPopUpListener(polygon, notes, map) {
-  const listener = polygon.addListener('click', (event) => {
+function addPopUpListener(polygon, map) {
+  const listener = polygon.addListener('click', () => {
     // Remove the listener so that duplicate windows don't pop up on another
     // click, and the cursor doesn't become a "clicking hand" over this shape.
     google.maps.event.removeListener(listener);
     const infoWindow = new google.maps.InfoWindow();
-    infoWindow.setContent(notes);
+    infoWindow.setContent(polygonData.get(polygon).notes);
     // TODO(janakr): is there a better place to pop this window up?
     const popupCoords = polygon.getPath().getAt(0);
     infoWindow.setPosition(popupCoords);
     // Reinstall the pop-up listener when the window is closed.
-    infoWindow.addListener(
-        'closeclick', (event) => addPopUpListener(polygon, notes, map));
+    infoWindow.addListener('closeclick', () => addPopUpListener(polygon, map));
     infoWindow.open(map);
   });
 }
@@ -98,7 +143,8 @@ function drawRegionsFromFirestoreQuery(querySnapshot, map) {
     const properties = Object.assign({}, appearance);
     properties.paths = coordinates;
     const polygon = new google.maps.Polygon(properties);
-    addPopUpListener(polygon, userDefinedRegion.get('notes'), map);
+    polygonData.set(polygon, new PolygonData(userDefinedRegion.id, userDefinedRegion.get('notes')));
+    addPopUpListener(polygon, map);
     polygon.setMap(map);
   });
 }
@@ -111,4 +157,8 @@ function drawRegionsFromFirestoreQuery(querySnapshot, map) {
  */
 function geoPointToLatLng(geopoint) {
   return {lat: geopoint.latitude, lng: geopoint.longitude};
+}
+
+function latLngToGeoPoint(latLng) {
+  return new firebase.firestore.GeoPoint(latLng.lat(), latLng.lng());
 }
