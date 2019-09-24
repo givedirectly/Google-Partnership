@@ -1,3 +1,4 @@
+import mapStyles from './map_styles.js';
 import setUpPolygonDrawing from './polygon_draw.js';
 
 export {createMap as default};
@@ -18,7 +19,8 @@ function createMap() {
   // Create the base Google Map. Takes ~7 ms to execute this step..
   // TODO: this is centered for Harvey right now - generalize.
   const map = new google.maps.Map(
-      $('.map').get(0), {center: {lat: 29.76, lng: -95.36}, zoom: 8});
+      $('.map').get(0),
+      {center: {lat: 29.76, lng: -95.36}, zoom: 8, styles: mapStyles});
   setUpPolygonDrawing(map);
 
   // Search box code roughly taken from
