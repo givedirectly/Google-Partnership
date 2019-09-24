@@ -13,13 +13,13 @@ describe('Integration test for update.js', () => {
 
   it('Checks list size updates with higher threshold', () => {
     cy.visit(host);
+    cy.awaitLoad();
 
     cy.get('[id="damage threshold"]').type('0.0');
     cy.get('[id="update"]').click();
 
     // Wait for table to reload properly.
-    // TODO(#53): implement loading element and replace with call to it.
-    cy.wait(500);
+    cy.awaitLoad(['tableContainer']);
 
     const numPages = cy.get('.google-visualization-table-page-numbers')
                          .find('*')
@@ -27,14 +27,11 @@ describe('Integration test for update.js', () => {
     numPages.should('gt', 0);
 
     cy.get('[id="poverty threshold"]').type('1.0');
-    cy.get('[id="update"]').click();
-
     cy.get('[id="damage threshold"]').type('1.0');
     cy.get('[id="update"]').click();
 
     // Wait for table to reload properly.
-    // TODO(#53): implement loading element and replace with call to it.
-    cy.wait(500);
+    cy.awaitLoad(['tableContainer']);
 
     cy.get(tableClass)
         .find('.google-visualization-table-page-numbers')
