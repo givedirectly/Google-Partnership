@@ -2,7 +2,7 @@ export {addLoadingElement, loadingElementFinished};
 
 /**
  * A mapping from a div id to the the number of components currently being
- * loaded within that div
+ * loaded within that div.
  */
 const loadingCounterMap = {};
 
