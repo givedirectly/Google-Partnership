@@ -35,10 +35,18 @@
 <body>
 <h1>Houston damage/poverty map</h1>
 
-<div class="map"></div>
+<div class="map-container" id="mapContainer">
+  <div class="map"></div>
+  <div class="loader" id="mapContainer-loader">
+    <div class="ellipsis"><div></div><div></div><div></div><div></div></div>
+  </div>
+</div>
 <div class="form" id="form-div"></div>
-<div id="tableContainer">
+<div class="table-container" id="tableContainer">
   <div id="table"></div>
+  <div class="loader" id="tableContainer-loader">
+    <div class="ellipsis"><div></div><div></div><div></div><div></div></div>
+  </div>
 </div>
 <div class="g-sign-in hidden">
   <span class="label">Sign in with:</span>

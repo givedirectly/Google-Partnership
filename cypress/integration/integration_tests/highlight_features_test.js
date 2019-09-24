@@ -1,10 +1,8 @@
 describe('Integration tests for highlighting chosen districts', () => {
   it('Clicks on list and highlights district', () => {
     cy.visit(host);
-    // Wait for table to fully load. Needed to ensure that layerMap is
-    // populated.
-    // TODO(#53): check for loading bar element to finish instead of waiting.
-    cy.wait(4000);
+    cy.awaitLoad();
+
     // Actually verifying that the element appears is difficult, because the
     // drawing happens on a canvas, which doesn't expose its contents. So we
     // don't do it, instead just verifying that nothing terrible happens.
