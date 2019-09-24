@@ -27,8 +27,6 @@ describe('Integration test for update.js', () => {
     numPages.should('gt', 0);
 
     cy.get('[id="poverty threshold"]').type('1.0');
-    cy.get('[id="update"]').click();
-
     cy.get('[id="damage threshold"]').type('1.0');
     cy.get('[id="update"]').click();
 
