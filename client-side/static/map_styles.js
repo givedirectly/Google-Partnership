@@ -1,5 +1,8 @@
 export {mapStyles as default};
 
+// Map styles to update the Google Map display. Updates map to silver theme,
+// (see https://mapstyle.withgoogle.com/) with blue water. Deprioritizes
+// display of landmarks, since they matter less to GD.
 const mapStyles = [
   {'elementType': 'geometry', 'stylers': [{'color': '#f5f5f5'}]},
   {'elementType': 'labels.icon', 'stylers': [{'visibility': 'off'}]},
