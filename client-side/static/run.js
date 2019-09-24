@@ -1,5 +1,5 @@
 import {clickFeature, selectHighlightedFeatures} from './click_feature.js';
-import {tableContainerId} from './dom_constants.js';
+import {mapContainerId, tableContainerId} from './dom_constants.js';
 import {drawTable} from './draw_table.js';
 import {highlightFeatures} from './highlight_features.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
@@ -97,7 +97,7 @@ function createAndDisplayJoinedData(
 function createAssetCheckboxes(map) {
   // TODO: these probably shouldn't just sit at the bottom of the page - move to
   // a better place.
-  const mapDiv = document.getElementById('mapContainer');
+  const mapDiv = document.getElementById(mapContainerId);
   Object.keys(assets).forEach(
       (assetName) => createNewCheckbox(assetName, map, mapDiv));
   // score checkbox gets checked during initializeScoreLayer
