@@ -121,9 +121,8 @@ function addLayer(map, layer, assetName, index) {
   layer.getMap({
     callback: (layerId, failure) => {
       if (layerId) {
-        layerMap[assetName].overlay =
-            addLayerFromId(
-                map, assetName, layerId, index, layerMap[assetName].displayed);
+        layerMap[assetName].overlay = addLayerFromId(
+            map, assetName, layerId, index, layerMap[assetName].displayed);
       } else {
         // TODO: if there's an error, disable checkbox, add tests for this.
         layerMap[assetName].displayed = false;
