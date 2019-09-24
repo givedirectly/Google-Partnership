@@ -368,6 +368,8 @@ class MapLayerOverlay {
    * Constructor.
    */
   constructor() {}
+
+  addTileCallback(callback) {}
 }
 
 /**
