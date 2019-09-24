@@ -1,3 +1,6 @@
+import {mapContainerId} from './dom_constants.js'
+import {addLoadingElement, loadingElementFinished} from './loading.js';
+
 export {processUserRegions, setUpPolygonDrawing as default};
 
 // TODO(#13): use proper keys associated to GiveDirectly account,
@@ -47,6 +50,7 @@ function setUpPolygonDrawing(map) {
  * @param {google.maps.Map} map Map to display regions on
  */
 function processUserRegions(map) {
+  addLoadingElement(mapContainerId);
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
   db.collection('usershapes')
@@ -102,6 +106,7 @@ function drawRegionsFromFirestoreQuery(querySnapshot, map) {
     addPopUpListener(polygon, userDefinedRegion.get('notes'), map);
     polygon.setMap(map);
   });
+  loadingElementFinished(mapContainerId);
 }
 
 /**

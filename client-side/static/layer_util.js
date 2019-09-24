@@ -1,4 +1,5 @@
 import createError from './create_error.js';
+import {mapContainerId} from './dom_constants.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {scoreLayerName} from './run.js';
 
@@ -11,8 +12,6 @@ export {
 };
 // @VisibleForTesting
 export {layerMap, LayerMapValue};
-
-const mapContainerId = 'mapContainer';
 
 // Keep a map of asset name -> overlay, index, display status. Overlays are
 // lazily generated i.e. pre-known assets that don't display by

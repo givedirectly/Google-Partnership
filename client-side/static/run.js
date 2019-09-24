@@ -1,4 +1,5 @@
 import {clickFeature, selectHighlightedFeatures} from './click_feature.js';
+import {tableContainerId} from './dom_constants.js';
 import {drawTable} from './draw_table.js';
 import {highlightFeatures} from './highlight_features.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
@@ -23,8 +24,6 @@ const snapAndDamageAsset = 'users/juliexxia/harvey-snap-and-damage';
 const scalingFactor = 100;
 const scoreIndex = Object.keys(assets).length;
 const scoreLayerName = 'score';
-
-const tableContainerId = 'tableContainer';
 
 /**
  * Main function that processes the known assets (FEMA damage, etc., SNAP) and
