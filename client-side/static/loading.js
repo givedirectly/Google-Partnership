@@ -10,7 +10,7 @@ const loadingCounterMap = {};
  * Retrieves the loading overlay of a given div if it is present and logs an
  * error otherwise.
  *
- * @param {Number} divId The id of the div that may contain a loading overlay.
+ * @param {string} divId The id of the div that may contain a loading overlay.
  * @return {Object} the div of the loading overlay or undefined.
  */
 function getLoadingOverlay(divId) {
@@ -27,7 +27,7 @@ function getLoadingOverlay(divId) {
  * Takes an id of a div, increments that div's number of outstanding loading
  * elements, and updates its UI loading state accordingly.
  *
- * @param {Number} divId The id of the div that needs to update loading state
+ * @param {string} divId The id of the div that needs to update loading state
  */
 function addLoadingElement(divId) {
   const overlay = getLoadingOverlay(divId);
@@ -43,7 +43,7 @@ function addLoadingElement(divId) {
  * Takes an id of a div, decrements that div's number of outstanding loading
  * elements, and updates its UI loading state accordingly.
  *
- * @param {Number} divId The id of the div that needs to update loading state
+ * @param {string} divId The id of the div that needs to update loading state
  */
 function loadingElementFinished(divId) {
   const overlay = getLoadingOverlay(divId);
