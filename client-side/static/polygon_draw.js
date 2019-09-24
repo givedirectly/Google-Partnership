@@ -1,4 +1,4 @@
-import {mapContainerId} from './dom_constants.js'
+import {mapContainerId} from './dom_constants.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 
 export {processUserRegions, setUpPolygonDrawing as default};
