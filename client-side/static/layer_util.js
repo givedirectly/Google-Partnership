@@ -72,7 +72,7 @@ function toggleLayerOff(map, assetName) {
  * callbacks or similar to that overlay.
  *
  * @param {google.maps.Map} map
- * @param {Object} assetName
+ * @param {string} assetName
  * @param {Object} layerId
  * @param {number} index
  * @param {boolean} displayed
