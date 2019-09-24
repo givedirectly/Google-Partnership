@@ -1,5 +1,3 @@
-import {awaitLoad} from './loading_test_util.js';
-
 describe('Integration tests for drawing polygons', () => {
   it('Draws a polygon', () => {
     cy.visit(host);
@@ -32,7 +30,7 @@ describe('Integration tests for drawing polygons', () => {
 
   it('Clicks on a region and verifies notes pop up', () => {
     cy.visit(host);
-    awaitLoad(cy);
+    cy.awaitLoad();
 
     // Experimented to find point on map within second triangle.
     cy.get('.map').click(447, 250);

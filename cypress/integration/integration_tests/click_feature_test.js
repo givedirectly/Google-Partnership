@@ -1,5 +1,3 @@
-import {awaitLoad} from './loading_test_util.js';
-
 /**
  * This test relies on the FEMA damage data for Hurricane Michael and the
  * starting thresholds of poverty 0.3 and damage 0.5
@@ -7,7 +5,7 @@ import {awaitLoad} from './loading_test_util.js';
 describe('Integration test for clicking feature', () => {
   it('clicks a feature on the map highlights feature in list', () => {
     cy.visit(host);
-    awaitLoad(cy);
+    cy.awaitLoad();
 
     cy.get('.map').click(343, 184);
     cy.get('.google-visualization-table-tr-sel')
@@ -19,7 +17,7 @@ describe('Integration test for clicking feature', () => {
 
   it('click highlights correct feature even after resort', () => {
     cy.visit(host);
-    awaitLoad(cy);
+    cy.awaitLoad();
 
     // Sort descending by damage percentage
     cy.get('.google-visualization-table-tr-head > :nth-child(4)').click();
@@ -35,7 +33,7 @@ describe('Integration test for clicking feature', () => {
 
   it('clicks a place where there is no damage -> no feature', () => {
     cy.visit(host);
-    awaitLoad(cy);
+    cy.awaitLoad();
 
     cy.get('.map').click(25, 25);
     cy.get('.google-visualization-table-tr-sel').should('not.exist');
@@ -45,7 +43,7 @@ describe('Integration test for clicking feature', () => {
   // are updated.
   it('click highlights correct feature even after update', () => {
     cy.visit(host);
-    awaitLoad(cy);
+    cy.awaitLoad();
 
     cy.get('.map').click(343, 184);
     cy.get('[id="damage threshold"]').type('0.9');

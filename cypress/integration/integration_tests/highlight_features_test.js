@@ -1,9 +1,7 @@
-import {awaitLoad} from './loading_test_util.js';
-
 describe('Integration tests for highlighting chosen districts', () => {
   it('Clicks on list and highlights district', () => {
     cy.visit(host);
-    awaitLoad(cy);
+    cy.awaitLoad();
 
     // Actually verifying that the element appears is difficult, because the
     // drawing happens on a canvas, which doesn't expose its contents. So we
