@@ -369,6 +369,12 @@ class MapLayerOverlay {
    */
   constructor() {}
 
+  /**
+   * Mock for addTileCallback.
+   *
+   * @param {function(ee.TileEvent): *} callback Function that would be invoked
+   *     for every tile loaded.
+   */
   addTileCallback(callback) {}
 }
 
