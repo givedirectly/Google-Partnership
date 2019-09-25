@@ -6,11 +6,11 @@ import {scoreLayerName} from './run.js';
 export {
   addLayer,
   addNullLayer,
+  redrawLayers,
   removeScoreLayer,
   setMap,
   toggleLayerOff,
   toggleLayerOn,
-    redrawLayers,
 };
 // @VisibleForTesting
 export {layerMap, LayerMapValue};
@@ -46,7 +46,8 @@ function setMap(map) {
   // Uncomment to try local loading.
   // const layerMapValue = new LayerMapValue(damageGeoJson, 0, true);
   // layerMap['users/juliexxia/harvey-damage-crowdai-format'] = layerMapValue;
-  // addLayerFromFeatures(layerMapValue, 'users/juliexxia/harvey-damage-crowdai-format');
+  // addLayerFromFeatures(layerMapValue,
+  // 'users/juliexxia/harvey-damage-crowdai-format');
 }
 
 /**
@@ -60,7 +61,8 @@ function toggleLayerOn(assetName) {
   if (currentLayerMapValue.data) {
     addLayerFromFeatures(currentLayerMapValue, assetName);
   } else {
-    addLayer(ee.FeatureCollection(assetName), assetName, currentLayerMapValue.index);
+    addLayer(
+        ee.FeatureCollection(assetName), assetName, currentLayerMapValue.index);
   }
 }
 
@@ -77,7 +79,9 @@ const coloring = (f) => showColor(f.properties['color']);
 
 function addLayerFromFeatures(layerMapValue, assetName) {
   layerArray[layerMapValue.index] = new deck.GeoJsonLayer({
-    id: assetName, data: layerMapValue.data, pointRadiusScale: 500,
+    id: assetName,
+    data: layerMapValue.data,
+    pointRadiusScale: 500,
     getFillColor: coloring,
     visible: layerMapValue.displayed,
   });
@@ -110,17 +114,16 @@ function addLayer(layer, assetName, index) {
   // Add entry to map.
   const layerMapValue = new LayerMapValue(null, index, true);
   layerMap[assetName] = layerMapValue;
-  ee.FeatureCollection(layer).toList(250000).evaluate(
-      (features, failure) => {
-        if (features) {
-        layerMapValue.data = features;
-        addLayerFromFeatures(layerMapValue, assetName);
-      } else {
-        // TODO: if there's an error, disable checkbox, add tests for this.
-        createError('getting id for ' + assetName)(failure);
-      }
-      loadingElementFinished(mapContainerId);
-    });
+  ee.FeatureCollection(layer).toList(250000).evaluate((features, failure) => {
+    if (features) {
+      layerMapValue.data = features;
+      addLayerFromFeatures(layerMapValue, assetName);
+    } else {
+      // TODO: if there's an error, disable checkbox, add tests for this.
+      createError('getting id for ' + assetName)(failure);
+    }
+    loadingElementFinished(mapContainerId);
+  });
 }
 
 /**
