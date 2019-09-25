@@ -141,3 +141,63 @@ body {
     transform: translate(19px, 0);
   }
 }
+
+.main-content {
+  box-sizing: border-box;
+  padding: 16px;
+  width: 75%;
+  position: absolute;
+  right: 0;
+}
+
+/** Sidebar styling */
+
+.sidebar {
+  box-shadow: 3px 0 10px -2px #BEC2C1;
+  height: 100%; 
+  left: 0;
+  max-width: 400px;
+  min-width: 150px;
+  overflow-x: hidden; 
+  position: fixed; 
+  top: 0; 
+  width: 25%;  
+  z-index: 1; 
+}
+
+.sidebar-content {
+  box-sizing: border-box;
+  height: 100%;
+  min-height: 200px;
+  padding: 10px;
+  position: relative;
+  width: 100%;
+}
+
+.sidebar-heading {
+  color: #fff;
+  background-color: #9DBCB5;
+  font-size: 16px;
+  height: 30px;
+  padding-top: 15px;
+  text-align: center;
+  text-transform: uppercase;
+  width:100%;
+}
+
+/** Responsive styles */
+
+@media (max-width: 1066px) { 
+  .sidebar {
+    bottom: 0;
+    box-shadow: none;
+    max-width: none;
+    position: relative;
+    width: 100%; 
+  }
+
+  .main-content {
+    width: 100%;
+    position: relative;
+  }
+}

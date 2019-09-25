@@ -33,29 +33,36 @@
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
-<h1>Houston damage/poverty map</h1>
-
-<div class="map-container" id="mapContainer">
-  <div class="map"></div>
-  <div class="loader" id="mapContainer-loader">
-    <div class="ellipsis"><div></div><div></div><div></div><div></div></div>
+  <div class="wrapper">
+    <div class="main-content">
+      <h1>Houston damage/poverty map</h1>
+      <div class="map-container" id="mapContainer">
+        <div class="map"></div>
+        <div class="loader" id="mapContainer-loader">
+          <div class="ellipsis"><div></div><div></div><div></div><div></div></div>
+        </div>
+      </div>
+      <div class="table-container" id="tableContainer">
+        <div id="table"></div>
+        <div class="loader" id="tableContainer-loader">
+          <div class="ellipsis"><div></div><div></div><div></div><div></div></div>
+        </div>
+      </div>
+      <div class="g-sign-in hidden">
+        <span class="label">Sign in with:</span>
+        <div class="button">
+          <span class="icon"></span>
+          <span class="button-text">Google</span>
+        </div>
+      </div>
+    </div>
+    <div class="sidebar">
+      <div class="sidebar-heading">Adjust Thresholds</div>
+      <div class="sidebar-content">
+        <div class="form" id="form-div"></div>
+      </div>
+    </div>
+    <div class="tiles-loading"></div>
   </div>
-</div>
-<div class="form" id="form-div"></div>
-<div class="table-container" id="tableContainer">
-  <div id="table"></div>
-  <div class="loader" id="tableContainer-loader">
-    <div class="ellipsis"><div></div><div></div><div></div><div></div></div>
-  </div>
-</div>
-<div class="g-sign-in hidden">
-  <span class="label">Sign in with:</span>
-  <div class="button">
-    <span class="icon"></span>
-    <span class="button-text">Google</span>
-  </div>
-</div>
-
-<div class="tiles-loading"></div>
 </body>
 </html>
