@@ -63,46 +63,60 @@ function createToggles(map) {
   form.append(errorMessage);
 
   // threshold toggles
+  const thresholdTitle = document.createElement('div');
+  thresholdTitle.className = 'formTitle';
+  thresholdTitle.innerHTML = 'threshold';
+  form.appendChild(thresholdTitle);
   for (const toggle of toggles.keys()) {
     if (!toggle.endsWith('threshold')) {
       continue;
     }
-    const input = createBasicToggleInputElement(toggle);
-    input.type = 'number';
-    form.appendChild(input);
+    const thresholdInputDiv = document.createElement('div');
+    thresholdInputDiv.className = 'input-container';
 
     const label = document.createElement('label');
     label.for = toggle;
     label.id = 'for ' + toggle;
     label.innerHTML = ' ' + toggle;
-    form.appendChild(label);
+    thresholdInputDiv.appendChild(label);
 
-    form.appendChild(document.createElement('br'));
+    const input = createBasicToggleInputElement(toggle);
+    input.type = 'number';
+    thresholdInputDiv.appendChild(input);
+
+    form.appendChild(thresholdInputDiv);
   }
 
   // weight toggle
+  const weightInputDiv = document.createElement('div');
+  weightInputDiv.className = 'input-container';
+  const weightTitle = document.createElement('div');
+  weightTitle.className = 'formTitle';
+  weightTitle.innerHTML = 'weight';
+  weightInputDiv.appendChild(weightTitle);
+
   const povertyWeight = document.createElement('label');
   povertyWeight.innerHTML = 'poverty weight: ';
   const povertyWeightValue = document.createElement('span');
   povertyWeightValue.id = povertyWeightValueId;
   povertyWeight.appendChild(povertyWeightValue);
-  form.appendChild(povertyWeight);
+  weightInputDiv.appendChild(povertyWeight);
 
   const weightInput = createBasicToggleInputElement('poverty weight');
   weightInput.type = 'range';
   weightInput.min = '0.00';
   weightInput.max = '1.00';
   weightInput.oninput = updateWeights;
-  form.appendChild(weightInput);
+  weightInputDiv.appendChild(weightInput);
 
   const damageWeight = document.createElement('label');
   damageWeight.innerHTML = 'damage weight: ';
   const damageWeightValue = document.createElement('span');
   damageWeightValue.id = damageWeightValueId;
   damageWeight.appendChild(damageWeightValue);
-  form.appendChild(damageWeight);
+  weightInputDiv.appendChild(damageWeight);
 
-  form.appendChild(document.createElement('br'));
+  form.appendChild(weightInputDiv);
 
   // buttons
   form.appendChild(createButton('update', () => {

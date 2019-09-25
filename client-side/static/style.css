@@ -62,6 +62,69 @@ body {
   width: 745px;
 }
 
+/* Form css */
+
+.formTitle {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 10px;
+  text-transform: capitalize;
+}
+
+.input-container {
+  margin-bottom: 10px;
+}
+
+form {
+  padding: 5px 10px 5px 5px;
+}
+
+label {
+  font-size: 14px;
+  text-transform: capitalize;
+}
+
+input {
+  border: solid #BEC2C1 1px;
+  border-radius: 4px;
+  margin: 0 10px;
+  outline: none;
+  padding: 3px;
+}
+
+input:hover {
+  border-color: #6B9B8F;
+}
+
+input:focus {
+  border-color: #095845;
+}
+
+input[type='range'] {
+  vertical-align: middle;
+}
+
+input[type='button'] {
+  background-color: #095845;
+  border: none;
+  color: #fff;
+  font-size: 14px;
+  margin: 5px 15px 5px 0;
+  padding: 8px;
+  text-transform: capitalize;
+}
+
+input[type='button']:hover {
+  background-color: #6B9B8F;
+}
+
+#toggles span {
+  color: #6B9B8F;
+  font-weight: bold;
+}
+
+/* Loading indicator css */
+
 .loader {
   position: absolute;
   width: 100%;
