@@ -63,7 +63,9 @@ function colorAndRate(
         damageTag,
         ratioBuildingsDamaged,
       ]))
-      .set({color: [255, 0, 255, score.multiply(3).min(ee.Number(scoreDisplayCap))]});
+      .set({
+        color: [255, 0, 255, score.multiply(3).min(ee.Number(scoreDisplayCap))]
+      });
 }
 
 /**
