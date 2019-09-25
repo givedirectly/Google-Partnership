@@ -30,8 +30,8 @@ describe('Integration tests for drawing polygons', () => {
 
   it('Clicks on a region and verifies notes pop up', () => {
     cy.visit(host);
-    // TODO(#53): check for loading bar element to finish instead of waiting.
-    cy.wait(1000);
+    cy.awaitLoad();
+
     // Experimented to find point on map within second triangle.
     cy.get('.map').click(447, 250);
     cy.get('.map').contains('second notes');
