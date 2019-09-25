@@ -88,9 +88,9 @@ function addPopUpListener(polygon, notes, map) {
  * Creates the inner contents of the InfoWindow that pops up when a polygon is
  * selected.
  *
- * @param polygon
- * @param notes
- * @param infoWindow
+ * @param {google.maps.Polygon} polygon
+ * @param {String} notes
+ * @param {google.maps.InfoWindow} infoWindow
  * @returns {HTMLDivElement}
  */
 function createInfoWindowHtml(polygon, notes, infoWindow) {
