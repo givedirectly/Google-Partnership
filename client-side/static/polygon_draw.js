@@ -16,50 +16,53 @@ const firebaseConfig = {
   appId: '1:634162034024:web:c5f5b82327ba72f46d52dd',
 };
 
-const PolygonState = {
-  SAVED: 0,
-  WRITING: 1,
-  QUEUED_WRITE: 2,
-};
 const polygonData = new Map();
 
 class PolygonData {
+  static State = {
+    SAVED: 0,
+    WRITING: 1,
+    QUEUED_WRITE: 2,
+  };
+
+  static pendingWriteCount = 0;
+
   constructor(id, notes) {
     this.id = id;
     this.notes = notes;
-    this.state = PolygonState.SAVED;
+    this.state = PolygonData.State.SAVED;
   }
 
   update(polygon, notes) {
     this.notes = notes;
-    if (this.state !== PolygonState.SAVED) {
+    if (this.state !== PolygonData.State.SAVED) {
       // Don't do a write, just wait for the last one to finish.
-      this.state = PolygonState.QUEUED_WRITE;
+      this.state = PolygonData.State.QUEUED_WRITE;
       return;
     }
-    this.state = PolygonState.WRITING;
+    this.state = PolygonData.State.WRITING;
     const geometry = [];
     polygon.getPath().forEach((elt) => {geometry.push(latLngToGeoPoint(elt))});
     const record = {geometry: geometry, notes: this.notes};
-    pendingWriteCount++;
+    PolygonData.pendingWriteCount++;
     const reduceWriteCountAndMaybeWriteAgain = () => {
-      pendingWriteCount--;
+      PolygonData.pendingWriteCount--;
       const oldState = this.state;
-      this.state = PolygonState.SAVED;
+      this.state = PolygonData.State.SAVED;
       switch (oldState) {
-        case PolygonState.WRITING:
+        case PolygonData.State.WRITING:
           return;
-        case PolygonState.QUEUED_WRITE:
+        case PolygonData.State.QUEUED_WRITE:
           this.update(polygon, this.notes);
           break;
-        case PolygonState.SAVED:
+        case PolygonData.State.SAVED:
           console.error('Unexpected saved state for ' + polygon);
           break;
       }
     };
     if (this.id) {
       userShapes.doc(this.id).set(record).then(reduceWriteCountAndMaybeWriteAgain)
-          .catch((error) => {pendingWriteCount--; createError('writing polygon with id ' + this.id)(error)});
+          .catch((error) => {PolygonData.pendingWriteCount--; createError('writing polygon with id ' + this.id)(error)});
     } else {
       userShapes.add(record).then(
           (docRef) => {
@@ -67,17 +70,15 @@ class PolygonData {
             reduceWriteCountAndMaybeWriteAgain();
           }
           )
-          .catch((error) => {pendingWriteCount--; createError('writing polygon')(error)});
+          .catch((error) => {PolygonData.pendingWriteCount--; createError('writing polygon')(error)});
     }
 
   }
 }
 
-let pendingWriteCount = 0;
-
 // TODO(janakr): should this be initialized somewhere better?
 // Warning before leaving the page.
-window.onbeforeunload = () => {return pendingWriteCount > 0 ? true : null};
+window.onbeforeunload = () => {return PolygonData.pendingWriteCount > 0 ? true : null};
 
 // TODO(janakr): maybe not best practice to initialize outside of a function?
 // But doesn't take much/any time.
@@ -108,9 +109,10 @@ function setUpPolygonDrawing(map) {
   drawingManager.addListener(
       'overlaycomplete', (event) => {
         const polygon = event.overlay;
-        polygonData.set(polygon, new PolygonData(null, ''));
+        const data = new PolygonData(null, '');
+        polygonData.set(polygon, data);
         addPopUpListener(polygon, map);
-        persistToBackEnd(polygon);
+        data.update(polygon, '');
       });
 
   drawingManager.setMap(map);
@@ -130,7 +132,6 @@ function processUserRegions(map) {
       .then(
           (querySnapshot) => drawRegionsFromFirestoreQuery(querySnapshot, map))
       .catch(createError('Error retrieving user-drawn regions'));
-  ;
 }
 
 function persistToBackEnd(polygon) {
