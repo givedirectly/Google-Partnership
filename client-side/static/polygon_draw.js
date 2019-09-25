@@ -91,7 +91,7 @@ function addPopUpListener(polygon, notes, map) {
  * @param {google.maps.Polygon} polygon
  * @param {String} notes
  * @param {google.maps.InfoWindow} infoWindow
- * @returns {HTMLDivElement}
+ * @return {HTMLDivElement}
  */
 function createInfoWindowHtml(polygon, notes, infoWindow) {
   const outerDiv = document.createElement('div');
