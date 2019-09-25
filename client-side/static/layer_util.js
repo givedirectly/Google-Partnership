@@ -112,7 +112,7 @@ function addLayer(layer, assetName, index) {
   layerMap[assetName] = layerMapValue;
   ee.FeatureCollection(layer).toList(250000).evaluate(
       (features, failure) => {
-      if (features) {
+        if (features) {
         layerMapValue.data = features;
         addLayerFromFeatures(layerMapValue, assetName);
       } else {
