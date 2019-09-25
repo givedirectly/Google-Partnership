@@ -13,12 +13,60 @@ const firebaseConfig = {
   appId: '1:634162034024:web:c5f5b82327ba72f46d52dd',
 };
 
+const PolygonState = {
+  SAVED: 0,
+  WRITING: 1,
+  QUEUED_WRITE: 2,
+};
 const polygonData = new Map();
 
 class PolygonData {
   constructor(id, notes) {
     this.id = id;
     this.notes = notes;
+    this.state = PolygonState.SAVED;
+  }
+
+  update(polygon, notes) {
+    this.notes = notes;
+    if (this.state !== PolygonState.SAVED) {
+      // Don't do a write, just wait for the last one to finish.
+      this.state = PolygonState.QUEUED_WRITE;
+      return;
+    }
+    this.state = PolygonState.WRITING;
+    const geometry = [];
+    polygon.getPath().forEach((elt) => {geometry.push(latLngToGeoPoint(elt))});
+    const record = {geometry: geometry, notes: this.notes};
+    pendingWriteCount++;
+    const reduceWriteCountAndMaybeWriteAgain = () => {
+      pendingWriteCount--;
+      const oldState = this.state;
+      this.state = PolygonState.SAVED;
+      switch (oldState) {
+        case PolygonState.WRITING:
+          return;
+        case PolygonState.QUEUED_WRITE:
+          this.update(polygon, this.notes);
+          break;
+        case PolygonState.SAVED:
+          console.error('Unexpected saved state for ' + polygon);
+          break;
+      }
+    };
+    if (this.id) {
+      userShapes.doc(this.id).set(record).then(reduceWriteCountAndMaybeWriteAgain)
+          .catch((error) => {pendingWriteCount--; createError('writing polygon with id ' + this.id)(error)});
+    } else {
+      userShapes.add(record).then(
+          (docRef) => {
+            this.id = docRef.id;
+            reduceWriteCountAndMaybeWriteAgain();
+          }
+          )
+          .catch((error) => {pendingWriteCount--; createError('writing polygon')(error)});
+    }
+
   }
 }
 
