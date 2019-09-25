@@ -1,3 +1,6 @@
+import {mapContainerId} from './dom_constants.js';
+import {addLoadingElement, loadingElementFinished} from './loading.js';
+
 export {processUserRegions, setUpPolygonDrawing as default};
 import createError from './create_error.js';
 
@@ -121,6 +124,7 @@ function setUpPolygonDrawing(map) {
  * @param {google.maps.Map} map Map to display regions on
  */
 function processUserRegions(map) {
+  addLoadingElement(mapContainerId);
   userShapes
       .get()
       .then(
@@ -195,6 +199,7 @@ function drawRegionsFromFirestoreQuery(querySnapshot, map) {
     addPopUpListener(polygon, map);
     polygon.setMap(map);
   });
+  loadingElementFinished(mapContainerId);
 }
 
 /**
