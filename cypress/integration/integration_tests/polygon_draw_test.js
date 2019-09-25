@@ -38,7 +38,8 @@ describe('Integration tests for drawing polygons', () => {
             expect(foundElements++).to.equal(0);
             $elt.trigger('click');
           }
-        }).then(() => expect(foundElements).to.equal(1));
+        })
+        .then(() => expect(foundElements).to.equal(1));
     cy.get('div[style*="left: -100px; top: -95px;"').should('not.exist');
   });
 
@@ -79,7 +80,8 @@ describe('Integration tests for drawing polygons', () => {
             expect(foundElements++).to.equal(0);
             $elt.trigger('click');
           }
-        }).then(() => expect(foundElements).to.equal(1));
+        })
+        .then(() => expect(foundElements).to.equal(1));
     // Assert still exists.
     cy.get('div[style*="left: -100px; top: -95px;"');
   });
