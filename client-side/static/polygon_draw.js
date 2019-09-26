@@ -1,3 +1,6 @@
+import {mapContainerId} from './dom_constants.js';
+import {addLoadingElement, loadingElementFinished} from './loading.js';
+
 export {processUserRegions, setUpPolygonDrawing as default};
 import createError from './create_error.js';
 
@@ -73,12 +76,12 @@ function setUpPolygonDrawing(map) {
  * @param {google.maps.Map} map Map to display regions on
  */
 function processUserRegions(map) {
+  addLoadingElement(mapContainerId);
   userShapes
       .get()
       .then(
           (querySnapshot) => drawRegionsFromFirestoreQuery(querySnapshot, map))
       .catch(createError('Error retrieving user-drawn regions'));
-  ;
 }
 
 function persistToBackEnd(polygon) {
@@ -115,7 +118,7 @@ function addPopUpListener(polygon, map) {
     // click, and the cursor doesn't become a "clicking hand" over this shape.
     google.maps.event.removeListener(listener);
     const infoWindow = new google.maps.InfoWindow();
-    infoWindow.setContent(polygonData.get(polygon).notes);
+    infoWindow.setContent(createInfoWindowHtml(polygon, polygonData.get(polygon).notes, infoWindow));
     // TODO(janakr): is there a better place to pop this window up?
     const popupCoords = polygon.getPath().getAt(0);
     infoWindow.setPosition(popupCoords);
@@ -123,6 +126,32 @@ function addPopUpListener(polygon, map) {
     infoWindow.addListener('closeclick', () => addPopUpListener(polygon, map));
     infoWindow.open(map);
   });
+}
+
+/**
+ * Creates the inner contents of the InfoWindow that pops up when a polygon is
+ * selected.
+ *
+ * @param {google.maps.Polygon} polygon
+ * @param {String} notes
+ * @param {google.maps.InfoWindow} infoWindow
+ * @return {HTMLDivElement}
+ */
+function createInfoWindowHtml(polygon, notes, infoWindow) {
+  const outerDiv = document.createElement('div');
+  const button = document.createElement('button');
+  button.innerHTML = 'delete';
+  button.onclick = () => {
+    if (confirm('Delete region?')) {
+      polygon.setMap(null);
+      infoWindow.close();
+    }
+  };
+  const notesDiv = document.createElement('div');
+  notesDiv.innerText = notes;
+  outerDiv.appendChild(button);
+  outerDiv.appendChild(notesDiv);
+  return outerDiv;
 }
 
 // TODO(janakr): it would be nice to unit-test this, but I don't know how to get
@@ -147,6 +176,7 @@ function drawRegionsFromFirestoreQuery(querySnapshot, map) {
     addPopUpListener(polygon, map);
     polygon.setMap(map);
   });
+  loadingElementFinished(mapContainerId);
 }
 
 /**

@@ -1,4 +1,6 @@
 import createError from './create_error.js';
+import {mapContainerId} from './dom_constants.js';
+import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {scoreLayerName} from './run.js';
 
 export {
@@ -31,6 +33,7 @@ class LayerMapValue {
     /** @const */
     this.index = index;
     this.displayed = displayed;
+    this.loading = false;
   }
 }
 
@@ -69,15 +72,28 @@ function toggleLayerOff(map, assetName) {
  * callbacks or similar to that overlay.
  *
  * @param {google.maps.Map} map
+ * @param {string} assetName
  * @param {Object} layerId
  * @param {number} index
  * @param {boolean} displayed
  * @return {ee.MapLayerOverlay}
  */
-function addLayerFromId(map, layerId, index, displayed) {
+function addLayerFromId(map, assetName, layerId, index, displayed) {
   const overlay = new ee.MapLayerOverlay(
       'https://earthengine.googleapis.com/map', layerId.mapid, layerId.token,
       {});
+
+  // Update loading state according to layers.
+  overlay.addTileCallback((tileEvent) => {
+    if (tileEvent.count == 0) {
+      loadingElementFinished(mapContainerId);
+      layerMap[assetName].loading = false;
+    } else if (!layerMap[assetName].loading) {
+      layerMap[assetName].loading = true;
+      addLoadingElement(mapContainerId);
+    }
+  });
+
   // Check in case the status has changed while the callback was running.
   if (displayed) {
     map.overlayMapTypes.setAt(index, overlay);
@@ -105,8 +121,8 @@ function addLayer(map, layer, assetName, index) {
   layer.getMap({
     callback: (layerId, failure) => {
       if (layerId) {
-        layerMap[assetName].overlay =
-            addLayerFromId(map, layerId, index, layerMap[assetName].displayed);
+        layerMap[assetName].overlay = addLayerFromId(
+            map, assetName, layerId, index, layerMap[assetName].displayed);
       } else {
         // TODO: if there's an error, disable checkbox, add tests for this.
         layerMap[assetName].displayed = false;
