@@ -31,8 +31,10 @@ describe('Integration tests for drawing polygons', () => {
     cy.get('div[style*="left: -100px; top: -95px;"').click();
     // Accept confirmation when it happens.
     cy.on('window:confirm', () => true);
+    // Make sure button exists and is findable by Cypress.
+    cy.get('#mapContainer').find('button');
     let foundElements = 0;
-    cy.get('button')
+    cy.get('#mapContainer').find('button')
         .each(($elt) => {
           if ($elt.html() === 'delete') {
             expect(foundElements++).to.equal(0);
@@ -71,10 +73,12 @@ describe('Integration tests for drawing polygons', () => {
     handButton.click();
     // Check draggable edge present, and click it to trigger pop-up.
     cy.get('div[style*="left: -100px; top: -95px;"').click();
-    // Accept confirmation when it happens.
+    // Reject confirmation when it happens.
     cy.on('window:confirm', () => false);
+    // Make sure button exists and is findable by Cypress.
+    cy.get('#mapContainer').find('button');
     let foundElements = 0;
-    cy.get('button')
+    cy.get('#mapContainer').find('button')
         .each(($elt) => {
           if ($elt.html() === 'delete') {
             expect(foundElements++).to.equal(0);
