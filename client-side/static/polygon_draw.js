@@ -19,17 +19,77 @@ const firebaseConfig = {
 const polygonData = new Map();
 
 class PolygonData {
+  static State = {
+    SAVED: 0,
+  WRITING: 1,
+    QUEUED_WRITE: 2,
+};
+
+  static pendingWriteCount = 0;
+
   constructor(id, notes) {
     this.id = id;
     this.notes = notes;
+    this.state = PolygonData.State.SAVED;
+  }
+
+  update(polygon, notes = this.notes) {
+    this.notes = notes;
+    if (this.state !== PolygonData.State.SAVED) {
+      this.state = PolygonData.State.QUEUED_WRITE;
+      return;
+    }
+    this.state = PolygonData.State.WRITING;
+    PolygonData.pendingWriteCount++;
+    if (!polygon.getMap()) {
+      // Polygon has been removed from map, we should delete on backend.
+      polygonData.delete(polygon);
+      if (!this.id) {
+        console.error('Polygon to be deleted had no id: ', polygon);
+        return;
+      }
+      // Nothing more needs to be done for this element because it is
+      // unreachable and about to be GC'ed.
+      userShapes.doc(this.id).delete().then(() => PolygonData.pendingWriteCount--)
+          .catch((error) => {PolygonData.pendingWriteCount--; createError('deleting polygon ' + polygon)(error);});
+      return;
+    }
+    const geometry = [];
+    polygon.getPath().forEach((elt) => {geometry.push(latLngToGeoPoint(elt))});
+    const record = {geometry: geometry, notes: this.notes};
+    const finishWriteAndMaybeWriteAgain = () => {
+      PolygonData.pendingWriteCount--;
+      const oldState = this.state;
+      this.state = PolygonData.State.SAVED;
+      switch (oldState) {
+        case PolygonData.State.WRITING:
+          return;
+        case PolygonData.State.QUEUED_WRITE:
+          update(polygon, this.notes);
+          return;
+        case PolygonData.State.SAVED:
+          console.error('Unexpected polygon state:' + this);
+      }
+    };
+    if (this.id) {
+      userShapes.doc(this.id).set(record).then(finishWriteAndMaybeWriteAgain)
+          .catch((error) => {PolygonData.pendingWriteCount--; createError('writing polygon with id ' + this.id)(error)});
+    } else {
+      userShapes.add(record).then(
+          (docRef) => {
+            this.id = docRef.id;
+            finishWriteAndMaybeWriteAgain();
+          }
+          )
+          .catch((error) => {PolygonData.pendingWriteCount--; createError('writing polygon')(error)});
+    }
   }
 }
 
-let pendingWriteCount = 0;
-
 // TODO(janakr): should this be initialized somewhere better?
 // Warning before leaving the page.
-window.onbeforeunload = () => {return pendingWriteCount > 0 ? true : null};
+// window.onbeforeunload = () => {return PolygonData.pendingWriteCount > 0 ? true : null};
+window.onbeforeunload = () => {return true;};
 
 // TODO(janakr): maybe not best practice to initialize outside of a function?
 // But doesn't take much/any time.
@@ -60,9 +120,10 @@ function setUpPolygonDrawing(map) {
   drawingManager.addListener(
       'overlaycomplete', (event) => {
         const polygon = event.overlay;
-        polygonData.set(polygon, new PolygonData(null, ''));
+        const data = new PolygonData(null, '');
+        polygonData.set(polygon, data);
         addPopUpListener(polygon, map);
-        persistToBackEnd(polygon);
+        data.update(polygon, '');
       });
 
   drawingManager.setMap(map);
@@ -82,26 +143,6 @@ function processUserRegions(map) {
       .then(
           (querySnapshot) => drawRegionsFromFirestoreQuery(querySnapshot, map))
       .catch(createError('Error retrieving user-drawn regions'));
-}
-
-function persistToBackEnd(polygon) {
-  const data = polygonData.get(polygon);
-  const geometry = [];
-  polygon.getPath().forEach((elt) => {geometry.push(latLngToGeoPoint(elt))});
-  const record = {geometry: geometry, notes: data.notes};
-  pendingWriteCount++;
-  if (data.id) {
-    userShapes.doc(data.id).set(record).then(() => pendingWriteCount--)
-        .catch((error) => {pendingWriteCount--; createError('writing polygon with id ' + data.id)(error)});
-  } else {
-    userShapes.add(record).then(
-        (docRef) => {
-          data.id = docRef.id;
-          pendingWriteCount--;
-        }
-        )
-        .catch((error) => {pendingWriteCount--; createError('writing polygon')(error)});
-  }
 }
 
 // TODO(#18): pop notes up as editable field, trigger save on modifications.
@@ -145,6 +186,7 @@ function createInfoWindowHtml(polygon, notes, infoWindow) {
     if (confirm('Delete region?')) {
       polygon.setMap(null);
       infoWindow.close();
+      polygonData.get(polygon).update(polygon);
     }
   };
   const notesDiv = document.createElement('div');
