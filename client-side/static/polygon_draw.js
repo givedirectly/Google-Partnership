@@ -68,20 +68,46 @@ function processUserRegions(map) {
  * @param {google.maps.Map} map Map that polygon will be/is attached to
  */
 function addPopUpListener(polygon, notes, map) {
-  const listener = polygon.addListener('click', (event) => {
+  const listener = polygon.addListener('click', () => {
     // Remove the listener so that duplicate windows don't pop up on another
     // click, and the cursor doesn't become a "clicking hand" over this shape.
     google.maps.event.removeListener(listener);
     const infoWindow = new google.maps.InfoWindow();
-    infoWindow.setContent(notes);
+    infoWindow.setContent(createInfoWindowHtml(polygon, notes, infoWindow));
     // TODO(janakr): is there a better place to pop this window up?
     const popupCoords = polygon.getPath().getAt(0);
     infoWindow.setPosition(popupCoords);
     // Reinstall the pop-up listener when the window is closed.
     infoWindow.addListener(
-        'closeclick', (event) => addPopUpListener(polygon, notes, map));
+        'closeclick', () => addPopUpListener(polygon, notes, map));
     infoWindow.open(map);
   });
+}
+
+/**
+ * Creates the inner contents of the InfoWindow that pops up when a polygon is
+ * selected.
+ *
+ * @param {google.maps.Polygon} polygon
+ * @param {String} notes
+ * @param {google.maps.InfoWindow} infoWindow
+ * @return {HTMLDivElement}
+ */
+function createInfoWindowHtml(polygon, notes, infoWindow) {
+  const outerDiv = document.createElement('div');
+  const button = document.createElement('button');
+  button.innerHTML = 'delete';
+  button.onclick = () => {
+    if (confirm('Delete region?')) {
+      polygon.setMap(null);
+      infoWindow.close();
+    }
+  };
+  const notesDiv = document.createElement('div');
+  notesDiv.innerText = notes;
+  outerDiv.appendChild(button);
+  outerDiv.appendChild(notesDiv);
+  return outerDiv;
 }
 
 // TODO(janakr): it would be nice to unit-test this, but I don't know how to get
