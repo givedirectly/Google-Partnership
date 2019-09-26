@@ -34,7 +34,8 @@ describe('Integration tests for drawing polygons', () => {
     // Make sure button exists and is findable by Cypress.
     cy.get('#mapContainer').find('button');
     let foundElements = 0;
-    cy.get('#mapContainer').find('button')
+    cy.get('#mapContainer')
+        .find('button')
         .each(($elt) => {
           if ($elt.html() === 'delete') {
             expect(foundElements++).to.equal(0);
@@ -78,7 +79,8 @@ describe('Integration tests for drawing polygons', () => {
     // Make sure button exists and is findable by Cypress.
     cy.get('#mapContainer').find('button');
     let foundElements = 0;
-    cy.get('#mapContainer').find('button')
+    cy.get('#mapContainer')
+        .find('button')
         .each(($elt) => {
           if ($elt.html() === 'delete') {
             expect(foundElements++).to.equal(0);
