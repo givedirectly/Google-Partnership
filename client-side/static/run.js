@@ -70,8 +70,8 @@ function createAndDisplayJoinedData(
       processedData, (features) => highlightFeatures(features, map),
       (table, tableData) => {
         loadingElementFinished(tableContainerId);
-        // every time we get a new table and data, reselect elements in the
-        // table based on {@code currentFeatures} in highlight_features.js.
+        // every time we get a new table and data, reselect elements in the table
+        // based on {@code currentFeatures} in highlight_features.js.
         selectHighlightedFeatures(table, tableData);
         // TODO: handle ctrl+click situations
         mapSelectListener = map.addListener('click', (event) => {
@@ -79,8 +79,8 @@ function createAndDisplayJoinedData(
               event.latLng.lng(), event.latLng.lat(), map, snapAndDamageAsset,
               table, tableData);
         });
-        // map.data covers clicks to map areas underneath map.data so we need
-        // two listeners
+        // map.data covers clicks to map areas underneath map.data so we need two
+        // listeners
         featureSelectListener = map.data.addListener('click', (event) => {
           clickFeature(
               event.latLng.lng(), event.latLng.lat(), map, snapAndDamageAsset,

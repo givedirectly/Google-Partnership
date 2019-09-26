@@ -115,5 +115,6 @@ function drawPointAndPrepareForNext(x, y) {
   // cy.get('.map').trigger('mousemove', {clientX: clientX, clientY: clientY});
   cy.get('.map').click(x, y);
   // Ensure that element from click is present.
-  cy.get('div[style*="left: ' + (x - 325) + 'px; top: ' + (y - 245) + 'px;"');
+  cy.get('div[style*="left: ' + (x - 325) + 'px; top: ' + (y - 245) + 'px;"',
+      {timeout: 2000});
 }
