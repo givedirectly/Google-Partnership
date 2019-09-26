@@ -17,7 +17,7 @@ describe('Integration tests for drawing polygons', () => {
     cy.get('div[style*="left: -100px; top: -95px;"');
   });
 
-  it('Clicks on a region and verifies notes pop up', () => {
+  it('Clicks on a region and verifies notes pop up and deletes polygon locally', () => {
     cy.visit(host);
     cy.awaitLoad();
 
