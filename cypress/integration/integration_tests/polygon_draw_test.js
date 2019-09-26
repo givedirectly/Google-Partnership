@@ -1,7 +1,47 @@
+// Call this firebaseLibrary to avoid conflicting with mock firebase defined in
+// commands.js.
+const firebaseLibrary = require('firebase');
+
 const hackyWaitTime = 1000;
 
+// TODO(janakr): do test authentication separately.
+const firebaseConfig = {
+  apiKey: 'AIzaSyAbNHe9B0Wo4MV8rm3qEdy8QzFeFWZERHs',
+  authDomain: 'givedirectly.firebaseapp.com',
+  databaseURL: 'https://givedirectly.firebaseio.com',
+  projectId: 'givedirectly',
+  storageBucket: '',
+  messagingSenderId: '634162034024',
+  appId: '1:634162034024:web:c5f5b82327ba72f46d52dd',
+};
+
+firebaseLibrary.initializeApp(firebaseConfig);
+const db = firebaseLibrary.firestore();
+
+const userShapes = db.collection('usershapes');
+
 describe('Integration tests for drawing polygons', () => {
-  xit('Draws a polygon and deletes it', () => {
+  // Delete all test-defined polygons, identified by their starting point.
+  const deleteAllRegionsDrawnByTest = () => {
+    cy.then(() => {
+      const promisesToDelete = [];
+      userShapes.get()
+          .then((querySnapshot) => {
+            querySnapshot.forEach((userDefinedRegion) => {
+              const storedGeometry = userDefinedRegion.get('geometry');
+              if (storedGeometry[0].latitude === 29.711705459174475) {
+                promisesToDelete.push(userShapes.doc(userDefinedRegion.id).delete());
+              }
+            });
+          })
+          .then(() => Promise.all(promisesToDelete));
+    });
+  };
+  beforeEach(deleteAllRegionsDrawnByTest);
+
+  afterEach(deleteAllRegionsDrawnByTest);
+
+  it('Draws a polygon and deletes it', () => {
     // Accept confirmation when it happens.
     cy.on('window:confirm', () => true);
     drawPolygonAndClickOnItAndPressDelete();
@@ -9,15 +49,40 @@ describe('Integration tests for drawing polygons', () => {
     cy.get('div[style*="left: -100px; top: -95px;"').should('not.exist');
   });
 
-  it('Draws a polygon and almost deletes it', () => {
-    // Reject confirmation when it happens.
-    cy.on('window:confirm', () => false);
+  it('Draws a polygon and almost deletes it, then deletes', () => {
+    // Reject confirmation when first happens, then accept it later.
+    let confirmValue = false;
+    cy.on('window:confirm', () => confirmValue);
     drawPolygonAndClickOnItAndPressDelete();
     // Assert still exists.
     cy.get('div[style*="left: -100px; top: -95px;"');
+    // TODO(#18): wait for a notification that all writes have completed instead
+    // of a hardcoded wait.
+    cy.wait(1000);
+    cy.visit(host);
+    cy.awaitLoad();
+    // Polygon is still there.
+    cy.get('div[style*="left: -100px; top: -95px;"');
+    clickAndPressDelete();
+    // Polygon is still there.
+    // Accept confirmation when it happens.
+    cy.get('div[style*="left: -100px; top: -95px;"')
+        .then(() => confirmValue = true);
+    clickAndPressDelete();
+    // Polygon should be gone.
+    // TODO(janakr): the delete above moves the viewport so that this div
+    // selection never succeeds, even if the polygon is still there. Do a better
+    // test?
+    cy.get('div[style*="left: -100px; top: -95px;"').should('not.exist');
+    cy.wait(1000);
+    cy.visit(host);
+    cy.awaitLoad();
+    // Polygon is gone.
+    cy.get('div[style*="left: -100px; top: -95px;"').should('not.exist');
+
   });
 
-  xit('Clicks on region and verifies notes pop up', () => {
+  it('Clicks on region and verifies notes pop up', () => {
     cy.visit(host);
     cy.awaitLoad();
 
@@ -65,6 +130,10 @@ function drawPolygonAndClickOnItAndPressDelete() {
   drawPointAndPrepareForNext(50, 250);
   const handButton = cy.get('[title="Stop drawing"]');
   handButton.click();
+  clickAndPressDelete();
+}
+
+function clickAndPressDelete() {
   // Check draggable edge present, and click it to trigger pop-up.
   cy.get('div[style*="left: -100px; top: -95px;"').click();
   pressDelete();
@@ -72,7 +141,7 @@ function drawPolygonAndClickOnItAndPressDelete() {
 
 /** Press the delete button of a visible pop-up. */
 function pressDelete() {
-  cy.get('#mapContainer').contains('delete').click();
+  cy.get('#mapContainer').contains('delete').trigger('click');
 }
 
 /**

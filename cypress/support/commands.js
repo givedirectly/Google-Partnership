@@ -1,5 +1,9 @@
 const LOADING_TIMEOUT = 20000;
 
+const fireBaseCollection = {};
+const firebaseDb = {collection: (name) => fireBaseCollection};
+global.firebase = {initializeApp: () => {}, firestore: () => firebaseDb};
+
 /**
  * Awaits loading. If no divId is provided, then a full page load is awaited.
  *

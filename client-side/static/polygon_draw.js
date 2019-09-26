@@ -19,14 +19,6 @@ const firebaseConfig = {
 const polygonData = new Map();
 
 class PolygonData {
-  static State = {
-    SAVED: 0,
-  WRITING: 1,
-    QUEUED_WRITE: 2,
-};
-
-  static pendingWriteCount = 0;
-
   constructor(id, notes) {
     this.id = id;
     this.notes = notes;
@@ -86,10 +78,19 @@ class PolygonData {
   }
 }
 
+// Inline static variables not supported in Cypress browser.
+PolygonData.State = {
+  SAVED: 0,
+WRITING: 1,
+  QUEUED_WRITE: 2,
+};
+
+PolygonData.pendingWriteCount = 0;
+
+
 // TODO(janakr): should this be initialized somewhere better?
 // Warning before leaving the page.
-// window.onbeforeunload = () => {return PolygonData.pendingWriteCount > 0 ? true : null};
-window.onbeforeunload = () => {return true;};
+window.onbeforeunload = () => {return PolygonData.pendingWriteCount > 0 ? true : null};
 
 // TODO(janakr): maybe not best practice to initialize outside of a function?
 // But doesn't take much/any time.
