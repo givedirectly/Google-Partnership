@@ -44,6 +44,7 @@ describe('Integration tests for drawing polygons', () => {
   });
 });
 
+/** Visit page, draw a new polygon on the map, and press its delete button. */
 function drawPolygonAndClickOnItAndPressDelete() {
   cy.visit(host);
   const polygonButton = cy.get('[title="Draw a shape"]');
@@ -75,6 +76,7 @@ function drawPolygonAndClickOnItAndPressDelete() {
   pressDelete();
 }
 
+/** Press the delete button of a visible pop-up. */
 function pressDelete() {
   cy.get('#mapContainer').contains('delete').click();
 }
