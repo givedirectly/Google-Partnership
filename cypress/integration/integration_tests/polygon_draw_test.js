@@ -2,92 +2,17 @@ const hackyWaitTime = 1000;
 
 describe('Integration tests for drawing polygons', () => {
   it('Draws a polygon and deletes it', () => {
-    cy.visit(host);
-    const polygonButton = cy.get('[title="Draw a shape"]');
-    polygonButton.click();
-    // Wait for polygon selection overlay to appear.
-    // Fragile, but ensures that "clicking" layer is present.
-    // Explanation of string: 'div' means we're searching for elements that are
-    // divs. The [] indicate we're searching for an attribute of these elements.
-    // 'style' means that we are inspecting the style attribute in particular.
-    // The '*=' means we're searching for a substring, as opposed to the full
-    // attribute (contrast the 'title=' above). The remainder of the string was
-    // derived by inspecting the page after starting to draw a polygon.
-    cy.get(
-        'div[style*="cursor: url(\\"https://maps.gstatic.com/mapfiles/crosshair.cur\\") 7 7, crosshair;"]');
-    drawPointAndPrepareForNext(50, 250);
-    // TODO(janakr): test seems to fail reliably on command line without these
-    // and pass with it. Figure out what to actually test for on the page and
-    // remove these waits.
-    cy.wait(hackyWaitTime);
-    drawPointAndPrepareForNext(400, 50);
-    cy.wait(hackyWaitTime);
-    drawPointAndPrepareForNext(450, 150);
-    cy.wait(hackyWaitTime);
-    drawPointAndPrepareForNext(50, 250);
-    const handButton = cy.get('[title="Stop drawing"]');
-    handButton.click();
-    // Check draggable edge present, and click it to trigger pop-up.
-    cy.get('div[style*="left: -100px; top: -95px;"').click();
     // Accept confirmation when it happens.
     cy.on('window:confirm', () => true);
-    // Make sure button exists and is findable by Cypress.
-    cy.get('#mapContainer').find('button');
-    let foundElements = 0;
-    cy.get('#mapContainer')
-        .find('button')
-        .each(($elt) => {
-          if ($elt.html() === 'delete') {
-            expect(foundElements++).to.equal(0);
-            $elt.trigger('click');
-          }
-        })
-        .then(() => expect(foundElements).to.equal(1));
+    drawPolygonAndClickOnItAndPressDelete();
+    // Polygon should be gone.
     cy.get('div[style*="left: -100px; top: -95px;"').should('not.exist');
   });
 
   it('Draws a polygon and almost deletes it', () => {
-    cy.visit(host);
-    const polygonButton = cy.get('[title="Draw a shape"]');
-    polygonButton.click();
-    // Wait for polygon selection overlay to appear.
-    // Fragile, but ensures that "clicking" layer is present.
-    // Explanation of string: 'div' means we're searching for elements that are
-    // divs. The [] indicate we're searching for an attribute of these elements.
-    // 'style' means that we are inspecting the style attribute in particular.
-    // The '*=' means we're searching for a substring, as opposed to the full
-    // attribute (contrast the 'title=' above). The remainder of the string was
-    // derived by inspecting the page after starting to draw a polygon.
-    cy.get(
-        'div[style*="cursor: url(\\"https://maps.gstatic.com/mapfiles/crosshair.cur\\") 7 7, crosshair;"]');
-    drawPointAndPrepareForNext(50, 250);
-    // TODO(janakr): test seems to fail reliably on command line without these
-    // and pass with it. Figure out what to actually test for on the page and
-    // remove these waits.
-    cy.wait(hackyWaitTime);
-    drawPointAndPrepareForNext(400, 50);
-    cy.wait(hackyWaitTime);
-    drawPointAndPrepareForNext(450, 150);
-    cy.wait(hackyWaitTime);
-    drawPointAndPrepareForNext(50, 250);
-    const handButton = cy.get('[title="Stop drawing"]');
-    handButton.click();
-    // Check draggable edge present, and click it to trigger pop-up.
-    cy.get('div[style*="left: -100px; top: -95px;"').click();
     // Reject confirmation when it happens.
     cy.on('window:confirm', () => false);
-    // Make sure button exists and is findable by Cypress.
-    cy.get('#mapContainer').find('button');
-    let foundElements = 0;
-    cy.get('#mapContainer')
-        .find('button')
-        .each(($elt) => {
-          if ($elt.html() === 'delete') {
-            expect(foundElements++).to.equal(0);
-            $elt.trigger('click');
-          }
-        })
-        .then(() => expect(foundElements).to.equal(1));
+    drawPolygonAndClickOnItAndPressDelete();
     // Assert still exists.
     cy.get('div[style*="left: -100px; top: -95px;"');
   });
@@ -110,8 +35,49 @@ describe('Integration tests for drawing polygons', () => {
     assertExactlyPopUps(0);
     cy.get('.map').click(447, 250);
     cy.get('.map').contains('second notes');
+    // Accept confirmation when it happens.
+    cy.on('window:confirm', () => true);
+    pressDelete();
+    cy.get('.map').click(447, 250);
+    // Make sure that no pop-up, implying polygon is gone.
+    assertExactlyPopUps(0);
   });
 });
+
+function drawPolygonAndClickOnItAndPressDelete() {
+  cy.visit(host);
+  const polygonButton = cy.get('[title="Draw a shape"]');
+  polygonButton.click();
+  // Wait for polygon selection overlay to appear.
+  // Fragile, but ensures that "clicking" layer is present.
+  // Explanation of string: 'div' means we're searching for elements that are
+  // divs. The [] indicate we're searching for an attribute of these elements.
+  // 'style' means that we are inspecting the style attribute in particular.
+  // The '*=' means we're searching for a substring, as opposed to the full
+  // attribute (contrast the 'title=' above). The remainder of the string was
+  // derived by inspecting the page after starting to draw a polygon.
+  cy.get(
+      'div[style*="cursor: url(\\"https://maps.gstatic.com/mapfiles/crosshair.cur\\") 7 7, crosshair;"]');
+  drawPointAndPrepareForNext(50, 250);
+  // TODO(janakr): test seems to fail reliably on command line without these
+  // and pass with it. Figure out what to actually test for on the page and
+  // remove these waits.
+  cy.wait(hackyWaitTime);
+  drawPointAndPrepareForNext(400, 50);
+  cy.wait(hackyWaitTime);
+  drawPointAndPrepareForNext(450, 150);
+  cy.wait(hackyWaitTime);
+  drawPointAndPrepareForNext(50, 250);
+  const handButton = cy.get('[title="Stop drawing"]');
+  handButton.click();
+  // Check draggable edge present, and click it to trigger pop-up.
+  cy.get('div[style*="left: -100px; top: -95px;"').click();
+  pressDelete();
+}
+
+function pressDelete() {
+  cy.get('#mapContainer').contains('delete').click();
+}
 
 /**
  * Asserts that a div with innerHtml 'second notes' is found exactly
