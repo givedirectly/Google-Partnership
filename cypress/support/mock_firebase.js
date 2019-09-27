@@ -1,8 +1,13 @@
 export {firebaseCollection as default};
 
 export const firebaseCollection = {};
-const firebaseDb = {collection: (name) => firebaseCollection};
-const firebase = {initializeApp: () => {}, firestore: () => firebaseDb};
+const firebaseDb = {
+  collection: (name) => firebaseCollection
+};
+const firebase = {
+  initializeApp: () => {},
+  firestore: () => firebaseDb
+};
 
 global.firebase = firebase;
 

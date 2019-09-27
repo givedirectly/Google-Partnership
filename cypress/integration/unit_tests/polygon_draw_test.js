@@ -1,5 +1,5 @@
-import {firebaseCollection} from '../../support/mock_firebase';
 import {PolygonData} from '../../../client-side/static/polygon_draw';
+import {firebaseCollection} from '../../support/mock_firebase';
 
 /**
  * Fake of the Promise class. Needed because Promise executes async, so if we
@@ -23,7 +23,9 @@ describe('Unit test for PolygonData', () => {
     const records = [];
     firebaseCollection.add = recordRecord(records, {id: 'new_id'});
     underTest.update(mockPolygon);
-    expect(records).to.eql([{geometry: [new firebase.firestore.GeoPoint(0, 1)], notes: 'my notes'}]);
+    expect(records).to.eql([
+      {geometry: [new firebase.firestore.GeoPoint(0, 1)], notes: 'my notes'}
+    ]);
     expect(underTest.id).to.eql('new_id');
     expect(PolygonData.pendingWriteCount).to.eql(0);
   });
@@ -35,11 +37,15 @@ describe('Unit test for PolygonData', () => {
     const ids = [];
     firebaseCollection.doc = (id) => {
       ids.push(id);
-      return {set: recordRecord(records, null)}
+      return {
+        set: recordRecord(records, null)
+      }
     };
     underTest.update(mockPolygon);
     expect(ids).to.eql(['my_id']);
-    expect(records).to.eql([{geometry: [new firebase.firestore.GeoPoint(0, 1)], notes: 'my notes'}]);
+    expect(records).to.eql([
+      {geometry: [new firebase.firestore.GeoPoint(0, 1)], notes: 'my notes'}
+    ]);
     expect(underTest.id).to.eql('my_id');
     expect(PolygonData.pendingWriteCount).to.eql(0);
   });
@@ -52,7 +58,9 @@ describe('Unit test for PolygonData', () => {
     const ids = [];
     firebaseCollection.doc = (id) => {
       ids.push(id);
-      return {delete: () => new FakePromise(undefined)}
+      return {
+        delete: () => new FakePromise(undefined)
+      }
     };
     underTest.update(mockPolygon);
     expect(ids).to.eql(['my_id']);
@@ -84,7 +92,10 @@ describe('Unit test for PolygonData', () => {
     underTest.update(mockPolygon);
     expect(ids).to.eql(['my_id', 'my_id']);
     const geometry = [new firebase.firestore.GeoPoint(0, 1)];
-    expect(records).to.eql([{geometry: geometry, notes: 'my notes'}, {geometry: geometry, notes: 'racing notes'}]);
+    expect(records).to.eql([
+      {geometry: geometry, notes: 'my notes'},
+      {geometry: geometry, notes: 'racing notes'}
+    ]);
     expect(underTest.id).to.eql('my_id');
     expect(PolygonData.pendingWriteCount).to.eql(0);
   });
@@ -105,4 +116,3 @@ describe('Unit test for PolygonData', () => {
     }
   }
 });
-

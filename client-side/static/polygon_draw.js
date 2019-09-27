@@ -1,9 +1,9 @@
+import createError from './create_error.js';
 import {mapContainerId} from './dom_constants.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 
 // PolygonData is only for testing.
-export {processUserRegions, PolygonData, setUpPolygonDrawing as default};
-import createError from './create_error.js';
+export {PolygonData, processUserRegions, setUpPolygonDrawing as default};
 
 // TODO(#13): use proper keys associated to GiveDirectly account,
 // and lock down security (right now database is global read-write).
@@ -65,7 +65,9 @@ class PolygonData {
       }
       // Nothing more needs to be done for this element because it is
       // unreachable and about to be GC'ed.
-      userShapes.doc(this.id).delete().then(() => PolygonData.pendingWriteCount--)
+      userShapes.doc(this.id)
+          .delete()
+          .then(() => PolygonData.pendingWriteCount--)
           .catch(createError('error deleting ' + this));
       return;
     }
@@ -87,15 +89,17 @@ class PolygonData {
       }
     };
     if (this.id) {
-      userShapes.doc(this.id).set(record).then(finishWriteAndMaybeWriteAgain)
+      userShapes.doc(this.id)
+          .set(record)
+          .then(finishWriteAndMaybeWriteAgain)
           .catch(createError('error updating ' + this));
     } else {
-      userShapes.add(record).then(
-          (docRef) => {
+      userShapes.add(record)
+          .then((docRef) => {
             this.id = docRef.id;
             finishWriteAndMaybeWriteAgain();
-          }
-          )          .catch(createError('error adding ' + this));
+          })
+          .catch(createError('error adding ' + this));
     }
   }
 }
@@ -111,7 +115,9 @@ PolygonData.pendingWriteCount = 0;
 
 // TODO(janakr): should this be initialized somewhere better?
 // Warning before leaving the page.
-window.onbeforeunload = () => {return PolygonData.pendingWriteCount > 0 ? true : null};
+window.onbeforeunload = () => {
+  return PolygonData.pendingWriteCount > 0 ? true : null
+};
 
 // TODO(janakr): maybe not best practice to initialize outside of a function?
 // But doesn't take much/any time.
@@ -139,14 +145,13 @@ function setUpPolygonDrawing(map) {
     polygonOptions: appearance,
   });
 
-  drawingManager.addListener(
-      'overlaycomplete', (event) => {
-        const polygon = event.overlay;
-        const data = new PolygonData(null, '');
-        polygonData.set(polygon, data);
-        addPopUpListener(polygon, map);
-        data.update(polygon, '');
-      });
+  drawingManager.addListener('overlaycomplete', (event) => {
+    const polygon = event.overlay;
+    const data = new PolygonData(null, '');
+    polygonData.set(polygon, data);
+    addPopUpListener(polygon, map);
+    data.update(polygon, '');
+  });
 
   drawingManager.setMap(map);
 }
@@ -160,8 +165,7 @@ function setUpPolygonDrawing(map) {
  */
 function processUserRegions(map) {
   addLoadingElement(mapContainerId);
-  userShapes
-      .get()
+  userShapes.get()
       .then(
           (querySnapshot) => drawRegionsFromFirestoreQuery(querySnapshot, map))
       .catch();
@@ -181,7 +185,8 @@ function addPopUpListener(polygon, map) {
     // click, and the cursor doesn't become a "clicking hand" over this shape.
     google.maps.event.removeListener(listener);
     const infoWindow = new google.maps.InfoWindow();
-    infoWindow.setContent(createInfoWindowHtml(polygon, polygonData.get(polygon).notes, infoWindow));
+    infoWindow.setContent(createInfoWindowHtml(
+        polygon, polygonData.get(polygon).notes, infoWindow));
     // TODO(janakr): is there a better place to pop this window up?
     const popupCoords = polygon.getPath().getAt(0);
     infoWindow.setPosition(popupCoords);
@@ -236,7 +241,9 @@ function drawRegionsFromFirestoreQuery(querySnapshot, map) {
     const properties = Object.assign({}, appearance);
     properties.paths = coordinates;
     const polygon = new google.maps.Polygon(properties);
-    polygonData.set(polygon, new PolygonData(userDefinedRegion.id, userDefinedRegion.get('notes')));
+    polygonData.set(
+        polygon,
+        new PolygonData(userDefinedRegion.id, userDefinedRegion.get('notes')));
     addPopUpListener(polygon, map);
     polygon.setMap(map);
   });

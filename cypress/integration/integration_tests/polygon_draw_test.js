@@ -30,7 +30,8 @@ describe('Integration tests for drawing polygons', () => {
             querySnapshot.forEach((userDefinedRegion) => {
               const storedGeometry = userDefinedRegion.get('geometry');
               if (storedGeometry[0].latitude === 29.711705459174475) {
-                promisesToDelete.push(userShapes.doc(userDefinedRegion.id).delete());
+                promisesToDelete.push(
+                    userShapes.doc(userDefinedRegion.id).delete());
               }
             });
           })
@@ -79,7 +80,6 @@ describe('Integration tests for drawing polygons', () => {
     cy.awaitLoad();
     // Polygon is gone.
     cy.get('div[style*="left: -100px; top: -95px;"').should('not.exist');
-
   });
 
   it('Clicks on region and verifies notes pop up', () => {
@@ -178,6 +178,7 @@ function drawPointAndPrepareForNext(x, y) {
   // cy.get('.map').trigger('mousemove', {clientX: clientX, clientY: clientY});
   cy.get('.map').click(x, y);
   // Ensure that element from click is present.
-  cy.get('div[style*="left: ' + (x - 325) + 'px; top: ' + (y - 245) + 'px;"',
+  cy.get(
+      'div[style*="left: ' + (x - 325) + 'px; top: ' + (y - 245) + 'px;"',
       {timeout: 2000});
 }
