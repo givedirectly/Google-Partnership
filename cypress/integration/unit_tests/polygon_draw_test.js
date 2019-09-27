@@ -19,7 +19,7 @@ class FakePromise {
    * Mirrors Promise.then. Calls func with this.thenArg.
    *
    * @param {Function} func Function to invoke.
-   * @returns {Object} dummy object with dummy catch method.
+   * @return {Object} dummy object with dummy catch method.
    */
   then(func) {
     func(this.thenArg);
@@ -35,7 +35,7 @@ describe('Unit test for PolygonData', () => {
     firebaseCollection.add = recordRecord(records, {id: 'new_id'});
     underTest.update(mockPolygon);
     expect(records).to.eql([
-      {geometry: [new firebase.firestore.GeoPoint(0, 1)], notes: 'my notes'}
+      {geometry: [new firebase.firestore.GeoPoint(0, 1)], notes: 'my notes',}
     ]);
     expect(underTest.id).to.eql('new_id');
     expect(PolygonData.pendingWriteCount).to.eql(0);
@@ -48,9 +48,7 @@ describe('Unit test for PolygonData', () => {
     const ids = [];
     firebaseCollection.doc = (id) => {
       ids.push(id);
-      return {
-        set: recordRecord(records, null)
-      }
+      return {set: recordRecord(records, null)};
     };
     underTest.update(mockPolygon);
     expect(ids).to.eql(['my_id']);
