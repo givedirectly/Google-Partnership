@@ -119,8 +119,8 @@ describe('Unit test for PolygonData', () => {
   });
 
   /**
-   * Make an approximation of a google.maps.Polygon with a single-point path and a
-   * "true" getMap return value.
+   * Make an approximation of a google.maps.Polygon with a single-point path and
+   * a "true" getMap return value.
    */
   function makeMockPolygon() {
     const mockPolygon = {};
@@ -131,9 +131,9 @@ describe('Unit test for PolygonData', () => {
   }
 
   /**
-   * Returns a function that will record a given record to records and then return
-   * a FakePromise that will pass retval to its function argument. It will also
-   * assert that there is 1 pending write.
+   * Returns a function that will record a given record to records and then
+   * return a FakePromise that will pass retval to its function argument. It
+   * will also assert that there is 1 pending write.
    *
    * @param {Array} records
    * @param {Object} retval
