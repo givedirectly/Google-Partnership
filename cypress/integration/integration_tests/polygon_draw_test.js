@@ -1,4 +1,5 @@
 const hackyWaitTime = 1000;
+const notes = 'Sphinx of black quartz, judge my vow';
 
 describe('Integration tests for drawing polygons', () => {
   it('Draws a polygon and deletes it', () => {
@@ -23,9 +24,9 @@ describe('Integration tests for drawing polygons', () => {
     drawPolygonAndClickOnIt();
     pressPolygonButton('edit');
     cy.get('[id="notes"]').clear();
-    cy.get('[id="notes"]').type('Sphinx of black quartz, judge my vow');
+    cy.get('[id="notes"]').type(notes);
     pressPolygonButton('save');
-    cy.get('.map').contains('Sphinx of black quartz, judge my vow');
+    cy.get('.map').contains(notes);
   });
 
   it('Clicks on a region and edits notes locally', () => {
@@ -36,9 +37,9 @@ describe('Integration tests for drawing polygons', () => {
     cy.get('.map').contains('second notes');
     pressPolygonButton('edit');
     cy.get('[id="notes"]').clear();
-    cy.get('[id="notes"]').type('Sphinx of black quartz, judge my vow');
+    cy.get('[id="notes"]').type(notes);
     pressPolygonButton('save');
-    cy.get('.map').contains('Sphinx of black quartz, judge my vow');
+    cy.get('.map').contains(notes);
   });
 
   it('Clicks on region and deletes polygon locally', () => {

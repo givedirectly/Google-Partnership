@@ -19,7 +19,7 @@ const appearance = {
   fillColor: '#FF0000',
   strokeColor: '#FF0000',
   // TODO(#18): make editable by choosing polygon and clicking button.
-  editable: true,
+  editable: false,
 };
 
 /**
@@ -109,6 +109,8 @@ function createInfoWindowHtml(polygon, notes, infoWindow) {
   const editButton = document.createElement('button');
   editButton.innerHTML = 'edit';
   editButton.onclick = () => {
+    polygon.setEditable(true);
+
     const currentNotes = notesDiv.innerText;
 
     outerDiv.removeChild(notesDiv);
@@ -121,6 +123,7 @@ function createInfoWindowHtml(polygon, notes, infoWindow) {
     const saveButton = document.createElement('button');
     saveButton.innerHTML = 'save';
     saveButton.onclick = () => {
+      polygon.setEditable(false);
       infoWindow.setContent(
           createInfoWindowHtml(polygon, notesForm.value, infoWindow));
     };
