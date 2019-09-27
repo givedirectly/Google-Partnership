@@ -133,6 +133,7 @@ function drawPolygonAndClickOnItAndPressDelete() {
   clickAndPressDelete();
 }
 
+/** Click on the standard test-drawn region to bring up pop up, then delete. */
 function clickAndPressDelete() {
   // Check draggable edge present, and click it to trigger pop-up.
   cy.get('div[style*="left: -100px; top: -95px;"').click();
