@@ -53,7 +53,7 @@ describe('Integration tests for drawing polygons', () => {
 
   it('Clicks on a polygon and edits notes locally', () => {
     cy.visit(host);
-    cy.wait(hackyWaitTime);
+    cy.awaitLoad();
 
     clickInsideKnownRegion();
     cy.get('.map').contains('second notes');
@@ -66,8 +66,7 @@ describe('Integration tests for drawing polygons', () => {
 
   it('Clicks on polygon and deletes polygon locally', () => {
     cy.visit(host);
-    cy.wait(hackyWaitTime);
-
+    cy.awaitLoad();
     // Experimented to find point on map within second triangle.
     clickInsideKnownRegion();
     cy.get('.map').contains('second notes');
@@ -169,7 +168,4 @@ function drawPointAndPrepareForNext(x, y) {
   // const clientY = y + 81;
   // cy.get('.map').trigger('mousemove', {clientX: clientX, clientY: clientY});
   cy.get('.map').click(x, y);
-  // Ensure that element from click is present.
-  // cy.get('div[style*="left: ' + (x - 325) + 'px; top: ' + (y - 245) + 'px;"',
-  //     {timeout: 2000});
 }
