@@ -34,9 +34,10 @@ describe('Unit test for PolygonData', () => {
     const records = [];
     firebaseCollection.add = recordRecord(records, {id: 'new_id'});
     underTest.update(mockPolygon);
-    expect(records).to.eql([
-      {geometry: [new firebase.firestore.GeoPoint(0, 1)], notes: 'my notes',}
-    ]);
+    expect(records).to.eql([{
+      geometry: [new firebase.firestore.GeoPoint(0, 1)],
+      notes: 'my notes',
+    }]);
     expect(underTest.id).to.eql('new_id');
     expect(PolygonData.pendingWriteCount).to.eql(0);
   });
