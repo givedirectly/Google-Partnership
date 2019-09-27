@@ -2,7 +2,6 @@
 import * as LayerUtil from '../../../client-side/static/layer_util.js';
 import * as Run from '../../../client-side/static/run.js';
 import {createToggles, toggles} from '../../../client-side/static/update';
-import {firebaseCollection} from '../../support/mock_firebase';
 
 let lastPassedPovertyThreshold;
 let lastPassedDamageThreshold;
