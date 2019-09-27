@@ -72,7 +72,7 @@ class PolygonData {
       return;
     }
     const geometry = [];
-    polygon.getPath().forEach((elt) => {geometry.push(latLngToGeoPoint(elt))});
+    polygon.getPath().forEach((elt) => geometry.push(latLngToGeoPoint(elt)));
     const record = {geometry: geometry, notes: this.notes};
     const finishWriteAndMaybeWriteAgain = () => {
       PolygonData.pendingWriteCount--;
