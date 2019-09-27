@@ -6,10 +6,21 @@ import {firebaseCollection} from '../../support/mock_firebase';
  * use real Promises, we lose control of execution order in the test.
  */
 class FakePromise {
+  /**
+   * Constructor.
+   *
+   * @param {Object} thenArg Argument to invoke then with.
+   */
   constructor(thenArg) {
     this.thenArg = thenArg;
   }
 
+  /**
+   * Mirrors Promise.then. Calls func with this.thenArg.
+   *
+   * @param {Function} func Function to invoke.
+   * @returns {Object} dummy object with dummy catch method.
+   */
   then(func) {
     func(this.thenArg);
     return {catch: () => undefined};
