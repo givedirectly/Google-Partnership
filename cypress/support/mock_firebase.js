@@ -2,16 +2,23 @@ export {firebaseCollection as default};
 
 export const firebaseCollection = {};
 const firebaseDb = {
-  collection: (name) => firebaseCollection
+  collection: (name) => firebaseCollection,
 };
 const firebase = {
   initializeApp: () => {},
-  firestore: () => firebaseDb
+  firestore: () => firebaseDb,
 };
 
 global.firebase = firebase;
 
+/** Mock firebase.firestore.GeoPoint class. */
 class GeoPoint {
+  /**
+   * Constructor.
+   *
+   * @param {Number} latitude
+   * @param {Number} longitude
+   */
   constructor(latitude, longitude) {
     this.latitude = latitude;
     this.longitude = longitude;

@@ -121,6 +121,8 @@ describe('Unit test for PolygonData', () => {
   /**
    * Make an approximation of a google.maps.Polygon with a single-point path and
    * a "true" getMap return value.
+   *
+   * @return {Object} fake google.maps.Polygon.
    */
   function makeMockPolygon() {
     const mockPolygon = {};
@@ -144,6 +146,6 @@ describe('Unit test for PolygonData', () => {
       expect(PolygonData.pendingWriteCount).to.eql(1);
       records.push(record);
       return new FakePromise(retval);
-    }
+    };
   }
 });
