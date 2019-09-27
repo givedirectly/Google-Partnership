@@ -21,7 +21,7 @@ describe('Integration tests for drawing polygons', () => {
     cy.get('.map').contains(notes);
   });
 
-  it("Draws a polygon and checks its reshapable", () => {
+  it('Draws a polygon and checks its reshapable', () => {
     drawPolygonAndClickOnIt();
     cy.get('div[style*="left: 15px; top: -95px;"').should('not.exist');
     pressPolygonButton('edit');
