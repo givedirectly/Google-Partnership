@@ -29,6 +29,7 @@ module.exports = {
     'indent': ['error', 2,
     {
       'CallExpression': {'arguments': 2},
+      'SwitchCase': 2,
       'MemberExpression': 2,
       'FunctionDeclaration': {'parameters': 2},
       'ignoredNodes': [
