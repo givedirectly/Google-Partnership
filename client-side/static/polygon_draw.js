@@ -122,7 +122,7 @@ PolygonData.pendingWriteCount = 0;
 // TODO(janakr): should this be initialized somewhere better?
 // Warning before leaving the page.
 window.onbeforeunload = () => {
-  return PolygonData.pendingWriteCount > 0 ? true : null
+  return PolygonData.pendingWriteCount > 0 ? true : null;
 };
 
 // TODO(janakr): maybe not best practice to initialize outside of a function?
@@ -266,6 +266,12 @@ function geoPointToLatLng(geopoint) {
   return {lat: geopoint.latitude, lng: geopoint.longitude};
 }
 
+/**
+ * Converts Google Maps LatLng object into Firestore geopoint.
+ *
+ * @param {google.maps.LatLng} latLng
+ * @return {firebase.firestore.GeoPoint}
+ */
 function latLngToGeoPoint(latLng) {
   return new firebase.firestore.GeoPoint(latLng.lat(), latLng.lng());
 }
