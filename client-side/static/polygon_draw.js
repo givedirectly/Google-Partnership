@@ -87,7 +87,8 @@ class PolygonData {
         case PolygonData.State.SAVED:
           console.error('Unexpected polygon state:' + this);
       }
-    } if (this.id) {
+    };
+    if (this.id) {
       userShapes.doc(this.id)
           .set(record)
           .then(finishWriteAndMaybeWriteAgain)

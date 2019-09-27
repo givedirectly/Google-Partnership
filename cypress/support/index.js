@@ -16,6 +16,7 @@
 // Import commands.js using ES2015 syntax:
 import './commands';
 import './mock_ee';
+import './mock_firebase';
 
 // Alternatively you can use CommonJS syntax:
 // require('./commands')

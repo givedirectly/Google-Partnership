@@ -1,6 +1,4 @@
-export {firebaseCollection as default};
-
-export const firebaseCollection = {};
+const firebaseCollection = {};
 const firebaseDb = {
   collection: (name) => firebaseCollection,
 };
