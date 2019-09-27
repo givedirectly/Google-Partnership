@@ -28,6 +28,12 @@ class FakePromise {
 }
 
 describe('Unit test for PolygonData', () => {
+  beforeEach(() => {
+    for (let member in firebaseCollection) {
+      delete firebaseCollection[member];
+    }
+  });
+
   it('Add shape', () => {
     const underTest = new PolygonData(null, 'my notes');
     const mockPolygon = makeMockPolygon();
@@ -53,9 +59,10 @@ describe('Unit test for PolygonData', () => {
     };
     underTest.update(mockPolygon);
     expect(ids).to.eql(['my_id']);
-    expect(records).to.eql([
-      {geometry: [new firebase.firestore.GeoPoint(0, 1)], notes: 'my notes'}
-    ]);
+    expect(records).to.eql([{
+      geometry: [new firebase.firestore.GeoPoint(0, 1)],
+      notes: 'my notes',
+    }]);
     expect(underTest.id).to.eql('my_id');
     expect(PolygonData.pendingWriteCount).to.eql(0);
   });
