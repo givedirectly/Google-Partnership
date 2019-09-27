@@ -29,7 +29,7 @@ class FakePromise {
 
 describe('Unit test for PolygonData', () => {
   beforeEach(() => {
-    for (let prop in firebaseCollection) {
+    for (const prop in firebaseCollection) {
       if (firebaseCollection.hasOwnProperty(prop)) {
         delete firebaseCollection[prop];
       }
@@ -73,7 +73,6 @@ describe('Unit test for PolygonData', () => {
     const underTest = new PolygonData('my_id', 'my notes');
     const mockPolygon = makeMockPolygon();
     mockPolygon.getMap = () => null;
-    const records = [];
     const ids = [];
     firebaseCollection.doc = (id) => {
       ids.push(id);
