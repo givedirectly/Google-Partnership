@@ -29,8 +29,10 @@ class FakePromise {
 
 describe('Unit test for PolygonData', () => {
   beforeEach(() => {
-    for (let member in firebaseCollection) {
-      delete firebaseCollection[member];
+    for (let prop in firebaseCollection) {
+      if (firebaseCollection.hasOwnProperty(prop)) {
+        delete firebaseCollection[prop];
+      }
     }
   });
 
