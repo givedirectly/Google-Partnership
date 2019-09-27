@@ -2,16 +2,6 @@ const hackyWaitTime = 1000;
 const notes = 'Sphinx of black quartz, judge my vow';
 
 describe('Integration tests for drawing polygons', () => {
-  it('Draws a polygon and deletes it', () => {
-    // Accept confirmation when it happens.
-    cy.on('window:confirm', () => true);
-    drawPolygonAndClickOnIt();
-    pressPolygonButton('delete');
-    // Polygon should be gone.
-    cy.get('.map').click(200, 200);
-    assertExactlyPopUps(0);
-  });
-
   it('Draws a polygon and edits its notes', () => {
     drawPolygonAndClickOnIt();
     pressPolygonButton('edit');
@@ -21,12 +11,44 @@ describe('Integration tests for drawing polygons', () => {
     cy.get('.map').contains(notes);
   });
 
-  it('Draws a polygon and checks its reshapable', () => {
+  it('Draws a polygon and deletes it', () => {
+    // Accept confirmation when it happens.
+    cy.on('window:confirm', () => true);
+    drawPolygonAndClickOnIt();
+    pressPolygonButton('edit');
+    cy.get('[id="notes"]').type(notes);
+    pressPolygonButton('save');
+
+    pressPolygonButton('delete');
+    // Polygon should be gone.
+    cy.get('.map').click(160, 200);
+    // TODO(juliexxia): indicator
+    assertExactlyPopUps(0, notes);
+  });
+
+  it('Draws a polygon and almost deletes it', () => {
+    // Reject confirmation when it happens.
+    cy.on('window:confirm', () => false);
+    drawPolygonAndClickOnIt();
+    pressPolygonButton('edit');
+    cy.get('[id="notes"]').type(notes);
+    pressPolygonButton('save');
+
+    pressPolygonButton('delete');
+    // Assert still exists.
+    cy.get('.map').click(160, 200);
+    // TODO(juliexxia): indicator
+    assertExactlyPopUps(1, notes);
+  });
+
+  it('Draws a polygon and checks that it is reshapable', () => {
     drawPolygonAndClickOnIt();
     cy.get('div[style*="left: 15px; top: -95px;"').should('not.exist');
     pressPolygonButton('edit');
     // check for draggable edge (used Selector Playground to find one).
     cy.get('div[style*="left: 15px; top: -95px;"').click();
+    pressPolygonButton('save');
+    cy.get('div[style*="left: 15px; top: -95px;"').should('not.exist');
   });
 
   it('Clicks on a polygon and edits notes locally', () => {
@@ -54,10 +76,10 @@ describe('Integration tests for drawing polygons', () => {
     cy.wait(hackyWaitTime);
     clickInsideKnownRegion();
     // Make sure that even though we clicked twice, there's only one pop-up.
-    assertExactlyPopUps(1);
+    assertExactlyPopUps(1, 'second notes');
     // TODO(janakr): Why does Cypress claim to find two identical buttons?
     cy.get('button[title="Close"]').first().click();
-    assertExactlyPopUps(0);
+    assertExactlyPopUps(0, 'second notes');
     clickInsideKnownRegion();
     cy.get('.map').contains('second notes');
     // Accept confirmation when it happens.
@@ -65,33 +87,7 @@ describe('Integration tests for drawing polygons', () => {
     pressPolygonButton('delete');
     clickInsideKnownRegion();
     // Make sure that no pop-up, implying polygon is gone.
-    assertExactlyPopUps(0);
-  });
-
-  it('Clicks on polygon and almost deletes polygon locally', () => {
-    cy.visit(host);
-    cy.wait(hackyWaitTime);
-
-    // Experimented to find point on map within second triangle.
-    clickInsideKnownRegion();
-    cy.get('.map').contains('second notes');
-    // Click again. Wait a little bit because it seems like without the wait
-    // the page may not register the second click?
-    cy.wait(hackyWaitTime);
-    clickInsideKnownRegion();
-    // Make sure that even though we clicked twice, there's only one pop-up.
-    assertExactlyPopUps(1);
-    // TODO(janakr): Why does Cypress claim to find two identical buttons?
-    cy.get('button[title="Close"]').first().click();
-    assertExactlyPopUps(0);
-    clickInsideKnownRegion();
-    cy.get('.map').contains('second notes');
-    // Accept confirmation when it happens.
-    cy.on('window:confirm', () => false);
-    pressPolygonButton('delete');
-    clickInsideKnownRegion();
-    // Assert still exists.
-    assertExactlyPopUps(1);
+    assertExactlyPopUps(0, 'second notes');
   });
 });
 
@@ -127,8 +123,9 @@ function drawPolygonAndClickOnIt() {
   drawPointAndPrepareForNext(50, 250);
   const handButton = cy.get('[title="Stop drawing"]');
   handButton.click();
+  cy.wait(2000);
   // click to trigger pop up.
-  cy.get('.map').click(200, 200);
+  cy.get('.map').click(150, 200);
 }
 
 /**
@@ -145,14 +142,14 @@ function pressPolygonButton(button) {
  * occurrences, and can't be used to assert there are no matches, and Cypress'
  * #get() function doesn't allow selecting on contents.
  *
- * @param {Number} expectedFound how many divs with content 'second notes' are
- *             expected
+ * @param {Number} expectedFound how many divs with notes param expected
+ * @param {String} notes contents to look for
  */
-function assertExactlyPopUps(expectedFound) {
+function assertExactlyPopUps(expectedFound, notes) {
   let foundElements = 0;
   cy.get('div')
       .each(($elt) => {
-        if ($elt.html() === 'second notes') {
+        if ($elt.html() === notes) {
           expect(foundElements++).to.equal(0);
         }
       })

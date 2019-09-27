@@ -100,6 +100,7 @@ function createInfoWindowHtml(polygon, notes, infoWindow) {
 
   const deleteButton = document.createElement('button');
   deleteButton.innerHTML = 'delete';
+  deleteButton.id = 'delete';
   deleteButton.onclick = () => {
     if (confirm('Delete region?')) {
       polygon.setMap(null);
@@ -108,6 +109,7 @@ function createInfoWindowHtml(polygon, notes, infoWindow) {
   };
   const editButton = document.createElement('button');
   editButton.innerHTML = 'edit';
+  editButton.id = 'edit';
   editButton.onclick = () => {
     polygon.setEditable(true);
 
@@ -122,6 +124,7 @@ function createInfoWindowHtml(polygon, notes, infoWindow) {
 
     const saveButton = document.createElement('button');
     saveButton.innerHTML = 'save';
+    saveButton.id = 'save';
     saveButton.onclick = () => {
       polygon.setEditable(false);
       infoWindow.setContent(
