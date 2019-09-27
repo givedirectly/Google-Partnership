@@ -1,7 +1,6 @@
 import {PolygonData} from '../../../client-side/static/polygon_draw';
 
-const firebaseCollection =
-    firebase.firestore().collection('usershapes');
+const firebaseCollection = firebase.firestore().collection('usershapes');
 /**
  * Fake of the Promise class. Needed because Promise executes async, so if we
  * use real Promises, we lose control of execution order in the test.

@@ -93,8 +93,7 @@ class PolygonData {
           .set(record)
           .then(finishWriteAndMaybeWriteAgain)
           .catch(createError('error updating ' + this));
-    }
-    else {
+    } else {
       userShapes.add(record)
           .then((docRef) => {
             this.id = docRef.id;
