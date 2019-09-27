@@ -95,17 +95,43 @@ function addPopUpListener(polygon, notes, map) {
  */
 function createInfoWindowHtml(polygon, notes, infoWindow) {
   const outerDiv = document.createElement('div');
-  const button = document.createElement('button');
-  button.innerHTML = 'delete';
-  button.onclick = () => {
+  const notesDiv = document.createElement('div');
+  notesDiv.innerText = notes;
+
+  const deleteButton = document.createElement('button');
+  deleteButton.innerHTML = 'delete';
+  deleteButton.onclick = () => {
     if (confirm('Delete region?')) {
       polygon.setMap(null);
       infoWindow.close();
     }
   };
-  const notesDiv = document.createElement('div');
-  notesDiv.innerText = notes;
-  outerDiv.appendChild(button);
+  const editButton = document.createElement('button');
+  editButton.innerHTML = 'edit';
+  editButton.onclick = () => {
+    const currentNotes = notesDiv.innerText;
+
+    outerDiv.removeChild(notesDiv);
+    outerDiv.removeChild(editButton);
+
+    const notesForm = document.createElement('textarea');
+    notesForm.id = 'notes';
+    notesForm.value = currentNotes;
+
+    const saveButton = document.createElement('button');
+    saveButton.innerHTML = 'save';
+    saveButton.onclick = () => {
+      infoWindow.setContent(
+          createInfoWindowHtml(polygon, notesForm.value, infoWindow));
+    };
+
+    outerDiv.appendChild(saveButton);
+    outerDiv.appendChild(document.createElement('br'));
+    outerDiv.appendChild(notesForm);
+  };
+
+  outerDiv.appendChild(deleteButton);
+  outerDiv.appendChild(editButton);
   outerDiv.appendChild(notesDiv);
   return outerDiv;
 }

@@ -4,7 +4,8 @@ describe('Integration tests for drawing polygons', () => {
   it('Draws a polygon and deletes it', () => {
     // Accept confirmation when it happens.
     cy.on('window:confirm', () => true);
-    drawPolygonAndClickOnItAndPressDelete();
+    drawPolygonAndClickOnIt();
+    pressPolygonButton('delete');
     // Polygon should be gone.
     cy.get('div[style*="left: -100px; top: -95px;"').should('not.exist');
   });
@@ -12,40 +13,68 @@ describe('Integration tests for drawing polygons', () => {
   it('Draws a polygon and almost deletes it', () => {
     // Reject confirmation when it happens.
     cy.on('window:confirm', () => false);
-    drawPolygonAndClickOnItAndPressDelete();
+    drawPolygonAndClickOnIt();
+    pressPolygonButton('delete');
     // Assert still exists.
     cy.get('div[style*="left: -100px; top: -95px;"');
   });
 
+  it('Draws a polygon and edits its notes', () => {
+    drawPolygonAndClickOnIt();
+    pressPolygonButton('edit');
+    cy.get('[id="notes"]').clear();
+    cy.get('[id="notes"]').type('Sphinx of black quartz, judge my vow');
+    pressPolygonButton('save');
+    cy.get('.map').contains('Sphinx of black quartz, judge my vow');
+  });
+
+  it('Clicks on a region and edits notes locally', () => {
+    cy.visit(host);
+    cy.wait(hackyWaitTime);
+
+    clickInsideKnownRegion();
+    cy.get('.map').contains('second notes');
+    pressPolygonButton('edit');
+    cy.get('[id="notes"]').clear();
+    cy.get('[id="notes"]').type('Sphinx of black quartz, judge my vow');
+    pressPolygonButton('save');
+    cy.get('.map').contains('Sphinx of black quartz, judge my vow');
+  });
+
   it('Clicks on region and deletes polygon locally', () => {
     cy.visit(host);
-    cy.awaitLoad();
+    cy.wait(hackyWaitTime);
 
     // Experimented to find point on map within second triangle.
-    cy.get('.map').click(447, 250);
+    clickInsideKnownRegion();
     cy.get('.map').contains('second notes');
     // Click again. Wait a little bit because it seems like without the wait
     // the page may not register the second click?
-    cy.wait(1000);
-    cy.get('.map').click(447, 250);
+    cy.wait(hackyWaitTime);
+    clickInsideKnownRegion();
     // Make sure that even though we clicked twice, there's only one pop-up.
     assertExactlyPopUps(1);
     // TODO(janakr): Why does Cypress claim to find two identical buttons?
     cy.get('button[title="Close"]').first().click();
     assertExactlyPopUps(0);
-    cy.get('.map').click(447, 250);
+    clickInsideKnownRegion();
     cy.get('.map').contains('second notes');
     // Accept confirmation when it happens.
     cy.on('window:confirm', () => true);
-    pressDelete();
-    cy.get('.map').click(447, 250);
+    pressPolygonButton('delete');
+    clickInsideKnownRegion();
     // Make sure that no pop-up, implying polygon is gone.
     assertExactlyPopUps(0);
   });
 });
 
+/** Click inside the known polygon we have stored in firestore. */
+function clickInsideKnownRegion() {
+  cy.get('.map').click(447, 250);
+}
+
 /** Visit page, draw a new polygon on the map, and press its delete button. */
-function drawPolygonAndClickOnItAndPressDelete() {
+function drawPolygonAndClickOnIt() {
   cy.visit(host);
   const polygonButton = cy.get('[title="Draw a shape"]');
   polygonButton.click();
@@ -73,12 +102,14 @@ function drawPolygonAndClickOnItAndPressDelete() {
   handButton.click();
   // Check draggable edge present, and click it to trigger pop-up.
   cy.get('div[style*="left: -100px; top: -95px;"').click();
-  pressDelete();
 }
 
-/** Press the delete button of a visible pop-up. */
-function pressDelete() {
-  cy.get('#mapContainer').contains('delete').click();
+/**
+ * Clicks a button inside the map with the given id.
+ * @param {string} button id of html button we want to click
+ */
+function pressPolygonButton(button) {
+  cy.get('#mapContainer').contains(button).click();
 }
 
 /**
@@ -115,6 +146,7 @@ function drawPointAndPrepareForNext(x, y) {
   // cy.get('.map').trigger('mousemove', {clientX: clientX, clientY: clientY});
   cy.get('.map').click(x, y);
   // Ensure that element from click is present.
-  cy.get('div[style*="left: ' + (x - 325) + 'px; top: ' + (y - 245) + 'px;"',
+  cy.get(
+      'div[style*="left: ' + (x - 325) + 'px; top: ' + (y - 245) + 'px;"',
       {timeout: 2000});
 }
