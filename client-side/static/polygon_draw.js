@@ -1,7 +1,8 @@
 import {mapContainerId} from './dom_constants.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 
-export {processUserRegions, setUpPolygonDrawing as default};
+// PolygonData is only for testing.
+export {processUserRegions, PolygonData, setUpPolygonDrawing as default};
 import createError from './create_error.js';
 
 // TODO(#13): use proper keys associated to GiveDirectly account,
