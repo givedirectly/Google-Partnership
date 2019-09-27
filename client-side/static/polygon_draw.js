@@ -74,34 +74,40 @@ class PolygonData {
     const geometry = [];
     polygon.getPath().forEach((elt) => geometry.push(latLngToGeoPoint(elt)));
     const record = {geometry: geometry, notes: this.notes};
-    const finishWriteAndMaybeWriteAgain = () => {
-      PolygonData.pendingWriteCount--;
-      const oldState = this.state;
-      this.state = PolygonData.State.SAVED;
-      switch (oldState) {
-        case PolygonData.State.WRITING:
-          return;
-        case PolygonData.State.QUEUED_WRITE:
-          this.update(polygon, this.notes);
-          return;
-        case PolygonData.State.SAVED:
-          console.error('Unexpected polygon state:' + this);
-      }
-    };
     if (this.id) {
       userShapes.doc(this.id)
           .set(record)
-          .then(finishWriteAndMaybeWriteAgain)
+          .then(this.finishWriteAndMaybeWriteAgain)
           .catch(createError('error updating ' + this));
     } else {
       userShapes.add(record)
           .then((docRef) => {
             this.id = docRef.id;
-            finishWriteAndMaybeWriteAgain();
+            this.finishWriteAndMaybeWriteAgain();
           })
           .catch(createError('error adding ' + this));
     }
   }
+
+  /**
+   * Called only by update to record a finished write and maybe start the next
+   * write if needed. Should be a private method but Javascript private methods
+   * seem catastrophically complex.
+   */
+  finishWriteAndMaybeWriteAgain() {
+    PolygonData.pendingWriteCount--;
+    const oldState = this.state;
+    this.state = PolygonData.State.SAVED;
+    switch (oldState) {
+      case PolygonData.State.WRITING:
+        return;
+      case PolygonData.State.QUEUED_WRITE:
+        this.update(polygon, this.notes);
+        return;
+      case PolygonData.State.SAVED:
+        console.error('Unexpected polygon state:' + this);
+    }
+  };
 }
 
 // Inline static variables not supported in Cypress browser.
