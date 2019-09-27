@@ -1,7 +1,8 @@
 import {mapContainerId} from './dom_constants.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 
-export {processUserRegions, setUpPolygonDrawing as default};
+// PolygonData is only for testing.
+export {processUserRegions, PolygonData, setUpPolygonDrawing as default};
 import createError from './create_error.js';
 
 // TODO(#13): use proper keys associated to GiveDirectly account,
@@ -18,34 +19,60 @@ const firebaseConfig = {
 
 const polygonData = new Map();
 
+/**
+ * Class holding data for a user-drawn polygon, including the state of writing
+ * to the backend. Does not hold the polygon itself.
+ */
 class PolygonData {
-  static State = {
-    SAVED: 0,
-    WRITING: 1,
-    QUEUED_WRITE: 2,
-  };
-
-  static pendingWriteCount = 0;
-
+  /**
+   * Constructor. id is null if user has just created polygon (corresponds
+   * to backend id).
+   *
+   * @param {String} id Firestore id.
+   * @param {String} notes User-entered notes.
+   */
   constructor(id, notes) {
     this.id = id;
     this.notes = notes;
     this.state = PolygonData.State.SAVED;
   }
 
-  update(polygon, notes) {
+  /**
+   * Writes this polygon's data to the backend, using the existing id field,
+   * or adding a new document to Firestore if there is no id. The passed-in
+   * notes, if given, override the current notes value.
+   *
+   * If there is already a pending write, this method records that another write
+   * should be performed when the pending one completes and returns immediately.
+   *
+   * @param {google.maps.Polygon} polygon Polygon to be written to backend.
+   * @param {String} notes User-supplied notes (optional).
+   */
+  update(polygon, notes = this.notes) {
     this.notes = notes;
     if (this.state !== PolygonData.State.SAVED) {
-      // Don't do a write, just wait for the last one to finish.
       this.state = PolygonData.State.QUEUED_WRITE;
       return;
     }
     this.state = PolygonData.State.WRITING;
+    PolygonData.pendingWriteCount++;
+    if (!polygon.getMap()) {
+      // Polygon has been removed from map, we should delete on backend.
+      polygonData.delete(polygon);
+      if (!this.id) {
+        console.error('Polygon to be deleted had no id: ', polygon);
+        return;
+      }
+      // Nothing more needs to be done for this element because it is
+      // unreachable and about to be GC'ed.
+      userShapes.doc(this.id).delete().then(() => PolygonData.pendingWriteCount--)
+          .catch(createError('error deleting ' + this));
+      return;
+    }
     const geometry = [];
     polygon.getPath().forEach((elt) => {geometry.push(latLngToGeoPoint(elt))});
     const record = {geometry: geometry, notes: this.notes};
-    PolygonData.pendingWriteCount++;
-    const reduceWriteCountAndMaybeWriteAgain = () => {
+    const finishWriteAndMaybeWriteAgain = () => {
       PolygonData.pendingWriteCount--;
       const oldState = this.state;
       this.state = PolygonData.State.SAVED;
@@ -54,27 +81,33 @@ class PolygonData {
           return;
         case PolygonData.State.QUEUED_WRITE:
           this.update(polygon, this.notes);
-          break;
+          return;
         case PolygonData.State.SAVED:
-          console.error('Unexpected saved state for ' + polygon);
-          break;
+          console.error('Unexpected polygon state:' + this);
       }
     };
     if (this.id) {
-      userShapes.doc(this.id).set(record).then(reduceWriteCountAndMaybeWriteAgain)
-          .catch((error) => {PolygonData.pendingWriteCount--; createError('writing polygon with id ' + this.id)(error)});
+      userShapes.doc(this.id).set(record).then(finishWriteAndMaybeWriteAgain)
+          .catch(createError('error updating ' + this));
     } else {
       userShapes.add(record).then(
           (docRef) => {
             this.id = docRef.id;
-            reduceWriteCountAndMaybeWriteAgain();
+            finishWriteAndMaybeWriteAgain();
           }
-          )
-          .catch((error) => {PolygonData.pendingWriteCount--; createError('writing polygon')(error)});
+          )          .catch(createError('error adding ' + this));
     }
-
   }
 }
+
+// Inline static variables not supported in Cypress browser.
+PolygonData.State = {
+  SAVED: 0,
+  WRITING: 1,
+  QUEUED_WRITE: 2,
+};
+
+PolygonData.pendingWriteCount = 0;
 
 // TODO(janakr): should this be initialized somewhere better?
 // Warning before leaving the page.
@@ -131,27 +164,7 @@ function processUserRegions(map) {
       .get()
       .then(
           (querySnapshot) => drawRegionsFromFirestoreQuery(querySnapshot, map))
-      .catch(createError('Error retrieving user-drawn regions'));
-}
-
-function persistToBackEnd(polygon) {
-  const data = polygonData.get(polygon);
-  const geometry = [];
-  polygon.getPath().forEach((elt) => {geometry.push(latLngToGeoPoint(elt))});
-  const record = {geometry: geometry, notes: data.notes};
-  pendingWriteCount++;
-  if (data.id) {
-    userShapes.doc(data.id).set(record).then(() => pendingWriteCount--)
-        .catch((error) => {pendingWriteCount--; createError('writing polygon with id ' + data.id)(error)});
-  } else {
-    userShapes.add(record).then(
-        (docRef) => {
-          data.id = docRef.id;
-          pendingWriteCount--;
-        }
-        )
-        .catch((error) => {pendingWriteCount--; createError('writing polygon')(error)});
-  }
+      .catch();
 }
 
 // TODO(#18): pop notes up as editable field, trigger save on modifications.
@@ -168,7 +181,7 @@ function addPopUpListener(polygon, map) {
     // click, and the cursor doesn't become a "clicking hand" over this shape.
     google.maps.event.removeListener(listener);
     const infoWindow = new google.maps.InfoWindow();
-    infoWindow.setContent(polygonData.get(polygon).notes);
+    infoWindow.setContent(createInfoWindowHtml(polygon, polygonData.get(polygon).notes, infoWindow));
     // TODO(janakr): is there a better place to pop this window up?
     const popupCoords = polygon.getPath().getAt(0);
     infoWindow.setPosition(popupCoords);
@@ -176,6 +189,33 @@ function addPopUpListener(polygon, map) {
     infoWindow.addListener('closeclick', () => addPopUpListener(polygon, map));
     infoWindow.open(map);
   });
+}
+
+/**
+ * Creates the inner contents of the InfoWindow that pops up when a polygon is
+ * selected.
+ *
+ * @param {google.maps.Polygon} polygon
+ * @param {String} notes
+ * @param {google.maps.InfoWindow} infoWindow
+ * @return {HTMLDivElement}
+ */
+function createInfoWindowHtml(polygon, notes, infoWindow) {
+  const outerDiv = document.createElement('div');
+  const button = document.createElement('button');
+  button.innerHTML = 'delete';
+  button.onclick = () => {
+    if (confirm('Delete region?')) {
+      polygon.setMap(null);
+      infoWindow.close();
+      polygonData.get(polygon).update(polygon);
+    }
+  };
+  const notesDiv = document.createElement('div');
+  notesDiv.innerText = notes;
+  outerDiv.appendChild(button);
+  outerDiv.appendChild(notesDiv);
+  return outerDiv;
 }
 
 // TODO(janakr): it would be nice to unit-test this, but I don't know how to get
