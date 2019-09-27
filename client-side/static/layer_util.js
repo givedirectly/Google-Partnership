@@ -6,9 +6,9 @@ export {
   addLayer,
   addNullLayer,
   removeScoreLayer,
+  scoreLayerName,
   toggleLayerOff,
   toggleLayerOn,
-  scoreLayerName,
 };
 // @VisibleForTesting
 export {layerMap, LayerMapValue};
