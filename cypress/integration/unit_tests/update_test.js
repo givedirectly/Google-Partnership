@@ -1,3 +1,5 @@
+// Used only to allow polygon_draw.js to be loaded successfully.
+import {firebaseCollection} from "../../support/mock_firebase";
 import * as LayerUtil from '../../../client-side/static/layer_util.js';
 import * as Run from '../../../client-side/static/run.js';
 import {createToggles, toggles} from '../../../client-side/static/update';

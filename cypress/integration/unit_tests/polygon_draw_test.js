@@ -1,5 +1,5 @@
-import {PolygonData} from '../../../client-side/static/polygon_draw';
 import {firebaseCollection} from '../../support/mock_firebase';
+import {PolygonData} from '../../../client-side/static/polygon_draw';
 
 /**
  * Fake of the Promise class. Needed because Promise executes async, so if we
