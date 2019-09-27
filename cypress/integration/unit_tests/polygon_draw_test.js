@@ -77,8 +77,8 @@ describe('Unit test for PolygonData', () => {
     firebaseCollection.doc = (id) => {
       ids.push(id);
       return {
-        delete: () => new FakePromise(undefined)
-      }
+        delete: () => new FakePromise(undefined),
+      };
     };
     underTest.update(mockPolygon);
     expect(ids).to.eql(['my_id']);
@@ -101,7 +101,7 @@ describe('Unit test for PolygonData', () => {
         // Put back usual set for next run.
         setThatTriggersNewUpdate.set = recordRecord(records, null);
         return new FakePromise(null);
-      }
+      },
     };
     firebaseCollection.doc = (id) => {
       ids.push(id);
@@ -112,12 +112,16 @@ describe('Unit test for PolygonData', () => {
     const geometry = [new firebase.firestore.GeoPoint(0, 1)];
     expect(records).to.eql([
       {geometry: geometry, notes: 'my notes'},
-      {geometry: geometry, notes: 'racing notes'}
+      {geometry: geometry, notes: 'racing notes'},
     ]);
     expect(underTest.id).to.eql('my_id');
     expect(PolygonData.pendingWriteCount).to.eql(0);
   });
 
+  /**
+   * Make an approximation of a google.maps.Polygon with a single-point path and a
+   * "true" getMap return value.
+   */
   function makeMockPolygon() {
     const mockPolygon = {};
     mockPolygon.getMap = () => true;
@@ -126,9 +130,18 @@ describe('Unit test for PolygonData', () => {
     return mockPolygon;
   }
 
-  function recordRecord(records, retval, expectedWriteCount = 1) {
+  /**
+   * Returns a function that will record a given record to records and then return
+   * a FakePromise that will pass retval to its function argument. It will also
+   * assert that there is 1 pending write.
+   *
+   * @param {Array} records
+   * @param {Object} retval
+   * @return {function(*=): FakePromise}
+   */
+  function recordRecord(records, retval) {
     return (record) => {
-      expect(PolygonData.pendingWriteCount).to.eql(expectedWriteCount);
+      expect(PolygonData.pendingWriteCount).to.eql(1);
       records.push(record);
       return new FakePromise(retval);
     }
