@@ -8,16 +8,8 @@ describe('Integration tests for drawing polygons', () => {
     drawPolygonAndClickOnIt();
     pressPolygonButton('delete');
     // Polygon should be gone.
-    cy.get('div[style*="left: -100px; top: -95px;"').should('not.exist');
-  });
-
-  it('Draws a polygon and almost deletes it', () => {
-    // Reject confirmation when it happens.
-    cy.on('window:confirm', () => false);
-    drawPolygonAndClickOnIt();
-    pressPolygonButton('delete');
-    // Assert still exists.
-    cy.get('div[style*="left: -100px; top: -95px;"');
+    cy.get('.map').click(200, 200);
+    assertExactlyPopUps(0);
   });
 
   it('Draws a polygon and edits its notes', () => {
@@ -29,7 +21,15 @@ describe('Integration tests for drawing polygons', () => {
     cy.get('.map').contains(notes);
   });
 
-  it('Clicks on a region and edits notes locally', () => {
+  it("Draws a polygon and checks its reshapable", () => {
+    drawPolygonAndClickOnIt();
+    cy.get('div[style*="left: 15px; top: -95px;"').should('not.exist');
+    pressPolygonButton('edit');
+    // check for draggable edge (used Selector Playground to find one).
+    cy.get('div[style*="left: 15px; top: -95px;"').click();
+  });
+
+  it('Clicks on a polygon and edits notes locally', () => {
     cy.visit(host);
     cy.wait(hackyWaitTime);
 
@@ -42,7 +42,7 @@ describe('Integration tests for drawing polygons', () => {
     cy.get('.map').contains(notes);
   });
 
-  it('Clicks on region and deletes polygon locally', () => {
+  it('Clicks on polygon and deletes polygon locally', () => {
     cy.visit(host);
     cy.wait(hackyWaitTime);
 
@@ -66,6 +66,32 @@ describe('Integration tests for drawing polygons', () => {
     clickInsideKnownRegion();
     // Make sure that no pop-up, implying polygon is gone.
     assertExactlyPopUps(0);
+  });
+
+  it('Clicks on polygon and almost deletes polygon locally', () => {
+    cy.visit(host);
+    cy.wait(hackyWaitTime);
+
+    // Experimented to find point on map within second triangle.
+    clickInsideKnownRegion();
+    cy.get('.map').contains('second notes');
+    // Click again. Wait a little bit because it seems like without the wait
+    // the page may not register the second click?
+    cy.wait(hackyWaitTime);
+    clickInsideKnownRegion();
+    // Make sure that even though we clicked twice, there's only one pop-up.
+    assertExactlyPopUps(1);
+    // TODO(janakr): Why does Cypress claim to find two identical buttons?
+    cy.get('button[title="Close"]').first().click();
+    assertExactlyPopUps(0);
+    clickInsideKnownRegion();
+    cy.get('.map').contains('second notes');
+    // Accept confirmation when it happens.
+    cy.on('window:confirm', () => false);
+    pressPolygonButton('delete');
+    clickInsideKnownRegion();
+    // Assert still exists.
+    assertExactlyPopUps(1);
   });
 });
 
@@ -101,8 +127,8 @@ function drawPolygonAndClickOnIt() {
   drawPointAndPrepareForNext(50, 250);
   const handButton = cy.get('[title="Stop drawing"]');
   handButton.click();
-  // Check draggable edge present, and click it to trigger pop-up.
-  cy.get('div[style*="left: -100px; top: -95px;"').click();
+  // click to trigger pop up.
+  cy.get('.map').click(200, 200);
 }
 
 /**
@@ -147,7 +173,6 @@ function drawPointAndPrepareForNext(x, y) {
   // cy.get('.map').trigger('mousemove', {clientX: clientX, clientY: clientY});
   cy.get('.map').click(x, y);
   // Ensure that element from click is present.
-  cy.get(
-      'div[style*="left: ' + (x - 325) + 'px; top: ' + (y - 245) + 'px;"',
-      {timeout: 2000});
+  // cy.get('div[style*="left: ' + (x - 325) + 'px; top: ' + (y - 245) + 'px;"',
+  //     {timeout: 2000});
 }
