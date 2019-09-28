@@ -22,22 +22,17 @@ const userShapes = db.collection('usershapes');
 
 describe('Integration tests for drawing polygons', () => {
   // Delete all test-defined polygons, identified by their starting point.
-  const deleteAllRegionsDrawnByTest = () => {
-    cy.then(() => {
-      userShapes.get().then((querySnapshot) => {
+  const deleteAllRegionsDrawnByTest = () =>
+    cy.wrap(userShapes.get().then((querySnapshot) => {
+        const deletePromises = [];
         querySnapshot.forEach((userDefinedRegion) => {
           const storedGeometry = userDefinedRegion.get('geometry');
           if (storedGeometry[0].latitude === 29.711705459174475) {
-            // TODO(janakr): I don't know if Cypress actually waits for this
-            // delete to happen before it goes on to the next test, but it seems
-            // to work ok for now, and my attempts to wait for these deletes to
-            // finish are causing failures.
-            userShapes.doc(userDefinedRegion.id).delete();
+            deletePromises.push(userShapes.doc(userDefinedRegion.id).delete());
           }
         });
-      });
-    });
-  };
+        return Promise.all(deletePromises);
+      }));
 
   beforeEach(deleteAllRegionsDrawnByTest);
 
