@@ -45,8 +45,6 @@ while read local_ref local_sha remote_ref remote_sha; do
     # Run clang-format. If there are any replacements, they'll be printed to
     # the console in the form "<replacement ...". Because grep matches that,
     # it'll succeed, so we can fail.
-    # TODO(janakr): the file that caused the failure isn't shown, but user
-    # should format all files anyway.
     if clang-format --style=Google -output-replacements-xml $modified_js_files \
         | grep -c '<replacement ' >/dev/null; then
         for eachfile in $modified_js_files; do
