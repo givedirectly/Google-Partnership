@@ -50,7 +50,8 @@ while read local_ref local_sha remote_ref remote_sha; do
     if clang-format --style=Google -output-replacements-xml $modified_js_files \
         | grep -c '<replacement ' >/dev/null; then
         for eachfile in $modified_js_files; do
-          clang-format --style=Google -output-replacements-xml $eachfile | grep -c '<replacement ' > /dev/null && echo "$eachfile needs formatting"
+          clang-format --style=Google -output-replacements-xml $eachfile \
+    | grep -c '<replacement ' > /dev/null && echo "$eachfile needs formatting"
         done
         exit 1
     fi
