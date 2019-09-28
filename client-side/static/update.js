@@ -16,8 +16,7 @@ const initialDamageThreshold = 0.5;
 const initialPovertyWeight = 0.5;
 
 const toggles = new Map([
-  ['poverty threshold',
-                                    initialPovertyThreshold],
+  ['poverty threshold', initialPovertyThreshold],
   ['damage threshold', initialDamageThreshold],
   ['poverty weight', initialPovertyWeight],
 ]);

@@ -129,8 +129,7 @@ function drawRegionsFromFirestoreQuery(querySnapshot, map) {
     properties.paths = coordinates;
     const polygon = new google.maps.Polygon(properties);
     addPopUpListener(polygon, userDefinedRegion.get('notes'), map);
-    polygon.setMap(
-                      map);
+    polygon.setMap(map);
   });
   loadingElementFinished(mapContainerId);
 }
