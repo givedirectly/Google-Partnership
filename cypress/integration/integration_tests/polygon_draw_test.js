@@ -4,7 +4,9 @@ const firebaseLibrary = require('firebase');
 
 const hackyWaitTime = 1000;
 
-// TODO(janakr): do test authentication separately.
+// TODO(janakr): do test authentication separately. We should have a separate
+// test account that writes to a test database, to avoid interacting with
+// production data.
 const firebaseConfig = {
   apiKey: 'AIzaSyAbNHe9B0Wo4MV8rm3qEdy8QzFeFWZERHs',
   authDomain: 'givedirectly.firebaseapp.com',
@@ -21,7 +23,9 @@ const db = firebaseLibrary.firestore();
 const userShapes = db.collection('usershapes');
 
 describe('Integration tests for drawing polygons', () => {
-  // Delete all test-defined polygons, identified by their starting point.
+  // Delete all test-defined polygons, identified by their starting point. We
+  // depend on the high probability that no real person will randomly click on
+  // precisely this point.
   const deleteAllRegionsDrawnByTest = () =>
       cy.wrap(userShapes.get().then((querySnapshot) => {
         const deletePromises = [];
