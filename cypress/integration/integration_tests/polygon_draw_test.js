@@ -27,6 +27,7 @@ describe('Integration tests for drawing polygons', () => {
   // depend on the high probability that no real person will randomly click on
   // precisely this point.
   const deleteAllRegionsDrawnByTest = () =>
+      // Return a wrapped promise. Cypress will wait for the promise to finish.
       cy.wrap(userShapes.get().then((querySnapshot) => {
         const deletePromises = [];
         querySnapshot.forEach((userDefinedRegion) => {

@@ -28,6 +28,7 @@ class FakePromise {
 }
 
 describe('Unit test for PolygonData', () => {
+  // Reset firebaseCollection's dummy methods.
   beforeEach(() => {
     for (const prop in firebaseCollection) {
       if (firebaseCollection.hasOwnProperty(prop)) {
