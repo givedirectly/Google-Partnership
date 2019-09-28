@@ -1,4 +1,5 @@
 import {removeScoreLayer} from './layer_util.js';
+import {registerLoadingCallbacks} from './loading.js';
 import {createAndDisplayJoinedData} from './run.js';
 
 export {
@@ -105,6 +106,10 @@ function createToggles(map) {
   form.appendChild(document.createElement('br'));
 
   // buttons
+  registerLoadingCallbacks(
+      ['mapContainer', 'tableContainer'],
+      () => document.getElementById('update').disabled = true,
+      () => document.getElementById('update').disabled = false);
   form.appendChild(createButton('update', () => {
     update(map);
   }));
