@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -e
 # Put this file in .git/hooks to activate it.
 #
@@ -28,12 +28,9 @@ while read local_ref local_sha remote_ref remote_sha; do
   if [ "$local_sha" = $z40 ]; then
     # Handle delete?
     exit 0
-  elif [ "$remote_sha" = $z40 ]; then
+  else
     # New branch, examine all commits
     range="master..$local_sha"
-  else
-    # Update to existing branch, examine new commits
-    range="$remote_sha..$local_sha"
   fi
 
   # --diff-filter=dr excludes deleted and renamed files, which don't exist
@@ -50,7 +47,9 @@ while read local_ref local_sha remote_ref remote_sha; do
     # should format all files anyway.
     if clang-format --style=Google -output-replacements-xml $modified_js_files \
         | grep -c '<replacement ' >/dev/null; then
-        echo "Found unformatted file"
+        for eachfile in $modified_js_files; do
+          clang-format --style=Google -output-replacements-xml $eachfile | grep -c '<replacement ' > /dev/null && echo "$eachfile needs formatting"
+        done
         exit 1
     fi
     yarn run eslint $modified_js_files
