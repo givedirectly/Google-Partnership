@@ -29,7 +29,9 @@ while read local_ref local_sha remote_ref remote_sha; do
     # Handle delete?
     exit 0
   else
-    # New branch, examine all commits
+    # Examine all changes since master. This will catch a badly formatted file
+    # every time, but also means you can safely push with --no-verify once and
+    # still catch problems on subsequent pushes.
     range="master..$local_sha"
   fi
 
