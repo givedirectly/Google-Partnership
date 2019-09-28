@@ -23,7 +23,7 @@ const userShapes = db.collection('usershapes');
 describe('Integration tests for drawing polygons', () => {
   // Delete all test-defined polygons, identified by their starting point.
   const deleteAllRegionsDrawnByTest = () =>
-    cy.wrap(userShapes.get().then((querySnapshot) => {
+      cy.wrap(userShapes.get().then((querySnapshot) => {
         const deletePromises = [];
         querySnapshot.forEach((userDefinedRegion) => {
           const storedGeometry = userDefinedRegion.get('geometry');
