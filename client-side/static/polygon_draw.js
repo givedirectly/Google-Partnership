@@ -115,9 +115,7 @@ PolygonData.pendingWriteCount = 0;
 
 // TODO(janakr): should this be initialized somewhere better?
 // Warning before leaving the page.
-window.onbeforeunload = () => {
-  return PolygonData.pendingWriteCount > 0 ? true : null;
-};
+window.onbeforeunload = () => PolygonData.pendingWriteCount > 0 ? true : null;
 
 // TODO(janakr): maybe not best practice to initialize outside of a function?
 // But doesn't take much/any time.

@@ -38,6 +38,7 @@ describe('Integration tests for drawing polygons', () => {
           .then(() => Promise.all(promisesToDelete));
     });
   };
+
   beforeEach(deleteAllRegionsDrawnByTest);
 
   afterEach(deleteAllRegionsDrawnByTest);
