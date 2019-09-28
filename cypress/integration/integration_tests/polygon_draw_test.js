@@ -23,8 +23,7 @@ const userShapes = db.collection('usershapes');
 describe('Integration tests for drawing polygons', () => {
   // Delete all test-defined polygons, identified by their starting point.
   const deleteAllRegionsDrawnByTest = () => {
-    cy.then(() => {
-      userShapes.get().then((querySnapshot) => {
+    cy.then(() => {userShapes.get().then((querySnapshot) => {
               querySnapshot.forEach((userDefinedRegion) => {
                 const storedGeometry = userDefinedRegion.get('geometry');
                 if (storedGeometry[0].latitude === 29.711705459174475) {
@@ -35,7 +34,7 @@ describe('Integration tests for drawing polygons', () => {
                   userShapes.doc(userDefinedRegion.id).delete();
                 }
               });
-            })});
+            });});
   };
 
   beforeEach(deleteAllRegionsDrawnByTest);
