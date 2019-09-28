@@ -60,6 +60,9 @@ class PolygonData {
       // Polygon has been removed from map, we should delete on backend.
       polygonData.delete(polygon);
       if (!this.id) {
+        // Even if the user creates a polygon and then deletes it immediately,
+        // the creation should trigger an update that must complete before the
+        // deletion gets here. So there should always be an id.
         console.error('Polygon to be deleted had no id: ', polygon);
         return;
       }
