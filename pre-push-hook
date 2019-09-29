@@ -42,9 +42,9 @@ while read local_ref local_sha remote_ref remote_sha; do
       "$range" 'client-side/static/*.js' 'cypress/integration/**/*.js' \
         'cypress/support/*.js')"
   if [[ "$modified_js_files" ]]; then
-    echo 'Found badly formatted files. Run:'
     if clang-format --style=Google -output-replacements-xml $modified_js_files \
         | grep -c '<replacement ' >/dev/null; then
+      echo 'Found badly formatted files. Run:'
       declare -a badfiles
       for eachfile in $modified_js_files; do
         clang-format --style=Google -output-replacements-xml $eachfile | grep -c '<replacement ' > /dev/null && badfiles+=($eachfile)
