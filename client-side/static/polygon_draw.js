@@ -1,7 +1,7 @@
 import createError from './create_error.js';
 import {mapContainerId} from './dom_constants.js';
-import {addLoadingElement, loadingElementFinished} from './loading.js';
 import inProduction from './in_test_util.js';
+import {addLoadingElement, loadingElementFinished} from './loading.js';
 
 // PolygonData is only for testing.
 export {PolygonData, processUserRegions, setUpPolygonDrawing as default};
