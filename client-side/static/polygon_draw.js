@@ -210,7 +210,8 @@ function addPopUpListener(polygon, map) {
     // click, and the cursor doesn't become a "clicking hand" over this shape.
     google.maps.event.removeListener(listener);
     const infoWindow = new google.maps.InfoWindow();
-    infoWindow.setContent(createInfoWindowHtml(polygon, polygonData.get(polygon).notes, infoWindow));
+    infoWindow.setContent(createInfoWindowHtml(
+        polygon, polygonData.get(polygon).notes, infoWindow));
 
     // TODO(janakr): is there a better place to pop this window up?
     const popupCoords = polygon.getPath().getAt(0);
