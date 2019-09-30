@@ -18,7 +18,6 @@ const firebaseConfig = {
 const appearance = {
   fillColor: '#FF0000',
   strokeColor: '#FF0000',
-  // TODO(#18): make editable by choosing polygon and clicking button.
   editable: false,
 };
 
@@ -74,12 +73,21 @@ function addPopUpListener(polygon, notes, map) {
     google.maps.event.removeListener(listener);
     const infoWindow = new google.maps.InfoWindow();
     infoWindow.setContent(createInfoWindowHtml(polygon, notes, infoWindow));
+
     // TODO(janakr): is there a better place to pop this window up?
     const popupCoords = polygon.getPath().getAt(0);
     infoWindow.setPosition(popupCoords);
-    // Reinstall the pop-up listener when the window is closed.
     infoWindow.addListener(
-        'closeclick', () => addPopUpListener(polygon, notes, map));
+        // Reinstall the pop-up listener when the window is closed.
+        'closeclick', () => {
+          addPopUpListener(polygon, notes, map);
+          // If we closed while editing, autosave
+          // TODO: actually autosave the text when we actually save edited text
+          // back to firestore.
+          if (polygon.getEditable() === true) {
+            polygon.setEditable(false);
+          }
+        });
     infoWindow.open(map);
   });
 }

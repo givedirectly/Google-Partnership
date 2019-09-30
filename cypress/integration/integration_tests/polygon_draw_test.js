@@ -22,7 +22,6 @@ describe('Integration tests for drawing polygons', () => {
     pressPolygonButton('delete');
     // Polygon should be gone.
     cy.get('.map').click(160, 200);
-    // TODO(juliexxia): indicator
     assertExactlyPopUps(0, notes);
   });
 
@@ -37,7 +36,6 @@ describe('Integration tests for drawing polygons', () => {
     pressPolygonButton('delete');
     // Assert still exists.
     cy.get('.map').click(160, 200);
-    // TODO(juliexxia): indicator
     assertExactlyPopUps(1, notes);
   });
 
@@ -95,7 +93,7 @@ function clickInsideKnownRegion() {
   cy.get('.map').click(447, 250);
 }
 
-/** Visit page, draw a new polygon on the map, and press its delete button. */
+/** Visit page, draw a new polygon on the map, click inside it. */
 function drawPolygonAndClickOnIt() {
   cy.visit(host);
   const polygonButton = cy.get('[title="Draw a shape"]');
