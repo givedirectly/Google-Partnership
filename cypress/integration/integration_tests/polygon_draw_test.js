@@ -137,6 +137,12 @@ function drawPolygonAndClickOnIt() {
   clickOnDrawnPolygon();
 }
 
+/**
+ * Click on the map inside the test-drawn polygon to trigger a pop-up if it's
+ * there. Returns the result for chaining.
+ *
+ * @return {Cypress.Chainable}
+ */
 function clickOnDrawnPolygon() {
   return cy.get('.map').click(150, 200);
 }
