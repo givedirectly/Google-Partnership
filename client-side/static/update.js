@@ -50,7 +50,7 @@ function update(map) {
 
 /**
  * Creates the form for toggling the equation.
- * @param {google.map.Maps} map
+ * @param {google.maps.Map} map
  */
 function createToggles(map) {
   const form = document.createElement('form');

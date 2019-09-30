@@ -6,6 +6,7 @@ import {scoreLayerName} from './run.js';
 export {
   addLayer,
   addNullLayer,
+  addLayerFromGeoJsonPromise,
   redrawLayers,
   removeScoreLayer,
   setMap,
@@ -29,12 +30,14 @@ const deckGlOverlay = new deck.GoogleMapsOverlay();
 /** Values of layerMap. */
 class LayerMapValue {
   /**
-   * @param {number} index - position in list of assets (does not change)
-   * @param {boolean} displayed - true if layer is currently displayed
+   * Constructor.
+   *
+   * @param {GeoJSON} data Data to be rendered
+   * @param {number} index Z-index of layer when displayed. Higher is better.
+   * @param {boolean} displayed True if layer is currently displayed
    */
   constructor(data, index, displayed) {
     this.data = data;
-    /** @const */
     this.index = index;
     this.displayed = displayed;
     this.loading = false;
@@ -43,11 +46,6 @@ class LayerMapValue {
 
 function setMap(map) {
   deckGlOverlay.setMap(map);
-  // Uncomment to try local loading.
-  // const layerMapValue = new LayerMapValue(damageGeoJson, 0, true);
-  // layerMap['users/juliexxia/harvey-damage-crowdai-format'] = layerMapValue;
-  // addLayerFromFeatures(layerMapValue,
-  // 'users/juliexxia/harvey-damage-crowdai-format');
 }
 
 /**
@@ -98,12 +96,12 @@ function showColor(color) {
 }
 
 /**
- * Asynchronous wrapper for addLayerFromId that calls getMap() with a callback
- * to avoid blocking on the result. This also populates layerMap.
+ * Asynchronous wrapper for addLayerFromFeatures that calls getMap() with a
+ * callback to avoid blocking on the result. This also populates layerMap.
  *
  * This should only be called once per asset when its overlay is initialized
  * for the first time. After the overlay is non-null in layerMap, any displaying
- * should be able to call {@code map.overlayMapTypes.setAt(...)}.
+ * should be able to set its visibility and redraw the layers.
  *
  * @param {ee.Element} layer
  * @param {string} assetName
@@ -124,6 +122,18 @@ function addLayer(layer, assetName, index) {
     }
     loadingElementFinished(mapContainerId);
   });
+}
+
+function addLayerFromGeoJsonPromise(featuresPromise, assetName, index) {
+  addLoadingElement(mapContainerId);
+  // Add entry to map.
+  const layerMapValue = new LayerMapValue(null, index, true);
+  layerMap[assetName] = layerMapValue;
+  featuresPromise.then((features) => {
+    layerMapValue.data = features;
+    addLayerFromFeatures(layerMapValue, assetName);
+    loadingElementFinished(mapContainerId);
+  }).catch(createError('Error rendering ' + assetName));
 }
 
 /**

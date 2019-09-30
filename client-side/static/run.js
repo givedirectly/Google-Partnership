@@ -2,7 +2,7 @@ import {clickFeature, selectHighlightedFeatures} from './click_feature.js';
 import {mapContainerId, tableContainerId} from './dom_constants.js';
 import {drawTable} from './draw_table.js';
 import {highlightFeatures} from './highlight_features.js';
-import {addLayer, addNullLayer, redrawLayers, setMap, toggleLayerOff, toggleLayerOn} from './layer_util.js';
+import {addLayer, addNullLayer, addLayerFromGeoJsonPromise, setMap, toggleLayerOff, toggleLayerOn} from './layer_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {processUserRegions} from './polygon_draw.js';
 import processJoinedData from './process_joined_data.js';
@@ -33,7 +33,6 @@ const scoreLayerName = 'score';
  */
 function run(map) {
   setMap(map);
-  // Comment out to try local loading.
   initializeAssetLayers(map);
   createToggles(map);
   createAssetCheckboxes(map);
@@ -65,7 +64,7 @@ function createAndDisplayJoinedData(
   google.maps.event.removeListener(mapSelectListener);
   google.maps.event.removeListener(featureSelectListener);
   const processedData = processJoinedData(
-      ee.FeatureCollection(snapAndDamageAsset), ee.Number(scalingFactor),
+      ee.FeatureCollection(snapAndDamageAsset), scalingFactor,
       povertyThreshold, damageThreshold, povertyWeight);
   initializeScoreLayer(map, processedData);
   drawTable(
@@ -164,6 +163,6 @@ function initializeAssetLayers(map) {
  * @param {ee.FeatureCollection} layer the computed score features
  */
 function initializeScoreLayer(map, layer) {
-  addLayer(layer, scoreLayerName, scoreIndex);
+  addLayerFromGeoJsonPromise(layer, scoreLayerName, scoreIndex);
   document.getElementById(scoreLayerName).checked = true;
 }

@@ -1,4 +1,5 @@
 import {blockGroupTag, damageTag, geoidTag, scoreTag, snapPercentageTag} from './property_names.js';
+import createError from './create_error.js';
 
 export {drawTable, tableHeadings};
 
@@ -8,7 +9,7 @@ const tableHeadings =
 /**
  * Display a ranked table of the given features that have non-zero score.
  *
- * @param {ee.FeatureCollection} scoredFeatures
+ * @param {Promise} scoredFeatures
  * @param {Object} selectTableCallback Callback to be invoked for selected table
  *     row
  * @param {Object} chartAndFeaturesReceiver receiver for chart and contents
@@ -28,30 +29,25 @@ function drawTable(
 
   // TODO(#37): These callbacks could be executed out of order, and the table
   //  might not reflect the user's latest request.
-  scoredFeatures.filter(ee.Filter.gt(scoreTag, ee.Number(0)))
-      .evaluate((featureCollection, failure) => {
-        if (typeof failure !== 'undefined') {
-          // TODO(juliexxia): more robust error reporting
-          // https://developers.google.com/chart/interactive/docs/reference#errordisplay
-          console.error(failure);
-        } else {
-          const features = featureCollection.features;
-          // Clone headings.
-          const list = [tableHeadings];
-          for (const feature of features) {
-            list.push(tableHeadings.map((col) => feature.properties[col]));
-          }
-          // Multiple calls to this are fine:
-          // https://developers.google.com/chart/interactive/docs/basic_load_libs#Callback
-          google.charts.setOnLoadCallback(
-              () => renderTable(
-                  list, features, selectTableCallback,
-                  chartAndFeaturesReceiver));
-          // Set download button to visible once table data is loaded.
-          document.getElementById('downloadButton').style.visibility =
-              'visible';
-        }
-      });
+  scoredFeatures.then((allFeatures) => {
+    const features = allFeatures.filter((feature) => feature.properties['score']);
+    // Clone headings.
+    const list = [tableHeadings];
+    for (const feature of features) {
+      list.push(tableHeadings.map((col) => feature.properties[col]));
+    }
+    // Multiple calls to this are fine:
+    // https://developers.google.com/chart/interactive/docs/basic_load_libs#Callback
+    google.charts.setOnLoadCallback(
+        () => renderTable(
+            list, features, selectTableCallback,
+            chartAndFeaturesReceiver));
+    // Set download button to visible once table data is loaded.
+    document.getElementById('downloadButton').style.visibility =
+        'visible';
+    // TODO(juliexxia): more robust error reporting
+    // https://developers.google.com/chart/interactive/docs/reference#errordisplay
+  }).catch(createError('Failure evaluating scored features'));
 }
 
 /**
