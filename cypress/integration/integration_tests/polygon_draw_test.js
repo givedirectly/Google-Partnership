@@ -20,7 +20,7 @@ const firebaseConfig = {
 firebaseLibrary.initializeApp(firebaseConfig);
 const db = firebaseLibrary.firestore();
 
-const userShapes = db.collection('usershapes');
+const userShapes = db.collection('usershapes-test');
 
 describe('Integration tests for drawing polygons', () => {
   // Delete all test-defined polygons, identified by their starting point. We

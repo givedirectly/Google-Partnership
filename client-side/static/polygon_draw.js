@@ -1,6 +1,7 @@
 import createError from './create_error.js';
 import {mapContainerId} from './dom_constants.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
+import inProduction from './in_test_util.js';
 
 // PolygonData is only for testing.
 export {PolygonData, processUserRegions, setUpPolygonDrawing as default};
@@ -17,6 +18,12 @@ const firebaseConfig = {
   appId: '1:634162034024:web:c5f5b82327ba72f46d52dd',
 };
 
+/**
+ * Map from Google Maps Polygon to PolygonData, so that on user-region
+ * modifications we can track new notes values and write data back to database.
+ * Data is added to this map on loading from the backend or on user creation,
+ * and removed if the polygon is deleted.
+ */
 const polygonData = new Map();
 
 /**
@@ -25,7 +32,7 @@ const polygonData = new Map();
  */
 class PolygonData {
   /**
-   * Constructor. id is null if user has just created polygon (corresponds
+   * Constructor. The id is null if user has just created polygon (corresponds
    * to backend id).
    *
    * @param {String} id Firestore id.
@@ -57,21 +64,7 @@ class PolygonData {
     this.state = PolygonData.State.WRITING;
     PolygonData.pendingWriteCount++;
     if (!polygon.getMap()) {
-      // Polygon has been removed from map, we should delete on backend.
-      polygonData.delete(polygon);
-      if (!this.id) {
-        // Even if the user creates a polygon and then deletes it immediately,
-        // the creation should trigger an update that must complete before the
-        // deletion gets here. So there should always be an id.
-        console.error('Polygon to be deleted had no id: ', polygon);
-        return;
-      }
-      // Nothing more needs to be done for this element because it is
-      // unreachable and about to be GC'ed.
-      userShapes.doc(this.id)
-          .delete()
-          .then(() => PolygonData.pendingWriteCount--)
-          .catch(createError('error deleting ' + this));
+      this.delete(polygon);
       return;
     }
     const geometry = [];
@@ -105,15 +98,45 @@ class PolygonData {
           .catch(createError('error adding ' + this));
     }
   }
+
+  /**
+   * Deletes this region from storage and polygonData. Only for internal use.
+   *
+   * @param {google.maps.Polygon} polygon
+   */
+  delete(polygon) {
+    // Polygon has been removed from map, we should delete on backend.
+    polygonData.delete(polygon);
+    if (!this.id) {
+      // Even if the user creates a polygon and then deletes it immediately,
+      // the creation should trigger an update that must complete before the
+      // deletion gets here. So there should always be an id.
+      console.error('Unexpected: polygon to be deleted had no id: ', polygon);
+      return;
+    }
+    // Nothing more needs to be done for this element because it is
+    // unreachable and about to be GC'ed.
+    userShapes.doc(this.id)
+        .delete()
+        .then(() => PolygonData.pendingWriteCount--)
+        .catch(createError('error deleting ' + this));
+  }
 }
 
 // Inline static variables not supported in Cypress browser.
 PolygonData.State = {
+  /** Current state is same as that in backend. */
   SAVED: 0,
+  /** Current state is being written to backend. No other writes needed. */
   WRITING: 1,
+  /**
+   * After the current write finishes, another write is needed because user
+   * modified region after current write started.
+   */
   QUEUED_WRITE: 2,
 };
 
+// Tracks global pending writes so that we can warn if user leaves page early.
 PolygonData.pendingWriteCount = 0;
 
 // TODO(janakr): should this be initialized somewhere better?
@@ -125,7 +148,9 @@ window.onbeforeunload = () => PolygonData.pendingWriteCount > 0 ? true : null;
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-const userShapes = db.collection('usershapes');
+const collectionName = 'usershapes' + (inProduction() ? '' : '-test');
+
+const userShapes = db.collection(collectionName);
 
 const appearance = {
   fillColor: '#FF0000',
@@ -169,7 +194,7 @@ function processUserRegions(map) {
   userShapes.get()
       .then(
           (querySnapshot) => drawRegionsFromFirestoreQuery(querySnapshot, map))
-      .catch();
+      .catch(createError('error getting user-drawn regions'));
 }
 
 // TODO(#18): pop notes up as editable field, trigger save on modifications.
