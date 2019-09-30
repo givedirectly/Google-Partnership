@@ -84,9 +84,7 @@ function addPopUpListener(polygon, notes, map) {
           // If we closed while editing, autosave
           // TODO: actually autosave the text when we actually save edited text
           // back to firestore.
-          if (polygon.getEditable() === true) {
-            polygon.setEditable(false);
-          }
+          save(polygon, infoWindow, '');
         });
     infoWindow.open(map);
   });
@@ -133,11 +131,7 @@ function createInfoWindowHtml(polygon, notes, infoWindow) {
     const saveButton = document.createElement('button');
     saveButton.innerHTML = 'save';
     saveButton.id = 'save';
-    saveButton.onclick = () => {
-      polygon.setEditable(false);
-      infoWindow.setContent(
-          createInfoWindowHtml(polygon, notesForm.value, infoWindow));
-    };
+    saveButton.onclick = () => save(polygon, infoWindow, notesForm.value);
 
     outerDiv.appendChild(saveButton);
     outerDiv.appendChild(document.createElement('br'));
@@ -148,6 +142,12 @@ function createInfoWindowHtml(polygon, notes, infoWindow) {
   outerDiv.appendChild(editButton);
   outerDiv.appendChild(notesDiv);
   return outerDiv;
+}
+
+function save(polygon, infoWindow, notes) {
+  polygon.setEditable(false);
+  infoWindow.setContent(
+      createInfoWindowHtml(polygon, notes, infoWindow));
 }
 
 // TODO(janakr): it would be nice to unit-test this, but I don't know how to get
