@@ -1,7 +1,49 @@
+// Call this firebaseLibrary to avoid conflicting with mock firebase defined in
+// commands.js.
+const firebaseLibrary = require('firebase');
+
 const hackyWaitTime = 1000;
 const notes = 'Sphinx of black quartz, judge my vow';
 
+// TODO(janakr): do test authentication separately. We should have a separate
+// test account that writes to a test database, to avoid interacting with
+// production data.
+const firebaseConfig = {
+  apiKey: 'AIzaSyAbNHe9B0Wo4MV8rm3qEdy8QzFeFWZERHs',
+  authDomain: 'givedirectly.firebaseapp.com',
+  databaseURL: 'https://givedirectly.firebaseio.com',
+  projectId: 'givedirectly',
+  storageBucket: '',
+  messagingSenderId: '634162034024',
+  appId: '1:634162034024:web:c5f5b82327ba72f46d52dd',
+};
+
+firebaseLibrary.initializeApp(firebaseConfig);
+const db = firebaseLibrary.firestore();
+
+const userShapes = db.collection('usershapes-test');
+
 describe('Integration tests for drawing polygons', () => {
+  // Delete all test-defined polygons, identified by their starting point. We
+  // depend on the high probability that no real person will randomly click on
+  // precisely this point.
+  const deleteAllRegionsDrawnByTest = () =>
+      // Return a wrapped promise. Cypress will wait for the promise to finish.
+      cy.wrap(userShapes.get().then((querySnapshot) => {
+        const deletePromises = [];
+        querySnapshot.forEach((userDefinedRegion) => {
+          const storedGeometry = userDefinedRegion.get('geometry');
+          if (storedGeometry[0].latitude === 29.711705459174475) {
+            deletePromises.push(userShapes.doc(userDefinedRegion.id).delete());
+          }
+        });
+        return Promise.all(deletePromises);
+      }));
+
+  beforeEach(deleteAllRegionsDrawnByTest);
+
+  afterEach(deleteAllRegionsDrawnByTest);
+
   it('Draws a polygon and edits its notes', () => {
     drawPolygonAndClickOnIt();
     pressPolygonButton('edit');
@@ -25,73 +67,43 @@ describe('Integration tests for drawing polygons', () => {
     assertExactlyPopUps(0, notes);
   });
 
-  it('Draws a polygon and almost deletes it', () => {
-    // Reject confirmation when it happens.
-    cy.on('window:confirm', () => false);
+  it('Draws a polygon and almost deletes it, then deletes', () => {
+    // Reject confirmation when first happens, then accept it later.
+    let confirmValue = false;
+    cy.on('window:confirm', () => confirmValue);
     drawPolygonAndClickOnIt();
     pressPolygonButton('edit');
     cy.get('[id="notes"]').type(notes);
     pressPolygonButton('save');
-
     pressPolygonButton('delete');
     // Assert still exists.
-    cy.get('.map').click(160, 200);
+    clickOnDrawnPolygon();
     assertExactlyPopUps(1, notes);
-  });
-
-  it('Draws a polygon and checks that it is reshapable', () => {
-    drawPolygonAndClickOnIt();
-    cy.get('div[style*="left: 15px; top: -95px;"').should('not.exist');
-    pressPolygonButton('edit');
-    // check for draggable edge (used Selector Playground to find one).
-    cy.get('div[style*="left: 15px; top: -95px;"').click();
-    pressPolygonButton('save');
-    cy.get('div[style*="left: 15px; top: -95px;"').should('not.exist');
-  });
-
-  it('Clicks on a polygon and edits notes locally', () => {
+    // TODO(#18): wait for a notification that all writes have completed instead
+    // of a hardcoded wait.
+    cy.wait(1000);
     cy.visit(host);
     cy.awaitLoad();
+    // Polygon is still there.
+    clickOnDrawnPolygon();
+    assertExactlyPopUps(1, notes);
 
-    clickInsideKnownRegion();
-    cy.get('.map').contains('second notes');
-    pressPolygonButton('edit');
-    cy.get('[id="notes"]').clear();
-    cy.get('[id="notes"]').type(notes);
-    pressPolygonButton('save');
-    cy.get('.map').contains(notes);
-  });
-
-  it('Clicks on polygon and deletes polygon locally', () => {
-    cy.visit(host);
-    cy.awaitLoad();
-    // Experimented to find point on map within second triangle.
-    clickInsideKnownRegion();
-    cy.get('.map').contains('second notes');
-    // Click again. Wait a little bit because it seems like without the wait
-    // the page may not register the second click?
-    cy.wait(hackyWaitTime);
-    clickInsideKnownRegion();
-    // Make sure that even though we clicked twice, there's only one pop-up.
-    assertExactlyPopUps(1, 'second notes');
-    // TODO(janakr): Why does Cypress claim to find two identical buttons?
-    cy.get('button[title="Close"]').first().click();
-    assertExactlyPopUps(0, 'second notes');
-    clickInsideKnownRegion();
-    cy.get('.map').contains('second notes');
-    // Accept confirmation when it happens.
-    cy.on('window:confirm', () => true);
     pressPolygonButton('delete');
-    clickInsideKnownRegion();
-    // Make sure that no pop-up, implying polygon is gone.
-    assertExactlyPopUps(0, 'second notes');
+    // Polygon is still there.
+    // Accept confirmation when it happens.
+    clickOnDrawnPolygon().then(() => confirmValue = true);
+    pressPolygonButton('delete');
+    // Polygon should be gone.
+    clickOnDrawnPolygon();
+    assertExactlyPopUps(0, notes);
+    cy.wait(1000);
+    cy.visit(host);
+    cy.awaitLoad();
+    // Polygon is gone.
+    clickOnDrawnPolygon();
+    assertExactlyPopUps(0, notes);
   });
 });
-
-/** Click inside the known polygon we have stored in firestore. */
-function clickInsideKnownRegion() {
-  cy.get('.map').click(447, 250);
-}
 
 /** Visit page, draw a new polygon on the map, click inside it. */
 function drawPolygonAndClickOnIt() {
@@ -122,7 +134,17 @@ function drawPolygonAndClickOnIt() {
   handButton.click();
   cy.wait(2000);
   // click to trigger pop up.
-  cy.get('.map').click(150, 200);
+  clickOnDrawnPolygon();
+}
+
+/**
+ * Click on the map inside the test-drawn polygon to trigger a pop-up if it's
+ * there. Returns the result for chaining.
+ *
+ * @return {Cypress.Chainable}
+ */
+function clickOnDrawnPolygon() {
+  return cy.get('.map').click(150, 200);
 }
 
 /**
