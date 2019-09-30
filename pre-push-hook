@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 set -e
 # Put this file in .git/hooks to activate it.
 #
