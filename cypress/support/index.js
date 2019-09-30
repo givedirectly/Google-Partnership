@@ -23,3 +23,5 @@ import './mock_firebase';
 
 global.host = 'http://localhost:8080/';
 global.tableClass = '.google-visualization-table-table';
+
+beforeEach(() => cy.setCookie('IN_CYPRESS_TEST', '1'));
