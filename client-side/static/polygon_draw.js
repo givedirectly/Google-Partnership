@@ -284,13 +284,14 @@ function createInfoWindowHtml(polygon, notes, infoWindow) {
 }
 
 /**
- * Sets given polygon's notes and makes it uneditable.
+ * Sets given polygon's notes, makes it uneditable, and saves to backend.
  *
  * @param {google.maps.Polygon} polygon
  * @param {google.maps.InfoWindow} infoWindow
  * @param {String} notes
  */
 function save(polygon, infoWindow, notes) {
+  polygonData.get(polygon).update(polygon, notes);
   polygon.setEditable(false);
   infoWindow.setContent(createInfoWindowHtml(polygon, notes, infoWindow));
 }

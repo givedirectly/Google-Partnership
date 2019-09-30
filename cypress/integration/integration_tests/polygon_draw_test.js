@@ -91,9 +91,7 @@ describe('Integration tests for drawing polygons', () => {
     pressPolygonButton('delete');
     // Polygon is still there.
     // Accept confirmation when it happens.
-    cy.get('div[style*="left: -100px; top: -95px;"')
-        .then(() => confirmValue = true);
-    clickOnDrawnPolygon();
+    clickOnDrawnPolygon().then(() => confirmValue = true);
     pressPolygonButton('delete');
     // Polygon should be gone.
     clickOnDrawnPolygon();
@@ -140,7 +138,7 @@ function drawPolygonAndClickOnIt() {
 }
 
 function clickOnDrawnPolygon() {
-  cy.get('.map').click(150, 200);
+  return cy.get('.map').click(150, 200);
 }
 
 /**
