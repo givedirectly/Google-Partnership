@@ -1,51 +1,100 @@
 const hackyWaitTime = 1000;
+const notes = 'Sphinx of black quartz, judge my vow';
 
 describe('Integration tests for drawing polygons', () => {
+  it('Draws a polygon and edits its notes', () => {
+    drawPolygonAndClickOnIt();
+    pressPolygonButton('edit');
+    cy.get('[id="notes"]').clear();
+    cy.get('[id="notes"]').type(notes);
+    pressPolygonButton('save');
+    cy.get('.map').contains(notes);
+  });
+
   it('Draws a polygon and deletes it', () => {
     // Accept confirmation when it happens.
     cy.on('window:confirm', () => true);
-    drawPolygonAndClickOnItAndPressDelete();
+    drawPolygonAndClickOnIt();
+    pressPolygonButton('edit');
+    cy.get('[id="notes"]').type(notes);
+    pressPolygonButton('save');
+
+    pressPolygonButton('delete');
     // Polygon should be gone.
-    cy.get('div[style*="left: -100px; top: -95px;"').should('not.exist');
+    cy.get('.map').click(160, 200);
+    assertExactlyPopUps(0, notes);
   });
 
   it('Draws a polygon and almost deletes it', () => {
     // Reject confirmation when it happens.
     cy.on('window:confirm', () => false);
-    drawPolygonAndClickOnItAndPressDelete();
+    drawPolygonAndClickOnIt();
+    pressPolygonButton('edit');
+    cy.get('[id="notes"]').type(notes);
+    pressPolygonButton('save');
+
+    pressPolygonButton('delete');
     // Assert still exists.
-    cy.get('div[style*="left: -100px; top: -95px;"');
+    cy.get('.map').click(160, 200);
+    assertExactlyPopUps(1, notes);
   });
 
-  it('Clicks on region and deletes polygon locally', () => {
+  it('Draws a polygon and checks that it is reshapable', () => {
+    drawPolygonAndClickOnIt();
+    cy.get('div[style*="left: 15px; top: -95px;"').should('not.exist');
+    pressPolygonButton('edit');
+    // check for draggable edge (used Selector Playground to find one).
+    cy.get('div[style*="left: 15px; top: -95px;"').click();
+    pressPolygonButton('save');
+    cy.get('div[style*="left: 15px; top: -95px;"').should('not.exist');
+  });
+
+  it('Clicks on a polygon and edits notes locally', () => {
     cy.visit(host);
     cy.awaitLoad();
 
+    clickInsideKnownRegion();
+    cy.get('.map').contains('second notes');
+    pressPolygonButton('edit');
+    cy.get('[id="notes"]').clear();
+    cy.get('[id="notes"]').type(notes);
+    pressPolygonButton('save');
+    cy.get('.map').contains(notes);
+  });
+
+  it('Clicks on polygon and deletes polygon locally', () => {
+    cy.visit(host);
+    cy.awaitLoad();
     // Experimented to find point on map within second triangle.
-    cy.get('.map').click(447, 250);
+    clickInsideKnownRegion();
     cy.get('.map').contains('second notes');
     // Click again. Wait a little bit because it seems like without the wait
     // the page may not register the second click?
-    cy.wait(1000);
-    cy.get('.map').click(447, 250);
+    cy.wait(hackyWaitTime);
+    clickInsideKnownRegion();
     // Make sure that even though we clicked twice, there's only one pop-up.
-    assertExactlyPopUps(1);
+    assertExactlyPopUps(1, 'second notes');
     // TODO(janakr): Why does Cypress claim to find two identical buttons?
     cy.get('button[title="Close"]').first().click();
-    assertExactlyPopUps(0);
-    cy.get('.map').click(447, 250);
+    assertExactlyPopUps(0, 'second notes');
+    clickInsideKnownRegion();
     cy.get('.map').contains('second notes');
     // Accept confirmation when it happens.
     cy.on('window:confirm', () => true);
-    pressDelete();
-    cy.get('.map').click(447, 250);
+    pressPolygonButton('delete');
+    clickInsideKnownRegion();
     // Make sure that no pop-up, implying polygon is gone.
-    assertExactlyPopUps(0);
+    assertExactlyPopUps(0, 'second notes');
   });
 });
 
-/** Visit page, draw a new polygon on the map, and press its delete button. */
-function drawPolygonAndClickOnItAndPressDelete() {
+/** Click inside the known polygon we have stored in firestore. */
+function clickInsideKnownRegion() {
+  cy.get('.map').click(447, 250);
+}
+
+/** Visit page, draw a new polygon on the map, click inside it. */
+function drawPolygonAndClickOnIt() {
   cy.visit(host);
   const polygonButton = cy.get('[title="Draw a shape"]');
   polygonButton.click();
@@ -71,14 +120,17 @@ function drawPolygonAndClickOnItAndPressDelete() {
   drawPointAndPrepareForNext(50, 250);
   const handButton = cy.get('[title="Stop drawing"]');
   handButton.click();
-  // Check draggable edge present, and click it to trigger pop-up.
-  cy.get('div[style*="left: -100px; top: -95px;"').click();
-  pressDelete();
+  cy.wait(2000);
+  // click to trigger pop up.
+  cy.get('.map').click(150, 200);
 }
 
-/** Press the delete button of a visible pop-up. */
-function pressDelete() {
-  cy.get('#mapContainer').contains('delete').click();
+/**
+ * Clicks a button inside the map with the given id.
+ * @param {string} button id of html button we want to click
+ */
+function pressPolygonButton(button) {
+  cy.get('#mapContainer').contains(button).click();
 }
 
 /**
@@ -87,14 +139,14 @@ function pressDelete() {
  * occurrences, and can't be used to assert there are no matches, and Cypress'
  * #get() function doesn't allow selecting on contents.
  *
- * @param {Number} expectedFound how many divs with content 'second notes' are
- *             expected
+ * @param {Number} expectedFound how many divs with notes param expected
+ * @param {String} notes contents to look for
  */
-function assertExactlyPopUps(expectedFound) {
+function assertExactlyPopUps(expectedFound, notes) {
   let foundElements = 0;
   cy.get('div')
       .each(($elt) => {
-        if ($elt.html() === 'second notes') {
+        if ($elt.html() === notes) {
           expect(foundElements++).to.equal(0);
         }
       })
@@ -114,7 +166,4 @@ function drawPointAndPrepareForNext(x, y) {
   // const clientY = y + 81;
   // cy.get('.map').trigger('mousemove', {clientX: clientX, clientY: clientY});
   cy.get('.map').click(x, y);
-  // Ensure that element from click is present.
-  cy.get('div[style*="left: ' + (x - 325) + 'px; top: ' + (y - 245) + 'px;"',
-      {timeout: 2000});
 }
