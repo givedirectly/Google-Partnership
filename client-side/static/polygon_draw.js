@@ -155,8 +155,7 @@ const userShapes = db.collection(collectionName);
 const appearance = {
   fillColor: '#FF0000',
   strokeColor: '#FF0000',
-  // TODO(#18): make editable by choosing polygon and clicking button.
-  editable: true,
+  editable: false,
 };
 
 /**
@@ -211,13 +210,20 @@ function addPopUpListener(polygon, map) {
     // click, and the cursor doesn't become a "clicking hand" over this shape.
     google.maps.event.removeListener(listener);
     const infoWindow = new google.maps.InfoWindow();
-    infoWindow.setContent(createInfoWindowHtml(
-        polygon, polygonData.get(polygon).notes, infoWindow));
+    infoWindow.setContent(createInfoWindowHtml(polygon, polygonData.get(polygon).notes, infoWindow));
+
     // TODO(janakr): is there a better place to pop this window up?
     const popupCoords = polygon.getPath().getAt(0);
     infoWindow.setPosition(popupCoords);
-    // Reinstall the pop-up listener when the window is closed.
-    infoWindow.addListener('closeclick', () => addPopUpListener(polygon, map));
+    infoWindow.addListener(
+        // Reinstall the pop-up listener when the window is closed.
+        'closeclick', () => {
+          addPopUpListener(polygon, map);
+          // If we closed while editing, autosave
+          // TODO: actually autosave the text when we actually save edited text
+          // back to firestore.
+          save(polygon, infoWindow, '');
+        });
     infoWindow.open(map);
   });
 }
@@ -233,20 +239,60 @@ function addPopUpListener(polygon, map) {
  */
 function createInfoWindowHtml(polygon, notes, infoWindow) {
   const outerDiv = document.createElement('div');
-  const button = document.createElement('button');
-  button.innerHTML = 'delete';
-  button.onclick = () => {
+  const notesDiv = document.createElement('div');
+  notesDiv.innerText = notes;
+
+  const deleteButton = document.createElement('button');
+  deleteButton.innerHTML = 'delete';
+  deleteButton.id = 'delete';
+  deleteButton.onclick = () => {
     if (confirm('Delete region?')) {
       polygon.setMap(null);
       infoWindow.close();
       polygonData.get(polygon).update(polygon);
     }
   };
-  const notesDiv = document.createElement('div');
-  notesDiv.innerText = notes;
-  outerDiv.appendChild(button);
+  const editButton = document.createElement('button');
+  editButton.innerHTML = 'edit';
+  editButton.id = 'edit';
+  editButton.onclick = () => {
+    polygon.setEditable(true);
+
+    const currentNotes = notesDiv.innerText;
+
+    outerDiv.removeChild(notesDiv);
+    outerDiv.removeChild(editButton);
+
+    const notesForm = document.createElement('textarea');
+    notesForm.id = 'notes';
+    notesForm.value = currentNotes;
+
+    const saveButton = document.createElement('button');
+    saveButton.innerHTML = 'save';
+    saveButton.id = 'save';
+    saveButton.onclick = () => save(polygon, infoWindow, notesForm.value);
+
+    outerDiv.appendChild(saveButton);
+    outerDiv.appendChild(document.createElement('br'));
+    outerDiv.appendChild(notesForm);
+  };
+
+  outerDiv.appendChild(deleteButton);
+  outerDiv.appendChild(editButton);
   outerDiv.appendChild(notesDiv);
   return outerDiv;
+}
+
+/**
+ * Sets given polygon's notes and makes it uneditable.
+ *
+ * @param {google.maps.Polygon} polygon
+ * @param {google.maps.InfoWindow} infoWindow
+ * @param {String} notes
+ */
+function save(polygon, infoWindow, notes) {
+  polygon.setEditable(false);
+  infoWindow.setContent(createInfoWindowHtml(polygon, notes, infoWindow));
 }
 
 // TODO(janakr): it would be nice to unit-test this, but I don't know how to get
