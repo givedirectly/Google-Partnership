@@ -144,10 +144,16 @@ function createInfoWindowHtml(polygon, notes, infoWindow) {
   return outerDiv;
 }
 
+/**
+ * Sets given polygon's notes and makes it uneditable.
+ *
+ * @param {google.maps.Polygon} polygon
+ * @param {google.maps.InfoWindow} infoWindow
+ * @param {String} notes
+ */
 function save(polygon, infoWindow, notes) {
   polygon.setEditable(false);
-  infoWindow.setContent(
-      createInfoWindowHtml(polygon, notes, infoWindow));
+  infoWindow.setContent(createInfoWindowHtml(polygon, notes, infoWindow));
 }
 
 // TODO(janakr): it would be nice to unit-test this, but I don't know how to get
