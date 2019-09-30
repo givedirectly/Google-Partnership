@@ -1,5 +1,6 @@
 import createError from './create_error.js';
 import createMap from './create_map.js';
+import inProduction from './in_test_util.js';
 import run from './run.js';
 
 export {map};
@@ -48,15 +49,15 @@ function setup() {
       });
     };
 
-    // Attempt to authenticate using existing credentials.
-    // TODO(#21): Fix buggy authentification.
-    // ee.data.authenticate(
-    //     CLIENT_ID,
-    //     runOnSuccess,
-    //     createError('authenticating'),
-    //     null,
-    //     onImmediateFailed);
-    runOnSuccess();
+    if (inProduction()) {
+      // Attempt to authenticate using existing credentials.
+      ee.data.authenticate(
+          CLIENT_ID, runOnSuccess, createError('authenticating'), null,
+          onImmediateFailed);
+    } else {
+      // TODO(#21): have something better for tests.
+      runOnSuccess();
+    }
   });
 }
 
