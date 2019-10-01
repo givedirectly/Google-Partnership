@@ -65,7 +65,7 @@ function colorAndRate(
       ]))
       .set({
         style: {
-          color: score.min(ee.Number(scoreDisplayCap)).format('ff00ff%02X'),
+          color: score.min(ee.Number(scoreDisplayCap)).format('ff00ff%02d'),
         },
       });
 }
