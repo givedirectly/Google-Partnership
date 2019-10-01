@@ -1,5 +1,5 @@
 import damageLevelsList from './damage_levels.js';
-import {blockGroupTag, buildingCountTag, geoidTag, snapPopTag, totalPopTag} from './property_names.js';
+import {blockGroupTag, buildingCountTag, geoidTag, snapPopTag, totalPopTag, damageTag, snapPercentageTag} from './property_names.js';
 
 export {crowdAiDamageKey};
 
@@ -78,8 +78,8 @@ disasters.set(
 
 /**
  * Given a feature from the SNAP census data, returns a new
- * feature with GEOID, SNAP #, total pop #, total building count and
- * building counts for all damage categories.
+ * feature with GEOID, SNAP #, total pop #, total building count, building
+ * counts for all damage categories, and SNAP percentage and damage percentage.
  *
  * @param {ee.Feature} feature
  * @return {Feature}
@@ -96,17 +96,21 @@ function countDamageAndBuildings(feature) {
   const attrDict = ee.Dictionary.fromLists(
       damageLevels,
       damageFilters.map((type) => blockDamage.filter(type).size()));
-  const totalBuildings = damageLevels.iterate((current, lastResult) => {
-    return ee.Number(lastResult).add(ee.Number(attrDict.get(current)));
-  }, ee.Number(0));
+  const totalBuildings = attrDict.values().reduce(ee.Reducer.sum());
+  const ratioBuildingsDamaged =
+      ee.Number(totalBuildings).subtract(attrDict.get('no-damage')).divide(totalBuildings);
   const snapFeature = ee.Feature(feature.get('primary'));
+  const snapPop = ee.Number.parse(snapFeature.get(snapKey)).long();
+  const totalPop = ee.Number.parse(snapFeature.get(totalKey)).long();
   return ee.Feature(
       geometry,
       attrDict.set(geoidTag, snapFeature.get(censusGeoidKey))
           .set(blockGroupTag, snapFeature.get(censusBlockGroupKey))
-          .set(snapPopTag, ee.Number.parse(snapFeature.get(snapKey)).long())
-          .set(totalPopTag, ee.Number.parse(snapFeature.get(totalKey)).long())
-          .set(buildingCountTag, totalBuildings));
+          .set(snapPopTag, snapPop)
+          .set(totalPopTag, totalPop)
+          .set(snapPercentageTag, snapPop.divide(totalPop))
+          .set(buildingCountTag, totalBuildings)
+          .set(damageTag, ratioBuildingsDamaged));
 }
 
 /**
@@ -140,7 +144,7 @@ function run() {
   // TODO: delete existing asset with same name if it exists.
   const task = ee.batch.Export.table.toAsset(
       joinedSnap.map(countDamageAndBuildings), assetName,
-      'users/juliexxia/' + assetName);
+      'users/janak/' + assetName);
   task.start();
   $('.upload-status')
       .text('Check Code Editor console for progress. Task: ' + task.id);
