@@ -32,7 +32,8 @@ function colorAndRate(
   const povertyRatio = feature.get(snapPercentageTag);
   const ratioBuildingsDamaged = feature.get(damageTag);
   const belowThresholds =
-      ee.Number(povertyRatio).lte(povertyThreshold)
+      ee.Number(povertyRatio)
+          .lte(povertyThreshold)
           .or(ee.Number(ratioBuildingsDamaged).lte(damageThreshold));
   const potentialScore =
       ee.Number(ratioBuildingsDamaged.multiply(1 - povertyWeight)

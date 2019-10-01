@@ -1,8 +1,7 @@
 import damageLevelsList from './damage_levels.js';
-import {blockGroupTag, buildingCountTag, geoidTag, snapPopTag, totalPopTag, damageTag, snapPercentageTag} from './property_names.js';
+import {blockGroupTag, buildingCountTag, damageTag, geoidTag, snapPercentageTag, snapPopTag, totalPopTag} from './property_names.js';
 
 export {crowdAiDamageKey};
-
 /** @VisibleForTesting */
 export {countDamageAndBuildings, disaster, DisasterMapValue, disasters};
 
@@ -97,8 +96,9 @@ function countDamageAndBuildings(feature) {
       damageLevels,
       damageFilters.map((type) => blockDamage.filter(type).size()));
   const totalBuildings = attrDict.values().reduce(ee.Reducer.sum());
-  const ratioBuildingsDamaged =
-      ee.Number(totalBuildings).subtract(attrDict.get('no-damage')).divide(totalBuildings);
+  const ratioBuildingsDamaged = ee.Number(totalBuildings)
+                                    .subtract(attrDict.get('no-damage'))
+                                    .divide(totalBuildings);
   const snapFeature = ee.Feature(feature.get('primary'));
   const snapPop = ee.Number.parse(snapFeature.get(snapKey)).long();
   const totalPop = ee.Number.parse(snapFeature.get(totalKey)).long();
