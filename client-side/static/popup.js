@@ -46,7 +46,7 @@ function setUpPopup() {
 
   /** Called when the popup is added to the map. */
   Popup.prototype.onAdd = function() {
-    createPopupHtml(this);
+    createPopupHtml(this, this.notes);
     this.getPanes().floatPane.appendChild(this.containerDiv);
   };
 
@@ -58,7 +58,12 @@ function setUpPopup() {
   };
 
   /** Called each frame when the popup needs to draw itself. */
-  Popup.prototype.draw = function() {};
+  Popup.prototype.draw = function() {
+    const divPosition =
+        this.getProjection().fromLatLngToDivPixel(this.position);
+    this.containerDiv.style.left = divPosition.x + 'px';
+    this.containerDiv.style.top = divPosition.y + 'px';
+  };
 
   // Set the visibility to 'hidden' or 'visible'.
   Popup.prototype.hide = function() {
@@ -76,13 +81,14 @@ function setUpPopup() {
 /**
  *
  * @param {Popup} popup
+ * @param {string} notes
  */
-function createPopupHtml(popup) {
+function createPopupHtml(popup, notes) {
   const content = popup.content;
   markSaved(content);
 
   const notesDiv = document.createElement('div');
-  notesDiv.innerText = popup.notes;
+  notesDiv.innerText = notes;
 
   const polygon = popup.polygon;
   const deleteButton = document.createElement('button');
@@ -147,12 +153,13 @@ function createPopupHtml(popup) {
  */
 function save(polygon, popup, notes) {
   polygonData.get(polygon).update(polygon, notes);
+
   polygon.setEditable(false);
   markSaved(popup.content);
   while (popup.content.firstChild) {
     popup.content.firstChild.remove();
   }
-  createPopupHtml(polygon, popup, notes, popup.content);
+  createPopupHtml(popup, notes);
 }
 
 /**
