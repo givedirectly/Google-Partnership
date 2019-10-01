@@ -58,24 +58,7 @@ function setUpPopup() {
   };
 
   /** Called each frame when the popup needs to draw itself. */
-  Popup.prototype.draw = function() {
-    const divPosition =
-        this.getProjection().fromLatLngToDivPixel(this.position);
-
-    // Hide the popup when it is far out of view.
-    const display =
-        Math.abs(divPosition.x) < 4000 && Math.abs(divPosition.y) < 4000 ?
-        'block' :
-        'none';
-
-    if (display === 'block') {
-      this.containerDiv.style.left = divPosition.x + 'px';
-      this.containerDiv.style.top = divPosition.y + 'px';
-    }
-    if (this.containerDiv.style.display !== display) {
-      this.containerDiv.style.display = display;
-    }
-  };
+  Popup.prototype.draw = function() {};
 
   // Set the visibility to 'hidden' or 'visible'.
   Popup.prototype.hide = function() {
