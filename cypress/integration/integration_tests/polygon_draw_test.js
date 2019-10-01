@@ -138,7 +138,7 @@ describe('Integration tests for drawing polygons', () => {
     // element is still there, just hidden
     assertExactlyPopUps(1, notes);
     cy.get('#mapContainer').contains(notes).should('not.be.visible');
-  })
+  });
 });
 
 /** Visit page, draw a new polygon on the map, click inside it. */
