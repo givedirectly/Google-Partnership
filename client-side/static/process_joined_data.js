@@ -31,15 +31,12 @@ function colorAndRate(
     povertyWeight) {
   const povertyRatio = ee.Number(feature.get(snapPercentageTag));
   const ratioBuildingsDamaged = ee.Number(feature.get(damageTag));
-  const belowThresholds =
-      povertyRatio
-          .lte(povertyThreshold)
-          .or(ratioBuildingsDamaged.lte(damageThreshold));
-  const potentialScore =
-      ratioBuildingsDamaged.multiply(1 - povertyWeight)
-                    .add(povertyRatio.multiply(povertyWeight))
-                    .multiply(scalingFactor)
-                    .round();
+  const belowThresholds = povertyRatio.lte(povertyThreshold)
+                              .or(ratioBuildingsDamaged.lte(damageThreshold));
+  const potentialScore = ratioBuildingsDamaged.multiply(1 - povertyWeight)
+                             .add(povertyRatio.multiply(povertyWeight))
+                             .multiply(scalingFactor)
+                             .round();
   const score = ee.Number(
       ee.Algorithms.If(belowThresholds, ee.Number(0), potentialScore));
   return ee
