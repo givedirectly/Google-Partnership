@@ -120,7 +120,7 @@ function drawPolygonAndClickOnIt() {
   // derived by inspecting the page after starting to draw a polygon.
   cy.get(
       'div[style*="cursor: url(\\"https://maps.gstatic.com/mapfiles/crosshair.cur\\") 7 7, crosshair;"]');
-  drawPointAndPrepareForNext(50, 250);
+  drawPointAndPrepareForNext(150, 250);
   // TODO(janakr): test seems to fail reliably on command line without these
   // and pass with it. Figure out what to actually test for on the page and
   // remove these waits.
@@ -129,7 +129,7 @@ function drawPolygonAndClickOnIt() {
   cy.wait(hackyWaitTime);
   drawPointAndPrepareForNext(450, 150);
   cy.wait(hackyWaitTime);
-  drawPointAndPrepareForNext(50, 250);
+  drawPointAndPrepareForNext(150, 250);
   const handButton = cy.get('[title="Stop drawing"]');
   handButton.click();
   cy.wait(2000);
@@ -144,7 +144,7 @@ function drawPolygonAndClickOnIt() {
  * @return {Cypress.Chainable}
  */
 function clickOnDrawnPolygon() {
-  return cy.get('.map').click(150, 200);
+  return cy.get('.map').click(150, 250);
 }
 
 /**

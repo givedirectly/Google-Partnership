@@ -2,9 +2,16 @@ import createError from './create_error.js';
 import {mapContainerId} from './dom_constants.js';
 import inProduction from './in_test_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
+import setUpPopup from './popup.js';
 
 // PolygonData is only for testing.
-export {PolygonData, processUserRegions, setUpPolygonDrawing as default};
+export {
+  addPopUpListener,
+  PolygonData,
+  polygonData,
+  processUserRegions,
+  setUpPolygonDrawing as default,
+};
 
 // TODO(#13): use proper keys associated to GiveDirectly account,
 // and lock down security (right now database is global read-write).
@@ -158,12 +165,17 @@ const appearance = {
   editable: false,
 };
 
+// custom popups must be defined after Maps API is loaded.
+let Popup = null;
+
 /**
  * Create a Google Maps Drawing Manager for drawing polygons.
  *
  * @param {google.maps.Map} map
  */
 function setUpPolygonDrawing(map) {
+  Popup = setUpPopup();
+
   const drawingManager = new google.maps.drawing.DrawingManager({
     drawingControl: true,
     drawingControlOptions: {drawingModes: ['marker', 'polygon']},
@@ -174,11 +186,25 @@ function setUpPolygonDrawing(map) {
     const polygon = event.overlay;
     const data = new PolygonData(null, '');
     polygonData.set(polygon, data);
-    addPopUpListener(polygon, map);
+    addPopUpListener(polygon, createPopup(polygon, map));
     data.update(polygon, '');
   });
 
   drawingManager.setMap(map);
+}
+
+/**
+ *
+ * @param {google.maps.Polygon} polygon
+ * @param {google.maps.Map} map
+ * @return {Popup}
+ */
+function createPopup(polygon, map) {
+  // TODO(janakr): is there a better place to pop this window up?
+  const popup = new Popup(polygon, polygonData.get(polygon).notes);
+  popup.setMap(map);
+  popup.hide();
+  return popup;
 }
 
 // TODO(#18): allow toggling visibility of user regions off and on.
@@ -202,99 +228,15 @@ function processUserRegions(map) {
  * Adds an onclick listener to polygon, popping up the given notes.
  *
  * @param {google.maps.Polygon} polygon Polygon to add listener to
- * @param {google.maps.Map} map Map that polygon will be/is attached to
+ * @param {Popup} popup
  */
-function addPopUpListener(polygon, map) {
+function addPopUpListener(polygon, popup) {
   const listener = polygon.addListener('click', () => {
     // Remove the listener so that duplicate windows don't pop up on another
     // click, and the cursor doesn't become a "clicking hand" over this shape.
     google.maps.event.removeListener(listener);
-    const infoWindow = new google.maps.InfoWindow();
-    infoWindow.setContent(createInfoWindowHtml(
-        polygon, polygonData.get(polygon).notes, infoWindow));
-
-    // TODO(janakr): is there a better place to pop this window up?
-    const popupCoords = polygon.getPath().getAt(0);
-    infoWindow.setPosition(popupCoords);
-    infoWindow.addListener(
-        // Reinstall the pop-up listener when the window is closed.
-        'closeclick', () => {
-          addPopUpListener(polygon, map);
-          // If we closed while editing, autosave
-          // TODO: actually autosave the text when we actually save edited text
-          // back to firestore.
-          save(polygon, infoWindow, '');
-        });
-    infoWindow.open(map);
+    popup.show();
   });
-}
-
-/**
- * Creates the inner contents of the InfoWindow that pops up when a polygon is
- * selected.
- *
- * @param {google.maps.Polygon} polygon
- * @param {String} notes
- * @param {google.maps.InfoWindow} infoWindow
- * @return {HTMLDivElement}
- */
-function createInfoWindowHtml(polygon, notes, infoWindow) {
-  const outerDiv = document.createElement('div');
-  const notesDiv = document.createElement('div');
-  notesDiv.innerText = notes;
-
-  const deleteButton = document.createElement('button');
-  deleteButton.innerHTML = 'delete';
-  deleteButton.id = 'delete';
-  deleteButton.onclick = () => {
-    if (confirm('Delete region?')) {
-      polygon.setMap(null);
-      infoWindow.close();
-      polygonData.get(polygon).update(polygon);
-    }
-  };
-  const editButton = document.createElement('button');
-  editButton.innerHTML = 'edit';
-  editButton.id = 'edit';
-  editButton.onclick = () => {
-    polygon.setEditable(true);
-
-    const currentNotes = notesDiv.innerText;
-
-    outerDiv.removeChild(notesDiv);
-    outerDiv.removeChild(editButton);
-
-    const notesForm = document.createElement('textarea');
-    notesForm.id = 'notes';
-    notesForm.value = currentNotes;
-
-    const saveButton = document.createElement('button');
-    saveButton.innerHTML = 'save';
-    saveButton.id = 'save';
-    saveButton.onclick = () => save(polygon, infoWindow, notesForm.value);
-
-    outerDiv.appendChild(saveButton);
-    outerDiv.appendChild(document.createElement('br'));
-    outerDiv.appendChild(notesForm);
-  };
-
-  outerDiv.appendChild(deleteButton);
-  outerDiv.appendChild(editButton);
-  outerDiv.appendChild(notesDiv);
-  return outerDiv;
-}
-
-/**
- * Sets given polygon's notes, makes it uneditable, and saves to backend.
- *
- * @param {google.maps.Polygon} polygon
- * @param {google.maps.InfoWindow} infoWindow
- * @param {String} notes
- */
-function save(polygon, infoWindow, notes) {
-  polygonData.get(polygon).update(polygon, notes);
-  polygon.setEditable(false);
-  infoWindow.setContent(createInfoWindowHtml(polygon, notes, infoWindow));
 }
 
 // TODO(janakr): it would be nice to unit-test this, but I don't know how to get
@@ -318,7 +260,7 @@ function drawRegionsFromFirestoreQuery(querySnapshot, map) {
     polygonData.set(
         polygon,
         new PolygonData(userDefinedRegion.id, userDefinedRegion.get('notes')));
-    addPopUpListener(polygon, map);
+    addPopUpListener(polygon, createPopup(polygon, map));
     polygon.setMap(map);
   });
   loadingElementFinished(mapContainerId);
