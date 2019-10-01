@@ -29,17 +29,17 @@ const scoreDisplayCap = 99;
 function colorAndRate(
     feature, scalingFactor, damageLevels, povertyThreshold, damageThreshold,
     povertyWeight) {
-  const povertyRatio = feature.get(snapPercentageTag);
-  const ratioBuildingsDamaged = feature.get(damageTag);
+  const povertyRatio = ee.Number(feature.get(snapPercentageTag));
+  const ratioBuildingsDamaged = ee.Number(feature.get(damageTag));
   const belowThresholds =
-      ee.Number(povertyRatio)
+      povertyRatio
           .lte(povertyThreshold)
-          .or(ee.Number(ratioBuildingsDamaged).lte(damageThreshold));
+          .or(ratioBuildingsDamaged.lte(damageThreshold));
   const potentialScore =
-      ee.Number(ratioBuildingsDamaged.multiply(1 - povertyWeight)
+      ratioBuildingsDamaged.multiply(1 - povertyWeight)
                     .add(povertyRatio.multiply(povertyWeight))
                     .multiply(scalingFactor)
-                    .round());
+                    .round();
   const score = ee.Number(
       ee.Algorithms.If(belowThresholds, ee.Number(0), potentialScore));
   return ee
