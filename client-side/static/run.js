@@ -21,6 +21,7 @@ const assets = {
 
 // TODO: infer this from disaster const in import_data.js?
 const snapAndDamageAsset = 'users/juliexxia/harvey-snap-and-damage';
+let snapAndDamagePromise;
 const scalingFactor = 100;
 const scoreIndex = Object.keys(assets).length;
 const scoreLayerName = 'score';
@@ -36,6 +37,8 @@ function run(map) {
   initializeAssetLayers(map);
   createToggles(map);
   createAssetCheckboxes(map);
+  snapAndDamagePromise =
+      convertEeObjectToPromise(ee.FeatureCollection(snapAndDamageAsset));
   createAndDisplayJoinedData(
       map, initialPovertyThreshold, initialDamageThreshold,
       initialPovertyWeight);
@@ -64,7 +67,7 @@ function createAndDisplayJoinedData(
   google.maps.event.removeListener(mapSelectListener);
   google.maps.event.removeListener(featureSelectListener);
   const processedData = processJoinedData(
-      ee.FeatureCollection(snapAndDamageAsset), scalingFactor,
+      snapAndDamagePromise, scalingFactor,
       povertyThreshold, damageThreshold, povertyWeight);
   initializeScoreLayer(map, processedData);
   drawTable(
@@ -165,4 +168,18 @@ function initializeAssetLayers(map) {
 function initializeScoreLayer(map, layer) {
   addLayerFromGeoJsonPromise(layer, scoreLayerName, scoreIndex);
   document.getElementById(scoreLayerName).checked = true;
+}
+
+function convertEeObjectToPromise(eeObject) {
+  return new Promise(
+      (resolve, reject) => {
+        eeObject.evaluate((resolvedObject, error) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+          resolve(resolvedObject);
+        });
+      }
+  );
 }

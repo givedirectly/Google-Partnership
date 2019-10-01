@@ -165,9 +165,8 @@ function removeLayer(assetName) {
   addLayerFromFeatures(layerMapValue, assetName);
 }
 
-/**
- * Removes the score layer overlay.
- */
+/** Removes the score layer overlay before a parameter update. */
 function removeScoreLayer() {
-  removeLayer(scoreLayerName);
+  layerArray[layerMap[scoreLayerName].index] = null;
+  redrawLayers();
 }

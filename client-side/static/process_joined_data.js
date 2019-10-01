@@ -40,22 +40,8 @@ function colorAndRate(
   feature.properties['color'] = [255, 0, 255, Math.min(3 * score, scoreDisplayCap)];
 }
 
-function convertEeObjectToPromise(eeObject) {
-  return new Promise(
-      (resolve, reject) => {
-        eeObject.evaluate((resolvedObject, error) => {
-          if (error) {
-            reject(error);
-            return;
-          }
-          resolve(resolvedObject);
-        });
-      }
-  );
-}
-
 /**
- * @param {ee.FeatureCollection} joinedData
+ * @param {Promise} dataPromise
  * @param {number} scalingFactor multiplies the raw score, it can be
  *     adjusted to make sure that the values span the desired range of ~0 to
  *     ~100.
@@ -69,10 +55,9 @@ function convertEeObjectToPromise(eeObject) {
  * @return {Promise}
  */
 function processJoinedData(
-    joinedData, scalingFactor, povertyThreshold, damageThreshold,
+    dataPromise, scalingFactor, povertyThreshold, damageThreshold,
     povertyWeight) {
-  const promise = convertEeObjectToPromise(joinedData);
-  return promise.then((featureCollection) => {
+  return dataPromise.then((featureCollection) => {
     for (const feature of featureCollection.features) {
       colorAndRate(
           feature, scalingFactor, povertyThreshold, damageThreshold,

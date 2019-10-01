@@ -30,7 +30,7 @@ function drawTable(
   // TODO(#37): These callbacks could be executed out of order, and the table
   //  might not reflect the user's latest request.
   scoredFeatures.then((allFeatures) => {
-    const features = allFeatures.filter((feature) => feature.properties['score']);
+    const features = allFeatures.filter((feature) => feature.properties[scoreTag]);
     // Clone headings.
     const list = [tableHeadings];
     for (const feature of features) {
