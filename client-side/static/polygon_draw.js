@@ -2,13 +2,12 @@ import createError from './create_error.js';
 import {mapContainerId} from './dom_constants.js';
 import inProduction from './in_test_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
-import setUpPopup from './popup.js';
+import {polygonData} from './polygon_data.js';
+import {addPopUpListener, setUpPopup} from './popup.js';
 
 // PolygonData is only for testing.
 export {
-  addPopUpListener,
   PolygonData,
-  polygonData,
   processUserRegions,
   setUpPolygonDrawing as default,
 };
@@ -25,13 +24,6 @@ const firebaseConfig = {
   appId: '1:634162034024:web:c5f5b82327ba72f46d52dd',
 };
 
-/**
- * Map from Google Maps Polygon to PolygonData, so that on user-region
- * modifications we can track new notes values and write data back to database.
- * Data is added to this map on loading from the backend or on user creation,
- * and removed if the polygon is deleted.
- */
-const polygonData = new Map();
 
 /**
  * Class holding data for a user-drawn polygon, including the state of writing
@@ -193,14 +185,17 @@ function setUpPolygonDrawing(map) {
   drawingManager.setMap(map);
 }
 
+
 /**
+ * Creates a new popup object, attaches it to the map and hides it.
+ * This is meant to be called once over the lifetime of a polygon. After it's
+ * created, logic should use the show/hide methods to handle its visibility.
  *
  * @param {google.maps.Polygon} polygon
  * @param {google.maps.Map} map
  * @return {Popup}
  */
 function createPopup(polygon, map) {
-  // TODO(janakr): is there a better place to pop this window up?
   const popup = new Popup(polygon, polygonData.get(polygon).notes);
   popup.setMap(map);
   popup.hide();
@@ -220,23 +215,6 @@ function processUserRegions(map) {
       .then(
           (querySnapshot) => drawRegionsFromFirestoreQuery(querySnapshot, map))
       .catch(createError('error getting user-drawn regions'));
-}
-
-// TODO(#18): pop notes up as editable field, trigger save on modifications.
-// Also trigger save on modifying bounds.
-/**
- * Adds an onclick listener to polygon, popping up the given notes.
- *
- * @param {google.maps.Polygon} polygon Polygon to add listener to
- * @param {Popup} popup
- */
-function addPopUpListener(polygon, popup) {
-  const listener = polygon.addListener('click', () => {
-    // Remove the listener so that duplicate windows don't pop up on another
-    // click, and the cursor doesn't become a "clicking hand" over this shape.
-    google.maps.event.removeListener(listener);
-    popup.show();
-  });
 }
 
 // TODO(janakr): it would be nice to unit-test this, but I don't know how to get

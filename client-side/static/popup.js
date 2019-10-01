@@ -1,14 +1,13 @@
-import {addPopUpListener, polygonData} from './polygon_draw.js';
+import {polygonData} from './polygon_data.js';
 
-export {setUpPopup as default};
+export {addPopUpListener, setUpPopup};
 
-const editingClass = 'editing';
 
 // Mostly copied from example at
 // https://developers-dot-devsite-v2-prod.appspot.com/maps \
 //     /documentation/javascript/examples/overlay-popup
 /**
- *
+ * Sets up the Popup class. See link above for more context.
  * @return {Popup}
  */
 function setUpPopup() {
@@ -21,6 +20,7 @@ function setUpPopup() {
    */
   function Popup(polygon, notes) {
     this.polygon = polygon;
+    // TODO(janakr): is there a better place to pop this window up?
     this.position = polygon.getPath().getAt(0);
     this.notes = notes;
     this.content = document.createElement('div');
@@ -78,7 +78,10 @@ function setUpPopup() {
   return Popup;
 }
 
+const editingClass = 'editing';
+
 /**
+ * Populates the content div of the popup.
  *
  * @param {Popup} popup
  * @param {string} notes
@@ -112,7 +115,7 @@ function createPopupHtml(popup, notes) {
     content.removeChild(editButton);
 
     const notesForm = document.createElement('textarea');
-    // This isn't great because we end up with multiple divs with the same
+    // This isn't great because we end up with multiple elements with the same
     // id. But since we only rely on it for testing for now, not super pressing.
     // TODO: create this id based on polygon id?
     notesForm.id = 'notes';
@@ -176,4 +179,19 @@ function markEditing(div) {
  */
 function markSaved(div) {
   div.classList.remove(editingClass);
+}
+
+/**
+ * Adds an onclick listener to polygon, popping up the given notes.
+ *
+ * @param {google.maps.Polygon} polygon Polygon to add listener to
+ * @param {Popup} popup
+ */
+function addPopUpListener(polygon, popup) {
+  const listener = polygon.addListener('click', () => {
+    // Remove the listener so that duplicate windows don't pop up on another
+    // click, and the cursor doesn't become a "clicking hand" over this shape.
+    google.maps.event.removeListener(listener);
+    popup.show();
+  });
 }
