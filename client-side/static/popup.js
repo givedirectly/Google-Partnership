@@ -1,14 +1,14 @@
 import {polygonData} from './polygon_data.js';
 
-export {addPopUpListener, setUpPopup};
+export {addPopUpListener, createPopup, setUpPopup};
 
+let CustomPopup = null;
 
 // Mostly copied from example at
 // https://developers-dot-devsite-v2-prod.appspot.com/maps \
 //     /documentation/javascript/examples/overlay-popup
 /**
  * Sets up the Popup class. See link above for more context.
- * @return {Popup}
  */
 function setUpPopup() {
   /**
@@ -75,7 +75,7 @@ function setUpPopup() {
     this.containerDiv.style.visibility = 'visible';
   };
 
-  return Popup;
+  CustomPopup = Popup;
 }
 
 const editingClass = 'editing';
@@ -194,4 +194,20 @@ function addPopUpListener(polygon, popup) {
     google.maps.event.removeListener(listener);
     popup.show();
   });
+}
+
+/**
+ * Creates a new popup object, attaches it to the map and hides it.
+ * This is meant to be called once over the lifetime of a polygon. After it's
+ * created, logic should use the show/hide methods to handle its visibility.
+ *
+ * @param {google.maps.Polygon} polygon
+ * @param {google.maps.Map} map
+ * @return {Popup}
+ */
+function createPopup(polygon, map) {
+  const popup = new CustomPopup(polygon, polygonData.get(polygon).notes);
+  popup.setMap(map);
+  popup.hide();
+  return popup;
 }

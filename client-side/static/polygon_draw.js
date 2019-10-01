@@ -3,7 +3,7 @@ import {mapContainerId} from './dom_constants.js';
 import inProduction from './in_test_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {polygonData} from './polygon_data.js';
-import {addPopUpListener, setUpPopup} from './popup.js';
+import {addPopUpListener, createPopup, setUpPopup} from './popup.js';
 
 // PolygonData is only for testing.
 export {
@@ -157,16 +157,13 @@ const appearance = {
   editable: false,
 };
 
-// custom popups must be defined after Maps API is loaded.
-let Popup = null;
-
 /**
  * Create a Google Maps Drawing Manager for drawing polygons.
  *
  * @param {google.maps.Map} map
  */
 function setUpPolygonDrawing(map) {
-  Popup = setUpPopup();
+  setUpPopup();
 
   const drawingManager = new google.maps.drawing.DrawingManager({
     drawingControl: true,
@@ -183,23 +180,6 @@ function setUpPolygonDrawing(map) {
   });
 
   drawingManager.setMap(map);
-}
-
-
-/**
- * Creates a new popup object, attaches it to the map and hides it.
- * This is meant to be called once over the lifetime of a polygon. After it's
- * created, logic should use the show/hide methods to handle its visibility.
- *
- * @param {google.maps.Polygon} polygon
- * @param {google.maps.Map} map
- * @return {Popup}
- */
-function createPopup(polygon, map) {
-  const popup = new Popup(polygon, polygonData.get(polygon).notes);
-  popup.setMap(map);
-  popup.hide();
-  return popup;
 }
 
 // TODO(#18): allow toggling visibility of user regions off and on.
