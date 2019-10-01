@@ -16,9 +16,12 @@
 // Import commands.js using ES2015 syntax:
 import './commands';
 import './mock_ee';
+import './mock_firebase';
 
 // Alternatively you can use CommonJS syntax:
 // require('./commands')
 
 global.host = 'http://localhost:8080/';
 global.tableClass = '.google-visualization-table-table';
+
+beforeEach(() => cy.setCookie('IN_CYPRESS_TEST', '1'));

@@ -2,7 +2,7 @@ import {clickFeature, selectHighlightedFeatures} from './click_feature.js';
 import {mapContainerId, tableContainerId} from './dom_constants.js';
 import {drawTable} from './draw_table.js';
 import {highlightFeatures} from './highlight_features.js';
-import {addLayer, addNullLayer, toggleLayerOff, toggleLayerOn} from './layer_util.js';
+import {addLayer, addNullLayer, scoreLayerName, toggleLayerOff, toggleLayerOn} from './layer_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {processUserRegions} from './polygon_draw.js';
 import processJoinedData from './process_joined_data.js';
@@ -11,7 +11,7 @@ import {createToggles, initialDamageThreshold, initialPovertyThreshold, initialP
 export {
   createAndDisplayJoinedData,
   run as default,
-  scoreLayerName,
+
 };
 
 // Dictionary of known assets -> whether they should be displayed by default
@@ -23,7 +23,6 @@ const assets = {
 const snapAndDamageAsset = 'users/juliexxia/harvey-snap-and-damage';
 const scalingFactor = 100;
 const scoreIndex = Object.keys(assets).length;
-const scoreLayerName = 'score';
 
 /**
  * Main function that processes the known assets (FEMA damage, etc., SNAP) and
@@ -70,8 +69,8 @@ function createAndDisplayJoinedData(
       processedData, (features) => highlightFeatures(features, map),
       (table, tableData) => {
         loadingElementFinished(tableContainerId);
-        // every time we get a new table and data, reselect elements in the table
-        // based on {@code currentFeatures} in highlight_features.js.
+        // every time we get a new table and data, reselect elements in the
+        // table based on {@code currentFeatures} in highlight_features.js.
         selectHighlightedFeatures(table, tableData);
         // TODO: handle ctrl+click situations
         mapSelectListener = map.addListener('click', (event) => {
@@ -79,8 +78,8 @@ function createAndDisplayJoinedData(
               event.latLng.lng(), event.latLng.lat(), map, snapAndDamageAsset,
               table, tableData);
         });
-        // map.data covers clicks to map areas underneath map.data so we need two
-        // listeners
+        // map.data covers clicks to map areas underneath map.data so we need
+        // two listeners
         featureSelectListener = map.data.addListener('click', (event) => {
           clickFeature(
               event.latLng.lng(), event.latLng.lat(), map, snapAndDamageAsset,
