@@ -3,11 +3,13 @@ import processJoinedData from '../../../client-side/static/process_joined_data.j
 const featureProperties = new Map();
 featureProperties.set('SNAP HOUSEHOLDS', 2);
 featureProperties.set('TOTAL HOUSEHOLDS', 4);
+featureProperties.set('SNAP PERCENTAGE', 0.5);
 featureProperties.set('BUILDING COUNT', 27);
 featureProperties.set('BLOCK GROUP', 'block group');
 featureProperties.set('no-damage', 12);
 featureProperties.set('minor-damage', 10);
 featureProperties.set('major-damage', 5);
+featureProperties.set('DAMAGE PERCENTAGE', 15 / 27);
 const feature = {};
 feature.get = (prop) => featureProperties.get(prop);
 const geometryObject = {};
