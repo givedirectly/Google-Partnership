@@ -47,7 +47,6 @@ describe('Integration tests for drawing polygons', () => {
   it('Draws a polygon and edits its notes', () => {
     drawPolygonAndClickOnIt();
     pressPolygonButton('edit');
-    cy.get('[id="notes"]').clear();
     cy.get('[id="notes"]').type(notes);
     pressPolygonButton('save');
     cy.get('.map').contains(notes);
@@ -63,7 +62,7 @@ describe('Integration tests for drawing polygons', () => {
 
     pressPolygonButton('delete');
     // Polygon should be gone.
-    cy.get('.map').click(160, 200);
+    clickOnDrawnPolygon();
     assertExactlyPopUps(0, notes);
   });
 
@@ -103,6 +102,43 @@ describe('Integration tests for drawing polygons', () => {
     clickOnDrawnPolygon();
     assertExactlyPopUps(0, notes);
   });
+
+  it('Draws a polygon, clicks it, closes its dialoge box', () => {
+    drawPolygonAndClickOnIt();
+    pressPolygonButton('edit');
+    cy.get('[id="notes"]').type(notes);
+    pressPolygonButton('save');
+    pressPolygonButton('close');
+    // element is still there, just hidden
+    assertExactlyPopUps(1, notes);
+    cy.get('.map').contains(notes).should('not.be.visible');
+  });
+
+  it('Draws a polygon, almost closes while editing', () => {
+    cy.on('window:confirm', () => false);
+
+    drawPolygonAndClickOnIt();
+    pressPolygonButton('edit');
+    cy.get('[id="notes"]').type(notes);
+    pressPolygonButton('close');
+    pressPolygonButton('save');
+    cy.get('#mapContainer').contains(notes).should('be.visible');
+  });
+
+  it('Draws a polygon, closes while editing', () => {
+    cy.on('window:confirm', () => true);
+
+    drawPolygonAndClickOnIt();
+    pressPolygonButton('edit');
+    cy.get('[id="notes"]').type(notes);
+    pressPolygonButton('save');
+    pressPolygonButton('edit');
+    cy.get('[id="notes"]').type('blahblahblah');
+    pressPolygonButton('close');
+    // element is still there, just hidden
+    assertExactlyPopUps(1, notes);
+    cy.get('#mapContainer').contains(notes).should('not.be.visible');
+  })
 });
 
 /** Visit page, draw a new polygon on the map, click inside it. */
@@ -156,7 +192,7 @@ function pressPolygonButton(button) {
 }
 
 /**
- * Asserts that a div with innerHtml 'second notes' is found exactly
+ * Asserts that a div with innerHtml notes is found exactly
  * expectedFound times. Cypress' normal #contains() function doesn't count
  * occurrences, and can't be used to assert there are no matches, and Cypress'
  * #get() function doesn't allow selecting on contents.
