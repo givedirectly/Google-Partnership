@@ -103,7 +103,7 @@ describe('Integration tests for drawing polygons', () => {
     assertExactlyPopUps(0, notes);
   });
 
-  it('Draws a polygon, clicks it, closes its dialoge box', () => {
+  it('Draws a polygon, clicks it, closes its info box', () => {
     drawPolygonAndClickOnIt();
     pressPolygonButton('edit');
     cy.get('[id="notes"]').type(notes);
