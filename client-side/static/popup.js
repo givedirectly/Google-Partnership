@@ -86,8 +86,6 @@ function setUpPopup() {
   CustomPopup = Popup;
 }
 
-const editingClass = 'editing';
-
 /**
  * Populates the content div of the popup.
  *
@@ -97,7 +95,7 @@ const editingClass = 'editing';
  */
 function createPopupHtml(popup, notes, map) {
   const content = popup.content;
-  markSaved(content);
+  let saved = true;
 
   const notesDiv = document.createElement('div');
   notesDiv.innerText = notes;
@@ -118,7 +116,7 @@ function createPopupHtml(popup, notes, map) {
   const editButton = document.createElement('button');
   editButton.innerHTML = 'edit';
   editButton.onclick = () => {
-    markEditing(content);
+    saved = false;
     polygon.setEditable(true);
 
     const currentNotes = notesDiv.innerText;
@@ -131,12 +129,15 @@ function createPopupHtml(popup, notes, map) {
     // This isn't great because we end up with multiple elements with the same
     // id. But since we only rely on it for testing for now, not super pressing.
     // TODO: create this id based on polygon id?
-    notesForm.id = 'notes';
+    notesForm.classList.add('notes');
     notesForm.value = currentNotes;
 
     const saveButton = document.createElement('button');
     saveButton.innerHTML = 'save';
-    saveButton.onclick = () => save(polygon, popup, notesForm.value, map);
+    saveButton.onclick = () => {
+      save(polygon, popup, notesForm.value, map);
+      saved = true;
+    };
 
     content.insertBefore(saveButton, closeButton);
     content.appendChild(document.createElement('br'));
@@ -146,7 +147,7 @@ function createPopupHtml(popup, notes, map) {
   const closeButton = document.createElement('button');
   closeButton.innerHTML = 'close';
   closeButton.onclick = () => {
-    if (!content.classList.contains(editingClass)) {
+    if (saved) {
       popup.hide();
       addPopUpListener(polygon, popup);
     } else if (confirm('Exit without saving changes? Changes will be lost.')) {
@@ -171,7 +172,7 @@ function createPopupHtml(popup, notes, map) {
 }
 
 /**
- * Sets given polygon's notes, makes it uneditable, and saves to backend.
+ * Updates a polygon's data in the backend and reverts popup to saved state.
  *
  * @param {google.maps.Polygon} polygon
  * @param {Object} popup
@@ -183,8 +184,8 @@ function save(polygon, popup, notes, map) {
   // update where the popup pops up to match any polygon shape changes
   popup.updatePosition();
   polygon.setEditable(false);
-  markSaved(popup.content);
-  // Remove all current contents of the popup replace with the fresh saved
+  // markSaved(popup.content);
+  // Remove all current contents of the popup and replace with the fresh saved
   // content. This is annoying, but would also be annoying to just replace the
   // entire div because of the styling work that happens upon Popup
   // initialization.
@@ -192,22 +193,6 @@ function save(polygon, popup, notes, map) {
     popup.content.firstChild.remove();
   }
   createPopupHtml(popup, notes, map);
-}
-
-/**
- * Mark a div as in editing state
- * @param {Element} div
- */
-function markEditing(div) {
-  div.classList.add(editingClass);
-}
-
-/**
- * Mark a div as in saved state
- * @param {Element} div
- */
-function markSaved(div) {
-  div.classList.remove(editingClass);
 }
 
 /**

@@ -47,7 +47,7 @@ describe('Integration tests for drawing polygons', () => {
   it('Draws a polygon and edits its notes', () => {
     drawPolygonAndClickOnIt();
     pressPolygonButton('edit');
-    cy.get('[id="notes"]').type(notes);
+    cy.get('[class="notes"]').type(notes);
     pressPolygonButton('save');
     cy.get('.map').contains(notes);
   });
@@ -57,7 +57,7 @@ describe('Integration tests for drawing polygons', () => {
     cy.on('window:confirm', () => true);
     drawPolygonAndClickOnIt();
     pressPolygonButton('edit');
-    cy.get('[id="notes"]').type(notes);
+    cy.get('[class="notes"]').type(notes);
     pressPolygonButton('save');
 
     pressPolygonButton('delete');
@@ -72,7 +72,7 @@ describe('Integration tests for drawing polygons', () => {
     cy.on('window:confirm', () => confirmValue);
     drawPolygonAndClickOnIt();
     pressPolygonButton('edit');
-    cy.get('[id="notes"]').type(notes);
+    cy.get('[class="notes"]').type(notes);
     pressPolygonButton('save');
     pressPolygonButton('delete');
     // Assert still exists.
@@ -106,7 +106,7 @@ describe('Integration tests for drawing polygons', () => {
   it('Draws a polygon, clicks it, closes its info box', () => {
     drawPolygonAndClickOnIt();
     pressPolygonButton('edit');
-    cy.get('[id="notes"]').type(notes);
+    cy.get('[class="notes"]').type(notes);
     pressPolygonButton('save');
     pressPolygonButton('close');
     // element is still there, just hidden
@@ -119,7 +119,7 @@ describe('Integration tests for drawing polygons', () => {
 
     drawPolygonAndClickOnIt();
     pressPolygonButton('edit');
-    cy.get('[id="notes"]').type(notes);
+    cy.get('[class="notes"]').type(notes);
     pressPolygonButton('close');
     pressPolygonButton('save');
     cy.get('#mapContainer').contains(notes).should('be.visible');
@@ -130,10 +130,10 @@ describe('Integration tests for drawing polygons', () => {
 
     drawPolygonAndClickOnIt();
     pressPolygonButton('edit');
-    cy.get('[id="notes"]').type(notes);
+    cy.get('[class="notes"]').type(notes);
     pressPolygonButton('save');
     pressPolygonButton('edit');
-    cy.get('[id="notes"]').type('blahblahblah');
+    cy.get('[class="notes"]').type('blahblahblah');
     pressPolygonButton('close');
     // element is still there, just hidden
     assertExactlyPopUps(1, notes);

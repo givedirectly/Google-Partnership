@@ -7,9 +7,9 @@ import {userRegionData} from './user_region_data.js';
 
 // ShapeData is only for testing.
 export {
-  ShapeData,
   processUserRegions,
   setUpPolygonDrawing as default,
+  ShapeData,
 };
 
 // TODO(#13): use proper keys associated to GiveDirectly account,
