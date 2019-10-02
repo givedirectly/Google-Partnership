@@ -131,8 +131,8 @@ function createPopupHtml(popup, notes, map) {
     const saveButton = document.createElement('button');
     saveButton.innerHTML = 'save';
     saveButton.onclick = () => {
-      processNewData(polygon, popup, notes);
-      makeUneditable(polygon, popup, notes, map);
+      processNewData(polygon, popup, notesForm.value);
+      makeUneditable(polygon, popup, notesForm.value, map);
       saved = true;
     };
 
