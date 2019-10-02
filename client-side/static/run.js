@@ -169,6 +169,13 @@ function initializeScoreLayer(map, layer) {
   document.getElementById(scoreLayerName).checked = true;
 }
 
+/**
+ * Transform an EE object into a standard Javascript Promise by wrapping its
+ * evaluate call.
+ *
+ * @param {ee.ComputedObject} eeObject
+ * @return {Promise<GeoJson>}
+ */
 function convertEeObjectToPromise(eeObject) {
   return new Promise((resolve, reject) => {
     eeObject.evaluate((resolvedObject, error) => {

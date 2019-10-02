@@ -46,6 +46,11 @@ class LayerMapValue {
   }
 }
 
+/**
+ * Sets the map for deck.gl. Called only at startup.
+ *
+ * @param {google.maps.Map} map
+ */
 function setMap(map) {
   deckGlOverlay.setMap(map);
 }
@@ -77,6 +82,12 @@ function toggleLayerOff(assetName) {
 
 const coloring = (f) => showColor(f.properties['color']);
 
+/**
+ * Creates a deck.gl layer from the given value's GeoJSON data.
+ *
+ * @param {LayerMapValue} layerMapValue
+ * @param {string} assetName
+ */
 function addLayerFromFeatures(layerMapValue, assetName) {
   layerArray[layerMapValue.index] = new deck.GeoJsonLayer({
     id: assetName,
@@ -90,11 +101,14 @@ function addLayerFromFeatures(layerMapValue, assetName) {
 
 const black = [0, 0, 0, 255];
 
+/**
+ * Utility function to return the given color if defined, or black if undefined.
+ *
+ * @param {Array} color RGBA color specification as an array, or undefined/null
+ * @return {Array} RGBA color specification as an array
+ */
 function showColor(color) {
-  if (color) {
-    return color;
-  }
-  return black;
+  return color ? color : black;
 }
 
 /**
@@ -126,6 +140,14 @@ function addLayer(layer, assetName, index) {
   });
 }
 
+/**
+ * Adds a visible layer to the map from a Promise that resolves to a GeoJSON
+ * list of Features.
+ *
+ * @param {Promise<Array<GeoJson>>}featuresPromise
+ * @param {string} assetName
+ * @param {number} index Ordering of layer (higher is more visible)
+ */
 function addLayerFromGeoJsonPromise(featuresPromise, assetName, index) {
   addLoadingElement(mapContainerId);
   // Add entry to map.
@@ -153,6 +175,10 @@ function addNullLayer(assetName, index) {
 
 const hasContent = (val) => val;
 
+/**
+ * Sets the "layers" attribute of deckGlOverlay to the non-null elements of
+ * layerArray, which has the effect of redrawing it on the map.
+ */
 function redrawLayers() {
   deckGlOverlay.setProps({layers: layerArray.filter(hasContent)});
 }

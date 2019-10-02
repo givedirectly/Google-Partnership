@@ -1,5 +1,4 @@
-import damageLevelsList from './damage_levels.js';
-import {blockGroupTag, damageTag, geoidTag, scoreTag, snapPercentageTag} from './property_names.js';
+import {damageTag, scoreTag, snapPercentageTag} from './property_names.js';
 
 export {processJoinedData as default};
 
