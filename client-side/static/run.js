@@ -2,7 +2,7 @@ import {clickFeature, selectHighlightedFeatures} from './click_feature.js';
 import {mapContainerId, tableContainerId} from './dom_constants.js';
 import {drawTable} from './draw_table.js';
 import {highlightFeatures} from './highlight_features.js';
-import {addLayer, addNullLayer, addLayerFromGeoJsonPromise, setMap, toggleLayerOff, toggleLayerOn} from './layer_util.js';
+import {addLayer, addNullLayer, scoreLayerName, addLayerFromGeoJsonPromise, setMap, toggleLayerOff, toggleLayerOn} from './layer_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {processUserRegions} from './polygon_draw.js';
 import processJoinedData from './process_joined_data.js';
@@ -11,7 +11,7 @@ import {createToggles, initialDamageThreshold, initialPovertyThreshold, initialP
 export {
   createAndDisplayJoinedData,
   run as default,
-  scoreLayerName,
+
 };
 
 // Dictionary of known assets -> whether they should be displayed by default
@@ -24,7 +24,6 @@ const snapAndDamageAsset = 'users/juliexxia/harvey-snap-and-damage';
 let snapAndDamagePromise;
 const scalingFactor = 100;
 const scoreIndex = Object.keys(assets).length;
-const scoreLayerName = 'score';
 
 /**
  * Main function that processes the known assets (FEMA damage, etc., SNAP) and
