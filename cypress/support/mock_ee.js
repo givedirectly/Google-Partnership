@@ -125,10 +125,10 @@ class EeNumber {
    * Returns if this value is <= the given value.
    *
    * @param {number} value
-   * @return {boolean}
+   * @return {EeNumber}
    */
   lte(value) {
-    return this._myNumberValue <= value;
+    return this._myNumberValue <= value ? new EeNumber(1) : new EeNumber(0);
   }
 
   /**
