@@ -1,4 +1,4 @@
-export deck;
+export {deck as default};
 
 const deck = {};
 
