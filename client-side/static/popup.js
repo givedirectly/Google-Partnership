@@ -72,7 +72,6 @@ function setUpPopup() {
   };
 
   Popup.prototype.show = function() {
-    this.updatePosition();
     this.containerDiv.style.visibility = 'visible';
   };
 
