@@ -9,7 +9,7 @@ const featureProperties = {
   'no-damage': 12,
   'minor-damage': 10,
   'major-damage': 5,
-  'DAMAGE PERCENTAGE': 15 / 27
+  'DAMAGE PERCENTAGE': 15 / 27,
 };
 const feature = {};
 feature.properties = featureProperties;

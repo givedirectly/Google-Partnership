@@ -50,16 +50,9 @@ describe('Unit test for toggleLayerOn', () => {
     expect(layerProps).to.have.property('data', emptyList);
   });
 
-  it('check hidden layer, then uncheck before getMapCallback', () => {
+  it('check hidden layer, then uncheck before list evaluation', () => {
     expect(layerMap['asset2'].displayed).to.equals(false);
     expect(layerMap['asset2'].data).to.be.null;
-
-    const overlayMapTypesApi = {
-      setAt: (index, overlay) => {},
-    };
-    const mockOverlayMapTypes = Cypress.sinon.mock(overlayMapTypesApi);
-
-    mockOverlayMapTypes.expects('setAt').once().withArgs(2, null);
 
     toggleLayerOn('asset2');
     toggleLayerOff('asset2');

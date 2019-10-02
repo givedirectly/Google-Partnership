@@ -325,8 +325,6 @@ class Feature {
   }
 }
 
-ee.getMapCallback = null;
-
 /** A thin stub of ee.FeatureCollection. */
 class FeatureCollection {
   /**
@@ -336,17 +334,6 @@ class FeatureCollection {
    */
   constructor(url) {
     this.url = url;
-  }
-
-  /**
-   * Accepts a callback param as expected and stores it so it can be manually
-   * called from tests (helpful for simulating varied lengths of time before
-   * callback calling).
-   *
-   * @param {Dictionary} args
-   */
-  getMap(args) {
-    ee.getMapCallback = args['callback'];
   }
 
   /**
@@ -374,6 +361,11 @@ class FeatureCollection {
     return new Feature({id: 0}, {'GEOID': 0});
   }
 
+  /**
+   * Returns a List of the first element of this collection.
+   *
+   * @return {List}
+   */
   toList() {
     return new List([this.first()]);
   }
