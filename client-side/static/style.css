@@ -114,6 +114,8 @@ button {
   margin: 5px 15px 5px 0;
   padding: 8px;
   text-transform: capitalize;
+  -webkit-transition: background-color 0.3s;
+  transition: background-color 0.3s;
 }
 
 input[type='button']:hover,
