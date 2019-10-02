@@ -16,14 +16,17 @@ function setUpPopup() {
    *
    * @param {google.maps.Polygon} polygon
    * @param {string} notes
+   * @param {google.maps.Map} map
    * @constructor
    */
-  function Popup(polygon, notes) {
+  function Popup(polygon, notes, map) {
     this.polygon = polygon;
     // TODO(janakr): is there a better place to pop this window up?
     this.position = polygon.getPath().getAt(0);
     this.notes = notes;
+    this.map = map;
     this.content = document.createElement('div');
+
 
     this.content.classList.add('popup-bubble');
 
@@ -46,7 +49,7 @@ function setUpPopup() {
 
   /** Called when the popup is added to the map. */
   Popup.prototype.onAdd = function() {
-    createPopupHtml(this, this.notes);
+    createPopupHtml(this, this.notes, this.map);
     this.getPanes().floatPane.appendChild(this.containerDiv);
   };
 
@@ -90,8 +93,9 @@ const editingClass = 'editing';
  *
  * @param {Popup} popup
  * @param {string} notes
+ * @param {google.maps.Map} map
  */
-function createPopupHtml(popup, notes) {
+function createPopupHtml(popup, notes, map) {
   const content = popup.content;
   markSaved(content);
 
@@ -108,6 +112,9 @@ function createPopupHtml(popup, notes) {
       userRegionData.get(polygon).update(polygon);
     }
   };
+  // lazily initialized so we don't do the deep clone unless we actually want to
+  // edit the polygon.
+  let savedShape = null;
   const editButton = document.createElement('button');
   editButton.innerHTML = 'edit';
   editButton.onclick = () => {
@@ -115,6 +122,7 @@ function createPopupHtml(popup, notes) {
     polygon.setEditable(true);
 
     const currentNotes = notesDiv.innerText;
+    savedShape = clonePolygonPaths(polygon);
 
     content.removeChild(notesDiv);
     content.removeChild(editButton);
@@ -128,7 +136,7 @@ function createPopupHtml(popup, notes) {
 
     const saveButton = document.createElement('button');
     saveButton.innerHTML = 'save';
-    saveButton.onclick = () => save(polygon, popup, notesForm.value);
+    saveButton.onclick = () => save(polygon, popup, notesForm.value, map);
 
     content.insertBefore(saveButton, closeButton);
     content.appendChild(document.createElement('br'));
@@ -138,9 +146,19 @@ function createPopupHtml(popup, notes) {
   const closeButton = document.createElement('button');
   closeButton.innerHTML = 'close';
   closeButton.onclick = () => {
-    if (!content.classList.contains(editingClass) ||
-        confirm('Exit without saving? Unsaved notes will be lost.')) {
-      save(polygon, popup, userRegionData.get(polygon).notes);
+    if (!content.classList.contains(editingClass)) {
+      popup.hide();
+      addPopUpListener(polygon, popup);
+    } else if (confirm('Exit without saving changes? Changes will be lost.')) {
+      if (savedShape === null) {
+        console.error(
+            'unexpected state: no shape state saved before editing polygon');
+        return;
+      }
+      polygon.setMap(null);
+      polygon.setPaths(savedShape);
+      polygon.setMap(map);
+      save(polygon, popup, userRegionData.get(polygon).notes, map);
       popup.hide();
       addPopUpListener(polygon, popup);
     }
@@ -158,8 +176,9 @@ function createPopupHtml(popup, notes) {
  * @param {google.maps.Polygon} polygon
  * @param {Object} popup
  * @param {String} notes
+ * @param {google.maps.Map} map
  */
-function save(polygon, popup, notes) {
+function save(polygon, popup, notes, map) {
   userRegionData.get(polygon).update(polygon, notes);
   // update where the popup pops up to match any polygon shape changes
   popup.updatePosition();
@@ -172,7 +191,7 @@ function save(polygon, popup, notes) {
   while (popup.content.firstChild) {
     popup.content.firstChild.remove();
   }
-  createPopupHtml(popup, notes);
+  createPopupHtml(popup, notes, map);
 }
 
 /**
@@ -189,6 +208,24 @@ function markEditing(div) {
  */
 function markSaved(div) {
   div.classList.remove(editingClass);
+}
+
+/**
+ * Make a deep copy of a polygon's shape in the form of Array<Array<LatLng>>
+ *   (suitable for being fed into google.maps.Polygon.setPaths(...))
+ * @param {google.maps.Polygon} polygon
+ * @return {Array<Array<google.maps.LatLng>>}
+ */
+function clonePolygonPaths(polygon) {
+  const currentShape = [];
+  polygon.getPaths().forEach(function(array, index) {
+    const path = [];
+    array.forEach(function(latlng, index) {
+      path.push(JSON.parse(JSON.stringify(latlng)));
+    });
+    currentShape.push(path);
+  });
+  return currentShape;
 }
 
 /**
@@ -216,7 +253,8 @@ function addPopUpListener(polygon, popup) {
  * @return {Popup}
  */
 function createPopup(polygon, map) {
-  const popup = new CustomPopup(polygon, userRegionData.get(polygon).notes);
+  const popup =
+      new CustomPopup(polygon, userRegionData.get(polygon).notes, map);
   popup.setMap(map);
   popup.hide();
   return popup;
