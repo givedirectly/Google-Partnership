@@ -6,7 +6,7 @@ export {
   addLayer,
   addLayerFromGeoJsonPromise,
   addNullLayer,
-    convertEeObjectToPromise,
+  convertEeObjectToPromise,
   redrawLayers,
   removeScoreLayer,
   scoreLayerName,

@@ -6,9 +6,7 @@ global.deck = deck;
 
 /** Mock GoogleMapsOverlay. */
 class GoogleMapsOverlay {
-  /**
-   * @constructor
-   */
+  /** @constructor */
   constructor() {
     this.props = {};
   }
