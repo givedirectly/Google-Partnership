@@ -19270,7 +19270,7 @@ ee.layers.AbstractOverlay.prototype.getTile = function(coord, zoom, ownerDocumen
   }
   var x = coord.x % maxCoord;
   0 > x && (x += maxCoord);
-  var normalizedCoord = new google.maps.Point(), uniqueId = this.getUniqueTileId_(coord, zoom), tile = this.createTile(normalizedCoord, zoom, ownerDocument, uniqueId);
+  var normalizedCoord = new google.maps.Point(x, coord.y), uniqueId = this.getUniqueTileId_(coord, zoom), tile = this.createTile(normalizedCoord, zoom, ownerDocument, uniqueId);
   tile.tileSize = this.tileSize;
   goog.style.setOpacity(tile.div, this.opacity);
   this.tilesById.set(uniqueId, tile);
@@ -19626,7 +19626,7 @@ ee.layers.CloudStorageTileSource.prototype.loadTile = function(tile, opt_priorit
   if (tile.zoom <= this.maxZoom_) {
     tile.sourceUrl = this.getTileUrl_(tile.coord, tile.zoom);
   } else {
-    var zoomSteps = tile.zoom - this.maxZoom_, zoomFactor = Math.pow(2, zoomSteps), upperCoord = new google.maps.Point();
+    var zoomSteps = tile.zoom - this.maxZoom_, zoomFactor = Math.pow(2, zoomSteps), upperCoord = new google.maps.Point(Math.floor(tile.coord.x / zoomFactor), Math.floor(tile.coord.y / zoomFactor));
     tile.sourceUrl = this.getTileUrl_(upperCoord, tile.zoom - zoomSteps);
     tile.renderer = goog.partial(ee.layers.CloudStorageTileSource.zoomTileRenderer_, this.maxZoom_);
   }
