@@ -119,6 +119,7 @@ button {
 input[type='button']:hover,
 button:hover {
   background-color: #6B9B8F;
+  cursor: pointer;
 }
 
 #toggles span {
