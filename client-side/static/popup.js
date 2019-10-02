@@ -27,7 +27,6 @@ function setUpPopup() {
     this.map = map;
     this.content = document.createElement('div');
 
-
     this.content.classList.add('popup-bubble');
 
     // This zero-height div is positioned at the bottom of the bubble.
