@@ -72,7 +72,13 @@ function setUpPopup() {
   };
 
   Popup.prototype.show = function() {
+    this.updatePosition();
     this.containerDiv.style.visibility = 'visible';
+  };
+
+  Popup.prototype.updatePosition = function() {
+    this.position = this.polygon.getPath().getAt(0);
+    this.draw();
   };
 
   CustomPopup = Popup;
@@ -156,7 +162,8 @@ function createPopupHtml(popup, notes) {
  */
 function save(polygon, popup, notes) {
   userRegionData.get(polygon).update(polygon, notes);
-
+  // update where the popup pops up to match any polygon shape changes
+  popup.updatePosition();
   polygon.setEditable(false);
   markSaved(popup.content);
   // Remove all current contents of the popup replace with the fresh saved
