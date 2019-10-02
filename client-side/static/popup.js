@@ -183,7 +183,6 @@ function save(polygon, popup, notes, map) {
   // update where the popup pops up to match any polygon shape changes
   popup.updatePosition();
   polygon.setEditable(false);
-  // markSaved(popup.content);
   // Remove all current contents of the popup and replace with the fresh saved
   // content. This is annoying, but would also be annoying to just replace the
   // entire div because of the styling work that happens upon Popup
