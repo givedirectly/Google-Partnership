@@ -153,8 +153,8 @@ const collectionName = 'usershapes' + (inProduction() ? '' : '-test');
 const userShapes = db.collection(collectionName);
 
 const appearance = {
-  fillColor: '#FF0000',
-  strokeColor: '#FF0000',
+  fillColor: '#4CEF64',
+  strokeColor: '#4CEF64',
   editable: false,
 };
 
