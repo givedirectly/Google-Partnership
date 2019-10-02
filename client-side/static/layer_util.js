@@ -86,8 +86,8 @@ const coloring = (f) => showColor(f.properties['color']);
 /**
  * Creates a deck.gl layer from the given value's GeoJSON data. deck.gl is very
  * proud of its "reactive" nature. What that means here is that when layerArray
- * is given to deckGlOverlay inside redrawLayers(), deck.gl will examine each of the
- * GeoJsonLayers here and compare it to the layer *with the same id* that it
+ * is given to deckGlOverlay inside redrawLayers(), deck.gl will examine each of
+ * the GeoJsonLayers here and compare it to the layer *with the same id* that it
  * already had, if any. If it thinks that all the attributes are the same, it
  * will skip any redrawing work. Thus, it's "fine" to recreate these as much as
  * we like.
@@ -128,7 +128,8 @@ function showColor(color) {
 /**
  /**
  * Asynchronous wrapper for addLayerFromFeatures that takes in a Promise coming
- * from an ee.List of Features to avoid blocking on the result. This also populates layerMap.
+ * from an ee.List of Features to avoid blocking on the result. This also
+ populates layerMap.
  *
  * This should only be called once per asset when its overlay is initialized
  * for the first time. After the overlay is non-null in layerMap, any displaying

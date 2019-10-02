@@ -149,8 +149,10 @@ function initializeAssetLayers(map) {
     // TODO(juliexxia): generalize for ImageCollections (and Features/Images?)
     if (assets[assetName]) {
       // 250M objects in a FeatureCollection ought to be enough for anyone.
-      addLayerFromGeoJsonPromise(convertEeObjectToPromise(ee.FeatureCollection(assetName)
-          .toList(250000000)), assetName, index);
+      addLayerFromGeoJsonPromise(
+          convertEeObjectToPromise(
+              ee.FeatureCollection(assetName).toList(250000000)),
+          assetName, index);
     } else {
       addNullLayer(assetName, index);
     }
