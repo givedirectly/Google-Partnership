@@ -1,5 +1,5 @@
 import damageLevelsList from './damage_levels.js';
-import {blockGroupTag, buildingCountTag, damageTag, geoidTag, scoreTag, snapPercentageTag, snapPopTag, totalPopTag} from './property_names.js';
+import {blockGroupTag, damageTag, geoidTag, scoreTag, snapPercentageTag} from './property_names.js';
 
 export {processJoinedData as default};
 
@@ -29,25 +29,14 @@ const scoreDisplayCap = 99;
 function colorAndRate(
     feature, scalingFactor, damageLevels, povertyThreshold, damageThreshold,
     povertyWeight) {
-  const povertyRatio =
-      ee.Number(feature.get(snapPopTag)).divide(feature.get(totalPopTag));
-  const ratioBuildingsDamaged =
-      ee.Number(damageLevels
-                    .map((type) => {
-                      return ee.Algorithms.If(
-                          ee.Algorithms.IsEqual(type, 'no-damage'),
-                          ee.Number(0), ee.Number(feature.get(type)));
-                    })
-                    .reduce(ee.Reducer.sum()))
-          .divide(feature.get(buildingCountTag));
-  const belowThresholds =
-      ee.Number(povertyRatio.lte(povertyThreshold))
-          .or(ee.Number(ratioBuildingsDamaged.lte(damageThreshold)));
-  const potentialScore =
-      ee.Number(ratioBuildingsDamaged.multiply(1 - povertyWeight)
-                    .add(povertyRatio.multiply(povertyWeight))
-                    .multiply(scalingFactor)
-                    .round());
+  const povertyRatio = ee.Number(feature.get(snapPercentageTag));
+  const ratioBuildingsDamaged = ee.Number(feature.get(damageTag));
+  const belowThresholds = povertyRatio.lte(povertyThreshold)
+                              .or(ratioBuildingsDamaged.lte(damageThreshold));
+  const potentialScore = ratioBuildingsDamaged.multiply(1 - povertyWeight)
+                             .add(povertyRatio.multiply(povertyWeight))
+                             .multiply(scalingFactor)
+                             .round();
   const score = ee.Number(
       ee.Algorithms.If(belowThresholds, ee.Number(0), potentialScore));
   return ee
