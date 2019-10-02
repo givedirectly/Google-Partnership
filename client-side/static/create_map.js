@@ -5,8 +5,8 @@ export {createMap as default};
 
 const placeIconParams = {
   size: new google.maps.Size(71, 71),
-  origin: new google.maps.Point(0, 0),
-  anchor: new google.maps.Point(17, 34),
+  origin: new google.maps.Point(),
+  anchor: new google.maps.Point(),
   scaledSize: new google.maps.Size(25, 25),
 };
 
