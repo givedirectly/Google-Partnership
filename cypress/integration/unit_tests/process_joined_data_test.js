@@ -21,7 +21,7 @@ joinedDataPromise.then = (lambda) => lambda({features: [feature]});
 describe('Unit test for processed_joined_data.js', () => {
   it('Processes an above threshold block group', () => {
     const result = processJoinedData(
-        joinedDataPromise, ee.Number(100) /* scalingFactor */,
+        joinedDataPromise, 100 /* scalingFactor */,
         0.3 /* povertyThreshold */, 0.5 /* damageThreshold */,
         0.5 /* povertyWeight */);
     expect(result).to.be.an('array');
@@ -35,12 +35,12 @@ describe('Unit test for processed_joined_data.js', () => {
     expect(resultProperties).to.have.property('BLOCK GROUP', 'block group');
     expect(resultProperties).to.have.property('SCORE',
         Math.round(100 * (0.5 * ((10 + 5) / 27) + 0.5 * (2 / 4))));
-    expect(resultProperties).to.have.property('color', [255, 0, 255, 83]);
+    assertColorAndOpacity(resultProperties, 159);
   });
 
-  xit('Processes uneven weights', () => {
+  it('Processes uneven weights', () => {
     const result = processJoinedData(
-        joinedDataPromise, ee.Number(100) /* scalingFactor */,
+        joinedDataPromise, 100 /* scalingFactor */,
         0.3 /* povertyThreshold */, 0.5 /* damageThreshold */,
         0.9 /* povertyWeight */);
     expect(result).to.be.an('array');
@@ -49,22 +49,30 @@ describe('Unit test for processed_joined_data.js', () => {
     expect(returnedFeature).to.have.property('geometry', geometryObject);
     expect(returnedFeature).to.haveOwnProperty('properties');
     const resultProperties = returnedFeature.properties;
-    expect(resultProperties.get('BLOCK GROUP')).to.equal('block group');
-    const score = resultProperties.get('SCORE');
-    expect(score).to.haveOwnProperty('_myNumberValue');
-    expect(score._myNumberValue)
-        .to.equals(Math.round(100 * (0.1 * ((10 + 5) / 27) + 0.9 * (2 / 4))));
-    expect(resultProperties.get('style')).to.eql({color: 'ff00ff51'});
+    expect(resultProperties).to.have.property('BLOCK GROUP', 'block group');
+    expect(resultProperties).to.have.property('SCORE',
+        Math.round(100 * (0.1 * ((10 + 5) / 27) + 0.9 * (2 / 4))));
+    assertColorAndOpacity(resultProperties, 153);
   });
 
-  xit('Processes a below threshold block group', () => {
+  it('Processes a below threshold block group', () => {
     const result = processJoinedData(
-        joinedDataPromise, ee.Number(100) /* scalingFactor */,
+        joinedDataPromise, 100 /* scalingFactor */,
         0.9 /* povertyThreshold */, 0.5 /* damageThreshold */,
         0.5 /* povertyWeight */);
     const resultProperties = result[0].properties;
-    const score = resultProperties.get('SCORE');
-    expect(score._myNumberValue).to.equals(0);
-    expect(resultProperties.get('style')).to.eql({color: 'ff00ff00'});
+    expect(resultProperties).to.have.property('SCORE', 0);
+    assertColorAndOpacity(resultProperties, 0);
   });
+
+  /**
+   * Asserts that resultProperties has a color attribute with expected opacity.
+   *
+   * @param {Object} resultProperties
+   * @param {number} opacity
+   */
+  function assertColorAndOpacity(resultProperties, opacity) {
+    expect(resultProperties).to.have.property('color');
+    expect(resultProperties['color']).to.eqls([255, 0, 255, opacity]);
+  }
 });

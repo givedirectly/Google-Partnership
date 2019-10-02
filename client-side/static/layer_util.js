@@ -14,7 +14,7 @@ export {
   toggleLayerOn,
 };
 // @VisibleForTesting
-export {layerMap, LayerMapValue};
+export {layerMap, layerArray, LayerMapValue};
 
 const scoreLayerName = 'score';
 

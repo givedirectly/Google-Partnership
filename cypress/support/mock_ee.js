@@ -186,6 +186,8 @@ class EeNumber {
 
 const eeNumberString = getTypeOf(new EeNumber(0));
 
+ee.listEvaluateCallback = null;
+
 /** A thin stub of ee.List. */
 class List {
   /**
@@ -220,6 +222,17 @@ class List {
     } else {
       throw new Error('Non-sum reducers not supported');
     }
+  }
+
+  /**
+   * Accepts a callback param as expected and stores it so it can be manually
+   * called from tests (helpful for simulating varied lengths of time before
+   * callback calling).
+   *
+   * @param {Function} callback
+   */
+  evaluate(callback) {
+    ee.listEvaluateCallback = callback;
   }
 }
 
@@ -359,6 +372,10 @@ class FeatureCollection {
    */
   first() {
     return new Feature({id: 0}, {'GEOID': 0});
+  }
+
+  toList() {
+    return new List([this.first()]);
   }
 }
 
