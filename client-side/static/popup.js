@@ -125,16 +125,14 @@ function createPopupHtml(popup, notes, map) {
     content.removeChild(editButton);
 
     const notesForm = document.createElement('textarea');
-    // This isn't great because we end up with multiple elements with the same
-    // id. But since we only rely on it for testing for now, not super pressing.
-    // TODO: create this id based on polygon id?
     notesForm.classList.add('notes');
     notesForm.value = currentNotes;
 
     const saveButton = document.createElement('button');
     saveButton.innerHTML = 'save';
     saveButton.onclick = () => {
-      save(polygon, popup, notesForm.value, map);
+      processNewData(polygon, popup, notes);
+      makeUneditable(polygon, popup, notes, map);
       saved = true;
     };
 
@@ -147,8 +145,7 @@ function createPopupHtml(popup, notes, map) {
   closeButton.innerHTML = 'close';
   closeButton.onclick = () => {
     if (saved) {
-      popup.hide();
-      addPopUpListener(polygon, popup);
+      closeCleanup(polygon, popup);
     } else if (confirm('Exit without saving changes? Changes will be lost.')) {
       if (savedShape === null) {
         console.error(
@@ -156,11 +153,10 @@ function createPopupHtml(popup, notes, map) {
         return;
       }
       polygon.setMap(null);
-      polygon.setPaths(savedShape);
+      polygon.setPath(savedShape);
       polygon.setMap(map);
-      save(polygon, popup, userRegionData.get(polygon).notes, map);
-      popup.hide();
-      addPopUpListener(polygon, popup);
+      makeUneditable(polygon, popup, notes, map);
+      closeCleanup(polygon, popup);
     }
   };
 
@@ -171,17 +167,14 @@ function createPopupHtml(popup, notes, map) {
 }
 
 /**
- * Updates a polygon's data in the backend and reverts popup to saved state.
+ * Updates the popup and polygon to their uneditable state appearances..
  *
  * @param {google.maps.Polygon} polygon
  * @param {Object} popup
  * @param {String} notes
  * @param {google.maps.Map} map
  */
-function save(polygon, popup, notes, map) {
-  userRegionData.get(polygon).update(polygon, notes);
-  // update where the popup pops up to match any polygon shape changes
-  popup.updatePosition();
+function makeUneditable(polygon, popup, notes, map) {
   polygon.setEditable(false);
   // Remove all current contents of the popup and replace with the fresh saved
   // content. This is annoying, but would also be annoying to just replace the
@@ -194,20 +187,36 @@ function save(polygon, popup, notes, map) {
 }
 
 /**
- * Make a deep copy of a polygon's shape in the form of Array<Array<LatLng>>
- *   (suitable for being fed into google.maps.Polygon.setPaths(...))
+ * Process new polygon shape and notes.
  * @param {google.maps.Polygon} polygon
- * @return {Array<Array<google.maps.LatLng>>}
+ * @param {Popup} popup
+ * @param {String} notes
+ */
+function processNewData(polygon, popup, notes) {
+  userRegionData.get(polygon).update(polygon, notes);
+  // update where the popup pops up to match any polygon shape changes
+  popup.updatePosition();
+}
+
+/**
+ * Hides popup and adds listener for next click.
+ * @param {google.maps.Polygon} polygon
+ * @param {Popup} popup
+ */
+function closeCleanup(polygon, popup) {
+  popup.hide();
+  addPopUpListener(polygon, popup);
+}
+
+/**
+ * Make a deep copy of a polygon's shape in the form of Array<LatLng>
+ *   (suitable for being fed into google.maps.Polygon.setPath(...))
+ * @param {google.maps.Polygon} polygon
+ * @return {Array<google.maps.LatLng>}
  */
 function clonePolygonPaths(polygon) {
   const currentShape = [];
-  polygon.getPaths().forEach(function(array, index) {
-    const path = [];
-    array.forEach(function(latlng, index) {
-      path.push(JSON.parse(JSON.stringify(latlng)));
-    });
-    currentShape.push(path);
-  });
+  polygon.getPath().forEach((latlng) => currentShape.push(latlng));
   return currentShape;
 }
 
