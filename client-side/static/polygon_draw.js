@@ -2,8 +2,8 @@ import createError from './create_error.js';
 import {mapContainerId} from './dom_constants.js';
 import inProduction from './in_test_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
-import {polygonData} from './polygon_data.js';
 import {addPopUpListener, createPopup, setUpPopup} from './popup.js';
+import {userRegionData} from './user_region_data.js';
 
 // PolygonData is only for testing.
 export {
@@ -99,13 +99,13 @@ class PolygonData {
   }
 
   /**
-   * Deletes this region from storage and polygonData. Only for internal use.
+   * Deletes this region from storage and userRegionData. Only for internal use.
    *
    * @param {google.maps.Polygon} polygon
    */
   delete(polygon) {
     // Polygon has been removed from map, we should delete on backend.
-    polygonData.delete(polygon);
+    userRegionData.delete(polygon);
     if (!this.id) {
       // Even if the user creates a polygon and then deletes it immediately,
       // the creation should trigger an update that must complete before the
@@ -174,7 +174,7 @@ function setUpPolygonDrawing(map) {
   drawingManager.addListener('overlaycomplete', (event) => {
     const polygon = event.overlay;
     const data = new PolygonData(null, '');
-    polygonData.set(polygon, data);
+    userRegionData.set(polygon, data);
     addPopUpListener(polygon, createPopup(polygon, map));
     data.update(polygon, '');
   });
@@ -215,7 +215,7 @@ function drawRegionsFromFirestoreQuery(querySnapshot, map) {
     const properties = Object.assign({}, appearance);
     properties.paths = coordinates;
     const polygon = new google.maps.Polygon(properties);
-    polygonData.set(
+    userRegionData.set(
         polygon,
         new PolygonData(userDefinedRegion.id, userDefinedRegion.get('notes')));
     addPopUpListener(polygon, createPopup(polygon, map));

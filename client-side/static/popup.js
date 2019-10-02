@@ -1,4 +1,4 @@
-import {polygonData} from './polygon_data.js';
+import {userRegionData} from './user_region_data.js';
 
 export {addPopUpListener, createPopup, setUpPopup};
 
@@ -37,7 +37,7 @@ function setUpPopup() {
     this.containerDiv.classList.add('popup-container');
     this.containerDiv.appendChild(bubbleAnchor);
 
-    // Optionally stop clicks, etc., from bubbling up to the map.
+    // Stop clicks, etc., from bubbling up to the map.
     google.maps.OverlayView.preventMapHitsAndGesturesFrom(this.containerDiv);
   }
 
@@ -100,7 +100,7 @@ function createPopupHtml(popup, notes) {
     if (confirm('Delete region?')) {
       polygon.setMap(null);
       popup.setMap(null);
-      polygonData.get(polygon).update(polygon);
+      userRegionData.get(polygon).update(polygon);
     }
   };
   const editButton = document.createElement('button');
@@ -135,7 +135,7 @@ function createPopupHtml(popup, notes) {
   closeButton.onclick = () => {
     if (!content.classList.contains(editingClass) ||
         confirm('Exit without saving? Unsaved notes will be lost.')) {
-      save(polygon, popup, polygonData.get(polygon).notes);
+      save(polygon, popup, userRegionData.get(polygon).notes);
       popup.hide();
       addPopUpListener(polygon, popup);
     }
@@ -155,10 +155,14 @@ function createPopupHtml(popup, notes) {
  * @param {String} notes
  */
 function save(polygon, popup, notes) {
-  polygonData.get(polygon).update(polygon, notes);
+  userRegionData.get(polygon).update(polygon, notes);
 
   polygon.setEditable(false);
   markSaved(popup.content);
+  // Remove all current contents of the popup replace with the fresh saved
+  // content. This is annoying, but would also be annoying to just replace the
+  // entire div because of the styling work that happens upon Popup
+  // initialization.
   while (popup.content.firstChild) {
     popup.content.firstChild.remove();
   }
@@ -206,7 +210,7 @@ function addPopUpListener(polygon, popup) {
  * @return {Popup}
  */
 function createPopup(polygon, map) {
-  const popup = new CustomPopup(polygon, polygonData.get(polygon).notes);
+  const popup = new CustomPopup(polygon, userRegionData.get(polygon).notes);
   popup.setMap(map);
   popup.hide();
   return popup;
