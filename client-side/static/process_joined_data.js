@@ -1,5 +1,5 @@
 import damageLevelsList from './damage_levels.js';
-import {blockGroupTag, buildingCountTag, damageTag, geoidTag, scoreTag, snapPercentageTag, snapPopTag, totalPopTag} from './property_names.js';
+import {blockGroupTag, damageTag, geoidTag, scoreTag, snapPercentageTag} from './property_names.js';
 
 export {processJoinedData as default};
 
@@ -24,12 +24,8 @@ const scoreDisplayCap = 255;
 function colorAndRate(
     feature, scalingFactor, povertyThreshold, damageThreshold,
     povertyWeight) {
-  const povertyRatio = feature.properties[snapPopTag] / feature.properties[totalPopTag];
-  const ratioBuildingsDamaged =
-      damageLevelsList
-                    .map((type) => (type === 'no-damage') ? 0 : feature.properties[type])
-                    .reduce((total, num) => total + num)
-          / feature.properties[buildingCountTag];
+  const povertyRatio = feature.properties[snapPercentageTag];
+  const ratioBuildingsDamaged = feature.properties[damageTag];
   let score = 0;
   if (povertyRatio >= povertyThreshold && ratioBuildingsDamaged >= damageThreshold) {
     score = Math.round(scalingFactor * (ratioBuildingsDamaged * (1 - povertyWeight) + povertyRatio * povertyWeight));

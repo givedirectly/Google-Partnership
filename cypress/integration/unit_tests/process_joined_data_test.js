@@ -3,11 +3,14 @@ import processJoinedData from '../../../client-side/static/process_joined_data.j
 const featureProperties = {
   'SNAP HOUSEHOLDS': 2,
   'TOTAL HOUSEHOLDS': 4,
+  'SNAP PERCENTAGE': 0.5,
   'BUILDING COUNT': 27,
   'BLOCK GROUP': 'block group',
   'no-damage': 12,
   'minor-damage': 10,
-  'major-damage': 5};
+  'major-damage': 5,
+  'DAMAGE PERCENTAGE': 15 / 27
+};
 const feature = {};
 feature.properties = featureProperties;
 const geometryObject = {};
