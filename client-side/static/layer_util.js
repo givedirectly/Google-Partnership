@@ -24,8 +24,14 @@ const scoreLayerName = 'score';
 // default will have an entry in this map, but the LayerMapValue will have a
 // null overlay field until we do want to display it. Currently assume we're
 // only working with one map.
-const layerMap = {};
+const layerMap = new Map();
 
+/**
+ * deck.gl layers, in the order they should be rendered. Passed to deckGlOverlay
+ * in redrawLayers() (after filtering out absent elements).
+ *
+ * @type {Array<deck.GeoJsonLayer>}
+ */
 const layerArray = [];
 
 const deckGlOverlay = new deck.GoogleMapsOverlay();
@@ -35,7 +41,7 @@ class LayerMapValue {
   /**
    * Constructor.
    *
-   * @param {GeoJSON} data Data to be rendered
+   * @param {GeoJSON} data Data to be rendered, null if not yet available.
    * @param {number} index Z-index of layer when displayed. Higher is better.
    *   Does not change.
    * @param {boolean} displayed True if layer is currently displayed
@@ -64,13 +70,12 @@ function setMap(map) {
  * @param {string} assetName
  */
 function toggleLayerOn(assetName) {
-  const currentLayerMapValue = layerMap[assetName];
+  const currentLayerMapValue = layerMap.get(assetName);
   currentLayerMapValue.displayed = true;
   if (currentLayerMapValue.data) {
     addLayerFromFeatures(currentLayerMapValue, assetName);
   } else {
-    addLayer(
-        ee.FeatureCollection(assetName), assetName, currentLayerMapValue.index);
+    addLayer(assetName, currentLayerMapValue.index);
   }
 }
 
@@ -159,7 +164,7 @@ function addLayerFromGeoJsonPromise(featuresPromise, assetName, index) {
   addLoadingElement(mapContainerId);
   // Add entry to map.
   const layerMapValue = new LayerMapValue(null, index, true);
-  layerMap[assetName] = layerMapValue;
+  layerMap.set(assetName, layerMapValue);
   featuresPromise
       .then((features) => {
         layerMapValue.data = features;
@@ -177,7 +182,7 @@ function addLayerFromGeoJsonPromise(featuresPromise, assetName, index) {
  * @param {number} index
  */
 function addNullLayer(assetName, index) {
-  layerMap[assetName] = new LayerMapValue(null, index, false);
+  layerMap.set(assetName, new LayerMapValue(null, index, false));
 }
 
 const hasContent = (val) => val;
@@ -187,7 +192,6 @@ const hasContent = (val) => val;
  * layerArray, which has the effect of redrawing it on the map.
  */
 function redrawLayers() {
-  console.log(layerArray);
   deckGlOverlay.setProps({layers: layerArray.filter(hasContent)});
 }
 
@@ -198,7 +202,7 @@ function redrawLayers() {
  * @param {string} assetName
  */
 function removeLayer(assetName) {
-  const layerMapValue = layerMap[assetName];
+  const layerMapValue = layerMap.get(assetName);
   layerMapValue.displayed = false;
   addLayerFromFeatures(layerMapValue, assetName);
 }
@@ -209,7 +213,7 @@ function removeLayer(assetName) {
  * any actual data changes, and therefore not update the map.
  */
 function removeScoreLayer() {
-  layerArray[layerMap[scoreLayerName].index] = null;
+  layerArray[layerMap.get(scoreLayerName).index] = null;
   redrawLayers();
 }
 /**
