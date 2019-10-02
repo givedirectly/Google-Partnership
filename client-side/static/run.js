@@ -2,7 +2,7 @@ import {clickFeature, selectHighlightedFeatures} from './click_feature.js';
 import {mapContainerId, tableContainerId} from './dom_constants.js';
 import {drawTable} from './draw_table.js';
 import {highlightFeatures} from './highlight_features.js';
-import {addLayer, addLayerFromGeoJsonPromise, addNullLayer, scoreLayerName, setMap, toggleLayerOff, toggleLayerOn} from './layer_util.js';
+import {addLayerFromGeoJsonPromise, addNullLayer, scoreLayerName, setMap, toggleLayerOff, toggleLayerOn} from './layer_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {processUserRegions} from './polygon_draw.js';
 import processJoinedData from './process_joined_data.js';
@@ -148,7 +148,9 @@ function initializeAssetLayers(map) {
   Object.keys(assets).forEach((assetName, index) => {
     // TODO(juliexxia): generalize for ImageCollections (and Features/Images?)
     if (assets[assetName]) {
-      addLayer(ee.FeatureCollection(assetName), assetName, index);
+      // 250M objects in a FeatureCollection ought to be enough for anyone.
+      addLayerFromGeoJsonPromise(convertEeObjectToPromise(ee.FeatureCollection(assetName)
+          .toList(250000000)), assetName, index);
     } else {
       addNullLayer(assetName, index);
     }

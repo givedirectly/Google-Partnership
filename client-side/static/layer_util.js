@@ -3,7 +3,6 @@ import {mapContainerId} from './dom_constants.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 
 export {
-  addLayer,
   addLayerFromGeoJsonPromise,
   addNullLayer,
   redrawLayers,
@@ -36,10 +35,12 @@ class LayerMapValue {
    *
    * @param {GeoJSON} data Data to be rendered
    * @param {number} index Z-index of layer when displayed. Higher is better.
+   *   Does not change.
    * @param {boolean} displayed True if layer is currently displayed
    */
   constructor(data, index, displayed) {
     this.data = data;
+    /** @const */
     this.index = index;
     this.displayed = displayed;
     this.loading = false;
@@ -83,7 +84,17 @@ function toggleLayerOff(assetName) {
 const coloring = (f) => showColor(f.properties['color']);
 
 /**
- * Creates a deck.gl layer from the given value's GeoJSON data.
+ * Creates a deck.gl layer from the given value's GeoJSON data. deck.gl is very
+ * proud of its "reactive" nature. What that means here is that when layerArray
+ * is given to deckGlOverlay inside redrawLayers(), deck.gl will examine each of the
+ * GeoJsonLayers here and compare it to the layer *with the same id* that it
+ * already had, if any. If it thinks that all the attributes are the same, it
+ * will skip any redrawing work. Thus, it's "fine" to recreate these as much as
+ * we like.
+ *
+ * Note that the only difference deck.gl can actually detect is visibility. It
+ * explicitly does not check the actual data. That's why the score layer needs
+ * special handling, so deck.gl is forced to re-render it on parameter changes.
  *
  * @param {LayerMapValue} layerMapValue
  * @param {string} assetName
@@ -93,6 +104,9 @@ function addLayerFromFeatures(layerMapValue, assetName) {
     id: assetName,
     data: layerMapValue.data,
     pointRadiusScale: 500,
+    // TODO(janakr): deck.gl docs claim that the "color" property should
+    // automatically color the features, but it doesn't appear to work:
+    // https://deck.gl/#/documentation/deckgl-api-reference/layers/geojson-layer?section=getelevation-function-number-optional-transition-enabled
     getFillColor: coloring,
     visible: layerMapValue.displayed,
   });
@@ -112,37 +126,13 @@ function showColor(color) {
 }
 
 /**
- * Asynchronous wrapper for addLayerFromFeatures that calls getMap() with a
- * callback to avoid blocking on the result. This also populates layerMap.
+ /**
+ * Asynchronous wrapper for addLayerFromFeatures that takes in a Promise coming
+ * from an ee.List of Features to avoid blocking on the result. This also populates layerMap.
  *
  * This should only be called once per asset when its overlay is initialized
  * for the first time. After the overlay is non-null in layerMap, any displaying
  * should be able to set its visibility and redraw the layers.
- *
- * @param {ee.Element} layer
- * @param {string} assetName
- * @param {number} index
- */
-function addLayer(layer, assetName, index) {
-  addLoadingElement(mapContainerId);
-  // Add entry to map.
-  const layerMapValue = new LayerMapValue(null, index, true);
-  layerMap[assetName] = layerMapValue;
-  ee.FeatureCollection(layer).toList(250000).evaluate((features, failure) => {
-    if (features) {
-      layerMapValue.data = features;
-      addLayerFromFeatures(layerMapValue, assetName);
-    } else {
-      // TODO: if there's an error, disable checkbox, add tests for this.
-      createError('getting id for ' + assetName)(failure);
-    }
-    loadingElementFinished(mapContainerId);
-  });
-}
-
-/**
- * Adds a visible layer to the map from a Promise that resolves to a GeoJSON
- * list of Features.
  *
  * @param {Promise<Array<GeoJson>>}featuresPromise
  * @param {string} assetName
@@ -195,7 +185,11 @@ function removeLayer(assetName) {
   addLayerFromFeatures(layerMapValue, assetName);
 }
 
-/** Removes the score layer overlay before a parameter update. */
+/**
+ * Removes the score layer overlay before a parameter update. Must actually be
+ * removed, not just made invisible, because deck.gl would otherwise not notice
+ * any actual data changes, and therefore not update the map.
+ */
 function removeScoreLayer() {
   layerArray[layerMap[scoreLayerName].index] = null;
   redrawLayers();

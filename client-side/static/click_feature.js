@@ -16,7 +16,7 @@ export {clickFeature, selectHighlightedFeatures};
  *        in draw_table.js where the first inner array is {@code headings}.
  */
 function clickFeature(lng, lat, map, featuresAsset, table, tableData) {
-  const point = ee.Geometry.Point();
+  const point = ee.Geometry.Point(lng, lat);
   const blockGroups = ee.FeatureCollection(featuresAsset).filterBounds(point);
   const selected = blockGroups.first();
   selected.evaluate((feature, failure) => {

@@ -33,13 +33,17 @@ function colorAndRate(
          povertyRatio * povertyWeight));
   }
   feature.properties[scoreTag] = score;
-  feature.properties[snapPercentageTag] = povertyRatio;
-  feature.properties[damageTag] = ratioBuildingsDamaged;
   feature.properties['color'] =
       [255, 0, 255, Math.min(3 * score, scoreDisplayCap)];
 }
 
 /**
+ * Processes the provided Promise. The returned Promise has the same underlying
+ * data as the original Promise. In other words, this method will mutate the
+ * underlying data of the original Promise. This is acceptable, because it only
+ * adds/overwrites the computed attributes of score and color. We avoid doing a
+ * full copy because it would unnecessarily copy a lot of data.
+ *
  * @param {Promise} dataPromise
  * @param {number} scalingFactor multiplies the raw score, it can be
  *     adjusted to make sure that the values span the desired range of ~0 to
