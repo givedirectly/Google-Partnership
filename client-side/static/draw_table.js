@@ -1,5 +1,5 @@
-import {blockGroupTag, damageTag, geoidTag, scoreTag, snapPercentageTag} from './property_names.js';
 import createError from './create_error.js';
+import {blockGroupTag, damageTag, geoidTag, scoreTag, snapPercentageTag} from './property_names.js';
 
 export {drawTable, tableHeadings};
 
@@ -29,25 +29,26 @@ function drawTable(
 
   // TODO(#37): These callbacks could be executed out of order, and the table
   //  might not reflect the user's latest request.
-  scoredFeatures.then((allFeatures) => {
-    const features = allFeatures.filter((feature) => feature.properties[scoreTag]);
-    // Clone headings.
-    const list = [tableHeadings];
-    for (const feature of features) {
-      list.push(tableHeadings.map((col) => feature.properties[col]));
-    }
-    // Multiple calls to this are fine:
-    // https://developers.google.com/chart/interactive/docs/basic_load_libs#Callback
-    google.charts.setOnLoadCallback(
-        () => renderTable(
-            list, features, selectTableCallback,
-            chartAndFeaturesReceiver));
-    // Set download button to visible once table data is loaded.
-    document.getElementById('downloadButton').style.visibility =
-        'visible';
-    // TODO(juliexxia): more robust error reporting
-    // https://developers.google.com/chart/interactive/docs/reference#errordisplay
-  }).catch(createError('Failure evaluating scored features'));
+  scoredFeatures
+      .then((allFeatures) => {
+        const features =
+            allFeatures.filter((feature) => feature.properties[scoreTag]);
+        // Clone headings.
+        const list = [tableHeadings];
+        for (const feature of features) {
+          list.push(tableHeadings.map((col) => feature.properties[col]));
+        }
+        // Multiple calls to this are fine:
+        // https://developers.google.com/chart/interactive/docs/basic_load_libs#Callback
+        google.charts.setOnLoadCallback(
+            () => renderTable(
+                list, features, selectTableCallback, chartAndFeaturesReceiver));
+        // Set download button to visible once table data is loaded.
+        document.getElementById('downloadButton').style.visibility = 'visible';
+        // TODO(juliexxia): more robust error reporting
+        // https://developers.google.com/chart/interactive/docs/reference#errordisplay
+      })
+      .catch(createError('Failure evaluating scored features'));
 }
 
 /**

@@ -21,5 +21,4 @@ class GeoJsonLayer {
 }
 
 deck.GoogleMapsOverlay = GoogleMapsOverlay;
-deck.GeoJsonLayer= GeoJsonLayer;
-
+deck.GeoJsonLayer = GeoJsonLayer;

@@ -1,10 +1,4 @@
-import {
-  layerArray,
-  layerMap,
-  LayerMapValue,
-  toggleLayerOff,
-  toggleLayerOn
-} from '../../../client-side/static/layer_util';
+import {layerArray, layerMap, LayerMapValue, toggleLayerOff, toggleLayerOn} from '../../../client-side/static/layer_util';
 
 const mockData = {};
 

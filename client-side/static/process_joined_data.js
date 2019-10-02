@@ -22,18 +22,22 @@ const scoreDisplayCap = 255;
  *     for damageWeight which is 1-this value).
  */
 function colorAndRate(
-    feature, scalingFactor, povertyThreshold, damageThreshold,
-    povertyWeight) {
+    feature, scalingFactor, povertyThreshold, damageThreshold, povertyWeight) {
   const povertyRatio = feature.properties[snapPercentageTag];
   const ratioBuildingsDamaged = feature.properties[damageTag];
   let score = 0;
-  if (povertyRatio >= povertyThreshold && ratioBuildingsDamaged >= damageThreshold) {
-    score = Math.round(scalingFactor * (ratioBuildingsDamaged * (1 - povertyWeight) + povertyRatio * povertyWeight));
+  if (povertyRatio >= povertyThreshold &&
+      ratioBuildingsDamaged >= damageThreshold) {
+    score = Math.round(
+        scalingFactor *
+        (ratioBuildingsDamaged * (1 - povertyWeight) +
+         povertyRatio * povertyWeight));
   }
   feature.properties[scoreTag] = score;
   feature.properties[snapPercentageTag] = povertyRatio;
   feature.properties[damageTag] = ratioBuildingsDamaged;
-  feature.properties['color'] = [255, 0, 255, Math.min(3 * score, scoreDisplayCap)];
+  feature.properties['color'] =
+      [255, 0, 255, Math.min(3 * score, scoreDisplayCap)];
 }
 
 /**

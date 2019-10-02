@@ -2,7 +2,7 @@ import {clickFeature, selectHighlightedFeatures} from './click_feature.js';
 import {mapContainerId, tableContainerId} from './dom_constants.js';
 import {drawTable} from './draw_table.js';
 import {highlightFeatures} from './highlight_features.js';
-import {addLayer, addNullLayer, scoreLayerName, addLayerFromGeoJsonPromise, setMap, toggleLayerOff, toggleLayerOn} from './layer_util.js';
+import {addLayer, addLayerFromGeoJsonPromise, addNullLayer, scoreLayerName, setMap, toggleLayerOff, toggleLayerOn} from './layer_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {processUserRegions} from './polygon_draw.js';
 import processJoinedData from './process_joined_data.js';
@@ -66,8 +66,8 @@ function createAndDisplayJoinedData(
   google.maps.event.removeListener(mapSelectListener);
   google.maps.event.removeListener(featureSelectListener);
   const processedData = processJoinedData(
-      snapAndDamagePromise, scalingFactor,
-      povertyThreshold, damageThreshold, povertyWeight);
+      snapAndDamagePromise, scalingFactor, povertyThreshold, damageThreshold,
+      povertyWeight);
   initializeScoreLayer(map, processedData);
   drawTable(
       processedData, (features) => highlightFeatures(features, map),
@@ -170,15 +170,13 @@ function initializeScoreLayer(map, layer) {
 }
 
 function convertEeObjectToPromise(eeObject) {
-  return new Promise(
-      (resolve, reject) => {
-        eeObject.evaluate((resolvedObject, error) => {
-          if (error) {
-            reject(error);
-            return;
-          }
-          resolve(resolvedObject);
-        });
+  return new Promise((resolve, reject) => {
+    eeObject.evaluate((resolvedObject, error) => {
+      if (error) {
+        reject(error);
+        return;
       }
-  );
+      resolve(resolvedObject);
+    });
+  });
 }

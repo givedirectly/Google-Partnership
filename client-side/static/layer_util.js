@@ -4,17 +4,17 @@ import {addLoadingElement, loadingElementFinished} from './loading.js';
 
 export {
   addLayer,
-  addNullLayer,
   addLayerFromGeoJsonPromise,
+  addNullLayer,
   redrawLayers,
   removeScoreLayer,
-  setMap,
   scoreLayerName,
+  setMap,
   toggleLayerOff,
   toggleLayerOn,
 };
 // @VisibleForTesting
-export {layerMap, layerArray, LayerMapValue};
+export {layerArray, layerMap, LayerMapValue};
 
 const scoreLayerName = 'score';
 
@@ -131,11 +131,13 @@ function addLayerFromGeoJsonPromise(featuresPromise, assetName, index) {
   // Add entry to map.
   const layerMapValue = new LayerMapValue(null, index, true);
   layerMap[assetName] = layerMapValue;
-  featuresPromise.then((features) => {
-    layerMapValue.data = features;
-    addLayerFromFeatures(layerMapValue, assetName);
-    loadingElementFinished(mapContainerId);
-  }).catch(createError('Error rendering ' + assetName));
+  featuresPromise
+      .then((features) => {
+        layerMapValue.data = features;
+        addLayerFromFeatures(layerMapValue, assetName);
+        loadingElementFinished(mapContainerId);
+      })
+      .catch(createError('Error rendering ' + assetName));
 }
 
 /**
