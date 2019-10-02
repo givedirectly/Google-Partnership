@@ -6,7 +6,7 @@ describe('Unit test for toggleLayerOn', () => {
   beforeEach(() => {
     layerMap.set('asset0', new LayerMapValue(mockData, 0, true));
     layerMap.set('asset1', new LayerMapValue(mockData, 1, false));
-    layerMap.set('asset2',  new LayerMapValue(null, 2, false));
+    layerMap.set('asset2', new LayerMapValue(null, 2, false));
     layerArray[0] = new deck.GeoJsonLayer({});
     layerArray[1] = new deck.GeoJsonLayer({});
   });
