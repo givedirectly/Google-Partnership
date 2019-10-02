@@ -5,9 +5,9 @@ import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {addPopUpListener, createPopup, setUpPopup} from './popup.js';
 import {userRegionData} from './user_region_data.js';
 
-// PolygonData is only for testing.
+// ShapeData is only for testing.
 export {
-  PolygonData,
+  ShapeData,
   processUserRegions,
   setUpPolygonDrawing as default,
 };
@@ -29,7 +29,7 @@ const firebaseConfig = {
  * Class holding data for a user-drawn polygon, including the state of writing
  * to the backend. Does not hold the polygon itself.
  */
-class PolygonData {
+class ShapeData {
   /**
    * Constructor. The id is null if user has just created polygon (corresponds
    * to backend id).
@@ -40,7 +40,7 @@ class PolygonData {
   constructor(id, notes) {
     this.id = id;
     this.notes = notes;
-    this.state = PolygonData.State.SAVED;
+    this.state = ShapeData.State.SAVED;
   }
 
   /**
@@ -56,12 +56,12 @@ class PolygonData {
    */
   update(polygon, notes = this.notes) {
     this.notes = notes;
-    if (this.state !== PolygonData.State.SAVED) {
-      this.state = PolygonData.State.QUEUED_WRITE;
+    if (this.state !== ShapeData.State.SAVED) {
+      this.state = ShapeData.State.QUEUED_WRITE;
       return;
     }
-    this.state = PolygonData.State.WRITING;
-    PolygonData.pendingWriteCount++;
+    this.state = ShapeData.State.WRITING;
+    ShapeData.pendingWriteCount++;
     if (!polygon.getMap()) {
       this.delete(polygon);
       return;
@@ -70,16 +70,16 @@ class PolygonData {
     polygon.getPath().forEach((elt) => geometry.push(latLngToGeoPoint(elt)));
     const record = {geometry: geometry, notes: this.notes};
     const finishWriteAndMaybeWriteAgain = () => {
-      PolygonData.pendingWriteCount--;
+      ShapeData.pendingWriteCount--;
       const oldState = this.state;
-      this.state = PolygonData.State.SAVED;
+      this.state = ShapeData.State.SAVED;
       switch (oldState) {
-        case PolygonData.State.WRITING:
+        case ShapeData.State.WRITING:
           return;
-        case PolygonData.State.QUEUED_WRITE:
+        case ShapeData.State.QUEUED_WRITE:
           this.update(polygon, this.notes);
           return;
-        case PolygonData.State.SAVED:
+        case ShapeData.State.SAVED:
           console.error('Unexpected polygon state:' + this);
       }
     };
@@ -117,13 +117,13 @@ class PolygonData {
     // unreachable and about to be GC'ed.
     userShapes.doc(this.id)
         .delete()
-        .then(() => PolygonData.pendingWriteCount--)
+        .then(() => ShapeData.pendingWriteCount--)
         .catch(createError('error deleting ' + this));
   }
 }
 
 // Inline static variables not supported in Cypress browser.
-PolygonData.State = {
+ShapeData.State = {
   /** Current state is same as that in backend. */
   SAVED: 0,
   /** Current state is being written to backend. No other writes needed. */
@@ -136,11 +136,11 @@ PolygonData.State = {
 };
 
 // Tracks global pending writes so that we can warn if user leaves page early.
-PolygonData.pendingWriteCount = 0;
+ShapeData.pendingWriteCount = 0;
 
 // TODO(janakr): should this be initialized somewhere better?
 // Warning before leaving the page.
-window.onbeforeunload = () => PolygonData.pendingWriteCount > 0 ? true : null;
+window.onbeforeunload = () => ShapeData.pendingWriteCount > 0 ? true : null;
 
 // TODO(janakr): maybe not best practice to initialize outside of a function?
 // But doesn't take much/any time.
@@ -173,7 +173,7 @@ function setUpPolygonDrawing(map) {
 
   drawingManager.addListener('overlaycomplete', (event) => {
     const polygon = event.overlay;
-    const data = new PolygonData(null, '');
+    const data = new ShapeData(null, '');
     userRegionData.set(polygon, data);
     addPopUpListener(polygon, createPopup(polygon, map));
     data.update(polygon, '');
@@ -217,7 +217,7 @@ function drawRegionsFromFirestoreQuery(querySnapshot, map) {
     const polygon = new google.maps.Polygon(properties);
     userRegionData.set(
         polygon,
-        new PolygonData(userDefinedRegion.id, userDefinedRegion.get('notes')));
+        new ShapeData(userDefinedRegion.id, userDefinedRegion.get('notes')));
     addPopUpListener(polygon, createPopup(polygon, map));
     polygon.setMap(map);
   });
