@@ -2,7 +2,7 @@ import {clickFeature, selectHighlightedFeatures} from './click_feature.js';
 import {mapContainerId, tableContainerId} from './dom_constants.js';
 import {drawTable} from './draw_table.js';
 import {highlightFeatures} from './highlight_features.js';
-import {addLayerFromGeoJsonPromise, addNullLayer, scoreLayerName, setMap, toggleLayerOff, toggleLayerOn} from './layer_util.js';
+import {addLayer, addLayerFromGeoJsonPromise, addNullLayer, scoreLayerName, setMap, toggleLayerOff, toggleLayerOn, convertEeObjectToPromise} from './layer_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {processUserRegions} from './polygon_draw.js';
 import processJoinedData from './process_joined_data.js';
@@ -21,6 +21,8 @@ const assets = {
 
 // TODO: infer this from disaster const in import_data.js?
 const snapAndDamageAsset = 'users/janak/harvey-snap-and-damage';
+// Promise for snapAndDamageAsset. After it's first resolved, we never need to
+// download it from EarthEngine again.
 let snapAndDamagePromise;
 const scalingFactor = 100;
 const scoreIndex = Object.keys(assets).length;
@@ -148,11 +150,7 @@ function initializeAssetLayers(map) {
   Object.keys(assets).forEach((assetName, index) => {
     // TODO(juliexxia): generalize for ImageCollections (and Features/Images?)
     if (assets[assetName]) {
-      // 250M objects in a FeatureCollection ought to be enough for anyone.
-      addLayerFromGeoJsonPromise(
-          convertEeObjectToPromise(
-              ee.FeatureCollection(assetName).toList(250000000)),
-          assetName, index);
+      addLayer(assetName, index);
     } else {
       addNullLayer(assetName, index);
     }
@@ -171,23 +169,4 @@ function initializeAssetLayers(map) {
 function initializeScoreLayer(map, layer) {
   addLayerFromGeoJsonPromise(layer, scoreLayerName, scoreIndex);
   document.getElementById(scoreLayerName).checked = true;
-}
-
-/**
- * Transform an EE object into a standard Javascript Promise by wrapping its
- * evaluate call.
- *
- * @param {ee.ComputedObject} eeObject
- * @return {Promise<GeoJson>}
- */
-function convertEeObjectToPromise(eeObject) {
-  return new Promise((resolve, reject) => {
-    eeObject.evaluate((resolvedObject, error) => {
-      if (error) {
-        reject(error);
-        return;
-      }
-      resolve(resolvedObject);
-    });
-  });
 }

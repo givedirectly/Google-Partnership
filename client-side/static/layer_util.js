@@ -3,8 +3,10 @@ import {mapContainerId} from './dom_constants.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 
 export {
+  addLayer,
   addLayerFromGeoJsonPromise,
   addNullLayer,
+    convertEeObjectToPromise,
   redrawLayers,
   removeScoreLayer,
   scoreLayerName,
@@ -126,6 +128,20 @@ function showColor(color) {
 }
 
 /**
+ * Convenience wrapper for addLayerFromGeoJsonPromise.
+ *
+ * @param {string} assetName Name of EarthEngine FeatureCollection.
+ * @param index Ordering of layer (higher is more visible).
+ */
+function addLayer(assetName, index) {
+  // 250M objects in a FeatureCollection ought to be enough for anyone.
+  addLayerFromGeoJsonPromise(
+      convertEeObjectToPromise(
+          ee.FeatureCollection(assetName).toList(250000000)),
+      assetName, index);
+}
+
+/**
  /**
  * Asynchronous wrapper for addLayerFromFeatures that takes in a Promise coming
  * from an ee.List of Features to avoid blocking on the result. This also
@@ -171,6 +187,7 @@ const hasContent = (val) => val;
  * layerArray, which has the effect of redrawing it on the map.
  */
 function redrawLayers() {
+  console.log(layerArray);
   deckGlOverlay.setProps({layers: layerArray.filter(hasContent)});
 }
 
@@ -194,4 +211,22 @@ function removeLayer(assetName) {
 function removeScoreLayer() {
   layerArray[layerMap[scoreLayerName].index] = null;
   redrawLayers();
+}
+/**
+ * Transform an EE object into a standard Javascript Promise by wrapping its
+ * evaluate call.
+ *
+ * @param {ee.ComputedObject} eeObject
+ * @return {Promise<GeoJson>}
+ */
+function convertEeObjectToPromise(eeObject) {
+  return new Promise((resolve, reject) => {
+    eeObject.evaluate((resolvedObject, error) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+      resolve(resolvedObject);
+    });
+  });
 }
