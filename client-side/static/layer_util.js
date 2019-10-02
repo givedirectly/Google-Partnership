@@ -131,7 +131,7 @@ function showColor(color) {
  * Convenience wrapper for addLayerFromGeoJsonPromise.
  *
  * @param {string} assetName Name of EarthEngine FeatureCollection.
- * @param index Ordering of layer (higher is more visible).
+ * @param {number} index Ordering of layer (higher is more visible).
  */
 function addLayer(assetName, index) {
   // 250M objects in a FeatureCollection ought to be enough for anyone.
