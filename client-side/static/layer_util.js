@@ -10,7 +10,7 @@ export {
   redrawLayers,
   removeScoreLayer,
   scoreLayerName,
-  setMap,
+  setMapToDrawLayersOn,
   toggleLayerOff,
   toggleLayerOn,
 };
@@ -19,21 +19,26 @@ export {layerArray, layerMap, LayerMapValue};
 
 const scoreLayerName = 'score';
 
-// Keep a map of asset name -> overlay, index, display status. Overlays are
-// lazily generated i.e. pre-known assets that don't display by
-// default will have an entry in this map, but the LayerMapValue will have a
-// null overlay field until we do want to display it. Currently assume we're
-// only working with one map.
+/**
+ * Keep a map of asset name -> data, index, display status. Data is lazily generated i.e. pre-known assets that don't display by
+ * default will have an entry in this map, but the LayerMapValue will have a
+ * null data field until we fetch the data when the user wants to display it.
+ * Currently assume we're only working with one map.
+ */
 const layerMap = new Map();
 
 /**
  * deck.gl layers, in the order they should be rendered. Passed to deckGlOverlay
  * in redrawLayers() (after filtering out absent elements).
  *
+ * Contains one GeoJsonLayer per LayerMapValue with non-null data attribute (from
+ * layerMap), ordered by LayerMapValue.index.
+ *
  * @type {Array<deck.GeoJsonLayer>}
  */
 const layerArray = [];
 
+/** Container for all deck.gl layers. */
 const deckGlOverlay = new deck.GoogleMapsOverlay();
 
 /** Values of layerMap. */
@@ -42,8 +47,7 @@ class LayerMapValue {
    * Constructor.
    *
    * @param {GeoJSON} data Data to be rendered, null if not yet available.
-   * @param {number} index Z-index of layer when displayed. Higher is better.
-   *   Does not change.
+   * @param {number} index Z-index of layer when displayed. Does not change.
    * @param {boolean} displayed True if layer is currently displayed
    */
   constructor(data, index, displayed) {
@@ -60,7 +64,7 @@ class LayerMapValue {
  *
  * @param {google.maps.Map} map
  */
-function setMap(map) {
+function setMapToDrawLayersOn(map) {
   deckGlOverlay.setMap(map);
 }
 
@@ -88,6 +92,7 @@ function toggleLayerOff(assetName) {
   removeLayer(assetName);
 }
 
+/** Function object to extract a color from a JSON Feature. */
 const coloring = (f) => showColor(f.properties['color']);
 
 /**
@@ -153,8 +158,8 @@ function addLayer(assetName, index) {
  * from an ee.List of Features to avoid blocking on the result. This also
  populates layerMap.
  *
- * This should only be called once per asset when its overlay is initialized
- * for the first time. After the overlay is non-null in layerMap, any displaying
+ * This should only be called once per asset when its data is initialized
+ * for the first time. After the data is non-null in layerMap, any displaying
  * should be able to set its visibility and redraw the layers.
  *
  * @param {Promise<Array<GeoJson>>}featuresPromise
@@ -176,8 +181,7 @@ function addLayerFromGeoJsonPromise(featuresPromise, assetName, index) {
 }
 
 /**
- * Adds an entry to layerMap when we haven't actually generated the overlay
- * yet. Useful for assets that we don't want to display by default.
+ * Adds an entry to layerMap when we haven't actually gotten the data yet. Useful for assets that we don't want to display by default.
  *
  * @param {string} assetName
  * @param {number} index
@@ -197,8 +201,8 @@ function redrawLayers() {
 }
 
 /**
- * Removes an overlay from the map by setting its index in overlayMapTypes to
- * null. Records it is no longer being displayed in layerMap.
+ * Removes an entry from the map by setting its displayed attribute to false and
+ * recreating the layer.
  *
  * @param {string} assetName
  */
@@ -209,7 +213,7 @@ function removeLayer(assetName) {
 }
 
 /**
- * Removes the score layer overlay before a parameter update. Must actually be
+ * Removes the score layer before a parameter update. Must actually be
  * removed, not just made invisible, because deck.gl would otherwise not notice
  * any actual data changes, and therefore not update the map.
  */

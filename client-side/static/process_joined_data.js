@@ -33,8 +33,12 @@ function colorAndRate(
          povertyRatio * povertyWeight));
   }
   feature.properties[scoreTag] = score;
-  feature.properties['color'] =
-      [255, 0, 255, Math.min(3 * score, scoreDisplayCap)];
+  // Opacity is between 0 and 255, while score is between 0 and scalingFactor.
+  // Math.min is out of an abundance of caution, in case bad data leads to
+  // score > scalingFactor.
+  const opacity =
+      Math.min(Math.round((255 / scalingFactor) * score), scoreDisplayCap);
+  feature.properties['color'] = [255, 0, 255, opacity];
 }
 
 /**
