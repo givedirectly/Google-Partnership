@@ -93,8 +93,15 @@ function toggleLayerOff(assetName) {
   removeLayer(assetName);
 }
 
-// Function object to extract a color from a JSON Feature.
-const coloring = (f) => showColor(f.properties['color']);
+/**
+ * Function object to extract a color from a JSON Feature.
+ *
+ * @param {GeoJSON.Feature} feature
+ * @return {Array} RGBA array
+ */
+function getColorOfFeature(feature) {
+  return showColor(feature.properties['color']);
+}
 
 /**
  * Creates a deck.gl layer from the given value's GeoJSON data. deck.gl is very
@@ -120,7 +127,7 @@ function addLayerFromFeatures(layerMapValue, assetName) {
     // TODO(janakr): deck.gl docs claim that the "color" property should
     // automatically color the features, but it doesn't appear to work:
     // https://deck.gl/#/documentation/deckgl-api-reference/layers/geojson-layer?section=getelevation-function-number-optional-transition-enabled
-    getFillColor: coloring,
+    getFillColor: getColorOfFeature,
     visible: layerMapValue.displayed,
   });
   redrawLayers();
@@ -192,14 +199,22 @@ function addNullLayer(assetName, index) {
   layerMap.set(assetName, new LayerMapValue(null, index, false));
 }
 
-const hasContent = (val) => val;
+/**
+ * Dumb function that just returns true if its input is not null, for a filter.
+ *
+ * @param {Object} val
+ * @return {boolean}
+ */
+function valIsNotNull(val) {
+  return val !== null;
+}
 
 /**
  * Sets the "layers" attribute of deckGlOverlay to the non-null elements of
  * layerArray, which has the effect of redrawing it on the map.
  */
 function redrawLayers() {
-  deckGlOverlay.setProps({layers: layerArray.filter(hasContent)});
+  deckGlOverlay.setProps({layers: layerArray.filter(valIsNotNull)});
 }
 
 /**
