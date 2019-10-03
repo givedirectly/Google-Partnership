@@ -20,10 +20,11 @@ export {layerArray, layerMap, LayerMapValue};
 const scoreLayerName = 'score';
 
 /**
- * Keep a map of asset name -> data, index, display status. Data is lazily generated i.e. pre-known assets that don't display by
- * default will have an entry in this map, but the LayerMapValue will have a
- * null data field until we fetch the data when the user wants to display it.
- * Currently assume we're only working with one map.
+ * Keep a map of asset name -> data, index, display status. Data is lazily
+ * generated i.e. pre-known assets that don't display by default will have an
+ * entry in this map, but the LayerMapValue will have a null data field until we
+ * fetch the data when the user wants to display it. Currently assume we're only
+ * working with one map.
  */
 const layerMap = new Map();
 
@@ -31,8 +32,8 @@ const layerMap = new Map();
  * deck.gl layers, in the order they should be rendered. Passed to deckGlOverlay
  * in redrawLayers() (after filtering out absent elements).
  *
- * Contains one GeoJsonLayer per LayerMapValue with non-null data attribute (from
- * layerMap), ordered by LayerMapValue.index.
+ * Contains one GeoJsonLayer per LayerMapValue with non-null data attribute
+ * (from layerMap), ordered by LayerMapValue.index.
  *
  * @type {Array<deck.GeoJsonLayer>}
  */
@@ -181,7 +182,8 @@ function addLayerFromGeoJsonPromise(featuresPromise, assetName, index) {
 }
 
 /**
- * Adds an entry to layerMap when we haven't actually gotten the data yet. Useful for assets that we don't want to display by default.
+ * Adds an entry to layerMap when we haven't actually gotten the data yet.
+ * Useful for assets that we don't want to display by default.
  *
  * @param {string} assetName
  * @param {number} index
