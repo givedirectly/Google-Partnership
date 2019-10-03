@@ -2,7 +2,7 @@ import {userRegionData} from './user_region_data.js';
 
 export {addPopUpListener, createPopup, setUpPopup};
 
-let CustomPopup = null;
+let Popup = null;
 
 // Mostly copied from example at
 // https://developers-dot-devsite-v2-prod.appspot.com/maps \
@@ -19,7 +19,7 @@ function setUpPopup() {
    * @param {google.maps.Map} map
    * @constructor
    */
-  function Popup(polygon, notes, map) {
+  Popup = function(polygon, notes, map) {
     this.polygon = polygon;
     // TODO(janakr): is there a better place to pop this window up?
     this.position = polygon.getPath().getAt(0);
@@ -41,7 +41,7 @@ function setUpPopup() {
 
     // Stop clicks, etc., from bubbling up to the map.
     google.maps.OverlayView.preventMapHitsAndGesturesFrom(this.containerDiv);
-  }
+  };
 
   // ES5 magic to extend google.maps.OverlayView.
   Popup.prototype = Object.create(google.maps.OverlayView.prototype);
@@ -81,8 +81,6 @@ function setUpPopup() {
     this.position = this.polygon.getPath().getAt(0);
     this.draw();
   };
-
-  CustomPopup = Popup;
 }
 
 /**
@@ -119,7 +117,7 @@ function createPopupHtml(popup, notes, map) {
     polygon.setEditable(true);
 
     const currentNotes = notesDiv.innerText;
-    savedShape = clonePolygonPaths(polygon);
+    savedShape = clonePolygonPath(polygon);
 
     content.removeChild(notesDiv);
     content.removeChild(editButton);
@@ -167,7 +165,7 @@ function createPopupHtml(popup, notes, map) {
 }
 
 /**
- * Updates the popup and polygon to their uneditable state appearances..
+ * Updates the popup and polygon to their uneditable state appearances.
  *
  * @param {google.maps.Polygon} polygon
  * @param {Object} popup
@@ -210,11 +208,12 @@ function closeCleanup(polygon, popup) {
 
 /**
  * Make a deep copy of a polygon's shape in the form of Array<LatLng>
- *   (suitable for being fed into google.maps.Polygon.setPath(...))
+ * (suitable for being fed into google.maps.Polygon.setPath(...)). We only
+ * clone a single path because we don't support multi-path polygons right now.
  * @param {google.maps.Polygon} polygon
  * @return {Array<google.maps.LatLng>}
  */
-function clonePolygonPaths(polygon) {
+function clonePolygonPath(polygon) {
   const currentShape = [];
   polygon.getPath().forEach((latlng) => currentShape.push(latlng));
   return currentShape;
@@ -245,8 +244,7 @@ function addPopUpListener(polygon, popup) {
  * @return {Popup}
  */
 function createPopup(polygon, map) {
-  const popup =
-      new CustomPopup(polygon, userRegionData.get(polygon).notes, map);
+  const popup = new Popup(polygon, userRegionData.get(polygon).notes, map);
   popup.setMap(map);
   popup.hide();
   return popup;
