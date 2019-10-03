@@ -35,7 +35,7 @@ describe('Unit test for processed_joined_data.js', () => {
     expect(resultProperties)
         .to.have.property(
             'SCORE', Math.round(100 * (0.5 * ((10 + 5) / 27) + 0.5 * (2 / 4))));
-    assertColorAndOpacity(resultProperties, 159);
+    assertColorAndOpacity(resultProperties, 135);
   });
 
   it('Processes uneven weights', () => {
@@ -52,7 +52,7 @@ describe('Unit test for processed_joined_data.js', () => {
     expect(resultProperties)
         .to.have.property(
             'SCORE', Math.round(100 * (0.1 * ((10 + 5) / 27) + 0.9 * (2 / 4))));
-    assertColorAndOpacity(resultProperties, 153);
+    assertColorAndOpacity(resultProperties, 130);
   });
 
   it('Processes a below threshold block group', () => {
