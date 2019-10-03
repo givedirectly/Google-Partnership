@@ -93,7 +93,7 @@ function toggleLayerOff(assetName) {
   removeLayer(assetName);
 }
 
-/** Function object to extract a color from a JSON Feature. */
+// Function object to extract a color from a JSON Feature.
 const coloring = (f) => showColor(f.properties['color']);
 
 /**
