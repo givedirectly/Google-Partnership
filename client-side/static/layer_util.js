@@ -132,6 +132,9 @@ function showColor(color) {
   return color ? color : black;
 }
 
+// 250M objects in a FeatureCollection ought to be enough for anyone.
+const maxNumFeaturesExpected = 250000000;
+
 /**
  * Convenience wrapper for addLayerFromGeoJsonPromise.
  *
@@ -139,15 +142,13 @@ function showColor(color) {
  * @param {number} index Ordering of layer (higher is more visible).
  */
 function addLayer(assetName, index) {
-  // 250M objects in a FeatureCollection ought to be enough for anyone.
   addLayerFromGeoJsonPromise(
       convertEeObjectToPromise(
-          ee.FeatureCollection(assetName).toList(250000000)),
+          ee.FeatureCollection(assetName).toList(maxNumFeaturesExpected)),
       assetName, index);
 }
 
 /**
- /**
  * Asynchronous wrapper for addLayerFromFeatures that takes in a Promise coming
  * from an ee.List of Features to avoid blocking on the result. This also
  populates layerMap.
@@ -216,6 +217,7 @@ function removeScoreLayer() {
   layerArray[layerMap.get(scoreLayerName).index] = null;
   redrawLayers();
 }
+
 /**
  * Transform an EE object into a standard Javascript Promise by wrapping its
  * evaluate call.
