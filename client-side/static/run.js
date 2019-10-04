@@ -20,7 +20,7 @@ const assets = {
 };
 
 // TODO: infer this from disaster const in import_data.js?
-const snapAndDamageAsset = 'users/juliexxia/harvey-data';
+const snapAndDamageAsset = 'users/juliexxia/harvey-data-aff-as-nod';
 const scalingFactor = 100;
 const scoreIndex = Object.keys(assets).length;
 

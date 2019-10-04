@@ -75,7 +75,7 @@ disasters.set(
 disasters.set(
     'harvey',
     new DisasterMapValue(
-        'users/juliexxia/harvey-damage-crowdai-format',
+        'users/juliexxia/harvey-damage-crowdai-format-aff-as-nod',
         'users/juliexxia/snap_texas', 'users/juliexxia/tiger_texas',
         'users/juliexxia/income_texas', 'users/ruthtalbot/harvey-SVI'));
 
@@ -121,7 +121,7 @@ function countDamageAndBuildings(feature) {
           .set(damageTag, ratioBuildingsDamaged));
 }
 
-function fixSnap(feature) {
+function combineWithSnap(feature) {
   const snapFeature = ee.Feature(feature.get('primary'));
   return ee.Feature(
       ee.Feature(feature.get('secondary')).geometry(), ee.Dictionary([
@@ -136,8 +136,9 @@ function fixSnap(feature) {
       ]));
 }
 
-function fixIncome(feature) {
+function combineWithIncome(feature) {
   const incomeFeature = ee.Feature(feature.get('secondary'));
+
   return ee.Feature(feature.get('primary')).set(ee.Dictionary([
     incomeTag, incomeFeature.get(incomeKey), incomeErrorTag,
     incomeFeature.get(incomeErrorKey)
@@ -145,7 +146,7 @@ function fixIncome(feature) {
 }
 
 
-function fixSVI(feature) {
+function combineWithSvi(feature) {
   const sviFeature = ee.Feature(feature.get('secondary'));
   return ee.Feature(feature.get('primary')).set(ee.Dictionary([
     sviTag, sviFeature.get(sviTag)
@@ -188,7 +189,7 @@ function run() {
               snapAsset, blockGroupAsset,
               ee.Filter.equals(
                   {leftField: censusGeoidKey, rightField: tigerGeoidKey}))
-          .map(fixSnap);
+          .map(combineWithSnap);
 
   const joinedSnapIncome =
       ee.Join.inner()
@@ -196,7 +197,7 @@ function run() {
               joinedSnap, ee.FeatureCollection(resources.incomeAsset),
               ee.Filter.equals(
                   {leftField: geoidTag, rightField: censusGeoidKey}))
-          .map(fixIncome);
+          .map(combineWithIncome);
 
   const svi =
       ee.FeatureCollection(resources.sviAsset)
@@ -207,9 +208,9 @@ function run() {
           .apply(
               joinedSnapIncome.map(addTractInfo), svi,
               ee.Filter.equals({leftField: tractTag, rightField: geoidTag}))
-          .map(fixSVI);
+          .map(combineWithSvi);
 
-  const assetName = disaster + '-data';
+  const assetName = disaster + '-data-aff-as-nod';
   // TODO(#61): parameterize ee user account to write assets to or make GD
   // account.
   // TODO: delete existing asset with same name if it exists.
