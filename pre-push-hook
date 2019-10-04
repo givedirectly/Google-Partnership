@@ -54,7 +54,10 @@ while read local_ref local_sha remote_ref remote_sha; do
     fi
     yarn run eslint $modified_js_files
   fi
+  # TODO(janakr): delete Cypress once all tests migrated. Requires
+  # adding ES6 language support to Mocha via Babel package.
   yarn run cypress run --config video=false
+  yarn run mocha
 done
 
 exit 0
