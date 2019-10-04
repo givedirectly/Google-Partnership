@@ -33,21 +33,19 @@ function initializeSidebar() {
 function toggleSidebar(toggleId, contentId) {
   const sidebar = document.getElementById(sidebarId);
 
-  if (currentContentId) {
-    $('#' + currentContentId).fadeOut(sidebarContentTransitionDuration);
-  }
-
   if (currentContentId !== contentId) {
+    if (currentContentId) {
+      $('#' + currentContentId).fadeOut(sidebarContentTransitionDuration,
+          () => $('#' + contentId).fadeIn(sidebarContentTransitionDuration));
+    } else {
+      sidebar.style.width = sidebarExpandedWidth;
+      $('#' + contentId).fadeIn(sidebarContentTransitionDuration);
+    }
     currentContentId = contentId;
-
-    // Expand the sidebar if it wasn't already expanded.
-    sidebar.style.width = sidebarExpandedWidth;
-
-    // Show the new content.
-    $('#' + contentId).fadeIn(sidebarContentTransitionDuration);
   } else {
     // Collapse the sidebar because the current content is being toggled off.
     sidebar.style.width = sidebarMinWidth;
+    $('#' + currentContentId).fadeOut(sidebarContentTransitionDuration);
     currentContentId = null;
   }
 }
