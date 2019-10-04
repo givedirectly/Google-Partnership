@@ -10,6 +10,12 @@ body {
   --green-4: #9EBCB5;
   --green-5: #CEDEDA;
   --green-6: #E4EEEC;
+  --green-7: #F4FBFA;
+
+  --background-color-transition: background-color 0.3s ease-in-out;
+  --opacity-transition: opacity 0.5s ease-in-out;
+
+  --sidebar-min-width: 64px;
 }
 
 .hidden {
@@ -123,8 +129,8 @@ button {
   margin: 5px 15px 5px 0;
   padding: 8px;
   text-transform: capitalize;
-  -webkit-transition: background-color 0.3s;
-  transition: background-color 0.3s;
+  -webkit-transition: var(--background-color-transition);
+  transition: var(--background-color-transition);
 }
 
 input[type='button']:hover,
@@ -149,9 +155,9 @@ button:hover {
   background: rgba(0, 0, 0, 0.1);
   z-index: 100;
   opacity: 1;
-  transition: opacity 0.5s ease-in-out;
-  -webkit-transition: opacity 0.5s ease-in-out;
   pointer-events: none;
+  -webkit-transition: var(--opacity-transition);
+  transition: var(--opacity-transition);
 }
 
 .map-container .loader .ellipsis {
@@ -235,32 +241,50 @@ button:hover {
   height: 100%;
   left: 0;
   max-width: 400px;
-  min-width: 150px;
   overflow-x: hidden;
   position: fixed;
   top: 0;
-  width: 25%;
+  width: var(--sidebar-min-width);
   z-index: 1; 
+  -webkit-transition: width 0.5s ease-in-out;
+  transition: width 0.5s ease-in-out;
+}
+
+.sidebar ul {
+  width: var(--sidebar-min-width);
+  height: 100%;
+  background-color: var(--green-6);
+  float: left;
+  padding-inline-start: 0;
+  margin-block-start: 0;
+  margin-block-end: 0;
+  margin-inline-start: 0;
+  margin-inline-end: 0;
+}
+
+.sidebar-list-item {
+  width: var(--sidebar-min-width);
+  padding: 10px 0;
+  text-align: center;
+  -webkit-transition: var(--background-color-transition);
+  transition: var(--background-color-transition);
+}
+
+.sidebar-list-item:hover {
+  background-color: var(--green-7);
+  cursor: pointer;
 }
 
 .sidebar-content {
+  float: right;
   box-sizing: border-box;
-  height: calc(100% - 45px);
   min-height: 200px;
   padding: 10px;
   position: relative;
-  width: 100%;
-}
-
-.sidebar-heading {
-  color: #fff;
-  background-color: #9DBCB5;
-  font-size: 16px;
-  height: 30px;
-  padding-top: 15px;
-  text-align: center;
-  text-transform: uppercase;
-  width:100%;
+  width: calc(100% - var(--sidebar-min-width));
+  opacity: 0;
+  --webkit-transition: var(--opacity-transition);
+  transition: var(--opacity-transition);
 }
 
 /** Responsive styles */
