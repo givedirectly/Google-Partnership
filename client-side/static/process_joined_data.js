@@ -54,7 +54,7 @@ function colorAndRate(
         sviTag,
         feature.get(sviTag),
         incomeTag,
-        feature.get(incomeTag)
+        feature.get(incomeTag),
       ]))
       .set({
         style: {

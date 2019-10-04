@@ -2,8 +2,15 @@ import {blockGroupTag, damageTag, geoidTag, incomeTag, scoreTag, snapPercentageT
 
 export {drawTable, tableHeadings};
 
-const tableHeadings =
-    [geoidTag, blockGroupTag, scoreTag, snapPercentageTag, damageTag, sviTag, incomeTag];
+const tableHeadings = [
+  geoidTag,
+  blockGroupTag,
+  scoreTag,
+  snapPercentageTag,
+  damageTag,
+  sviTag,
+  incomeTag,
+];
 
 /**
  * Display a ranked table of the given features that have non-zero score.

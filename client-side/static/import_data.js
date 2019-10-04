@@ -55,6 +55,8 @@ class DisasterMapValue {
    * @param {string} damageAsset ee asset path
    * @param {string} snapAsset ee asset path to snap info
    * @param {string} bgAsset ee asset path to block group info
+   * @param {string} incomeAsset ee asset path to median income info
+   * @param {string} sviAsset ee asset path to svi info
    */
   constructor(damageAsset, snapAsset, bgAsset, incomeAsset, sviAsset) {
     this.damageAsset = damageAsset;
@@ -121,6 +123,12 @@ function countDamageAndBuildings(feature) {
           .set(damageTag, ratioBuildingsDamaged));
 }
 
+/**
+ * Post-process the join of snap data and tiger geometries to form a single
+ * feature.
+ * @param {ee.Feature} feature
+ * @return {ee.Feature}
+ */
 function combineWithSnap(feature) {
   const snapFeature = ee.Feature(feature.get('primary'));
   return ee.Feature(
@@ -136,20 +144,31 @@ function combineWithSnap(feature) {
       ]));
 }
 
+/**
+ * Post-process the join to income data to form a single feature.
+ * @param {ee.Feature} feature
+ * @return {ee.Feature}
+ */
 function combineWithIncome(feature) {
   const incomeFeature = ee.Feature(feature.get('secondary'));
-
   return ee.Feature(feature.get('primary')).set(ee.Dictionary([
-    incomeTag, incomeFeature.get(incomeKey), incomeErrorTag,
-    incomeFeature.get(incomeErrorKey)
+    incomeTag,
+    incomeFeature.get(incomeKey),
+    incomeErrorTag,
+    incomeFeature.get(incomeErrorKey),
   ]));
 }
 
-
+/**
+ * Post-process the join to SVI data to form a single feature.
+ * @param {ee.Feature} feature
+ * @return {ee.Feature}
+ */
 function combineWithSvi(feature) {
   const sviFeature = ee.Feature(feature.get('secondary'));
   return ee.Feature(feature.get('primary')).set(ee.Dictionary([
-    sviTag, sviFeature.get(sviTag)
+    sviTag,
+    sviFeature.get(sviTag),
   ]));
 }
 
@@ -158,13 +177,19 @@ function combineWithSvi(feature) {
  * TIGER data.
  *
  * @param {ee.Feature} feature
- * @param {String} geoidKey
  * @return {ee.Feature}
  */
-function stringifyGeoid(feature, geoidKey) {
-  return feature.set(geoidKey, ee.String(feature.get(geoidKey)));
+function stringifyGeoid(feature) {
+  return feature.set(censusGeoidKey, ee.String(feature.get(censusGeoidKey)));
 }
 
+/**
+ * Extracts the census tract geoid from the block group id so it can be used
+ * to join to SVI data. The census tract geoid is the block group id minus the
+ * last digit.
+ * @param {ee.Feature} feature
+ * @return {ee.Feature}
+ */
 function addTractInfo(feature) {
   const blockGroupId = ee.String(feature.get(geoidTag));
   const tractGeoid =
