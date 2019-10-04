@@ -1,3 +1,4 @@
+// TODO(janakr): migrate to ES6-style exports if possible.
 const {Builder, By} = require('selenium-webdriver');
 
 // We use the ip address rather than 'localhost' because Selenium has issues
@@ -7,7 +8,8 @@ const hostAddress = 'http://127.0.0.1:8080';
 /**
  * Loads the page, waiting for all processes to finish.
  *
- * @param {Promise<ThenableWebDriver>} driverPromise The promise returned from setUp
+ * @param {Promise<ThenableWebDriver>} driverPromise The promise returned from
+ *     setUp
  * @return {ThenableWebDriver} The resolved driver (although it is wrapped in a
  * Promise since this function is async, so callers still need to await it)
  */
@@ -25,8 +27,10 @@ module.exports.loadPage = async (driverPromise) => {
  * @param {ThenableWebDriver} driver Selenium webdriver
  */
 module.exports.waitForLoad = async (driver) => {
-  await driver.findElement(By.xpath('//div[@id="mapContainer-loader"][contains(@style,"opacity: 1")]'));
-  await driver.findElement(By.xpath('//div[@id="mapContainer-loader"][contains(@style,"opacity: 0")]'));
+  await driver.findElement(By.xpath(
+      '//div[@id="mapContainer-loader"][contains(@style,"opacity: 1")]'));
+  await driver.findElement(By.xpath(
+      '//div[@id="mapContainer-loader"][contains(@style,"opacity: 0")]'));
 };
 
 /**
