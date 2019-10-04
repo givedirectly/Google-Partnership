@@ -1,5 +1,5 @@
 import damageLevelsList from './damage_levels.js';
-import {blockGroupTag, buildingCountTag, damageTag, geoidTag, snapPercentageTag, snapPopTag, totalPopTag} from './property_names.js';
+import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeErrorTag, incomeTag, snapPercentageTag, snapPopTag, sviTag, totalPopTag, tractTag} from './property_names.js';
 
 export {crowdAiDamageKey};
 /** @VisibleForTesting */
@@ -41,6 +41,8 @@ const censusBlockGroupKey = 'GEOdisplay-label';
 const tigerGeoidKey = 'GEOID';
 const snapKey = 'HD01_VD02';
 const totalKey = 'HD01_VD01';
+const incomeKey = 'HD01_VD01';
+const incomeErrorKey = 'HD02_VD01';
 // check with crowd ai folks about name.
 const crowdAiDamageKey = 'descriptio';
 
@@ -54,26 +56,28 @@ class DisasterMapValue {
    * @param {string} snapAsset ee asset path to snap info
    * @param {string} bgAsset ee asset path to block group info
    */
-  constructor(damageAsset, snapAsset, bgAsset) {
+  constructor(damageAsset, snapAsset, bgAsset, incomeAsset, sviAsset) {
     this.damageAsset = damageAsset;
     this.rawSnapAsset = snapAsset;
     this.bgAsset = bgAsset;
+    this.incomeAsset = incomeAsset;
+    this.sviAsset = sviAsset;
   }
 }
 
+// TODO: upload michael income and SVI data
 disasters.set(
     'michael',
     new DisasterMapValue(
-        'users/juliexxia/crowd_ai_michael' /* damageAsset */,
-        'users/juliexxia/ACS_16_5YR_B22010_with_ann' /* rawSnapAsset */,
-        'users/juliexxia/tiger_florida' /* bgAsset */));
+        'users/juliexxia/crowd_ai_michael', 'users/juliexxia/florida_snap',
+        'users/juliexxia/tiger_florida'));
 
 disasters.set(
     'harvey',
     new DisasterMapValue(
-        'users/juliexxia/harvey-damage-crowdai-format' /* damageAsset */,
-        'users/juliexxia/snap_texas' /* rawSnapAsset */,
-        'users/juliexxia/tiger_texas' /* bgAsset */));
+        'users/juliexxia/harvey-damage-crowdai-format',
+        'users/juliexxia/snap_texas', 'users/juliexxia/tiger_texas',
+        'users/juliexxia/income_texas', 'users/ruthtalbot/harvey-SVI'));
 
 /**
  * Given a feature from the SNAP census data, returns a new
@@ -89,7 +93,7 @@ function countDamageAndBuildings(feature) {
   const damageLevels = ee.List(damageLevelsList);
   const damageFilters =
       damageLevels.map((type) => ee.Filter.eq(crowdAiDamageKey, type));
-  const geometry = ee.Feature(feature.get('secondary')).geometry();
+  const geometry = feature.geometry();
   const blockDamage = damage.filterBounds(geometry);
 
   const attrDict = ee.Dictionary.fromLists(
@@ -99,18 +103,53 @@ function countDamageAndBuildings(feature) {
   const ratioBuildingsDamaged = ee.Number(totalBuildings)
                                     .subtract(attrDict.get('no-damage'))
                                     .divide(totalBuildings);
-  const snapFeature = ee.Feature(feature.get('primary'));
-  const snapPop = ee.Number.parse(snapFeature.get(snapKey)).long();
-  const totalPop = ee.Number.parse(snapFeature.get(totalKey)).long();
+  const snapPop = ee.Number.parse(feature.get(snapPopTag)).long();
+  const totalPop = ee.Number.parse(feature.get(totalPopTag)).long();
   return ee.Feature(
       geometry,
-      attrDict.set(geoidTag, snapFeature.get(censusGeoidKey))
-          .set(blockGroupTag, snapFeature.get(censusBlockGroupKey))
-          .set(snapPopTag, snapPop)
-          .set(totalPopTag, totalPop)
-          .set(snapPercentageTag, snapPop.divide(totalPop))
+      attrDict.set(geoidTag, feature.get(geoidTag))
+          .set(blockGroupTag, feature.get(blockGroupTag))
+          .set(snapPopTag, ee.Number(snapPop))
+          .set(totalPopTag, ee.Number(totalPop))
+          .set(snapPercentageTag, ee.Number(snapPop).divide(totalPop))
+          // These entries can't be parsed to numbers easily because have some
+          // non-number values like "**" and "-" :(
+          .set(incomeTag, feature.get(incomeTag))
+          .set(incomeErrorTag, feature.get(incomeErrorTag))
+          .set(sviTag, feature.get(sviTag))
           .set(buildingCountTag, totalBuildings)
           .set(damageTag, ratioBuildingsDamaged));
+}
+
+function fixSnap(feature) {
+  const snapFeature = ee.Feature(feature.get('primary'));
+  return ee.Feature(
+      ee.Feature(feature.get('secondary')).geometry(), ee.Dictionary([
+        geoidTag,
+        snapFeature.get(censusGeoidKey),
+        blockGroupTag,
+        snapFeature.get(censusBlockGroupKey),
+        snapPopTag,
+        snapFeature.get(snapKey),
+        totalPopTag,
+        snapFeature.get(totalKey),
+      ]));
+}
+
+function fixIncome(feature) {
+  const incomeFeature = ee.Feature(feature.get('secondary'));
+  return ee.Feature(feature.get('primary')).set(ee.Dictionary([
+    incomeTag, incomeFeature.get(incomeKey), incomeErrorTag,
+    incomeFeature.get(incomeErrorKey)
+  ]));
+}
+
+
+function fixSVI(feature) {
+  const sviFeature = ee.Feature(feature.get('secondary'));
+  return ee.Feature(feature.get('primary')).set(ee.Dictionary([
+    sviTag, sviFeature.get(sviTag)
+  ]));
 }
 
 /**
@@ -118,10 +157,18 @@ function countDamageAndBuildings(feature) {
  * TIGER data.
  *
  * @param {ee.Feature} feature
+ * @param {String} geoidKey
  * @return {ee.Feature}
  */
-function stringifyGeoid(feature) {
-  return feature.set(censusGeoidKey, ee.String(feature.get(censusGeoidKey)));
+function stringifyGeoid(feature, geoidKey) {
+  return feature.set(geoidKey, ee.String(feature.get(geoidKey)));
+}
+
+function addTractInfo(feature) {
+  const blockGroupId = ee.String(feature.get(geoidTag));
+  const tractGeoid =
+      blockGroupId.slice(0, ee.Number(blockGroupId.length()).subtract(1));
+  return feature.set(tractTag, tractGeoid);
 }
 
 /** Performs operation of processing inputs and creating output asset. */
@@ -130,21 +177,45 @@ function run() {
 
   const resources = disasters.get(disaster);
   const snapAsset =
-      ee.FeatureCollection(resources.rawSnapAsset).map(stringifyGeoid);
+      ee.FeatureCollection(resources.rawSnapAsset)
+          .map((feature) => stringifyGeoid(feature, censusGeoidKey));
   const blockGroupAsset =
       ee.FeatureCollection(resources.bgAsset)
           .filterBounds(ee.FeatureCollection(resources.damageAsset).geometry());
-  const joinedSnap = ee.Join.inner().apply(
-      snapAsset, blockGroupAsset,
-      ee.Filter.equals({leftField: censusGeoidKey, rightField: tigerGeoidKey}));
+  const joinedSnap =
+      ee.Join.inner()
+          .apply(
+              snapAsset, blockGroupAsset,
+              ee.Filter.equals(
+                  {leftField: censusGeoidKey, rightField: tigerGeoidKey}))
+          .map(fixSnap);
 
-  const assetName = disaster + '-snap-and-damage';
+  const joinedSnapIncome =
+      ee.Join.inner()
+          .apply(
+              joinedSnap, ee.FeatureCollection(resources.incomeAsset),
+              ee.Filter.equals(
+                  {leftField: geoidTag, rightField: censusGeoidKey}))
+          .map(fixIncome);
+
+  const svi =
+      ee.FeatureCollection(resources.sviAsset)
+          .filterBounds(ee.FeatureCollection(resources.damageAsset).geometry());
+
+  const joinedSnapIncomeSVI =
+      ee.Join.inner()
+          .apply(
+              joinedSnapIncome.map(addTractInfo), svi,
+              ee.Filter.equals({leftField: tractTag, rightField: geoidTag}))
+          .map(fixSVI);
+
+  const assetName = disaster + '-data';
   // TODO(#61): parameterize ee user account to write assets to or make GD
   // account.
   // TODO: delete existing asset with same name if it exists.
   const task = ee.batch.Export.table.toAsset(
-      joinedSnap.map(countDamageAndBuildings), assetName,
-      'users/janak/' + assetName);
+      joinedSnapIncomeSVI.map(countDamageAndBuildings), assetName,
+      'users/juliexxia/' + assetName);
   task.start();
   $('.upload-status')
       .text('Check Code Editor console for progress. Task: ' + task.id);

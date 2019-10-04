@@ -1,5 +1,5 @@
 import damageLevelsList from './damage_levels.js';
-import {blockGroupTag, damageTag, geoidTag, scoreTag, snapPercentageTag} from './property_names.js';
+import {blockGroupTag, damageTag, geoidTag, incomeTag, scoreTag, snapPercentageTag, sviTag} from './property_names.js';
 
 export {processJoinedData as default};
 
@@ -51,6 +51,10 @@ function colorAndRate(
         povertyRatio,
         damageTag,
         ratioBuildingsDamaged,
+        sviTag,
+        feature.get(sviTag),
+        incomeTag,
+        feature.get(incomeTag)
       ]))
       .set({
         style: {

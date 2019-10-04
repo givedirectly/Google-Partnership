@@ -42,7 +42,7 @@ function run() {
 
   const femaDamageData = ee.FeatureCollection(
       'users/juliexxia/FEMA_Damage_Assessments_Harvey_20170829');
-  const assetName = 'harvey-damage-crowdai-format';
+  const assetName = 'harvey-damage-crowdai-format-aff-as-nod';
   const convertedDamageData = femaDamageData.map(femaToCrowdAi);
   const task = ee.batch.Export.table.toAsset(
       convertedDamageData, assetName, 'users/juliexxia/' + assetName);
