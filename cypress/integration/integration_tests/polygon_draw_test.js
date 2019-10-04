@@ -47,8 +47,7 @@ describe('Integration tests for drawing polygons', () => {
   it('Draws a polygon and edits its notes', () => {
     drawPolygonAndClickOnIt();
     pressPolygonButton('edit');
-    cy.get('[id="notes"]').clear();
-    cy.get('[id="notes"]').type(notes);
+    cy.get('[class="notes"]').type(notes);
     pressPolygonButton('save');
     cy.get('.map').contains(notes);
   });
@@ -58,12 +57,12 @@ describe('Integration tests for drawing polygons', () => {
     cy.on('window:confirm', () => true);
     drawPolygonAndClickOnIt();
     pressPolygonButton('edit');
-    cy.get('[id="notes"]').type(notes);
+    cy.get('[class="notes"]').type(notes);
     pressPolygonButton('save');
 
     pressPolygonButton('delete');
     // Polygon should be gone.
-    cy.get('.map').click(160, 200);
+    clickOnDrawnPolygon();
     assertExactlyPopUps(0, notes);
   });
 
@@ -73,7 +72,7 @@ describe('Integration tests for drawing polygons', () => {
     cy.on('window:confirm', () => confirmValue);
     drawPolygonAndClickOnIt();
     pressPolygonButton('edit');
-    cy.get('[id="notes"]').type(notes);
+    cy.get('[class="notes"]').type(notes);
     pressPolygonButton('save');
     pressPolygonButton('delete');
     // Assert still exists.
@@ -103,6 +102,43 @@ describe('Integration tests for drawing polygons', () => {
     clickOnDrawnPolygon();
     assertExactlyPopUps(0, notes);
   });
+
+  it('Draws a polygon, clicks it, closes its info box', () => {
+    drawPolygonAndClickOnIt();
+    pressPolygonButton('edit');
+    cy.get('[class="notes"]').type(notes);
+    pressPolygonButton('save');
+    pressPolygonButton('close');
+    // element is still there, just hidden
+    assertExactlyPopUps(1, notes);
+    cy.get('.map').contains(notes).should('not.be.visible');
+  });
+
+  it('Draws a polygon, almost closes while editing', () => {
+    cy.on('window:confirm', () => false);
+
+    drawPolygonAndClickOnIt();
+    pressPolygonButton('edit');
+    cy.get('[class="notes"]').type(notes);
+    pressPolygonButton('close');
+    pressPolygonButton('save');
+    cy.get('#mapContainer').contains(notes).should('be.visible');
+  });
+
+  it('Draws a polygon, closes while editing', () => {
+    cy.on('window:confirm', () => true);
+
+    drawPolygonAndClickOnIt();
+    pressPolygonButton('edit');
+    cy.get('[class="notes"]').type(notes);
+    pressPolygonButton('save');
+    pressPolygonButton('edit');
+    cy.get('[class="notes"]').type('blahblahblah');
+    pressPolygonButton('close');
+    // element is still there, just hidden
+    assertExactlyPopUps(1, notes);
+    cy.get('#mapContainer').contains(notes).should('not.be.visible');
+  });
 });
 
 /** Visit page, draw a new polygon on the map, click inside it. */
@@ -120,7 +156,7 @@ function drawPolygonAndClickOnIt() {
   // derived by inspecting the page after starting to draw a polygon.
   cy.get(
       'div[style*="cursor: url(\\"https://maps.gstatic.com/mapfiles/crosshair.cur\\") 7 7, crosshair;"]');
-  drawPointAndPrepareForNext(50, 250);
+  drawPointAndPrepareForNext(150, 250);
   // TODO(janakr): test seems to fail reliably on command line without these
   // and pass with it. Figure out what to actually test for on the page and
   // remove these waits.
@@ -129,7 +165,7 @@ function drawPolygonAndClickOnIt() {
   cy.wait(hackyWaitTime);
   drawPointAndPrepareForNext(450, 150);
   cy.wait(hackyWaitTime);
-  drawPointAndPrepareForNext(50, 250);
+  drawPointAndPrepareForNext(150, 250);
   const handButton = cy.get('[title="Stop drawing"]');
   handButton.click();
   cy.wait(2000);
@@ -144,7 +180,7 @@ function drawPolygonAndClickOnIt() {
  * @return {Cypress.Chainable}
  */
 function clickOnDrawnPolygon() {
-  return cy.get('.map').click(150, 200);
+  return cy.get('.map').click(150, 250);
 }
 
 /**
@@ -156,7 +192,7 @@ function pressPolygonButton(button) {
 }
 
 /**
- * Asserts that a div with innerHtml 'second notes' is found exactly
+ * Asserts that a div with innerHtml notes is found exactly
  * expectedFound times. Cypress' normal #contains() function doesn't count
  * occurrences, and can't be used to assert there are no matches, and Cypress'
  * #get() function doesn't allow selecting on contents.
