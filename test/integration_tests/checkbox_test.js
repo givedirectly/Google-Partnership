@@ -10,8 +10,8 @@ describe('Integration test', function() {
     driver.findElement(By.id('score')).click();
     const result = await driver.findElement(By.id('score')).isSelected();
     chai.expect(result).to.be.false;
-    driver.findElement(By.id('poverty threshold')).sendKeys('1.0');
-    driver.findElement(By.id('update')).click();
+    await driver.findElement(By.id('poverty threshold')).sendKeys('1.0');
+    await driver.findElement(By.id('update')).click();
     await testSupport.waitForLoad(driver);
     const nextResult = await driver.findElement(By.id('score')).isSelected();
     chai.expect(nextResult).to.be.true;
