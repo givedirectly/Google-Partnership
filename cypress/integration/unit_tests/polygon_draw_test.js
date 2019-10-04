@@ -1,4 +1,4 @@
-import {PolygonData} from '../../../client-side/static/polygon_draw';
+import {ShapeData} from '../../../client-side/static/polygon_draw';
 
 // Name of collection doesn't matter.
 const firebaseCollection = firebase.firestore().collection('usershapes-test');
@@ -28,7 +28,7 @@ class FakePromise {
   }
 }
 
-describe('Unit test for PolygonData', () => {
+describe('Unit test for ShapeData', () => {
   // Reset firebaseCollection's dummy methods.
   beforeEach(() => {
     for (const prop in firebaseCollection) {
@@ -39,7 +39,7 @@ describe('Unit test for PolygonData', () => {
   });
 
   it('Add shape', () => {
-    const underTest = new PolygonData(null, 'my notes');
+    const underTest = new ShapeData(null, 'my notes');
     const mockPolygon = makeMockPolygon();
     const records = [];
     firebaseCollection.add = recordRecord(records, {id: 'new_id'});
@@ -49,11 +49,11 @@ describe('Unit test for PolygonData', () => {
       notes: 'my notes',
     }]);
     expect(underTest.id).to.eql('new_id');
-    expect(PolygonData.pendingWriteCount).to.eql(0);
+    expect(ShapeData.pendingWriteCount).to.eql(0);
   });
 
   it('Update shape', () => {
-    const underTest = new PolygonData('my_id', 'my notes');
+    const underTest = new ShapeData('my_id', 'my notes');
     const mockPolygon = makeMockPolygon();
     const records = [];
     const ids = [];
@@ -68,11 +68,11 @@ describe('Unit test for PolygonData', () => {
       notes: 'my notes',
     }]);
     expect(underTest.id).to.eql('my_id');
-    expect(PolygonData.pendingWriteCount).to.eql(0);
+    expect(ShapeData.pendingWriteCount).to.eql(0);
   });
 
   it('Delete shape', () => {
-    const underTest = new PolygonData('my_id', 'my notes');
+    const underTest = new ShapeData('my_id', 'my notes');
     const mockPolygon = makeMockPolygon();
     mockPolygon.getMap = () => null;
     const ids = [];
@@ -85,11 +85,11 @@ describe('Unit test for PolygonData', () => {
     underTest.update(mockPolygon);
     expect(ids).to.eql(['my_id']);
     expect(underTest.id).to.eql('my_id');
-    expect(PolygonData.pendingWriteCount).to.eql(0);
+    expect(ShapeData.pendingWriteCount).to.eql(0);
   });
 
   it('Update while update pending', () => {
-    const underTest = new PolygonData('my_id', 'my notes');
+    const underTest = new ShapeData('my_id', 'my notes');
     const mockPolygon = makeMockPolygon();
     const records = [];
     const ids = [];
@@ -97,9 +97,9 @@ describe('Unit test for PolygonData', () => {
       set: (record) => {
         underTest.update(mockPolygon, 'racing notes');
         expect(underTest.notes).to.eql('racing notes');
-        expect(underTest.state).to.eql(PolygonData.State.QUEUED_WRITE);
+        expect(underTest.state).to.eql(ShapeData.State.QUEUED_WRITE);
         records.push(record);
-        expect(PolygonData.pendingWriteCount).to.eql(1);
+        expect(ShapeData.pendingWriteCount).to.eql(1);
         // Put back usual set for next run.
         setThatTriggersNewUpdate.set = recordRecord(records, null);
         return new FakePromise(null);
@@ -117,7 +117,7 @@ describe('Unit test for PolygonData', () => {
       {geometry: geometry, notes: 'racing notes'},
     ]);
     expect(underTest.id).to.eql('my_id');
-    expect(PolygonData.pendingWriteCount).to.eql(0);
+    expect(ShapeData.pendingWriteCount).to.eql(0);
   });
 
   /**
@@ -145,7 +145,7 @@ describe('Unit test for PolygonData', () => {
    */
   function recordRecord(records, retval) {
     return (record) => {
-      expect(PolygonData.pendingWriteCount).to.eql(1);
+      expect(ShapeData.pendingWriteCount).to.eql(1);
       records.push(record);
       return new FakePromise(retval);
     };
