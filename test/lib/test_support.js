@@ -41,6 +41,7 @@ module.exports.waitForLoad = async (driver) => {
  * use.
  */
 module.exports.setUp = async (testFramework) => {
+  // 40 seconds to run an individual test case.
   testFramework.timeout(40000);
   let resolveFunctionForDriver = null;
   const driverPromise = new Promise((resolve) => {
@@ -49,6 +50,8 @@ module.exports.setUp = async (testFramework) => {
   let driver;
   before(async () => {
     driver = new Builder().forBrowser('chrome').build();
+    // Timeout after 10 seconds if page isn't loaded, script isn't run, or
+    // element on page isn't found.
     driver.manage().setTimeouts(
         {implicit: 10000, pageLoad: 10000, script: 10000});
     // Workaround for fact that cookies can only be set on the domain we've
