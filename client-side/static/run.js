@@ -6,7 +6,6 @@ import {addLayer, addNullLayer, scoreLayerName, toggleLayerOff, toggleLayerOn} f
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {processUserRegions} from './polygon_draw.js';
 import processJoinedData from './process_joined_data.js';
-import {initializeSidebar} from './sidebar.js';
 import {createToggles, initialDamageThreshold, initialPovertyThreshold, initialPovertyWeight} from './update.js';
 
 export {
@@ -34,7 +33,6 @@ const scoreIndex = Object.keys(assets).length;
 function run(map) {
   initializeAssetLayers(map);
   createToggles(map);
-  initializeSidebar();
   createAssetCheckboxes(map);
   createAndDisplayJoinedData(
       map, initialPovertyThreshold, initialDamageThreshold,

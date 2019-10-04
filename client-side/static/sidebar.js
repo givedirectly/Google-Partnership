@@ -1,9 +1,13 @@
-import {sidebarId, sidebarToggleThresholdsId, sidebarToggleDatasetsId, sidebarThresholdsId, sidebarDatasetsId} from './dom_constants.js';
-
 export {initializeSidebar};
 
+const sidebarId = 'sidebar';
+const sidebarToggleThresholdsId = 'sidebar-toggle-thresholds';
+const sidebarToggleDatasetsId = 'sidebar-toggle-datasets';
+const sidebarThresholdsId = 'sidebar-thresholds';
+const sidebarDatasetsId = 'sidebar-datasets';
 const sidebarMinWidth = '64px';
 const sidebarExpandedWidth = '25%';
+const sidebarContentTransitionDuration = 300;
 
 // The id of the div containing the current sidebar content.
 let currentContentId;
@@ -29,18 +33,18 @@ function initializeSidebar() {
 function toggleSidebar(toggleId, contentId) {
   const sidebar = document.getElementById(sidebarId);
 
-  // Clear the current content if one exists.
   if (currentContentId) {
-    document.getElementById(currentContentId).style.opacity = 0;
+    $('#' + currentContentId).fadeOut(sidebarContentTransitionDuration);
   }
 
   if (currentContentId !== contentId) {
+    currentContentId = contentId;
+
     // Expand the sidebar if it wasn't already expanded.
     sidebar.style.width = sidebarExpandedWidth;
 
     // Show the new content.
-    document.getElementById(contentId).style.opacity = 1;
-    currentContentId = contentId;
+    $('#' + contentId).fadeIn(sidebarContentTransitionDuration);
   } else {
     // Collapse the sidebar because the current content is being toggled off.
     sidebar.style.width = sidebarMinWidth;
