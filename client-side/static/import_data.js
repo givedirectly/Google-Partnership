@@ -149,6 +149,8 @@ function combineWithSnap(feature) {
  * @param {ee.Feature} feature
  * @return {ee.Feature}
  */
+// TODO: make income formatting prettier so it looks like a currency value.
+// Not trivial because it has some non-valid values like '-'.
 function combineWithIncome(feature) {
   const incomeFeature = ee.Feature(feature.get('secondary'));
   return ee.Feature(feature.get('primary')).set(ee.Dictionary([
