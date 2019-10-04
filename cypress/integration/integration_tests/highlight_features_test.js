@@ -8,11 +8,11 @@ describe('Integration tests for highlighting chosen districts', () => {
     // don't do it, instead just verifying that nothing terrible happens.
     getTable().get('tr').eq(1).click();
     // Shift-click to select a range.
-    cy.get('body').type('{shift}', {release: false});
+    cy.get('body').type('{shift}', {release: false, force: true});
     getTable().get('tr').eq(3).click();
     // Clear shift modifier. Unfortunately this seems to swallow the next
     // click.
-    cy.get('body').type('{shift}').click();
+    cy.get('body').type('{shift}').click({force: true});
     // TODO(janakr): this click isn't registered properly. But the next one
     // is.
     getTable().get('tr').eq(2).click();
