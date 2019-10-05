@@ -1,4 +1,7 @@
-export {getTestCookie, inProduction, };
+export {
+  getTestCookie,
+  inProduction,
+};
 
 /**
  * Returns the value of the requested cookie. Copied from
