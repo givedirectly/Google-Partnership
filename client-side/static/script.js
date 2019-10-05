@@ -1,6 +1,6 @@
 import createError from './create_error.js';
 import createMap from './create_map.js';
-import inProduction from './in_test_util.js';
+import {inProduction} from './in_test_util.js';
 import run from './run.js';
 
 export {map};
@@ -55,6 +55,7 @@ function setup() {
           CLIENT_ID, runOnSuccess, createError('authenticating'), null,
           onImmediateFailed);
     } else {
+      console.log('got to test');
       // TODO(#21): have something better for tests.
       runOnSuccess();
     }

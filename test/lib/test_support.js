@@ -1,5 +1,6 @@
 // TODO(janakr): migrate to ES6-style exports if possible.
 const {Builder, By} = require('selenium-webdriver');
+const {Options} = require('selenium-webdriver/chrome');
 
 // We use the ip address rather than 'localhost' because Selenium has issues
 // with setting cookies on localhost.
@@ -33,37 +34,46 @@ module.exports.waitForLoad = async (driver) => {
       '//div[@id="mapContainer-loader"][contains(@style,"opacity: 0")]'));
 };
 
+const chromeOptions = new Options(); //.addArguments(['--headless']);
+
 /**
  * Sets up testing, should be called as first line in each describe() function.
  *
  * @param {Object} testFramework "this" variable inside describe().
+ * @param {string} testCookieValue value to set test cookie to.
  * @return {Promise<ThenableWebDriver>} Promise of Selenium webdriver for later
  * use.
  */
-module.exports.setUp = async (testFramework) => {
+module.exports.setUp = async (testFramework, testCookieValue) => {
   // 40 seconds to run an individual test case.
-  testFramework.timeout(40000);
+  testFramework.timeout(10000);
   let resolveFunctionForDriver = null;
   const driverPromise = new Promise((resolve) => {
     resolveFunctionForDriver = resolve;
   });
   let driver;
   before(async () => {
-    driver = new Builder().forBrowser('chrome').build();
-    // Timeout after 10 seconds if page isn't loaded, script isn't run, or
-    // element on page isn't found.
-    driver.manage().setTimeouts(
-        {implicit: 10000, pageLoad: 10000, script: 10000});
+    driver = new Builder().forBrowser('chrome').setChromeOptions(chromeOptions).build();
+    await module.exports.setTimeouts(driver);
     // Workaround for fact that cookies can only be set on the domain we've
     // already set: navigate to domain first, then set cookie.
     // https://docs.seleniumhq.org/docs/03_webdriver.jsp#cookies
     driver.get(hostAddress);
     // TODO(janakr): switch cookie name once fully migrated.
-    await driver.manage().addCookie({name: 'IN_CYPRESS_TEST', value: 'true'});
+    await driver.manage().addCookie({name: 'IN_CYPRESS_TEST', value: testCookieValue});
     resolveFunctionForDriver(driver);
   });
   after(async () => {
     await driver.quit();
   });
   return driverPromise;
+};
+/**
+ * Timeout after 10 seconds if page isn't loaded, script isn't run, or element on page isn't found.
+ *
+ * @param driver
+ */
+module.exports.setTimeouts = async (driver) => {
+  driver.manage().setTimeouts(
+      {implicit: 10000, pageLoad: 10000, script: 10000});
 };
