@@ -44,7 +44,7 @@ const chromeOptions = new Options().addArguments(['--headless']);
  * @return {Promise<ThenableWebDriver>} Promise of Selenium webdriver for later
  * use.
  */
-module.exports.setUp = async (testFramework, testCookieValue) => {
+module.exports.setUp = async (testFramework, testCookieValue = Math.random() + 'suffix') => {
   // 40 seconds to run an individual test case.
   testFramework.timeout(10000);
   let resolveFunctionForDriver = null;
