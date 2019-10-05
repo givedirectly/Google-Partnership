@@ -16,6 +16,11 @@ function getCookieValue(cookieName) {
   return value ? value.pop() : '';
 }
 
+/**
+ * Returns value of cookie set by tests.
+ *
+ * @returns {string}
+ */
 function getTestCookie() {
   return getCookieValue('IN_CYPRESS_TEST');
 }
