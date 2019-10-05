@@ -72,13 +72,13 @@ module.exports.setUp =
     await driver.quit();
   });
   return driverPromise;
-};
+    };
 
 /**
  * Timeout after 10 seconds if page isn't loaded, script isn't run, or element
  * on page isn't found.
  *
- * @param driver
+ * @param {WebDriver} driver
  */
 module.exports.setTimeouts = async (driver) => {
   driver.manage().setTimeouts(
