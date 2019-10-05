@@ -72,7 +72,7 @@ module.exports.setUp =
     await driver.quit();
   });
   return driverPromise;
-    };
+};
 
 /**
  * Timeout after 10 seconds if page isn't loaded, script isn't run, or element
