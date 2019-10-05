@@ -55,7 +55,6 @@ function setup() {
           CLIENT_ID, runOnSuccess, createError('authenticating'), null,
           onImmediateFailed);
     } else {
-      console.log('got to test');
       // TODO(#21): have something better for tests.
       runOnSuccess();
     }
