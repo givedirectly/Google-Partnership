@@ -34,7 +34,7 @@ module.exports.waitForLoad = async (driver) => {
       '//div[@id="mapContainer-loader"][contains(@style,"opacity: 0")]'));
 };
 
-const chromeOptions = new Options(); //.addArguments(['--headless']);
+const chromeOptions = new Options().addArguments(['--headless']);
 
 /**
  * Sets up testing, should be called as first line in each describe() function.
