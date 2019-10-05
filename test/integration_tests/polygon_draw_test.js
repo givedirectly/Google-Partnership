@@ -1,7 +1,7 @@
-const {By, until} = require('selenium-webdriver');
-const firebase = require('firebase');
-const testSupport = require('../lib/test_support');
-const chai = require('chai');
+import {until} from 'selenium-webdriver';
+import * as firebase from 'firebase';
+import {expect} from 'chai';
+import {setUp, setTimeouts, loadPage} from "../lib/test_support.js";
 
 const hackyWaitTime = 200;
 const notes = 'Sphinx of black quartz, judge my vow';
@@ -24,7 +24,7 @@ const db = firebase.firestore();
 
 describe('Integration tests for drawing polygons', function() {
   const testCookieValue = Math.random() + 'suffix';
-  const driverPromise = testSupport.setUp(this, testCookieValue);
+  const driverPromise = setUp(this, testCookieValue);
   const userShapes = db.collection('usershapes-test-' + testCookieValue);
   // Delete all polygons in the test database.
   const deleteAllRegionsInDatabase = async () => {
@@ -43,115 +43,101 @@ describe('Integration tests for drawing polygons', function() {
   after(() => firebase.app().delete());
 
   it('Draws a polygon and edits its notes', async () => {
-    const driver = await testSupport.loadPage(driverPromise);
+    const driver = await loadPage(driverPromise);
     await drawPolygonAndClickOnIt(driver);
-    await pressPolygonButton('Edit', driver);
-    await driver.findElement(By.className('notes')).sendKeys(notes);
-    await pressPolygonButton('Save', driver);
-    await driver.findElement(By.xpath('//div[.="' + notes + '"]'));
+    await pressPolygonButton('edit', driver);
+    await driver.findElement({className: 'notes'}).sendKeys(notes);
+    await pressPolygonButton('save', driver);
+    await driver.findElement({xpath: '//div[.="' + notes + '"]'});
   });
 
   it('Draws a polygon and deletes it', async () => {
-    const driver = await testSupport.loadPage(driverPromise);
+    const driver = await loadPage(driverPromise);
     await drawPolygonAndClickOnIt(driver);
-    await pressPolygonButton('Edit', driver);
-    await driver.findElement(By.className('notes')).sendKeys(notes);
-    await pressPolygonButton('Save', driver);
-
-    await pressPolygonButton('Delete', driver);
-    await driver.wait(until.alertIsPresent());
-    await driver.switchTo().alert().accept();
+    await pressPolygonButton('edit', driver);
+    await driver.findElement({className: 'notes'}).sendKeys(notes);
+    await pressPolygonButton('save', driver);
+    await pressPolygonButtonAndReactToConfirm('delete', true, driver);
     // Polygon should be gone.
     await clickOnDrawnPolygon(driver);
-    await assertExactlyPopUps(0, notes, driver)
-        .then(() => console.log('all done'));
+    await assertExactlyPopUps(0, notes, driver);
   });
 
   it('Draws a polygon and almost deletes it, then deletes', async () => {
-    const driver = await testSupport.loadPage(driverPromise);
+    const driver = await loadPage(driverPromise);
     await drawPolygonAndClickOnIt(driver);
-    await pressPolygonButton('Edit', driver);
-    await driver.findElement(By.className('notes')).sendKeys(notes);
-    await pressPolygonButton('Save', driver);
-    await pressPolygonButton('Delete', driver);
-    await driver.wait(until.alertIsPresent());
-    await driver.switchTo().alert().dismiss();
+    await pressPolygonButton('edit', driver);
+    await driver.findElement({className: 'notes'}).sendKeys(notes);
+    await pressPolygonButton('save', driver);
+    await pressPolygonButtonAndReactToConfirm('delete', false, driver);
     // Assert still exists.
     await clickOnDrawnPolygon(driver);
     await assertExactlyPopUps(1, notes, driver);
     // TODO(#18): wait for a notification that all writes have completed instead
     // of a hardcoded wait.
     await driver.sleep(1000);
-    await testSupport.loadPage(driverPromise);
+    await loadPage(driverPromise);
     // Polygon is still there.
     await clickOnDrawnPolygon(driver);
     await assertExactlyPopUps(1, notes, driver);
 
-    await pressPolygonButton('Delete', driver);
-    await driver.wait(until.alertIsPresent());
-    await driver.switchTo().alert().dismiss();
+    await pressPolygonButtonAndReactToConfirm('delete', false, driver);
     // Polygon is still there.
     await clickOnDrawnPolygon(driver);
-    await pressPolygonButton('Delete', driver);
-    await driver.wait(until.alertIsPresent());
-    await driver.switchTo().alert().accept();
+    await pressPolygonButtonAndReactToConfirm('delete', true, driver);
     // Polygon should be gone.
     await clickOnDrawnPolygon(driver);
     await assertExactlyPopUps(0, notes, driver);
     await driver.sleep(1000);
-    testSupport.loadPage(driverPromise);
+    loadPage(driverPromise);
     // Polygon is gone.
     await clickOnDrawnPolygon(driver);
     await assertExactlyPopUps(0, notes, driver);
   });
 
   it('Draws a polygon, clicks it, closes its info box', async () => {
-    const driver = await testSupport.loadPage(driverPromise);
+    const driver = await loadPage(driverPromise);
     await drawPolygonAndClickOnIt(driver);
     await pressPolygonButton('edit', driver);
-    await driver.findElement(By.className('notes')).sendKeys(notes);
+    await driver.findElement({className: 'notes'}).sendKeys(notes);
     await pressPolygonButton('save', driver);
     await pressPolygonButton('close', driver);
     // element is still there, just hidden
     await assertExactlyPopUps(1, notes, driver);
     const isVisible =
-        await driver.findElement(By.xpath('//div[.="' + notes + '"]'))
+        await driver.findElement({xpath: '//div[.="' + notes + '"]'})
             .isDisplayed();
-    chai.expect(isVisible).to.be.false;
+    expect(isVisible).to.be.false;
   });
 
   it('Draws a polygon, almost closes while editing', async () => {
-    const driver = await testSupport.loadPage(driverPromise);
+    const driver = await loadPage(driverPromise);
     await drawPolygonAndClickOnIt(driver);
     await pressPolygonButton('edit', driver);
-    await driver.findElement(By.className('notes')).sendKeys(notes);
-    await pressPolygonButton('close', driver);
-    await driver.wait(until.alertIsPresent());
-    await driver.switchTo().alert().dismiss();
+    await driver.findElement({className: 'notes'}).sendKeys(notes);
+    await pressPolygonButtonAndReactToConfirm('close', false, driver);
     await pressPolygonButton('save', driver);
     const isVisible =
-        await driver.findElement(By.xpath('//div[.="' + notes + '"]'))
+        await driver.findElement({xpath: '//div[.="' + notes + '"]'})
             .isDisplayed();
-    chai.expect(isVisible).to.be.true;
+    expect(isVisible).to.be.true;
   });
 
   it('Draws a polygon, closes while editing', async () => {
-    const driver = await testSupport.loadPage(driverPromise);
+    const driver = await loadPage(driverPromise);
     await drawPolygonAndClickOnIt(driver);
     await pressPolygonButton('edit', driver);
-    await driver.findElement(By.className('notes')).sendKeys(notes);
+    await driver.findElement({className: 'notes'}).sendKeys(notes);
     await pressPolygonButton('save', driver);
     await pressPolygonButton('edit', driver);
-    await driver.findElement(By.className('notes')).sendKeys('blahblahblah');
-    await pressPolygonButton('close', driver);
-    await driver.wait(until.alertIsPresent());
-    await driver.switchTo().alert().accept();
+    await driver.findElement({className: 'notes'}).sendKeys('blahblahblah');
+    await pressPolygonButtonAndReactToConfirm('close', true, driver);
     // element is still there, just hidden
     await assertExactlyPopUps(1, notes, driver);
     const isVisible =
-        await driver.findElement(By.xpath('//div[.="' + notes + '"]'))
+        await driver.findElement({xpath: '//div[.="' + notes + '"]'})
             .isDisplayed();
-    chai.expect(isVisible).to.be.false;
+    expect(isVisible).to.be.false;
   });
 });
 
@@ -160,7 +146,7 @@ describe('Integration tests for drawing polygons', function() {
  * @param {WebDriver} driver
  * */
 async function drawPolygonAndClickOnIt(driver) {
-  await driver.findElement(By.css('[title="Draw a shape"]')).click();
+  await driver.findElement({css: '[title="Draw a shape"]'}).click();
   await driver.actions()
       .move({x: 150, y: 250})
       .click()
@@ -174,7 +160,7 @@ async function drawPolygonAndClickOnIt(driver) {
       .move({x: 150, y: 250})
       .click()
       .perform();
-  await driver.findElement(By.css('[title="Stop drawing"]')).click();
+  await driver.findElement({css: '[title="Stop drawing"]'}).click();
   await driver.sleep(hackyWaitTime);
   // click to trigger pop up.
   await driver.actions().move({x: 170, y: 250}).click().perform();
@@ -190,14 +176,34 @@ async function clickOnDrawnPolygon(driver) {
 }
 
 /**
- * Clicks a button inside the map with the given id.
+ * Clicks a button inside the map with the given text.
  * @param {string} button text of html button we want to click
  * @param {WebDriver} driver
+ * @return {Promise} promise to wait for
  */
 function pressPolygonButton(button, driver) {
-  driver.findElement(By.xpath('//button[.="' + button + '"]')).click();
+  return driver.findElement({xpath: '//button[.="' + button + '"]'}).click();
 }
 
+/**
+ * Clicks a button inside the map with the given text that triggers a confirm
+ * dialog, then accepts/rejects the dialog.
+ * @param {string} button text of html button we want to click
+ * @param {boolean} accept whether or not to accept the confirmation.
+ * @param {WebDriver} driver
+ * @return {Promise} promise to wait on
+ */
+function pressPolygonButtonAndReactToConfirm(button, accept, driver) {
+  return pressPolygonButton(button, driver)
+      .then(async () => {
+        await driver.wait(until.alertIsPresent());
+        if (accept) {
+          await driver.switchTo().alert().accept();
+        } else {
+          await driver.switchTo().alert().dismiss();
+        }
+      });
+}
 /**
  * Asserts that a div with innerHtml notes is found exactly
  * expectedFound times.
@@ -208,7 +214,7 @@ function pressPolygonButton(button, driver) {
  */
 async function assertExactlyPopUps(expectedFound, notes, driver) {
   await driver.manage().setTimeouts({implicit: 0});
-  const elts = await driver.findElements(By.xpath('//div[.="' + notes + '"]'));
-  chai.expect(elts).has.length(expectedFound);
-  await testSupport.setTimeouts(driver);
+  const elts = await driver.findElements({xpath: '//div[.="' + notes + '"]'});
+  expect(elts).has.length(expectedFound);
+  await setTimeouts(driver);
 }

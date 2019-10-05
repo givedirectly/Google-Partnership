@@ -6,7 +6,9 @@
   },
   "dependencies": {
     "@babel/core": "^7.6.2",
+    "@babel/preset-env": "^7.6.2",
     "@babel/register": "^7.6.2",
+    "babel-polyfill": "^6.26.0",
     "babelify": "^10.0.0",
     "chai": "^4.2.0",
     "chromedriver": "^77.0.0",
@@ -14,6 +16,7 @@
     "firebase-admin": "^8.6.0",
     "firebase-functions": "^3.2.0",
     "mocha": "^6.2.1",
+    "polyfill": "^0.1.0",
     "selenium-webdriver": "^4.0.0-alpha.5"
   }
 }

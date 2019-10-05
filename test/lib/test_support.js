@@ -1,6 +1,7 @@
-// TODO(janakr): migrate to ES6-style exports if possible.
-const {Builder, By} = require('selenium-webdriver');
-const {Options} = require('selenium-webdriver/chrome');
+import {Builder} from 'selenium-webdriver';
+import {Options} from 'selenium-webdriver/chrome';
+
+export {loadPage, setUp, setTimeouts, waitForLoad};
 
 // We use the ip address rather than 'localhost' because Selenium has issues
 // with setting cookies on localhost.
@@ -14,12 +15,12 @@ const hostAddress = 'http://127.0.0.1:8080';
  * @return {ThenableWebDriver} The resolved driver (although it is wrapped in a
  * Promise since this function is async, so callers still need to await it)
  */
-module.exports.loadPage = async (driverPromise) => {
+async function loadPage(driverPromise) {
   const driver = await driverPromise;
   driver.get(hostAddress);
-  await module.exports.waitForLoad(driver);
+  await waitForLoad(driver);
   return driver;
-};
+}
 
 /**
  * Waits for all loading to finish. Should be inlineable once deck-gl changes
@@ -27,14 +28,14 @@ module.exports.loadPage = async (driverPromise) => {
  *
  * @param {ThenableWebDriver} driver Selenium webdriver
  */
-module.exports.waitForLoad = async (driver) => {
-  await driver.findElement(By.xpath(
-      '//div[@id="mapContainer-loader"][contains(@style,"opacity: 1")]'));
-  await driver.findElement(By.xpath(
-      '//div[@id="mapContainer-loader"][contains(@style,"opacity: 0")]'));
-};
+async function waitForLoad (driver) {
+  await driver.findElement({xpath: 
+      '//div[@id="mapContainer-loader"][contains(@style,"opacity: 1")]'});
+  await driver.findElement({xpath: 
+      '//div[@id="mapContainer-loader"][contains(@style,"opacity: 0")]'});
+}
 
-const chromeOptions = new Options();//.addArguments(['--headless']);
+const chromeOptions = new Options().addArguments(['--headless']);
 
 /**
  * Sets up testing, should be called as first line in each describe() function.
@@ -44,8 +45,7 @@ const chromeOptions = new Options();//.addArguments(['--headless']);
  * @return {Promise<ThenableWebDriver>} Promise of Selenium webdriver for later
  * use.
  */
-module.exports.setUp =
-    async (testFramework, testCookieValue = Math.random() + 'suffix') => {
+async function setUp(testFramework, testCookieValue = Math.random() + 'suffix') {
   // 10 seconds to run an individual test case.
   testFramework.timeout(10000);
   let resolveFunctionForDriver = null;
@@ -58,7 +58,7 @@ module.exports.setUp =
                  .forBrowser('chrome')
                  .setChromeOptions(chromeOptions)
                  .build();
-    await module.exports.setTimeouts(driver);
+    setTimeouts(driver);
     // Workaround for fact that cookies can only be set on the domain we've
     // already set: navigate to domain first, then set cookie.
     // https://docs.seleniumhq.org/docs/03_webdriver.jsp#cookies
@@ -72,7 +72,7 @@ module.exports.setUp =
     await driver.quit();
   });
   return driverPromise;
-};
+}
 
 /**
  * Timeout after 5 seconds if page isn't loaded, script isn't run, or element
@@ -80,7 +80,6 @@ module.exports.setUp =
  *
  * @param {WebDriver} driver
  */
-module.exports.setTimeouts = async (driver) => {
-  driver.manage().setTimeouts(
-      {implicit: 5000, pageLoad: 5000, script: 5000});
-};
+function setTimeouts(driver) {
+  driver.manage().setTimeouts({implicit: 5000, pageLoad: 5000, script: 5000});
+}
