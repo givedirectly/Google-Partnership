@@ -19,7 +19,7 @@ function getCookieValue(cookieName) {
 /**
  * Returns value of cookie set by tests.
  *
- * @returns {string}
+ * @return {string}
  */
 function getTestCookie() {
   return getCookieValue('IN_CYPRESS_TEST');
