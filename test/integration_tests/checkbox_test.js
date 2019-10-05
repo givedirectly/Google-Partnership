@@ -1,5 +1,6 @@
 import {expect} from 'chai';
-import {setUp, loadPage, waitForLoad} from "../lib/test_support";
+
+import {loadPage, setUp, waitForLoad} from '../lib/test_support';
 
 describe('Integration test', function() {
   const driverPromise = setUp(this);

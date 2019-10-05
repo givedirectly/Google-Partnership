@@ -1,7 +1,8 @@
-import {until} from 'selenium-webdriver';
-import * as firebase from 'firebase';
 import {expect} from 'chai';
-import {setUp, setTimeouts, loadPage} from "../lib/test_support.js";
+import * as firebase from 'firebase';
+import {until} from 'selenium-webdriver';
+
+import {loadPage, setTimeouts, setUp} from '../lib/test_support.js';
 
 const hackyWaitTime = 200;
 const notes = 'Sphinx of black quartz, judge my vow';
@@ -194,15 +195,14 @@ function pressPolygonButton(button, driver) {
  * @return {Promise} promise to wait on
  */
 function pressPolygonButtonAndReactToConfirm(button, accept, driver) {
-  return pressPolygonButton(button, driver)
-      .then(async () => {
-        await driver.wait(until.alertIsPresent());
-        if (accept) {
-          await driver.switchTo().alert().accept();
-        } else {
-          await driver.switchTo().alert().dismiss();
-        }
-      });
+  return pressPolygonButton(button, driver).then(async () => {
+    await driver.wait(until.alertIsPresent());
+    if (accept) {
+      await driver.switchTo().alert().accept();
+    } else {
+      await driver.switchTo().alert().dismiss();
+    }
+  });
 }
 /**
  * Asserts that a div with innerHtml notes is found exactly

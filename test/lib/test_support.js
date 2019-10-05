@@ -1,7 +1,7 @@
 import {Builder} from 'selenium-webdriver';
 import {Options} from 'selenium-webdriver/chrome';
 
-export {loadPage, setUp, setTimeouts, waitForLoad};
+export {loadPage, setTimeouts, setUp, waitForLoad};
 
 // We use the ip address rather than 'localhost' because Selenium has issues
 // with setting cookies on localhost.
@@ -28,11 +28,13 @@ async function loadPage(driverPromise) {
  *
  * @param {ThenableWebDriver} driver Selenium webdriver
  */
-async function waitForLoad (driver) {
-  await driver.findElement({xpath: 
-      '//div[@id="mapContainer-loader"][contains(@style,"opacity: 1")]'});
-  await driver.findElement({xpath: 
-      '//div[@id="mapContainer-loader"][contains(@style,"opacity: 0")]'});
+async function waitForLoad(driver) {
+  await driver.findElement({
+    xpath: '//div[@id="mapContainer-loader"][contains(@style,"opacity: 1")]'
+  });
+  await driver.findElement({
+    xpath: '//div[@id="mapContainer-loader"][contains(@style,"opacity: 0")]'
+  });
 }
 
 const chromeOptions = new Options().addArguments(['--headless']);
@@ -45,7 +47,8 @@ const chromeOptions = new Options().addArguments(['--headless']);
  * @return {Promise<ThenableWebDriver>} Promise of Selenium webdriver for later
  * use.
  */
-async function setUp(testFramework, testCookieValue = Math.random() + 'suffix') {
+async function setUp(
+    testFramework, testCookieValue = Math.random() + 'suffix') {
   // 10 seconds to run an individual test case.
   testFramework.timeout(10000);
   let resolveFunctionForDriver = null;
