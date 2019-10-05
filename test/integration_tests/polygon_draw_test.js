@@ -2,7 +2,7 @@ import {expect} from 'chai';
 import * as firebase from 'firebase';
 import {until} from 'selenium-webdriver';
 
-import {loadPage, setTimeouts, setUp} from '../lib/test_support.js';
+import {setTimeouts} from '../lib/test_support.js';
 
 const hackyWaitTime = 200;
 const notes = 'Sphinx of black quartz, judge my vow';
