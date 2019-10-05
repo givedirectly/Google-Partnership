@@ -30,10 +30,10 @@ async function loadPage(driverPromise) {
  */
 async function waitForLoad(driver) {
   await driver.findElement({
-    xpath: '//div[@id="mapContainer-loader"][contains(@style,"opacity: 1")]'
+    xpath: '//div[@id="mapContainer-loader"][contains(@style,"opacity: 1")]',
   });
   await driver.findElement({
-    xpath: '//div[@id="mapContainer-loader"][contains(@style,"opacity: 0")]'
+    xpath: '//div[@id="mapContainer-loader"][contains(@style,"opacity: 0")]',
   });
 }
 
