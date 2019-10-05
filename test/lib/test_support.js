@@ -34,7 +34,7 @@ module.exports.waitForLoad = async (driver) => {
       '//div[@id="mapContainer-loader"][contains(@style,"opacity: 0")]'));
 };
 
-const chromeOptions = new Options().addArguments(['--headless']);
+const chromeOptions = new Options();//.addArguments(['--headless']);
 
 /**
  * Sets up testing, should be called as first line in each describe() function.
@@ -46,7 +46,7 @@ const chromeOptions = new Options().addArguments(['--headless']);
  */
 module.exports.setUp =
     async (testFramework, testCookieValue = Math.random() + 'suffix') => {
-  // 40 seconds to run an individual test case.
+  // 10 seconds to run an individual test case.
   testFramework.timeout(10000);
   let resolveFunctionForDriver = null;
   const driverPromise = new Promise((resolve) => {
@@ -75,12 +75,12 @@ module.exports.setUp =
 };
 
 /**
- * Timeout after 10 seconds if page isn't loaded, script isn't run, or element
+ * Timeout after 5 seconds if page isn't loaded, script isn't run, or element
  * on page isn't found.
  *
  * @param {WebDriver} driver
  */
 module.exports.setTimeouts = async (driver) => {
   driver.manage().setTimeouts(
-      {implicit: 10000, pageLoad: 10000, script: 10000});
+      {implicit: 5000, pageLoad: 5000, script: 5000});
 };

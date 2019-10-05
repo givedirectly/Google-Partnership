@@ -45,20 +45,20 @@ describe('Integration tests for drawing polygons', function() {
   it('Draws a polygon and edits its notes', async () => {
     const driver = await testSupport.loadPage(driverPromise);
     await drawPolygonAndClickOnIt(driver);
-    await pressPolygonButton('edit', driver);
+    await pressPolygonButton('Edit', driver);
     await driver.findElement(By.className('notes')).sendKeys(notes);
-    await pressPolygonButton('save', driver);
+    await pressPolygonButton('Save', driver);
     await driver.findElement(By.xpath('//div[.="' + notes + '"]'));
   });
 
   it('Draws a polygon and deletes it', async () => {
     const driver = await testSupport.loadPage(driverPromise);
     await drawPolygonAndClickOnIt(driver);
-    await pressPolygonButton('edit', driver);
+    await pressPolygonButton('Edit', driver);
     await driver.findElement(By.className('notes')).sendKeys(notes);
-    await pressPolygonButton('save', driver);
+    await pressPolygonButton('Save', driver);
 
-    await pressPolygonButton('delete', driver);
+    await pressPolygonButton('Delete', driver);
     await driver.wait(until.alertIsPresent());
     await driver.switchTo().alert().accept();
     // Polygon should be gone.
@@ -70,10 +70,10 @@ describe('Integration tests for drawing polygons', function() {
   it('Draws a polygon and almost deletes it, then deletes', async () => {
     const driver = await testSupport.loadPage(driverPromise);
     await drawPolygonAndClickOnIt(driver);
-    await pressPolygonButton('edit', driver);
+    await pressPolygonButton('Edit', driver);
     await driver.findElement(By.className('notes')).sendKeys(notes);
-    await pressPolygonButton('save', driver);
-    await pressPolygonButton('delete', driver);
+    await pressPolygonButton('Save', driver);
+    await pressPolygonButton('Delete', driver);
     await driver.wait(until.alertIsPresent());
     await driver.switchTo().alert().dismiss();
     // Assert still exists.
@@ -87,12 +87,12 @@ describe('Integration tests for drawing polygons', function() {
     await clickOnDrawnPolygon(driver);
     await assertExactlyPopUps(1, notes, driver);
 
-    await pressPolygonButton('delete', driver);
+    await pressPolygonButton('Delete', driver);
     await driver.wait(until.alertIsPresent());
     await driver.switchTo().alert().dismiss();
     // Polygon is still there.
     await clickOnDrawnPolygon(driver);
-    await pressPolygonButton('delete', driver);
+    await pressPolygonButton('Delete', driver);
     await driver.wait(until.alertIsPresent());
     await driver.switchTo().alert().accept();
     // Polygon should be gone.
