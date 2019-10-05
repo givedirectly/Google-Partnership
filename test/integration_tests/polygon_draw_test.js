@@ -143,7 +143,7 @@ describe('Integration tests for drawing polygons', function() {
     await pressPolygonButton('save', driver);
     await pressPolygonButton('edit', driver);
     await driver.findElement(By.className('notes')).sendKeys('blahblahblah');
-    pressPolygonButton('close', driver);
+    await pressPolygonButton('close', driver);
     await driver.wait(until.alertIsPresent());
     await driver.switchTo().alert().accept();
     // element is still there, just hidden
@@ -155,7 +155,10 @@ describe('Integration tests for drawing polygons', function() {
   });
 });
 
-/** Visit page, draw a new polygon on the map, click inside it. */
+/**
+ * Visit page, draw a new polygon on the map, click inside it.
+ * @param {WebDriver} driver
+ * */
 async function drawPolygonAndClickOnIt(driver) {
   await driver.findElement(By.css('[title="Draw a shape"]')).click();
   await driver.actions()
@@ -192,7 +195,7 @@ async function clickOnDrawnPolygon(driver) {
  * @param {WebDriver} driver
  */
 function pressPolygonButton(button, driver) {
-  return driver.findElement(By.xpath('//button[.="' + button + '"]')).click();
+  driver.findElement(By.xpath('//button[.="' + button + '"]')).click();
 }
 
 /**

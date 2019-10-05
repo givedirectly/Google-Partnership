@@ -73,6 +73,7 @@ module.exports.setUp =
   });
   return driverPromise;
 };
+
 /**
  * Timeout after 10 seconds if page isn't loaded, script isn't run, or element
  * on page isn't found.
