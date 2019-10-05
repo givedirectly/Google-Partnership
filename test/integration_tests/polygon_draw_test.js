@@ -28,13 +28,13 @@ describe('Integration tests for drawing polygons', function() {
   const userShapes = db.collection('usershapes-test-' + testCookieValue);
   // Delete all polygons in the test database.
   const deleteAllRegionsInDatabase = async () => {
-      await userShapes.get().then((querySnapshot) => {
-        const deletePromises = [];
-        querySnapshot.forEach((userDefinedRegion) => {
-          deletePromises.push(userShapes.doc(userDefinedRegion.id).delete());
-        });
-        Promise.all(deletePromises);
+    await userShapes.get().then((querySnapshot) => {
+      const deletePromises = [];
+      querySnapshot.forEach((userDefinedRegion) => {
+        deletePromises.push(userShapes.doc(userDefinedRegion.id).delete());
       });
+      Promise.all(deletePromises);
+    });
   };
 
   beforeEach(deleteAllRegionsInDatabase);
@@ -63,7 +63,8 @@ describe('Integration tests for drawing polygons', function() {
     await driver.switchTo().alert().accept();
     // Polygon should be gone.
     await clickOnDrawnPolygon(driver);
-    await assertExactlyPopUps(0, notes, driver).then(() => console.log('all done'));
+    await assertExactlyPopUps(0, notes, driver)
+        .then(() => console.log('all done'));
   });
 
   it('Draws a polygon and almost deletes it, then deletes', async () => {
@@ -113,7 +114,9 @@ describe('Integration tests for drawing polygons', function() {
     await pressPolygonButton('close', driver);
     // element is still there, just hidden
     await assertExactlyPopUps(1, notes, driver);
-    const isVisible = await driver.findElement(By.xpath('//div[.="' + notes + '"]')).isDisplayed();
+    const isVisible =
+        await driver.findElement(By.xpath('//div[.="' + notes + '"]'))
+            .isDisplayed();
     chai.expect(isVisible).to.be.false;
   });
 
@@ -126,7 +129,9 @@ describe('Integration tests for drawing polygons', function() {
     await driver.wait(until.alertIsPresent());
     await driver.switchTo().alert().dismiss();
     await pressPolygonButton('save', driver);
-    const isVisible = await driver.findElement(By.xpath('//div[.="' + notes + '"]')).isDisplayed();
+    const isVisible =
+        await driver.findElement(By.xpath('//div[.="' + notes + '"]'))
+            .isDisplayed();
     chai.expect(isVisible).to.be.true;
   });
 
@@ -143,7 +148,9 @@ describe('Integration tests for drawing polygons', function() {
     await driver.switchTo().alert().accept();
     // element is still there, just hidden
     await assertExactlyPopUps(1, notes, driver);
-    const isVisible = await driver.findElement(By.xpath('//div[.="' + notes + '"]')).isDisplayed();
+    const isVisible =
+        await driver.findElement(By.xpath('//div[.="' + notes + '"]'))
+            .isDisplayed();
     chai.expect(isVisible).to.be.false;
   });
 });
@@ -152,13 +159,17 @@ describe('Integration tests for drawing polygons', function() {
 async function drawPolygonAndClickOnIt(driver) {
   await driver.findElement(By.css('[title="Draw a shape"]')).click();
   await driver.actions()
-      .move({x: 150, y: 250}).click()
+      .move({x: 150, y: 250})
+      .click()
       .pause(hackyWaitTime)
-      .move({x: 400, y: 150}).click()
+      .move({x: 400, y: 150})
+      .click()
       .pause(hackyWaitTime)
-      .move({x: 450, y: 260}).click()
+      .move({x: 450, y: 260})
+      .click()
       .pause(hackyWaitTime)
-      .move({x: 150, y: 250}).click()
+      .move({x: 150, y: 250})
+      .click()
       .perform();
   await driver.findElement(By.css('[title="Stop drawing"]')).click();
   await driver.sleep(hackyWaitTime);
@@ -197,5 +208,4 @@ async function assertExactlyPopUps(expectedFound, notes, driver) {
   const elts = await driver.findElements(By.xpath('//div[.="' + notes + '"]'));
   chai.expect(elts).has.length(expectedFound);
   await testSupport.setTimeouts(driver);
-
 }

@@ -44,7 +44,8 @@ const chromeOptions = new Options().addArguments(['--headless']);
  * @return {Promise<ThenableWebDriver>} Promise of Selenium webdriver for later
  * use.
  */
-module.exports.setUp = async (testFramework, testCookieValue = Math.random() + 'suffix') => {
+module.exports.setUp =
+    async (testFramework, testCookieValue = Math.random() + 'suffix') => {
   // 40 seconds to run an individual test case.
   testFramework.timeout(10000);
   let resolveFunctionForDriver = null;
@@ -53,14 +54,18 @@ module.exports.setUp = async (testFramework, testCookieValue = Math.random() + '
   });
   let driver;
   before(async () => {
-    driver = new Builder().forBrowser('chrome').setChromeOptions(chromeOptions).build();
+    driver = new Builder()
+                 .forBrowser('chrome')
+                 .setChromeOptions(chromeOptions)
+                 .build();
     await module.exports.setTimeouts(driver);
     // Workaround for fact that cookies can only be set on the domain we've
     // already set: navigate to domain first, then set cookie.
     // https://docs.seleniumhq.org/docs/03_webdriver.jsp#cookies
     driver.get(hostAddress);
     // TODO(janakr): switch cookie name once fully migrated.
-    await driver.manage().addCookie({name: 'IN_CYPRESS_TEST', value: testCookieValue});
+    await driver.manage().addCookie(
+        {name: 'IN_CYPRESS_TEST', value: testCookieValue});
     resolveFunctionForDriver(driver);
   });
   after(async () => {
@@ -69,7 +74,8 @@ module.exports.setUp = async (testFramework, testCookieValue = Math.random() + '
   return driverPromise;
 };
 /**
- * Timeout after 10 seconds if page isn't loaded, script isn't run, or element on page isn't found.
+ * Timeout after 10 seconds if page isn't loaded, script isn't run, or element
+ * on page isn't found.
  *
  * @param driver
  */
