@@ -12,7 +12,7 @@ describe('Integration test for clicking feature', () => {
         .find('[class="google-visualization-table-td"]')
         .should(
             'have.text',
-            'Block Group 4, Census Tract 2511, Harris County, Texas');
+            'Block Group 4, Census Tract 2511, Harris County, Texas67019');
   });
 
   it('click highlights correct feature even after resort', () => {
@@ -28,7 +28,7 @@ describe('Integration test for clicking feature', () => {
         .find('[class="google-visualization-table-td"]')
         .should(
             'have.text',
-            'Block Group 4, Census Tract 2511, Harris County, Texas');
+            'Block Group 4, Census Tract 2511, Harris County, Texas67019');
   });
 
   it('clicks a place where there is no damage -> no feature', () => {
@@ -52,6 +52,6 @@ describe('Integration test for clicking feature', () => {
         .find('[class="google-visualization-table-td"]')
         .should(
             'have.text',
-            'Block Group 4, Census Tract 2511, Harris County, Texas');
+            'Block Group 4, Census Tract 2511, Harris County, Texas67019');
   });
 });
