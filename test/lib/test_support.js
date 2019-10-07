@@ -47,8 +47,7 @@ const chromeOptions = new Options().addArguments(['--headless']);
  * @return {Promise<WebDriver>} Promise of Selenium webdriver for later
  * use.
  */
-async function setUp(
-    testFramework, testCookieValue = randomString()) {
+async function setUp(testFramework, testCookieValue = randomString()) {
   // 10 seconds to run an individual test case.
   testFramework.timeout(10000);
   let resolveFunctionForDriver = null;
@@ -87,6 +86,11 @@ function setTimeouts(driver) {
   driver.manage().setTimeouts({implicit: 5000, pageLoad: 5000, script: 5000});
 }
 
+/**
+ * Returns a random string.
+ *
+ * @return {string}
+ */
 function randomString() {
   return Math.random() + 'suffix';
 }
