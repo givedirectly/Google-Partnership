@@ -2,7 +2,7 @@ import {expect} from 'chai';
 import * as firebase from 'firebase';
 import {until} from 'selenium-webdriver';
 
-import {setTimeouts} from '../lib/test_support.js';
+import {randomString, setTimeouts} from '../lib/test_support.js';
 
 const hackyWaitTime = 200;
 const notes = 'Sphinx of black quartz, judge my vow';
@@ -24,7 +24,7 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 describe('Integration tests for drawing polygons', function() {
-  const testCookieValue = Math.random() + 'suffix';
+  const testCookieValue = randomString();
   const driverPromise = setUp(this, testCookieValue);
   const userShapes = db.collection('usershapes-test-' + testCookieValue);
   // Delete all polygons in the test database.

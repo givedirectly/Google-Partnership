@@ -1,7 +1,7 @@
 import {Builder} from 'selenium-webdriver';
 import {Options} from 'selenium-webdriver/chrome';
 
-export {loadPage, setTimeouts, setUp, waitForLoad};
+export {loadPage, randomString, setTimeouts, setUp, waitForLoad};
 
 // We use the ip address rather than 'localhost' because Selenium has issues
 // with setting cookies on localhost.
@@ -26,7 +26,7 @@ async function loadPage(driverPromise) {
  * Waits for all loading to finish. Should be inlineable once deck-gl changes
  * are submitted.
  *
- * @param {ThenableWebDriver} driver Selenium webdriver
+ * @param {WebDriver} driver Selenium webdriver
  */
 async function waitForLoad(driver) {
   await driver.findElement({
@@ -44,11 +44,11 @@ const chromeOptions = new Options().addArguments(['--headless']);
  *
  * @param {Object} testFramework "this" variable inside describe().
  * @param {string} testCookieValue value to set test cookie to.
- * @return {Promise<ThenableWebDriver>} Promise of Selenium webdriver for later
+ * @return {Promise<WebDriver>} Promise of Selenium webdriver for later
  * use.
  */
 async function setUp(
-    testFramework, testCookieValue = Math.random() + 'suffix') {
+    testFramework, testCookieValue = randomString()) {
   // 10 seconds to run an individual test case.
   testFramework.timeout(10000);
   let resolveFunctionForDriver = null;
@@ -85,4 +85,8 @@ async function setUp(
  */
 function setTimeouts(driver) {
   driver.manage().setTimeouts({implicit: 5000, pageLoad: 5000, script: 5000});
+}
+
+function randomString() {
+  return Math.random() + 'suffix';
 }
