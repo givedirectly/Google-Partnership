@@ -52,6 +52,7 @@ describe('Unit test for updates.js', () => {
     document.getElementById('poverty weight').value = 0.01;
     document.getElementById('damage threshold').value = 0.24;
 
+    global.google = {maps: {event: {clearListeners: () => {}}}};
     document.getElementById('update').click();
 
     expect(toggles.get('poverty weight')).to.equals(0.01);
