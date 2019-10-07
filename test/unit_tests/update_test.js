@@ -1,6 +1,7 @@
-import * as LayerUtil from '../../../client-side/static/layer_util.js';
-import * as Run from '../../../client-side/static/run.js';
-import {createToggles, toggles} from '../../../client-side/static/update';
+import * as sinon from 'sinon';
+import * as LayerUtil from '../../client-side/static/layer_util.js';
+import * as Run from '../../client-side/static/run.js';
+import {createToggles, toggles} from '../../client-side/static/update';
 
 let lastPassedPovertyThreshold;
 let lastPassedDamageThreshold;
@@ -9,15 +10,16 @@ let lastPassedPovertyWeight;
 describe('Unit test for updates.js', () => {
   // creates the form div and stubs the relevent document methods.
   beforeEach(() => {
-    cy.stub(
-        Run, 'createAndDisplayJoinedData',
+    sinon.stub(
+        Run, 'createAndDisplayJoinedData').callsFake(
         (map, povertyThreshold, damageThreshold, povertyWeight) => {
           lastPassedPovertyThreshold = povertyThreshold;
           lastPassedDamageThreshold = damageThreshold;
           lastPassedPovertyWeight = povertyWeight;
         });
 
-    cy.stub(LayerUtil, 'removeScoreLayer', (map) => {});
+    sinon.stub(LayerUtil, 'removeScoreLayer').callsFake(() => {
+    });
 
     const formDiv = document.createElement('div');
     formDiv.class = 'form';
@@ -31,6 +33,8 @@ describe('Unit test for updates.js', () => {
     lastPassedPovertyThreshold = null;
     lastPassedPovertyWeight = null;
   });
+
+  afterEach(() => sinon.restore());
 
   it('updates weight labels', () => {
     const slider = document.getElementById('poverty weight');

@@ -1,4 +1,4 @@
-import processJoinedData from '../../../client-side/static/process_joined_data.js';
+import processJoinedData from '../../client-side/static/process_joined_data.js';
 
 const featureProperties = new Map();
 featureProperties.set('SNAP HOUSEHOLDS', 2);

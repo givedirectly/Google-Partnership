@@ -1,4 +1,5 @@
-import {layerMap, LayerMapValue, toggleLayerOff, toggleLayerOn} from '../../../client-side/static/layer_util';
+import * as sinon from 'sinon';
+import {layerMap, LayerMapValue, toggleLayerOff, toggleLayerOn} from '../../client-side/static/layer_util';
 
 const mockOverlay = {};
 
@@ -21,7 +22,7 @@ describe('Unit test for toggleLayerOn', () => {
       setAt: (index, overlay) => {},
     };
     const map = {overlayMapTypes: overlayMapTypesApi};
-    const mockOverlayMapTypes = Cypress.sinon.mock(overlayMapTypesApi);
+    const mockOverlayMapTypes = sinon.mock(overlayMapTypesApi);
 
     mockOverlayMapTypes.expects('setAt').once().withArgs(1, mockOverlay);
     toggleLayerOn(map, 'asset1');
@@ -37,7 +38,7 @@ describe('Unit test for toggleLayerOn', () => {
       setAt: (index, overlay) => {},
     };
     const map = {overlayMapTypes: overlayMapTypesApi};
-    const mockOverlayMapTypes = Cypress.sinon.mock(overlayMapTypesApi);
+    const mockOverlayMapTypes = sinon.mock(overlayMapTypesApi);
 
     // Oddly, if you print layerMap['asset2'] to console here, and also print
     // just layerMap and manually inspect it forov 'asset2', they give different
@@ -65,7 +66,7 @@ describe('Unit test for toggleLayerOn', () => {
       setAt: (index, overlay) => {},
     };
     const map = {overlayMapTypes: overlayMapTypesApi};
-    const mockOverlayMapTypes = Cypress.sinon.mock(overlayMapTypesApi);
+    const mockOverlayMapTypes = sinon.mock(overlayMapTypesApi);
 
     mockOverlayMapTypes.expects('setAt').once().withArgs(2, null);
 
@@ -88,7 +89,7 @@ describe('Unit test for toggleLayerOff', () => {
       setAt: (index, overlay) => {},
     };
     const map = {overlayMapTypes: overlayMapTypesApi};
-    const mockOverlayMapTypes = Cypress.sinon.mock(overlayMapTypesApi);
+    const mockOverlayMapTypes = sinon.mock(overlayMapTypesApi);
 
     mockOverlayMapTypes.expects('setAt').once().withArgs(0, null);
     toggleLayerOff(map, 'asset0');
