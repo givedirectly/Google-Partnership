@@ -1,5 +1,5 @@
 import {clickFeature, selectHighlightedFeatures} from './click_feature.js';
-import {mapContainerId, tableContainerId} from './dom_constants.js';
+import {mapContainerId, tableContainerId, sidebarDatasetsId} from './dom_constants.js';
 import {drawTable} from './draw_table.js';
 import {highlightFeatures} from './highlight_features.js';
 import {addLayer, addNullLayer, scoreLayerName, toggleLayerOff, toggleLayerOn} from './layer_util.js';
@@ -96,11 +96,11 @@ function createAndDisplayJoinedData(
 function createAssetCheckboxes(map) {
   // TODO: these probably shouldn't just sit at the bottom of the page - move to
   // a better place.
-  const mapDiv = document.getElementById(mapContainerId);
+  const sidebarDiv = document.getElementById(sidebarDatasetsId);
   Object.keys(assets).forEach(
-      (assetName) => createNewCheckbox(assetName, map, mapDiv));
+      (assetName) => createNewCheckbox(assetName, map, sidebarDiv));
   // score checkbox gets checked during initializeScoreLayer
-  createNewCheckbox(scoreLayerName, map, mapDiv);
+  createNewCheckbox(scoreLayerName, map, sidebarDiv);
 }
 
 /**
@@ -108,9 +108,9 @@ function createAssetCheckboxes(map) {
  *
  * @param {string} assetName
  * @param {google.maps.Map} map main map
- * @param {Element} mapDiv
+ * @param {Element} sidebarDiv
  */
-function createNewCheckbox(assetName, map, mapDiv) {
+function createNewCheckbox(assetName, map, sidebarDiv) {
   const newBox = document.createElement('input');
   newBox.type = 'checkbox';
   newBox.id = assetName;
@@ -124,11 +124,11 @@ function createNewCheckbox(assetName, map, mapDiv) {
       toggleLayerOff(map, assetName);
     }
   };
-  mapDiv.parentNode.appendChild(newBox);
+  sidebarDiv.appendChild(newBox);
   const label = document.createElement('label');
   label.for = assetName;
   label.innerHTML = assetName;
-  mapDiv.parentNode.appendChild(label);
+  sidebarDiv.appendChild(label);
 }
 
 /**
