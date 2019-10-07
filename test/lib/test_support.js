@@ -37,7 +37,7 @@ async function waitForLoad(driver) {
   });
 }
 
-const chromeOptions = new Options().addArguments(['--headless']);
+const chromeOptions = new Options();//.addArguments(['--headless']);
 
 /**
  * Sets up testing, should be called as first line in each describe() function.
