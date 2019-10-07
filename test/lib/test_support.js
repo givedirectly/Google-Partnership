@@ -29,15 +29,21 @@ async function loadPage(driverPromise) {
  * @param {WebDriver} driver Selenium webdriver
  */
 async function waitForLoad(driver) {
+  driver.findElement({
+    xpath: '//div[@id="tableContainer-loader"][contains(@style,"opacity: 1")]',
+  });
   await driver.findElement({
     xpath: '//div[@id="mapContainer-loader"][contains(@style,"opacity: 1")]',
+  });
+  driver.findElement({
+    xpath: '//div[@id="tableContainer-loader"][contains(@style,"opacity: 0")]',
   });
   await driver.findElement({
     xpath: '//div[@id="mapContainer-loader"][contains(@style,"opacity: 0")]',
   });
 }
 
-const chromeOptions = new Options().addArguments(['--headless']);
+const chromeOptions = new Options(); //.addArguments(['--headless']);
 
 /**
  * Sets up testing, should be called as first line in each describe() function.
