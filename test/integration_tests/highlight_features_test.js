@@ -1,6 +1,6 @@
 import {Key} from 'selenium-webdriver/lib/input';
 
-describe('Integration tests for highlighting chosen districts', function () {
+describe('Integration tests for highlighting chosen districts', function() {
   const driverPromise = setUp(this);
   it('Clicks on list and highlights district', async () => {
     const driver = await loadPage(driverPromise);
@@ -9,7 +9,11 @@ describe('Integration tests for highlighting chosen districts', function () {
     // don't do it, instead just verifying that nothing terrible happens.
     await getRow(driver, 1).click();
     // Shift-click to select a range.
-    await driver.actions().keyDown(Key.SHIFT).click(getRow(driver, 3)).keyUp(Key.SHIFT).perform();
+    await driver.actions()
+        .keyDown(Key.SHIFT)
+        .click(getRow(driver, 3))
+        .keyUp(Key.SHIFT)
+        .perform();
     await getRow(driver, 2).click();
   });
 });
