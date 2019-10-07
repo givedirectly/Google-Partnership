@@ -3,7 +3,6 @@ export {
   buildingCountTag,
   damageTag,
   geoidTag,
-  incomeErrorTag,
   incomeTag,
   scoreTag,
   snapPercentageTag,
@@ -26,5 +25,4 @@ const buildingCountTag = 'BUILDING COUNT';
 // Median household income in the past 12 months (in 2016 inflation-adjusted
 // dollars)
 const incomeTag = 'MEDIAN INCOME';
-const incomeErrorTag = 'MEDIAN INCOME MOE';
 const sviTag = 'SVI';

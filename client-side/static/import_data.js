@@ -1,5 +1,5 @@
 import damageLevelsList from './damage_levels.js';
-import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeErrorTag, incomeTag, snapPercentageTag, snapPopTag, sviTag, totalPopTag, tractTag} from './property_names.js';
+import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, snapPercentageTag, snapPopTag, sviTag, totalPopTag, tractTag} from './property_names.js';
 
 export {crowdAiDamageKey};
 /** @VisibleForTesting */
@@ -42,7 +42,6 @@ const tigerGeoidKey = 'GEOID';
 const snapKey = 'HD01_VD02';
 const totalKey = 'HD01_VD01';
 const incomeKey = 'HD01_VD01';
-const incomeErrorKey = 'HD02_VD01';
 // check with crowd ai folks about name.
 const crowdAiDamageKey = 'descriptio';
 
@@ -117,7 +116,6 @@ function countDamageAndBuildings(feature) {
           // These entries can't be parsed to numbers easily because have some
           // non-number values like "**" and "-" :(
           .set(incomeTag, feature.get(incomeTag))
-          .set(incomeErrorTag, feature.get(incomeErrorTag))
           .set(sviTag, feature.get(sviTag))
           .set(buildingCountTag, totalBuildings)
           .set(damageTag, ratioBuildingsDamaged));
@@ -156,8 +154,6 @@ function combineWithIncome(feature) {
   return ee.Feature(feature.get('primary')).set(ee.Dictionary([
     incomeTag,
     incomeFeature.get(incomeKey),
-    incomeErrorTag,
-    incomeFeature.get(incomeErrorKey),
   ]));
 }
 
