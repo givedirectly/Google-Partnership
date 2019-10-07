@@ -22,6 +22,7 @@ describe('Integration tests for highlighting chosen districts', function() {
  * Gets the table with the ranked list.
  *
  * @param {WebDriver} driver
+ * @param {number} index Index of row
  * @return {Object}
  */
 function getRow(driver, index) {
