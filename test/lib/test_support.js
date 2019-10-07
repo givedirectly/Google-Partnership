@@ -37,7 +37,7 @@ async function waitForLoad(driver) {
   });
 }
 
-const chromeOptions = new Options().addArguments(['--headless']);
+const chromeOptions = new Options()//.addArguments(['--headless']);
 
 /**
  * Sets up testing, should be called as first line in each describe() function.
@@ -49,7 +49,7 @@ const chromeOptions = new Options().addArguments(['--headless']);
  */
 async function setUp(testFramework, testCookieValue = randomString()) {
   // 10 seconds to run an individual test case.
-  testFramework.timeout(10000);
+  testFramework.timeout(100000);
   let resolveFunctionForDriver = null;
   const driverPromise = new Promise((resolve) => {
     resolveFunctionForDriver = resolve;
