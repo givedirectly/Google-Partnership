@@ -8,11 +8,6 @@ describe('Integration test for clicking feature', function() {
   it('clicks a feature on the map highlights feature in list', async () => {
     const driver = await loadPage(driverPromise);
 
-    // await driver.findElement({css: '[title="Add a marker"]'}).click();
-    // await driver.actions().move({x: 370, y:320}).click().perform();
-    // await driver.findElement({css: '[title="Stop drawing"]'}).click();
-
-
     await driver.actions().move({x: 370, y: 320}).click().perform();
     await driver.findElement({className: 'google-visualization-table-tr-sel'})
         .findElement({
@@ -23,6 +18,7 @@ describe('Integration test for clicking feature', function() {
 
   it('click highlights correct feature even after resort', async () => {
     const driver = await loadPage(driverPromise);
+
     // Sort descending by damage percentage
     await driver
         .findElement({
