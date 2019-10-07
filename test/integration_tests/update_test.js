@@ -1,6 +1,6 @@
 import {setTimeouts, waitForLoad} from '../lib/test_support';
 
-describe('Integration test for update.js', function () {
+describe('Integration test for update.js', function() {
   const driverPromise = setUp(this);
   /**
    * Checks that by setting the threshold to 100% the list and page number
@@ -12,7 +12,10 @@ describe('Integration test for update.js', function () {
     await setValueOfField(driver, 'damage threshold', 0);
     await driver.findElement({id: 'update'}).click();
     await waitForLoad(driver);
-    const pageElts = await driver.findElement({className: 'google-visualization-table-page-numbers'}).findElements({tagName: 'a'});
+    const pageElts =
+        await driver
+            .findElement({className: 'google-visualization-table-page-numbers'})
+            .findElements({tagName: 'a'});
     expect(pageElts).is.not.empty;
 
     await setValueOfField(driver, 'damage threshold', 1);
@@ -21,9 +24,11 @@ describe('Integration test for update.js', function () {
     await waitForLoad(driver);
 
     await driver.manage().setTimeouts({implicit: 0});
-    const emptyPageElts = await driver.findElements({className: 'google-visualization-table-page-numbers'});
+    const emptyPageElts = await driver.findElements(
+        {className: 'google-visualization-table-page-numbers'});
     expect(emptyPageElts).is.empty;
-    const emptyEvenRows = await driver.findElements({className: 'google-visualization-table-tr-even'});
+    const emptyEvenRows = await driver.findElements(
+        {className: 'google-visualization-table-tr-even'});
     expect(emptyEvenRows).is.empty;
     await setTimeouts(driver);
   });
