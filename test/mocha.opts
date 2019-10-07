@@ -1,4 +1,4 @@
 --require babel-polyfill
 --require @babel/register
 test/index.js
-test/unit_tests/*.js
+test/*_tests/*.js
