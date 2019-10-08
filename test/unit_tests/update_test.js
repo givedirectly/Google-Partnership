@@ -10,16 +10,14 @@ let lastPassedPovertyWeight;
 describe('Unit test for updates.js', () => {
   // creates the form div and stubs the relevent document methods.
   beforeEach(() => {
-    sinon.stub(
-        Run, 'createAndDisplayJoinedData').callsFake(
-        (map, povertyThreshold, damageThreshold, povertyWeight) => {
+    sinon.stub(Run, 'createAndDisplayJoinedData')
+        .callsFake((map, povertyThreshold, damageThreshold, povertyWeight) => {
           lastPassedPovertyThreshold = povertyThreshold;
           lastPassedDamageThreshold = damageThreshold;
           lastPassedPovertyWeight = povertyWeight;
         });
 
-    sinon.stub(LayerUtil, 'removeScoreLayer').callsFake(() => {
-    });
+    sinon.stub(LayerUtil, 'removeScoreLayer').callsFake(() => {});
 
     const formDiv = document.createElement('div');
     formDiv.class = 'form';
