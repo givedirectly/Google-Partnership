@@ -96,7 +96,7 @@ async function setUp(testFramework, testCookieValue = randomString()) {
  */
 function setTimeouts(driver) {
   driver.manage().setTimeouts(
-      {implicit: 10000, pageLoad: 10000, script: 10000});
+      {implicit: 60000, pageLoad: 60000, script: 60000});
 }
 
 /**
