@@ -110,7 +110,7 @@ class SettablePromise {
     this.reject = rejectFunction;
   }
 
-  /** @return Promise to be resolved/rejected. */
+  /** @return {Promise} Promise to be resolved/rejected. */
   get() {
     return this.promise;
   }
