@@ -7,7 +7,7 @@ import {setTimeouts, setValueOfField} from '../lib/test_support.js';
 describe('Integration test for clicking feature', function() {
   const driverPromise = setUp(this);
 
-  it.only('clicks a map feature, highlights feature in list', async () => {
+  it('clicks a map feature, highlights feature in list', async () => {
     const driver = await loadPage(driverPromise);
 
     await driver.actions()
