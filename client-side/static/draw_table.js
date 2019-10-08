@@ -1,10 +1,17 @@
 import createError from './create_error.js';
-import {blockGroupTag, damageTag, geoidTag, scoreTag, snapPercentageTag} from './property_names.js';
+import {blockGroupTag, damageTag, geoidTag, incomeTag, scoreTag, snapPercentageTag, sviTag} from './property_names.js';
 
 export {drawTable, tableHeadings};
 
-const tableHeadings =
-    [geoidTag, blockGroupTag, scoreTag, snapPercentageTag, damageTag];
+const tableHeadings = [
+  geoidTag,
+  blockGroupTag,
+  scoreTag,
+  snapPercentageTag,
+  damageTag,
+  sviTag,
+  incomeTag,
+];
 
 /**
  * Display a ranked table of the given features that have non-zero score.
