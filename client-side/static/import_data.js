@@ -51,22 +51,36 @@ const disasters = new Map();
 /** Constants for {@code disasters} map. */
 class DisasterMapValue {
   /**
+   * Currently, we're using microsoft's USBuildingFootprints data to calculate
+   * the total number of buildings in an area AKA the denominator in the damage
+   * percentage calculation. FEMA data doesn't mark non-damaged homes and
+   * it's possible this is a better denominator than CrowdAI's non-damaged
+   * home numbers.
+   *
+   * That being said, I (juliexxia@) have seen instances where microsoft's
+   * footprints have missed footprints that are clearly there on google map's
+   * default base layer.
+   *
    * @param {string} damageAsset ee asset path
    * @param {string} snapAsset ee asset path to snap info
    * @param {string} bgAsset ee asset path to block group info
    * @param {string} incomeAsset ee asset path to median income info
    * @param {string} sviAsset ee asset path to svi info
+   * @param {string} buildingsAsset ee asset path to feature set of all
+   *     buildings
    */
-  constructor(damageAsset, snapAsset, bgAsset, incomeAsset, sviAsset) {
+  constructor(
+      damageAsset, snapAsset, bgAsset, incomeAsset, sviAsset, buildingsAsset) {
     this.damageAsset = damageAsset;
     this.rawSnapAsset = snapAsset;
     this.bgAsset = bgAsset;
     this.incomeAsset = incomeAsset;
     this.sviAsset = sviAsset;
+    this.buildingsAsset = buildingsAsset;
   }
 }
 
-// TODO: upload michael income and SVI data
+// TODO: upload michael income, SVI, buildings data.
 disasters.set(
     'michael',
     new DisasterMapValue(
@@ -78,7 +92,8 @@ disasters.set(
     new DisasterMapValue(
         'users/juliexxia/harvey-damage-crowdai-format-aff-as-nod',
         'users/juliexxia/snap_texas', 'users/juliexxia/tiger_texas',
-        'users/juliexxia/income_texas', 'users/ruthtalbot/harvey-SVI'));
+        'users/juliexxia/income_texas', 'users/ruthtalbot/harvey-SVI',
+        'users/ruthtalbot/texas_buildings'));
 
 /**
  * Given a feature from the SNAP census data, returns a new
@@ -88,7 +103,7 @@ disasters.set(
  * @param {ee.Feature} feature
  * @return {Feature}
  */
-function countDamageAndBuildings(feature) {
+function countDamageAndBuildings(feature, buildings) {
   const resources = disasters.get(disaster);
   const damage = ee.FeatureCollection(resources.damageAsset);
   const damageLevels = ee.List(damageLevelsList);
@@ -96,14 +111,15 @@ function countDamageAndBuildings(feature) {
       damageLevels.map((type) => ee.Filter.eq(crowdAiDamageKey, type));
   const geometry = feature.geometry();
   const blockDamage = damage.filterBounds(geometry);
+  const totalBuildings = buildings.filterBounds(geometry).size();
 
   const attrDict = ee.Dictionary.fromLists(
       damageLevels,
       damageFilters.map((type) => blockDamage.filter(type).size()));
-  const totalBuildings = attrDict.values().reduce(ee.Reducer.sum());
-  const ratioBuildingsDamaged = ee.Number(totalBuildings)
-                                    .subtract(attrDict.get('no-damage'))
-                                    .divide(totalBuildings);
+  const damagedBuildings = ee.Number(attrDict.values().reduce(ee.Reducer.sum()))
+                               .subtract(attrDict.get('no-damage'));
+  const ratioBuildingsDamaged =
+      ee.Number(damagedBuildings).divide(totalBuildings);
   const snapPop = ee.Number.parse(feature.get(snapPopTag)).long();
   const totalPop = ee.Number.parse(feature.get(totalPopTag)).long();
   return ee.Feature(
@@ -114,7 +130,7 @@ function countDamageAndBuildings(feature) {
           .set(totalPopTag, ee.Number(totalPop))
           .set(snapPercentageTag, ee.Number(snapPop).divide(totalPop))
           // These entries can't be parsed to numbers easily because have some
-          // non-number values like "**" and "-" :(
+          // non-number values like "-" :(
           .set(incomeTag, feature.get(incomeTag))
           .set(sviTag, feature.get(sviTag))
           .set(buildingCountTag, totalBuildings)
@@ -213,7 +229,6 @@ function run() {
               ee.Filter.equals(
                   {leftField: censusGeoidKey, rightField: tigerGeoidKey}))
           .map(combineWithSnap);
-
   const joinedSnapIncome =
       ee.Join.inner()
           .apply(
@@ -221,25 +236,26 @@ function run() {
               ee.Filter.equals(
                   {leftField: geoidTag, rightField: censusGeoidKey}))
           .map(combineWithIncome);
-
   const svi =
       ee.FeatureCollection(resources.sviAsset)
           .filterBounds(ee.FeatureCollection(resources.damageAsset).geometry());
-
   const joinedSnapIncomeSVI =
       ee.Join.inner()
           .apply(
               joinedSnapIncome.map(addTractInfo), svi,
               ee.Filter.equals({leftField: tractTag, rightField: geoidTag}))
           .map(combineWithSvi);
+  const buildings = ee.FeatureCollection(resources.buildings)
+                        .filterBounds(blockGroupAsset.geometry());
+  const data = joinedSnapIncomeSVI.map(
+      (feature) => countDamageAndBuildings(feature, buildings));
 
-  const assetName = disaster + '-data-aff-as-nod';
+  const assetName = disaster + '-data-ms-as-nod';
   // TODO(#61): parameterize ee user account to write assets to or make GD
   // account.
   // TODO: delete existing asset with same name if it exists.
   const task = ee.batch.Export.table.toAsset(
-      joinedSnapIncomeSVI.map(countDamageAndBuildings), assetName,
-      'users/juliexxia/' + assetName);
+      data, assetName, 'users/juliexxia/' + assetName);
   task.start();
   $('.upload-status')
       .text('Check Code Editor console for progress. Task: ' + task.id);
