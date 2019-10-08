@@ -1,7 +1,13 @@
 import {Builder} from 'selenium-webdriver';
 import {Options} from 'selenium-webdriver/chrome';
 
-export {loadPage, randomString, setTimeouts, setUp, waitForLoad};
+export {
+  loadPage,
+  randomString,
+  setTimeouts,
+  setUp,
+  setValueOfField,
+};
 
 // We use the ip address rather than 'localhost' because Selenium has issues
 // with setting cookies on localhost.
@@ -23,14 +29,19 @@ async function loadPage(driverPromise) {
 }
 
 /**
- * Waits for all loading to finish. Should be inlineable once deck-gl changes
- * are submitted.
+ * Waits for all loading to finish.
  *
  * @param {WebDriver} driver Selenium webdriver
  */
 async function waitForLoad(driver) {
+  driver.findElement({
+    xpath: '//div[@id="tableContainer-loader"][contains(@style,"opacity: 1")]',
+  });
   await driver.findElement({
     xpath: '//div[@id="mapContainer-loader"][contains(@style,"opacity: 1")]',
+  });
+  driver.findElement({
+    xpath: '//div[@id="tableContainer-loader"][contains(@style,"opacity: 0")]',
   });
   await driver.findElement({
     xpath: '//div[@id="mapContainer-loader"][contains(@style,"opacity: 0")]',
@@ -48,7 +59,7 @@ const chromeOptions = new Options().addArguments(['--headless']);
  * use.
  */
 async function setUp(testFramework, testCookieValue = randomString()) {
-  // 10 seconds to run an individual test case.
+  // 100 seconds to run an individual test case.
   testFramework.timeout(100000);
   let resolveFunctionForDriver = null;
   const driverPromise = new Promise((resolve) => {
@@ -61,6 +72,7 @@ async function setUp(testFramework, testCookieValue = randomString()) {
                  .setChromeOptions(chromeOptions)
                  .build();
     setTimeouts(driver);
+    driver.manage().window().setRect({width: 1024, height: 1700});
     // Workaround for fact that cookies can only be set on the domain we've
     // already set: navigate to domain first, then set cookie.
     // https://docs.seleniumhq.org/docs/03_webdriver.jsp#cookies
@@ -77,13 +89,14 @@ async function setUp(testFramework, testCookieValue = randomString()) {
 }
 
 /**
- * Timeout after 5 seconds if page isn't loaded, script isn't run, or element
+ * Timeout after 10 seconds if page isn't loaded, script isn't run, or element
  * on page isn't found.
  *
  * @param {WebDriver} driver
  */
 function setTimeouts(driver) {
-  driver.manage().setTimeouts({implicit: 5000, pageLoad: 5000, script: 5000});
+  driver.manage().setTimeouts(
+      {implicit: 10000, pageLoad: 10000, script: 10000});
 }
 
 /**
@@ -93,4 +106,17 @@ function setTimeouts(driver) {
  */
 function randomString() {
   return Math.random() + 'suffix';
+}
+
+/**
+ * Sets the value of the input with id inputId to value.
+ *
+ * @param {WebDriver} driver
+ * @param {string} inputId
+ * @param {Object} value
+ * @return {Promise}
+ */
+async function setValueOfField(driver, inputId, value) {
+  await driver.findElement({id: inputId}).clear();
+  return driver.findElement({id: inputId}).sendKeys(value);
 }

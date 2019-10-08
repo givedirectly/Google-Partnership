@@ -39,7 +39,7 @@ function update(map) {
     }
   }
 
-  removeScoreLayer(map);
+  removeScoreLayer();
   createAndDisplayJoinedData(
       map, toggles.get('poverty threshold'), toggles.get('damage threshold'),
       toggles.get('poverty weight'));
@@ -50,7 +50,7 @@ function update(map) {
 
 /**
  * Creates the form for toggling the equation.
- * @param {google.map.Maps} map
+ * @param {google.maps.Map} map
  */
 function createToggles(map) {
   const form = document.createElement('form');

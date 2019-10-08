@@ -2,7 +2,7 @@ import {clickFeature, selectHighlightedFeatures} from './click_feature.js';
 import {mapContainerId, tableContainerId, sidebarDatasetsId} from './dom_constants.js';
 import {drawTable} from './draw_table.js';
 import {highlightFeatures} from './highlight_features.js';
-import {addLayer, addNullLayer, scoreLayerName, toggleLayerOff, toggleLayerOn} from './layer_util.js';
+import {addLayer, addLayerFromGeoJsonPromise, addNullLayer, convertEeObjectToPromise, scoreLayerName, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from './layer_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {processUserRegions} from './polygon_draw.js';
 import processJoinedData from './process_joined_data.js';
@@ -21,6 +21,9 @@ const assets = {
 
 // TODO: infer this from disaster const in import_data.js?
 const snapAndDamageAsset = 'users/juliexxia/harvey-data-aff-as-nod';
+// Promise for snapAndDamageAsset. After it's first resolved, we never need to
+// download it from EarthEngine again.
+let snapAndDamagePromise;
 const scalingFactor = 100;
 const scoreIndex = Object.keys(assets).length;
 
@@ -31,9 +34,12 @@ const scoreIndex = Object.keys(assets).length;
  * @param {google.maps.Map} map main map
  */
 function run(map) {
+  setMapToDrawLayersOn(map);
   initializeAssetLayers(map);
   createToggles(map);
   createAssetCheckboxes(map);
+  snapAndDamagePromise =
+      convertEeObjectToPromise(ee.FeatureCollection(snapAndDamageAsset));
   createAndDisplayJoinedData(
       map, initialPovertyThreshold, initialDamageThreshold,
       initialPovertyWeight);
@@ -62,8 +68,8 @@ function createAndDisplayJoinedData(
   google.maps.event.removeListener(mapSelectListener);
   google.maps.event.removeListener(featureSelectListener);
   const processedData = processJoinedData(
-      ee.FeatureCollection(snapAndDamageAsset), ee.Number(scalingFactor),
-      povertyThreshold, damageThreshold, povertyWeight);
+      snapAndDamagePromise, scalingFactor, povertyThreshold, damageThreshold,
+      povertyWeight);
   initializeScoreLayer(map, processedData);
   drawTable(
       processedData, (features) => highlightFeatures(features, map),
@@ -119,9 +125,9 @@ function createNewCheckbox(assetName, map, sidebarDiv) {
   }
   newBox.onclick = () => {
     if (newBox.checked) {
-      toggleLayerOn(map, assetName);
+      toggleLayerOn(assetName);
     } else {
-      toggleLayerOff(map, assetName);
+      toggleLayerOff(assetName);
     }
   };
   sidebarDiv.appendChild(newBox);
@@ -140,10 +146,11 @@ function createNewCheckbox(assetName, map, sidebarDiv) {
 function initializeAssetLayers(map) {
   // This is the standard way to iterate over a dictionary according to
   // https://stackoverflow.com/questions/34448724/iterating-over-a-dictionary-in-javascript
-  Object.keys(assets).forEach(function(assetName, index) {
+
+  Object.keys(assets).forEach((assetName, index) => {
     // TODO(juliexxia): generalize for ImageCollections (and Features/Images?)
     if (assets[assetName]) {
-      addLayer(map, ee.FeatureCollection(assetName), assetName, index);
+      addLayer(assetName, index);
     } else {
       addNullLayer(assetName, index);
     }
@@ -160,7 +167,6 @@ function initializeAssetLayers(map) {
  * @param {ee.FeatureCollection} layer the computed score features
  */
 function initializeScoreLayer(map, layer) {
-  addLayer(
-      map, layer.style({styleProperty: 'style'}), scoreLayerName, scoreIndex);
+  addLayerFromGeoJsonPromise(layer, scoreLayerName, scoreIndex);
   document.getElementById(scoreLayerName).checked = true;
 }
