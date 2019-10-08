@@ -82,8 +82,7 @@ describe('Integration test for clicking feature', function() {
         .move({x: 39, y: 4, origin: driver.findElement({className: 'map'})})
         .click()
         .perform();
-    await setValueOfField(driver, 'damage threshold', 0.9);
-    await driver.findElement({id: 'update'}).click();
+    await setValueOfField(driver, 'damage threshold', 0.8);
     const blockGroup =
         await driver
             .findElement({
@@ -93,7 +92,19 @@ describe('Integration test for clicking feature', function() {
             .getText();
     expect(blockGroup)
         .to.equal(
-            'Block Group 1, Census Tract 2525,' +
-            ' Harris County, Texas');
+        'Block Group 1, Census Tract 2525,' +
+        ' Harris County, Texas');
+    await driver.findElement({id: 'update'}).click();
+    const blockGroupAfter =
+        await driver
+            .findElement({
+              xpath: '//tr[contains(@class,' +
+                  ' "google-visualization-table-tr-sel")]/child::td[1]',
+            })
+            .getText();
+    expect(blockGroupAfter)
+        .to.equal(
+        'Block Group 1, Census Tract 2525,' +
+        ' Harris County, Texas');
   });
 });
