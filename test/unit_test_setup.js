@@ -10,6 +10,6 @@ import ee from './lib/mock_ee';
 import firebase from './lib/mock_firebase';
 import deck from './lib/mock_deck';
 
-global.dom = new JSDOM('<!doctype html><html><body></body></html>');
+const dom = new JSDOM('<!doctype html><html><body></body></html>');
 global.window = dom.window;
 global.document = dom.window.document;

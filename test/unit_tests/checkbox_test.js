@@ -31,21 +31,15 @@ describe('Unit test for toggleLayerOn', () => {
     toggleLayerOn('asset2');
     const emptyList = [];
     ee.listEvaluateCallback(emptyList);
-    let resolveFunction = null;
-    const promiseToEnsureTimerFinished = new Promise((resolve) => {
-      resolveFunction = resolve;
-    });
-    // Evaluate after the promise finishes by using an instant timer.
-    setTimeout(() => {
+
+    await executeCodeNext(() => {
       expect(layerMap.get('asset2').displayed).to.equals(true);
       expect(layerMap.get('asset2').data).to.not.be.null;
       const layerProps = layerArray[2].props;
       expect(layerProps).to.have.property('id', 'asset2');
       expect(layerProps).to.have.property('visible', true);
       expect(layerProps).to.have.property('data', emptyList);
-      resolveFunction(null);
-    }, 0);
-    await promiseToEnsureTimerFinished;
+    });
   });
 
   it('check hidden layer, then uncheck before list evaluation', async () => {
@@ -57,21 +51,14 @@ describe('Unit test for toggleLayerOn', () => {
     const emptyList = [];
     ee.listEvaluateCallback(emptyList);
 
-    let resolveFunction = null;
-    const promiseToEnsureTimerFinished = new Promise((resolve) => {
-      resolveFunction = resolve;
-    });
-    // Evaluate after the promise finishes by using an instant timer.
-    setTimeout(() => {
+    await executeCodeNext(() => {
       expect(layerMap.get('asset2').displayed).to.equals(false);
       expect(layerMap.get('asset2').data).to.not.be.null;
       const layerProps = layerArray[2].props;
       expect(layerProps).to.have.property('id', 'asset2');
       expect(layerProps).to.have.property('visible', false);
       expect(layerProps).to.have.property('data', emptyList);
-      resolveFunction(null);
     });
-    await promiseToEnsureTimerFinished;
   });
 });
 
@@ -89,3 +76,42 @@ describe('Unit test for toggleLayerOff', () => {
     expect(layerProps).to.have.property('data', mockData);
   });
 });
+
+/**
+ * Executes the code in lambda after all current pending code in the event loop.
+ *
+ * @param {Function} lambda
+ * @returns {Promise}
+ */
+function executeCodeNext(lambda) {
+  const settablePromise = new SettablePromise();
+  // Evaluate after the current code finishes by using an instant timer.
+  setTimeout(() => {
+    lambda();
+    settablePromise.resolve(null);
+  });
+  return settablePromise.get();
+}
+
+/**
+ * Corresponds to Java SettableFuture class. Call this.resolve() to complete the
+ * Promise successfully, and this.reject() to complete it with a failure.
+ */
+class SettablePromise {
+  /** @constructor */
+  constructor() {
+    let resolveFunction = null;
+    let rejectFunction = null;
+    this.promise = new Promise((resolve, reject) => {
+      resolveFunction = resolve;
+      rejectFunction = reject;
+    });
+    this.resolve = resolveFunction;
+    this.reject = rejectFunction;
+  }
+
+  /** Returns Promise to be resolved/rejected. */
+  get() {
+    return this.promise;
+  }
+}
