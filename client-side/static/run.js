@@ -95,7 +95,7 @@ function createAndDisplayJoinedData(
 }
 
 /**
- * Creates checkboxes for all known assets and the score overlay.
+ * Creates checkboxes for all known assets, user features, and the score overlay.
  *
  * @param {google.maps.Map} map main map
  */

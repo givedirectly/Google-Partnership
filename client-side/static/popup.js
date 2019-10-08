@@ -1,6 +1,6 @@
 import {userRegionData} from './user_region_data.js';
 
-export {addPopUpListener, createPopup, setUpPopup};
+export {addPopUpListener, createPopup, setUpPopup, setUserFeatureVisibility};
 
 let Popup = null;
 
@@ -83,6 +83,23 @@ function setUpPopup() {
   };
 }
 
+const allPopups = new Set();
+let numEdits = 0;
+
+function setUserFeatureVisibility(visibility) {
+  if (numEdits > 0) {
+    window.alert('Cannot show/hide user features when edits in progress');
+    return false;
+  }
+  for (const popup of allPopups) {
+    if (!visibility) {
+      popup.hide();
+    }
+    popup.polygon.setVisible(visibility);
+  }
+  return true;
+}
+
 /**
  * Populates the content div of the popup.
  *
@@ -104,6 +121,7 @@ function createPopupHtml(popup, notes, map) {
     if (confirm('Delete region?')) {
       polygon.setMap(null);
       popup.setMap(null);
+      allPopups.remove(popup);
       userRegionData.get(polygon).update(polygon);
     }
   };
@@ -114,6 +132,7 @@ function createPopupHtml(popup, notes, map) {
   editButton.innerHTML = 'edit';
   editButton.onclick = () => {
     saved = false;
+    numEdits++;
     polygon.setEditable(true);
 
     const currentNotes = notesDiv.innerText;
@@ -174,6 +193,7 @@ function createPopupHtml(popup, notes, map) {
  */
 function makeUneditable(polygon, popup, notes, map) {
   polygon.setEditable(false);
+  numEdits--;
   // Remove all current contents of the popup and replace with the fresh saved
   // content. This is annoying, but would also be annoying to just replace the
   // entire div because of the styling work that happens upon Popup
@@ -196,12 +216,15 @@ function processNewData(polygon, popup, notes) {
   popup.updatePosition();
 }
 
+let openEdits = 0;
+
 /**
  * Hides popup and adds listener for next click.
  * @param {google.maps.Polygon} polygon
  * @param {Popup} popup
  */
 function closeCleanup(polygon, popup) {
+  openEdits--;
   popup.hide();
   addPopUpListener(polygon, popup);
 }
@@ -247,5 +270,6 @@ function createPopup(polygon, map) {
   const popup = new Popup(polygon, userRegionData.get(polygon).notes, map);
   popup.setMap(map);
   popup.hide();
+  allPopups.add(popup);
   return popup;
 }

@@ -198,6 +198,18 @@ function processUserRegions(map) {
       .catch(createError('error getting user-drawn regions'));
 }
 
+function hideAllUserFeatures() {
+  for (const feature of userRegionData.keys()) {
+    feature.setVisible(false);
+  }
+}
+
+function showAllUserFeatures() {
+  for (const feature of userRegionData.keys()) {
+    feature.setVisible(true);
+  }
+}
+
 // TODO(janakr): it would be nice to unit-test this, but I don't know how to get
 // the google maps Polygon objects, and mocking them defeats the purpose.
 /**
