@@ -9,6 +9,7 @@ describe('Unit test for toggleLayerOn', () => {
     layerMap.set('asset2', new LayerMapValue(null, 2, false));
     layerArray[0] = new deck.GeoJsonLayer({});
     layerArray[1] = new deck.GeoJsonLayer({});
+    ee.listEvaluateCallback = null;
   });
 
   it('displays a hidden but loaded layer', () => {
@@ -23,13 +24,17 @@ describe('Unit test for toggleLayerOn', () => {
     expect(layerProps).to.have.property('data', mockData);
   });
 
-  it('loads a hidden layer and displays', () => {
+  it('loads a hidden layer and displays', async () => {
     expect(layerMap.get('asset2').displayed).to.equals(false);
     expect(layerMap.get('asset2').data).to.be.null;
 
     toggleLayerOn('asset2');
     const emptyList = [];
     ee.listEvaluateCallback(emptyList);
+    let resolveFunction = null;
+    const promiseToEnsureTimerFinished = new Promise((resolve) => {
+      resolveFunction = resolve;
+    });
     // Evaluate after the promise finishes by using an instant timer.
     setTimeout(() => {
       expect(layerMap.get('asset2').displayed).to.equals(true);
@@ -38,10 +43,12 @@ describe('Unit test for toggleLayerOn', () => {
       expect(layerProps).to.have.property('id', 'asset2');
       expect(layerProps).to.have.property('visible', true);
       expect(layerProps).to.have.property('data', emptyList);
+      resolveFunction(null);
     }, 0);
+    await promiseToEnsureTimerFinished;
   });
 
-  it('check hidden layer, then uncheck before list evaluation', () => {
+  it('check hidden layer, then uncheck before list evaluation', async () => {
     expect(layerMap.get('asset2').displayed).to.equals(false);
     expect(layerMap.get('asset2').data).to.be.null;
 
@@ -50,6 +57,10 @@ describe('Unit test for toggleLayerOn', () => {
     const emptyList = [];
     ee.listEvaluateCallback(emptyList);
 
+    let resolveFunction = null;
+    const promiseToEnsureTimerFinished = new Promise((resolve) => {
+      resolveFunction = resolve;
+    });
     // Evaluate after the promise finishes by using an instant timer.
     setTimeout(() => {
       expect(layerMap.get('asset2').displayed).to.equals(false);
@@ -58,7 +69,9 @@ describe('Unit test for toggleLayerOn', () => {
       expect(layerProps).to.have.property('id', 'asset2');
       expect(layerProps).to.have.property('visible', false);
       expect(layerProps).to.have.property('data', emptyList);
+      resolveFunction(null);
     });
+    await promiseToEnsureTimerFinished;
   });
 });
 
