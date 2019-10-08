@@ -6,8 +6,9 @@
 // after that test enables it to run successfully.
 import {JSDOM} from 'jsdom';
 
-import ee from '../cypress/support/mock_ee';
-import firebase from '../cypress/support/mock_firebase';
+import ee from './lib/mock_ee';
+import firebase from './lib/mock_firebase';
+import deck from './lib/mock_deck';
 
 global.dom = new JSDOM('<!doctype html><html><body></body></html>');
 global.window = dom.window;
