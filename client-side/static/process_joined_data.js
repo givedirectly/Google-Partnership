@@ -1,21 +1,17 @@
-import damageLevelsList from './damage_levels.js';
-import {blockGroupTag, damageTag, geoidTag, incomeTag, scoreTag, snapPercentageTag, sviTag} from './property_names.js';
+import {damageTag, scoreTag, snapPercentageTag} from './property_names.js';
 
 export {processJoinedData as default};
 
-const scoreDisplayCap = 99;
+const scoreDisplayCap = 255;
 
 /**
- * Processes a feature corresponding to a geographic area and returns a new one,
- * with just the GEOID and SCORE properties set, and a style attribute that
- * sets the color/opacity based on the score, with all scores past 99
- * equally opaque.
+ * Processes a feature corresponding to a geographic area and sets the score,
+ * poverty and damage ratios, and color.
  *
- * @param {ee.Feature} feature
- * @param {ee.Number} scalingFactor multiplies the raw score, it can be
+ * @param {GeoJSON} feature GeoJSON Feature
+ * @param {number} scalingFactor multiplies the raw score, it can be
  *     adjusted to make sure that the values span the desired range of ~0 to
  *     ~100.
- * @param {ee.List} damageLevels
  * @param {number} povertyThreshold between 0 and 1 representing what
  *     fraction of a population must be SNAP eligible to be considered.
  * @param {number} damageThreshold a number between 0 and 1 representing what
@@ -23,49 +19,37 @@ const scoreDisplayCap = 99;
  * @param {number} povertyWeight float between 0 and 1 that describes what
  *     percentage of the score should be based on poverty (this is also a proxy
  *     for damageWeight which is 1-this value).
- *
- * @return {ee.Feature}
  */
 function colorAndRate(
-    feature, scalingFactor, damageLevels, povertyThreshold, damageThreshold,
-    povertyWeight) {
-  const povertyRatio = ee.Number(feature.get(snapPercentageTag));
-  const ratioBuildingsDamaged = ee.Number(feature.get(damageTag));
-  const belowThresholds = povertyRatio.lte(povertyThreshold)
-                              .or(ratioBuildingsDamaged.lte(damageThreshold));
-  const potentialScore = ratioBuildingsDamaged.multiply(1 - povertyWeight)
-                             .add(povertyRatio.multiply(povertyWeight))
-                             .multiply(scalingFactor)
-                             .round();
-  const score = ee.Number(
-      ee.Algorithms.If(belowThresholds, ee.Number(0), potentialScore));
-  return ee
-      .Feature(feature.geometry(), ee.Dictionary([
-        geoidTag,
-        feature.get(geoidTag),
-        blockGroupTag,
-        feature.get(blockGroupTag),
-        scoreTag,
-        score,
-        snapPercentageTag,
-        povertyRatio,
-        damageTag,
-        ratioBuildingsDamaged,
-        sviTag,
-        feature.get(sviTag),
-        incomeTag,
-        feature.get(incomeTag),
-      ]))
-      .set({
-        style: {
-          color: score.min(ee.Number(scoreDisplayCap)).format('ff00ff%02d'),
-        },
-      });
+    feature, scalingFactor, povertyThreshold, damageThreshold, povertyWeight) {
+  const povertyRatio = feature.properties[snapPercentageTag];
+  const ratioBuildingsDamaged = feature.properties[damageTag];
+  let score = 0;
+  if (povertyRatio >= povertyThreshold &&
+      ratioBuildingsDamaged >= damageThreshold) {
+    score = Math.round(
+        scalingFactor *
+        (ratioBuildingsDamaged * (1 - povertyWeight) +
+         povertyRatio * povertyWeight));
+  }
+  feature.properties[scoreTag] = score;
+  // Opacity is between 0 and 255, while score is between 0 and scalingFactor.
+  // Math.min is out of an abundance of caution, in case bad data leads to
+  // score > scalingFactor.
+  const opacity =
+      Math.min(Math.round((255 / scalingFactor) * score), scoreDisplayCap);
+  feature.properties['color'] = [255, 0, 255, opacity];
 }
 
 /**
- * @param {ee.FeatureCollection} joinedData
- * @param {ee.Number} scalingFactor multiplies the raw score, it can be
+ * Processes the provided Promise. The returned Promise has the same underlying
+ * data as the original Promise. In other words, this method will mutate the
+ * underlying data of the original Promise. This is acceptable, because it only
+ * adds/overwrites the computed attributes of score and color. We avoid doing a
+ * full copy because it would unnecessarily copy a lot of data.
+ *
+ * @param {Promise} dataPromise
+ * @param {number} scalingFactor multiplies the raw score, it can be
  *     adjusted to make sure that the values span the desired range of ~0 to
  *     ~100.
  * @param {number} povertyThreshold between 0 and 1 representing what
@@ -75,15 +59,17 @@ function colorAndRate(
  * @param {number} povertyWeight float between 0 and 1 that describes what
  *     percentage of the score should be based on poverty (this is also a proxy
  *     for damageWeight which is 1-this value).
- * @return {ee.FeatureCollection}
+ * @return {Promise}
  */
 function processJoinedData(
-    joinedData, scalingFactor, povertyThreshold, damageThreshold,
+    dataPromise, scalingFactor, povertyThreshold, damageThreshold,
     povertyWeight) {
-  const damageLevels = ee.List(damageLevelsList);
-  return joinedData.map(function(feature) {
-    return colorAndRate(
-        feature, scalingFactor, damageLevels, povertyThreshold, damageThreshold,
-        povertyWeight);
+  return dataPromise.then((featureCollection) => {
+    for (const feature of featureCollection.features) {
+      colorAndRate(
+          feature, scalingFactor, povertyThreshold, damageThreshold,
+          povertyWeight);
+    }
+    return featureCollection.features;
   });
 }

@@ -1,4 +1,4 @@
-import {setTimeouts, setValueOfField, waitForLoad} from '../lib/test_support';
+import {setTimeouts, setValueOfField} from '../lib/test_support';
 
 describe('Integration test for update.js', function() {
   const driverPromise = setUp(this);
@@ -11,7 +11,6 @@ describe('Integration test for update.js', function() {
     const driver = await loadPage(driverPromise);
     await setValueOfField(driver, 'damage threshold', 0);
     await driver.findElement({id: 'update'}).click();
-    await waitForLoad(driver);
     const pageElts =
         await driver
             .findElement({className: 'google-visualization-table-page-numbers'})
@@ -21,7 +20,6 @@ describe('Integration test for update.js', function() {
     await setValueOfField(driver, 'damage threshold', 1);
     await setValueOfField(driver, 'poverty threshold', 1);
     await driver.findElement({id: 'update'}).click();
-    await waitForLoad(driver);
 
     await driver.manage().setTimeouts({implicit: 0});
     const emptyPageElts = await driver.findElements(

@@ -7,7 +7,6 @@ export {
   setTimeouts,
   setUp,
   setValueOfField,
-  waitForLoad,
 };
 
 // We use the ip address rather than 'localhost' because Selenium has issues
@@ -30,8 +29,7 @@ async function loadPage(driverPromise) {
 }
 
 /**
- * Waits for all loading to finish. Should be inlineable once deck-gl changes
- * are submitted.
+ * Waits for all loading to finish.
  *
  * @param {WebDriver} driver Selenium webdriver
  */
@@ -61,7 +59,7 @@ const chromeOptions = new Options().addArguments(['--headless']);
  * use.
  */
 async function setUp(testFramework, testCookieValue = randomString()) {
-  // 10 seconds to run an individual test case.
+  // 100 seconds to run an individual test case.
   testFramework.timeout(100000);
   let resolveFunctionForDriver = null;
   const driverPromise = new Promise((resolve) => {
@@ -91,13 +89,14 @@ async function setUp(testFramework, testCookieValue = randomString()) {
 }
 
 /**
- * Timeout after 5 seconds if page isn't loaded, script isn't run, or element
+ * Timeout after 10 seconds if page isn't loaded, script isn't run, or element
  * on page isn't found.
  *
  * @param {WebDriver} driver
  */
 function setTimeouts(driver) {
-  driver.manage().setTimeouts({implicit: 5000, pageLoad: 5000, script: 5000});
+  driver.manage().setTimeouts(
+      {implicit: 10000, pageLoad: 10000, script: 10000});
 }
 
 /**
