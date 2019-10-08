@@ -1,7 +1,14 @@
 import {Builder} from 'selenium-webdriver';
 import {Options} from 'selenium-webdriver/chrome';
 
-export {loadPage, randomString, setTimeouts, setUp, setValueOfField, waitForLoad};
+export {
+  loadPage,
+  randomString,
+  setTimeouts,
+  setUp,
+  setValueOfField,
+  waitForLoad
+};
 
 // We use the ip address rather than 'localhost' because Selenium has issues
 // with setting cookies on localhost.
@@ -43,7 +50,7 @@ async function waitForLoad(driver) {
   });
 }
 
-const chromeOptions = new Options();//.addArguments(['--headless']);
+const chromeOptions = new Options();  //.addArguments(['--headless']);
 
 /**
  * Sets up testing, should be called as first line in each describe() function.
