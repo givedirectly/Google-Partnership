@@ -123,7 +123,6 @@ function addLayerFromFeatures(layerMapValue, assetName) {
   layerArray[layerMapValue.index] = new deck.GeoJsonLayer({
     id: assetName,
     data: layerMapValue.data,
-    pointRadiusMaxPixels: 5,
     pointRadiusScale: 500,
     // TODO(janakr): deck.gl docs claim that the "color" property should
     // automatically color the features, but it doesn't appear to work:
