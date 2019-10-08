@@ -7,7 +7,6 @@ export {
   setTimeouts,
   setUp,
   setValueOfField,
-  waitForLoad,
 };
 
 // We use the ip address rather than 'localhost' because Selenium has issues
@@ -30,8 +29,7 @@ async function loadPage(driverPromise) {
 }
 
 /**
- * Waits for all loading to finish. Should be inlineable once deck-gl changes
- * are submitted.
+ * Waits for all loading to finish.
  *
  * @param {WebDriver} driver Selenium webdriver
  */
