@@ -1,26 +1,28 @@
-import {clickFeature} from '../../../client-side/static/click_feature.js';
-import {tableHeadings} from '../../../client-side/static/draw_table.js';
-import * as HighlightFeatures from '../../../client-side/static/highlight_features.js';
+import * as sinon from 'sinon';
+import {clickFeature} from '../../client-side/static/click_feature.js';
+import {tableHeadings} from '../../client-side/static/draw_table.js';
+import * as HighlightFeatures from '../../client-side/static/highlight_features.js';
 
 let mockTable;
 let tableApi;
 
 describe('Unit test for click_feature.js', () => {
   beforeEach(() => {
-    cy.stub(HighlightFeatures, 'highlightFeatures', (features, map) => {
+    sinon.stub(HighlightFeatures, 'highlightFeatures').callsFake((features) => {
       if (features.length === 0) {
         HighlightFeatures.currentFeatures.clear();
       } else {
         HighlightFeatures.currentFeatures.set(0, {});
       }
     });
-
     tableApi = {
-      setSelection: (selection) => {},
+      setSelection: () => {},
     };
-    mockTable = Cypress.sinon.mock(tableApi);
+    mockTable = sinon.mock(tableApi);
     HighlightFeatures.currentFeatures.clear();
   });
+
+  afterEach(() => sinon.restore());
 
   it('clicks on a block group in the list', () => {
     const tableData = [tableHeadings, [0, 99, 0.46, 0.52]];

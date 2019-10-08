@@ -38,7 +38,7 @@ while read local_ref local_sha remote_ref remote_sha; do
   # --diff-filter=dr excludes deleted and renamed files, which don't exist
   # locally anymore.
   # TODO(janakr): this is vulnerable to filenames with spaces.
-  modified_js_files="$(git diff --diff-filter=dr --name-only \
+  modified_js_files="$(git diff --diff-filter=d --name-only \
       "$range" 'client-side/static/*.js' 'cypress/integration/**/*.js' \
         'cypress/support/*.js' 'test/**/*.js')"
   if [[ "$modified_js_files" ]]; then
@@ -54,9 +54,6 @@ while read local_ref local_sha remote_ref remote_sha; do
     fi
     yarn run eslint $modified_js_files
   fi
-  # TODO(janakr): delete Cypress once all tests migrated. Requires
-  # adding ES6 language support to Mocha via Babel package.
-  yarn run cypress run --config video=false
   yarn run mocha
 done
 
