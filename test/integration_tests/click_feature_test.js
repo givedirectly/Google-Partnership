@@ -92,8 +92,8 @@ describe('Integration test for clicking feature', function() {
             .getText();
     expect(blockGroup)
         .to.equal(
-        'Block Group 1, Census Tract 2525,' +
-        ' Harris County, Texas');
+            'Block Group 1, Census Tract 2525,' +
+            ' Harris County, Texas');
     await driver.findElement({id: 'update'}).click();
     const blockGroupAfter =
         await driver
@@ -104,7 +104,7 @@ describe('Integration test for clicking feature', function() {
             .getText();
     expect(blockGroupAfter)
         .to.equal(
-        'Block Group 1, Census Tract 2525,' +
-        ' Harris County, Texas');
+            'Block Group 1, Census Tract 2525,' +
+            ' Harris County, Texas');
   });
 });
