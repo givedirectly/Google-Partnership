@@ -81,7 +81,7 @@ describe('Unit test for toggleLayerOff', () => {
  * Executes the code in lambda after all current pending code in the event loop.
  *
  * @param {Function} lambda
- * @returns {Promise}
+ * @return {Promise}
  */
 function executeCodeNext(lambda) {
   const settablePromise = new SettablePromise();
@@ -110,7 +110,7 @@ class SettablePromise {
     this.reject = rejectFunction;
   }
 
-  /** Returns Promise to be resolved/rejected. */
+  /** @return Promise to be resolved/rejected. */
   get() {
     return this.promise;
   }
