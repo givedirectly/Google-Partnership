@@ -1,4 +1,4 @@
-import {setTimeouts, waitForLoad} from '../lib/test_support';
+import {setTimeouts, setValueOfField, waitForLoad} from '../lib/test_support';
 
 describe('Integration test for update.js', function() {
   const driverPromise = setUp(this);
@@ -33,16 +33,3 @@ describe('Integration test for update.js', function() {
     await setTimeouts(driver);
   });
 });
-
-/**
- * Sets the value of the input with id inputId to value.
- *
- * @param {WebDriver} driver
- * @param {string} inputId
- * @param {Object} value
- * @return {Promise}
- */
-async function setValueOfField(driver, inputId, value) {
-  await driver.findElement({id: inputId}).clear();
-  return driver.findElement({id: inputId}).sendKeys(value);
-}

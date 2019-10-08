@@ -1,7 +1,7 @@
 import {Builder} from 'selenium-webdriver';
 import {Options} from 'selenium-webdriver/chrome';
 
-export {loadPage, randomString, setTimeouts, setUp, waitForLoad};
+export {loadPage, randomString, setTimeouts, setUp, setValueOfField, waitForLoad};
 
 // We use the ip address rather than 'localhost' because Selenium has issues
 // with setting cookies on localhost.
@@ -43,7 +43,7 @@ async function waitForLoad(driver) {
   });
 }
 
-const chromeOptions = new Options().addArguments(['--headless']);
+const chromeOptions = new Options();//.addArguments(['--headless']);
 
 /**
  * Sets up testing, should be called as first line in each describe() function.
@@ -67,6 +67,7 @@ async function setUp(testFramework, testCookieValue = randomString()) {
                  .setChromeOptions(chromeOptions)
                  .build();
     setTimeouts(driver);
+    driver.manage().window().setRect({width: 1024, height: 1700});
     // Workaround for fact that cookies can only be set on the domain we've
     // already set: navigate to domain first, then set cookie.
     // https://docs.seleniumhq.org/docs/03_webdriver.jsp#cookies
@@ -99,4 +100,17 @@ function setTimeouts(driver) {
  */
 function randomString() {
   return Math.random() + 'suffix';
+}
+
+/**
+ * Sets the value of the input with id inputId to value.
+ *
+ * @param {WebDriver} driver
+ * @param {string} inputId
+ * @param {Object} value
+ * @return {Promise}
+ */
+async function setValueOfField(driver, inputId, value) {
+  await driver.findElement({id: inputId}).clear();
+  return driver.findElement({id: inputId}).sendKeys(value);
 }
