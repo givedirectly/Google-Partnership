@@ -1,5 +1,5 @@
 import createError from './create_error.js';
-import {blockGroupTag, damageTag, buildingCountTag, geoidTag, incomeTag, scoreTag, snapPercentageTag, sviTag, totalPopTag} from './property_names.js';
+import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, scoreTag, snapPercentageTag, sviTag, totalPopTag} from './property_names.js';
 
 export {drawTable, tableHeadings};
 
