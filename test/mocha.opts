@@ -1,6 +1,4 @@
 --require babel-polyfill
 --require @babel/register
-test/setup.js
-test/integration_tests/*.js
-test/unit_test_setup.js
-test/unit_tests/*.js
+test/index.js
+test/*_tests/*.js

@@ -1,7 +1,6 @@
-import * as sinon from 'sinon';
-import * as LayerUtil from '../../client-side/static/layer_util.js';
-import * as Run from '../../client-side/static/run.js';
-import {createToggles, toggles} from '../../client-side/static/update';
+import * as LayerUtil from '../../../client-side/static/layer_util.js';
+import * as Run from '../../../client-side/static/run.js';
+import {createToggles, toggles} from '../../../client-side/static/update';
 
 let lastPassedPovertyThreshold;
 let lastPassedDamageThreshold;
@@ -10,14 +9,15 @@ let lastPassedPovertyWeight;
 describe('Unit test for updates.js', () => {
   // creates the form div and stubs the relevent document methods.
   beforeEach(() => {
-    sinon.stub(Run, 'createAndDisplayJoinedData')
-        .callsFake((map, povertyThreshold, damageThreshold, povertyWeight) => {
+    cy.stub(
+        Run, 'createAndDisplayJoinedData',
+        (map, povertyThreshold, damageThreshold, povertyWeight) => {
           lastPassedPovertyThreshold = povertyThreshold;
           lastPassedDamageThreshold = damageThreshold;
           lastPassedPovertyWeight = povertyWeight;
         });
 
-    sinon.stub(LayerUtil, 'removeScoreLayer').callsFake(() => {});
+    cy.stub(LayerUtil, 'removeScoreLayer', (map) => {});
 
     const formDiv = document.createElement('div');
     formDiv.class = 'form';
@@ -31,8 +31,6 @@ describe('Unit test for updates.js', () => {
     lastPassedPovertyThreshold = null;
     lastPassedPovertyWeight = null;
   });
-
-  afterEach(() => sinon.restore());
 
   it('updates weight labels', () => {
     const slider = document.getElementById('poverty weight');
@@ -50,7 +48,6 @@ describe('Unit test for updates.js', () => {
     document.getElementById('poverty weight').value = 0.01;
     document.getElementById('damage threshold').value = 0.24;
 
-    global.google = {maps: {event: {clearListeners: () => {}}}};
     document.getElementById('update').click();
 
     expect(toggles.get('poverty weight')).to.equals(0.01);
