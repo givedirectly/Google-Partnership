@@ -1,5 +1,5 @@
 import {clickFeature, selectHighlightedFeatures} from './click_feature.js';
-import {mapContainerId, tableContainerId, sidebarDatasetsId} from './dom_constants.js';
+import {tableContainerId, sidebarDatasetsId} from './dom_constants.js';
 import {drawTable} from './draw_table.js';
 import {highlightFeatures} from './highlight_features.js';
 import {addLayer, addLayerFromGeoJsonPromise, addNullLayer, convertEeObjectToPromise, scoreLayerName, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from './layer_util.js';
