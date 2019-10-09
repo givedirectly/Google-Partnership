@@ -58,7 +58,7 @@ class EarthEngineAsset {
 }
 
 /**
- * Color the feature with SVI specific logic.
+ * Color the feature with SVI-specific logic.
  *
  * @param {GeoJSON.Feature} feature
  */
@@ -68,7 +68,7 @@ function colorSVILayer(feature) {
 }
 
 /**
- * Color the feature with Path of Storm Radii specific logic.
+ * Color the feature with Path of Storm Radii-specific logic.
  *
  * @param {GeoJSON.Feature} feature
  */
@@ -80,7 +80,7 @@ function colorPathofStormRadiiLayer(feature) {
 }
 
 /**
- * Color the feature with FEMA assistance specific logic.
+ * Color the feature with FEMA Assistance-specific logic.
  *
  * @param {GeoJSON.Feature} feature
  */
@@ -88,12 +88,12 @@ function colorFemaAssistanceLayer(feature) {
   // Color 'public assistance' as yellow, and 'individual and public assistance'
   // as red.
   const color = feature.properties['Designatio'] == 'PA' ? [255, 255, 51, 40] :
-    [220, 20, 60, 40];
+                                                           [220, 20, 60, 40];
   feature.properties['color'] = color;
 }
 
 /**
- * Color the feature with damage specific logic.
+ * Color the feature with damage-specific logic.
  *
  * @param {GeoJSON.Feature} feature
  */
@@ -109,26 +109,19 @@ function colorDamageLayer(feature) {
 }
 
 // TODO: Store these and allow users to change/set these fields on import page.
-const harveyDamgeCrowdAIFormat = new EarthEngineAsset(
-    'FeatureCollection', 'Harvey Damge CrowdAI', true, (feature) => {
-      colorDamageLayer(feature);
-    });
+const harveyDamageCrowdAIFormat = new EarthEngineAsset(
+    'FeatureCollection', 'Harvey Damge CrowdAI', true, colorDamageLayer);
 const sviData =
-    new EarthEngineAsset('FeatureCollection', 'SVI Data', false, (feature) => {
-      colorSVILayer(feature);
-    });
+    new EarthEngineAsset('FeatureCollection', 'SVI Data', false, colorSVILayer);
 const pathOfStormRadii = new EarthEngineAsset(
-    'FeatureCollection', 'Path of Storm Radii', false, (feature) => {
-      colorPathofStormRadiiLayer(feature);
-    });
+    'FeatureCollection', 'Path of Storm Radii', false,
+    colorPathofStormRadiiLayer);
 const femaVisits = new EarthEngineAsset(
-    'FeatureCollection', 'FEMA Assistance', false, (feature) => {
-      colorFemaAssistanceLayer(feature);
-    });
+    'FeatureCollection', 'FEMA Assistance', false, colorFemaAssistanceLayer);
 
 // List of known assets
 const assets = {
-  'users/juliexxia/harvey-damage-crowdai-format': harveyDamgeCrowdAIFormat,
+  'users/juliexxia/harvey-damage-crowdai-format': harveyDamageCrowdAIFormat,
   'users/ruthtalbot/harvey-SVI': sviData,
   'users/ruthtalbot/harvey-pathofstorm-radii': pathOfStormRadii,
   'users/ruthtalbot/fema-visits-polygon': femaVisits,
