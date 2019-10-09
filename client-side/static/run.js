@@ -136,7 +136,7 @@ function createNewCheckbox(name, displayName, mapDiv) {
  * @param {Element} mapDiv
  */
 function createNewCheckboxForAsset(assetName, mapDiv) {
-  const newBox = createNewCheckbox(assetName, assets[name] ? assets[name].getDisplayName() : name, mapDiv);
+  const newBox = createNewCheckbox(assetName, assets[assetName] ? assets[name].getDisplayName() : name, mapDiv);
   if (assets[assetName] && !assets[assetName].shouldDisplayOnLoad()) {
     newBox.checked = false;
   }
