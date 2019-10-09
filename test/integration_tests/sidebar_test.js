@@ -1,6 +1,7 @@
 describe('Integration test for the sidebar', function() {
   const driverPromise = setUp(this);
 
+  // TODO(ramvellanki): figure out why display styles fail xpath/ checks
   it('enables toggling', async () => {
     const driver = await loadPage(driverPromise);
 
