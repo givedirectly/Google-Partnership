@@ -166,9 +166,7 @@ describe('Integration tests for drawing polygons', function() {
     await pressPolygonButton('edit', driver);
     await driver.findElement({className: 'notes'}).sendKeys(notes);
     await pressPolygonButton('save', driver);
-    console.log('saved');
     await assertNotesVisibleStatus(true, driver);
-    console.log('visible');
     const beforeClick1 =
         await driver.findElement({id: 'user features-checkbox'}).isSelected();
     expect(beforeClick1).to.be.true;
@@ -188,14 +186,7 @@ describe('Integration tests for drawing polygons', function() {
     await assertNotesVisibleStatus(false, driver);
     // await driver.findElement({css: '[title="Add a marker"]'}).click();
     await clickOnDrawnPolygon(driver);
-    console.log('new saved');
-    try {
-      await assertNotesVisibleStatus(true, driver);
-    } catch (err) {
-      await takeScreenshot(driver, 'screenshot.png');
-      throw err;
-    }
-    console.log('now visible');
+    await assertNotesVisibleStatus(true, driver);
 
     // Try to hide user features in the middle of editing: will fail.
     await pressPolygonButton('edit', driver);
