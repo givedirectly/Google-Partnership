@@ -208,7 +208,7 @@ function makeUneditable(polygon, popup, notes, damage, map) {
  * @param {String} notes
  */
 function processNewData(polygon, popup, notes, map, damageDiv) {
-  damageDiv.innerText =  'damage points: calculating';
+  damageDiv.innerText = 'damage points: calculating';
   userRegionData.get(polygon).update(
       polygon, (damage) => makeUneditable(polygon, popup, notes, damage, map),
       notes);

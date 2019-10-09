@@ -84,12 +84,15 @@ class ShapeData {
       }
     };
 
+    //TODO: don't recompute size if polygon hasn't changed.
     const points = [];
     polygon.getPath().forEach((elt) => points.push(elt.lng(), elt.lat()));
-    const eeGeometry = ee.Geometry.Polygon(points);
-    ee.FeatureCollection(
-          'users/juliexxia/harvey-damage-crowdai-format-aff-as-nod')
-        .filterBounds(eeGeometry)
+    ee.Join.simple()
+        .apply(
+            ee.FeatureCollection(
+                'users/juliexxia/harvey-damage-crowdai-format-aff-as-nod'),
+            ee.FeatureCollection(ee.Geometry.Polygon(points)),
+            ee.Filter.intersects({leftField: '.geo', rightField: '.geo'}))
         .size()
         .evaluate((damage, failure) => {
           if (damage || damage === 0) {
