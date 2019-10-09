@@ -30,13 +30,26 @@ available. However, if you work for Google and get a failed command when you run
 
 * Install [yarn](http://yarnpkg.com/).
 
+* Install [Chromium](https://www.chromium.org).
+  * On Mac, `brew cask install chromium` should work if you have
+  [Homebrew](https://brew.sh) installed.
+  [FreeSMUG](http://freesmug.org/chromium) also offers a pre-built `.dmg`
+  installer.
+  * On Linux, install via the usual `apt-get`-style channels. This should be
+  relatively straightforward on most systems, but is difficult/impossible on
+  Google-internal machines. If you have difficulty, you can [download a latest
+  version](https://download-chromium.appspot.com) and unzip it. In this
+  case, you will have to change `--browser chromium` to `--browser
+  path/to/file/in/extracted/zip/named/chrome-wrapper` in all later commands and
+  in your .git/hooks/pre-push file below.
+
 * Test changes.
 
     ```shell
     cd the/directory/this/README/is/in
     yarn install # Just once, to make sure everything is installed.
     yarn run mocha
-    yarn run cypress run
+    yarn run cypress run --browser chromium
     ```
 
 * Save and share test results in a web interface using
