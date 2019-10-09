@@ -1,9 +1,13 @@
 export {assets};
 
-/* EarthEngineAsset class to store relevant data about any assets, including
- * special coloring instructions and display name. */
+/**
+ * EarthEngineAsset class to store relevant data about any assets, including
+ * special coloring instructions and display name. 
+ */
 class EarthEngineAsset {
   /**
+   * Constructor for EarthEngineAsset class. 
+   *
    * @param {string} type
    * @param {string} displayName
    * @param {boolean} displayOnLoad
@@ -79,11 +83,13 @@ function colorPathofStormRadiiLayer(feature) {
 const harveyDamgeCrowdAIFormat =
     new EarthEngineAsset('FeatureCollection', 'Harvey Damge CrowdAI', true);
 const sviData = new EarthEngineAsset(
-    'FeatureCollection', 'SVI Data', false, {},
-    (feature) => {colorSVILayer(feature)});
+    'FeatureCollection', 'SVI Data', false, {}, (feature) => {
+      colorSVILayer(feature);
+    });
 const pathOfStormRadii = new EarthEngineAsset(
-    'FeatureCollection', 'Path of Storm Radii', false, {},
-    (feature) => {colorPathofStormRadiiLayer(feature)});
+    'FeatureCollection', 'Path of Storm Radii', false, {}, (feature) => {
+      colorPathofStormRadiiLayer(feature);
+    });
 
 // List of known assets
 const assets = {
