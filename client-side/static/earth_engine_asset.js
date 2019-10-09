@@ -48,7 +48,7 @@ class EarthEngineAsset {
   }
 
   /**
-   * Return the display name for the asset.
+   * Returns the display name for the asset.
    *
    * @return {string}
    */
@@ -58,7 +58,7 @@ class EarthEngineAsset {
 }
 
 /**
- * Color the feature with SVI-specific logic.
+ * Colors the feature with SVI-specific logic.
  *
  * @param {GeoJSON.Feature} feature
  */
@@ -68,7 +68,7 @@ function colorSVILayer(feature) {
 }
 
 /**
- * Color the feature with Path of Storm Radii-specific logic.
+ * Colors the feature with Path of Storm Radii-specific logic.
  *
  * @param {GeoJSON.Feature} feature
  */
@@ -79,7 +79,7 @@ function colorPathofStormRadiiLayer(feature) {
 }
 
 /**
- * Color the feature with FEMA Assistance-specific logic.
+ * Colors the feature with FEMA Assistance-specific logic.
  *
  * @param {GeoJSON.Feature} feature
  */
@@ -91,7 +91,7 @@ function colorFemaAssistanceLayer(feature) {
 }
 
 /**
- * Color the feature with damage-specific logic.
+ * Colors the feature with damage-specific logic.
  *
  * @param {GeoJSON.Feature} feature
  */

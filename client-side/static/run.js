@@ -112,10 +112,11 @@ function createAssetCheckboxes(map) {
  * Creates a checkbox for showing/hiding layers.
  *
  * @param {string} name checkbox name, basis for id
+ * @param {string} displayName checkbox display name
  * @param {div} mapDiv div to attach checkbox to
  * @return {HTMLInputElement} the checkbox
  */
-function createNewCheckbox(name, mapDiv) {
+function createNewCheckbox(name, displayName, mapDiv) {
   const newBox = document.createElement('input');
   newBox.type = 'checkbox';
   newBox.id = getCheckBoxId(name);
@@ -123,7 +124,7 @@ function createNewCheckbox(name, mapDiv) {
   mapDiv.parentNode.appendChild(newBox);
   const label = document.createElement('label');
   label.for = name;
-  label.innerHTML = assets[name] ? assets[name].getDisplayName() : name;
+  label.innerHTML = displayName;
   mapDiv.parentNode.appendChild(label);
   return newBox;
 }
@@ -135,7 +136,7 @@ function createNewCheckbox(name, mapDiv) {
  * @param {Element} mapDiv
  */
 function createNewCheckboxForAsset(assetName, mapDiv) {
-  const newBox = createNewCheckbox(assetName, mapDiv);
+  const newBox = createNewCheckbox(assetName, assets[name].getDisplayName(), mapDiv);
   if (assets[assetName] && !assets[assetName].shouldDisplayOnLoad()) {
     newBox.checked = false;
   }
@@ -154,7 +155,7 @@ function createNewCheckboxForAsset(assetName, mapDiv) {
  * @param {div} mapDiv div to attach checkbox to
  */
 function createCheckboxForUserFeatures(mapDiv) {
-  const newBox = createNewCheckbox('user features', mapDiv);
+  const newBox = createNewCheckbox('user features', 'user features', mapDiv);
   newBox.checked = true;
   newBox.onclick = () => setUserFeatureVisibility(newBox.checked);
 }
