@@ -1,13 +1,5 @@
 import * as firebase from 'firebase';
 import {until} from 'selenium-webdriver';
-const util = require('util');
-const fs = require('fs');
-const writeFile = util.promisify(fs.writeFile);
-
-function takeScreenshot(driver, file) {
-  return driver.takeScreenshot().then(
-      image => writeFile(file, image, 'base64'));
-}
 
 import {randomString, setTimeouts, startGet} from '../lib/test_support.js';
 

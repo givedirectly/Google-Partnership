@@ -112,6 +112,13 @@ function createAssetCheckboxes(map) {
   createNewCheckboxForAsset(scoreLayerName, mapDiv);
 }
 
+/**
+ * Creates a checkbox for showing/hiding layers.
+ *
+ * @param {string} name checkbox name, basis for id
+ * @param {div} mapDiv div to attach checkbox to
+ * @return {HTMLInputElement} the checkbox
+ */
 function createNewCheckbox(name, mapDiv) {
   const newBox = document.createElement('input');
   newBox.type = 'checkbox';
@@ -145,6 +152,11 @@ function createNewCheckboxForAsset(assetName, mapDiv) {
   };
 }
 
+/**
+ * Creates a show/hide checkbox for user features.
+ *
+ * @param {div} mapDiv div to attach checkbox to
+ */
 function createCheckboxForUserFeatures(mapDiv) {
   const newBox = createNewCheckbox('user features', mapDiv);
   newBox.checked = true;
@@ -185,6 +197,12 @@ function initializeScoreLayer(map, layer) {
   document.getElementById(getCheckBoxId(scoreLayerName)).checked = true;
 }
 
+/**
+ * Creates the id of a show/hide checkbox.
+ *
+ * @param {string} baseName
+ * @return {string}
+ */
 function getCheckBoxId(baseName) {
   return baseName + '-checkbox';
 }
