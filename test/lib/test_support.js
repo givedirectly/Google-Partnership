@@ -6,7 +6,6 @@ export {
   randomString,
   setTimeouts,
   setUp,
-  setValueOfField,
   startGet,
 };
 
@@ -47,9 +46,6 @@ const loadingTimeout = 60000;
  * @param {WebDriver} driver Selenium webdriver
  */
 async function waitForLoad(driver) {
-  driver.findElement({
-    xpath: '//div[@id="tableContainer-loader"][contains(@style,"opacity: 1")]',
-  });
   await driver.findElement({
     xpath: '//div[@id="mapContainer-loader"][contains(@style,"opacity: 1")]',
   });
@@ -91,7 +87,6 @@ async function setUp(testFramework, testCookieValue = randomString()) {
                  .setChromeOptions(chromeOptions)
                  .build();
     setTimeouts(driver);
-    driver.manage().window().setRect({width: 1024, height: 1700});
     // Workaround for fact that cookies can only be set on the domain we've
     // already set: navigate to domain first, then set cookie.
     // https://docs.seleniumhq.org/docs/03_webdriver.jsp#cookies
@@ -124,17 +119,4 @@ function setTimeouts(driver) {
  */
 function randomString() {
   return Math.random() + 'suffix';
-}
-
-/**
- * Sets the value of the input with id inputId to value.
- *
- * @param {WebDriver} driver
- * @param {string} inputId
- * @param {Object} value
- * @return {Promise}
- */
-async function setValueOfField(driver, inputId, value) {
-  await driver.findElement({id: inputId}).clear();
-  return driver.findElement({id: inputId}).sendKeys(value);
 }
