@@ -60,7 +60,7 @@ const chromeOptions = new Options().addArguments(['--headless']);
  */
 async function setUp(testFramework, testCookieValue = randomString()) {
   // 100 seconds to run an individual test case.
-  testFramework.timeout(100000);
+  testFramework.timeout(200000);
   let resolveFunctionForDriver = null;
   const driverPromise = new Promise((resolve) => {
     resolveFunctionForDriver = resolve;
@@ -96,7 +96,7 @@ async function setUp(testFramework, testCookieValue = randomString()) {
  */
 function setTimeouts(driver) {
   driver.manage().setTimeouts(
-      {implicit: 10000, pageLoad: 10000, script: 10000});
+      {implicit: 60000, pageLoad: 60000, script: 60000});
 }
 
 /**
