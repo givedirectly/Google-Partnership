@@ -87,7 +87,7 @@ function setUpPopup() {
   Popup.prototype.setDamage = function(damage) {
     this.damage = damage;
     createPopupHtml(this, this.notes, this.damage, this.map);
-  }
+  };
 }
 
 /**
@@ -182,6 +182,10 @@ function createPopupHtml(popup, notes, damage, map) {
 // content. This is annoying, but would also be annoying to just replace the
 // entire div because of the styling work that happens upon Popup
 // initialization.
+/**
+ *
+ * @param {Element} div
+ */
 function removeAllChildren(div) {
   while (div.firstChild) {
     div.firstChild.remove();
@@ -194,6 +198,7 @@ function removeAllChildren(div) {
  * @param {google.maps.Polygon} polygon
  * @param {Object} popup
  * @param {String} notes
+ * @param {Integer} damage
  * @param {google.maps.Map} map
  */
 function makeUneditable(polygon, popup, notes, damage, map) {
@@ -206,6 +211,8 @@ function makeUneditable(polygon, popup, notes, damage, map) {
  * @param {google.maps.Polygon} polygon
  * @param {Popup} popup
  * @param {String} notes
+ * @param {google.maps.Map} map
+ * @param {Element} damageDiv
  */
 function processNewData(polygon, popup, notes, map, damageDiv) {
   damageDiv.innerText = 'damage points: calculating';

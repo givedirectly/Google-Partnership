@@ -36,6 +36,7 @@ class ShapeData {
    *
    * @param {String} id Firestore id.
    * @param {String} notes User-entered notes.
+   * @param {String} damage
    */
   constructor(id, notes, damage) {
     this.id = id;
@@ -53,6 +54,7 @@ class ShapeData {
    * should be performed when the pending one completes and returns immediately.
    *
    * @param {google.maps.Polygon} polygon Polygon to be written to backend.
+   * @param {Function} damageReceiver
    * @param {String} notes User-supplied notes (optional).
    */
   update(polygon, damageReceiver = () => {}, notes = this.notes) {
@@ -101,7 +103,7 @@ class ShapeData {
             const record = {
               geometry: geometry,
               notes: this.notes,
-              damage: this.damage
+              damage: this.damage,
             };
             if (this.id) {
               userShapes.doc(this.id)
