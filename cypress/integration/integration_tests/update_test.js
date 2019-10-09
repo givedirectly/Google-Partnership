@@ -18,9 +18,6 @@ describe('Integration test for update.js', () => {
     cy.get('[id="damage threshold"]').type('0.0');
     cy.get('[id="update"]').click();
 
-    // Wait for table to reload properly.
-    cy.awaitLoad(['tableContainer']);
-
     const numPages = cy.get('.google-visualization-table-page-numbers')
                          .find('*')
                          .then((elm) => elm.length);
@@ -29,9 +26,6 @@ describe('Integration test for update.js', () => {
     cy.get('[id="poverty threshold"]').type('1.0');
     cy.get('[id="damage threshold"]').type('1.0');
     cy.get('[id="update"]').click();
-
-    // Wait for table to reload properly.
-    cy.awaitLoad(['tableContainer']);
 
     cy.get(tableClass)
         .find('.google-visualization-table-page-numbers')
