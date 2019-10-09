@@ -84,11 +84,11 @@ const harveyDamgeCrowdAIFormat =
     new EarthEngineAsset('FeatureCollection', 'Harvey Damge CrowdAI', true);
 const sviData = new EarthEngineAsset(
     'FeatureCollection', 'SVI Data', false, (feature) => {
-      colorSVILayer(feature)
+      colorSVILayer(feature);
     });
 const pathOfStormRadii = new EarthEngineAsset(
     'FeatureCollection', 'Path of Storm Radii', false, (feature) => {
-      colorPathofStormRadiiLayer(feature)
+      colorPathofStormRadiiLayer(feature);
     });
 
 // List of known assets
