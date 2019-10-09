@@ -98,9 +98,10 @@ function toggleLayerOff(assetName) {
  * Function object to extract a color from a JSON Feature.
  *
  * @param {GeoJSON.Feature} feature
+ * @param {string} assetName
  * @return {Array} RGBA array
  */
-function getColorOfFeature(feature, temp, assetName) {
+function getColorOfFeature(feature, assetName) {
   if (assets[assetName] && assets[assetName].getColorFunction()) {
     assets[assetName].getColorFunction()(feature);
   }
@@ -131,8 +132,7 @@ function addLayerFromFeatures(layerMapValue, assetName) {
     // TODO(janakr): deck.gl docs claim that the "color" property should
     // automatically color the features, but it doesn't appear to work:
     // https://deck.gl/#/documentation/deckgl-api-reference/layers/geojson-layer?section=getelevation-function-number-optional-transition-enabled
-    getFillColor: (feature, temp) =>
-        getColorOfFeature(feature, temp, assetName),
+    getFillColor: (feature) => getColorOfFeature(feature, assetName),
     visible: layerMapValue.displayed,
   });
   redrawLayers();

@@ -1,5 +1,7 @@
 export {assets};
 
+/* EarthEngineAsset class to store relevant data about any assets, including
+ * special coloring instructions and display name. */
 class EarthEngineAsset {
   constructor(type, displayName, displayOnLoad, visParams, colorFunction) {
     this.type = type;
@@ -9,37 +11,35 @@ class EarthEngineAsset {
     this.colorFunction = colorFunction;
   }
 
-  getAsset(assetPath) {
-    // TODO(ruthtalbot): Add support for images
-    switch (this.type) {
-      case 'FeatureCollection':
-        return ee.FeatureCollection(assetPath);
-        break;
-    }
-  }
-
+  /* @return {boolean} Whether to display the asset on initial load. */
   shouldDisplayOnLoad() {
     return this.displayOnLoad;
   }
 
+  /* @return {Function} The function to color the asset. Null if asset doesn't
+   * need styling or is styled elsewhere. */
   getColorFunction() {
     return this.colorFunction;
   }
 
+  /* @return {string} The asset type. */
   getType() {
     return this.type;
   }
 
+  /* @return {string} The display name for the asset. */
   getDisplayName() {
     return this.displayName;
   }
 }
 
+/* @param {GeoJSON.Feature} feature */
 function colorSVILayer(feature) {
   const opacity = Math.min(Math.round(255 * feature.properties['SVI']), 255);
   feature.properties['color'] = [255 - opacity, 0, 255 - opacity, opacity];
 }
 
+/* @param {GeoJSON.Feature} feature */
 function colorPathofStormRadiiLayer(feature) {
   const opacity =
       Math.min(Math.round(255 * feature.properties['RADII'] / 100), 255);
@@ -50,13 +50,6 @@ function colorPathofStormRadiiLayer(feature) {
 // TODO: Store these and allow users to change/set these fields on import page.
 const harveyDamgeCrowdAIFormat =
     new EarthEngineAsset('FeatureCollection', 'Harvey Damge CrowdAI', true);
-// TODO(ruthtalbot): support images and add this back into asset list.
-const elevationData = new EarthEngineAsset(
-    'Image', 'Elevation Data', false, {min: -1, max: 1, opacity: .25},
-    (layer) => {
-      var aspect = ee.Terrain.aspect(layer);
-      return aspect.divide(180).multiply(Math.PI).sin();
-    });
 const sviData = new EarthEngineAsset(
     'FeatureCollection', 'SVI Data', false, {},
     (feature) => {colorSVILayer(feature)});
