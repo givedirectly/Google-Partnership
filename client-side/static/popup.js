@@ -90,6 +90,13 @@ function setUpPopup() {
 const allPopups = new Set();
 let numEdits = 0;
 
+/**
+ * Sets the visibility of all current user features. May fail if any features
+ * are currently being edited.
+ *
+ * @param {boolean} visibility If features should be visible or not
+ * @return {boolean} if it succeeded
+ */
 function setUserFeatureVisibility(visibility) {
   if (numEdits > 0) {
     window.alert('Cannot show/hide user features when edits in progress');
@@ -219,8 +226,6 @@ function processNewData(polygon, popup, notes) {
   // update where the popup pops up to match any polygon shape changes
   popup.updatePosition();
 }
-
-let openEdits = 0;
 
 /**
  * Hides popup and adds listener for next click.

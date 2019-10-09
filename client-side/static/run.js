@@ -106,11 +106,10 @@ function createAssetCheckboxes(map) {
   // a better place.
   const mapDiv = document.getElementById(mapContainerId);
   Object.keys(assets).forEach(
-      (assetName) =>
-          createNewCheckboxAndAttachAssetListener(assetName, mapDiv));
+      (assetName) => createNewCheckboxForAsset(assetName, mapDiv));
   createCheckboxForUserFeatures(mapDiv);
   // score checkbox gets checked during initializeScoreLayer
-  createNewCheckboxAndAttachAssetListener(scoreLayerName, mapDiv);
+  createNewCheckboxForAsset(scoreLayerName, mapDiv);
 }
 
 function createNewCheckbox(name, mapDiv) {
@@ -132,7 +131,7 @@ function createNewCheckbox(name, mapDiv) {
  * @param {string} assetName
  * @param {Element} mapDiv
  */
-function createNewCheckboxAndAttachAssetListener(assetName, mapDiv) {
+function createNewCheckboxForAsset(assetName, mapDiv) {
   const newBox = createNewCheckbox(assetName, mapDiv);
   if (!assets[assetName]) {
     newBox.checked = false;
