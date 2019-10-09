@@ -1,5 +1,5 @@
 import createError from './create_error.js';
-import {blockGroupTag, damageTag, geoidTag, incomeTag, scoreTag, snapPercentageTag, sviTag} from './property_names.js';
+import {blockGroupTag, damageTag, buildingCountTag, geoidTag, incomeTag, scoreTag, snapPercentageTag, sviTag, totalPopTag} from './property_names.js';
 
 export {drawTable, tableHeadings};
 
@@ -9,6 +9,8 @@ const tableHeadings = [
   scoreTag,
   snapPercentageTag,
   damageTag,
+  buildingCountTag,
+  totalPopTag,
   sviTag,
   incomeTag,
 ];
