@@ -88,7 +88,7 @@ function colorFemaAssistanceLayer(feature) {
   // Color 'public assistance' as yellow, and 'individual and public assistance'
   // as red.
   const color = feature.properties['Designatio'] == 'PA' ? [255, 255, 51, 40] :
-                                                           [220, 20, 60, 40];
+     [220, 20, 60, 40];
   feature.properties['color'] = color;
 }
 
