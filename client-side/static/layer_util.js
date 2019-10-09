@@ -98,10 +98,9 @@ function toggleLayerOff(assetName) {
  * Function object to extract a color from a JSON Feature.
  *
  * @param {GeoJSON.Feature} feature
- * @param {string} assetName
  * @return {Array} RGBA array
  */
-function getColorOfFeature(feature, assetName) {
+function getColorOfFeature(feature) {
   return showColor(feature.properties['color']);
 }
 

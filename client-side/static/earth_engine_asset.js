@@ -2,14 +2,15 @@ export {assets};
 
 /**
  * EarthEngineAsset class to store relevant data about any assets, including
- * special coloring instructions and display name.
+ * special coloring instructions and display name. Doesn't store assetPath,
+ * as this is used as the key in the list of assets.
  */
 class EarthEngineAsset {
   /**
    * Constructor for EarthEngineAsset class.
    *
-   * @param {string} type
-   * @param {string} displayName
+   * @param {String} type
+   * @param {String} displayName
    * @param {boolean} displayOnLoad
    * @param {?Function} colorFunction
    **/
@@ -41,7 +42,7 @@ class EarthEngineAsset {
   /**
    * Returns the asset type.
    *
-   * @return {string} The asset type.
+   * @return {String} The asset type.
    */
   getType() {
     return this.type;
@@ -50,7 +51,7 @@ class EarthEngineAsset {
   /**
    * Returns the display name for the asset.
    *
-   * @return {string}
+   * @return {String}
    */
   getDisplayName() {
     return this.displayName;

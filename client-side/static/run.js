@@ -111,8 +111,8 @@ function createAssetCheckboxes(map) {
 /**
  * Creates a checkbox for showing/hiding layers.
  *
- * @param {string} name checkbox name, basis for id
- * @param {string} displayName checkbox display name
+ * @param {String} name checkbox name, basis for id
+ * @param {String} displayName checkbox display name
  * @param {div} mapDiv div to attach checkbox to
  * @return {HTMLInputElement} the checkbox
  */
@@ -132,11 +132,14 @@ function createNewCheckbox(name, displayName, mapDiv) {
 /**
  * Creates a new checkbox for the given asset.
  *
- * @param {string} assetName
+ * @param {String} assetName
  * @param {Element} mapDiv
  */
 function createNewCheckboxForAsset(assetName, mapDiv) {
-  const newBox = createNewCheckbox(assetName, assets[assetName] ? assets[assetName].getDisplayName() : assetName, mapDiv);
+  const newBox = createNewCheckbox(
+      assetName,
+      assets[assetName] ? assets[assetName].getDisplayName() : assetName,
+      mapDiv);
   if (assets[assetName] && !assets[assetName].shouldDisplayOnLoad()) {
     newBox.checked = false;
   }
