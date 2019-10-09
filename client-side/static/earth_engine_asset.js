@@ -2,11 +2,11 @@ export {assets};
 
 /**
  * EarthEngineAsset class to store relevant data about any assets, including
- * special coloring instructions and display name. 
+ * special coloring instructions and display name.
  */
 class EarthEngineAsset {
   /**
-   * Constructor for EarthEngineAsset class. 
+   * Constructor for EarthEngineAsset class.
    *
    * @param {string} type
    * @param {string} displayName
