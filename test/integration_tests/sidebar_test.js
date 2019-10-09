@@ -52,8 +52,6 @@ describe('Integration test for the sidebar', function() {
       xpath: '//div[@id="sidebar-datasets"][not(contains(@style,"display: none"))]',
     });
 
-
-    await driver.sleep(1000000);
     // The thresholds should appear on toggling even from another sidebar view.
     driver.findElement({id: 'sidebar-toggle-thresholds'}).click();
     await driver.findElement({
