@@ -5,6 +5,7 @@ import {highlightFeatures} from './highlight_features.js';
 import {addLayer, addLayerFromGeoJsonPromise, addNullLayer, convertEeObjectToPromise, scoreLayerName, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from './layer_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {processUserRegions} from './polygon_draw.js';
+import {setUserFeatureVisibility} from "./popup.js";
 import processJoinedData from './process_joined_data.js';
 import {createToggles, initialDamageThreshold, initialPovertyThreshold, initialPovertyWeight} from './update.js';
 
@@ -104,24 +105,35 @@ function createAssetCheckboxes(map) {
   // a better place.
   const mapDiv = document.getElementById(mapContainerId);
   Object.keys(assets).forEach(
-      (assetName) => createNewCheckbox(assetName, map, mapDiv));
+      (assetName) => createNewCheckboxAndAttachAssetListener(assetName, mapDiv));
+  createCheckboxForUserFeatures(mapDiv);
   // score checkbox gets checked during initializeScoreLayer
-  createNewCheckbox(scoreLayerName, map, mapDiv);
+  createNewCheckboxAndAttachAssetListener(scoreLayerName, mapDiv);
+}
+
+function createNewCheckbox(name, mapDiv) {
+  const newBox = document.createElement('input');
+  newBox.type = 'checkbox';
+  newBox.id = getCheckBoxId(name);
+  newBox.checked = true;
+  mapDiv.parentNode.appendChild(newBox);
+  const label = document.createElement('label');
+  label.for = name;
+  label.innerHTML = name;
+  mapDiv.parentNode.appendChild(label);
+  return newBox;
 }
 
 /**
  * Creates a new checkbox for the given asset.
  *
  * @param {string} assetName
- * @param {google.maps.Map} map main map
  * @param {Element} mapDiv
  */
-function createNewCheckbox(assetName, map, mapDiv) {
-  const newBox = document.createElement('input');
-  newBox.type = 'checkbox';
-  newBox.id = assetName;
-  if (assets[assetName]) {
-    newBox.checked = true;
+function createNewCheckboxAndAttachAssetListener(assetName, mapDiv) {
+  const newBox = createNewCheckbox(assetName, mapDiv);
+  if (!assets[assetName]) {
+    newBox.checked = false;
   }
   newBox.onclick = () => {
     if (newBox.checked) {
@@ -130,11 +142,12 @@ function createNewCheckbox(assetName, map, mapDiv) {
       toggleLayerOff(assetName);
     }
   };
-  mapDiv.parentNode.appendChild(newBox);
-  const label = document.createElement('label');
-  label.for = assetName;
-  label.innerHTML = assetName;
-  mapDiv.parentNode.appendChild(label);
+}
+
+function createCheckboxForUserFeatures(mapDiv) {
+  const newBox = createNewCheckbox('user features', mapDiv);
+  newBox.checked = true;
+  newBox.onclick = () => setUserFeatureVisibility(newBox.checked);
 }
 
 /**
@@ -168,5 +181,9 @@ function initializeAssetLayers(map) {
  */
 function initializeScoreLayer(map, layer) {
   addLayerFromGeoJsonPromise(layer, scoreLayerName, scoreIndex);
-  document.getElementById(scoreLayerName).checked = true;
+  document.getElementById(getCheckBoxId(scoreLayerName)).checked = true;
+}
+
+function getCheckBoxId(baseName) {
+  return baseName + '-checkbox';
 }

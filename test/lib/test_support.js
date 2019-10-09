@@ -1,7 +1,8 @@
-import {Builder} from 'selenium-webdriver';
+import {Builder, until} from 'selenium-webdriver';
 import {Options} from 'selenium-webdriver/chrome';
 
 export {
+  startGet,
   loadPage,
   randomString,
   setTimeouts,
@@ -23,9 +24,13 @@ const hostAddress = 'http://127.0.0.1:8080';
  */
 async function loadPage(driverPromise) {
   const driver = await driverPromise;
-  driver.get(hostAddress);
+  await startGet(driver);
   await waitForLoad(driver);
   return driver;
+}
+
+async function startGet(driver) {
+  driver.get(hostAddress);
 }
 
 /**
@@ -40,12 +45,12 @@ async function waitForLoad(driver) {
   await driver.findElement({
     xpath: '//div[@id="mapContainer-loader"][contains(@style,"opacity: 1")]',
   });
-  driver.findElement({
+  driver.wait(until.elementLocated({
     xpath: '//div[@id="tableContainer-loader"][contains(@style,"opacity: 0")]',
-  });
-  await driver.findElement({
+  }), 60000);
+  driver.wait(until.elementLocated({
     xpath: '//div[@id="mapContainer-loader"][contains(@style,"opacity: 0")]',
-  });
+  }), 60000);
 }
 
 const chromeOptions = new Options().addArguments(['--headless']);
@@ -96,7 +101,7 @@ async function setUp(testFramework, testCookieValue = randomString()) {
  */
 function setTimeouts(driver) {
   driver.manage().setTimeouts(
-      {implicit: 10000, pageLoad: 10000, script: 10000});
+      {implicit: 2000, pageLoad: 10000, script: 10000});
 }
 
 /**

@@ -1,7 +1,15 @@
 import * as firebase from 'firebase';
 import {until} from 'selenium-webdriver';
+const util = require('util');
+const fs = require('fs');
+const writeFile = util.promisify(fs.writeFile);
 
-import {randomString, setTimeouts} from '../lib/test_support.js';
+function takeScreenshot(driver, file){
+  return driver.takeScreenshot()
+      .then(image => writeFile(file, image, 'base64'));
+}
+
+import {randomString, setTimeouts, startGet} from '../lib/test_support.js';
 
 const hackyWaitTime = 200;
 const notes = 'Sphinx of black quartz, judge my vow';
@@ -24,6 +32,7 @@ const db = firebase.firestore();
 
 describe('Integration tests for drawing polygons', function() {
   const testCookieValue = randomString();
+  // Don't wait for the load, we don't need it for drawing polygons.
   const driverPromise = setUp(this, testCookieValue);
   const userShapes = db.collection('usershapes-test-' + testCookieValue);
   // Delete all polygons in the test database.
@@ -43,7 +52,8 @@ describe('Integration tests for drawing polygons', function() {
   after(() => firebase.app().delete());
 
   it('Draws a polygon and edits its notes', async () => {
-    const driver = await loadPage(driverPromise);
+    const driver = await driverPromise;
+    startGet(driver);
     await drawPolygonAndClickOnIt(driver);
     await pressPolygonButton('edit', driver);
     await driver.findElement({className: 'notes'}).sendKeys(notes);
@@ -52,7 +62,8 @@ describe('Integration tests for drawing polygons', function() {
   });
 
   it('Draws a polygon and deletes it', async () => {
-    const driver = await loadPage(driverPromise);
+    const driver = await driverPromise;
+    startGet(driver);
     await drawPolygonAndClickOnIt(driver);
     await pressPolygonButton('edit', driver);
     await driver.findElement({className: 'notes'}).sendKeys(notes);
@@ -64,7 +75,8 @@ describe('Integration tests for drawing polygons', function() {
   });
 
   it('Draws a polygon and almost deletes it, then deletes', async () => {
-    const driver = await loadPage(driverPromise);
+    const driver = await driverPromise;
+    const getPromise = startGet(driver);
     await drawPolygonAndClickOnIt(driver);
     await pressPolygonButton('edit', driver);
     await driver.findElement({className: 'notes'}).sendKeys(notes);
@@ -76,6 +88,8 @@ describe('Integration tests for drawing polygons', function() {
     // TODO(#18): wait for a notification that all writes have completed instead
     // of a hardcoded wait.
     await driver.sleep(1000);
+    // Make sure page started loading, at least.
+    await getPromise;
     await loadPage(driverPromise);
     // Polygon is still there.
     await clickOnDrawnPolygon(driver);
@@ -89,14 +103,15 @@ describe('Integration tests for drawing polygons', function() {
     await clickOnDrawnPolygon(driver);
     await assertExactlyPopUps(0, notes, driver);
     await driver.sleep(1000);
-    loadPage(driverPromise);
+    await loadPage(driverPromise);
     // Polygon is gone.
     await clickOnDrawnPolygon(driver);
     await assertExactlyPopUps(0, notes, driver);
   });
 
   it('Draws a polygon, clicks it, closes its info box', async () => {
-    const driver = await loadPage(driverPromise);
+    const driver = await driverPromise;
+    startGet(driver);
     await drawPolygonAndClickOnIt(driver);
     await pressPolygonButton('edit', driver);
     await driver.findElement({className: 'notes'}).sendKeys(notes);
@@ -111,7 +126,8 @@ describe('Integration tests for drawing polygons', function() {
   });
 
   it('Draws a polygon, almost closes while editing', async () => {
-    const driver = await loadPage(driverPromise);
+    const driver = await driverPromise;
+    startGet(driver);
     await drawPolygonAndClickOnIt(driver);
     await pressPolygonButton('edit', driver);
     await driver.findElement({className: 'notes'}).sendKeys(notes);
@@ -124,7 +140,8 @@ describe('Integration tests for drawing polygons', function() {
   });
 
   it('Draws a polygon, closes while editing', async () => {
-    const driver = await loadPage(driverPromise);
+    const driver = await driverPromise;
+    startGet(driver);
     await drawPolygonAndClickOnIt(driver);
     await pressPolygonButton('edit', driver);
     await driver.findElement({className: 'notes'}).sendKeys(notes);
@@ -139,50 +156,143 @@ describe('Integration tests for drawing polygons', function() {
             .isDisplayed();
     expect(isVisible).to.be.false;
   });
+
+  it('Tests hiding functionality', async () => {
+    const driver = await driverPromise;
+    startGet(driver);
+    // const driver = await loadPage(driverPromise);
+    // Draw a polygon and verify that it goes away when box is unchecked.
+    await drawPolygonAndClickOnIt(driver);
+    await pressPolygonButton('edit', driver);
+    await driver.findElement({className: 'notes'}).sendKeys(notes);
+    await pressPolygonButton('save', driver);
+    console.log('saved');
+    await assertNotesVisibleStatus(true, driver);
+    console.log('visible');
+    const beforeClick1 =
+        await driver.findElement({id: 'user features-checkbox'}).isSelected();
+    expect(beforeClick1).to.be.true;
+    await driver.findElement({id: 'user features-checkbox'}).click();
+    await assertUserFeaturesCheckboxCheckedStatus(driver, false);
+    await assertNotesVisibleStatus(false, driver);
+    // Notes is invisible even if we click on the polygon, so it's really gone.
+    // Use an offset because there's some weirdness around selecting block
+    // groups that then suppress clicks.
+    await clickOnDrawnPolygon(driver, -10);
+    await assertNotesVisibleStatus(false, driver);
+
+    // Check box again and verify that notes box can now be brought up.
+    await driver.findElement({id: 'user features-checkbox'}).click();
+    await assertUserFeaturesCheckboxCheckedStatus(driver, true);
+    // Notes not visible yet.
+    await assertNotesVisibleStatus(false, driver);
+    // await driver.findElement({css: '[title="Add a marker"]'}).click();
+    await clickOnDrawnPolygon(driver);
+    console.log('new saved');
+    try {
+      await assertNotesVisibleStatus(true, driver);
+    } catch (err) {
+      await takeScreenshot(driver, 'screenshot.png');
+      throw err;
+    }
+    console.log('now visible');
+
+    // Try to hide user features in the middle of editing: will fail.
+    await pressPolygonButton('edit', driver);
+    await driver.findElement({id: 'user features-checkbox'}).click()
+        .then(async () => {
+          await driver.wait(until.alertIsPresent());
+          await driver.switchTo().alert().accept();
+        });
+    await assertUserFeaturesCheckboxCheckedStatus(driver, true);
+    // Confirm that save is still around to be pressed.
+    await pressPolygonButton('save', driver);
+
+    // After a save, the hide is successful.
+    await driver.findElement({id: 'user features-checkbox'}).click();
+    await assertUserFeaturesCheckboxCheckedStatus(driver, false);
+
+    // With the box unchecked, draw a new polygon, below the first one, and set
+    // its notes, but don't finish editing.
+    await drawPolygonAndClickOnIt(driver, 50);
+    await pressPolygonButton('edit', driver);
+    await driver.findElement({className: 'notes'}).sendKeys('new notes');
+    // Try to re-check the box. It will fail because we're editing.
+    await driver.findElement({id: 'user features-checkbox'}).click()
+        .then(async () => {
+          await driver.wait(until.alertIsPresent());
+          await driver.switchTo().alert().accept();
+        });
+    await assertUserFeaturesCheckboxCheckedStatus(driver, false);
+
+    // Save the new notes and check the box, this time it succeeds.
+    await pressPolygonButton('save', driver);
+    await driver.findElement({id: 'user features-checkbox'}).click();
+    await assertUserFeaturesCheckboxCheckedStatus(driver, true);
+
+    // We can click on the old polygon and view its notes,
+    await clickOnDrawnPolygon(driver);
+    await assertNotesVisibleStatus(true, driver, notes);
+    // And the new polygon and view its notes.
+    await clickOnDrawnPolygon(driver, 50);
+    await assertNotesVisibleStatus(true, driver, 'new notes');
+
+    // Now hide both polygons, and verify that they're really gone.
+    await driver.findElement({id: 'user features-checkbox'}).click();
+    await assertUserFeaturesCheckboxCheckedStatus(driver, false);
+    await assertNotesVisibleStatus(false, driver, notes);
+    await assertNotesVisibleStatus(false, driver, 'new notes');
+    await clickOnDrawnPolygon(driver, 50);
+    await assertNotesVisibleStatus(false, driver, 'new notes');
+  });
 });
 
 /**
  * Visit page, draw a new polygon on the map, click inside it.
  * @param {WebDriver} driver
+ * @param {number} offset Number to add to y coordinate (shifting down).
  * */
-async function drawPolygonAndClickOnIt(driver) {
+async function drawPolygonAndClickOnIt(driver, offset=0) {
   await driver.findElement({css: '[title="Draw a shape"]'}).click();
+  const mapPromise = driver.findElement({className: 'map'});
   await driver.actions()
-      .move({x: 150, y: 250})
+      .move({x: -100, y: -50 + offset, origin: mapPromise})
       .click()
       .pause(hackyWaitTime)
-      .move({x: 400, y: 150})
+      .move({x: 100, y: -50 + offset, origin: mapPromise})
       .click()
       .pause(hackyWaitTime)
-      .move({x: 450, y: 260})
+      .move({x: 0, y: -100 + offset, origin: mapPromise})
       .click()
       .pause(hackyWaitTime)
-      .move({x: 150, y: 250})
+      .move({x: -100, y: -50 + offset, origin: mapPromise})
       .click()
       .perform();
   await driver.findElement({css: '[title="Stop drawing"]'}).click();
   await driver.sleep(hackyWaitTime);
   // click to trigger pop up.
-  await driver.actions().move({x: 170, y: 250}).click().perform();
+  await clickOnDrawnPolygon(driver, offset);
 }
 
 /**
  * Click on the map inside the test-drawn polygon to trigger a pop-up if it's
  * there.
  * @param {WebDriver} driver
+ * @param {number} offset Number to add to y coordinate (shifting down).
  */
-async function clickOnDrawnPolygon(driver) {
-  await driver.actions().move({x: 170, y: 250}).click().perform();
+async function clickOnDrawnPolygon(driver, offset=0) {
+  await driver.actions().move({x: 0, y: -90 + offset, origin: driver.findElement({className: 'map'})}).click().perform();
 }
 
 /**
- * Clicks a button inside the map with the given text.
+ * Clicks a non-hidden button inside the map with the given text.
  * @param {string} button text of html button we want to click
  * @param {WebDriver} driver
  * @return {Promise} promise to wait for
  */
 function pressPolygonButton(button, driver) {
-  return driver.findElement({xpath: '//button[.="' + button + '"]'}).click();
+  return driver.findElement({xpath: '//button[.="' + button
+        + '" and not(ancestor::div[contains(@style,"visibility: hidden")])]'}).click();
 }
 
 /**
@@ -194,12 +304,12 @@ function pressPolygonButton(button, driver) {
  * @return {Promise} promise to wait on
  */
 function pressPolygonButtonAndReactToConfirm(button, accept, driver) {
-  return pressPolygonButton(button, driver).then(async () => {
-    await driver.wait(until.alertIsPresent());
+  return pressPolygonButton(button, driver).then(() => {
+    const waitPromise = driver.wait(until.alertIsPresent());
     if (accept) {
-      await driver.switchTo().alert().accept();
+      return waitPromise.then(() => driver.switchTo().alert().accept());
     } else {
-      await driver.switchTo().alert().dismiss();
+      return waitPromise.then(() => driver.switchTo().alert().dismiss());
     }
   });
 }
@@ -216,4 +326,16 @@ async function assertExactlyPopUps(expectedFound, notes, driver) {
   const elts = await driver.findElements({xpath: '//div[.="' + notes + '"]'});
   expect(elts).has.length(expectedFound);
   await setTimeouts(driver);
+}
+
+async function assertNotesVisibleStatus(visible, driver, expectedNotes = notes) {
+  const value =
+      await driver.findElement({xpath: '//div[.="' + expectedNotes + '"]'})
+          .isDisplayed();
+  expect(value).to.eq(visible);
+}
+
+async function assertUserFeaturesCheckboxCheckedStatus(driver, checked) {
+  const status = await driver.findElement({id: 'user features-checkbox'}).isSelected();
+  expect(status).to.equal(checked);
 }

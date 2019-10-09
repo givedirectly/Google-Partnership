@@ -73,6 +73,10 @@ function setUpPopup() {
     this.containerDiv.style.visibility = 'hidden';
   };
 
+  Popup.prototype.isVisible = function() {
+    return this.containerDiv.style.visibility === 'visible';
+  };
+
   Popup.prototype.show = function() {
     this.containerDiv.style.visibility = 'visible';
   };
@@ -92,8 +96,8 @@ function setUserFeatureVisibility(visibility) {
     return false;
   }
   for (const popup of allPopups) {
-    if (!visibility) {
-      popup.hide();
+    if (!visibility && popup.isVisible()) {
+      closeCleanup(popup.polygon, popup);
     }
     popup.polygon.setVisible(visibility);
   }
@@ -121,7 +125,7 @@ function createPopupHtml(popup, notes, map) {
     if (confirm('Delete region?')) {
       polygon.setMap(null);
       popup.setMap(null);
-      allPopups.remove(popup);
+      allPopups.delete(popup);
       userRegionData.get(polygon).update(polygon);
     }
   };
@@ -224,7 +228,6 @@ let openEdits = 0;
  * @param {Popup} popup
  */
 function closeCleanup(polygon, popup) {
-  openEdits--;
   popup.hide();
   addPopUpListener(polygon, popup);
 }
