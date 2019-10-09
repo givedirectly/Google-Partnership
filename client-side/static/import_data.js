@@ -105,20 +105,20 @@ disasters.set(
  */
 function countDamageAndBuildings(feature) {
   const resources = disasters.get(disaster);
-  const damage = ee.FeatureCollection(resources.damageAsset);
   const damageLevels = ee.List(damageLevelsList);
   const damageFilters =
       damageLevels.map((type) => ee.Filter.eq(crowdAiDamageKey, type));
   const thisAsCollection = ee.FeatureCollection(feature);
-  const blockDamage = ee.Join.simple().apply(
+  const damage = ee.FeatureCollection(resources.damageAsset);
+  const blockDamage = ee.FeatureCollection(ee.Join.simple().apply(
       damage, thisAsCollection,
-      ee.Filter.intersects({leftField: '.geo', rightField: '.geo'}));
+      ee.Filter.intersects({leftField: '.geo', rightField: '.geo'})));
   const totalBuildings =
-      ee.Join.simple()
+      ee.Number(ee.Join.simple()
           .apply(
               ee.FeatureCollection(resources.buildingsAsset), thisAsCollection,
               ee.Filter.intersects({leftField: '.geo', rightField: '.geo'}))
-          .size();
+          .size());
   const attrDict = ee.Dictionary.fromLists(
       damageLevels,
       damageFilters.map((type) => blockDamage.filter(type).size()));
@@ -253,13 +253,8 @@ function run() {
               joinedSnapIncome.map(addTractInfo), svi,
               ee.Filter.equals({leftField: tractTag, rightField: geoidTag}))
           .map(combineWithSvi);
-  const data = joinedSnapIncomeSVI.limit(25).map(countDamageAndBuildings);
 
-  // data.first().evaluate((yes, no) => {
-  //   console.log(yes);
-  //   console.log(no);
-  //   console.log('data');
-  // })
+  const data = joinedSnapIncomeSVI.limit(25).map(countDamageAndBuildings);
 
   const assetName = disaster + '-data-ms-as-nod';
   // TODO(#61): parameterize ee user account to write assets to or make GD
