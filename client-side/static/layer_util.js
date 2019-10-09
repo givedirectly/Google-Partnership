@@ -128,7 +128,7 @@ function addLayerFromFeatures(layerMapValue, assetName) {
   layerArray[layerMapValue.index] = new deck.GeoJsonLayer({
     id: assetName,
     data: layerMapValue.data,
-    pointRadiusScale: 500,
+    pointRadiusScale: 100,
     // TODO(janakr): deck.gl docs claim that the "color" property should
     // automatically color the features, but it doesn't appear to work:
     // https://deck.gl/#/documentation/deckgl-api-reference/layers/geojson-layer?section=getelevation-function-number-optional-transition-enabled

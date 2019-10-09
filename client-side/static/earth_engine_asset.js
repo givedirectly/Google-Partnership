@@ -79,9 +79,40 @@ function colorPathofStormRadiiLayer(feature) {
       [255 - opacity, 255 - opacity, 255 - opacity, 40];
 }
 
+/**
+ * Color the feature with FEMA assistance specific logic.
+ *
+ * @param {GeoJSON.Feature} feature
+ */
+function colorFemaAssistanceLayer(feature) {
+  // Color 'public assistance' as yellow, and 'individual and public assistance'
+  // as red.
+  const color = feature.properties['Designatio'] == 'PA' ? [255, 255, 51, 40] :
+    [220, 20, 60, 40];
+  feature.properties['color'] = color;
+}
+
+/**
+ * Color the feature with FEMA assistance specific logic.
+ *
+ * @param {GeoJSON.Feature} feature
+ */
+function colorDamageLayer(feature) {
+  switch (feature.properties['descriptio']) {
+    case 'major-damage':
+      feature.properties['color'] = [255, 0, 0, 40];
+      break;
+    case 'minor-damage':
+      feature.properties['color'] = [255, 165, 0, 40];
+      break;
+  }
+}
+
 // TODO: Store these and allow users to change/set these fields on import page.
-const harveyDamgeCrowdAIFormat =
-    new EarthEngineAsset('FeatureCollection', 'Harvey Damge CrowdAI', true);
+const harveyDamgeCrowdAIFormat = new EarthEngineAsset(
+    'FeatureCollection', 'Harvey Damge CrowdAI', true, (feature) => {
+      colorDamageLayer(feature);
+    });
 const sviData =
     new EarthEngineAsset('FeatureCollection', 'SVI Data', false, (feature) => {
       colorSVILayer(feature);
@@ -90,10 +121,15 @@ const pathOfStormRadii = new EarthEngineAsset(
     'FeatureCollection', 'Path of Storm Radii', false, (feature) => {
       colorPathofStormRadiiLayer(feature);
     });
+const femaVisits = new EarthEngineAsset(
+    'FeatureCollection', 'FEMA Assistance', false, (feature) => {
+      colorFemaAssistanceLayer(feature);
+    });
 
 // List of known assets
 const assets = {
   'users/juliexxia/harvey-damage-crowdai-format': harveyDamgeCrowdAIFormat,
   'users/ruthtalbot/harvey-SVI': sviData,
   'users/ruthtalbot/harvey-pathofstorm-radii': pathOfStormRadii,
+  'users/ruthtalbot/fema-visits-polygon': femaVisits,
 };
