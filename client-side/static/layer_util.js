@@ -1,5 +1,6 @@
 import createError from './create_error.js';
 import {mapContainerId} from './dom_constants.js';
+import {assets} from './earth_engine_asset.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 
 export {
@@ -99,7 +100,10 @@ function toggleLayerOff(assetName) {
  * @param {GeoJSON.Feature} feature
  * @return {Array} RGBA array
  */
-function getColorOfFeature(feature) {
+function getColorOfFeature(feature, temp, assetName) {
+  if (assets[assetName] && assets[assetName].getColorFunction()) {
+    assets[assetName].getColorFunction()(feature);
+  }
   return showColor(feature.properties['color']);
 }
 
@@ -127,7 +131,8 @@ function addLayerFromFeatures(layerMapValue, assetName) {
     // TODO(janakr): deck.gl docs claim that the "color" property should
     // automatically color the features, but it doesn't appear to work:
     // https://deck.gl/#/documentation/deckgl-api-reference/layers/geojson-layer?section=getelevation-function-number-optional-transition-enabled
-    getFillColor: getColorOfFeature,
+    getFillColor: (feature, temp) =>
+        getColorOfFeature(feature, temp, assetName),
     visible: layerMapValue.displayed,
   });
   redrawLayers();
@@ -161,6 +166,14 @@ function addLayer(assetName, index) {
       assetName, index);
 }
 
+// addLayerFromGeoJsonPromise(
+//     convertEeObjectToPromise(
+//         assets[assetName].getAsset(assetName)).then((featureCollection) => {
+//   if (assets[assetName].getColorFunction()) {
+//     for (const feature of featureCollection.features) {
+//     assets[assetName].getColorFunction()(feature);
+//   }
+// }
 /**
  * Asynchronous wrapper for addLayerFromFeatures that takes in a Promise coming
  * from an ee.List of Features to avoid blocking on the result. This also

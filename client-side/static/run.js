@@ -1,6 +1,7 @@
 import {clickFeature, selectHighlightedFeatures} from './click_feature.js';
 import {mapContainerId, tableContainerId} from './dom_constants.js';
 import {drawTable} from './draw_table.js';
+import {assets} from './earth_engine_asset.js';
 import {highlightFeatures} from './highlight_features.js';
 import {addLayer, addLayerFromGeoJsonPromise, addNullLayer, convertEeObjectToPromise, scoreLayerName, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from './layer_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
@@ -12,11 +13,6 @@ export {
   createAndDisplayJoinedData,
   run as default,
 
-};
-
-// Dictionary of known assets -> whether they should be displayed by default
-const assets = {
-  'users/juliexxia/harvey-damage-crowdai-format': true,
 };
 
 // TODO: infer this from disaster const in import_data.js?
@@ -103,10 +99,24 @@ function createAssetCheckboxes(map) {
   // TODO: these probably shouldn't just sit at the bottom of the page - move to
   // a better place.
   const mapDiv = document.getElementById(mapContainerId);
-  Object.keys(assets).forEach(
-      (assetName) => createNewCheckbox(assetName, map, mapDiv));
+  Object.keys(assets).forEach((assetName) => {
+    createNewCheckbox(assetName, map, mapDiv);
+    maybeCheckCheckbox(assetName);
+  });
   // score checkbox gets checked during initializeScoreLayer
   createNewCheckbox(scoreLayerName, map, mapDiv);
+}
+
+/**
+ * Maybe initializes checkboxes as checked depending on whether or not the asset
+ * should be displayed by default.
+ *
+ * @param {string} assetName
+ */
+function maybeCheckCheckbox(assetName) {
+  if (assets[assetName].shouldDisplayOnLoad()) {
+    document.getElementById(assetName).checked = true;
+  }
 }
 
 /**
@@ -120,9 +130,6 @@ function createNewCheckbox(assetName, map, mapDiv) {
   const newBox = document.createElement('input');
   newBox.type = 'checkbox';
   newBox.id = assetName;
-  if (assets[assetName]) {
-    newBox.checked = true;
-  }
   newBox.onclick = () => {
     if (newBox.checked) {
       toggleLayerOn(assetName);
@@ -133,7 +140,8 @@ function createNewCheckbox(assetName, map, mapDiv) {
   mapDiv.parentNode.appendChild(newBox);
   const label = document.createElement('label');
   label.for = assetName;
-  label.innerHTML = assetName;
+  label.innerHTML =
+      assets[assetName] ? assets[assetName].getDisplayName() : assetName;
   mapDiv.parentNode.appendChild(label);
 }
 
@@ -149,7 +157,7 @@ function initializeAssetLayers(map) {
 
   Object.keys(assets).forEach((assetName, index) => {
     // TODO(juliexxia): generalize for ImageCollections (and Features/Images?)
-    if (assets[assetName]) {
+    if (assets[assetName].shouldDisplayOnLoad()) {
       addLayer(assetName, index);
     } else {
       addNullLayer(assetName, index);
