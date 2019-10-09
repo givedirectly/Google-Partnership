@@ -11,7 +11,7 @@ class EarthEngineAsset {
    * @param {string} type
    * @param {string} displayName
    * @param {boolean} displayOnLoad
-   * @param {Function} colorFunction
+   * @param {?Function} colorFunction
    **/
   constructor(type, displayName, displayOnLoad, colorFunction) {
     this.type = type;
@@ -32,7 +32,7 @@ class EarthEngineAsset {
    * Returns the function to color the asset. Null if asset doesn't
    * need styling or is styled elsewhere.
    *
-   * @return {Function}
+   * @return {?Function}
    */
   getColorFunction() {
     return this.colorFunction;
@@ -83,12 +83,12 @@ function colorPathofStormRadiiLayer(feature) {
 const harveyDamgeCrowdAIFormat =
     new EarthEngineAsset('FeatureCollection', 'Harvey Damge CrowdAI', true);
 const sviData = new EarthEngineAsset(
-    'FeatureCollection', 'SVI Data', false, {}, (feature) => {
-      colorSVILayer(feature);
+    'FeatureCollection', 'SVI Data', false, (feature) => {
+      colorSVILayer(feature)
     });
 const pathOfStormRadii = new EarthEngineAsset(
-    'FeatureCollection', 'Path of Storm Radii', false, {}, (feature) => {
-      colorPathofStormRadiiLayer(feature);
+    'FeatureCollection', 'Path of Storm Radii', false, (feature) => {
+      colorPathofStormRadiiLayer(feature)
     });
 
 // List of known assets
