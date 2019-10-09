@@ -2,12 +2,12 @@ import {Builder, until} from 'selenium-webdriver';
 import {Options} from 'selenium-webdriver/chrome';
 
 export {
-  startGet,
   loadPage,
   randomString,
   setTimeouts,
   setUp,
   setValueOfField,
+  startGet,
 };
 
 // We use the ip address rather than 'localhost' because Selenium has issues
@@ -45,12 +45,18 @@ async function waitForLoad(driver) {
   await driver.findElement({
     xpath: '//div[@id="mapContainer-loader"][contains(@style,"opacity: 1")]',
   });
-  driver.wait(until.elementLocated({
-    xpath: '//div[@id="tableContainer-loader"][contains(@style,"opacity: 0")]',
-  }), 60000);
-  driver.wait(until.elementLocated({
-    xpath: '//div[@id="mapContainer-loader"][contains(@style,"opacity: 0")]',
-  }), 60000);
+  driver.wait(
+      until.elementLocated({
+        xpath:
+            '//div[@id="tableContainer-loader"][contains(@style,"opacity: 0")]',
+      }),
+      60000);
+  driver.wait(
+      until.elementLocated({
+        xpath:
+            '//div[@id="mapContainer-loader"][contains(@style,"opacity: 0")]',
+      }),
+      60000);
 }
 
 const chromeOptions = new Options().addArguments(['--headless']);
@@ -100,8 +106,7 @@ async function setUp(testFramework, testCookieValue = randomString()) {
  * @param {WebDriver} driver
  */
 function setTimeouts(driver) {
-  driver.manage().setTimeouts(
-      {implicit: 2000, pageLoad: 10000, script: 10000});
+  driver.manage().setTimeouts({implicit: 2000, pageLoad: 10000, script: 10000});
 }
 
 /**

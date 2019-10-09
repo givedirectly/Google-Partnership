@@ -5,7 +5,7 @@ import {highlightFeatures} from './highlight_features.js';
 import {addLayer, addLayerFromGeoJsonPromise, addNullLayer, convertEeObjectToPromise, scoreLayerName, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from './layer_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {processUserRegions} from './polygon_draw.js';
-import {setUserFeatureVisibility} from "./popup.js";
+import {setUserFeatureVisibility} from './popup.js';
 import processJoinedData from './process_joined_data.js';
 import {createToggles, initialDamageThreshold, initialPovertyThreshold, initialPovertyWeight} from './update.js';
 
@@ -96,7 +96,8 @@ function createAndDisplayJoinedData(
 }
 
 /**
- * Creates checkboxes for all known assets, user features, and the score overlay.
+ * Creates checkboxes for all known assets, user features, and the score
+ * overlay.
  *
  * @param {google.maps.Map} map main map
  */
@@ -105,7 +106,8 @@ function createAssetCheckboxes(map) {
   // a better place.
   const mapDiv = document.getElementById(mapContainerId);
   Object.keys(assets).forEach(
-      (assetName) => createNewCheckboxAndAttachAssetListener(assetName, mapDiv));
+      (assetName) =>
+          createNewCheckboxAndAttachAssetListener(assetName, mapDiv));
   createCheckboxForUserFeatures(mapDiv);
   // score checkbox gets checked during initializeScoreLayer
   createNewCheckboxAndAttachAssetListener(scoreLayerName, mapDiv);
