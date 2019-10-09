@@ -100,10 +100,10 @@ function colorFemaAssistanceLayer(feature) {
 function colorDamageLayer(feature) {
   switch (feature.properties['descriptio']) {
     case 'major-damage':
-      feature.properties['color'] = [255, 0, 0, 40];
+      feature.properties['color'] = [255, 0, 0, 200];
       break;
     case 'minor-damage':
-      feature.properties['color'] = [255, 165, 0, 40];
+      feature.properties['color'] = [255, 165, 0, 200];
       break;
   }
 }
