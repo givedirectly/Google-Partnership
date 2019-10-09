@@ -166,14 +166,6 @@ function addLayer(assetName, index) {
       assetName, index);
 }
 
-// addLayerFromGeoJsonPromise(
-//     convertEeObjectToPromise(
-//         assets[assetName].getAsset(assetName)).then((featureCollection) => {
-//   if (assets[assetName].getColorFunction()) {
-//     for (const feature of featureCollection.features) {
-//     assets[assetName].getColorFunction()(feature);
-//   }
-// }
 /**
  * Asynchronous wrapper for addLayerFromFeatures that takes in a Promise coming
  * from an ee.List of Features to avoid blocking on the result. This also
