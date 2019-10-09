@@ -40,7 +40,7 @@ available. However, if you work for Google and get a failed command when you run
   Google-internal machines. If you have difficulty, you can [download a latest
   version](https://download-chromium.appspot.com) and unzip it. In this
   case, you will have to change `--browser chromium` to `--browser
-  path/to/file/in/extracted/zip/named/chrome-wrapper` in all later commands and
+  /path/to/file/in/extracted/zip/named/chrome-wrapper` in all later commands and
   in your .git/hooks/pre-push file below.
 
 * Test changes.
