@@ -93,7 +93,7 @@ function colorFemaAssistanceLayer(feature) {
 }
 
 /**
- * Color the feature with FEMA assistance specific logic.
+ * Color the feature with damage specific logic.
  *
  * @param {GeoJSON.Feature} feature
  */
