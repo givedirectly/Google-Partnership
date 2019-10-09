@@ -39,6 +39,8 @@ function startGet(driver) {
   return driver.get(hostAddress);
 }
 
+const loadingTimeout = 60000;
+
 /**
  * Waits for all loading to finish.
  *
@@ -56,13 +58,13 @@ async function waitForLoad(driver) {
         xpath:
             '//div[@id="tableContainer-loader"][contains(@style,"opacity: 0")]',
       }),
-      60000);
+      loadingTimeout);
   driver.wait(
       until.elementLocated({
         xpath:
             '//div[@id="mapContainer-loader"][contains(@style,"opacity: 0")]',
       }),
-      60000);
+      loadingTimeout);
 }
 
 const chromeOptions = new Options().addArguments(['--headless']);
@@ -77,7 +79,7 @@ const chromeOptions = new Options().addArguments(['--headless']);
  */
 async function setUp(testFramework, testCookieValue = randomString()) {
   // 100 seconds to run an individual test case.
-  testFramework.timeout(100000);
+  testFramework.timeout(200000);
   let resolveFunctionForDriver = null;
   const driverPromise = new Promise((resolve) => {
     resolveFunctionForDriver = resolve;
@@ -106,13 +108,13 @@ async function setUp(testFramework, testCookieValue = randomString()) {
 }
 
 /**
- * Timeout after 10 seconds if page isn't loaded, script isn't run, or element
- * on page isn't found.
+ * Timeout after 60 seconds if page isn't loaded or script isn't run, and 2 if
+ * element on page isn't found.
  *
  * @param {WebDriver} driver
  */
 function setTimeouts(driver) {
-  driver.manage().setTimeouts({implicit: 2000, pageLoad: 10000, script: 10000});
+  driver.manage().setTimeouts({implicit: 2000, pageLoad: 60000, script: 60000});
 }
 
 /**
