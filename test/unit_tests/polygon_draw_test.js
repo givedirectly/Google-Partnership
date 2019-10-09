@@ -91,13 +91,14 @@ describe('Unit test for ShapeData', () => {
   });
 
   it('Update while update pending', () => {
-    const underTest = new ShapeData('my_id', 'my notes');
+    const underTest = new ShapeData('my_id', 'my notes', 0);
     const mockPolygon = makeMockPolygon();
     const records = [];
     const ids = [];
     const setThatTriggersNewUpdate = {
       set: (record) => {
-        underTest.update(mockPolygon, 'racing notes');
+        underTest.update(mockPolygon, () => {}, 'racing notes');
+        expect(underTest.damage).to.eql(1);
         expect(underTest.notes).to.eql('racing notes');
         expect(underTest.state).to.eql(ShapeData.State.QUEUED_WRITE);
         records.push(record);

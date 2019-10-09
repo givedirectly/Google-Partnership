@@ -36,7 +36,7 @@ class ShapeData {
    *
    * @param {String} id Firestore id.
    * @param {String} notes User-entered notes.
-   * @param {String} damage
+   * @param {Integer} damage
    */
   constructor(id, notes, damage) {
     this.id = id;
@@ -86,7 +86,7 @@ class ShapeData {
       }
     };
 
-    // TODO: don't recompute size if polygon hasn't changed. I believe this is
+    // TODO: don't recompute size if polygon hasn't changed. I think this is
     // non-trivial because we need to actually compare the geopoints. We could
     // also pass in a boolean about whether the polygon has changed or not but
     // that feels buggy to me.

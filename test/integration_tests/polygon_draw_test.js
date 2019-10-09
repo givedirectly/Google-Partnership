@@ -1,3 +1,7 @@
+const util = require('util');
+const fs = require('fs');
+const writeFile = util.promisify(fs.writeFile)
+
 import * as firebase from 'firebase';
 import {until} from 'selenium-webdriver';
 
@@ -48,6 +52,9 @@ describe('Integration tests for drawing polygons', function() {
     await pressPolygonButton('edit', driver);
     await driver.findElement({className: 'notes'}).sendKeys(notes);
     await pressPolygonButton('save', driver);
+    // await driver.sleep(2000);
+    // let image = await driver.takeScreenshot();
+    // await writeFile('screenshot.png', image, 'base64');
     await driver.findElement({xpath: '//div[.="' + notes + '"]'});
   });
 

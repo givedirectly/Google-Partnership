@@ -95,7 +95,7 @@ function setUpPopup() {
  *
  * @param {Popup} popup
  * @param {string} notes
- * @param {Integer} damage
+ * @param {String|Integer} damage
  * @param {google.maps.Map} map
  */
 function createPopupHtml(popup, notes, damage, map) {
@@ -105,6 +105,9 @@ function createPopupHtml(popup, notes, damage, map) {
 
   const damageDiv = document.createElement('div');
   damageDiv.innerText = 'damage points: ' + damage;
+  if (damage === 'calculating') {
+    damageDiv.style.color = 'grey';
+  }
 
   const notesDiv = document.createElement('div');
   notesDiv.innerText = notes;
@@ -215,9 +218,9 @@ function makeUneditable(polygon, popup, notes, damage, map) {
  * @param {Element} damageDiv
  */
 function saveNewData(polygon, popup, notes, map, damageDiv) {
-  damageDiv.innerText = 'damage points: calculating';
+  makeUneditable(polygon, popup, notes, 'calculating', map);
   userRegionData.get(polygon).update(
-      polygon, (damage) => makeUneditable(polygon, popup, notes, damage, map),
+      polygon, (damage) => createPopupHtml(popup, notes, damage, map),
       notes);
   // update where the popup pops up to match any polygon shape changes
   popup.updatePosition();
