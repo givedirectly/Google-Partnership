@@ -114,9 +114,9 @@ function createAssetCheckboxes(map) {
  *
  * @param {string} assetName
  * @param {google.maps.Map} map main map
- * @param {Element} sidebarDiv
+ * @param {Element} parentDiv
  */
-function createNewCheckbox(assetName, map, sidebarDiv) {
+function createNewCheckbox(assetName, map, parentDiv) {
   const newBox = document.createElement('input');
   newBox.type = 'checkbox';
   newBox.id = assetName;
@@ -130,11 +130,11 @@ function createNewCheckbox(assetName, map, sidebarDiv) {
       toggleLayerOff(assetName);
     }
   };
-  sidebarDiv.appendChild(newBox);
+  parentDiv.appendChild(newBox);
   const label = document.createElement('label');
   label.for = assetName;
   label.innerHTML = assetName;
-  sidebarDiv.appendChild(label);
+  parentDiv.appendChild(label);
 }
 
 /**
