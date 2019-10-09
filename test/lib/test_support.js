@@ -6,7 +6,6 @@ export {
   randomString,
   setTimeouts,
   setUp,
-  setValueOfField,
   startGet,
 };
 
@@ -124,17 +123,4 @@ function setTimeouts(driver) {
  */
 function randomString() {
   return Math.random() + 'suffix';
-}
-
-/**
- * Sets the value of the input with id inputId to value.
- *
- * @param {WebDriver} driver
- * @param {string} inputId
- * @param {Object} value
- * @return {Promise}
- */
-async function setValueOfField(driver, inputId, value) {
-  await driver.findElement({id: inputId}).clear();
-  return driver.findElement({id: inputId}).sendKeys(value);
 }
