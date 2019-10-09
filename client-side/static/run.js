@@ -1,6 +1,7 @@
 import {clickFeature, selectHighlightedFeatures} from './click_feature.js';
 import {mapContainerId, tableContainerId} from './dom_constants.js';
 import {drawTable} from './draw_table.js';
+import {assets} from './earth_engine_asset.js';
 import {highlightFeatures} from './highlight_features.js';
 import {addLayer, addLayerFromGeoJsonPromise, addNullLayer, convertEeObjectToPromise, scoreLayerName, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from './layer_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
@@ -13,11 +14,6 @@ export {
   createAndDisplayJoinedData,
   run as default,
 
-};
-
-// Dictionary of known assets -> whether they should be displayed by default
-const assets = {
-  'users/juliexxia/harvey-damage-crowdai-format': true,
 };
 
 // TODO: infer this from disaster const in import_data.js?
@@ -115,11 +111,12 @@ function createAssetCheckboxes(map) {
 /**
  * Creates a checkbox for showing/hiding layers.
  *
- * @param {string} name checkbox name, basis for id
+ * @param {String} name checkbox name, basis for id
+ * @param {String} displayName checkbox display name
  * @param {div} mapDiv div to attach checkbox to
  * @return {HTMLInputElement} the checkbox
  */
-function createNewCheckbox(name, mapDiv) {
+function createNewCheckbox(name, displayName, mapDiv) {
   const newBox = document.createElement('input');
   newBox.type = 'checkbox';
   newBox.id = getCheckBoxId(name);
@@ -127,7 +124,7 @@ function createNewCheckbox(name, mapDiv) {
   mapDiv.parentNode.appendChild(newBox);
   const label = document.createElement('label');
   label.for = name;
-  label.innerHTML = name;
+  label.innerHTML = displayName;
   mapDiv.parentNode.appendChild(label);
   return newBox;
 }
@@ -135,12 +132,15 @@ function createNewCheckbox(name, mapDiv) {
 /**
  * Creates a new checkbox for the given asset.
  *
- * @param {string} assetName
+ * @param {String} assetName
  * @param {Element} mapDiv
  */
 function createNewCheckboxForAsset(assetName, mapDiv) {
-  const newBox = createNewCheckbox(assetName, mapDiv);
-  if (!assets[assetName]) {
+  const newBox = createNewCheckbox(
+      assetName,
+      assets[assetName] ? assets[assetName].getDisplayName() : assetName,
+      mapDiv);
+  if (assets[assetName] && !assets[assetName].shouldDisplayOnLoad()) {
     newBox.checked = false;
   }
   newBox.onclick = () => {
@@ -158,7 +158,7 @@ function createNewCheckboxForAsset(assetName, mapDiv) {
  * @param {div} mapDiv div to attach checkbox to
  */
 function createCheckboxForUserFeatures(mapDiv) {
-  const newBox = createNewCheckbox('user features', mapDiv);
+  const newBox = createNewCheckbox('user features', 'user features', mapDiv);
   newBox.checked = true;
   newBox.onclick = () => setUserFeatureVisibility(newBox.checked);
 }
@@ -175,7 +175,7 @@ function initializeAssetLayers(map) {
 
   Object.keys(assets).forEach((assetName, index) => {
     // TODO(juliexxia): generalize for ImageCollections (and Features/Images?)
-    if (assets[assetName]) {
+    if (assets[assetName].shouldDisplayOnLoad()) {
       addLayer(assetName, index);
     } else {
       addNullLayer(assetName, index);
