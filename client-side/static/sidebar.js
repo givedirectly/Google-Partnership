@@ -16,12 +16,10 @@ let currentContentId;
  * Initializes the sidebar menu (i.e. the toggles to open various sidebars).
  */
 function initializeSidebar() {
-  document.getElementById(sidebarToggleThresholdsId).onclick = () => {
+  document.getElementById(sidebarToggleThresholdsId).onclick = () =>
     toggleSidebar(sidebarToggleThresholdsId, sidebarThresholdsId);
-  };
-  document.getElementById(sidebarToggleDatasetsId).onclick = () => {
+  document.getElementById(sidebarToggleDatasetsId).onclick = () =>
     toggleSidebar(sidebarToggleDatasetsId, sidebarDatasetsId);
-  };
 }
 
 /**
