@@ -143,7 +143,7 @@ function createPopupHtml(popup, notes, damage, map) {
     const saveButton = document.createElement('button');
     saveButton.innerHTML = 'save';
     saveButton.onclick = () => {
-      processNewData(polygon, popup, notesForm.value, map, damageDiv);
+      saveNewData(polygon, popup, notesForm.value, map, damageDiv);
       saved = true;
     };
 
@@ -214,7 +214,7 @@ function makeUneditable(polygon, popup, notes, damage, map) {
  * @param {google.maps.Map} map
  * @param {Element} damageDiv
  */
-function processNewData(polygon, popup, notes, map, damageDiv) {
+function saveNewData(polygon, popup, notes, map, damageDiv) {
   damageDiv.innerText = 'damage points: calculating';
   userRegionData.get(polygon).update(
       polygon, (damage) => makeUneditable(polygon, popup, notes, damage, map),

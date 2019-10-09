@@ -86,7 +86,10 @@ class ShapeData {
       }
     };
 
-    // TODO: don't recompute size if polygon hasn't changed.
+    // TODO: don't recompute size if polygon hasn't changed. I believe this is
+    // non-trivial because we need to actually compare the geopoints. We could
+    // also pass in a boolean about whether the polygon has changed or not but
+    // that feels buggy to me.
     const points = [];
     polygon.getPath().forEach((elt) => points.push(elt.lng(), elt.lat()));
     ee.Join.simple()

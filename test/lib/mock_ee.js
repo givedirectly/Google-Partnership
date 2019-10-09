@@ -8,12 +8,29 @@ global.ee = ee;
 
 ee.Geometry = {};
 ee.Geometry.Point = () => new Point();
+ee.Geometry.Polygon = () => new Polygon();
 
 ee.Feature = (geometry, properties) => new Feature(geometry, properties);
 
 ee.FeatureCollection = (url) => new FeatureCollection(url);
 
+ee.Join = {};
+ee.Join.simple = () => new Join();
+
+ee.Filter = {};
+ee.Filter.intersects = (properties) => new Filter();
+
+ee.Number = (value) => new eeNumber(value);
+
 ee.listEvaluateCallback = null;
+
+class Join {
+  constructor() {}
+
+  apply(leftTable, rightTable, filter) {
+    return leftTable;
+  }
+}
 
 /** A thin stub of ee.Feature. */
 class Feature {
@@ -46,6 +63,7 @@ class FeatureCollection {
     this.url = url;
   }
 
+  // TODO: Get rid of this mock when we stop using filterBounds
   /**
    * Doesn't actually do any filtering, returns same feature collection.
    * @param {ee.Geometry} geometry
@@ -71,10 +89,36 @@ class FeatureCollection {
   toList() {
     return {evaluate: (callback) => ee.listEvaluateCallback = callback};
   }
+
+  size() {
+    return new eeNumber(1);
+  }
+}
+
+class eeNumber {
+  constructor(value) {
+    this._value = value;
+  }
+
+  evaluate(callback) {
+    callback(this._value, null);
+  }
 }
 
 /** An empty stub of ee.Geometry.Point. */
 class Point {
+  /** @constructor */
+  constructor() {}
+}
+
+/** An empty stub of ee.Geometry.Polygon. */
+class Polygon {
+  /** @constructor */
+  constructor() {}
+}
+
+/** An empty stub of ee.Filter. */
+class Filter {
   /** @constructor */
   constructor() {}
 }

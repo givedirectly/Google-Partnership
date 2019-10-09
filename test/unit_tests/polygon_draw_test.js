@@ -45,6 +45,7 @@ describe('Unit test for ShapeData', () => {
     firebaseCollection.add = recordRecord(records, {id: 'new_id'});
     underTest.update(mockPolygon);
     expect(records).to.eql([{
+      damage: 1,
       geometry: [new firebase.firestore.GeoPoint(0, 1)],
       notes: 'my notes',
     }]);
@@ -64,6 +65,7 @@ describe('Unit test for ShapeData', () => {
     underTest.update(mockPolygon);
     expect(ids).to.eql(['my_id']);
     expect(records).to.eql([{
+      damage: 1,
       geometry: [new firebase.firestore.GeoPoint(0, 1)],
       notes: 'my notes',
     }]);
