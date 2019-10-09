@@ -84,7 +84,7 @@ class ShapeData {
       }
     };
 
-    //TODO: don't recompute size if polygon hasn't changed.
+    // TODO: don't recompute size if polygon hasn't changed.
     const points = [];
     polygon.getPath().forEach((elt) => points.push(elt.lng(), elt.lat()));
     ee.Join.simple()
