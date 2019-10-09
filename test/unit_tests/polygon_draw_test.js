@@ -115,8 +115,8 @@ describe('Unit test for ShapeData', () => {
     expect(ids).to.eql(['my_id', 'my_id']);
     const geometry = [new firebase.firestore.GeoPoint(0, 1)];
     expect(records).to.eql([
-      {geometry: geometry, notes: 'my notes'},
-      {geometry: geometry, notes: 'racing notes'},
+      {damage: 1, geometry: geometry, notes: 'my notes'},
+      {damage: 1, geometry: geometry, notes: 'racing notes'},
     ]);
     expect(underTest.id).to.eql('my_id');
     expect(ShapeData.pendingWriteCount).to.eql(0);
