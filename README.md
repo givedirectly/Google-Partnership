@@ -38,10 +38,10 @@ available. However, if you work for Google and get a failed command when you run
   * On Linux, install via the usual `apt-get`-style channels. This should be
   relatively straightforward on most systems, but is difficult/impossible on
   Google-internal machines. If you have difficulty, you can [download a latest
-  version](https://download-chromium.appspot.com) and unzip it. In this
-  case, you will have to change `--browser chromium` to `--browser
-  /path/to/file/in/extracted/zip/named/chrome-wrapper` in all later commands and
-  in your .git/hooks/pre-push file below.
+  version](https://download-chromium.appspot.com) and unzip it. Then create a
+  link, via `sudo ln -s 
+  /path/to/file/in/extracted/zip/named/chrome-wrapper /usr/bin/chromium` so that
+  Cypress knows how to find it easily.
 
 * Test changes.
 
