@@ -1,5 +1,4 @@
-import * as sinon from 'sinon';
-import {highlightFeatures} from '../../client-side/static/highlight_features.js';
+import {highlightFeatures} from '../../../client-side/static/highlight_features.js';
 
 describe('Unit test for highlight_features.js', () => {
   it('Show feature, then hide', () => {
@@ -9,7 +8,7 @@ describe('Unit test for highlight_features.js', () => {
       overrideStyle: (feature, style) => {},
     };
     const map = {data: dataApi};
-    let mockData = sinon.mock(dataApi);
+    let mockData = Cypress.sinon.mock(dataApi);
     mockData.expects('addGeoJson').never();
     mockData.expects('remove').never();
     // Empty call succeeds.
@@ -19,7 +18,7 @@ describe('Unit test for highlight_features.js', () => {
     // Simple add succeeds.
     const geometry0 = {id: 0};
     const jsonFeature0 = {'type': 'Feature', 'geometry': geometry0};
-    mockData = sinon.mock(dataApi);
+    mockData = Cypress.sinon.mock(dataApi);
     mockData.expects('addGeoJson').once().withArgs(jsonFeature0).returns([
       jsonFeature0,
     ]);
@@ -37,7 +36,7 @@ describe('Unit test for highlight_features.js', () => {
     const geometry2 = {id: 2};
     const jsonFeature1 = {'type': 'Feature', 'geometry': geometry1};
     const jsonFeature2 = {'type': 'Feature', 'geometry': geometry2};
-    mockData = sinon.mock(dataApi);
+    mockData = Cypress.sinon.mock(dataApi);
     mockData.expects('addGeoJson').once().withArgs(jsonFeature1).returns([
       jsonFeature1,
     ]);
@@ -52,7 +51,7 @@ describe('Unit test for highlight_features.js', () => {
     mockData.verify();
 
     // Just keep feature2, feature1 is removed.
-    mockData = sinon.mock(dataApi);
+    mockData = Cypress.sinon.mock(dataApi);
     mockData.expects('addGeoJson').never();
     mockData.expects('remove').once().withArgs(jsonFeature1);
     mockData.expects('overrideStyle').never();
