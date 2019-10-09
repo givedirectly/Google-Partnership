@@ -152,16 +152,13 @@ describe('Integration tests for drawing polygons', function() {
   it('Tests hiding functionality', async () => {
     const driver = await driverPromise;
     startGet(driver);
-    // const driver = await loadPage(driverPromise);
     // Draw a polygon and verify that it goes away when box is unchecked.
     await drawPolygonAndClickOnIt(driver);
     await pressPolygonButton('edit', driver);
     await driver.findElement({className: 'notes'}).sendKeys(notes);
     await pressPolygonButton('save', driver);
     await assertNotesVisibleStatus(true, driver);
-    const beforeClick1 =
-        await driver.findElement({id: 'user features-checkbox'}).isSelected();
-    expect(beforeClick1).to.be.true;
+    await assertUserFeaturesCheckboxCheckedStatus(true, driver);
     await driver.findElement({id: 'user features-checkbox'}).click();
     await assertUserFeaturesCheckboxCheckedStatus(false, driver);
     await assertNotesVisibleStatus(false, driver);
