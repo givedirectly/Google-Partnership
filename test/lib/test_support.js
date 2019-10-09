@@ -29,8 +29,14 @@ async function loadPage(driverPromise) {
   return driver;
 }
 
-async function startGet(driver) {
-  driver.get(hostAddress);
+/**
+ * Starts fetching the main page.
+ *
+ * @param {WebDriver} driver
+ * @return {Promise}
+ */
+function startGet(driver) {
+  return driver.get(hostAddress);
 }
 
 /**

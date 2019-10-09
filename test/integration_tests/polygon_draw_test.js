@@ -163,7 +163,7 @@ describe('Integration tests for drawing polygons', function() {
         await driver.findElement({id: 'user features-checkbox'}).isSelected();
     expect(beforeClick1).to.be.true;
     await driver.findElement({id: 'user features-checkbox'}).click();
-    await assertUserFeaturesCheckboxCheckedStatus(driver, false);
+    await assertUserFeaturesCheckboxCheckedStatus(false, driver);
     await assertNotesVisibleStatus(false, driver);
     // Notes is invisible even if we click on the polygon, so it's really gone.
     // Use an offset because there's some weirdness around selecting block
@@ -173,7 +173,7 @@ describe('Integration tests for drawing polygons', function() {
 
     // Check box again and verify that notes box can now be brought up.
     await driver.findElement({id: 'user features-checkbox'}).click();
-    await assertUserFeaturesCheckboxCheckedStatus(driver, true);
+    await assertUserFeaturesCheckboxCheckedStatus(true, driver);
     // Notes not visible yet.
     await assertNotesVisibleStatus(false, driver);
     // await driver.findElement({css: '[title="Add a marker"]'}).click();
@@ -188,13 +188,13 @@ describe('Integration tests for drawing polygons', function() {
           await driver.wait(until.alertIsPresent());
           await driver.switchTo().alert().accept();
         });
-    await assertUserFeaturesCheckboxCheckedStatus(driver, true);
+    await assertUserFeaturesCheckboxCheckedStatus(true, driver);
     // Confirm that save is still around to be pressed.
     await pressPolygonButton('save', driver);
 
     // After a save, the hide is successful.
     await driver.findElement({id: 'user features-checkbox'}).click();
-    await assertUserFeaturesCheckboxCheckedStatus(driver, false);
+    await assertUserFeaturesCheckboxCheckedStatus(false, driver);
 
     // With the box unchecked, draw a new polygon, below the first one, and set
     // its notes, but don't finish editing.
@@ -208,12 +208,12 @@ describe('Integration tests for drawing polygons', function() {
           await driver.wait(until.alertIsPresent());
           await driver.switchTo().alert().accept();
         });
-    await assertUserFeaturesCheckboxCheckedStatus(driver, false);
+    await assertUserFeaturesCheckboxCheckedStatus(false, driver);
 
     // Save the new notes and check the box, this time it succeeds.
     await pressPolygonButton('save', driver);
     await driver.findElement({id: 'user features-checkbox'}).click();
-    await assertUserFeaturesCheckboxCheckedStatus(driver, true);
+    await assertUserFeaturesCheckboxCheckedStatus(true, driver);
 
     // We can click on the old polygon and view its notes,
     await clickOnDrawnPolygon(driver);
@@ -224,7 +224,7 @@ describe('Integration tests for drawing polygons', function() {
 
     // Now hide both polygons, and verify that they're really gone.
     await driver.findElement({id: 'user features-checkbox'}).click();
-    await assertUserFeaturesCheckboxCheckedStatus(driver, false);
+    await assertUserFeaturesCheckboxCheckedStatus(false, driver);
     await assertNotesVisibleStatus(false, driver, notes);
     await assertNotesVisibleStatus(false, driver, 'new notes');
     await clickOnDrawnPolygon(driver, 50);
@@ -270,7 +270,7 @@ async function clickOnDrawnPolygon(driver, offset = 0) {
       .move({
         x: 0,
         y: -90 + offset,
-        origin: driver.findElement({className: 'map'})
+        origin: driver.findElement({className: 'map'}),
       })
       .click()
       .perform();
@@ -286,7 +286,7 @@ function pressPolygonButton(button, driver) {
   return driver
       .findElement({
         xpath: '//button[.="' + button +
-            '" and not(ancestor::div[contains(@style,"visibility: hidden")])]'
+            '" and not(ancestor::div[contains(@style,"visibility: hidden")])]',
       })
       .click();
 }
@@ -324,6 +324,13 @@ async function assertExactlyPopUps(expectedFound, notes, driver) {
   await setTimeouts(driver);
 }
 
+/**
+ * Asserts that the given notes have the given visibility.
+ *
+ * @param {boolean} visible
+ * @param {WebDriver} driver
+ * @param {string} expectedNotes defaults to the global notes
+ */
 async function assertNotesVisibleStatus(
     visible, driver, expectedNotes = notes) {
   const value =
@@ -332,7 +339,13 @@ async function assertNotesVisibleStatus(
   expect(value).to.eq(visible);
 }
 
-async function assertUserFeaturesCheckboxCheckedStatus(driver, checked) {
+/**
+ * Asserts that the user features checkbox is checked or not.
+ *
+ * @param {boolean} checked
+ * @param {WebDriver} driver
+ */
+async function assertUserFeaturesCheckboxCheckedStatus(checked, driver) {
   const status =
       await driver.findElement({id: 'user features-checkbox'}).isSelected();
   expect(status).to.equal(checked);
