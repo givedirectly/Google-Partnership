@@ -1,4 +1,3 @@
-import {expect} from 'chai';
 import * as firebase from 'firebase';
 import {until} from 'selenium-webdriver';
 

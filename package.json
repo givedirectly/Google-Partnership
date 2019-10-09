@@ -12,7 +12,9 @@
     "chai": "^4.2.0",
     "chromedriver": "^77.0.0",
     "firebase": "^7.0.0",
+    "jsdom": "^15.1.1",
     "mocha": "^6.2.1",
-    "selenium-webdriver": "^4.0.0-alpha.5"
+    "selenium-webdriver": "^4.0.0-alpha.5",
+    "sinon": "^7.5.0"
   }
 }

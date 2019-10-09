@@ -1,4 +1,4 @@
-import {ShapeData} from '../../../client-side/static/polygon_draw';
+import {ShapeData} from '../../client-side/static/polygon_draw';
 
 // Name of collection doesn't matter.
 const firebaseCollection = firebase.firestore().collection('usershapes-test');
