@@ -63,8 +63,8 @@ class EarthEngineAsset {
  * @param {GeoJSON.Feature} feature
  */
 function colorSVILayer(feature) {
-  const opacity = Math.min(Math.round(255 * feature.properties['SVI']), 255);
-  feature.properties['color'] = [255 - opacity, 0, 255 - opacity, opacity];
+  const color = Math.min(Math.round(255 * feature.properties['SVI']), 255);
+  return [255 - color, 0, 255 - color, color];
 }
 
 /**
@@ -73,10 +73,9 @@ function colorSVILayer(feature) {
  * @param {GeoJSON.Feature} feature
  */
 function colorPathofStormRadiiLayer(feature) {
-  const opacity =
+  const color =
       Math.min(Math.round(255 * feature.properties['RADII'] / 100), 255);
-  feature.properties['color'] =
-      [255 - opacity, 255 - opacity, 255 - opacity, 40];
+  return [255 - color, 255 - color, 255 - color, 40];
 }
 
 /**
@@ -87,9 +86,8 @@ function colorPathofStormRadiiLayer(feature) {
 function colorFemaAssistanceLayer(feature) {
   // Color 'public assistance' as yellow, and 'individual and public assistance'
   // as red.
-  const color = feature.properties['Designatio'] == 'PA' ? [255, 255, 51, 40] :
-                                                           [220, 20, 60, 40];
-  feature.properties['color'] = color;
+  return (feature.properties['Designatio'] == 'PA') ? [255, 255, 51, 40] :
+                                                      [220, 20, 60, 40];
 }
 
 /**
@@ -100,11 +98,9 @@ function colorFemaAssistanceLayer(feature) {
 function colorDamageLayer(feature) {
   switch (feature.properties['descriptio']) {
     case 'major-damage':
-      feature.properties['color'] = [255, 0, 0, 200];
-      break;
+      return [255, 0, 0, 200];
     case 'minor-damage':
-      feature.properties['color'] = [255, 165, 0, 200];
-      break;
+      return [255, 165, 0, 200];
   }
 }
 
