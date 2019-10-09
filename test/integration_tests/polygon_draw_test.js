@@ -173,7 +173,6 @@ describe('Integration tests for drawing polygons', function() {
     await assertUserFeaturesCheckboxCheckedStatus(true, driver);
     // Notes not visible yet.
     await assertNotesVisibleStatus(false, driver);
-    // await driver.findElement({css: '[title="Add a marker"]'}).click();
     await clickOnDrawnPolygon(driver);
     await assertNotesVisibleStatus(true, driver);
 
