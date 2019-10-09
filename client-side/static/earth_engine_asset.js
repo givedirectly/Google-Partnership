@@ -62,6 +62,7 @@ class EarthEngineAsset {
  * Colors the feature with SVI-specific logic.
  *
  * @param {GeoJSON.Feature} feature
+ * @return {Array} color RGBA color specification as an array
  */
 function colorSVILayer(feature) {
   const color = Math.min(Math.round(255 * feature.properties['SVI']), 255);
@@ -72,6 +73,7 @@ function colorSVILayer(feature) {
  * Colors the feature with Path of Storm Radii-specific logic.
  *
  * @param {GeoJSON.Feature} feature
+ * @return {Array} color RGBA color specification as an array
  */
 function colorPathofStormRadiiLayer(feature) {
   const color =
@@ -83,18 +85,20 @@ function colorPathofStormRadiiLayer(feature) {
  * Colors the feature with FEMA Assistance-specific logic.
  *
  * @param {GeoJSON.Feature} feature
+ * @return {Array} color RGBA color specification as an array
  */
 function colorFemaAssistanceLayer(feature) {
   // Color 'public assistance' as yellow, and 'individual and public assistance'
   // as red.
   return (feature.properties['Designatio'] == 'PA') ? [255, 255, 51, 40] :
-                                                      [220, 20, 60, 40];
+    [220, 20, 60, 40];
 }
 
 /**
  * Colors the feature with damage-specific logic.
  *
  * @param {GeoJSON.Feature} feature
+ * @return {Array} color RGBA color specification as an array
  */
 function colorDamageLayer(feature) {
   switch (feature.properties['descriptio']) {
