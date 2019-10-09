@@ -82,8 +82,8 @@ function colorPathofStormRadiiLayer(feature) {
 // TODO: Store these and allow users to change/set these fields on import page.
 const harveyDamgeCrowdAIFormat =
     new EarthEngineAsset('FeatureCollection', 'Harvey Damge CrowdAI', true);
-const sviData = new EarthEngineAsset(
-    'FeatureCollection', 'SVI Data', false, (feature) => {
+const sviData =
+    new EarthEngineAsset('FeatureCollection', 'SVI Data', false, (feature) => {
       colorSVILayer(feature);
     });
 const pathOfStormRadii = new EarthEngineAsset(
