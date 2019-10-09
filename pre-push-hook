@@ -54,9 +54,6 @@ while read local_ref local_sha remote_ref remote_sha; do
     fi
     yarn run eslint $modified_js_files
   fi
-  # The browser value must be set to the path/to/Chromium if Chromium is not
-  # installed in the default location on the machine, as can happen with Google
-  # machines.
   yarn run cypress run --browser chromium --config video=false
   # TODO(janakr): delete Mocha once all tests migrated.
   yarn run mocha
