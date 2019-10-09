@@ -1,6 +1,6 @@
 import createError from './create_error.js';
 import {mapContainerId} from './dom_constants.js';
-import {getTestCookie, inProduction} from './in_test_util.js';
+import inProduction from './in_test_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {addPopUpListener, createPopup, setUpPopup} from './popup.js';
 import {userRegionData} from './user_region_data.js';
@@ -147,8 +147,7 @@ window.onbeforeunload = () => ShapeData.pendingWriteCount > 0 ? true : null;
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-const collectionName =
-    'usershapes' + (inProduction() ? '' : ('-test-' + getTestCookie()));
+const collectionName = 'usershapes' + (inProduction() ? '' : '-test');
 
 const userShapes = db.collection(collectionName);
 

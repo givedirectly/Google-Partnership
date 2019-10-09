@@ -1,7 +1,4 @@
-export {
-  getTestCookie,
-  inProduction,
-};
+export {inProduction as default};
 
 /**
  * Returns the value of the requested cookie. Copied from
@@ -17,18 +14,10 @@ function getCookieValue(cookieName) {
 }
 
 /**
- * Returns value of cookie set by tests.
- *
- * @return {string}
- */
-function getTestCookie() {
-  return getCookieValue('IN_CYPRESS_TEST');
-}
-/**
  * Returns if we are in production, as determined by the IN_CYPRESS_TEST cookie.
  *
  * @return {boolean}
  */
 function inProduction() {
-  return !getTestCookie();
+  return !getCookieValue('IN_CYPRESS_TEST');
 }
