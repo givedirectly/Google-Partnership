@@ -45,12 +45,10 @@ describe('Integration tests for drawing polygons', () => {
     cy.visit(host);
     drawPolygonAndClickOnIt();
     pressPolygonButton('edit');
-    cy.get('.map').contains('damage count: 64197');
     cy.get('[class="notes"]').type(notes);
     pressPolygonButton('save');
-    cy.wait(2000);
-
     cy.get('.map').contains(notes);
+    cy.get('.map').contains('damage count: 64197');
   });
 
   it('Draws a polygon and deletes it', () => {
@@ -61,7 +59,6 @@ describe('Integration tests for drawing polygons', () => {
     pressPolygonButton('edit');
     cy.get('[class="notes"]').type(notes);
     pressPolygonButton('save');
-    cy.wait(2000);
 
     pressPolygonButton('delete');
     // Polygon should be gone.
@@ -78,8 +75,6 @@ describe('Integration tests for drawing polygons', () => {
     pressPolygonButton('edit');
     cy.get('[class="notes"]').type(notes);
     pressPolygonButton('save');
-    cy.wait(2000);
-
     pressPolygonButton('delete');
     // Assert still exists.
     clickOnDrawnPolygon();
@@ -115,8 +110,6 @@ describe('Integration tests for drawing polygons', () => {
     pressPolygonButton('edit');
     cy.get('[class="notes"]').type(notes);
     pressPolygonButton('save');
-    cy.wait(2000);
-
     pressPolygonButton('close');
     // element is still there, just hidden
     assertExactlyPopUps(1, notes);
@@ -132,8 +125,6 @@ describe('Integration tests for drawing polygons', () => {
     cy.get('[class="notes"]').type(notes);
     pressPolygonButton('close');
     pressPolygonButton('save');
-    cy.wait(2000);
-
     cy.get('#mapContainer').contains(notes).should('be.visible');
   });
 
@@ -145,9 +136,6 @@ describe('Integration tests for drawing polygons', () => {
     pressPolygonButton('edit');
     cy.get('[class="notes"]').type(notes);
     pressPolygonButton('save');
-    cy.wait(2000);
-
-    // cy.wait(3000);
     pressPolygonButton('edit');
     cy.get('[class="notes"]').type('blahblahblah');
     pressPolygonButton('close');
@@ -162,8 +150,6 @@ describe('Integration tests for drawing polygons', () => {
     pressPolygonButton('edit');
     cy.get('[class="notes"]').type(notes);
     pressPolygonButton('save');
-    cy.wait(2000);
-
     cy.get('#mapContainer').contains(notes).should('be.visible');
     cy.get('#user-features-checkbox').should('be.checked');
     cy.get('#user-features-checkbox').click();
@@ -192,8 +178,6 @@ describe('Integration tests for drawing polygons', () => {
     cy.get('#user-features-checkbox').should('be.checked');
     // Confirm that save is still around to be pressed.
     pressPolygonButton('save');
-    cy.wait(2000);
-
 
     // After a save, the hide is successful.
     cy.get('#user-features-checkbox').click();
@@ -206,8 +190,6 @@ describe('Integration tests for drawing polygons', () => {
     pressPolygonButton('edit');
     cy.get('[class="notes"]').type(notes);
     pressPolygonButton('save');
-    cy.wait(2000);
-
     cy.get('#user-features-checkbox').click();
     cy.get('#user-features-checkbox').should('not.be.checked');
     // With the box unchecked, draw a new polygon, below the first one, and set
@@ -225,8 +207,6 @@ describe('Integration tests for drawing polygons', () => {
 
     // Save the new notes and check the box, this time it succeeds.
     pressPolygonButton('save');
-    cy.wait(2000);
-
     cy.get('#user-features-checkbox').click();
     cy.get('#user-features-checkbox').should('be.checked');
 
@@ -299,6 +279,9 @@ function clickOnDrawnPolygon(offset = 0) {
  */
 function pressPolygonButton(button) {
   cy.get(':button:visible').contains(button).click();
+  if (button === 'save') {
+    cy.awaitLoad(['writeWaiter']);
+  }
 }
 
 /**
