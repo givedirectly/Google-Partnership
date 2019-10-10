@@ -21,21 +21,22 @@ const firebaseConfig = {
 firebaseLibrary.initializeApp(firebaseConfig);
 const db = firebaseLibrary.firestore();
 
-const userShapes = db.collection('usershapes-test/' + testCookieValue);
-
 // This test generally doesn't wait for the page to load, since that's not
 // necessary to draw polygons.
 describe('Integration tests for drawing polygons', () => {
   // Delete all test-defined polygons.
-  const deleteAllRegionsDrawnByTest = () =>
-      // Return a wrapped promise. Cypress will wait for the promise to finish.
-      cy.wrap(userShapes.get().then((querySnapshot) => {
-        const deletePromises = [];
-        querySnapshot.forEach((userDefinedRegion) => {
-          deletePromises.push(userShapes.doc(userDefinedRegion.id).delete());
-        });
-        return Promise.all(deletePromises);
-      }));
+  const deleteAllRegionsDrawnByTest = () => {
+    const userShapes = db.collection('usershapes-test/' + testCookieValue);
+    // Return a wrapped promise. Cypress will wait for the promise to finish.
+    cy.wrap(userShapes.get().then(
+        (querySnapshot) => {
+          const deletePromises = [];
+          querySnapshot.forEach((userDefinedRegion) => {
+            deletePromises.push(userShapes.doc(userDefinedRegion.id).delete());
+          });
+          return Promise.all(deletePromises);
+        }))
+  };
 
   beforeEach(deleteAllRegionsDrawnByTest);
 
