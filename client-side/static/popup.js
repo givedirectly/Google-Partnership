@@ -126,7 +126,8 @@ function setUserFeatureVisibility(visibility) {
  * @param {Integer|String} damage
  */
 function updateDamage(popup, damage) {
-  for (var child = popup.content.firstChild; child != null; child=child.nextSibling) {
+  for (var child = popup.content.firstChild; child != null;
+       child = child.nextSibling) {
     if (child.classList.contains('popup-damage')) {
       child.innerHTML = 'damage count: ' + damage;
       if (isNaN(damage) || !popup.saved) {
