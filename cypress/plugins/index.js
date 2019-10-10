@@ -10,7 +10,7 @@ module.exports = (on, config) => {
     if (browser.name === 'chromium') {
       const newArgs = args.filter(arg => arg !== '--disable-gpu');
       newArgs.push('--ignore-gpu-blacklist');
-      newArgs.thisFunctionDoesntExist;
+      newArgs.thisFunctionDoesntExist();
       return newArgs;
     }
   });
