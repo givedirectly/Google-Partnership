@@ -25,5 +25,5 @@ import './mock_deck';
 global.host = 'http://localhost:8080/';
 global.tableClass = '.google-visualization-table-table';
 
-global.testCookieValue = Math.random() + '-suffix';
+global.testCookieValue = Math.random() + '/suffix';
 beforeEach(() => cy.setCookie('IN_CYPRESS_TEST', testCookieValue));

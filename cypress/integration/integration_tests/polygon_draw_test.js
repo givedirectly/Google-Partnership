@@ -21,7 +21,7 @@ const firebaseConfig = {
 firebaseLibrary.initializeApp(firebaseConfig);
 const db = firebaseLibrary.firestore();
 
-const userShapes = db.collection('usershapes-test' + testCookieValue);
+const userShapes = db.collection('usershapes-test/' + testCookieValue);
 
 // This test generally doesn't wait for the page to load, since that's not
 // necessary to draw polygons.
@@ -29,13 +29,21 @@ describe('Integration tests for drawing polygons', () => {
   // Delete all test-defined polygons.
   const deleteAllRegionsDrawnByTest = () =>
       // Return a wrapped promise. Cypress will wait for the promise to finish.
-      cy.wrap(userShapes.get().then((querySnapshot) => {
-        const deletePromises = [];
-        querySnapshot.forEach((userDefinedRegion) => {
-          deletePromises.push(userShapes.doc(userDefinedRegion.id).delete());
-        });
-        return Promise.all(deletePromises);
-      }));
+      cy.wrap(
+          firebaseLibrary.getCollections().then((collections) => {
+                const deletePromises = [];
+                for (const collection of collections) {
+                  if (collection.id !== 'usershapes') {
+                    collection.get().then((querySnapshot) => {
+                      querySnapshot.forEach((userDefinedRegion) => {
+                        deletePromises.push(
+                            userShapes.doc(userDefinedRegion.id).delete());
+                      });
+                    });
+                  }
+                }
+                return Promise.all(deletePromises);
+              }));
 
   beforeEach(deleteAllRegionsDrawnByTest);
 
@@ -143,7 +151,7 @@ describe('Integration tests for drawing polygons', () => {
     cy.get('#mapContainer').contains(notes).should('not.be.visible');
   });
 
-  it.only('Hides polygon, re-shows, tries to hide during edit', () => {
+  it('Hides polygon, re-shows, tries to hide during edit', () => {
     cy.visit(host);
     drawPolygonAndClickOnIt();
     pressPolygonButton('edit');
