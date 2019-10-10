@@ -31,8 +31,7 @@ describe('Integration tests for drawing polygons', () => {
       // Return a wrapped promise. Cypress will wait for the promise to finish.
       cy.wrap(userShapes.get().then((querySnapshot) => {
         querySnapshot.forEach((userDefinedRegion) => {
-          deletePromises.push(
-              userShapes.doc(userDefinedRegion.id).delete());
+          deletePromises.push(userShapes.doc(userDefinedRegion.id).delete());
         });
         return Promise.all(deletePromises);
       }));
