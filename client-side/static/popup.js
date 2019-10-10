@@ -1,6 +1,6 @@
 import {userRegionData} from './user_region_data.js';
 
-export {addPopUpListener, createPopup, setUpPopup};
+export {addPopUpListener, createPopup, setUpPopup, setUserFeatureVisibility};
 
 let Popup = null;
 
@@ -75,6 +75,10 @@ function setUpPopup() {
     this.containerDiv.style.visibility = 'hidden';
   };
 
+  Popup.prototype.isVisible = function() {
+    return this.containerDiv.style.visibility === 'visible';
+  };
+
   Popup.prototype.show = function() {
     this.containerDiv.style.visibility = 'visible';
   };
@@ -88,6 +92,30 @@ function setUpPopup() {
     this.damage = damage;
     createPopupHtml(this, this.notes, this.damage, this.map);
   };
+}
+
+const allPopups = new Set();
+let numEdits = 0;
+
+/**
+ * Sets the visibility of all current user features. May fail if any features
+ * are currently being edited.
+ *
+ * @param {boolean} visibility If features should be visible or not
+ * @return {boolean} if it succeeded
+ */
+function setUserFeatureVisibility(visibility) {
+  if (numEdits > 0) {
+    window.alert('Cannot show/hide user features when edits in progress');
+    return false;
+  }
+  for (const popup of allPopups) {
+    if (!visibility && popup.isVisible()) {
+      closeCleanup(popup.polygon, popup);
+    }
+    popup.polygon.setVisible(visibility);
+  }
+  return true;
 }
 
 /**
@@ -119,6 +147,7 @@ function createPopupHtml(popup, notes, damage, map) {
     if (confirm('Delete region?')) {
       polygon.setMap(null);
       popup.setMap(null);
+      allPopups.delete(popup);
       userRegionData.get(polygon).update(polygon);
     }
   };
@@ -129,6 +158,7 @@ function createPopupHtml(popup, notes, damage, map) {
   editButton.innerHTML = 'edit';
   editButton.onclick = () => {
     saved = false;
+    numEdits++;
     polygon.setEditable(true);
 
     const currentNotes = notesDiv.innerText;
@@ -146,7 +176,7 @@ function createPopupHtml(popup, notes, damage, map) {
     const saveButton = document.createElement('button');
     saveButton.innerHTML = 'save';
     saveButton.onclick = () => {
-      saveNewData(polygon, popup, notesForm.value, map, damageDiv);
+      saveNewData(polygon, popup, notesForm.value, map);
       saved = true;
     };
 
@@ -181,12 +211,9 @@ function createPopupHtml(popup, notes, damage, map) {
   content.appendChild(notesDiv);
 }
 
-// Remove all current contents of the popup and replace with the fresh saved
-// content. This is annoying, but would also be annoying to just replace the
-// entire div because of the styling work that happens upon Popup
-// initialization.
+
 /**
- *
+ * Remove all current contents of the popup.
  * @param {Element} div
  */
 function removeAllChildren(div) {
@@ -206,22 +233,24 @@ function removeAllChildren(div) {
  */
 function makeUneditable(polygon, popup, notes, damage, map) {
   polygon.setEditable(false);
+  numEdits--;
   createPopupHtml(popup, notes, damage, map);
 }
 
 /**
- * Process new polygon shape and notes.
+ * Process new polygon shape and notes. createPopupHtml gets called twice over
+ * the course of this method, once before we have the damage number and once
+ * after we receive the damage number.
+ *
  * @param {google.maps.Polygon} polygon
  * @param {Popup} popup
  * @param {String} notes
  * @param {google.maps.Map} map
- * @param {Element} damageDiv
  */
-function saveNewData(polygon, popup, notes, map, damageDiv) {
+function saveNewData(polygon, popup, notes, map) {
   makeUneditable(polygon, popup, notes, 'calculating', map);
   userRegionData.get(polygon).update(
-      polygon, (damage) => createPopupHtml(popup, notes, damage, map),
-      notes);
+      polygon, (damage) => createPopupHtml(popup, notes, damage, map), notes);
   // update where the popup pops up to match any polygon shape changes
   popup.updatePosition();
 }
@@ -278,5 +307,6 @@ function createPopup(polygon, map) {
   const popup = new Popup(polygon, data.notes, data.damage, map);
   popup.setMap(map);
   popup.hide();
+  allPopups.add(popup);
   return popup;
 }

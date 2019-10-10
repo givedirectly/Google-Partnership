@@ -1,5 +1,6 @@
 import createError from './create_error.js';
 import {mapContainerId} from './dom_constants.js';
+import {assets} from './earth_engine_asset.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 
 export {
@@ -120,6 +121,10 @@ function getColorOfFeature(feature) {
  * @param {string} assetName
  */
 function addLayerFromFeatures(layerMapValue, assetName) {
+  const colorFunction =
+      (assets[assetName] && assets[assetName].getColorFunction()) ?
+      assets[assetName].getColorFunction() :
+      getColorOfFeature;
   layerArray[layerMapValue.index] = new deck.GeoJsonLayer({
     id: assetName,
     data: layerMapValue.data,
@@ -128,7 +133,7 @@ function addLayerFromFeatures(layerMapValue, assetName) {
     // TODO(janakr): deck.gl docs claim that the "color" property should
     // automatically color the features, but it doesn't appear to work:
     // https://deck.gl/#/documentation/deckgl-api-reference/layers/geojson-layer?section=getelevation-function-number-optional-transition-enabled
-    getFillColor: getColorOfFeature,
+    getFillColor: colorFunction,
     visible: layerMapValue.displayed,
   });
   redrawLayers();

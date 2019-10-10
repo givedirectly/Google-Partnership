@@ -1,4 +1,4 @@
-import {Builder} from 'selenium-webdriver';
+import {Builder, until} from 'selenium-webdriver';
 import {Options} from 'selenium-webdriver/chrome';
 
 export {
@@ -6,7 +6,7 @@ export {
   randomString,
   setTimeouts,
   setUp,
-  setValueOfField,
+  startGet,
 };
 
 // We use the ip address rather than 'localhost' because Selenium has issues
@@ -23,10 +23,22 @@ const hostAddress = 'http://127.0.0.1:8080';
  */
 async function loadPage(driverPromise) {
   const driver = await driverPromise;
-  driver.get(hostAddress);
+  await startGet(driver);
   await waitForLoad(driver);
   return driver;
 }
+
+/**
+ * Starts fetching the main page.
+ *
+ * @param {WebDriver} driver
+ * @return {Promise}
+ */
+function startGet(driver) {
+  return driver.get(hostAddress);
+}
+
+const loadingTimeout = 60000;
 
 /**
  * Waits for all loading to finish.
@@ -40,12 +52,18 @@ async function waitForLoad(driver) {
   await driver.findElement({
     xpath: '//div[@id="mapContainer-loader"][contains(@style,"opacity: 1")]',
   });
-  driver.findElement({
-    xpath: '//div[@id="tableContainer-loader"][contains(@style,"opacity: 0")]',
-  });
-  await driver.findElement({
-    xpath: '//div[@id="mapContainer-loader"][contains(@style,"opacity: 0")]',
-  });
+  driver.wait(
+      until.elementLocated({
+        xpath:
+            '//div[@id="tableContainer-loader"][contains(@style,"opacity: 0")]',
+      }),
+      loadingTimeout);
+  driver.wait(
+      until.elementLocated({
+        xpath:
+            '//div[@id="mapContainer-loader"][contains(@style,"opacity: 0")]',
+      }),
+      loadingTimeout);
 }
 
 const chromeOptions = new Options(); //.addArguments(['--headless']);
@@ -89,14 +107,13 @@ async function setUp(testFramework, testCookieValue = randomString()) {
 }
 
 /**
- * Timeout after 10 seconds if page isn't loaded, script isn't run, or element
- * on page isn't found.
+ * Timeout after 60 seconds if page isn't loaded or script isn't run, and 2 if
+ * element on page isn't found.
  *
  * @param {WebDriver} driver
  */
 function setTimeouts(driver) {
-  driver.manage().setTimeouts(
-      {implicit: 60000, pageLoad: 60000, script: 60000});
+  driver.manage().setTimeouts({implicit: 2000, pageLoad: 60000, script: 60000});
 }
 
 /**
@@ -106,17 +123,4 @@ function setTimeouts(driver) {
  */
 function randomString() {
   return Math.random() + 'suffix';
-}
-
-/**
- * Sets the value of the input with id inputId to value.
- *
- * @param {WebDriver} driver
- * @param {string} inputId
- * @param {Object} value
- * @return {Promise}
- */
-async function setValueOfField(driver, inputId, value) {
-  await driver.findElement({id: inputId}).clear();
-  return driver.findElement({id: inputId}).sendKeys(value);
 }

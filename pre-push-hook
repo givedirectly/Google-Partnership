@@ -54,6 +54,8 @@ while read local_ref local_sha remote_ref remote_sha; do
     fi
     yarn run eslint $modified_js_files
   fi
+  yarn run cypress run --browser chromium --config video=false
+  # TODO(janakr): delete Mocha once all tests migrated.
   yarn run mocha
 done
 

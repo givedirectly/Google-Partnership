@@ -1,4 +1,4 @@
-import {layerArray, layerMap, LayerMapValue, toggleLayerOff, toggleLayerOn} from '../../client-side/static/layer_util';
+import {layerArray, layerMap, LayerMapValue, toggleLayerOff, toggleLayerOn} from '../../../client-side/static/layer_util';
 
 const mockData = {};
 
@@ -9,7 +9,6 @@ describe('Unit test for toggleLayerOn', () => {
     layerMap.set('asset2', new LayerMapValue(null, 2, false));
     layerArray[0] = new deck.GeoJsonLayer({});
     layerArray[1] = new deck.GeoJsonLayer({});
-    ee.listEvaluateCallback = null;
   });
 
   it('displays a hidden but loaded layer', () => {
@@ -24,25 +23,25 @@ describe('Unit test for toggleLayerOn', () => {
     expect(layerProps).to.have.property('data', mockData);
   });
 
-  it('loads a hidden layer and displays', async () => {
+  it('loads a hidden layer and displays', () => {
     expect(layerMap.get('asset2').displayed).to.equals(false);
     expect(layerMap.get('asset2').data).to.be.null;
 
     toggleLayerOn('asset2');
     const emptyList = [];
     ee.listEvaluateCallback(emptyList);
-
-    await executeCodeNext(() => {
+    // Evaluate after the promise finishes by using an instant timer.
+    setTimeout(() => {
       expect(layerMap.get('asset2').displayed).to.equals(true);
       expect(layerMap.get('asset2').data).to.not.be.null;
       const layerProps = layerArray[2].props;
       expect(layerProps).to.have.property('id', 'asset2');
       expect(layerProps).to.have.property('visible', true);
       expect(layerProps).to.have.property('data', emptyList);
-    });
+    }, 0);
   });
 
-  it('check hidden layer, then uncheck before list evaluation', async () => {
+  it('check hidden layer, then uncheck before list evaluation', () => {
     expect(layerMap.get('asset2').displayed).to.equals(false);
     expect(layerMap.get('asset2').data).to.be.null;
 
@@ -51,7 +50,8 @@ describe('Unit test for toggleLayerOn', () => {
     const emptyList = [];
     ee.listEvaluateCallback(emptyList);
 
-    await executeCodeNext(() => {
+    // Evaluate after the promise finishes by using an instant timer.
+    setTimeout(() => {
       expect(layerMap.get('asset2').displayed).to.equals(false);
       expect(layerMap.get('asset2').data).to.not.be.null;
       const layerProps = layerArray[2].props;
@@ -76,42 +76,3 @@ describe('Unit test for toggleLayerOff', () => {
     expect(layerProps).to.have.property('data', mockData);
   });
 });
-
-/**
- * Executes the code in lambda after all current pending code in the event loop.
- *
- * @param {Function} lambda
- * @return {Promise}
- */
-function executeCodeNext(lambda) {
-  const settablePromise = new SettablePromise();
-  // Evaluate after the current code finishes by using an instant timer.
-  setTimeout(() => {
-    lambda();
-    settablePromise.resolve(null);
-  });
-  return settablePromise.get();
-}
-
-/**
- * Corresponds to Java SettableFuture class. Call this.resolve() to complete the
- * Promise successfully, and this.reject() to complete it with a failure.
- */
-class SettablePromise {
-  /** @constructor */
-  constructor() {
-    let resolveFunction = null;
-    let rejectFunction = null;
-    this.promise = new Promise((resolve, reject) => {
-      resolveFunction = resolve;
-      rejectFunction = reject;
-    });
-    this.resolve = resolveFunction;
-    this.reject = rejectFunction;
-  }
-
-  /** @return {Promise} Promise to be resolved/rejected. */
-  get() {
-    return this.promise;
-  }
-}
