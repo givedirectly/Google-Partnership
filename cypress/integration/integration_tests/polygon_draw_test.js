@@ -28,14 +28,13 @@ describe('Integration tests for drawing polygons', () => {
   const deleteAllRegionsDrawnByTest = () => {
     const userShapes = db.collection('usershapes-test/' + testCookieValue);
     // Return a wrapped promise. Cypress will wait for the promise to finish.
-    cy.wrap(userShapes.get().then(
-        (querySnapshot) => {
-          const deletePromises = [];
-          querySnapshot.forEach((userDefinedRegion) => {
-            deletePromises.push(userShapes.doc(userDefinedRegion.id).delete());
-          });
-          return Promise.all(deletePromises);
-        }))
+    cy.wrap(userShapes.get().then((querySnapshot) => {
+      const deletePromises = [];
+      querySnapshot.forEach((userDefinedRegion) => {
+        deletePromises.push(userShapes.doc(userDefinedRegion.id).delete());
+      });
+      return Promise.all(deletePromises);
+    }))
   };
 
   beforeEach(deleteAllRegionsDrawnByTest);
