@@ -298,23 +298,6 @@ input[type='range'] {
   overflow-x: hidden;
 }
 
-/** Responsive styles */
-
-@media (max-width: 1066px) { 
-  .sidebar {
-    bottom: 0;
-    box-shadow: none;
-    max-width: none;
-    position: relative;
-    width: 100%; 
-  }
-
-  .main-content {
-    width: 100%;
-    position: relative;
-  }
-}
-
 /**
  * Copied from https://developers-dot-devsite-v2-prod.appspot.com/maps \
  *     /documentation/javascript/examples/overlay-popup
