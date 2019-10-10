@@ -154,7 +154,7 @@ function createNewCheckboxForAsset(assetName, parentDiv) {
  * @param {div} mapDiv div to attach checkbox to
  */
 function createCheckboxForUserFeatures(mapDiv) {
-  const newBox = createNewCheckbox('user features', 'user features', mapDiv);
+  const newBox = createNewCheckbox('user-features', 'user features', mapDiv);
   newBox.checked = true;
   newBox.onclick = () => setUserFeatureVisibility(newBox.checked);
 }
