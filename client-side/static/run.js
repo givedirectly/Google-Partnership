@@ -1,10 +1,12 @@
 import {clickFeature, selectHighlightedFeatures} from './click_feature.js';
 import {tableContainerId, sidebarDatasetsId} from './dom_constants.js';
 import {drawTable} from './draw_table.js';
+import {assets} from './earth_engine_asset.js';
 import {highlightFeatures} from './highlight_features.js';
 import {addLayer, addLayerFromGeoJsonPromise, addNullLayer, convertEeObjectToPromise, scoreLayerName, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from './layer_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {processUserRegions} from './polygon_draw.js';
+import {setUserFeatureVisibility} from './popup.js';
 import processJoinedData from './process_joined_data.js';
 import {createToggles, initialDamageThreshold, initialPovertyThreshold, initialPovertyWeight} from './update.js';
 
@@ -12,11 +14,6 @@ export {
   createAndDisplayJoinedData,
   run as default,
 
-};
-
-// Dictionary of known assets -> whether they should be displayed by default
-const assets = {
-  'users/juliexxia/harvey-damage-crowdai-format': true,
 };
 
 // TODO: infer this from disaster const in import_data.js?
@@ -95,7 +92,8 @@ function createAndDisplayJoinedData(
 }
 
 /**
- * Creates checkboxes for all known assets and the score overlay.
+ * Creates checkboxes for all known assets, user features, and the score
+ * overlay.
  *
  * @param {google.maps.Map} map main map
  */
@@ -104,24 +102,42 @@ function createAssetCheckboxes(map) {
   // a better place.
   const sidebarDiv = document.getElementById(sidebarDatasetsId);
   Object.keys(assets).forEach(
-      (assetName) => createNewCheckbox(assetName, map, sidebarDiv));
+      (assetName) => createNewCheckboxForAsset(assetName, sidebarDiv));
+  createCheckboxForUserFeatures(sidebarDiv);
   // score checkbox gets checked during initializeScoreLayer
-  createNewCheckbox(scoreLayerName, map, sidebarDiv);
+  createNewCheckboxForAsset(scoreLayerName, sidebarDiv);
+}
+
+/**
+ * Creates a checkbox for showing/hiding layers.
+ *
+ * @param {String} name checkbox name, basis for id
+ * @param {String} displayName checkbox display name
+ * @param {div} parentDiv div to attach checkbox to
+ * @return {HTMLInputElement} the checkbox
+ */
+function createNewCheckbox(name, displayName, parentDiv) {
+  const newBox = document.createElement('input');
+  newBox.type = 'checkbox';
+  newBox.id = getCheckBoxId(name);
+  newBox.checked = true;
+  parentDiv.appendChild(newBox);
+  return newBox;
 }
 
 /**
  * Creates a new checkbox for the given asset.
  *
- * @param {string} assetName
- * @param {google.maps.Map} map main map
+ * @param {String} assetName
  * @param {Element} parentDiv
  */
-function createNewCheckbox(assetName, map, parentDiv) {
-  const newBox = document.createElement('input');
-  newBox.type = 'checkbox';
-  newBox.id = assetName;
-  if (assets[assetName]) {
-    newBox.checked = true;
+function createNewCheckboxForAsset(assetName, parentDiv) {
+  const newBox = createNewCheckbox(
+      assetName,
+      assets[assetName] ? assets[assetName].getDisplayName() : assetName,
+      parentDiv);
+  if (assets[assetName] && !assets[assetName].shouldDisplayOnLoad()) {
+    newBox.checked = false;
   }
   newBox.onclick = () => {
     if (newBox.checked) {
@@ -130,11 +146,17 @@ function createNewCheckbox(assetName, map, parentDiv) {
       toggleLayerOff(assetName);
     }
   };
-  parentDiv.appendChild(newBox);
-  const label = document.createElement('label');
-  label.for = assetName;
-  label.innerHTML = assetName;
-  parentDiv.appendChild(label);
+}
+
+/**
+ * Creates a show/hide checkbox for user features.
+ *
+ * @param {div} mapDiv div to attach checkbox to
+ */
+function createCheckboxForUserFeatures(mapDiv) {
+  const newBox = createNewCheckbox('user features', 'user features', mapDiv);
+  newBox.checked = true;
+  newBox.onclick = () => setUserFeatureVisibility(newBox.checked);
 }
 
 /**
@@ -149,7 +171,7 @@ function initializeAssetLayers(map) {
 
   Object.keys(assets).forEach((assetName, index) => {
     // TODO(juliexxia): generalize for ImageCollections (and Features/Images?)
-    if (assets[assetName]) {
+    if (assets[assetName].shouldDisplayOnLoad()) {
       addLayer(assetName, index);
     } else {
       addNullLayer(assetName, index);
@@ -168,5 +190,15 @@ function initializeAssetLayers(map) {
  */
 function initializeScoreLayer(map, layer) {
   addLayerFromGeoJsonPromise(layer, scoreLayerName, scoreIndex);
-  document.getElementById(scoreLayerName).checked = true;
+  document.getElementById(getCheckBoxId(scoreLayerName)).checked = true;
+}
+
+/**
+ * Creates the id of a show/hide checkbox.
+ *
+ * @param {string} baseName
+ * @return {string}
+ */
+function getCheckBoxId(baseName) {
+  return baseName + '-checkbox';
 }
