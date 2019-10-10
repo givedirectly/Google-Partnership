@@ -44,6 +44,7 @@ describe('Integration test for clicking feature', () => {
   it.only('click highlights correct feature even after update', () => {
     cy.visit(host);
     cy.awaitLoad();
+    cy.get('#sidebar-toggle-thresholds').click();
 
     cy.get('.map').click(343, 184);
     cy.get('.google-visualization-table-tr-sel')

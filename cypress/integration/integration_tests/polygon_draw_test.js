@@ -145,6 +145,9 @@ describe('Integration tests for drawing polygons', () => {
 
   it('Hides polygon, re-shows, tries to hide during edit', () => {
     cy.visit(host);
+    cy.awaitLoad();
+    cy.get('#sidebar-toggle-datasets').click();
+
     drawPolygonAndClickOnIt();
     pressPolygonButton('edit');
     cy.get('[class="notes"]').type(notes);
@@ -185,6 +188,9 @@ describe('Integration tests for drawing polygons', () => {
 
   it('Hides, draws new one, tries to hide during edit, re-shows, hides', () => {
     cy.visit(host);
+    cy.awaitLoad();
+    cy.get('#sidebar-toggle-datasets').click();
+
     drawPolygonAndClickOnIt();
     pressPolygonButton('edit');
     cy.get('[class="notes"]').type(notes);

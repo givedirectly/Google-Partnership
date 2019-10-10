@@ -15,6 +15,8 @@ describe('Integration test for update.js', () => {
     cy.visit(host);
     cy.awaitLoad();
 
+    cy.get('[id="sidebar-toggle-thresholds"]').click();
+
     cy.get('[id="damage threshold"]').clear().type('0.0');
     cy.get('[id="update"]').click();
 

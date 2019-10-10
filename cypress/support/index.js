@@ -26,4 +26,7 @@ global.host = 'http://localhost:8080/';
 global.tableClass = '.google-visualization-table-table';
 
 global.testCookieValue = Math.random() + '/suffix';
-beforeEach(() => cy.setCookie('IN_CYPRESS_TEST', testCookieValue));
+beforeEach(() => {
+  cy.viewport(1100, 1700);
+  cy.setCookie('IN_CYPRESS_TEST', testCookieValue);
+});
