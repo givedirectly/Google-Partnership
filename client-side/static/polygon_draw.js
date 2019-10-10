@@ -1,5 +1,5 @@
 import createError from './create_error.js';
-import {mapContainerId} from './dom_constants.js';
+import {mapContainerId, writeWaiterId} from './dom_constants.js';
 import {getTestCookie, inProduction} from './in_test_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {addPopUpListener, createPopup, setUpPopup} from './popup.js';
@@ -60,7 +60,7 @@ class ShapeData {
       this.state = ShapeData.State.QUEUED_WRITE;
       return;
     }
-    addLoadingElement('writeWaiter');
+    addLoadingElement(writeWaiterId);
     this.state = ShapeData.State.WRITING;
     ShapeData.pendingWriteCount++;
     if (!polygon.getMap()) {
@@ -76,10 +76,10 @@ class ShapeData {
       this.state = ShapeData.State.SAVED;
       switch (oldState) {
         case ShapeData.State.WRITING:
-          loadingElementFinished('writeWaiter');
+          loadingElementFinished(writeWaiterId);
           return;
         case ShapeData.State.QUEUED_WRITE:
-          loadingElementFinished('writeWaiter');
+          loadingElementFinished(writeWaiterId);
           this.update(polygon, this.notes);
           return;
         case ShapeData.State.SAVED:
