@@ -1,10 +1,10 @@
-describe('Integration test for the sidebar', function() {
-  it('Enables toggling', async () => {
+describe('Integration test for the sidebar', () => {
+  it('Enables toggling', () => {
     cy.visit(host);
     cy.awaitLoad();
 
     // The sidebar should be collapsed to start.
-    cy.get('#sidebar').should('have.css', 'width').and('neq', '25%');
+    cy.get('#sidebar').should('have.css', 'width').and('eq', '64px');
     cy.get('#sidebar-thresholds').should('have.css', 'display').and('eq', 'none');
     cy.get('#sidebar-datasets').should('have.css', 'display').and('eq', 'none');
 
@@ -16,7 +16,7 @@ describe('Integration test for the sidebar', function() {
 
     // The thresholds sidebar should disappear on toggling.
     cy.get('#sidebar-toggle-thresholds').click();
-    cy.get('#sidebar').should('have.css', 'width').and('neq', '25%');
+    cy.get('#sidebar').should('have.css', 'width').and('eq', '64px');
     cy.get('#sidebar-thresholds').should('have.css', 'display').and('eq', 'none');
     cy.get('#sidebar-datasets').should('have.css', 'display').and('eq', 'none');
 
