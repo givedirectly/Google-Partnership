@@ -172,10 +172,9 @@ describe('Integration tests for drawing polygons', () => {
     pressPolygonButton('edit');
     let alertCameUp = false;
     cy.on('window:alert', () => alertCameUp = true);
-    cy.get('#user-features-checkbox').click()
-        .then(() => {
-          expect(alertCameUp).to.be.true;
-        });
+    cy.get('#user-features-checkbox').click().then(() => {
+      expect(alertCameUp).to.be.true;
+    });
     cy.get('#user-features-checkbox').should('be.checked');
     // Confirm that save is still around to be pressed.
     pressPolygonButton('save');
@@ -201,10 +200,9 @@ describe('Integration tests for drawing polygons', () => {
     // Try to re-check the box. It will fail because we're editing.
     let alertCameUp = false;
     cy.on('window:alert', () => alertCameUp = true);
-    cy.get('#user-features-checkbox').click()
-        .then(() => {
-          expect(alertCameUp).to.be.true;
-        });
+    cy.get('#user-features-checkbox').click().then(() => {
+      expect(alertCameUp).to.be.true;
+    });
     cy.get('#user-features-checkbox').should('not.be.checked');
 
     // Save the new notes and check the box, this time it succeeds.
