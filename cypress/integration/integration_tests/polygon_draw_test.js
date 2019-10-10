@@ -21,18 +21,15 @@ const firebaseConfig = {
 firebaseLibrary.initializeApp(firebaseConfig);
 const db = firebaseLibrary.firestore();
 
-const userShapes = db.collection('usershapes-test');
+const userShapes = db.collection('usershapes-test' + testCookieValue);
 
 describe('Integration tests for drawing polygons', () => {
-  // Delete all test-defined polygons, identified by their starting point. We
-  // depend on the high probability that no real person will randomly click on
-  // precisely this point.
+  // Delete all test-defined polygons.
   const deleteAllRegionsDrawnByTest = () =>
       // Return a wrapped promise. Cypress will wait for the promise to finish.
       cy.wrap(userShapes.get().then((querySnapshot) => {
         const deletePromises = [];
         querySnapshot.forEach((userDefinedRegion) => {
-          const storedGeometry = userDefinedRegion.get('geometry');
           deletePromises.push(userShapes.doc(userDefinedRegion.id).delete());
         });
         return Promise.all(deletePromises);
@@ -227,7 +224,11 @@ describe('Integration tests for drawing polygons', () => {
   });
 });
 
-/** Visit page, draw a new polygon on the map, click inside it. */
+/**
+ * Visit page, draw a new polygon on the map, click inside it.
+ *
+ * @param {number} offset Shift polygon down this many pixels
+ */
 function drawPolygonAndClickOnIt(offset = 0) {
   const polygonButton = cy.get('[title="Draw a shape"]');
   polygonButton.click();
@@ -262,6 +263,7 @@ function drawPolygonAndClickOnIt(offset = 0) {
  * Click on the map inside the test-drawn polygon to trigger a pop-up if it's
  * there. Returns the result for chaining.
  *
+ * @param {number} offset Shift click down this many pixels
  * @return {Cypress.Chainable}
  */
 function clickOnDrawnPolygon(offset = 0) {
