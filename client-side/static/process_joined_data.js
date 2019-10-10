@@ -38,7 +38,7 @@ function colorAndRate(
   // score > scalingFactor.
   const opacity =
       Math.min(Math.round((255 / scalingFactor) * score), scoreDisplayCap);
-  feature.properties['color'] = [255, 0, 255, opacity];
+  feature.properties['color'] = [255 - opacity, 0, 255, opacity];
 }
 
 /**
