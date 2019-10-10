@@ -72,6 +72,6 @@ describe('Unit test for processed_joined_data.js', () => {
    */
   function assertColorAndOpacity(resultProperties, opacity) {
     expect(resultProperties).to.have.property('color');
-    expect(resultProperties['color']).to.eqls([255, 0, 255, opacity]);
+    expect(resultProperties['color']).to.eqls([255 - opacity, 0, 255, opacity]);
   }
 });
