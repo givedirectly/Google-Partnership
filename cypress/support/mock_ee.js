@@ -24,9 +24,22 @@ ee.Number = (value) => new eeNumber(value);
 
 ee.listEvaluateCallback = null;
 
+/**
+ * A thin stub of ee.Join
+ */
 class Join {
+  /**
+   * @constructor
+   */
   constructor() {}
 
+  /**
+   * Applies a join that just returns the left table.
+   * @param {ee.FeatureCollection} leftTable
+   * @param {ee.FeatureCollection} rightTable
+   * @param {ee.Filter} filter
+   * @return {ee.FeatureCollection}
+   */
   apply(leftTable, rightTable, filter) {
     return leftTable;
   }
@@ -83,23 +96,36 @@ class FeatureCollection {
 
   /**
    * Returns a "list" that can be evaluated and will store its callback.
-   *
    * @return {Object}
    */
   toList() {
     return {evaluate: (callback) => ee.listEvaluateCallback = callback};
   }
 
+  /**
+   * Returns size of 1 always.
+   * @return {eeNumber}
+   */
   size() {
     return new eeNumber(1);
   }
 }
 
+/** A thin stub off ee.Number. */
 class eeNumber {
+  /**
+   * @constructor
+   * @param {number} value
+   */
   constructor(value) {
     this._value = value;
   }
 
+  /**
+   * Gives the value supplied at construction as the success parameter to the
+   * given callback.
+   * @param {function} callback
+   */
   evaluate(callback) {
     callback(this._value, null);
   }
