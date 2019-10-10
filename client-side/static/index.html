@@ -38,6 +38,20 @@
 </head>
 <body>
   <div class="wrapper">
+    <div id="sidebar" class="sidebar">
+      <ul>
+        <li id="sidebar-toggle-thresholds" class="sidebar-list-item">
+          <i class="fa fa-sliders fa-2x" aria-hidden="true"></i>
+        </li>
+        <li id="sidebar-toggle-datasets" class="sidebar-list-item">
+          <i class="fa fa-check-square fa-2x" aria-hidden="true"></i>
+        </li>
+      </ul>
+      <div id="sidebar-thresholds" class="sidebar-content">
+        <div class="form" id="form-div"></div>
+      </div>
+      <div id="sidebar-datasets" class="sidebar-content"></div>
+    </div>
     <div class="main-content">
       <h1>Houston damage/poverty map</h1>
       <div class="map-container" id="mapContainer">
@@ -62,20 +76,6 @@
           <span class="button-text">Google</span>
         </div>
       </div>
-    </div>
-    <div id="sidebar" class="sidebar">
-      <ul>
-        <li id="sidebar-toggle-thresholds" class="sidebar-list-item">
-          <i class="fa fa-sliders fa-2x" aria-hidden="true"></i>
-        </li>
-        <li id="sidebar-toggle-datasets" class="sidebar-list-item">
-          <i class="fa fa-check-square fa-2x" aria-hidden="true"></i>
-        </li>
-      </ul>
-      <div id="sidebar-thresholds" class="sidebar-content">
-        <div class="form" id="form-div"></div>
-      </div>
-      <div id="sidebar-datasets" class="sidebar-content"></div>
     </div>
     <div class="tiles-loading"></div>
   </div>
