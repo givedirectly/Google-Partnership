@@ -256,7 +256,7 @@ function drawPolygonAndClickOnIt(offset = 0) {
   drawPointAndPrepareForNext(150, 250 + offset);
   const handButton = cy.get('[title="Stop drawing"]');
   handButton.click();
-  cy.wait(1000);
+  cy.wait(500);
   // click to trigger pop up.
   clickOnDrawnPolygon(offset);
 }
