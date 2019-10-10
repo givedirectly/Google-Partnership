@@ -23,6 +23,8 @@ const db = firebaseLibrary.firestore();
 
 const userShapes = db.collection('usershapes-test' + testCookieValue);
 
+// This test generally doesn't wait for the page to load, since that's not
+// necessary to draw polygons.
 describe('Integration tests for drawing polygons', () => {
   // Delete all test-defined polygons.
   const deleteAllRegionsDrawnByTest = () =>
