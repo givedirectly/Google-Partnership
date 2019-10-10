@@ -1,6 +1,12 @@
 import {userRegionData} from './user_region_data.js';
 
-export {addPopUpListener, createPopup, setUpPopup, setUserFeatureVisibility};
+export {
+  addPopUpListener,
+  createPopup,
+  setUpPopup,
+  setUserFeatureVisibility,
+  updateDamage
+};
 
 let Popup = null;
 
@@ -28,6 +34,7 @@ function setUpPopup() {
     this.damage = damage;
     this.map = map;
     this.content = document.createElement('div');
+    this.saved = true;
 
     this.content.classList.add('popup-bubble');
 
@@ -50,7 +57,7 @@ function setUpPopup() {
 
   /** Called when the popup is added to the map. */
   Popup.prototype.onAdd = function() {
-    createPopupHtml(this, this.notes, this.damage, this.map);
+    createPopupHtml(this, this.notes, this.damage);
     this.getPanes().floatPane.appendChild(this.containerDiv);
   };
 
@@ -87,11 +94,6 @@ function setUpPopup() {
     this.position = this.polygon.getPath().getAt(0);
     this.draw();
   };
-
-  Popup.prototype.setDamage = function(damage) {
-    this.damage = damage;
-    createPopupHtml(this, this.notes, this.damage, this.map);
-  };
 }
 
 const allPopups = new Set();
@@ -119,23 +121,40 @@ function setUserFeatureVisibility(visibility) {
 }
 
 /**
- * Populates the content div of the popup.
- *
+ * Given a popup, update its damage child div to a new damage value.
  * @param {Popup} popup
- * @param {string} notes
- * @param {String|Integer} damage
- * @param {google.maps.Map} map
+ * @param {Integer|String} damage
  */
-function createPopupHtml(popup, notes, damage, map) {
+function updateDamage(popup, damage) {
+  for (var child = popup.content.firstChild; child != null; child=child.nextSibling) {
+    if (child.classList.contains('popup-damage')) {
+      child.innerHTML = 'damage count: ' + damage;
+      if (isNaN(damage) || !popup.saved) {
+        child.style.color = 'grey';
+      } else {
+        child.style.color = 'black';
+      }
+    }
+  }
+}
+
+/**
+ * Creates the popup HTML from scratch in the saved state (i.e. with an edit
+ * button).
+ *
+ * @param popup
+ * @param notes
+ * @param damage
+ */
+function createPopupHtml(popup, notes, damage) {
+  popup.notes = notes;
+  popup.damage = damage;
+
   const content = popup.content;
   removeAllChildren(content);
-  let saved = true;
 
   const damageDiv = document.createElement('div');
-  damageDiv.innerText = 'damage points: ' + damage;
-  if (damage === 'calculating') {
-    damageDiv.style.color = 'grey';
-  }
+  damageDiv.classList.add('popup-damage');
 
   const notesDiv = document.createElement('div');
   notesDiv.innerText = notes;
@@ -155,9 +174,10 @@ function createPopupHtml(popup, notes, damage, map) {
   // edit the polygon.
   let savedShape = null;
   const editButton = document.createElement('button');
+  editButton.classList.add('popup-edit');
   editButton.innerHTML = 'edit';
   editButton.onclick = () => {
-    saved = false;
+    popup.saved = false;
     numEdits++;
     polygon.setEditable(true);
 
@@ -176,8 +196,7 @@ function createPopupHtml(popup, notes, damage, map) {
     const saveButton = document.createElement('button');
     saveButton.innerHTML = 'save';
     saveButton.onclick = () => {
-      saveNewData(polygon, popup, notesForm.value, map);
-      saved = true;
+      saveNewData(polygon, popup, notesForm.value);
     };
 
     content.insertBefore(saveButton, closeButton);
@@ -188,7 +207,7 @@ function createPopupHtml(popup, notes, damage, map) {
   const closeButton = document.createElement('button');
   closeButton.innerHTML = 'close';
   closeButton.onclick = () => {
-    if (saved) {
+    if (popup.saved) {
       closeCleanup(polygon, popup);
     } else if (confirm('Exit without saving changes? Changes will be lost.')) {
       if (savedShape === null) {
@@ -198,8 +217,9 @@ function createPopupHtml(popup, notes, damage, map) {
       }
       polygon.setMap(null);
       polygon.setPath(savedShape);
-      polygon.setMap(map);
-      makeUneditable(polygon, popup, notes, damage, map);
+
+      polygon.setMap(popup.map);
+      makeUneditable(polygon, popup, notes, damage);
       closeCleanup(polygon, popup);
     }
   };
@@ -209,8 +229,9 @@ function createPopupHtml(popup, notes, damage, map) {
   content.appendChild(closeButton);
   content.appendChild(damageDiv);
   content.appendChild(notesDiv);
-}
 
+  updateDamage(popup, damage);
+}
 
 /**
  * Remove all current contents of the popup.
@@ -228,29 +249,28 @@ function removeAllChildren(div) {
  * @param {google.maps.Polygon} polygon
  * @param {Object} popup
  * @param {String} notes
- * @param {Integer} damage
- * @param {google.maps.Map} map
+ * @param {Integer|String} damage
  */
-function makeUneditable(polygon, popup, notes, damage, map) {
+function makeUneditable(polygon, popup, notes, damage) {
   polygon.setEditable(false);
+  popup.saved = true;
   numEdits--;
-  createPopupHtml(popup, notes, damage, map);
+  createPopupHtml(popup, notes, damage);
 }
 
 /**
- * Process new polygon shape and notes. createPopupHtml gets called twice over
+ * Process new polygon shape and notes. popup html gets created twice over
  * the course of this method, once before we have the damage number and once
  * after we receive the damage number.
  *
  * @param {google.maps.Polygon} polygon
  * @param {Popup} popup
  * @param {String} notes
- * @param {google.maps.Map} map
  */
-function saveNewData(polygon, popup, notes, map) {
-  makeUneditable(polygon, popup, notes, 'calculating', map);
+function saveNewData(polygon, popup, notes) {
+  makeUneditable(polygon, popup, notes, 'calculating');
   userRegionData.get(polygon).update(
-      polygon, (damage) => createPopupHtml(popup, notes, damage, map), notes);
+      polygon, (damage) => updateDamage(popup, damage), notes);
   // update where the popup pops up to match any polygon shape changes
   popup.updatePosition();
 }

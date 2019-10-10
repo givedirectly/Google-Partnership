@@ -2,7 +2,7 @@ import createError from './create_error.js';
 import {mapContainerId} from './dom_constants.js';
 import {getTestCookie, inProduction} from './in_test_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
-import {addPopUpListener, createPopup, setUpPopup} from './popup.js';
+import {addPopUpListener, createPopup, setUpPopup, updateDamage} from './popup.js';
 import {userRegionData} from './user_region_data.js';
 
 // ShapeData is only for testing.
@@ -36,7 +36,7 @@ class ShapeData {
    *
    * @param {String} id Firestore id.
    * @param {String} notes User-entered notes.
-   * @param {Integer} damage
+   * @param {Integer|String} damage
    */
   constructor(id, notes, damage) {
     this.id = id;
@@ -79,7 +79,7 @@ class ShapeData {
         case ShapeData.State.WRITING:
           return;
         case ShapeData.State.QUEUED_WRITE:
-          this.update(polygon, () => {}, this.notes);
+          this.update(polygon, damageReceiver, this.notes);
           return;
         case ShapeData.State.SAVED:
           console.error('Unexpected polygon state:' + this);
@@ -207,8 +207,9 @@ function setUpPolygonDrawing(map) {
     userRegionData.set(polygon, data);
     const popup = createPopup(polygon, map);
     addPopUpListener(polygon, popup);
-
-    data.update(polygon, (damage) => popup.setDamage(damage), '');
+    data.update(polygon, (damage) => {
+      updateDamage(popup, damage);
+    }, '');
   });
 
   drawingManager.setMap(map);

@@ -41,10 +41,11 @@ describe('Integration tests for drawing polygons', () => {
 
   afterEach(deleteAllRegionsDrawnByTest);
 
-  it('Draws a polygon and edits its notes', () => {
+  it.only('Draws a polygon and edits its notes', () => {
     cy.visit(host);
     drawPolygonAndClickOnIt();
     pressPolygonButton('edit');
+    cy.get('.map').contains('damage count: 64197');
     cy.get('[class="notes"]').type(notes);
     pressPolygonButton('save');
     cy.get('.map').contains(notes);
@@ -135,6 +136,7 @@ describe('Integration tests for drawing polygons', () => {
     pressPolygonButton('edit');
     cy.get('[class="notes"]').type(notes);
     pressPolygonButton('save');
+    // cy.wait(3000);
     pressPolygonButton('edit');
     cy.get('[class="notes"]').type('blahblahblah');
     pressPolygonButton('close');
