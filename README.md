@@ -48,7 +48,6 @@ available. However, if you work for Google and get a failed command when you run
     ```shell
     cd the/directory/this/README/is/in
     yarn install # Just once, to make sure everything is installed.
-    yarn run mocha
     yarn run cypress run --browser chromium
     ```
 

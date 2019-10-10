@@ -156,6 +156,7 @@ function createButton(id, onclick) {
   submitButton.value = id;
   submitButton.id = id;
   submitButton.onclick = onclick;
+  submitButton.classList.add('form-button');
   return submitButton;
 }
 
