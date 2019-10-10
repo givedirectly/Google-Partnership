@@ -7,11 +7,11 @@ describe('Integration test', () => {
     cy.visit(host);
     cy.awaitLoad();
 
-    cy.get('[id="score"]').uncheck();
+    cy.get('#score-checkbox').uncheck();
 
-    cy.get('[id="poverty threshold"]').type('1.0');
-    cy.get('[id="update"]').click();
+    cy.get('[id="poverty threshold"]').clear().type('1.0');
+    cy.get('#update').click();
 
-    cy.get('[id="score"]').should('be.checked');
+    cy.get('#score-checkbox').should('be.checked');
   });
 });
