@@ -127,7 +127,8 @@ function addImageLayer(map, layer, assetName, index) {
     layer = assets[assetName].getColorFunction()(layer);
   }
   layerMap[assetName] = new LayerMapValue(null, index, true);
-  layer.getMap({visParams: imgStyles,
+  layer.getMap({
+    visParams: imgStyles,
     callback: (layerId, failure) => {
       if (layerId) {
         layerMap[assetName].overlay = addLayerFromId(
@@ -193,7 +194,8 @@ function addLayerFromId(map, assetName, layerId, index, displayed) {
 function addLayerFromFeatures(layerMapValue, assetName) {
   const colorFunction =
       (assets[assetName] && assets[assetName].getColorFunction()) ?
-      assets[assetName].getColorFunction() : getColorOfFeature;
+      assets[assetName].getColorFunction() :
+      getColorOfFeature;
   layerArray[layerMapValue.index] = new deck.GeoJsonLayer({
     id: assetName,
     data: layerMapValue.data,
