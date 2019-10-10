@@ -60,6 +60,7 @@ class ShapeData {
       this.state = ShapeData.State.QUEUED_WRITE;
       return;
     }
+    addLoadingElement('writeWaiter');
     this.state = ShapeData.State.WRITING;
     ShapeData.pendingWriteCount++;
     if (!polygon.getMap()) {
@@ -75,8 +76,10 @@ class ShapeData {
       this.state = ShapeData.State.SAVED;
       switch (oldState) {
         case ShapeData.State.WRITING:
+          loadingElementFinished('writeWaiter');
           return;
         case ShapeData.State.QUEUED_WRITE:
+          loadingElementFinished('writeWaiter');
           this.update(polygon, this.notes);
           return;
         case ShapeData.State.SAVED:
