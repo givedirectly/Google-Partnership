@@ -29,21 +29,20 @@ describe('Integration tests for drawing polygons', () => {
   // Delete all test-defined polygons.
   const deleteAllRegionsDrawnByTest = () =>
       // Return a wrapped promise. Cypress will wait for the promise to finish.
-      cy.wrap(
-          firebaseLibrary.getCollections().then((collections) => {
-                const deletePromises = [];
-                for (const collection of collections) {
-                  if (collection.id !== 'usershapes') {
-                    collection.get().then((querySnapshot) => {
-                      querySnapshot.forEach((userDefinedRegion) => {
-                        deletePromises.push(
-                            userShapes.doc(userDefinedRegion.id).delete());
-                      });
-                    });
-                  }
-                }
-                return Promise.all(deletePromises);
-              }));
+      cy.wrap(firebaseLibrary.getCollections().then((collections) => {
+        const deletePromises = [];
+        for (const collection of collections) {
+          if (collection.id !== 'usershapes') {
+            collection.get().then((querySnapshot) => {
+              querySnapshot.forEach((userDefinedRegion) => {
+                deletePromises.push(
+                    userShapes.doc(userDefinedRegion.id).delete());
+              });
+            });
+          }
+        }
+        return Promise.all(deletePromises);
+      }));
 
   beforeEach(deleteAllRegionsDrawnByTest);
 
