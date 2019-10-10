@@ -34,7 +34,7 @@ describe('Integration tests for drawing polygons', () => {
         deletePromises.push(userShapes.doc(userDefinedRegion.id).delete());
       });
       return Promise.all(deletePromises);
-    }))
+    }));
   };
 
   beforeEach(deleteAllRegionsDrawnByTest);
