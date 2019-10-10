@@ -54,7 +54,11 @@ while read local_ref local_sha remote_ref remote_sha; do
     fi
     yarn run eslint $modified_js_files
   fi
-  yarn run cypress run --browser chromium
+  # If on Linux, uncomment to run integration tests using Chromium, and unit
+  # tests using headless Electron so it doesn't take focus quite as much.
+  yarn run cypress run # --browser chromium \
+      # --spec "cypress/integration/integration_tests/*.js"
+  # yarn run cypress run --spec "cypress/integration/unit_tests/*.js"
 done
 
 exit 0
