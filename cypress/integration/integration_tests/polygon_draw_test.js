@@ -1,9 +1,5 @@
 // Call this firebaseLibrary to avoid conflicting with mock firebase defined in
 // commands.js.
-import {startGet} from '../../../test/lib/test_support';
-import {until} from 'selenium-webdriver';
-import {expect} from 'chai';
-
 const firebaseLibrary = require('firebase');
 
 const hackyWaitTime = 1000;
@@ -37,9 +33,7 @@ describe('Integration tests for drawing polygons', () => {
         const deletePromises = [];
         querySnapshot.forEach((userDefinedRegion) => {
           const storedGeometry = userDefinedRegion.get('geometry');
-          if (storedGeometry[0].latitude === 29.711705459174475) {
-            deletePromises.push(userShapes.doc(userDefinedRegion.id).delete());
-          }
+          deletePromises.push(userShapes.doc(userDefinedRegion.id).delete());
         });
         return Promise.all(deletePromises);
       }));
@@ -49,6 +43,7 @@ describe('Integration tests for drawing polygons', () => {
   afterEach(deleteAllRegionsDrawnByTest);
 
   it('Draws a polygon and edits its notes', () => {
+    cy.visit(host);
     drawPolygonAndClickOnIt();
     pressPolygonButton('edit');
     cy.get('[class="notes"]').type(notes);
@@ -59,6 +54,7 @@ describe('Integration tests for drawing polygons', () => {
   it('Draws a polygon and deletes it', () => {
     // Accept confirmation when it happens.
     cy.on('window:confirm', () => true);
+    cy.visit(host);
     drawPolygonAndClickOnIt();
     pressPolygonButton('edit');
     cy.get('[class="notes"]').type(notes);
@@ -74,6 +70,7 @@ describe('Integration tests for drawing polygons', () => {
     // Reject confirmation when first happens, then accept it later.
     let confirmValue = false;
     cy.on('window:confirm', () => confirmValue);
+    cy.visit(host);
     drawPolygonAndClickOnIt();
     pressPolygonButton('edit');
     cy.get('[class="notes"]').type(notes);
@@ -108,6 +105,7 @@ describe('Integration tests for drawing polygons', () => {
   });
 
   it('Draws a polygon, clicks it, closes its info box', () => {
+    cy.visit(host);
     drawPolygonAndClickOnIt();
     pressPolygonButton('edit');
     cy.get('[class="notes"]').type(notes);
@@ -121,6 +119,7 @@ describe('Integration tests for drawing polygons', () => {
   it('Draws a polygon, almost closes while editing', () => {
     cy.on('window:confirm', () => false);
 
+    cy.visit(host);
     drawPolygonAndClickOnIt();
     pressPolygonButton('edit');
     cy.get('[class="notes"]').type(notes);
@@ -132,6 +131,7 @@ describe('Integration tests for drawing polygons', () => {
   it('Draws a polygon, closes while editing', () => {
     cy.on('window:confirm', () => true);
 
+    cy.visit(host);
     drawPolygonAndClickOnIt();
     pressPolygonButton('edit');
     cy.get('[class="notes"]').type(notes);
@@ -144,88 +144,93 @@ describe('Integration tests for drawing polygons', () => {
     cy.get('#mapContainer').contains(notes).should('not.be.visible');
   });
 
-  it('Tests hiding functionality', async () => {
-    const driver = await driverPromise;
-    startGet(driver);
-    // Draw a polygon and verify that it goes away when box is unchecked.
-    await drawPolygonAndClickOnIt(driver);
-    await pressPolygonButton('edit', driver);
-    await driver.findElement({className: 'notes'}).sendKeys(notes);
-    await pressPolygonButton('save', driver);
-    await assertNotesVisibleStatus(true, driver);
-    await assertUserFeaturesCheckboxCheckedStatus(true, driver);
-    await driver.findElement({id: 'user features-checkbox'}).click();
-    await assertUserFeaturesCheckboxCheckedStatus(false, driver);
-    await assertNotesVisibleStatus(false, driver);
+  it.only('Hides polygon, re-shows, tries to hide during edit', () => {
+    cy.visit(host);
+    drawPolygonAndClickOnIt();
+    pressPolygonButton('edit');
+    cy.get('[class="notes"]').type(notes);
+    pressPolygonButton('save');
+    cy.get('#mapContainer').contains(notes).should('be.visible');
+    cy.get('#user-features-checkbox').should('be.checked');
+    cy.get('#user-features-checkbox').click();
+    cy.get('#mapContainer').contains(notes).should('not.be.visible');
     // Notes is invisible even if we click on the polygon, so it's really gone.
     // Use an offset because there's some weirdness around selecting block
     // groups that then suppress clicks.
-    await clickOnDrawnPolygon(driver, -10);
-    await assertNotesVisibleStatus(false, driver);
+    clickOnDrawnPolygon(-50);
+    cy.get('#mapContainer').contains(notes).should('not.be.visible');
 
     // Check box again and verify that notes box can now be brought up.
-    await driver.findElement({id: 'user features-checkbox'}).click();
-    await assertUserFeaturesCheckboxCheckedStatus(true, driver);
+    cy.get('#user-features-checkbox').click();
+    cy.get('#user-features-checkbox').should('be.checked');
     // Notes not visible yet.
-    await assertNotesVisibleStatus(false, driver);
-    await clickOnDrawnPolygon(driver);
-    await assertNotesVisibleStatus(true, driver);
+    cy.get('#mapContainer').contains(notes).should('not.be.visible');
+    clickOnDrawnPolygon();
+    cy.get('#mapContainer').contains(notes).should('be.visible');
 
     // Try to hide user features in the middle of editing: will fail.
-    await pressPolygonButton('edit', driver);
-    await driver.findElement({id: 'user features-checkbox'})
-        .click()
-        .then(async () => {
-          await driver.wait(until.alertIsPresent());
-          await driver.switchTo().alert().accept();
+    pressPolygonButton('edit');
+    let alertCameUp = false;
+    cy.on('window:alert', () => alertCameUp = true);
+    cy.get('#user-features-checkbox').click()
+        .then(() => {
+          expect(alertCameUp).to.be.true;
         });
-    await assertUserFeaturesCheckboxCheckedStatus(true, driver);
+    cy.get('#user-features-checkbox').should('be.checked');
     // Confirm that save is still around to be pressed.
-    await pressPolygonButton('save', driver);
+    pressPolygonButton('save');
 
     // After a save, the hide is successful.
-    await driver.findElement({id: 'user features-checkbox'}).click();
-    await assertUserFeaturesCheckboxCheckedStatus(false, driver);
+    cy.get('#user-features-checkbox').click();
+    cy.get('#user-features-checkbox').should('not.be.checked');
+  });
 
+  it('Hides, draws new one, tries to hide during edit, re-shows, hides', () => {
+    cy.visit(host);
+    drawPolygonAndClickOnIt();
+    pressPolygonButton('edit');
+    cy.get('[class="notes"]').type(notes);
+    pressPolygonButton('save');
+    cy.get('#user-features-checkbox').click();
+    cy.get('#user-features-checkbox').should('not.be.checked');
     // With the box unchecked, draw a new polygon, below the first one, and set
     // its notes, but don't finish editing.
-    await drawPolygonAndClickOnIt(driver, 50);
-    await pressPolygonButton('edit', driver);
-    await driver.findElement({className: 'notes'}).sendKeys('new notes');
+    drawPolygonAndClickOnIt(200);
+    pressPolygonButton('edit');
+    cy.get('[class="notes"]').type('new notes');
     // Try to re-check the box. It will fail because we're editing.
-    await driver.findElement({id: 'user features-checkbox'})
-        .click()
-        .then(async () => {
-          await driver.wait(until.alertIsPresent());
-          await driver.switchTo().alert().accept();
+    let alertCameUp = false;
+    cy.on('window:alert', () => alertCameUp = true);
+    cy.get('#user-features-checkbox').click()
+        .then(() => {
+          expect(alertCameUp).to.be.true;
         });
-    await assertUserFeaturesCheckboxCheckedStatus(false, driver);
+    cy.get('#user-features-checkbox').should('not.be.checked');
 
     // Save the new notes and check the box, this time it succeeds.
-    await pressPolygonButton('save', driver);
-    await driver.findElement({id: 'user features-checkbox'}).click();
-    await assertUserFeaturesCheckboxCheckedStatus(true, driver);
+    pressPolygonButton('save');
+    cy.get('#user-features-checkbox').click();
+    cy.get('#user-features-checkbox').should('be.checked');
 
     // We can click on the old polygon and view its notes,
-    await clickOnDrawnPolygon(driver);
-    await assertNotesVisibleStatus(true, driver, notes);
+    clickOnDrawnPolygon();
+    cy.get('#mapContainer').contains(notes).should('be.visible');
     // And the new polygon and view its notes.
-    await clickOnDrawnPolygon(driver, 50);
-    await assertNotesVisibleStatus(true, driver, 'new notes');
+    clickOnDrawnPolygon(200);
+    cy.get('#mapContainer').contains('new notes').should('be.visible');
 
     // Now hide both polygons, and verify that they're really gone.
-    await driver.findElement({id: 'user features-checkbox'}).click();
-    await assertUserFeaturesCheckboxCheckedStatus(false, driver);
-    await assertNotesVisibleStatus(false, driver, notes);
-    await assertNotesVisibleStatus(false, driver, 'new notes');
-    await clickOnDrawnPolygon(driver, 50);
-    await assertNotesVisibleStatus(false, driver, 'new notes');
+    cy.get('#user-features-checkbox').click();
+    cy.get('#user-features-checkbox').should('not.be.checked');
+    cy.get('#mapContainer').contains(notes).should('not.be.visible');
+    cy.get('#mapContainer').contains('new notes').should('not.be.visible');
+    clickOnDrawnPolygon(200);
+    cy.get('#mapContainer').contains('new notes').should('not.be.visible');
   });
 });
 
 /** Visit page, draw a new polygon on the map, click inside it. */
-function drawPolygonAndClickOnIt() {
-  cy.visit(host);
+function drawPolygonAndClickOnIt(offset = 0) {
   const polygonButton = cy.get('[title="Draw a shape"]');
   polygonButton.click();
   // Wait for polygon selection overlay to appear.
@@ -238,21 +243,21 @@ function drawPolygonAndClickOnIt() {
   // derived by inspecting the page after starting to draw a polygon.
   cy.get(
       'div[style*="cursor: url(\\"https://maps.gstatic.com/mapfiles/crosshair.cur\\") 7 7, crosshair;"]');
-  drawPointAndPrepareForNext(150, 250);
+  drawPointAndPrepareForNext(150, 250 + offset);
   // TODO(janakr): test seems to fail reliably on command line without these
   // and pass with it. Figure out what to actually test for on the page and
   // remove these waits.
   cy.wait(hackyWaitTime);
-  drawPointAndPrepareForNext(400, 50);
+  drawPointAndPrepareForNext(400, 100 + offset);
   cy.wait(hackyWaitTime);
-  drawPointAndPrepareForNext(450, 150);
+  drawPointAndPrepareForNext(450, 250 + offset);
   cy.wait(hackyWaitTime);
-  drawPointAndPrepareForNext(150, 250);
+  drawPointAndPrepareForNext(150, 250 + offset);
   const handButton = cy.get('[title="Stop drawing"]');
   handButton.click();
-  cy.wait(2000);
+  cy.wait(1000);
   // click to trigger pop up.
-  clickOnDrawnPolygon();
+  clickOnDrawnPolygon(offset);
 }
 
 /**
@@ -261,16 +266,16 @@ function drawPolygonAndClickOnIt() {
  *
  * @return {Cypress.Chainable}
  */
-function clickOnDrawnPolygon() {
-  return cy.get('.map').click(150, 250);
+function clickOnDrawnPolygon(offset = 0) {
+  return cy.get('.map').click(300, 220 + offset);
 }
 
 /**
- * Clicks a button inside the map with the given id.
+ * Clicks a visible button inside the map with the given id.
  * @param {string} button id of html button we want to click
  */
 function pressPolygonButton(button) {
-  cy.get('#mapContainer').contains(button).click();
+  cy.get(':button:visible').contains(button).click();
 }
 
 /**
@@ -306,31 +311,4 @@ function drawPointAndPrepareForNext(x, y) {
   // const clientY = y + 81;
   // cy.get('.map').trigger('mousemove', {clientX: clientX, clientY: clientY});
   cy.get('.map').click(x, y);
-}
-
-/**
- * Asserts that the given notes have the given visibility.
- *
- * @param {boolean} visible
- * @param {WebDriver} driver
- * @param {string} expectedNotes defaults to the global notes
- */
-async function assertNotesVisibleStatus(
-    visible, driver, expectedNotes = notes) {
-  const value =
-      await driver.findElement({xpath: '//div[.="' + expectedNotes + '"]'})
-          .isDisplayed();
-  expect(value).to.eq(visible);
-}
-
-/**
- * Asserts that the user features checkbox is checked or not.
- *
- * @param {boolean} checked
- * @param {WebDriver} driver
- */
-async function assertUserFeaturesCheckboxCheckedStatus(checked, driver) {
-  const status =
-      await driver.findElement({id: 'user features-checkbox'}).isSelected();
-  expect(status).to.equal(checked);
 }

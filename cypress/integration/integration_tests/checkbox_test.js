@@ -12,8 +12,6 @@ describe('Integration test', () => {
     cy.get('[id="poverty threshold"]').type('1.0');
     cy.get('[id="update"]').click();
 
-    cy.awaitLoad();
-
     cy.get('[id="score"]').should('be.checked');
   });
 });
