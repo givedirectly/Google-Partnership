@@ -74,14 +74,15 @@ function setMapToDrawLayersOn(map) {
  * Toggles on displaying an asset on the map.
  *
  * @param {string} assetName
+ * @param {google.maps.Map} map main map
  */
-function toggleLayerOn(assetName) {
+function toggleLayerOn(assetName, map) {
   const currentLayerMapValue = layerMap.get(assetName);
   currentLayerMapValue.displayed = true;
   if (currentLayerMapValue.data) {
     addLayerFromFeatures(currentLayerMapValue, assetName);
   } else {
-    addLayer(assetName, currentLayerMapValue.index);
+    addLayer(assetName, currentLayerMapValue.index, map);
   }
 }
 
@@ -89,9 +90,10 @@ function toggleLayerOn(assetName) {
  * Toggles off displaying an asset on the map.
  *
  * @param {string} assetName
+ * @param {google.maps.Map} map main map
  */
-function toggleLayerOff(assetName) {
-  removeLayer(assetName);
+function toggleLayerOff(assetName, map) {
+  removeLayer(assetName, map);
 }
 
 /**
@@ -102,6 +104,74 @@ function toggleLayerOff(assetName) {
  */
 function getColorOfFeature(feature) {
   return showColor(feature.properties['color']);
+}
+
+/**
+ * Asynchronous wrapper for addLayerFromId that calls getMap() with a callback
+ * to avoid blocking on the result. This also populates layerMap.
+ *
+ * This should only be called once per asset when its overlay is initialized
+ * for the first time. After the overlay is non-null in layerMap, any displaying
+ * should be able to call {@code map.overlayMapTypes.setAt(...)}.
+ *
+ * @param {google.maps.Map} map
+ * @param {ee.Element} layer
+ * @param {string} assetName
+ * @param {number} index
+ */
+function addImageLayer(map, layer, assetName, index) {
+  // Add a null-overlay entry to layerMap while waiting for the callback to
+  // finish.
+  const imgStyles = assets[assetName].getVisParams();
+  if (assets[assetName].getColorFunction) {
+    layer = assets[assetName].getColorFunction()(layer);
+  }
+  layerMap[assetName] = new LayerMapValue(null, index, true);
+  layer.getMap({visParams: imgStyles,
+    callback: (layerId, failure) => {
+      if (layerId) {
+        layerMap[assetName].overlay = addLayerFromId(
+            map, assetName, layerId, index, layerMap[assetName].displayed);
+      } else {
+        // TODO: if there's an error, disable checkbox, add tests for this.
+        layerMap[assetName].displayed = false;
+        createError('getting id')(failure);
+      }
+    },
+  });
+}
+
+/**
+ * Create an EarthEngine layer (from EEObject.getMap()), potentially add to the
+ * given Google Map and returns the overlay, in case the caller wants to add
+ * callbacks or similar to that overlay.
+ *
+ * @param {google.maps.Map} map
+ * @param {string} assetName
+ * @param {Object} layerId
+ * @param {number} index
+ * @param {boolean} displayed
+ * @return {ee.MapLayerOverlay}
+ */
+function addLayerFromId(map, assetName, layerId, index, displayed) {
+  const overlay = new ee.MapLayerOverlay(
+      'https://earthengine.googleapis.com/map', layerId.mapid, layerId.token,
+      {});
+  // Update loading state according to layers.
+  overlay.addTileCallback((tileEvent) => {
+    if (tileEvent.count == 0) {
+      loadingElementFinished(mapContainerId);
+      layerMap[assetName].loading = false;
+    } else if (!layerMap[assetName].loading) {
+      layerMap[assetName].loading = true;
+      addLoadingElement(mapContainerId);
+    }
+  });
+  // Check in case the status has changed while the callback was running.
+  if (displayed) {
+    map.overlayMapTypes.setAt(index, overlay);
+  }
+  return overlay;
 }
 
 /**
@@ -123,8 +193,7 @@ function getColorOfFeature(feature) {
 function addLayerFromFeatures(layerMapValue, assetName) {
   const colorFunction =
       (assets[assetName] && assets[assetName].getColorFunction()) ?
-      assets[assetName].getColorFunction() :
-      getColorOfFeature;
+      assets[assetName].getColorFunction() : getColorOfFeature;
   layerArray[layerMapValue.index] = new deck.GeoJsonLayer({
     id: assetName,
     data: layerMapValue.data,
@@ -159,12 +228,20 @@ const maxNumFeaturesExpected = 250000000;
  *
  * @param {string} assetName Name of EarthEngine FeatureCollection.
  * @param {number} index Ordering of layer (higher is more visible).
+ * @param {google.maps.Map} map main map
  */
-function addLayer(assetName, index) {
-  addLayerFromGeoJsonPromise(
-      convertEeObjectToPromise(
-          ee.FeatureCollection(assetName).toList(maxNumFeaturesExpected)),
-      assetName, index);
+function addLayer(assetName, index, map) {
+  switch (assets[assetName].getType()) {
+    case 'Image':
+      addImageLayer(map, ee.Image(assetName), assetName, index);
+      break;
+    default:
+      addLayerFromGeoJsonPromise(
+          convertEeObjectToPromise(
+              ee.FeatureCollection(assetName).toList(maxNumFeaturesExpected)),
+          assetName, index);
+      break;
+  }
 }
 
 /**
@@ -228,11 +305,20 @@ function redrawLayers() {
  * recreating the layer.
  *
  * @param {string} assetName
+ * @param {google.maps.Map} map main map
  */
-function removeLayer(assetName) {
-  const layerMapValue = layerMap.get(assetName);
-  layerMapValue.displayed = false;
-  addLayerFromFeatures(layerMapValue, assetName);
+function removeLayer(assetName, map) {
+  switch (assets[assetName] && assets[assetName].getType()) {
+    case 'Image':
+      map.overlayMapTypes.setAt(layerMap[assetName].index, null);
+      layerMap[assetName].displayed = false;
+      break;
+    default:
+      const layerMapValue = layerMap.get(assetName);
+      layerMapValue.displayed = false;
+      addLayerFromFeatures(layerMapValue, assetName);
+      break;
+  }
 }
 
 /**

@@ -13,12 +13,14 @@ class EarthEngineAsset {
    * @param {String} displayName
    * @param {boolean} displayOnLoad
    * @param {?Function} colorFunction
+   * @param {Object} visParams
    **/
-  constructor(type, displayName, displayOnLoad, colorFunction) {
+  constructor(type, displayName, displayOnLoad, colorFunction, visParams) {
     this.type = type;
     this.displayName = displayName;
     this.displayOnLoad = displayOnLoad;
     this.colorFunction = colorFunction;
+    this.visParams = visParams;
   }
 
   /**
@@ -55,6 +57,15 @@ class EarthEngineAsset {
    */
   getDisplayName() {
     return this.displayName;
+  }
+
+  /**
+   * Returns the visual styling for the asset, if any.
+   *
+   * @return {Object}
+   */
+  getVisParams() {
+    return this.visParams;
   }
 }
 
@@ -119,6 +130,11 @@ const pathOfStormRadii = new EarthEngineAsset(
     colorPathofStormRadiiLayer);
 const femaVisits = new EarthEngineAsset(
     'FeatureCollection', 'FEMA Assistance', false, colorFemaAssistanceLayer);
+const elevationData =
+    new EarthEngineAsset('Image', 'Elevation Data', false, (layer) => {
+      const aspect = ee.Terrain.aspect(layer);
+      return aspect.divide(180).multiply(Math.PI).sin();
+    }, {min: -1, max: 1, opacity: .3});
 
 // List of known assets
 const assets = {
@@ -126,4 +142,5 @@ const assets = {
   'users/ruthtalbot/harvey-SVI': sviData,
   'users/ruthtalbot/harvey-pathofstorm-radii': pathOfStormRadii,
   'users/ruthtalbot/fema-visits-polygon': femaVisits,
+  'CGIAR/SRTM90_V4': elevationData,
 };

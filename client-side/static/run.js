@@ -102,7 +102,7 @@ function createAssetCheckboxes(map) {
   // a better place.
   const mapDiv = document.getElementById(mapContainerId);
   Object.keys(assets).forEach(
-      (assetName) => createNewCheckboxForAsset(assetName, mapDiv));
+      (assetName) => createNewCheckboxForAsset(assetName, mapDiv, map));
   createCheckboxForUserFeatures(mapDiv);
   // score checkbox gets checked during initializeScoreLayer
   createNewCheckboxForAsset(scoreLayerName, mapDiv);
@@ -134,8 +134,9 @@ function createNewCheckbox(name, displayName, mapDiv) {
  *
  * @param {String} assetName
  * @param {Element} mapDiv
+ * @param {google.maps.Map} map main map
  */
-function createNewCheckboxForAsset(assetName, mapDiv) {
+function createNewCheckboxForAsset(assetName, mapDiv, map) {
   const newBox = createNewCheckbox(
       assetName,
       assets[assetName] ? assets[assetName].getDisplayName() : assetName,
@@ -145,9 +146,9 @@ function createNewCheckboxForAsset(assetName, mapDiv) {
   }
   newBox.onclick = () => {
     if (newBox.checked) {
-      toggleLayerOn(assetName);
+      toggleLayerOn(assetName, map);
     } else {
-      toggleLayerOff(assetName);
+      toggleLayerOff(assetName, map);
     }
   };
 }
@@ -176,7 +177,7 @@ function initializeAssetLayers(map) {
   Object.keys(assets).forEach((assetName, index) => {
     // TODO(juliexxia): generalize for ImageCollections (and Features/Images?)
     if (assets[assetName].shouldDisplayOnLoad()) {
-      addLayer(assetName, index);
+      addLayer(assetName, index, map);
     } else {
       addNullLayer(assetName, index);
     }
