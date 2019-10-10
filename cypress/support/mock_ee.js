@@ -20,7 +20,7 @@ ee.Join.simple = () => new Join();
 ee.Filter = {};
 ee.Filter.intersects = (properties) => new Filter();
 
-ee.Number = (value) => new eeNumber(value);
+ee.Number = (value) => new EeNumber(value);
 
 ee.listEvaluateCallback = null;
 
@@ -104,15 +104,15 @@ class FeatureCollection {
 
   /**
    * Returns size of 1 always.
-   * @return {eeNumber}
+   * @return {EeNumber}
    */
   size() {
-    return new eeNumber(1);
+    return new EeNumber(1);
   }
 }
 
 /** A thin stub off ee.Number. */
-class eeNumber {
+class EeNumber {
   /**
    * @constructor
    * @param {number} value
