@@ -177,7 +177,7 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 const collectionName =
-    'usershapes' + (inProduction() ? '' : ('-test-' + getTestCookie()));
+    'usershapes' + (inProduction() ? '' : ('-test/' + getTestCookie()));
 
 const userShapes = db.collection(collectionName);
 
