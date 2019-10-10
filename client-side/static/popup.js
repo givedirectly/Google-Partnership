@@ -5,7 +5,7 @@ export {
   createPopup,
   setUpPopup,
   setUserFeatureVisibility,
-  updateDamage
+  updateDamage,
 };
 
 let Popup = null;
@@ -126,14 +126,13 @@ function setUserFeatureVisibility(visibility) {
  * @param {Integer|String} damage
  */
 function updateDamage(popup, damage) {
-  for (var child = popup.content.firstChild; child != null;
-       child = child.nextSibling) {
-    if (child.classList.contains('popup-damage')) {
-      child.innerHTML = 'damage count: ' + damage;
+  for (let c = popup.content.firstChild; c != null; c = c.nextSibling) {
+    if (c.classList.contains('popup-damage')) {
+      c.innerHTML = 'damage count: ' + damage;
       if (isNaN(damage) || !popup.saved) {
-        child.style.color = 'grey';
+        c.style.color = 'grey';
       } else {
-        child.style.color = 'black';
+        c.style.color = 'black';
       }
     }
   }
@@ -143,9 +142,9 @@ function updateDamage(popup, damage) {
  * Creates the popup HTML from scratch in the saved state (i.e. with an edit
  * button).
  *
- * @param popup
- * @param notes
- * @param damage
+ * @param {Popup} popup
+ * @param {String} notes
+ * @param {Integer|String} damage
  */
 function createPopupHtml(popup, notes, damage) {
   popup.notes = notes;
