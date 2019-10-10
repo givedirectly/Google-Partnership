@@ -227,7 +227,7 @@ describe('Integration tests for drawing polygons', () => {
 });
 
 /**
- * Visit page, draw a new polygon on the map, click inside it.
+ * Draws a new polygon on the map, clicks inside it.
  *
  * @param {number} offset Shift polygon down this many pixels
  */
