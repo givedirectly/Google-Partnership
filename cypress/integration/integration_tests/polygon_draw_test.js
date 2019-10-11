@@ -41,20 +41,20 @@ describe('Integration tests for drawing polygons', () => {
 
   afterEach(deleteAllRegionsDrawnByTest);
 
-  it('Draws a polygon and edits its notes', () => {
+  it.only('Draws a polygon and edits its notes', () => {
     cy.visit(host);
     drawPolygonAndClickOnIt();
     cy.awaitLoad(['writeWaiter']);
     pressPolygonButton('edit');
     // assert damage text is grey while editing
-    cy.get('.popup-damage').contains('damage count: 92349');
+    cy.get('.popup-damage').contains('damage count: 89079');
     cy.get('.popup-damage')
         .should('have.css', 'color')
         .and('eq', 'rgb(128, 128, 128)');
     cy.get('[class="notes"]').type(notes);
     pressPolygonButton('save');
     cy.get('.map').contains(notes);
-    cy.get('.popup-damage').contains('damage count: 92349');
+    cy.get('.popup-damage').contains('damage count: 89079');
     cy.get('.popup-damage')
         .should('have.css', 'color')
         .and('eq', 'rgb(0, 0, 0)');
@@ -221,7 +221,7 @@ describe('Integration tests for drawing polygons', () => {
     cy.get('#user-features-checkbox').should('not.be.checked');
     // With the box unchecked, draw a new polygon, below the first one, and set
     // its notes, but don't finish editing.
-    drawPolygonAndClickOnIt(200);
+    drawPolygonAndClickOnIt(100);
     pressPolygonButton('edit');
     cy.get('[class="notes"]').type('new notes');
     // Try to re-check the box. It will fail because we're editing.
@@ -241,7 +241,7 @@ describe('Integration tests for drawing polygons', () => {
     clickOnDrawnPolygon();
     cy.get('#mapContainer').contains(notes).should('be.visible');
     // And the new polygon and view its notes.
-    clickOnDrawnPolygon(200);
+    clickOnDrawnPolygon(100);
     cy.get('#mapContainer').contains('new notes').should('be.visible');
 
     // Now hide both polygons, and verify that they're really gone.
@@ -249,7 +249,7 @@ describe('Integration tests for drawing polygons', () => {
     cy.get('#user-features-checkbox').should('not.be.checked');
     cy.get('#mapContainer').contains(notes).should('not.be.visible');
     cy.get('#mapContainer').contains('new notes').should('not.be.visible');
-    clickOnDrawnPolygon(200);
+    clickOnDrawnPolygon(100);
     cy.get('#mapContainer').contains('new notes').should('not.be.visible');
   });
 });
@@ -276,8 +276,6 @@ function drawPolygonAndClickOnIt(offset = 0) {
   // TODO(janakr): test seems to fail reliably on command line without these
   // and pass with it. Figure out what to actually test for on the page and
   // remove these waits.
-  cy.wait(hackyWaitTime);
-  drawPointAndPrepareForNext(225, 50 + offset);
   cy.wait(hackyWaitTime);
   drawPointAndPrepareForNext(400, 100 + offset);
   cy.wait(hackyWaitTime);
