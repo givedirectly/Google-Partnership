@@ -2,6 +2,7 @@ import createError from './create_error.js';
 import createMap from './create_map.js';
 import {inProduction} from './in_test_util.js';
 import run from './run.js';
+import {initializeSidebar} from './sidebar.js';
 
 export {map};
 
@@ -27,6 +28,8 @@ function setup() {
   google.charts.load('current', {packages: ['table', 'controls']});
 
   $(document).ready(function() {
+    initializeSidebar();
+
     map = createMap();
 
     const runOnSuccess = function() {

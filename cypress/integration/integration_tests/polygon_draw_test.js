@@ -173,11 +173,13 @@ describe('Integration tests for drawing polygons', () => {
 
   it('Hides polygon, re-shows, tries to hide during edit', () => {
     cy.visit(host);
+
     drawPolygonAndClickOnIt();
     pressPolygonButton('edit');
     cy.get('[class="notes"]').type(notes);
     pressPolygonButton('save');
     cy.get('#mapContainer').contains(notes).should('be.visible');
+    cy.get('#sidebar-toggle-datasets').click();
     cy.get('#user-features-checkbox').should('be.checked');
     cy.get('#user-features-checkbox').click();
     cy.get('#mapContainer').contains(notes).should('not.be.visible');
@@ -213,10 +215,12 @@ describe('Integration tests for drawing polygons', () => {
 
   it('Hides, draws new one, tries to hide during edit, re-shows, hides', () => {
     cy.visit(host);
+
     drawPolygonAndClickOnIt();
     pressPolygonButton('edit');
     cy.get('[class="notes"]').type(notes);
     pressPolygonButton('save');
+    cy.get('#sidebar-toggle-datasets').click();
     cy.get('#user-features-checkbox').click();
     cy.get('#user-features-checkbox').should('not.be.checked');
     // With the box unchecked, draw a new polygon, below the first one, and set
