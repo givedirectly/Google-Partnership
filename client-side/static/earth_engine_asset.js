@@ -135,6 +135,8 @@ const elevationData =
       const aspect = ee.Terrain.aspect(layer);
       return aspect.divide(180).multiply(Math.PI).sin();
     }, {min: -1, max: 1, opacity: .3});
+const noaaData =
+    new EarthEngineAsset('ImageCollection', 'NOAA Imagery', false);
 
 // List of known assets
 const assets = {
@@ -143,4 +145,5 @@ const assets = {
   'users/ruthtalbot/harvey-pathofstorm-radii': pathOfStormRadii,
   'users/ruthtalbot/fema-visits-polygon': femaVisits,
   'CGIAR/SRTM90_V4': elevationData,
+  'users/ruthtalbot/harvey-noaa': noaaData,
 };

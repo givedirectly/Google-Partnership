@@ -120,12 +120,12 @@ function getColorOfFeature(feature) {
  * @param {number} index
  */
 function addImageLayer(map, layer, assetName, index) {
-  // Add a null-overlay entry to layerMap while waiting for the callback to
-  // finish.
   const imgStyles = assets[assetName].getVisParams();
-  if (assets[assetName].getColorFunction) {
+  if (assets[assetName].getColorFunction()) {
     layer = assets[assetName].getColorFunction()(layer);
   }
+  // Add a null-overlay entry to layerMap while waiting for the callback to
+  // finish.
   layerMap[assetName] = new LayerMapValue(null, index, true);
   layer.getMap({
     visParams: imgStyles,
@@ -237,6 +237,9 @@ function addLayer(assetName, index, map) {
   switch (assets[assetName].getType()) {
     case 'Image':
       addImageLayer(map, ee.Image(assetName), assetName, index);
+      break;
+    case 'ImageCollection':
+      addImageLayer(map, ee.ImageCollection(assetName), assetName, index);
       break;
     default:
       addLayerFromGeoJsonPromise(
