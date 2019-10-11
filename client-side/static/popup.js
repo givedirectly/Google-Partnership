@@ -141,9 +141,9 @@ function updateDamage(popup, damage) {
 }
 
 /**
- *
- * @param popup
- * @param saved
+ * Update the saved/editing state of a popup.
+ * @param {Popup} popup
+ * @param {boolean} saved
  */
 function updateState(popup, saved) {
   if (saved) {
