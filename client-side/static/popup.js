@@ -107,7 +107,6 @@ let numEdits = 0;
  * @return {boolean} if it succeeded
  */
 function setUserFeatureVisibility(visibility) {
-  console.log(numEdits);
   if (numEdits > 0) {
     window.alert('Cannot show/hide user features when edits in progress');
     return false;
@@ -252,7 +251,7 @@ function createPopupHtml(popup, notes, damage) {
 }
 
 /**
- * Remove all current contents of the popup.
+ * Utility function to remove all children of a given div.
  * @param {Element} div
  */
 function removeAllChildren(div) {
