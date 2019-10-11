@@ -9,6 +9,7 @@ describe('Unit test for toggleLayerOn', () => {
     layerMap.set('asset2', new LayerMapValue(null, 2, false));
     layerArray[0] = new deck.GeoJsonLayer({});
     layerArray[1] = new deck.GeoJsonLayer({});
+    ee.listEvaluateCallback = null;
   });
 
   it('displays a hidden but loaded layer', () => {
