@@ -135,8 +135,7 @@ const elevationData =
       const aspect = ee.Terrain.aspect(layer);
       return aspect.divide(180).multiply(Math.PI).sin();
     }, {min: -1, max: 1, opacity: .3});
-const noaaData =
-    new EarthEngineAsset('ImageCollection', 'NOAA Imagery', false);
+const noaaData = new EarthEngineAsset('ImageCollection', 'NOAA Imagery', false);
 
 // List of known assets
 const assets = {
