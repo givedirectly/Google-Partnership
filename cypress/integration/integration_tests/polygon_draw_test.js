@@ -41,7 +41,7 @@ describe('Integration tests for drawing polygons', () => {
 
   afterEach(deleteAllRegionsDrawnByTest);
 
-  it.only('Draws a polygon and edits its notes', () => {
+  it('Draws a polygon and edits its notes', () => {
     cy.visit(host);
     drawPolygonAndClickOnIt();
     cy.awaitLoad(['writeWaiter']);
