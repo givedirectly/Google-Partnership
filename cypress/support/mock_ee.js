@@ -14,36 +14,12 @@ ee.Feature = (geometry, properties) => new Feature(geometry, properties);
 
 ee.FeatureCollection = (url) => new FeatureCollection(url);
 
-ee.Join = {};
-ee.Join.simple = () => new Join();
-
 ee.Filter = {};
 ee.Filter.intersects = (properties) => new Filter();
 
 ee.Number = (value) => new EeNumber(value);
 
 ee.listEvaluateCallback = null;
-
-/**
- * A thin stub of ee.Join
- */
-class Join {
-  /**
-   * @constructor
-   */
-  constructor() {}
-
-  /**
-   * Applies a join that just returns the left table.
-   * @param {ee.FeatureCollection} leftTable
-   * @param {ee.FeatureCollection} rightTable
-   * @param {ee.Filter} filter
-   * @return {ee.FeatureCollection}
-   */
-  apply(leftTable, rightTable, filter) {
-    return leftTable;
-  }
-}
 
 /** A thin stub of ee.Feature. */
 class Feature {
@@ -139,12 +115,6 @@ class Point {
 
 /** An empty stub of ee.Geometry.Polygon. */
 class Polygon {
-  /** @constructor */
-  constructor() {}
-}
-
-/** An empty stub of ee.Filter. */
-class Filter {
   /** @constructor */
   constructor() {}
 }

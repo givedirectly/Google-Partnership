@@ -169,7 +169,7 @@ function createPopupHtml(popup, notes, damage) {
   removeAllChildren(content);
 
   const damageDiv = document.createElement('div');
-  damageDiv.classList.add('popup-damage');
+  damageDiv.classList.add('damage-test-finder');
   popup.damageDiv = damageDiv;
   updateDamage(popup, damage);
 
