@@ -1,11 +1,11 @@
 export {getResources as default};
 
 /**
- * Gets all the ee assets relevent to the current disaster.
+ * Gets all the ee assets relevant to the current disaster.
  * @return {DisasterMapValue}
  */
 function getResources() {
-  return disaster.get(disaster);
+  return disasters.get(disaster);
 }
 
 /** The current disaster. */
