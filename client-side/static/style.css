@@ -119,10 +119,6 @@ input[type='range'] {
   border-radius: 4px;
   color: #fff;
   font-family: Helvetica;
-  /* Will revert before submitting, just difficult to see everything */
-  font-size: 8px;
-  line-height: 10px;
-  margin: 5px 5px 5px 0;
   padding: 2px 8px;
   text-align: center;
   text-transform: capitalize;

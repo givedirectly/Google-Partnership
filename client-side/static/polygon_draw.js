@@ -89,7 +89,7 @@ class ShapeData {
       }
     };
 
-    // TODO: don't recompute size if polygon hasn't changed. I think this is
+    // TODO: don't recompute size if polygon hasn't changed. Somewhat
     // non-trivial because we need to actually compare the geopoints. We could
     // also pass in a boolean about whether the polygon has changed or not but
     // that feels buggy to me.
@@ -209,7 +209,7 @@ function setUpPolygonDrawing(map) {
     const data = new ShapeData(null, '', 'calculating');
     userRegionData.set(polygon, data);
     const popup = createPopup(polygon, map);
-    addPopUpListener(polygon, popup);
+    addPopUpListener(popup);
     data.update(polygon, (damage) => {
       updateDamage(popup, damage);
     }, '');
@@ -256,7 +256,7 @@ function drawRegionsFromFirestoreQuery(querySnapshot, map) {
         new ShapeData(
             userDefinedRegion.id, userDefinedRegion.get('notes'),
             userDefinedRegion.get('damage')));
-    addPopUpListener(polygon, createPopup(polygon, map));
+    addPopUpListener(createPopup(polygon, map));
     polygon.setMap(map);
   });
   loadingElementFinished(mapContainerId);

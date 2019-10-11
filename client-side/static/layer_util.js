@@ -124,7 +124,7 @@ function addLayerFromFeatures(layerMapValue, assetName) {
   const colorFunction =
       (assets[assetName] && assets[assetName].getColorFunction()) ?
       assets[assetName].getColorFunction() :
-      getColorOfFeature;
+        getColorOfFeature;
   layerArray[layerMapValue.index] = new deck.GeoJsonLayer({
     id: assetName,
     data: layerMapValue.data,
