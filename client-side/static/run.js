@@ -122,6 +122,11 @@ function createNewCheckbox(name, displayName, parentDiv) {
   newBox.id = getCheckBoxId(name);
   newBox.checked = true;
   parentDiv.appendChild(newBox);
+  const label = document.createElement('label');
+  label.for = name;
+  label.innerHTML = displayName;
+  parentDiv.appendChild(label);
+  parentDiv.appendChild(document.createElement('br'));
   return newBox;
 }
 
@@ -151,10 +156,10 @@ function createNewCheckboxForAsset(assetName, parentDiv) {
 /**
  * Creates a show/hide checkbox for user features.
  *
- * @param {div} mapDiv div to attach checkbox to
+ * @param {div} parentDiv div to attach checkbox to
  */
-function createCheckboxForUserFeatures(mapDiv) {
-  const newBox = createNewCheckbox('user-features', 'user features', mapDiv);
+function createCheckboxForUserFeatures(parentDiv) {
+  const newBox = createNewCheckbox('user-features', 'user features', parentDiv);
   newBox.checked = true;
   newBox.onclick = () => setUserFeatureVisibility(newBox.checked);
 }
