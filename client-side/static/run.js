@@ -1,5 +1,5 @@
 import {clickFeature, selectHighlightedFeatures} from './click_feature.js';
-import {mapContainerId, tableContainerId} from './dom_constants.js';
+import {tableContainerId, sidebarDatasetsId} from './dom_constants.js';
 import {drawTable} from './draw_table.js';
 import {assets} from './earth_engine_asset.js';
 import {highlightFeatures} from './highlight_features.js';
@@ -100,12 +100,12 @@ function createAndDisplayJoinedData(
 function createAssetCheckboxes(map) {
   // TODO: these probably shouldn't just sit at the bottom of the page - move to
   // a better place.
-  const mapDiv = document.getElementById(mapContainerId);
+  const sidebarDiv = document.getElementById(sidebarDatasetsId);
   Object.keys(assets).forEach(
-      (assetName) => createNewCheckboxForAsset(assetName, mapDiv, map));
-  createCheckboxForUserFeatures(mapDiv);
+      (assetName) => createNewCheckboxForAsset(assetName, sidebarDiv, map));
+  createCheckboxForUserFeatures(sidebarDiv);
   // score checkbox gets checked during initializeScoreLayer
-  createNewCheckboxForAsset(scoreLayerName, mapDiv);
+  createNewCheckboxForAsset(scoreLayerName, sidebarDiv, map);
 }
 
 /**
@@ -113,19 +113,21 @@ function createAssetCheckboxes(map) {
  *
  * @param {String} name checkbox name, basis for id
  * @param {String} displayName checkbox display name
- * @param {div} mapDiv div to attach checkbox to
+ * @param {div} parentDiv div to attach checkbox to
+ * @param {google.maps.Map} map main map
  * @return {HTMLInputElement} the checkbox
  */
-function createNewCheckbox(name, displayName, mapDiv) {
+function createNewCheckbox(name, displayName, parentDiv, map) {
   const newBox = document.createElement('input');
   newBox.type = 'checkbox';
   newBox.id = getCheckBoxId(name);
   newBox.checked = true;
-  mapDiv.parentNode.appendChild(newBox);
+  parentDiv.appendChild(newBox);
   const label = document.createElement('label');
-  label.for = name;
+  label.htmlFor = newBox.id;
   label.innerHTML = displayName;
-  mapDiv.parentNode.appendChild(label);
+  parentDiv.appendChild(label);
+  parentDiv.appendChild(document.createElement('br'));
   return newBox;
 }
 
@@ -133,14 +135,14 @@ function createNewCheckbox(name, displayName, mapDiv) {
  * Creates a new checkbox for the given asset.
  *
  * @param {String} assetName
- * @param {Element} mapDiv
+ * @param {Element} parentDiv
  * @param {google.maps.Map} map main map
  */
-function createNewCheckboxForAsset(assetName, mapDiv, map) {
+function createNewCheckboxForAsset(assetName, parentDiv, map) {
   const newBox = createNewCheckbox(
       assetName,
       assets[assetName] ? assets[assetName].getDisplayName() : assetName,
-      mapDiv);
+      parentDiv);
   if (assets[assetName] && !assets[assetName].shouldDisplayOnLoad()) {
     newBox.checked = false;
   }
@@ -156,10 +158,10 @@ function createNewCheckboxForAsset(assetName, mapDiv, map) {
 /**
  * Creates a show/hide checkbox for user features.
  *
- * @param {div} mapDiv div to attach checkbox to
+ * @param {div} parentDiv div to attach checkbox to
  */
-function createCheckboxForUserFeatures(mapDiv) {
-  const newBox = createNewCheckbox('user-features', 'user features', mapDiv);
+function createCheckboxForUserFeatures(parentDiv) {
+  const newBox = createNewCheckbox('user-features', 'user features', parentDiv);
   newBox.checked = true;
   newBox.onclick = () => setUserFeatureVisibility(newBox.checked);
 }

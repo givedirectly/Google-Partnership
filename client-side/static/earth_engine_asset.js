@@ -113,6 +113,16 @@ function colorFemaAssistanceLayer(feature) {
 }
 
 /**
+ * Colors the feature with GD Assistance-specific logic.
+ *
+ * @param {GeoJSON.Feature} feature
+ * @return {Array} color RGBA color specification as an array
+ */
+function colorGDAssistanceLayer(feature) {
+  return [255, 255, 102, 100];
+}
+
+/**
  * Colors the feature with damage-specific logic.
  *
  * @param {GeoJSON.Feature} feature
@@ -145,6 +155,8 @@ const elevationData =
     }, {min: -1, max: 1, opacity: .3});
 const noaaData =
     new EarthEngineAsset(eeType.IMAGECOLLECTION, 'NOAA Imagery', false);
+const gdVisits = new EarthEngineAsset(
+    'FeatureCollection', 'GD Assistance', false, colorGDAssistanceLayer);
 
 // List of known assets. Display priority is determined by order in this list,
 // with lower index assets being displayed above higher index assets, except for
@@ -157,4 +169,5 @@ const assets = {
   'users/ruthtalbot/fema-visits-polygon': femaVisits,
   'CGIAR/SRTM90_V4': elevationData,
   'users/ruthtalbot/harvey-noaa': noaaData,
+  'users/ruthtalbot/gd-polygons-harvey': gdVisits,
 };

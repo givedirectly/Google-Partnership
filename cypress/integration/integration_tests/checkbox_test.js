@@ -7,7 +7,11 @@ describe('Integration test', () => {
     cy.visit(host);
     cy.awaitLoad();
 
+    cy.get('#sidebar-toggle-datasets').click();
+
     cy.get('#score-checkbox').uncheck();
+
+    cy.get('#sidebar-toggle-thresholds').click();
 
     cy.get('[id="poverty threshold"]').clear().type('1.0');
     cy.get('#update').click();
