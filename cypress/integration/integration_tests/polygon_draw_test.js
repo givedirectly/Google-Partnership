@@ -41,14 +41,40 @@ describe('Integration tests for drawing polygons', () => {
 
   afterEach(deleteAllRegionsDrawnByTest);
 
-  it('Draws a polygon and edits its notes', () => {
+  it.only('Draws a polygon and edits its notes', () => {
     cy.visit(host);
     drawPolygonAndClickOnIt();
+    cy.awaitLoad(['writeWaiter']);
     pressPolygonButton('edit');
+    // assert damage text is grey while editing
+    cy.get('.popup-damage').contains('damage count: 92349');
+    cy.get('.popup-damage')
+        .should('have.css', 'color')
+        .and('eq', 'rgb(128, 128, 128)');
     cy.get('[class="notes"]').type(notes);
     pressPolygonButton('save');
     cy.get('.map').contains(notes);
-    cy.get('.map').contains('damage count: 64197');
+    cy.get('.popup-damage').contains('damage count: 92349');
+    cy.get('.popup-damage')
+        .should('have.css', 'color')
+        .and('eq', 'rgb(0, 0, 0)');
+  });
+
+  // This test relies on the earth engine damage count calculation happening
+  // slower than the cypress gets for the grey 'calculating'. Running a bunch
+  // of times manually this seems fairly safe, but there's a chance it flakes
+  // out if something changes.
+  it('Draws a polygon, checks for calculating status', () => {
+    cy.visit(host);
+    drawPolygonAndClickOnIt();
+    cy.get('.popup-damage').contains('damage count: calculating');
+    cy.get('.popup-damage')
+        .should('have.css', 'color')
+        .and('eq', 'rgb(128, 128, 128)');
+    cy.awaitLoad(['writeWaiter']);
+    cy.get('.popup-damage')
+        .should('have.css', 'color')
+        .and('eq', 'rgb(0, 0, 0)');
   });
 
   it('Draws a polygon and deletes it', () => {
@@ -250,9 +276,13 @@ function drawPolygonAndClickOnIt(offset = 0) {
   // and pass with it. Figure out what to actually test for on the page and
   // remove these waits.
   cy.wait(hackyWaitTime);
+  drawPointAndPrepareForNext(225, 50 + offset);
+  cy.wait(hackyWaitTime);
   drawPointAndPrepareForNext(400, 100 + offset);
   cy.wait(hackyWaitTime);
   drawPointAndPrepareForNext(450, 250 + offset);
+  cy.wait(hackyWaitTime);
+  drawPointAndPrepareForNext(425, 350 + offset);
   cy.wait(hackyWaitTime);
   drawPointAndPrepareForNext(150, 250 + offset);
   const handButton = cy.get('[title="Stop drawing"]');
@@ -274,7 +304,9 @@ function clickOnDrawnPolygon(offset = 0) {
 }
 
 /**
- * Clicks a visible button inside the map with the given id.
+ * Clicks a visible button inside the map with the given id. If we're clicking
+ * save, automatically wait on the result of the save to be written before
+ * continuing on.
  * @param {string} button id of html button we want to click
  */
 function pressPolygonButton(button) {
