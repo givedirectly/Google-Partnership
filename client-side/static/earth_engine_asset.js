@@ -1,4 +1,4 @@
-export {assets};
+export {assets, eeType};
 
 /**
  * EarthEngineAsset class to store relevant data about any assets, including
@@ -69,6 +69,13 @@ class EarthEngineAsset {
   }
 }
 
+const eeType = {
+  IMAGE: 'Image',
+  IMAGECOLLECTION: 'ImageCollection',
+  FEATURECOLLECTION: 'FeatureCollection',
+};
+
+
 /**
  * Colors the feature with SVI-specific logic.
  *
@@ -122,22 +129,27 @@ function colorDamageLayer(feature) {
 
 // TODO: Store these and allow users to change/set these fields on import page.
 const harveyDamageCrowdAIFormat = new EarthEngineAsset(
-    'FeatureCollection', 'Harvey Damge CrowdAI', true, colorDamageLayer);
+    eeType.FEATURECOLLECTION, 'Harvey Damge CrowdAI', true, colorDamageLayer);
 const sviData =
     new EarthEngineAsset('FeatureCollection', 'SVI Data', false, colorSVILayer);
 const pathOfStormRadii = new EarthEngineAsset(
-    'FeatureCollection', 'Path of Storm Radii', false,
+    eeType.FEATURECOLLECTION, 'Path of Storm Radii', false,
     colorPathofStormRadiiLayer);
 const femaVisits = new EarthEngineAsset(
-    'FeatureCollection', 'FEMA Assistance', false, colorFemaAssistanceLayer);
+    eeType.FEATURECOLLECTION, 'FEMA Assistance', false,
+    colorFemaAssistanceLayer);
 const elevationData =
-    new EarthEngineAsset('Image', 'Elevation Data', false, (layer) => {
+    new EarthEngineAsset(eeType.IMAGE, 'Elevation Data', false, (layer) => {
       const aspect = ee.Terrain.aspect(layer);
       return aspect.divide(180).multiply(Math.PI).sin();
     }, {min: -1, max: 1, opacity: .3});
-const noaaData = new EarthEngineAsset('ImageCollection', 'NOAA Imagery', false);
+const noaaData =
+    new EarthEngineAsset(eeType.IMAGECOLLECTION, 'NOAA Imagery', false);
 
-// List of known assets
+// List of known assets. Display priority is determined by order in this list,
+// with lower index assets being displayed above higher index assets, except for
+// Images/ImageCollections, which will always be displayed below
+// FeatureCollections.
 const assets = {
   'users/juliexxia/harvey-damage-crowdai-format': harveyDamageCrowdAIFormat,
   'users/ruthtalbot/harvey-SVI': sviData,
