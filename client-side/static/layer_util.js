@@ -1,6 +1,6 @@
 import createError from './create_error.js';
 import {mapContainerId} from './dom_constants.js';
-import {assets, eeType} from './earth_engine_asset.js';
+import {assets, EarthEngineAsset} from './earth_engine_asset.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 
 export {
@@ -235,10 +235,10 @@ const maxNumFeaturesExpected = 250000000;
  */
 function addLayer(assetName, index, map) {
   switch (assets[assetName].getType()) {
-    case eeType.IMAGE:
+    case EarthEngineAsset.Type.IMAGE:
       addImageLayer(map, ee.Image(assetName), assetName, index);
       break;
-    case eeType.IMAGECOLLECTION:
+    case EarthEngineAsset.Type.IMAGECOLLECTION:
       addImageLayer(map, ee.ImageCollection(assetName), assetName, index);
       break;
     default:
@@ -315,8 +315,8 @@ function redrawLayers() {
  */
 function removeLayer(assetName, map) {
   switch (assets[assetName] && assets[assetName].getType()) {
-    case eeType.IMAGE:
-    case eeType.IMAGECOLLECTION:
+    case EarthEngineAsset.Type.IMAGE:
+    case EarthEngineAsset.Type.IMAGECOLLECTION:
       map.overlayMapTypes.setAt(layerMap[assetName].index, null);
       layerMap[assetName].displayed = false;
       break;

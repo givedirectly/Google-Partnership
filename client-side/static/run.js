@@ -1,5 +1,5 @@
 import {clickFeature, selectHighlightedFeatures} from './click_feature.js';
-import {tableContainerId, sidebarDatasetsId} from './dom_constants.js';
+import {sidebarDatasetsId, tableContainerId} from './dom_constants.js';
 import {drawTable} from './draw_table.js';
 import {assets} from './earth_engine_asset.js';
 import {highlightFeatures} from './highlight_features.js';

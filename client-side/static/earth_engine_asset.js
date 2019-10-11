@@ -1,4 +1,4 @@
-export {assets, eeType};
+export {assets, EarthEngineAsset};
 
 /**
  * EarthEngineAsset class to store relevant data about any assets, including
@@ -69,7 +69,7 @@ class EarthEngineAsset {
   }
 }
 
-const eeType = {
+EarthEngineAsset.Type = {
   IMAGE: 'Image',
   IMAGECOLLECTION: 'ImageCollection',
   FEATURECOLLECTION: 'FeatureCollection',
@@ -139,22 +139,23 @@ function colorDamageLayer(feature) {
 
 // TODO: Store these and allow users to change/set these fields on import page.
 const harveyDamageCrowdAIFormat = new EarthEngineAsset(
-    eeType.FEATURECOLLECTION, 'Harvey Damge CrowdAI', true, colorDamageLayer);
-const sviData =
-    new EarthEngineAsset('FeatureCollection', 'SVI Data', false, colorSVILayer);
+    EarthEngineAsset.Type.FEATURECOLLECTION, 'Harvey Damge CrowdAI', true,
+    colorDamageLayer);
+const sviData = new EarthEngineAsset(
+    EarthEngineAsset.Type.FEATURECOLLECTION, 'SVI Data', false, colorSVILayer);
 const pathOfStormRadii = new EarthEngineAsset(
-    eeType.FEATURECOLLECTION, 'Path of Storm Radii', false,
+    EarthEngineAsset.Type.FEATURECOLLECTION, 'Path of Storm Radii', false,
     colorPathofStormRadiiLayer);
 const femaVisits = new EarthEngineAsset(
-    eeType.FEATURECOLLECTION, 'FEMA Assistance', false,
+    EarthEngineAsset.Type.FEATURECOLLECTION, 'FEMA Assistance', false,
     colorFemaAssistanceLayer);
-const elevationData =
-    new EarthEngineAsset(eeType.IMAGE, 'Elevation Data', false, (layer) => {
+const elevationData = new EarthEngineAsset(
+    EarthEngineAsset.Type.IMAGE, 'Elevation Data', false, (layer) => {
       const aspect = ee.Terrain.aspect(layer);
       return aspect.divide(180).multiply(Math.PI).sin();
     }, {min: -1, max: 1, opacity: .3});
-const noaaData =
-    new EarthEngineAsset(eeType.IMAGECOLLECTION, 'NOAA Imagery', false);
+const noaaData = new EarthEngineAsset(
+    EarthEngineAsset.Type.IMAGECOLLECTION, 'NOAA Imagery', false);
 const gdVisits = new EarthEngineAsset(
     'FeatureCollection', 'GD Assistance', false, colorGDAssistanceLayer);
 

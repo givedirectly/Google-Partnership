@@ -17,9 +17,9 @@ let currentContentId;
  */
 function initializeSidebar() {
   document.getElementById(sidebarToggleThresholdsId).onclick = () =>
-    toggleSidebar(sidebarToggleThresholdsId, sidebarThresholdsId);
+      toggleSidebar(sidebarToggleThresholdsId, sidebarThresholdsId);
   document.getElementById(sidebarToggleDatasetsId).onclick = () =>
-    toggleSidebar(sidebarToggleDatasetsId, sidebarDatasetsId);
+      toggleSidebar(sidebarToggleDatasetsId, sidebarDatasetsId);
 }
 
 /**
@@ -33,8 +33,11 @@ function toggleSidebar(toggleId, contentId) {
 
   if (currentContentId !== contentId) {
     if (currentContentId) {
-      $('#' + currentContentId).fadeOut(sidebarContentTransitionDuration,
-          () => $('#' + contentId).fadeIn(sidebarContentTransitionDuration));
+      $('#' + currentContentId)
+          .fadeOut(
+              sidebarContentTransitionDuration,
+              () =>
+                  $('#' + contentId).fadeIn(sidebarContentTransitionDuration));
     } else {
       sidebar.style.width = sidebarExpandedWidth;
       $('#' + contentId).fadeIn(sidebarContentTransitionDuration);
