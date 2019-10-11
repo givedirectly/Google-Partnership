@@ -1,3 +1,0 @@
-// Copied from https://dev.to/bnorbertjs/my-nodejs-setup-mocha--chai-babel7-es6-43ei
-// Needed in order to make Babel transpile down ES6 features.
-{'presets': ['@babel/preset-env']}
