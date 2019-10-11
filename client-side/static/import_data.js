@@ -43,6 +43,7 @@ const incomeKey = 'HD01_VD01';
 // check with crowd ai folks about name.
 const crowdAiDamageKey = 'descriptio';
 
+
 /**
  * Given a feature from the SNAP census data, returns a new
  * feature with GEOID, SNAP #, total pop #, total building count, building

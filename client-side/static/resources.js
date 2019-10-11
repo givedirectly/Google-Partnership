@@ -14,21 +14,6 @@ const disaster = 'harvey';
 /** Disaster asset names and other constants. */
 const disasters = new Map();
 
-// TODO: upload michael income and SVI data
-disasters.set(
-    'michael',
-    new DisasterMapValue(
-        'users/juliexxia/crowd_ai_michael', 'users/juliexxia/florida_snap',
-        'users/juliexxia/tiger_florida'));
-
-disasters.set(
-    'harvey',
-    new DisasterMapValue(
-        'users/juliexxia/harvey-damage-crowdai-format-aff-as-nod',
-        'users/juliexxia/snap_texas', 'users/juliexxia/tiger_texas',
-        'users/juliexxia/income_texas', 'users/ruthtalbot/harvey-SVI'));
-
-
 /** Constants for {@code disasters} map. */
 class DisasterMapValue {
   /**
@@ -46,3 +31,17 @@ class DisasterMapValue {
     this.sviAsset = sviAsset;
   }
 }
+
+// TODO: upload michael income and SVI data
+disasters.set(
+    'michael',
+    new DisasterMapValue(
+        'users/juliexxia/crowd_ai_michael', 'users/juliexxia/florida_snap',
+        'users/juliexxia/tiger_florida'));
+
+disasters.set(
+    'harvey',
+    new DisasterMapValue(
+        'users/juliexxia/harvey-damage-crowdai-format-aff-as-nod',
+        'users/juliexxia/snap_texas', 'users/juliexxia/tiger_texas',
+        'users/juliexxia/income_texas', 'users/ruthtalbot/harvey-SVI'));
