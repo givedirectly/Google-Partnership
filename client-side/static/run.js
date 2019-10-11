@@ -123,7 +123,7 @@ function createNewCheckbox(name, displayName, parentDiv) {
   newBox.checked = true;
   parentDiv.appendChild(newBox);
   const label = document.createElement('label');
-  label.for = name;
+  label.htmlFor = newBox.id;
   label.innerHTML = displayName;
   parentDiv.appendChild(label);
   parentDiv.appendChild(document.createElement('br'));
