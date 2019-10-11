@@ -41,7 +41,7 @@ describe('Integration tests for drawing polygons', () => {
 
   afterEach(deleteAllRegionsDrawnByTest);
 
-  it.only('Draws a polygon and edits its notes', () => {
+  it('Draws a polygon and edits its notes', () => {
     cy.visit(host);
     drawPolygonAndClickOnIt();
     cy.awaitLoad(['writeWaiter']);
@@ -63,7 +63,8 @@ describe('Integration tests for drawing polygons', () => {
   // This test relies on the earth engine damage count calculation happening
   // slower than the cypress gets for the grey 'calculating'. Running a bunch
   // of times manually this seems fairly safe, but there's a chance it flakes
-  // out if something changes.
+  // out if something changes. If this does start to flake, we can also consider
+  // lowering the wait at the end of drawPolygonAndClickOnIt.
   it('Draws a polygon, checks for calculating status', () => {
     cy.visit(host);
     drawPolygonAndClickOnIt();

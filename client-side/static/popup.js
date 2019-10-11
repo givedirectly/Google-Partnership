@@ -126,16 +126,11 @@ function setUserFeatureVisibility(visibility) {
  * @param {Integer|String} damage
  */
 function updateDamage(popup, damage) {
-  for (let c = popup.content.firstChild; c != null; c = c.nextSibling) {
-    if (c.classList.contains('popup-damage')) {
-      c.innerHTML = 'damage count: ' + damage;
-      if (isNaN(damage) || !popup.saved) {
-        c.style.color = 'grey';
-      } else {
-        c.style.color = 'black';
-      }
-      break;
-    }
+  popup.damageDiv.innerHTML = 'damage count: ' + damage;
+  if (isNaN(damage) || !popup.saved) {
+    popup.damageDiv.style.color = 'grey';
+  } else {
+    popup.damageDiv.style.color = 'black';
   }
 }
 
@@ -175,6 +170,8 @@ function createPopupHtml(popup, notes, damage) {
 
   const damageDiv = document.createElement('div');
   damageDiv.classList.add('popup-damage');
+  popup.damageDiv = damageDiv;
+  updateDamage(popup, damage);
 
   const notesDiv = document.createElement('div');
   notesDiv.innerText = notes;
@@ -201,7 +198,7 @@ function createPopupHtml(popup, notes, damage) {
     const currentNotes = notesDiv.innerText;
     savedShape = clonePolygonPath(polygon);
 
-    // Grey out the damage stat until we save so its clearly old.
+    // Grey out the damage stat until we save so it's clearly old.
     damageDiv.style.color = 'grey';
     content.removeChild(notesDiv);
     content.removeChild(editButton);
@@ -212,9 +209,7 @@ function createPopupHtml(popup, notes, damage) {
 
     const saveButton = document.createElement('button');
     saveButton.innerHTML = 'save';
-    saveButton.onclick = () => {
-      saveNewData(popup, notesForm.value);
-    };
+    saveButton.onclick = () => saveNewData(popup, notesForm.value);
 
     content.insertBefore(saveButton, closeButton);
     content.appendChild(document.createElement('br'));
@@ -245,9 +240,6 @@ function createPopupHtml(popup, notes, damage) {
   content.appendChild(closeButton);
   content.appendChild(damageDiv);
   content.appendChild(notesDiv);
-
-  // Do this at the end so that damageDiv is already attached to content.
-  updateDamage(popup, damage);
 }
 
 /**

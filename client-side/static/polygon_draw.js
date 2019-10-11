@@ -3,6 +3,7 @@ import {mapContainerId, writeWaiterId} from './dom_constants.js';
 import {getTestCookie, inProduction} from './in_test_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {addPopUpListener, createPopup, setUpPopup, updateDamage} from './popup.js';
+import getResources from './resources.js';
 import {userRegionData} from './user_region_data.js';
 
 // ShapeData is only for testing.
@@ -97,13 +98,14 @@ class ShapeData {
     polygon.getPath().forEach((elt) => points.push(elt.lng(), elt.lat()));
     ee.Join.simple()
         .apply(
-            ee.FeatureCollection(
-                'users/juliexxia/harvey-damage-crowdai-format-aff-as-nod'),
+            ee.FeatureCollection(getResources().damageAsset),
             ee.FeatureCollection(ee.Geometry.Polygon(points)),
             ee.Filter.intersects({leftField: '.geo', rightField: '.geo'}))
         .size()
         .evaluate((damage, failure) => {
-          if (damage || damage === 0) {
+          if (failure) {
+            createError('error calculating damage' + this);
+          } else {
             this.damage = damage;
             damageReceiver(this.damage);
             const record = {
@@ -124,8 +126,6 @@ class ShapeData {
                   })
                   .catch(createError('error adding ' + this));
             }
-          } else {
-            createError('error calculating damage' + this);
           }
         });
   }
@@ -210,9 +210,7 @@ function setUpPolygonDrawing(map) {
     userRegionData.set(polygon, data);
     const popup = createPopup(polygon, map);
     addPopUpListener(popup);
-    data.update(polygon, (damage) => {
-      updateDamage(popup, damage);
-    }, '');
+    data.update(polygon, (damage) => updateDamage(popup, damage), '');
   });
 
   drawingManager.setMap(map);
