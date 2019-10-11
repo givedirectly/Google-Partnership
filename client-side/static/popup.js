@@ -1,6 +1,12 @@
 import {userRegionData} from './user_region_data.js';
 
-export {addPopUpListener, createPopup, setUpPopup, setUserFeatureVisibility};
+export {
+  addPopUpListener,
+  createPopup,
+  setUpPopup,
+  setUserFeatureVisibility,
+  updateDamage,
+};
 
 let Popup = null;
 
@@ -15,17 +21,20 @@ function setUpPopup() {
    * A customized popup on the map.
    *
    * @param {google.maps.Polygon} polygon
-   * @param {string} notes
+   * @param {string} notes initial notes
+   * @param {Integer|String} damage initial damage
    * @param {google.maps.Map} map
    * @constructor
    */
-  Popup = function(polygon, notes, map) {
+  Popup = function(polygon, notes, damage, map) {
     this.polygon = polygon;
     // TODO(janakr): is there a better place to pop this window up?
     this.position = polygon.getPath().getAt(0);
     this.notes = notes;
+    this.damage = damage;
     this.map = map;
     this.content = document.createElement('div');
+    this.saved = true;
 
     this.content.classList.add('popup-bubble');
 
@@ -48,7 +57,7 @@ function setUpPopup() {
 
   /** Called when the popup is added to the map. */
   Popup.prototype.onAdd = function() {
-    createPopupHtml(this, this.notes, this.map);
+    createPopupHtml(this, this.notes, this.damage);
     this.getPanes().floatPane.appendChild(this.containerDiv);
   };
 
@@ -104,7 +113,7 @@ function setUserFeatureVisibility(visibility) {
   }
   for (const popup of allPopups) {
     if (!visibility && popup.isVisible()) {
-      closeCleanup(popup.polygon, popup);
+      closeCleanup(popup);
     }
     popup.polygon.setVisible(visibility);
   }
@@ -112,15 +121,57 @@ function setUserFeatureVisibility(visibility) {
 }
 
 /**
- * Populates the content div of the popup.
+ * Given a popup, update its damage child div to a new damage value.
+ * @param {Popup} popup
+ * @param {Integer|String} damage
+ */
+function updateDamage(popup, damage) {
+  popup.damageDiv.innerHTML = 'damage count: ' + damage;
+  if (isNaN(damage) || !popup.saved) {
+    popup.damageDiv.style.color = 'grey';
+  } else {
+    popup.damageDiv.style.color = 'black';
+  }
+}
+
+/**
+ * Update the saved/editing state of a popup.
+ * @param {Popup} popup
+ * @param {boolean} saved
+ */
+function updateState(popup, saved) {
+  if (saved) {
+    popup.saved = true;
+    popup.polygon.setEditable(false);
+    numEdits--;
+  } else {
+    popup.saved = false;
+    popup.polygon.setEditable(true);
+    numEdits++;
+  }
+}
+
+/**
+ * Creates the content of the popup's content div from scratch in the saved
+ * state (i.e. with an edit button), saves the given notes and damage to the
+ * popup object. Reuses the existing popup object including its content div and
+ * polygon.
  *
  * @param {Popup} popup
- * @param {string} notes
- * @param {google.maps.Map} map
+ * @param {String} notes
+ * @param {Integer|String} damage
  */
-function createPopupHtml(popup, notes, map) {
+function createPopupHtml(popup, notes, damage) {
+  popup.notes = notes;
+  popup.damage = damage;
+
   const content = popup.content;
-  let saved = true;
+  removeAllChildren(content);
+
+  const damageDiv = document.createElement('div');
+  damageDiv.classList.add('damage-test-finder');
+  popup.damageDiv = damageDiv;
+  updateDamage(popup, damage);
 
   const notesDiv = document.createElement('div');
   notesDiv.innerText = notes;
@@ -142,13 +193,13 @@ function createPopupHtml(popup, notes, map) {
   const editButton = document.createElement('button');
   editButton.innerHTML = 'edit';
   editButton.onclick = () => {
-    saved = false;
-    numEdits++;
-    polygon.setEditable(true);
+    updateState(popup, false);
 
     const currentNotes = notesDiv.innerText;
     savedShape = clonePolygonPath(polygon);
 
+    // Grey out the damage stat until we save so it's clearly old.
+    damageDiv.style.color = 'grey';
     content.removeChild(notesDiv);
     content.removeChild(editButton);
 
@@ -158,11 +209,7 @@ function createPopupHtml(popup, notes, map) {
 
     const saveButton = document.createElement('button');
     saveButton.innerHTML = 'save';
-    saveButton.onclick = () => {
-      processNewData(polygon, popup, notesForm.value);
-      makeUneditable(polygon, popup, notesForm.value, map);
-      saved = true;
-    };
+    saveButton.onclick = () => saveNewData(popup, notesForm.value);
 
     content.insertBefore(saveButton, closeButton);
     content.appendChild(document.createElement('br'));
@@ -172,8 +219,8 @@ function createPopupHtml(popup, notes, map) {
   const closeButton = document.createElement('button');
   closeButton.innerHTML = 'close';
   closeButton.onclick = () => {
-    if (saved) {
-      closeCleanup(polygon, popup);
+    if (popup.saved) {
+      closeCleanup(popup);
     } else if (confirm('Exit without saving changes? Changes will be lost.')) {
       if (savedShape === null) {
         console.error(
@@ -182,59 +229,62 @@ function createPopupHtml(popup, notes, map) {
       }
       polygon.setMap(null);
       polygon.setPath(savedShape);
-      polygon.setMap(map);
-      makeUneditable(polygon, popup, notes, map);
-      closeCleanup(polygon, popup);
+      polygon.setMap(popup.map);
+      savePopup(popup, notes, damage);
+      closeCleanup(popup);
     }
   };
 
   content.appendChild(deleteButton);
   content.appendChild(editButton);
   content.appendChild(closeButton);
+  content.appendChild(damageDiv);
   content.appendChild(notesDiv);
 }
 
 /**
- * Updates the popup and polygon to their uneditable state appearances.
- *
- * @param {google.maps.Polygon} polygon
- * @param {Object} popup
- * @param {String} notes
- * @param {google.maps.Map} map
+ * Utility function to remove all children of a given div.
+ * @param {Element} div
  */
-function makeUneditable(polygon, popup, notes, map) {
-  polygon.setEditable(false);
-  numEdits--;
-  // Remove all current contents of the popup and replace with the fresh saved
-  // content. This is annoying, but would also be annoying to just replace the
-  // entire div because of the styling work that happens upon Popup
-  // initialization.
-  while (popup.content.firstChild) {
-    popup.content.firstChild.remove();
+function removeAllChildren(div) {
+  while (div.firstChild) {
+    div.firstChild.remove();
   }
-  createPopupHtml(popup, notes, map);
 }
 
 /**
- * Process new polygon shape and notes.
- * @param {google.maps.Polygon} polygon
+ * Updates the popup and polygon to their uneditable state appearances.
+ * @param {Object} popup
+ * @param {String} notes
+ * @param {Integer|String} damage
+ */
+function savePopup(popup, notes, damage) {
+  updateState(popup, true);
+  createPopupHtml(popup, notes, damage);
+}
+
+/**
+ * Process new polygon shape and notes. popup html gets created twice over
+ * the course of this method, once before we have the damage number and once
+ * after we receive the damage number.
  * @param {Popup} popup
  * @param {String} notes
  */
-function processNewData(polygon, popup, notes) {
-  userRegionData.get(polygon).update(polygon, notes);
+function saveNewData(popup, notes) {
+  savePopup(popup, notes, 'calculating');
+  userRegionData.get(popup.polygon)
+      .update(popup.polygon, (damage) => updateDamage(popup, damage), notes);
   // update where the popup pops up to match any polygon shape changes
   popup.updatePosition();
 }
 
 /**
  * Hides popup and adds listener for next click.
- * @param {google.maps.Polygon} polygon
  * @param {Popup} popup
  */
-function closeCleanup(polygon, popup) {
+function closeCleanup(popup) {
   popup.hide();
-  addPopUpListener(polygon, popup);
+  addPopUpListener(popup);
 }
 
 /**
@@ -251,13 +301,11 @@ function clonePolygonPath(polygon) {
 }
 
 /**
- * Adds an onclick listener to polygon, popping up the given notes.
- *
- * @param {google.maps.Polygon} polygon Polygon to add listener to
+ * Adds an onclick listener to a popup's polygon, popping up the given notes.
  * @param {Popup} popup
  */
-function addPopUpListener(polygon, popup) {
-  const listener = polygon.addListener('click', () => {
+function addPopUpListener(popup) {
+  const listener = popup.polygon.addListener('click', () => {
     // Remove the listener so that duplicate windows don't pop up on another
     // click, and the cursor doesn't become a "clicking hand" over this shape.
     google.maps.event.removeListener(listener);
@@ -275,7 +323,8 @@ function addPopUpListener(polygon, popup) {
  * @return {Popup}
  */
 function createPopup(polygon, map) {
-  const popup = new Popup(polygon, userRegionData.get(polygon).notes, map);
+  const data = userRegionData.get(polygon);
+  const popup = new Popup(polygon, data.notes, data.damage, map);
   popup.setMap(map);
   popup.hide();
   allPopups.add(popup);

@@ -8,10 +8,16 @@ global.ee = ee;
 
 ee.Geometry = {};
 ee.Geometry.Point = () => new Point();
+ee.Geometry.Polygon = () => new Polygon();
 
 ee.Feature = (geometry, properties) => new Feature(geometry, properties);
 
 ee.FeatureCollection = (url) => new FeatureCollection(url);
+
+ee.Filter = {};
+ee.Filter.intersects = (properties) => new Filter();
+
+ee.Number = (value) => new EeNumber(value);
 
 ee.listEvaluateCallback = null;
 
@@ -46,6 +52,7 @@ class FeatureCollection {
     this.url = url;
   }
 
+  // TODO: Get rid of this mock when we stop using filterBounds
   /**
    * Doesn't actually do any filtering, returns same feature collection.
    * @param {ee.Geometry} geometry
@@ -65,16 +72,49 @@ class FeatureCollection {
 
   /**
    * Returns a "list" that can be evaluated and will store its callback.
-   *
    * @return {Object}
    */
   toList() {
     return {evaluate: (callback) => ee.listEvaluateCallback = callback};
   }
+
+  /**
+   * Returns size of 1 always.
+   * @return {EeNumber}
+   */
+  size() {
+    return new EeNumber(1);
+  }
+}
+
+/** A thin stub off ee.Number. */
+class EeNumber {
+  /**
+   * @constructor
+   * @param {number} value
+   */
+  constructor(value) {
+    this._value = value;
+  }
+
+  /**
+   * Gives the value supplied at construction as the success parameter to the
+   * given callback.
+   * @param {function} callback
+   */
+  evaluate(callback) {
+    callback(this._value, null);
+  }
 }
 
 /** An empty stub of ee.Geometry.Point. */
 class Point {
+  /** @constructor */
+  constructor() {}
+}
+
+/** An empty stub of ee.Geometry.Polygon. */
+class Polygon {
   /** @constructor */
   constructor() {}
 }
