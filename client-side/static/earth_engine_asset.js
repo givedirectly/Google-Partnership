@@ -91,7 +91,17 @@ function colorFemaAssistanceLayer(feature) {
   // Color 'public assistance' as yellow, and 'individual and public assistance'
   // as red.
   return (feature.properties['Designatio'] == 'PA') ? [255, 255, 51, 40] :
-    [220, 20, 60, 40];
+                                                      [220, 20, 60, 40];
+}
+
+/**
+ * Colors the feature with GD Assistance-specific logic.
+ *
+ * @param {GeoJSON.Feature} feature
+ * @return {Array} color RGBA color specification as an array
+ */
+function colorGDAssistanceLayer(feature) {
+  return [255, 255, 102, 100];
 }
 
 /**
@@ -119,6 +129,8 @@ const pathOfStormRadii = new EarthEngineAsset(
     colorPathofStormRadiiLayer);
 const femaVisits = new EarthEngineAsset(
     'FeatureCollection', 'FEMA Assistance', false, colorFemaAssistanceLayer);
+const gdVisits = new EarthEngineAsset(
+    'FeatureCollection', 'GD Assistance', false, colorGDAssistanceLayer);
 
 // List of known assets
 const assets = {
@@ -126,4 +138,5 @@ const assets = {
   'users/ruthtalbot/harvey-SVI': sviData,
   'users/ruthtalbot/harvey-pathofstorm-radii': pathOfStormRadii,
   'users/ruthtalbot/fema-visits-polygon': femaVisits,
+  'users/ruthtalbot/gd-polygons-harvey': gdVisits,
 };
