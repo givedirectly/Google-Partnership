@@ -94,18 +94,6 @@ function setUpPopup() {
     this.position = this.polygon.getPath().getAt(0);
     this.draw();
   };
-
-  Popup.prototype.setState = function(saved) {
-    if (saved) {
-      this.saved = true;
-      this.polygon.setEditable(false);
-      numEdits++;
-    } else {
-      this.saved = false;
-      this.polygon.setEditable(true);
-      numEdits--;
-    }
-  };
 }
 
 const allPopups = new Set();
@@ -119,6 +107,7 @@ let numEdits = 0;
  * @return {boolean} if it succeeded
  */
 function setUserFeatureVisibility(visibility) {
+  console.log(numEdits);
   if (numEdits > 0) {
     window.alert('Cannot show/hide user features when edits in progress');
     return false;
@@ -148,6 +137,23 @@ function updateDamage(popup, damage) {
       }
       break;
     }
+  }
+}
+
+/**
+ *
+ * @param popup
+ * @param saved
+ */
+function updateState(popup, saved) {
+  if (saved) {
+    popup.saved = true;
+    popup.polygon.setEditable(false);
+    numEdits--;
+  } else {
+    popup.saved = false;
+    popup.polygon.setEditable(true);
+    numEdits++;
   }
 }
 
@@ -191,7 +197,7 @@ function createPopupHtml(popup, notes, damage) {
   const editButton = document.createElement('button');
   editButton.innerHTML = 'edit';
   editButton.onclick = () => {
-    popup.setState(false);
+    updateState(popup, false);
 
     const currentNotes = notesDiv.innerText;
     savedShape = clonePolygonPath(polygon);
@@ -262,7 +268,7 @@ function removeAllChildren(div) {
  * @param {Integer|String} damage
  */
 function savePopup(popup, notes, damage) {
-  popup.setState(true);
+  updateState(popup, true);
   createPopupHtml(popup, notes, damage);
 }
 
