@@ -96,11 +96,8 @@ class ShapeData {
     // that feels buggy to me.
     const points = [];
     polygon.getPath().forEach((elt) => points.push(elt.lng(), elt.lat()));
-    ee.Join.simple()
-        .apply(
-            ee.FeatureCollection(getResources().damageAsset),
-            ee.FeatureCollection(ee.Geometry.Polygon(points)),
-            ee.Filter.intersects({leftField: '.geo', rightField: '.geo'}))
+    ee.FeatureCollection(getResources().damageAsset)
+        .filterBounds(ee.Geometry.Polygon(points))
         .size()
         .evaluate((damage, failure) => {
           if (failure) {
