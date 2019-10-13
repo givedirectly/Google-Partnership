@@ -15,6 +15,8 @@ html, body {
   --green-6: #E4EEEC;
   --green-7: #F4FBFA;
 
+  --main-content-padding: 24px;
+
   --background-color-transition: background-color 0.3s ease-in-out;
   --opacity-transition: opacity 0.5s ease-in-out;
 
@@ -69,7 +71,7 @@ h1 {
 
 .map-container {
   position: relative;
-  width: 100%;
+  width: calc(100vw - var(--sidebar-min-width) - 2 * var(--main-content-padding));
   height: 520px;
   margin-bottom: 10px;
 }
@@ -204,7 +206,7 @@ input[type=checkbox]:checked {
   top: 0;
   left: 0;
   background: rgba(0, 0, 0, 0.1);
-  z-index: 100;
+  z-index: 10;
   opacity: 1;
   pointer-events: none;
   -webkit-transition: var(--opacity-transition);
@@ -284,7 +286,8 @@ input[type=checkbox]:checked {
 
 .main-content {
   box-sizing: border-box;
-  padding: 24px;
+  padding: var(--main-content-padding);
+  margin-left: var(--sidebar-min-width);
   width: 75%;
   flex-grow: 1;
   overflow-x: scroll;
@@ -293,19 +296,21 @@ input[type=checkbox]:checked {
 /** Sidebar styling */
 
 .sidebar {
+  position: fixed;
   box-shadow: 3px 0 10px -2px #BEC2C1;
   left: 0;
   max-width: 400px;
+  height: 100%;
   float: left;
   top: 0;
   width: var(--sidebar-min-width);
-  z-index: 1; 
+  overflow-x: hidden;
+  z-index: 20;
   -webkit-transition: var(--width-transition);
   transition: var(--width-transition);
 }
 
 .sidebar ul {
-  position: fixed;
   width: var(--sidebar-min-width);
   height: 100%;
   background-color: var(--green-6);
@@ -330,13 +335,17 @@ input[type=checkbox]:checked {
   cursor: pointer;
 }
 
-.sidebar-content {
-  position: -webkit-sticky;
-  position: sticky;
-  top: 0;
-  display: none;
+.sidebar-content-container {
   margin-left: var(--sidebar-min-width);
-  width: calc(100% - var(--sidebar-min-width));
+  background-color: #ffffff;
+  width: 100%;
+  height: 100%;
+}
+
+.sidebar-content {
+  display: none;
+  width: 100%;
+  height: 100%;
   float: right;
   box-sizing: border-box;
   padding: 10px;
