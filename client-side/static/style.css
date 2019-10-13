@@ -26,6 +26,11 @@ html, body {
   display: none;
 }
 
+h1 {
+  margin: 0 0 16px;
+  font-weight: normal;
+}
+
 .g-sign-in .button {
   display: inline-block;
   background: #4285f4;
@@ -76,6 +81,7 @@ html, body {
 
 .table-container {
   position: relative;
+  margin: 0 auto;
   display: table;
   min-height: 200px;
   width: 745px;
