@@ -121,7 +121,7 @@ function colorDamageLayer(feature) {
 
 // TODO: Store these and allow users to change/set these fields on import page.
 const harveyDamageCrowdAIFormat = new EarthEngineAsset(
-    'FeatureCollection', 'Harvey Damge CrowdAI', true, colorDamageLayer);
+    'FeatureCollection', 'Harvey Damage CrowdAI', true, colorDamageLayer);
 const sviData =
     new EarthEngineAsset('FeatureCollection', 'SVI Data', false, colorSVILayer);
 const pathOfStormRadii = new EarthEngineAsset(
