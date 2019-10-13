@@ -332,12 +332,13 @@ input[type=checkbox]:checked {
 
 .sidebar-content {
   display: none;
+  position: fixed !important;
+  margin-left: var(--sidebar-min-width);
+  width: calc(25% - var(--sidebar-min-width));
   float: right;
   box-sizing: border-box;
   min-height: 200px;
   padding: 10px;
-  position: relative;
-  width: calc(100% - var(--sidebar-min-width));
   overflow-x: hidden;
 }
 
