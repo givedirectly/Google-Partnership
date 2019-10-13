@@ -4,6 +4,7 @@ html, body {
   margin: 0;
   width: 100%;
   min-height: 100%;
+  overflow-x: hidden;
 }
 
 :root {
@@ -279,6 +280,7 @@ input[type=checkbox]:checked {
   padding: 16px;
   width: 75%;
   flex-grow: 1;
+  overflow-x: scroll;
 }
 
 /** Sidebar styling */
