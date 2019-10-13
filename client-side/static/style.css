@@ -63,8 +63,8 @@ html, body {
 
 .map-container {
   position: relative;
-  width: 640px;
-  height: 480px;
+  width: 100%;
+  height: 520px;
   margin-bottom: 10px;
 }
 
@@ -277,7 +277,7 @@ input[type=checkbox]:checked {
 
 .main-content {
   box-sizing: border-box;
-  padding: 16px;
+  padding: 24px;
   width: 75%;
   flex-grow: 1;
   overflow-x: scroll;
