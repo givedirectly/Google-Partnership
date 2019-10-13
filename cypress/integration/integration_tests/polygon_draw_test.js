@@ -171,7 +171,7 @@ describe('Integration tests for drawing polygons', () => {
     cy.get('#mapContainer').contains(notes).should('not.be.visible');
   });
 
-  it('Hides polygon, re-shows, tries to hide during edit', () => {
+  it.only('Hides polygon, re-shows, tries to hide during edit', () => {
     cy.visit(host);
 
     drawPolygonAndClickOnIt();
@@ -193,7 +193,7 @@ describe('Integration tests for drawing polygons', () => {
     cy.get('#user-features-checkbox').click();
     cy.get('#user-features-checkbox').should('be.checked');
     // Wait a little bit for the layer to re-render (only needed on Electron).
-    cy.wait(50);
+    cy.wait(100);
     // Notes not visible yet.
     cy.get('#mapContainer').contains(notes).should('not.be.visible');
     clickOnDrawnPolygon();
