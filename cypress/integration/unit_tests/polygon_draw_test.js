@@ -45,6 +45,7 @@ describe('Unit test for ShapeData', () => {
     firebaseCollection.add = recordRecord(records, {id: 'new_id'});
     underTest.update(mockPolygon);
     expect(records).to.eql([{
+      damage: 1,
       geometry: [new firebase.firestore.GeoPoint(0, 1)],
       notes: 'my notes',
     }]);
@@ -64,6 +65,7 @@ describe('Unit test for ShapeData', () => {
     underTest.update(mockPolygon);
     expect(ids).to.eql(['my_id']);
     expect(records).to.eql([{
+      damage: 1,
       geometry: [new firebase.firestore.GeoPoint(0, 1)],
       notes: 'my notes',
     }]);
@@ -89,13 +91,14 @@ describe('Unit test for ShapeData', () => {
   });
 
   it('Update while update pending', () => {
-    const underTest = new ShapeData('my_id', 'my notes');
+    const underTest = new ShapeData('my_id', 'my notes', 0);
     const mockPolygon = makeMockPolygon();
     const records = [];
     const ids = [];
     const setThatTriggersNewUpdate = {
       set: (record) => {
-        underTest.update(mockPolygon, 'racing notes');
+        underTest.update(mockPolygon, () => {}, 'racing notes');
+        expect(underTest.damage).to.eql(1);
         expect(underTest.notes).to.eql('racing notes');
         expect(underTest.state).to.eql(ShapeData.State.QUEUED_WRITE);
         records.push(record);
@@ -113,8 +116,8 @@ describe('Unit test for ShapeData', () => {
     expect(ids).to.eql(['my_id', 'my_id']);
     const geometry = [new firebase.firestore.GeoPoint(0, 1)];
     expect(records).to.eql([
-      {geometry: geometry, notes: 'my notes'},
-      {geometry: geometry, notes: 'racing notes'},
+      {damage: 1, geometry: geometry, notes: 'my notes'},
+      {damage: 1, geometry: geometry, notes: 'racing notes'},
     ]);
     expect(underTest.id).to.eql('my_id');
     expect(ShapeData.pendingWriteCount).to.eql(0);

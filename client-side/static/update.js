@@ -80,6 +80,8 @@ function createToggles(map) {
     label.innerHTML = ' ' + toggle;
     thresholdInputDiv.appendChild(label);
 
+    thresholdInputDiv.appendChild(document.createElement('br'));
+
     const input = createBasicToggleInputElement(toggle);
     input.type = 'number';
     thresholdInputDiv.appendChild(input);
@@ -102,12 +104,16 @@ function createToggles(map) {
   povertyWeight.appendChild(povertyWeightValue);
   weightInputDiv.appendChild(povertyWeight);
 
+  weightInputDiv.appendChild(document.createElement('br'));
+
   const weightInput = createBasicToggleInputElement('poverty weight');
   weightInput.type = 'range';
   weightInput.min = '0.00';
   weightInput.max = '1.00';
   weightInput.oninput = updateWeights;
   weightInputDiv.appendChild(weightInput);
+
+  weightInputDiv.appendChild(document.createElement('br'));
 
   const damageWeight = document.createElement('label');
   damageWeight.innerHTML = 'damage weight: ';
@@ -122,6 +128,7 @@ function createToggles(map) {
   form.appendChild(createButton('update', () => {
     update(map);
   }));
+  form.appendChild(document.createElement('br'));
   form.appendChild(createButton('current settings', reset));
 
   document.getElementById('form-div').appendChild(form);

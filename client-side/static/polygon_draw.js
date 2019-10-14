@@ -2,7 +2,8 @@ import createError from './create_error.js';
 import {mapContainerId, writeWaiterId} from './dom_constants.js';
 import {getTestCookie, inProduction} from './in_test_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
-import {addPopUpListener, createPopup, setUpPopup} from './popup.js';
+import {addPopUpListener, createPopup, setUpPopup, updateDamage} from './popup.js';
+import getResources from './resources.js';
 import {userRegionData} from './user_region_data.js';
 
 // ShapeData is only for testing.
@@ -36,10 +37,12 @@ class ShapeData {
    *
    * @param {String} id Firestore id.
    * @param {String} notes User-entered notes.
+   * @param {Integer|String} damage
    */
-  constructor(id, notes) {
+  constructor(id, notes, damage) {
     this.id = id;
     this.notes = notes;
+    this.damage = damage;
     this.state = ShapeData.State.SAVED;
   }
 
@@ -52,9 +55,10 @@ class ShapeData {
    * should be performed when the pending one completes and returns immediately.
    *
    * @param {google.maps.Polygon} polygon Polygon to be written to backend.
+   * @param {Function} damageReceiver
    * @param {String} notes User-supplied notes (optional).
    */
-  update(polygon, notes = this.notes) {
+  update(polygon, damageReceiver = () => {}, notes = this.notes) {
     this.notes = notes;
     if (this.state !== ShapeData.State.SAVED) {
       this.state = ShapeData.State.QUEUED_WRITE;
@@ -69,7 +73,6 @@ class ShapeData {
     }
     const geometry = [];
     polygon.getPath().forEach((elt) => geometry.push(latLngToGeoPoint(elt)));
-    const record = {geometry: geometry, notes: this.notes};
     const finishWriteAndMaybeWriteAgain = () => {
       ShapeData.pendingWriteCount--;
       const oldState = this.state;
@@ -80,25 +83,48 @@ class ShapeData {
           return;
         case ShapeData.State.QUEUED_WRITE:
           loadingElementFinished(writeWaiterId);
-          this.update(polygon, this.notes);
+          this.update(polygon, damageReceiver, this.notes);
           return;
         case ShapeData.State.SAVED:
           console.error('Unexpected polygon state:' + this);
       }
     };
-    if (this.id) {
-      userShapes.doc(this.id)
-          .set(record)
-          .then(finishWriteAndMaybeWriteAgain)
-          .catch(createError('error updating ' + this));
-    } else {
-      userShapes.add(record)
-          .then((docRef) => {
-            this.id = docRef.id;
-            finishWriteAndMaybeWriteAgain();
-          })
-          .catch(createError('error adding ' + this));
-    }
+
+    // TODO: don't recompute size if polygon hasn't changed. Somewhat
+    // non-trivial because we need to actually compare the geopoints. We could
+    // also pass in a boolean about whether the polygon has changed or not but
+    // that feels buggy to me.
+    const points = [];
+    polygon.getPath().forEach((elt) => points.push(elt.lng(), elt.lat()));
+    ee.FeatureCollection(getResources().damageAsset)
+        .filterBounds(ee.Geometry.Polygon(points))
+        .size()
+        .evaluate((damage, failure) => {
+          if (failure) {
+            createError('error calculating damage' + this);
+          } else {
+            this.damage = damage;
+            damageReceiver(this.damage);
+            const record = {
+              geometry: geometry,
+              notes: this.notes,
+              damage: this.damage,
+            };
+            if (this.id) {
+              userShapes.doc(this.id)
+                  .set(record)
+                  .then(finishWriteAndMaybeWriteAgain)
+                  .catch(createError('error updating ' + this));
+            } else {
+              userShapes.add(record)
+                  .then((docRef) => {
+                    this.id = docRef.id;
+                    finishWriteAndMaybeWriteAgain();
+                  })
+                  .catch(createError('error adding ' + this));
+            }
+          }
+        });
   }
 
   /**
@@ -177,10 +203,11 @@ function setUpPolygonDrawing(map) {
 
   drawingManager.addListener('overlaycomplete', (event) => {
     const polygon = event.overlay;
-    const data = new ShapeData(null, '');
+    const data = new ShapeData(null, '', 'calculating');
     userRegionData.set(polygon, data);
-    addPopUpListener(polygon, createPopup(polygon, map));
-    data.update(polygon, '');
+    const popup = createPopup(polygon, map);
+    addPopUpListener(popup);
+    data.update(polygon, (damage) => updateDamage(popup, damage), '');
   });
 
   drawingManager.setMap(map);
@@ -221,8 +248,10 @@ function drawRegionsFromFirestoreQuery(querySnapshot, map) {
     const polygon = new google.maps.Polygon(properties);
     userRegionData.set(
         polygon,
-        new ShapeData(userDefinedRegion.id, userDefinedRegion.get('notes')));
-    addPopUpListener(polygon, createPopup(polygon, map));
+        new ShapeData(
+            userDefinedRegion.id, userDefinedRegion.get('notes'),
+            userDefinedRegion.get('damage')));
+    addPopUpListener(createPopup(polygon, map));
     polygon.setMap(map);
   });
   loadingElementFinished(mapContainerId);

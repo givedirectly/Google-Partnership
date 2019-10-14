@@ -32,34 +32,55 @@
 
   <!-- Load our styles. -->
   <link rel="stylesheet" href="./style.css">
+
+  <!-- Load icons. -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 </head>
 <body>
-<h1>Houston damage/poverty map</h1>
-
-<div class="map-container" id="mapContainer">
-  <div class="map"></div>
-  <div class="loader" id="mapContainer-loader">
-    <div class="ellipsis"><div></div><div></div><div></div><div></div></div>
+  <div class="wrapper">
+    <div id="sidebar" class="sidebar">
+      <ul>
+        <li id="sidebar-toggle-thresholds" class="sidebar-list-item">
+          <i class="fa fa-sliders fa-2x" aria-hidden="true"></i>
+        </li>
+        <li id="sidebar-toggle-datasets" class="sidebar-list-item">
+          <i class="fa fa-check-square fa-2x" aria-hidden="true"></i>
+        </li>
+      </ul>
+      <div id="sidebar-content-container" class="sidebar-content-container">
+        <div id="sidebar-thresholds" class="sidebar-content">
+          <div class="form" id="form-div"></div>
+        </div>
+        <div id="sidebar-datasets" class="sidebar-content"></div>
+      </div>
+    </div>
+    <div class="main-content">
+      <h1>Houston Damage/Poverty Map</h1>
+      <div class="map-container" id="mapContainer">
+        <div class="map"></div>
+        <div class="loader" id="mapContainer-loader">
+          <div class="ellipsis"><div></div><div></div><div></div><div></div></div>
+        </div>
+      </div>
+      <br>
+      <div class="table-container" id="tableContainer">
+        <div id="table"></div>
+        <div class="loader" id="tableContainer-loader">
+          <div class="ellipsis"><div></div><div></div><div></div><div></div></div>
+        </div>
+      </div>
+      <div id="writeWaiter">
+        <div id="writeWaiter-loader"></div>
+      </div>
+      <div class="g-sign-in hidden">
+        <span class="label">Sign in with:</span>
+        <div class="button">
+          <span class="icon"></span>
+          <span class="button-text">Google</span>
+        </div>
+      </div>
+    </div>
+    <div class="tiles-loading"></div>
   </div>
-</div>
-<div class="form" id="form-div"></div>
-<div class="table-container" id="tableContainer">
-  <div id="table"></div>
-  <div class="loader" id="tableContainer-loader">
-    <div class="ellipsis"><div></div><div></div><div></div><div></div></div>
-  </div>
-</div>
-<div id="writeWaiter">
-  <div id="writeWaiter-loader"></div>
-</div>
-<div class="g-sign-in hidden">
-  <span class="label">Sign in with:</span>
-  <div class="button">
-    <span class="icon"></span>
-    <span class="button-text">Google</span>
-  </div>
-</div>
-
-<div class="tiles-loading"></div>
 </body>
 </html>

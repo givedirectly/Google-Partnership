@@ -1,9 +1,10 @@
 import damageLevelsList from './damage_levels.js';
 import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, snapPercentageTag, snapPopTag, sviTag, totalPopTag, tractTag} from './property_names.js';
+import getResources from './resources.js';
 
 export {crowdAiDamageKey};
 /** @VisibleForTesting */
-export {countDamageAndBuildings, disaster, DisasterMapValue, disasters};
+export {countDamageAndBuildings};
 
 /**
  * Joins a state's census block-group-level SNAP/population data with building
@@ -25,16 +26,13 @@ export {countDamageAndBuildings, disaster, DisasterMapValue, disasters};
  * 3) download crowd ai damage data .shp file
  * 4) upload results of (1) (2) and (3) to GCS
  * 5) upload results of (5) to earth engine (see instructions above)
- * 6) add a new entry to {@code disasters}
- * 7) update the {@code disaster} constant
+ * 6) add a new entry to {@code disasters} in ./resources.js
+ * 7) update the {@code disaster} constant in ./resources.js
  * 8) visit http://localhost:8080/import_data.html
- * 9) make the new <disaster>-snap-and-damage asset readable by all in code
+ * 9) make the new asset readable by all in code
  * editor.
  */
 // TODO: factor in margins of error?
-
-/** The current disaster. */
-const disaster = 'harvey';
 
 const censusGeoidKey = 'GEOid2';
 const censusBlockGroupKey = 'GEOdisplay-label';
@@ -45,56 +43,6 @@ const incomeKey = 'HD01_VD01';
 // check with crowd ai folks about name.
 const crowdAiDamageKey = 'descriptio';
 
-/** Disaster asset names and other constants. */
-const disasters = new Map();
-
-/** Constants for {@code disasters} map. */
-class DisasterMapValue {
-  /**
-   * Currently, we're using microsoft's USBuildingFootprints data to calculate
-   * the total number of buildings in an area AKA the denominator in the damage
-   * percentage calculation. FEMA data doesn't mark non-damaged homes and
-   * it's possible this is a better denominator than CrowdAI's non-damaged
-   * home numbers.
-   *
-   * That being said, I (juliexxia@) have seen instances where microsoft's
-   * footprints have missed footprints that are clearly there on google map's
-   * default base layer.
-   *
-   * @param {string} damageAsset ee asset path
-   * @param {string} snapAsset ee asset path to snap info
-   * @param {string} bgAsset ee asset path to block group info
-   * @param {string} incomeAsset ee asset path to median income info
-   * @param {string} sviAsset ee asset path to svi info
-   * @param {string} buildingsAsset ee asset path to feature set of all
-   *     buildings
-   */
-  constructor(
-      damageAsset, snapAsset, bgAsset, incomeAsset, sviAsset, buildingsAsset) {
-    this.damageAsset = damageAsset;
-    this.rawSnapAsset = snapAsset;
-    this.bgAsset = bgAsset;
-    this.incomeAsset = incomeAsset;
-    this.sviAsset = sviAsset;
-    this.buildingsAsset = buildingsAsset;
-  }
-}
-
-// TODO: upload michael income, SVI, buildings data.
-disasters.set(
-    'michael',
-    new DisasterMapValue(
-        'users/juliexxia/crowd_ai_michael', 'users/juliexxia/florida_snap',
-        'users/juliexxia/tiger_florida'));
-
-disasters.set(
-    'harvey',
-    new DisasterMapValue(
-        'users/juliexxia/harvey-damage-crowdai-format-aff-as-nod',
-        'users/juliexxia/snap_texas', 'users/juliexxia/tiger_texas',
-        'users/juliexxia/income_texas', 'users/ruthtalbot/harvey-SVI',
-        'users/juliexxia/harvey-damage-zone-ms-buildings'));
-
 /**
  * Given a feature from the SNAP census data, returns a new
  * feature with GEOID, SNAP #, total pop #, total building count, building
@@ -104,7 +52,7 @@ disasters.set(
  * @return {Feature}
  */
 function countDamageAndBuildings(feature) {
-  const resources = disasters.get(disaster);
+  const resources = getResources();
   const damageLevels = ee.List(damageLevelsList);
   const damageFilters =
       damageLevels.map((type) => ee.Filter.eq(crowdAiDamageKey, type));
@@ -221,7 +169,7 @@ function addTractInfo(feature) {
 function run() {
   ee.initialize();
 
-  const resources = disasters.get(disaster);
+  const resources = getResources();
   const snapAsset =
       ee.FeatureCollection(resources.rawSnapAsset)
           .map((feature) => stringifyGeoid(feature, censusGeoidKey));

@@ -44,10 +44,38 @@ describe('Integration tests for drawing polygons', () => {
   it('Draws a polygon and edits its notes', () => {
     cy.visit(host);
     drawPolygonAndClickOnIt();
+    cy.awaitLoad(['writeWaiter']);
     pressPolygonButton('edit');
+    // assert damage text is grey while editing
+    cy.get('.damage-test-finder').contains('damage count: 89079');
+    cy.get('.damage-test-finder')
+        .should('have.css', 'color')
+        .and('eq', 'rgb(128, 128, 128)');
     cy.get('[class="notes"]').type(notes);
     pressPolygonButton('save');
     cy.get('.map').contains(notes);
+    cy.get('.damage-test-finder').contains('damage count: 89079');
+    cy.get('.damage-test-finder')
+        .should('have.css', 'color')
+        .and('eq', 'rgb(0, 0, 0)');
+  });
+
+  // This test relies on the earth engine damage count calculation happening
+  // slower than the cypress gets for the grey 'calculating'. Running a bunch
+  // of times manually this seems fairly safe, but there's a chance it flakes
+  // out if something changes. If this does start to flake, we can also consider
+  // lowering the wait at the end of drawPolygonAndClickOnIt.
+  it('Draws a polygon, checks for calculating status', () => {
+    cy.visit(host);
+    drawPolygonAndClickOnIt();
+    cy.get('.damage-test-finder').contains('damage count: calculating');
+    cy.get('.damage-test-finder')
+        .should('have.css', 'color')
+        .and('eq', 'rgb(128, 128, 128)');
+    cy.awaitLoad(['writeWaiter']);
+    cy.get('.damage-test-finder')
+        .should('have.css', 'color')
+        .and('eq', 'rgb(0, 0, 0)');
   });
 
   it('Draws a polygon and deletes it', () => {
@@ -145,11 +173,13 @@ describe('Integration tests for drawing polygons', () => {
 
   it('Hides polygon, re-shows, tries to hide during edit', () => {
     cy.visit(host);
+
     drawPolygonAndClickOnIt();
     pressPolygonButton('edit');
     cy.get('[class="notes"]').type(notes);
     pressPolygonButton('save');
     cy.get('#mapContainer').contains(notes).should('be.visible');
+    cy.get('#sidebar-toggle-datasets').click();
     cy.get('#user-features-checkbox').should('be.checked');
     cy.get('#user-features-checkbox').click();
     cy.get('#mapContainer').contains(notes).should('not.be.visible');
@@ -185,15 +215,17 @@ describe('Integration tests for drawing polygons', () => {
 
   it('Hides, draws new one, tries to hide during edit, re-shows, hides', () => {
     cy.visit(host);
+
     drawPolygonAndClickOnIt();
     pressPolygonButton('edit');
     cy.get('[class="notes"]').type(notes);
     pressPolygonButton('save');
+    cy.get('#sidebar-toggle-datasets').click();
     cy.get('#user-features-checkbox').click();
     cy.get('#user-features-checkbox').should('not.be.checked');
     // With the box unchecked, draw a new polygon, below the first one, and set
     // its notes, but don't finish editing.
-    drawPolygonAndClickOnIt(200);
+    drawPolygonAndClickOnIt(100);
     pressPolygonButton('edit');
     cy.get('[class="notes"]').type('new notes');
     // Try to re-check the box. It will fail because we're editing.
@@ -213,7 +245,7 @@ describe('Integration tests for drawing polygons', () => {
     clickOnDrawnPolygon();
     cy.get('#mapContainer').contains(notes).should('be.visible');
     // And the new polygon and view its notes.
-    clickOnDrawnPolygon(200);
+    clickOnDrawnPolygon(100);
     cy.get('#mapContainer').contains('new notes').should('be.visible');
 
     // Now hide both polygons, and verify that they're really gone.
@@ -221,7 +253,7 @@ describe('Integration tests for drawing polygons', () => {
     cy.get('#user-features-checkbox').should('not.be.checked');
     cy.get('#mapContainer').contains(notes).should('not.be.visible');
     cy.get('#mapContainer').contains('new notes').should('not.be.visible');
-    clickOnDrawnPolygon(200);
+    clickOnDrawnPolygon(100);
     cy.get('#mapContainer').contains('new notes').should('not.be.visible');
   });
 });
@@ -253,6 +285,8 @@ function drawPolygonAndClickOnIt(offset = 0) {
   cy.wait(hackyWaitTime);
   drawPointAndPrepareForNext(450, 250 + offset);
   cy.wait(hackyWaitTime);
+  drawPointAndPrepareForNext(425, 350 + offset);
+  cy.wait(hackyWaitTime);
   drawPointAndPrepareForNext(150, 250 + offset);
   const handButton = cy.get('[title="Stop drawing"]');
   handButton.click();
@@ -273,11 +307,16 @@ function clickOnDrawnPolygon(offset = 0) {
 }
 
 /**
- * Clicks a visible button inside the map with the given id.
+ * Clicks a visible button inside the map with the given id. If we're clicking
+ * save, automatically wait on the result of the save to be written before
+ * continuing on.
  * @param {string} button id of html button we want to click
  */
 function pressPolygonButton(button) {
   cy.get(':button:visible').contains(button).click();
+  if (button === 'save') {
+    cy.awaitLoad(['writeWaiter']);
+  }
 }
 
 /**
