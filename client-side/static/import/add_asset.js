@@ -13,6 +13,7 @@ const firebaseConfig = {
 };
 
 const earthEngineAssetBase = 'users/janak/';
+const earthEnginePrefix = 'projects/earthengine-legacy/assets/' + earthEngineAssetBase;
 
 // The client ID from the Google Developers Console.
 // TODO(#13): This is from janakr's console. Should use one for GiveDirectly.
@@ -47,9 +48,10 @@ firebase.auth().signInWithPopup(provider).then((result) => {
     'Authorization': 'Bearer ' + result.credential.accessToken,
   });
   onStartupTaskCompleted();
-}).catch(() => resultDiv.innerHTML = 'Error authenticating with Firebase');
+}).catch((err) => resultDiv.innerHTML = 'Error authenticating with Firebase: ' + err);
 
 const runOnSuccess = function() {
+  // Necessary for listAssets.
   ee.initialize(
       /* opt_baseurl=*/ null, /* opt_tileurl=*/ null, onStartupTaskCompleted,
       () => resultDiv.innerHTML = 'Error initializing EarthEngine');
@@ -73,10 +75,10 @@ ee.data.authenticate(
     onImmediateFailed);
 
 function enableWhenReady() {
+  ee.data.setCloudApiEnabled(true);
   document.getElementById('fileButton').disabled = false;
   document.getElementById('urlButton').disabled = false;
   document.getElementById('fileButton').onclick = submitFiles;
-  document.getElementById('urlButton').onclick = submitUrls;
   updateStatus();
 }
 
@@ -85,16 +87,33 @@ function submitFiles(e) {
     alert('Not signed in properly');
     return false;
   }
-  const collectionName = document.getElementById('collectionName').value;
-  const gcsListingPromise = listGCSFiles(collectionName);
-  const assetPromise = maybeCreateImageCollection();
   // prevent form's default submit action.
   e.preventDefault();
-  gcsListingPromise.then((r) => r.json()).then((result) => {
+  const collectionName = document.getElementById('collectionName').value;
+  const gcsListingPromise = listGCSFiles(collectionName)
+  const assetPromise = maybeCreateImageCollection(collectionName);
+  const listingPromise = assetPromise.then(() => listEEAssetFiles(collectionName));
+
+  Promise.all([gcsListingPromise, listingPromise])
+      .then((list) => {
+        const gcsItems = list[0];
+        const eeItems = list[1];
     const fileStatuses = new Map();
-    for (const item of result.items) {
+    const gcsPrefixLength = (collectionName + '/').length;
+    for (const item of gcsItems) {
       // Paths start with '/'.
-      fileStatuses.set(item.name.substr(1), Status.GCS_ONLY);
+      // TODO(janakr): remove wrapping when done.
+      fileStatuses.set(replaceEarthEngineIllegalCharacters(item.name.substr(gcsPrefixLength)), Status.GCS_ONLY);
+    }
+    const eePrefixLength = (earthEngineAssetBase + collectionName + '/').length;
+    for (const item of eeItems.assets) {
+      const name = item.id.substring(eePrefixLength);
+      const oldStatus = fileStatuses.get(name);
+      if (oldStatus) {
+        fileStatuses.set(name, Status.PRESENT_EVERYWHERE);
+      } else {
+        fileStatuses.set(name, Status.EE_ONLY);
+      }
     }
     return fileStatuses;
   }).then((fileStatuses) => processFiles(collectionName, assetPromise, fileStatuses));
@@ -105,72 +124,27 @@ function processFiles(collectionName, assetPromise, fileStatuses) {
   const files = document.getElementById('file').files;
   foundTopFiles += files.length;
   for (const file of files) {
-    const status = fileStatuses.get(file) || Status.NEW;
+    const mungedName = replaceEarthEngineIllegalCharacters(file.name);
+    const status = fileStatuses.get(mungedName) || Status.NEW;
     switch (status) {
       case Status.NEW:
-        uploadMaybeTarFileToGCS(file.name, file, collectionName, assetPromise);
+        uploadFileToGCS(mungedName, file, collectionName, assetPromise, ingestEEAssetFromGCS);
         break;
       case Status.GCS_ONLY:
-        ingestEEAssetFromGCS(BUCKET, collectionName, file.name);
+        ingestEEAssetFromGCS(BUCKET, collectionName, mungedName);
         break;
       case Status.EE_ONLY:
         addFileToDelete(file.name);
         break;
       case Status.PRESENT_EVERYWHERE:
-        deleteGCSFile(collectionName, file.name);
+        deleteGCSFile(collectionName, mungedName, file.name);
         break;
     }
     processedFiles++;
   }
 }
-function submitUrls(e) {
-  if (!gcsHeader) {
-    alert('Not signed in properly');
-    return false;
-  }
-  // prevent form's default submit action.
-  e.preventDefault();
-  const collectionName = document.getElementById('collectionName').value;
-  for (const url of document.getElementById('urls').value.split('\n')) {
-    fetch(url).then((response) => response.blob())
-        .then(
-        (blob) => uploadMaybeTarFileToGCS(url.substring(url.lastIndexOf('/') + 1), blob, collectionName));
-  }
-}
 
-function uploadMaybeTarFileToGCS(name, contents, collectionName, gcsListingPromise, assetPromise) {
-  if (name.endsWith('.tar')) {
-    foundTars++;
-    // createTarReader(collectionName, assetPromise).readAsArrayBuffer(contents);
-  } else {
-    uploadFileToGCS(name, contents, collectionName, gcsListingPromise, assetPromise, ingestEEAssetFromGCS);
-  }
-}
-
-function createTarReader(collectionName, assetPromise) {
-  // untar(contents)
-  //     .progress((file) => {
-  //       filesFoundInTars++;
-  //       uploadFileToGCS(file.name, file.blob, collectionName, assetPromise, ingestEEAssetFromGCS);
-  //     }).then(() => loadedTars++)
-  //     .catch(())
-  const reader = new FileReader();
-  reader.onload = () => {
-    loadedTars++;
-    console.log(reader.result);
-    // untar(reader.result)
-    //     .progress((file) => {
-    //       filesFoundInTars++;
-    //       uploadFileToGCS(file.name, file.blob, collectionName, assetPromise,
-    //           ingestEEAssetFromGCS);
-    //     }).then(() => processedTars++)
-    //     .catch((err) => console.error('untar Error', err));
-  };
-  reader.onerror = (err) => console.error('FileReader Error', err);
-  return reader;
-}
-
-function uploadFileToGCS(name, contents, collectionName, gcsListingPromise, assetPromise, callback) {
+function uploadFileToGCS(name, contents, collectionName, assetPromise, callback) {
   uploadingToGCS++;
   // get an encoded file name - either from the name input or from the file itself
   const fileName = encodeURIComponent(collectionName + '/' + name);
@@ -199,17 +173,19 @@ function uploadFileToGCS(name, contents, collectionName, gcsListingPromise, asse
       });
 }
 
-function maybeCreateImageCollection(assetName) {
+function maybeCreateImageCollection(collectionName) {
   let resolveFunction;
   let rejectFunction;
   const result = new Promise((resolve, reject) => {
     resolveFunction = resolve;
     rejectFunction = reject;
   });
+  const assetName = earthEngineAssetBase + collectionName;
   ee.data.getAsset(assetName, (getResult, failure) => {
     if (failure) {
       rejectFunction(failure);
     } else if (!getResult) {
+      // TODO(janakr): track if actually created to avoid unnecessary listing?
       ee.data.createAsset({id: assetName, type: 'ImageCollection'}, assetName,
           false, {},
           (createResult, failure) => {
@@ -234,23 +210,20 @@ function maybeCreateImageCollection(assetName) {
 }
 
 function ingestEEAssetFromGCS(gcsBucket, collectionName, name) {
-  // ee.data.createAsset
-  // ee.data.getAsset
-  //  listOperations
-  // ee.data.listAssets
-  const id = ee.data.newTaskId();
-  const request = {id: earthEngineAssetBase + collectionName + '/' + replaceEarthEngineIllegalCharacters(name),
-    tilesets: [{sources: [{primaryPath: 'gs://' + gcsBucket + '/' + collectionName + '/' + name}]}],
-  };
-  const task = ee.data.startIngestion(id, request);
-  startedEETask++;
-  const uploadId = ('id' in task) ? task.id : id;
-  const tail = ' ' + name + ' to EarthEngine with task id ' + uploadId;
-  if (('started' in task) && task.started === 'OK') {
-    resultDiv.innerHTML += '<br>Importing' + tail;
-  } else {
-    resultDiv.innerHTML += '<br>Error importing' + tail;
-  }
+  const id = ee.data.newTaskId()[0];
+  const request = {id: earthEnginePrefix + collectionName + '/' + name,
+    tilesets: [{sources: [{primaryPath: 'gs://' + gcsBucket + '/' + collectionName + '/' + name}]}]};
+  ee.data.startIngestion(id, request, (task) => {
+    startedEETask++;
+    const uploadId = ('taskId' in task) ? task.taskId: id;
+    const tail = ' ' + name + ' to EarthEngine with task id ' + uploadId;
+    if (('started' in task) && task.started === 'OK') {
+      resultDiv.innerHTML += '<br>Importing' + tail;
+    } else {
+      resultDiv.innerHTML += '<br>Error importing' + tail;
+    }
+
+  });
 }
 
 function replaceEarthEngineIllegalCharacters(fileName) {
@@ -259,21 +232,15 @@ function replaceEarthEngineIllegalCharacters(fileName) {
 
 let foundTopFiles = 0;
 let processedFiles = 0;
-let foundTars = 0;
-let loadedTars = 0;
-let processedTars = 0;
-let filesFoundInTars = 0;
 let uploadingToGCS = 0;
+let alreadyUploadedToGCS = 0;
 let uploadedToGCS = 0;
+let alreadyImportedToEE = 0;
 let startedEETask = 0;
 
 function updateStatus() {
   document.getElementById('status_div').innerHTML = 'Found ' + foundTopFiles + '<br/>'
   + 'Processed ' + processedFiles + '<br/>'
-  + 'Found ' + foundTars + ' tars<br/>'
-  + 'Loaded ' + loadedTars + ' tars<br/>'
-  + 'Processed ' + processedTars + ' tars<br/>'
-  + 'Loaded ' + filesFoundInTars + ' files from tars<br/>'
   + 'Found ' + (processedFiles - foundTars + filesFoundInTars) + ' files to upload</br>'
   + 'Uploading ' + uploadingToGCS + ' files to GCS<br/>'
   + 'Uploaded ' + uploadedToGCS + ' files to GCS<br/>'
@@ -294,7 +261,7 @@ function updateCommandDiv() {
   if (!filesToDelete.length) {
     return;
   }
-  document.getElementById('status_div').innerText = 'rm ' + filesToDelete.join(' ');
+  document.getElementById('command_div').innerText = 'rm ' + filesToDelete.join(' ');
 }
 
 function addFileToDelete(file) {
@@ -303,28 +270,48 @@ function addFileToDelete(file) {
 }
 
 function listGCSFiles(collectionName) {
-  return fetch(BASE_LISTING_URL + '/' + encodeURIComponent(collectionName),
-  {
-    method: 'GET',
-    headers: gcsHeader,
-  });
+  return listGCSFilesRecursive(collectionName, null, []);
 }
 
-function deleteGCSFile(collectionName, name) {
-  return fetch(BASE_LISTING_URL + encodeURIComponent(collectionName) + '/' + encodeURIComponent(name), {
+function listGCSFilesRecursive(collectionName, nextPageToken, accumulatedList) {
+  return fetch(BASE_LISTING_URL + '?prefix=' + encodeURIComponent(collectionName)
+       + (nextPageToken ? '&pageToken=' + nextPageToken : ''),
+      {
+        method: 'GET',
+        headers: gcsHeader,
+      }).then((r) => r.json())
+      .then((resp) => {
+        if (accumulatedList) {
+          // Avoid push's performance/stack overflow issues for large arrays.
+          for (const item of resp.items) {
+            accumulatedList.push(item);
+          }
+        } else {
+          accumulatedList = resp.items;
+        }
+        if (!resp.nextPageToken) {
+          return accumulatedList;
+        }
+        return listGCSFilesRecursive(collectionName, resp.nextPageToken, accumulatedList);
+      });
+}
+
+function deleteGCSFile(collectionName, name, originalName) {
+  if (name.endsWith('_tif')) {
+    fetch(BASE_LISTING_URL + + '/' + encodeURIComponent(collectionName) + '/'
+        + encodeURIComponent(name.replace('_tif', '.tif')), {
+      method: 'DELETE',
+      headers: gcsHeader,
+    });
+  }
+  return fetch(BASE_LISTING_URL + '/' + encodeURIComponent(collectionName) + '/' + encodeURIComponent(name), {
     method: 'DELETE',
     headers: gcsHeader,
-  }).then(() => addFileToDelete(name));
+  }).then(() => addFileToDelete(originalName));
 }
 
 function listEEAssetFiles(assetName) {
-  const result = new Promise((resp, reject) => {
-    try {
-      ee.data.listAssets(
-          'projects/earthengine-legacy/assets/' + earthEngineAssetBase
-          + assetName);
-    } catch (err) {
-      
-    }
-  }
+  return ee.data.listAssets(
+      earthEnginePrefix
+      + assetName, {}, () => {});
 }

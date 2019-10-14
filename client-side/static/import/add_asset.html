@@ -4,11 +4,17 @@
   <meta charset="UTF-8">
   <title>Add asset</title>
 <!--  <script src="./multifile.js"></script>-->
-  <script src="../ee_api_js_debug.js"></script>
+  <script src="../lib/ee_api_js_debug.js"></script>
   <script src="https://www.gstatic.com/firebasejs/7.2.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/7.2.0/firebase-auth.js"></script>
   <script src="https://cdn.firebase.com/libs/firebaseui/4.2.0/firebaseui.js"></script>
   <script src="./untar.js"></script>
+  <script>function listEEAssetFiles(assetName) {
+    console.log('got here');
+    return ee.data.listAssets(
+        'projects/earthengine-legacy/assets/users/janak/noaa-harvey');
+  }
+  </script>
   <script type="module" src="./add_asset.js"></script>
   <link type="text/css" rel="stylesheet" href="https://cdn.firebase.com/libs/firebaseui/4.2.0/firebaseui.css" />
 <!--  <script type="module" src="./add_asset.js"></script>-->
@@ -26,7 +32,9 @@
 </form>
 </p>
 <div id="status_div"></div>
+<hr/>
 <div id="command_div"></div>
+<hr/>
 <div id="results"></div>
 <script type="module">
   import onStartupTaskCompleted from './add_asset.js';
