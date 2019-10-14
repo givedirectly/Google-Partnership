@@ -7,7 +7,7 @@ describe('Integration test for clicking feature', () => {
     cy.visit(host);
     cy.awaitLoad();
 
-    cy.get('.map').click(343, 184);
+    cy.get('.map').click(406, 557);
     cy.get('.google-visualization-table-tr-sel')
         .find('[class="google-visualization-table-td"]')
         .should(
@@ -23,7 +23,7 @@ describe('Integration test for clicking feature', () => {
     cy.get('.google-visualization-table-tr-head > :nth-child(4)').click();
     cy.get('.google-visualization-table-tr-head > :nth-child(4)').click();
 
-    cy.get('.map').click(343, 184);
+    cy.get('.map').click(406, 557);
     cy.get('.google-visualization-table-tr-sel')
         .find('[class="google-visualization-table-td"]')
         .should(
@@ -46,7 +46,7 @@ describe('Integration test for clicking feature', () => {
     cy.awaitLoad();
     cy.get('#sidebar-toggle-thresholds').click();
 
-    cy.get('.map').click(343, 184);
+    cy.get('.map').click(406, 557);
     cy.get('.google-visualization-table-tr-sel')
         .find('[class="google-visualization-table-td"]')
         .should(
