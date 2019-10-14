@@ -36,9 +36,12 @@ function colorAndRate(
   // Opacity is between 0 and 255, while score is between 0 and scalingFactor.
   // Math.min is out of an abundance of caution, in case bad data leads to
   // score > scalingFactor.
-  const opacity =
-      Math.min(Math.round((255 / scalingFactor) * score), scoreDisplayCap);
-  feature.properties['color'] = [255 - opacity, 0, 255, opacity];
+  const opacity = score > 0 ? 180 : 0;
+  // Math.min(Math.round((255 / scalingFactor) * score), scoreDisplayCap);
+  score = Math.min(Math.round((100 / scalingFactor) * (100 - score)), 100);
+  const r = score < 50 ? 255 : Math.floor(255 - (score * 2 - 100) * 255 / 100);
+  const g = score > 50 ? 255 : Math.floor((score * 2) * 255 / 100);
+  feature.properties['color'] = [0, g, r, opacity];
 }
 
 /**
