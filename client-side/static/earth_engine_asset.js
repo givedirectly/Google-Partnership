@@ -12,14 +12,14 @@ class EarthEngineAsset {
    * @param {String} type
    * @param {String} displayName
    * @param {boolean} displayOnLoad
-   * @param {?Function} colorFunction
+   * @param {?Function} stylingFunction
    * @param {Object} visParams
    **/
-  constructor(type, displayName, displayOnLoad, colorFunction, visParams) {
+  constructor(type, displayName, displayOnLoad, stylingFunction, visParams) {
     this.type = type;
     this.displayName = displayName;
     this.displayOnLoad = displayOnLoad;
-    this.colorFunction = colorFunction;
+    this.stylingFunction = stylingFunction;
     this.visParams = visParams;
   }
 
@@ -32,13 +32,13 @@ class EarthEngineAsset {
   }
 
   /**
-   * Returns the function to color the asset. Null if asset doesn't
+   * Returns the function to style the asset. Null if asset doesn't
    * need styling or is styled elsewhere.
    *
    * @return {?Function}
    */
-  getColorFunction() {
-    return this.colorFunction;
+  getStylingFunction() {
+    return this.stylingFunction;
   }
 
   /**

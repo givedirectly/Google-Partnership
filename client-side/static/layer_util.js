@@ -121,8 +121,8 @@ function getColorOfFeature(feature) {
  */
 function addImageLayer(map, layer, assetName, index) {
   const imgStyles = assets[assetName].getVisParams();
-  if (assets[assetName].getColorFunction()) {
-    layer = assets[assetName].getColorFunction()(layer);
+  if (assets[assetName].getStylingFunction()) {
+    layer = assets[assetName].getStylingFunction()(layer);
   }
   // Add a null-overlay entry to layerMap while waiting for the callback to
   // finish.
@@ -192,10 +192,10 @@ function addLayerFromId(map, assetName, layerId, index, displayed) {
  * @param {string} assetName
  */
 function addLayerFromFeatures(layerMapValue, assetName) {
-  const hasColorFunction =
-      assets[assetName] && assets[assetName].getColorFunction();
-  const colorFunction = hasColorFunction ?
-      assets[assetName].getColorFunction() :
+  const hasStyleFunction =
+      assets[assetName] && assets[assetName].getStylingFunction();
+  const styleFunction = hasStyleFunction ?
+      assets[assetName].getStylingFunction() :
       getColorOfFeature;
   layerArray[layerMapValue.index] = new deck.GeoJsonLayer({
     id: assetName,
@@ -205,7 +205,7 @@ function addLayerFromFeatures(layerMapValue, assetName) {
     // TODO(janakr): deck.gl docs claim that the "color" property should
     // automatically color the features, but it doesn't appear to work:
     // https://deck.gl/#/documentation/deckgl-api-reference/layers/geojson-layer?section=getelevation-function-number-optional-transition-enabled
-    getFillColor: colorFunction,
+    getFillColor: styleFunction,
     visible: layerMapValue.displayed,
   });
   redrawLayers();
