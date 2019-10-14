@@ -131,12 +131,15 @@ function processFiles(collectionName, assetPromise, fileStatuses) {
         uploadFileToGCS(mungedName, file, collectionName, assetPromise, ingestEEAssetFromGCS);
         break;
       case Status.GCS_ONLY:
+        alreadyUploadedToGCS++;
         ingestEEAssetFromGCS(BUCKET, collectionName, mungedName);
         break;
       case Status.EE_ONLY:
+        alreadyImportedToEE++;
         addFileToDelete(file.name);
         break;
       case Status.PRESENT_EVERYWHERE:
+        alreadyPresentEverywhere++;
         deleteGCSFile(collectionName, mungedName, file.name);
         break;
     }
@@ -236,15 +239,21 @@ let uploadingToGCS = 0;
 let alreadyUploadedToGCS = 0;
 let uploadedToGCS = 0;
 let alreadyImportedToEE = 0;
+let alreadyPresentEverywhere = 0;
 let startedEETask = 0;
+let deletedFromGCS = 0;
 
 function updateStatus() {
   document.getElementById('status_div').innerHTML = 'Found ' + foundTopFiles + '<br/>'
   + 'Processed ' + processedFiles + '<br/>'
-  + 'Found ' + (processedFiles - foundTars + filesFoundInTars) + ' files to upload</br>'
   + 'Uploading ' + uploadingToGCS + ' files to GCS<br/>'
+  + 'Found ' + (alreadyUploadedToGCS + alreadyPresentEverywhere) + ' files previously uploaded to GCS<br/>'
   + 'Uploaded ' + uploadedToGCS + ' files to GCS<br/>'
-  + 'Started EE ingestion of ' + startedEETask + ' files<br/>';
+  + 'Started EE ingestion of ' + startedEETask + ' files<br/>'
+  + 'Found ' + (alreadyImportedToEE + alreadyPresentEverywhere) + ' files previously imported to EE<br/>'
+  + 'Found ' + alreadyPresentEverywhere + ' files previously imported to EE and present in GCS<br/>'
+  + 'Deleted ' + deletedFromGCS + ' files from GCS<br/>';
+
   setTimeout(updateStatus, 500);
 }
 
@@ -298,7 +307,7 @@ function listGCSFilesRecursive(collectionName, nextPageToken, accumulatedList) {
 
 function deleteGCSFile(collectionName, name, originalName) {
   if (name.endsWith('_tif')) {
-    fetch(BASE_LISTING_URL + + '/' + encodeURIComponent(collectionName) + '/'
+    fetch(BASE_LISTING_URL + '/' + encodeURIComponent(collectionName) + '/'
         + encodeURIComponent(name.replace('_tif', '.tif')), {
       method: 'DELETE',
       headers: gcsHeader,
@@ -307,7 +316,10 @@ function deleteGCSFile(collectionName, name, originalName) {
   return fetch(BASE_LISTING_URL + '/' + encodeURIComponent(collectionName) + '/' + encodeURIComponent(name), {
     method: 'DELETE',
     headers: gcsHeader,
-  }).then(() => addFileToDelete(originalName));
+  }).then(() => {
+    deletedFromGCS++;
+    addFileToDelete(originalName);
+  });
 }
 
 function listEEAssetFiles(assetName) {
