@@ -7,11 +7,42 @@ export {currentFeatures, highlightFeatures};
 // even after a redraw.
 
 // Keep track of displayed features so that we can remove them if deselected.
-// Keys are geoids, values are DataFeature objects returned by the map.
-// We expect one DataFeature object per geoid/feature, but the Maps interface
-// returns a list, so we keep the list here unaltered to stay robust to any
-// edge cases like disconnected districts or the like.
+// Keys are geoids, values are CurrentFeatureValue objects.
 const currentFeatures = new Map();
+
+/**
+ * Values of the currentFeatures map. Contains DataFeature objects returned by
+ * the map. We expect one DataFeature object per geoid/feature, but the Maps
+ * interface returns a list, so we keep the list here unaltered to stay robust
+ * to any edge cases like disconnected districts or the like. If a popup is
+ * attached to the feature, also contains that.
+ */
+class CurrentFeatureValue {
+  /**
+   * @constructor
+   * @param {Array<google.maps.Data.Feature>} dataFeatures
+   */
+  constructor(dataFeatures) {
+    this.dataFeatures = dataFeatures;
+  }
+
+  /**
+   * If the feature was highlighted via map click, this is the attached
+   * info window.
+   * @param {google.maps.InfoWindow} popup
+   */
+  setPopup(popup) {
+    this.popup = popup;
+  }
+
+  /**
+   * Gets the relevant info window.
+   * @return {google.maps.InfoWindow}
+   */
+  getPopup() {
+    return this.popup;
+  }
+}
 
 /**
  * Takes a list of EE features and displays their geometries on the Google Maps
@@ -31,7 +62,8 @@ function highlightFeatures(features, map) {
   const keys = currentFeatures.keys();
   for (const key of keys) {
     if (!newFeatures.delete(key)) {
-      currentFeatures.get(key).forEach((elt) => map.data.remove(elt));
+      currentFeatures.get(key).dataFeatures.forEach(
+          (elt) => map.data.remove(elt));
       currentFeatures.delete(key);
     }
   }
@@ -41,7 +73,7 @@ function highlightFeatures(features, map) {
     const jsonFeature = {'type': 'Feature', 'geometry': feature.geometry};
     const dataFeatures = map.data.addGeoJson(jsonFeature);
     // Store the features so they can be removed later on deselect.
-    currentFeatures.set(id, dataFeatures);
+    currentFeatures.set(id, new CurrentFeatureValue(dataFeatures));
     dataFeatures.forEach(
         (item) => map.data.overrideStyle(
             item, {fillColor: 'red', strokeColor: 'red'}));
