@@ -84,10 +84,8 @@ h1 {
 
 .table-container {
   position: relative;
-  margin: 0 auto;
   display: table;
   min-height: 200px;
-  width: 745px;
 }
 
 /* Form css */
