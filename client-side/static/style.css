@@ -3,6 +3,7 @@ html, body {
   font-family: 'Roboto', sans-serif;
   margin: 0;
   width: 100%;
+  height: 100%;
   min-height: 100%;
 }
 
@@ -71,7 +72,7 @@ h1 {
 
 .map-container {
   position: relative;
-  width: calc(100vw - var(--sidebar-min-width) - 2 * var(--main-content-padding));
+  width: 100%;
   height: 520px;
   margin-bottom: 10px;
 }
@@ -287,30 +288,28 @@ input[type=checkbox]:checked {
 .main-content {
   box-sizing: border-box;
   padding: var(--main-content-padding);
-  margin-left: var(--sidebar-min-width);
   width: 75%;
   flex-grow: 1;
-  overflow-x: scroll;
+  overflow-x: auto;
 }
 
 /** Sidebar styling */
 
 .sidebar {
-  position: fixed;
   box-shadow: 3px 0 10px -2px #BEC2C1;
   left: 0;
   max-width: 400px;
-  height: 100%;
   float: left;
   top: 0;
   width: var(--sidebar-min-width);
-  overflow-x: hidden;
+  height: 100%;
   z-index: 20;
   -webkit-transition: var(--width-transition);
   transition: var(--width-transition);
 }
 
 .sidebar ul {
+  position: fixed;
   width: var(--sidebar-min-width);
   height: 100%;
   background-color: var(--green-6);
@@ -335,16 +334,10 @@ input[type=checkbox]:checked {
   cursor: pointer;
 }
 
-.sidebar-content-container {
-  margin-left: var(--sidebar-min-width);
-  background-color: #ffffff;
-  width: 100%;
-  height: 100%;
-}
-
 .sidebar-content {
   display: none;
-  width: 100%;
+  margin-left: var(--sidebar-min-width);
+  width: calc(100% - var(--sidebar-min-width));
   height: 100%;
   float: right;
   box-sizing: border-box;
