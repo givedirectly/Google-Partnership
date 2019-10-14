@@ -13,7 +13,7 @@ describe('Unit test for toggleLayerOn', () => {
     assets['asset1'] = new EarthEngineAsset(
         EarthEngineAsset.Type.FEATURECOLLECTION, 'asset1', false);
     assets['asset2'] = new EarthEngineAsset(
-        EarthEngineAsset.Type.FEATURECOLLECTION, 'asset0', false);
+        EarthEngineAsset.Type.FEATURECOLLECTION, 'asset2', false);
     layerArray[0] = new deck.GeoJsonLayer({});
     layerArray[1] = new deck.GeoJsonLayer({});
     ee.listEvaluateCallback = null;

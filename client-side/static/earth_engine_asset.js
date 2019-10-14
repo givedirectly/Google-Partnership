@@ -160,7 +160,7 @@ const gdVisits = new EarthEngineAsset(
     'FeatureCollection', 'GD Assistance', false, colorGDAssistanceLayer);
 
 // List of known assets. Display priority is determined by order in this list,
-// with lower index assets being displayed above higher index assets, except for
+// with higher index assets being displayed above lower index assets, except for
 // Images/ImageCollections, which will always be displayed below
 // FeatureCollections.
 const assets = {
