@@ -143,25 +143,28 @@ input[type='range'] {
   vertical-align: middle;
 }
 
-.form-button {
+input[type='button'], button {
   background-color: var(--green-1);
   border: none;
   border-radius: 4px;
   color: #fff;
   font-family: Helvetica;
-  font-size: 16px;
-  line-height: 24px;
-  margin: 5px 15px 5px 0;
-  padding: 2px 8px;
   text-align: center;
   text-transform: capitalize;
   -webkit-transition: var(--background-color-transition);
   transition: var(--background-color-transition);
 }
 
-.form-button:hover {
+input[type='button']:hover, button:hover {
   background-color: var(--green-3);
   cursor: pointer;
+}
+
+.form-button {
+  font-size: 16px;
+  line-height: 24px;
+  margin: 5px 15px 5px 0;
+  padding: 2px 8px;
 }
 
 #toggles span {
@@ -404,4 +407,20 @@ input[type=checkbox]:checked {
   position: absolute;
   /* The max width of the info window. */
   width: 200px;
+}
+
+.popup-content {
+  margin: 0 auto;
+  text-align: center;
+}
+
+.popup-button {
+  font-size: 12px;
+  line-height: 12px;
+  margin: 4px;
+  padding: 6px;
+}
+
+.popup-damage {
+  margin: 6px auto;
 }

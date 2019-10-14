@@ -34,6 +34,7 @@ function setUpPopup() {
     this.damage = damage;
     this.map = map;
     this.content = document.createElement('div');
+    this.content.className = 'popup-content';
     this.saved = true;
 
     this.content.classList.add('popup-bubble');
@@ -169,7 +170,7 @@ function createPopupHtml(popup, notes, damage) {
   removeAllChildren(content);
 
   const damageDiv = document.createElement('div');
-  damageDiv.classList.add('damage-test-finder');
+  damageDiv.classList.add('popup-damage');
   popup.damageDiv = damageDiv;
   updateDamage(popup, damage);
 
@@ -178,6 +179,7 @@ function createPopupHtml(popup, notes, damage) {
 
   const polygon = popup.polygon;
   const deleteButton = document.createElement('button');
+  deleteButton.className = 'popup-button';
   deleteButton.innerHTML = 'delete';
   deleteButton.onclick = () => {
     if (confirm('Delete region?')) {
@@ -191,6 +193,7 @@ function createPopupHtml(popup, notes, damage) {
   // edit the polygon.
   let savedShape = null;
   const editButton = document.createElement('button');
+  editButton.className = 'popup-button';
   editButton.innerHTML = 'edit';
   editButton.onclick = () => {
     updateState(popup, false);
@@ -208,6 +211,7 @@ function createPopupHtml(popup, notes, damage) {
     notesForm.value = currentNotes;
 
     const saveButton = document.createElement('button');
+    saveButton.className = 'popup-button';
     saveButton.innerHTML = 'save';
     saveButton.onclick = () => saveNewData(popup, notesForm.value);
 
@@ -217,6 +221,7 @@ function createPopupHtml(popup, notes, damage) {
   };
 
   const closeButton = document.createElement('button');
+  closeButton.className = 'popup-button';
   closeButton.innerHTML = 'close';
   closeButton.onclick = () => {
     if (popup.saved) {
