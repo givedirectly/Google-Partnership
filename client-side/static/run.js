@@ -118,16 +118,22 @@ function createAssetCheckboxes(map) {
  * @return {HTMLInputElement} the checkbox
  */
 function createNewCheckbox(name, displayName, parentDiv, map) {
+  const newRow = document.createElement('div');
+  newRow.className = 'checkbox-row';
   const newBox = document.createElement('input');
   newBox.type = 'checkbox';
   newBox.id = getCheckBoxId(name);
+  newBox.className = 'checkbox';
   newBox.checked = true;
-  parentDiv.appendChild(newBox);
+  newRow.appendChild(newBox);
+  const newMark = document.createElement('span');
+  newMark.className = 'checkmark';
+  newRow.appendChild(newMark);
   const label = document.createElement('label');
   label.htmlFor = newBox.id;
   label.innerHTML = displayName;
-  parentDiv.appendChild(label);
-  parentDiv.appendChild(document.createElement('br'));
+  newRow.appendChild(label);
+  parentDiv.appendChild(newRow);
   return newBox;
 }
 
