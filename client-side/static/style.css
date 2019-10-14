@@ -21,8 +21,6 @@ html, body {
   --background-color-transition: background-color 0.3s ease-in-out;
   --opacity-transition: opacity 0.5s ease-in-out;
 
-  --width-transition: width 0.3s ease-in-out;
-
   --sidebar-min-width: 64px;
 }
 
@@ -304,8 +302,6 @@ input[type=checkbox]:checked {
   width: var(--sidebar-min-width);
   height: 100%;
   z-index: 20;
-  -webkit-transition: var(--width-transition);
-  transition: var(--width-transition);
 }
 
 .sidebar ul {
