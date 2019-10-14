@@ -47,14 +47,14 @@ describe('Integration tests for drawing polygons', () => {
     cy.awaitLoad(['writeWaiter']);
     pressPolygonButton('edit');
     // assert damage text is grey while editing
-    cy.get('.popup-damage').contains('damage count: 89079');
+    cy.get('.popup-damage').contains('damage count: 19625');
     cy.get('.popup-damage')
         .should('have.css', 'color')
         .and('eq', 'rgb(128, 128, 128)');
     cy.get('[class="notes"]').type(notes);
     pressPolygonButton('save');
     cy.get('.map').contains(notes);
-    cy.get('.popup-damage').contains('damage count: 89079');
+    cy.get('.popup-damage').contains('damage count: 19625');
     cy.get('.popup-damage')
         .should('have.css', 'color')
         .and('eq', 'rgb(0, 0, 0)');
@@ -278,18 +278,18 @@ function drawPolygonAndClickOnIt(offset = 0) {
   // derived by inspecting the page after starting to draw a polygon.
   cy.get(
       'div[style*="cursor: url(\\"https://maps.gstatic.com/mapfiles/crosshair.cur\\") 7 7, crosshair;"]');
-  drawPointAndPrepareForNext(150, 250 + offset);
+  drawPointAndPrepareForNext(150, 650 + offset);
   // TODO(janakr): test seems to fail reliably on command line without these
   // and pass with it. Figure out what to actually test for on the page and
   // remove these waits.
   cy.wait(hackyWaitTime);
-  drawPointAndPrepareForNext(400, 100 + offset);
+  drawPointAndPrepareForNext(400, 500 + offset);
   cy.wait(hackyWaitTime);
-  drawPointAndPrepareForNext(450, 250 + offset);
+  drawPointAndPrepareForNext(450, 650 + offset);
   cy.wait(hackyWaitTime);
-  drawPointAndPrepareForNext(425, 350 + offset);
+  drawPointAndPrepareForNext(425, 750 + offset);
   cy.wait(hackyWaitTime);
-  drawPointAndPrepareForNext(150, 250 + offset);
+  drawPointAndPrepareForNext(150, 650 + offset);
   const handButton = cy.get('[title="Stop drawing"]');
   handButton.click();
   cy.wait(500);
@@ -305,7 +305,7 @@ function drawPolygonAndClickOnIt(offset = 0) {
  * @return {Cypress.Chainable}
  */
 function clickOnDrawnPolygon(offset = 0) {
-  return cy.get('.map').click(300, 220 + offset);
+  return cy.get('.map').click(300, 620 + offset);
 }
 
 /**
@@ -315,6 +315,7 @@ function clickOnDrawnPolygon(offset = 0) {
  * @param {string} button id of html button we want to click
  */
 function pressPolygonButton(button) {
+  cy.get('.main-content').scrollTo(0, 0);
   cy.get(':button:visible').contains(button).click();
   if (button === 'save') {
     cy.awaitLoad(['writeWaiter']);
