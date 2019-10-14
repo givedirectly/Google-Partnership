@@ -192,6 +192,8 @@ describe('Integration tests for drawing polygons', () => {
     // Check box again and verify that notes box can now be brought up.
     cy.get('#user-features-checkbox').click();
     cy.get('#user-features-checkbox').should('be.checked');
+    // Wait a little bit for the layer to re-render (only needed on Electron).
+    cy.wait(100);
     // Notes not visible yet.
     cy.get('#mapContainer').contains(notes).should('not.be.visible');
     clickOnDrawnPolygon();
