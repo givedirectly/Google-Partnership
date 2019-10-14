@@ -47,15 +47,15 @@ describe('Integration tests for drawing polygons', () => {
     cy.awaitLoad(['writeWaiter']);
     pressPolygonButton('edit');
     // assert damage text is grey while editing
-    cy.get('.damage-test-finder').contains('damage count: 89079');
-    cy.get('.damage-test-finder')
+    cy.get('.popup-damage').contains('damage count: 89079');
+    cy.get('.popup-damage')
         .should('have.css', 'color')
         .and('eq', 'rgb(128, 128, 128)');
     cy.get('[class="notes"]').type(notes);
     pressPolygonButton('save');
     cy.get('.map').contains(notes);
-    cy.get('.damage-test-finder').contains('damage count: 89079');
-    cy.get('.damage-test-finder')
+    cy.get('.popup-damage').contains('damage count: 89079');
+    cy.get('.popup-damage')
         .should('have.css', 'color')
         .and('eq', 'rgb(0, 0, 0)');
   });
@@ -68,12 +68,12 @@ describe('Integration tests for drawing polygons', () => {
   it('Draws a polygon, checks for calculating status', () => {
     cy.visit(host);
     drawPolygonAndClickOnIt();
-    cy.get('.damage-test-finder').contains('damage count: calculating');
-    cy.get('.damage-test-finder')
+    cy.get('.popup-damage').contains('damage count: calculating');
+    cy.get('.popup-damage')
         .should('have.css', 'color')
         .and('eq', 'rgb(128, 128, 128)');
     cy.awaitLoad(['writeWaiter']);
-    cy.get('.damage-test-finder')
+    cy.get('.popup-damage')
         .should('have.css', 'color')
         .and('eq', 'rgb(0, 0, 0)');
   });
@@ -192,6 +192,8 @@ describe('Integration tests for drawing polygons', () => {
     // Check box again and verify that notes box can now be brought up.
     cy.get('#user-features-checkbox').click();
     cy.get('#user-features-checkbox').should('be.checked');
+    // Wait a little bit for the layer to re-render (only needed on Electron).
+    cy.wait(100);
     // Notes not visible yet.
     cy.get('#mapContainer').contains(notes).should('not.be.visible');
     clickOnDrawnPolygon();
