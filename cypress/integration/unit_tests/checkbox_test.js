@@ -1,3 +1,4 @@
+import {assets, EarthEngineAsset} from '../../../client-side/static/earth_engine_asset.js';
 import {layerArray, layerMap, LayerMapValue, toggleLayerOff, toggleLayerOn} from '../../../client-side/static/layer_util';
 
 const mockData = {};
@@ -7,6 +8,12 @@ describe('Unit test for toggleLayerOn', () => {
     layerMap.set('asset0', new LayerMapValue(mockData, 0, true));
     layerMap.set('asset1', new LayerMapValue(mockData, 1, false));
     layerMap.set('asset2', new LayerMapValue(null, 2, false));
+    assets['asset0'] = new EarthEngineAsset(
+        EarthEngineAsset.Type.FEATURECOLLECTION, 'asset0', true);
+    assets['asset1'] = new EarthEngineAsset(
+        EarthEngineAsset.Type.FEATURECOLLECTION, 'asset1', false);
+    assets['asset2'] = new EarthEngineAsset(
+        EarthEngineAsset.Type.FEATURECOLLECTION, 'asset0', false);
     layerArray[0] = new deck.GeoJsonLayer({});
     layerArray[1] = new deck.GeoJsonLayer({});
     ee.listEvaluateCallback = null;
