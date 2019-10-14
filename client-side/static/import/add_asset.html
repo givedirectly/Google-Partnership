@@ -17,15 +17,16 @@
 <!--<div id="firebaseui-auth-container"></div>-->
 
 <form action="" id="form">
+  <label for="collectionName">Name of collection:</label><input id="collectionName"><p>
   <input type="file" id="file" multiple="true">
   <button type="submit" id="fileButton" disabled="true">Upload to Cloud Storage</button>
-</form>
 <p>
-<form action="" id="form_http">
   <textarea id="urls"></textarea>
   <button type="submit" id="urlButton" disabled="true">Upload URLS to Cloud Storage</button>
 </form>
 </p>
+<div id="status_div"></div>
+<div id="command_div"></div>
 <div id="results"></div>
 <script type="module">
   import onStartupTaskCompleted from './add_asset.js';
