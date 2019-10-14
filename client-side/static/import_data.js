@@ -51,7 +51,7 @@ const crowdAiDamageKey = 'descriptio';
  * @param {ee.Feature} feature
  * @return {Feature}
  */
-function countDamageAndBuildings(feature) {
+function countDamageAndBuildings(feature, histo) {
   const resources = getResources();
   const damageLevels = ee.List(damageLevelsList);
   const damageFilters =
@@ -61,12 +61,7 @@ function countDamageAndBuildings(feature) {
   const blockDamage = ee.FeatureCollection(ee.Join.simple().apply(
       damage, thisAsCollection,
       ee.Filter.intersects({leftField: '.geo', rightField: '.geo'})));
-  const totalBuildings =
-      ee.Number(ee.Join.simple()
-          .apply(
-              ee.FeatureCollection(resources.buildingsAsset), thisAsCollection,
-              ee.Filter.intersects({leftField: '.geo', rightField: '.geo'}))
-          .size());
+  const totalBuildings = histo.get(feature.get(geoidTag));
   const attrDict = ee.Dictionary.fromLists(
       damageLevels,
       damageFilters.map((type) => blockDamage.filter(type).size()));
@@ -165,6 +160,12 @@ function addTractInfo(feature) {
   return feature.set(tractTag, tractGeoid);
 }
 
+function attachBlockGroups(feature) {
+  const blockGroups = ee.FeatureCollection(getResources().bgAsset);
+  const blockGroup = blockGroups.filterBounds(feature.geometry()).first();
+  return feature.set(geoidTag, blockGroup.get(tigerGeoidKey));
+}
+
 /** Performs operation of processing inputs and creating output asset. */
 function run() {
   ee.initialize();
@@ -202,9 +203,14 @@ function run() {
               ee.Filter.equals({leftField: tractTag, rightField: geoidTag}))
           .map(combineWithSvi);
 
-  const data = joinedSnapIncomeSVI.limit(25).map(countDamageAndBuildings);
+  const buildings = ee.FeatureCollection(resources.buildingsAsset)
+  const withBlocKGroup = buildings.map(attachBlockGroups);
+  const histo = ee.Dictionary(withBlocKGroup.aggregate_histogram(geoidTag));
 
-  const assetName = disaster + '-data-ms-as-nod';
+  const data = joinedSnapIncomeSVI.map(
+      (feature) => countDamageAndBuildings(feature, histo));
+  
+  const assetName = 'harvey-data-ms-as-nod';
   // TODO(#61): parameterize ee user account to write assets to or make GD
   // account.
   // TODO: delete existing asset with same name if it exists.

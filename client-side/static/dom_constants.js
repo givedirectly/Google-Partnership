@@ -1,4 +1,4 @@
-export {mapContainerId, tableContainerId, writeWaiterId, sidebarDatasetsId};
+export {mapContainerId, sidebarDatasetsId, tableContainerId, writeWaiterId};
 
 const mapContainerId = 'mapContainer';
 const tableContainerId = 'tableContainer';
