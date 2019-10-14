@@ -82,7 +82,7 @@ const mapStyles = [
   {
     'featureType': 'water',
     'elementType': 'geometry',
-    'stylers': [{'color': '#b1d6de'}],
+    'stylers': [{'color': '#b8cbcf'}],
   },
   {
     'featureType': 'water',
