@@ -163,9 +163,9 @@ function addTractInfo(feature) {
 }
 
 function attachBlockGroups(feature) {
-  const blockGroups = ee.FeatureCollection(getResources().bgAsset);
+  const blockGroups = ee.FeatureCollection('users/juliexxia/harvey-data-aff-as-nod');
   const blockGroup = blockGroups.filterBounds(feature.geometry()).first();
-  return feature.set(geoidTag, blockGroup.get(tigerGeoidKey));
+  return feature.set(geoidTag, blockGroup.get(geoidTag));
 }
 
 /** Performs operation of processing inputs and creating output asset. */
@@ -205,14 +205,14 @@ function run() {
               ee.Filter.equals({leftField: tractTag, rightField: geoidTag}))
           .map(combineWithSvi);
 
-  const buildings = ee.FeatureCollection(resources.buildingsAsset).limit(50);
+  const buildings = ee.FeatureCollection(resources.buildingsAsset);
   const withBlocKGroup = buildings.map(attachBlockGroups);
   const histo = ee.Dictionary(withBlocKGroup.aggregate_histogram(geoidTag));
 
   const data = joinedSnapIncomeSVI.map(
       (feature) => countDamageAndBuildings(feature, histo));
 
-  const assetName = 'harvey-data-ms-as-nod-50';
+  const assetName = 'harvey-data-ms-as-nod';
   // TODO(#61): parameterize ee user account to write assets to or make GD
   // account.
   // TODO: delete existing asset with same name if it exists.
