@@ -17,7 +17,7 @@ export {
 };
 
 // TODO: infer this from disaster const in import_data.js?
-const snapAndDamageAsset = 'users/juliexxia/harvey-data-aff-as-nod';
+const snapAndDamageAsset = 'users/janak/harvey-data-ms-correct-damage';
 // Promise for snapAndDamageAsset. After it's first resolved, we never need to
 // download it from EarthEngine again.
 let snapAndDamagePromise;

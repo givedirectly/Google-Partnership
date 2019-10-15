@@ -47,14 +47,14 @@ describe('Integration tests for drawing polygons', () => {
     cy.awaitLoad(['writeWaiter']);
     pressPolygonButton('edit');
     // assert damage text is grey while editing
-    cy.get('.popup-damage').contains('damage count: 19625');
+    cy.get('.popup-damage').contains('damage count: 13862');
     cy.get('.popup-damage')
         .should('have.css', 'color')
         .and('eq', 'rgb(128, 128, 128)');
     cy.get('[class="notes"]').type(notes);
     pressPolygonButton('save');
     cy.get('.map').contains(notes);
-    cy.get('.popup-damage').contains('damage count: 19625');
+    cy.get('.popup-damage').contains('damage count: 13862');
     cy.get('.popup-damage')
         .should('have.css', 'color')
         .and('eq', 'rgb(0, 0, 0)');
