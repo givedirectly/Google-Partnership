@@ -22,7 +22,7 @@ const mostOfUploadUrl =
 const gapiSettings = {
   apiKey: 'AIzaSyAbNHe9B0Wo4MV8rm3qEdy8QzFeFWZERHs',
   clientId: CLIENT_ID,
-  scope: storageScope
+  scope: storageScope,
 };
 
 const resultDiv = document.getElementById('results');
@@ -204,12 +204,13 @@ function uploadFileToGCS(name, contents, collectionName, callback) {
   const URL = mostOfUploadUrl + fileName;
   // Do the upload.
   // We're naively getting the MIME type from the file extension.
-  const gcsPromise = fetch(URL, {
-                       method: 'POST',
-                       headers: gcsHeader,
-                       body: contents,
-                     })
-                         .then(r => r.json())
+  const request = {
+    method: 'POST',
+    headers: gcsHeader,
+    body: contents,
+  };
+  const gcsPromise = fetch(URL, request)
+                         .then((r) => r.json())
                          .then((r) => {
                            uploadedToGCS++;
                            return r;
@@ -260,7 +261,7 @@ function maybeCreateImageCollection(collectionName) {
                     } else {
                       resolveFunction(undefined);
                     }
-                  })
+                  });
             }
           });
     } else {
@@ -283,9 +284,9 @@ function importEEAssetFromGCS(gcsBucket, collectionName, name) {
     id: earthEnginePrefix + collectionName + '/' + name,
     tilesets: [{
       sources: [
-        {primaryPath: 'gs://' + gcsBucket + '/' + collectionName + '/' + name}
-      ]
-    }]
+        {primaryPath: 'gs://' + gcsBucket + '/' + collectionName + '/' + name},
+      ],
+    }],
   };
   ee.data.startIngestion(id, request, (task, failure) => {
     const uploadId = (task && 'taskId' in task) ? task.taskId : id;
@@ -346,6 +347,10 @@ function updateStatus() {
   setTimeout(updateStatus, 500);
 }
 
+/**
+ * Sets the content of the status div. For errors and overall status.
+ * @param {string} contents
+ */
 function setStatusDiv(contents) {
   document.getElementById('status_div').innerHTML = contents;
 }
