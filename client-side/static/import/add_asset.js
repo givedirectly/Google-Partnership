@@ -64,7 +64,10 @@ function initializeEE() {
       (err) => setStatusDiv('Error initializing EarthEngine: ' + err));
 }
 
-// Attempt to authenticate using existing credentials.
+// This call happens before gapi starts loading, so I (Janak) think that it
+// will guarantee that authentication has completely finished by the time
+// getAccessToken has been called, so we'll never have to actually authenticate
+// in there. But I could be wrong!
 ee.data.authenticateViaOauth(
     CLIENT_ID, initializeEE,
     (err) => setStatusDiv('Error authenticating EarthEngine: ' + err),
@@ -124,6 +127,7 @@ function submitFiles(e) {
         }
         const eePrefixLength =
             (earthEngineAssetBase + collectionName + '/').length;
+        // assets is apparently null if there are no items.
         if (eeItems.assets) {
           for (const item of eeItems.assets) {
             const name = item.id.substring(eePrefixLength);
