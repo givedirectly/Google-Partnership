@@ -5,35 +5,21 @@
   <title>Add asset</title>
 <!--  <script src="./multifile.js"></script>-->
   <script src="../lib/ee_api_js_debug.js"></script>
+  // TODO(janakr): download this script to lib.
   <script src="https://apis.google.com/js/api.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/7.2.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/7.2.0/firebase-auth.js"></script>
-  <script src="https://cdn.firebase.com/libs/firebaseui/4.2.0/firebaseui.js"></script>
-  <script src="./untar.js"></script>
-  <script>function listEEAssetFiles(assetName) {
-    console.log('got here');
-    return ee.data.listAssets(
-        'projects/earthengine-legacy/assets/users/janak/noaa-harvey');
-  }
-  </script>
   <script type="module" src="./add_asset.js"></script>
-  <link type="text/css" rel="stylesheet" href="https://cdn.firebase.com/libs/firebaseui/4.2.0/firebaseui.css" />
-<!--  <script type="module" src="./add_asset.js"></script>-->
 </head>
 <body>
-<!--<div id="firebaseui-auth-container"></div>-->
 
 <form action="" id="form">
   <label for="collectionName">Name of collection:</label><input id="collectionName"><p>
   <input type="file" id="file" multiple="true">
   <button type="submit" id="fileButton" disabled="true">Upload to Cloud Storage</button>
-<p>
-  <textarea id="urls"></textarea>
-  <button type="submit" id="urlButton" disabled="true">Upload URLS to Cloud Storage</button>
 </form>
 </p>
 <div id="status_div"></div>
 <hr/>
+Command to delete processed files from your machine (wait until all files processed):
 <div id="command_div"></div>
 <hr/>
 <div id="results"></div>
