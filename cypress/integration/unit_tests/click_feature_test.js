@@ -1,17 +1,13 @@
 import {clickFeature} from '../../../client-side/static/click_feature.js';
 import {tableHeadings} from '../../../client-side/static/draw_table.js';
 import * as HighlightFeatures from '../../../client-side/static/highlight_features.js';
-// import {CurrentFeatureValue} from
-// '../../../client-side/static/highlight_features';
-// import {CurrentFeaturesValue} from
-// '../../../client-side/static/highlight_features.js';
 
 let mockTable;
 let tableApi;
 
 describe('Unit test for click_feature.js', () => {
   beforeEach(() => {
-    HighlightFeatures.CurrentFeaturesValue = (data) => new MockValue();
+    HighlightFeatures.CurrentFeaturesValue = () => new MockValue();
     /** Very real fake of the CurrentFeaturesValue class */
     class MockValue {
       /**

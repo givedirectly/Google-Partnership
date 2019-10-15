@@ -199,7 +199,7 @@ function initializeAssetLayers(map) {
  * score sit at index 0, but having it last ensures it displays on top.
  *
  * @param {google.maps.Map} map main map
- * @param {ee.FeatureCollection} layer the computed score features
+ * @param {Promise<Array<GeoJson>>} layer
  */
 function initializeScoreLayer(map, layer) {
   addLayerFromGeoJsonPromise(layer, scoreLayerName, scoreIndex);

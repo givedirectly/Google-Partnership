@@ -58,6 +58,7 @@ function highlightFeatures(features, map) {
       currentFeatureValue.dataFeatures.forEach((elt) => map.data.remove(elt));
       if (currentFeatureValue.popup) {
         currentFeatureValue.popup.close();
+        currentFeatureValue.popup.setMap(null);
       }
       currentFeatures.delete(key);
     }

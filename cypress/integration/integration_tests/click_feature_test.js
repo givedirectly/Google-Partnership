@@ -6,8 +6,7 @@ describe('Integration test for clicking feature', () => {
   it('clicks a feature on the map highlights feature in list', () => {
     cy.visit(host);
     cy.awaitLoad();
-    // const polygonButton = cy.get('[title="Add a marker"]');
-    // polygonButton.click();
+
     cy.get('.map').click(528, 624);
     cy.get('.google-visualization-table-tr-sel')
         .find('[class="google-visualization-table-td"]')
@@ -89,7 +88,7 @@ describe('Integration test for clicking feature', () => {
             'Block Group 1, Census Tract 2525, Harris County, Texas32574');
     cy.get('#sidebar-toggle-thresholds').click();
     cy.get('[id="damage threshold"]').type('0.8');
-    // cy.get('[id="update"]').click();
+    cy.get('[id="update"]').click();
     cy.get('.google-visualization-table-tr-sel')
         .find('[class="google-visualization-table-td"]')
         .should(

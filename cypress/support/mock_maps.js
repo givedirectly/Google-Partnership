@@ -10,6 +10,8 @@ google.maps.InfoWindow = () => new InfoWindow();
 
 google.maps.LatLng = () => new LatLng();
 
+google.maps.event = {clearListeners: () => {}};
+
 /** A thin stub of google.maps.InfoWindow */
 class InfoWindow {
   /** @constructor */
