@@ -79,11 +79,10 @@ function highlightFeatures(features, map, zoom = false) {
   // TODO(juliexxia): write tests for this functionality
   if (zoom && currentFeatures.size > 0) {
     const bounds = new google.maps.LatLngBounds();
-    for (const [geoid, currentFeatureValue] of currentFeatures.entries()) {
+    for (const currentFeatureValue of currentFeatures.values()) {
       currentFeatureValue.dataFeatures.forEach(
-          (feature) => {feature.getGeometry().forEachLatLng((latlng) => {
-            bounds.extend(latlng);
-          })})
+          (feature) => feature.getGeometry().forEachLatLng(
+              (latlng) => bounds.extend(latlng)));
     }
     // Make sure we're sufficiently zoomed out for reasonable map context.
     const extendPoint1 = new google.maps.LatLng(
