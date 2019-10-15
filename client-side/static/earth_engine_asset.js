@@ -155,7 +155,7 @@ const elevationData = new EarthEngineAsset(
       return aspect.divide(180).multiply(Math.PI).sin();
     }, {min: -1, max: 1, opacity: .3});
 const noaaData = new EarthEngineAsset(
-    EarthEngineAsset.Type.IMAGECOLLECTION, 'NOAA Imagery', false);
+    EarthEngineAsset.Type.IMAGE, 'NOAA Imagery', false);
 const gdVisits = new EarthEngineAsset(
     'FeatureCollection', 'GD Assistance', false, colorGDAssistanceLayer);
 
