@@ -42,6 +42,6 @@ disasters.set(
 disasters.set(
     'harvey',
     new DisasterMapValue(
-        'users/juliexxia/harvey-damage-crowdai-format-aff-as-nod',
+        'users/juliexxia/harvey-damage-crowdai-format-deduplicated',
         'users/juliexxia/snap_texas', 'users/juliexxia/tiger_texas',
         'users/juliexxia/income_texas', 'users/ruthtalbot/harvey-SVI'));
