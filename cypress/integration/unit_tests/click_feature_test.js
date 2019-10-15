@@ -11,10 +11,9 @@ let tableApi;
 
 describe('Unit test for click_feature.js', () => {
   beforeEach(() => {
-    HighlightFeatures.CurrentFeaturesValue = (data) =>
-        new CurrentFeaturesValue();
+    HighlightFeatures.CurrentFeaturesValue = (data) => new MockValue();
     /** Very real fake of the CurrentFeaturesValue class */
-    class CurrentFeaturesValue {
+    class MockValue {
       /**
        * @constructor
        * @param {Array} dataFeatures
