@@ -40,7 +40,8 @@ function clickFeature(lng, lat, map, featuresAsset, table, tableData) {
       if (rowNumber === null) {
         table.setSelection([]);
       } else {
-        table.setSelection([{row: rowNumber, column: null}]);
+        // underlaying data does not include headings row.
+        table.setSelection([{row: rowNumber - 1, column: null}]);
       }
       const infoWindow = new google.maps.InfoWindow();
       infoWindow.setContent(createHtmlForPopup(feature, tableData, rowNumber));
@@ -80,8 +81,10 @@ function createHtmlForPopup(feature, tableData, rowNumber) {
   const headings = tableData[0];
   for (let col = 3; col < headings.length; col++) {
     const property = document.createElement('li');
-    property.innerText =
-        headings[col] + ': ' + feature.properties[headings[col]];
+    const value = headings[col].endsWith(' PERCENTAGE') ?
+        parseFloat(feature.properties[headings[col]]).toFixed(3) :
+        feature.properties[headings[col]];
+    property.innerText = headings[col] + ': ' + value;
     properties.appendChild(property);
   }
   div.appendChild(heading);
@@ -117,8 +120,7 @@ function selectHighlightedFeatures(table, tableData) {
 function findRowNumber(geoid, tableData) {
   for (let i = 1; i < tableData.length; i++) {
     if (tableData[i][0] === geoid) {
-      // underlaying data does not include headings row.
-      return i - 1;
+      return i;
     }
   }
   return null;
