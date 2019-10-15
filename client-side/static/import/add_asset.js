@@ -399,11 +399,10 @@ function listGCSFiles(collectionName) {
  * @return {Promise}
  */
 function listGCSFilesRecursive(collectionName, nextPageToken, accumulatedList) {
-  return fetch(
-             BASE_LISTING_URL +
-                 '?prefix=' + encodeURIComponent(collectionName) +
-                 (nextPageToken ? '&pageToken=' + nextPageToken : ''),
-             listRequest)
+  const deleteUrl = BASE_LISTING_URL +
+      '?prefix=' + encodeURIComponent(collectionName) +
+      (nextPageToken ? '&pageToken=' + nextPageToken : '');
+  return fetch(deleteUrl, listRequest)
       .then((r) => r.json())
       .then((resp) => {
         if (!resp.items) {
