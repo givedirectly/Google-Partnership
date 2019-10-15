@@ -21,7 +21,19 @@ const mostOfUploadUrl =
 
 const resultDiv = document.getElementById('results');
 
-let gcsHeader = null;
+let listRequest = null;
+let uploadRequest = null;
+let deleteRequest = null;
+
+function setUpAllHeaders(accessToken) {
+  const gcsHeader = new Headers({'Authorization': 'Bearer ' + accessToken});
+
+  deleteRequest = {
+    method: 'DELETE',
+    headers: gcsHeader,
+  };
+
+}
 
 // 3 tasks: EE authentication, Firebase authentication, and page load.
 let tasksToComplete = 3;
@@ -61,9 +73,7 @@ function getAccessToken() {
         // Already logged in because EarthEngine did it for us.
         const auth = gapi.auth2.getAuthInstance();
         const user = auth.currentUser.get();
-        gcsHeader = new Headers({
-          'Authorization': 'Bearer ' + user.getAuthResponse().access_token,
-        });
+        setUpAllHeaders(user.getAuthResponse().access_token);
         onStartupTaskCompleted();
       });
 }
@@ -81,7 +91,7 @@ function enableWhenReady() {
  * @return {boolean}
  */
 function submitFiles(e) {
-  if (!gcsHeader) {
+  if (!listRequest) {
     alert('Not signed in properly');
     return false;
   }
@@ -422,10 +432,7 @@ function deleteGCSFile(collectionName, name, originalName) {
   return fetch(
              BASE_LISTING_URL + '/' + encodeURIComponent(collectionName) + '/' +
                  encodeURIComponent(name),
-             {
-               method: 'DELETE',
-               headers: gcsHeader,
-             })
+             )
       .then(() => {
         deletedFromGCS++;
         addFileToDelete(originalName);
@@ -436,6 +443,7 @@ function deleteGCSFile(collectionName, name, originalName) {
  * Lists all images under the given EE asset.
  *
  * @param {string} assetName
+ * @return {Promise}
  */
 function listEEAssetFiles(assetName) {
   // Pass an empty callback because it makes this return a Promise.
