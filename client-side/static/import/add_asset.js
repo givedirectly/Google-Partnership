@@ -19,20 +19,22 @@ const storageScope = 'https://www.googleapis.com/auth/devstorage.read_write';
 const mostOfUploadUrl =
     BASE_UPLOAD_URL + '?' + encodeURIComponent('uploadType=media') + '&name=';
 
+const gapiSettings = {
+  apiKey: 'AIzaSyAbNHe9B0Wo4MV8rm3qEdy8QzFeFWZERHs',
+  clientId: CLIENT_ID,
+  scope: storageScope
+};
+
 const resultDiv = document.getElementById('results');
 
+let gcsHeader = null;
 let listRequest = null;
-let uploadRequest = null;
 let deleteRequest = null;
 
 function setUpAllHeaders(accessToken) {
-  const gcsHeader = new Headers({'Authorization': 'Bearer ' + accessToken});
-
-  deleteRequest = {
-    method: 'DELETE',
-    headers: gcsHeader,
-  };
-
+  gcsHeader = new Headers({'Authorization': 'Bearer ' + accessToken});
+  deleteRequest = {method: 'DELETE', headers: gcsHeader};
+  listRequest = {method: 'GET', headers: gcsHeader};
 }
 
 // 3 tasks: EE authentication, Firebase authentication, and page load.
@@ -64,11 +66,7 @@ gapi.load('client:auth2', getAccessToken);
 /** Gets access token from gapi auth object after initialization. */
 function getAccessToken() {
   gapi.client
-      .init({
-        apiKey: 'AIzaSyAbNHe9B0Wo4MV8rm3qEdy8QzFeFWZERHs',
-        clientId: CLIENT_ID,
-        scope: storageScope
-      })
+      .init(gapiSettings)
       .then(() => {
         // Already logged in because EarthEngine did it for us.
         const auth = gapi.auth2.getAuthInstance();
@@ -119,13 +117,15 @@ function submitFiles(e) {
         }
         const eePrefixLength =
             (earthEngineAssetBase + collectionName + '/').length;
-        for (const item of eeItems.assets) {
-          const name = item.id.substring(eePrefixLength);
-          const oldStatus = fileStatuses.get(name);
-          if (oldStatus) {
-            fileStatuses.set(name, FileRemoteStatus.PRESENT_EVERYWHERE);
-          } else {
-            fileStatuses.set(name, FileRemoteStatus.EE_ONLY);
+        if (eeItems.assets) {
+          for (const item of eeItems.assets) {
+            const name = item.id.substring(eePrefixLength);
+            const oldStatus = fileStatuses.get(name);
+            if (oldStatus) {
+              fileStatuses.set(name, FileRemoteStatus.PRESENT_EVERYWHERE);
+            } else {
+              fileStatuses.set(name, FileRemoteStatus.EE_ONLY);
+            }
           }
         }
         return fileStatuses;
@@ -244,10 +244,9 @@ function maybeCreateImageCollection(collectionName) {
     rejectFunction = reject;
   });
   const assetName = earthEngineAssetBase + collectionName;
-  ee.data.getAsset(assetName, (getResult, failure) => {
-    if (failure) {
-      rejectFunction(failure);
-    } else if (!getResult) {
+  ee.data.getAsset(assetName, (getResult) => {
+    if (!getResult) {
+      // TODO(janakr): this swallows any actual errors in getting asset.
       // TODO(janakr): track if actually created to avoid unnecessary listing?
       ee.data.createAsset(
           {id: assetName, type: 'ImageCollection'}, assetName, false, {},
@@ -290,10 +289,14 @@ function importEEAssetFromGCS(gcsBucket, collectionName, name) {
       ]
     }]
   };
-  ee.data.startIngestion(id, request, (task) => {
-    startedEETask++;
-    const uploadId = ('taskId' in task) ? task.taskId : id;
+  ee.data.startIngestion(id, request, (task, failure) => {
+    const uploadId = (task && 'taskId' in task) ? task.taskId : id;
     const tail = ' ' + name + ' to EarthEngine with task id ' + uploadId;
+    if (failure) {
+      resultDiv.innerHTML += '<br>Error importing ' + tail + ': ' + failure;
+      return;
+    }
+    startedEETask++;
     if (('started' in task) && task.started === 'OK') {
       resultDiv.innerHTML += '<br>Importing' + tail;
     } else {
@@ -365,8 +368,9 @@ function addFileToDelete(file) {
   } else if (
       foundTopFiles === processedFiles &&
       alreadyPresentEverywhere === deletedFromGCS) {
-    document.getElementById('command_div').innerText =
-        'rm ' + filesToDelete.join(' ');
+    document.getElementById('command_div').innerHTML =
+        '# Command to delete processed files from your machine:<br/>'
+        + 'rm ' + filesToDelete.join(' ');
     filesToDelete.length = 0;
   }
 }
@@ -395,10 +399,8 @@ function listGCSFilesRecursive(collectionName, nextPageToken, accumulatedList) {
              BASE_LISTING_URL +
                  '?prefix=' + encodeURIComponent(collectionName) +
                  (nextPageToken ? '&pageToken=' + nextPageToken : ''),
-             {
-               method: 'GET',
-               headers: gcsHeader,
-             })
+      listRequest
+)
       .then((r) => r.json())
       .then((resp) => {
         if (!resp.items) {
@@ -430,12 +432,17 @@ function listGCSFilesRecursive(collectionName, nextPageToken, accumulatedList) {
  */
 function deleteGCSFile(collectionName, name, originalName) {
   return fetch(
-             BASE_LISTING_URL + '/' + encodeURIComponent(collectionName) + '/' +
-                 encodeURIComponent(name),
+             BASE_LISTING_URL + '/' + encodeURIComponent(collectionName + '/' +
+                 name),
+      deleteRequest
              )
-      .then(() => {
-        deletedFromGCS++;
-        addFileToDelete(originalName);
+      .then((resp) => {
+        if (resp.ok) {
+          deletedFromGCS++;
+          addFileToDelete(originalName);
+        } else {
+          resultDiv.innerHTML += '<br>Error deleting ' + name + ' from GCS: ' + resp.status;
+        }
       });
 }
 
