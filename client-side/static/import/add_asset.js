@@ -370,8 +370,7 @@ function addFileToDelete(file) {
         ') after all files should have been processed ' + currentText;
     return;
   }
-  if (
-      foundTopFiles === processedFiles &&
+  if (foundTopFiles === processedFiles &&
       alreadyPresentEverywhere === deletedFromGCS) {
     document.getElementById('command_div').innerHTML =
         '# Command to delete processed files from your machine:<br/>' +
