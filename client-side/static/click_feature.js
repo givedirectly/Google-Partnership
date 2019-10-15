@@ -30,7 +30,6 @@ function clickFeature(lng, lat, map, featuresAsset, table, tableData) {
     const currentKeys = Array.from(currentFeatures.keys());
     // Allow unselecting via the map.
     if (currentKeys.length === 1 && currentKeys.includes(geoid)) {
-      currentFeatures.get(geoid).getPopup().close();
       highlightFeatures([], map);
       table.setSelection([]);
     } else {

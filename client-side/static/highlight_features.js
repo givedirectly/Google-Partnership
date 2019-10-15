@@ -34,14 +34,6 @@ class CurrentFeatureValue {
   setPopup(popup) {
     this.popup = popup;
   }
-
-  /**
-   * Gets the relevant info window.
-   * @return {google.maps.InfoWindow}
-   */
-  getPopup() {
-    return this.popup;
-  }
 }
 
 /**
@@ -62,8 +54,13 @@ function highlightFeatures(features, map) {
   const keys = currentFeatures.keys();
   for (const key of keys) {
     if (!newFeatures.delete(key)) {
-      currentFeatures.get(key).dataFeatures.forEach(
+      const currentFeatureValue = currentFeatures.get(key);
+      currentFeatureValue.dataFeatures.forEach(
           (elt) => map.data.remove(elt));
+
+      if (currentFeatureValue.popup) {
+        currentFeatureValue.popup.close();
+      }
       currentFeatures.delete(key);
     }
   }
