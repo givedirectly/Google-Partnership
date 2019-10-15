@@ -1,5 +1,7 @@
 export {onStartupTaskCompleted as default};
+// GCS JSON HTTP calling code lovingly copied/modified from
 // https://github.com/joepin/google-cloud-storage/blob/master/public/index.html
+
 // TODO(#13): use proper keys associated to GiveDirectly account,
 // and lock down security (right now database is global read-write).
 const firebaseConfig = {
@@ -17,15 +19,14 @@ const earthEnginePrefix = 'projects/earthengine-legacy/assets/' + earthEngineAss
 
 // The client ID from the Google Developers Console.
 // TODO(#13): This is from janakr's console. Should use one for GiveDirectly.
-// eslint-disable-next-line no-unused-vars
 const CLIENT_ID = '634162034024-oodhl7ngkg63hd9ha9ho9b3okcb0bp8s' +
     '.apps.googleusercontent.com';
 const BUCKET = 'givedirectly.appspot.com';
 const BASE_UPLOAD_URL = `https://www.googleapis.com/upload/storage/v1/b/${BUCKET}/o`;
 const BASE_LISTING_URL = `https://www.googleapis.com/storage/v1/b/${BUCKET}/o`;
 const storageScope = 'https://www.googleapis.com/auth/devstorage.read_write';
-const provider = new firebase.auth.GoogleAuthProvider();
-provider.addScope(storageScope);
+// const provider = new firebase.auth.GoogleAuthProvider();
+// provider.addScope(storageScope);
 
 const mostOfUrl = BASE_UPLOAD_URL + '?' + encodeURIComponent('uploadType=media') + '&name=';
 
@@ -42,13 +43,30 @@ function onStartupTaskCompleted() {
 }
 
 let gcsHeader = null;
-firebase.initializeApp(firebaseConfig);
-firebase.auth().signInWithPopup(provider).then((result) => {
-  gcsHeader = new Headers({
-    'Authorization': 'Bearer ' + result.credential.accessToken,
+// firebase.initializeApp(firebaseConfig);
+// firebase.auth().signInWithPopup(provider).then((result) => {
+//   onStartupTaskCompleted();
+// }).catch((err) => resultDiv.innerHTML = 'Error authenticating with Firebase: ' + err);
+
+gapi.load('client:auth2', initClient);
+
+let auth = null;
+
+function initClient() {
+  gapi.client.init({
+    apiKey: 'AIzaSyAbNHe9B0Wo4MV8rm3qEdy8QzFeFWZERHs',
+    clientId: CLIENT_ID,
+    scope: storageScope
+  }).then(() => {
+    auth = gapi.auth2.getAuthInstance();
+    // Handle initial sign-in state. (Determine if user is already signed in.)
+    const user = auth.currentUser.get();
+    gcsHeader = new Headers({
+      'Authorization': 'Bearer ' + user.getAuthResponse().access_token,
+    });
+    onStartupTaskCompleted();
   });
-  onStartupTaskCompleted();
-}).catch((err) => resultDiv.innerHTML = 'Error authenticating with Firebase: ' + err);
+}
 
 const runOnSuccess = function() {
   // Necessary for listAssets.
@@ -57,22 +75,10 @@ const runOnSuccess = function() {
       () => resultDiv.innerHTML = 'Error initializing EarthEngine');
 };
 
-const onImmediateFailed = function() {
-  $('.g-sign-in').removeClass('hidden');
-  $('.output').text('(Log in to see the result.)');
-  $('.g-sign-in .button').click(function() {
-    ee.data.authenticateViaPopup(function() {
-      // If the login succeeds, hide the login button and run the analysis.
-      $('.g-sign-in').addClass('hidden');
-      runOnSuccess();
-    });
-  });
-};
-
 // Attempt to authenticate using existing credentials.
 ee.data.authenticate(
     CLIENT_ID, runOnSuccess, () => console.error('authenticating'), null,
-    onImmediateFailed);
+    () => ee.data.authenticateViaPopup(() => runOnSuccess()));
 
 function enableWhenReady() {
   ee.data.setCloudApiEnabled(true);
@@ -290,6 +296,10 @@ function listGCSFilesRecursive(collectionName, nextPageToken, accumulatedList) {
         headers: gcsHeader,
       }).then((r) => r.json())
       .then((resp) => {
+        if (!resp.items) {
+          // Can happen if folder does not exist in GCS yet.
+          return accumulatedList;
+        }
         if (accumulatedList) {
           // Avoid push's performance/stack overflow issues for large arrays.
           for (const item of resp.items) {
@@ -313,7 +323,7 @@ function deleteGCSFile(collectionName, name, originalName) {
       headers: gcsHeader,
     });
   }
-  return fetch(BASE_LISTING_URL + '/' + encodeURIComponent(collectionName) + '/' + encodeURIComponent(name), {
+  return gapi.client.request(BASE_LISTING_URL + '/' + encodeURIComponent(collectionName) + '/' + encodeURIComponent(name), {
     method: 'DELETE',
     headers: gcsHeader,
   }).then(() => {
