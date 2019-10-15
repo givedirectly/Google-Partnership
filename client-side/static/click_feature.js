@@ -81,9 +81,10 @@ function createHtmlForPopup(feature, tableData, rowNumber) {
   const headings = tableData[0];
   for (let col = 3; col < headings.length; col++) {
     const property = document.createElement('li');
-    const value = headings[col].endsWith(' PERCENTAGE') ?
-      parseFloat(feature.properties[headings[col]]).toFixed(3) :
-      feature.properties[headings[col]];
+    let value = feature.properties[headings[col]];
+    if (headings[col].endsWith(' PERCENTAGE')) {
+      value = parseFloat(rawValue).toFixed(3);
+    }
     property.innerText = headings[col] + ': ' + value;
     properties.appendChild(property);
   }
