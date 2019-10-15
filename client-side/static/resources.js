@@ -22,20 +22,17 @@ class DisasterMapValue {
    * @param {string} bgAsset ee asset path to block group info
    * @param {string} incomeAsset ee asset path to median income info
    * @param {string} sviAsset ee asset path to svi info
-   * @param {string} buildingsAsset ee asset path to building footprint info
    */
-  constructor(
-      damageAsset, snapAsset, bgAsset, incomeAsset, sviAsset, buildingsAsset) {
+  constructor(damageAsset, snapAsset, bgAsset, incomeAsset, sviAsset) {
     this.damageAsset = damageAsset;
     this.rawSnapAsset = snapAsset;
     this.bgAsset = bgAsset;
     this.incomeAsset = incomeAsset;
     this.sviAsset = sviAsset;
-    this.buildingsAsset = buildingsAsset;
   }
 }
 
-// TODO: upload michael income, SVI, buildings data
+// TODO: upload michael income and SVI data
 disasters.set(
     'michael',
     new DisasterMapValue(
@@ -47,5 +44,4 @@ disasters.set(
     new DisasterMapValue(
         'users/juliexxia/harvey-damage-crowdai-format-aff-as-nod',
         'users/juliexxia/snap_texas', 'users/juliexxia/tiger_texas',
-        'users/juliexxia/income_texas', 'users/ruthtalbot/harvey-SVI',
-        'users/juliexxia/harvey-damage-zone-ms-buildings'));
+        'users/juliexxia/income_texas', 'users/ruthtalbot/harvey-SVI'));
