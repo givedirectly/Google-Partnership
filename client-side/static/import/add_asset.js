@@ -1,6 +1,4 @@
 export {onStartupTaskCompleted as default};
-// GCS JSON HTTP calling code lovingly copied/modified from
-// https://github.com/joepin/google-cloud-storage/blob/master/public/index.html
 
 const earthEngineAssetBase = 'users/janak/';
 const earthEnginePrefix =
@@ -159,6 +157,8 @@ function submitFiles(e) {
  * Files are uploaded and imported with illegal characters replaced by '_'. If
  * files are not unique after that transformation, that sucks.
  *
+ * TODO(janakr): delete files that are PRESENT_EVERYWHERE even if not listed?
+ *
  * @param {string} collectionName
  * @param {Map} fileStatuses
  */
@@ -199,6 +199,8 @@ const FileRemoteStatus = {
 
 /**
  * Uploads file to GCS, then invokes callback (to import it to EE).
+ * Lovingly copied/modified from
+ * https://github.com/joepin/google-cloud-storage/blob/master/public/index.html
  *
  * @param {string} name file name, ideally with a single path segment
  * @param {Blob} contents
@@ -209,14 +211,11 @@ const FileRemoteStatus = {
  */
 function uploadFileToGCS(name, contents, collectionName, callback) {
   uploadingToGCS++;
-  // get an encoded file name - either from the name input or from the file
-  // itself
   const fileName = encodeURIComponent(collectionName + '/' + name);
-  // using the simple media upload as per the spec here:
+  // Use the simple media upload as per the spec here:
   // https://cloud.google.com/storage/docs/json_api/v1/how-tos/simple-upload
   const URL = mostOfUploadUrl + fileName;
   // Do the upload.
-  // We're naively getting the MIME type from the file extension.
   const request = {
     method: 'POST',
     headers: gcsHeader,
@@ -318,81 +317,6 @@ function importEEAssetFromGCS(gcsBucket, collectionName, name) {
 }
 
 /**
- * Transforms all characters not allowed in EE asset paths into '_'.
- * @param {string} fileName
- * @return {string} Transformed name
- */
-function replaceEarthEngineIllegalCharacters(fileName) {
-  return fileName.replace(/[^A-Za-z0-9_/-]/g, '_');
-}
-
-/**
- * These variables track progress of the uploads/imports for display.
- */
-let foundTopFiles = 0;
-let processedFiles = 0;
-let uploadingToGCS = 0;
-let alreadyUploadedToGCS = 0;
-let uploadedToGCS = 0;
-let alreadyImportedToEE = 0;
-let alreadyPresentEverywhere = 0;
-let startedEETask = 0;
-let deletedFromGCS = 0;
-
-/**
- * Sets the status of all current operations, and restarts itself half a second
- * later to do it again.
- */
-function updateStatus() {
-  setStatusDiv(
-      'Found ' + foundTopFiles + ' files<br/>' +
-      'Processed ' + processedFiles + ' files<br/>' +
-      'Uploading ' + uploadingToGCS + ' files to GCS<br/>' +
-      'Found ' + (alreadyUploadedToGCS + alreadyPresentEverywhere) +
-      ' files previously uploaded to GCS<br/>' +
-      'Uploaded ' + uploadedToGCS + ' files to GCS<br/>' +
-      'Started EE ingestion of ' + startedEETask + ' files<br/>' +
-      'Found ' + (alreadyImportedToEE + alreadyPresentEverywhere) +
-      ' files previously imported to EE<br/>' +
-      'Found ' + alreadyPresentEverywhere +
-      ' files previously imported to EE and present in GCS<br/>' +
-      'Deleted ' + deletedFromGCS + ' files from GCS<br/>');
-  setTimeout(updateStatus, 500);
-}
-
-/**
- * Sets the content of the status div. For errors and overall status.
- * @param {string} contents
- */
-function setStatusDiv(contents) {
-  document.getElementById('status_div').innerHTML = contents;
-}
-
-const filesToDelete = [];
-
-/**
- * Adds a file to be locally deleted, for display to user when complete.
- * @param {string} file
- */
-function addFileToDelete(file) {
-  filesToDelete.push(file);
-  const currentText = document.getElementById('command_div').innerText;
-  if (currentText) {
-    document.getElementById('command_div').innerText =
-        '### Error: found a file to delete (' + file +
-        ') after all files should have been processed ' + currentText;
-    return;
-  }
-  if (foundTopFiles === processedFiles &&
-      alreadyPresentEverywhere === deletedFromGCS) {
-    document.getElementById('command_div').innerHTML =
-        '# Command to delete processed files from your machine:<br/>' +
-        'rm ' + filesToDelete.join(' ');
-    filesToDelete.length = 0;
-  }
-}
-
-/**
  * Lists all GCS files in a collection, to avoid uploading them again (and to
  * delete them if they are already in EE). Since a maximum of 1000 entries is
  * returned, has to do some recursive footwork.
@@ -466,4 +390,79 @@ function deleteGCSFile(collectionName, name, originalName) {
 function listEEAssetFiles(assetName) {
   // Pass an empty callback because it makes this return a Promise.
   return ee.data.listAssets(earthEnginePrefix + assetName, {}, () => {});
+}
+
+/**
+ * Transforms all characters not allowed in EE asset paths into '_'.
+ * @param {string} fileName
+ * @return {string} Transformed name
+ */
+function replaceEarthEngineIllegalCharacters(fileName) {
+  return fileName.replace(/[^A-Za-z0-9_/-]/g, '_');
+}
+
+/**
+ * These variables track progress of the uploads/imports for display.
+ */
+let foundTopFiles = 0;
+let processedFiles = 0;
+let uploadingToGCS = 0;
+let alreadyUploadedToGCS = 0;
+let uploadedToGCS = 0;
+let alreadyImportedToEE = 0;
+let alreadyPresentEverywhere = 0;
+let startedEETask = 0;
+let deletedFromGCS = 0;
+
+/**
+ * Sets the status of all current operations, and restarts itself half a second
+ * later to do it again.
+ */
+function updateStatus() {
+  setStatusDiv(
+      'Found ' + foundTopFiles + ' files<br/>' +
+      'Processed ' + processedFiles + ' files<br/>' +
+      'Uploading ' + uploadingToGCS + ' files to GCS<br/>' +
+      'Found ' + (alreadyUploadedToGCS + alreadyPresentEverywhere) +
+      ' files previously uploaded to GCS<br/>' +
+      'Uploaded ' + uploadedToGCS + ' files to GCS<br/>' +
+      'Started EE ingestion of ' + startedEETask + ' files<br/>' +
+      'Found ' + (alreadyImportedToEE + alreadyPresentEverywhere) +
+      ' files previously imported to EE<br/>' +
+      'Found ' + alreadyPresentEverywhere +
+      ' files previously imported to EE and present in GCS<br/>' +
+      'Deleted ' + deletedFromGCS + ' files from GCS<br/>');
+  setTimeout(updateStatus, 500);
+}
+
+/**
+ * Sets the content of the status div. For errors and overall status.
+ * @param {string} contents
+ */
+function setStatusDiv(contents) {
+  document.getElementById('status_div').innerHTML = contents;
+}
+
+const filesToDelete = [];
+
+/**
+ * Adds a file to be locally deleted, for display to user when complete.
+ * @param {string} file
+ */
+function addFileToDelete(file) {
+  filesToDelete.push(file);
+  const currentText = document.getElementById('command_div').innerText;
+  if (currentText) {
+    document.getElementById('command_div').innerText =
+        '### Error: found a file to delete (' + file +
+        ') after all files should have been processed ' + currentText;
+    return;
+  }
+  if (foundTopFiles === processedFiles &&
+      alreadyPresentEverywhere === deletedFromGCS) {
+    document.getElementById('command_div').innerHTML =
+        '# Command to delete processed files from your machine:<br/>' +
+        'rm ' + filesToDelete.join(' ');
+    filesToDelete.length = 0;
+  }
 }
