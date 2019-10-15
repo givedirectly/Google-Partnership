@@ -31,6 +31,10 @@ let gcsHeader = null;
 let listRequest = null;
 let deleteRequest = null;
 
+/**
+ * Initialize all headers necessary for GCS operations.
+ * @param {string} accessToken Token coming from gapi authentication.
+ */
 function setUpAllHeaders(accessToken) {
   gcsHeader = new Headers({'Authorization': 'Bearer ' + accessToken});
   deleteRequest = {method: 'DELETE', headers: gcsHeader};
@@ -40,6 +44,10 @@ function setUpAllHeaders(accessToken) {
 // 3 tasks: EE authentication, Firebase authentication, and page load.
 let tasksToComplete = 3;
 
+/**
+ * Function to be called by every asynchronous initialization. When all have
+ * completed,
+ */
 function onStartupTaskCompleted() {
   if (--tasksToComplete === 0) {
     enableWhenReady();
@@ -49,6 +57,7 @@ function onStartupTaskCompleted() {
 // Necessary for listAssets.
 ee.data.setCloudApiEnabled(true);
 
+/** Initializes EarthEngine. */
 function initializeEE() {
   ee.initialize(
       /* opt_baseurl=*/ null, /* opt_tileurl=*/ null, onStartupTaskCompleted,
