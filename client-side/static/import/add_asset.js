@@ -402,27 +402,25 @@ function listGCSFilesRecursive(collectionName, nextPageToken, accumulatedList) {
   const deleteUrl = BASE_LISTING_URL +
       '?prefix=' + encodeURIComponent(collectionName) +
       (nextPageToken ? '&pageToken=' + nextPageToken : '');
-  return fetch(deleteUrl, listRequest)
-      .then((r) => r.json())
-      .then((resp) => {
-        if (!resp.items) {
-          // Can happen if folder does not exist in GCS yet.
-          return accumulatedList;
-        }
-        if (accumulatedList) {
-          // Avoid push's performance/stack overflow issues for large arrays.
-          for (const item of resp.items) {
-            accumulatedList.push(item);
-          }
-        } else {
-          accumulatedList = resp.items;
-        }
-        if (!resp.nextPageToken) {
-          return accumulatedList;
-        }
-        return listGCSFilesRecursive(
-            collectionName, resp.nextPageToken, accumulatedList);
-      });
+  return fetch(deleteUrl, listRequest).then((r) => r.json()).then((resp) => {
+    if (!resp.items) {
+      // Can happen if folder does not exist in GCS yet.
+      return accumulatedList;
+    }
+    if (accumulatedList) {
+      // Avoid push's performance/stack overflow issues for large arrays.
+      for (const item of resp.items) {
+        accumulatedList.push(item);
+      }
+    } else {
+      accumulatedList = resp.items;
+    }
+    if (!resp.nextPageToken) {
+      return accumulatedList;
+    }
+    return listGCSFilesRecursive(
+        collectionName, resp.nextPageToken, accumulatedList);
+  });
 }
 
 /**
