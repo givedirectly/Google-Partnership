@@ -399,10 +399,10 @@ function listGCSFiles(collectionName) {
  * @return {Promise}
  */
 function listGCSFilesRecursive(collectionName, nextPageToken, accumulatedList) {
-  const deleteUrl = BASE_LISTING_URL +
+  const listUrl = BASE_LISTING_URL +
       '?prefix=' + encodeURIComponent(collectionName) +
       (nextPageToken ? '&pageToken=' + nextPageToken : '');
-  return fetch(deleteUrl, listRequest).then((r) => r.json()).then((resp) => {
+  return fetch(listUrl, listRequest).then((r) => r.json()).then((resp) => {
     if (!resp.items) {
       // Can happen if folder does not exist in GCS yet.
       return accumulatedList;
@@ -431,19 +431,17 @@ function listGCSFilesRecursive(collectionName, nextPageToken, accumulatedList) {
  * @return {Promise}
  */
 function deleteGCSFile(collectionName, name, originalName) {
-  return fetch(
-             BASE_LISTING_URL + '/' +
-                 encodeURIComponent(collectionName + '/' + name),
-             deleteRequest)
-      .then((resp) => {
-        if (resp.ok) {
-          deletedFromGCS++;
-          addFileToDelete(originalName);
-        } else {
-          resultDiv.innerHTML +=
-              '<br>Error deleting ' + name + ' from GCS: ' + resp.status;
-        }
-      });
+  const deleteUrl =
+      BASE_LISTING_URL + '/' + encodeURIComponent(collectionName + '/' + name);
+  return fetch(deleteUrl, deleteRequest).then((resp) => {
+    if (resp.ok) {
+      deletedFromGCS++;
+      addFileToDelete(originalName);
+    } else {
+      resultDiv.innerHTML +=
+          '<br>Error deleting ' + name + ' from GCS: ' + resp.status;
+    }
+  });
 }
 
 /**
