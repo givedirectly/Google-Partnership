@@ -12,7 +12,7 @@ let tableApi;
 describe('Unit test for click_feature.js', () => {
   beforeEach(() => {
     HighlightFeatures.CurrentFeaturesValue = (data) =>
-      new CurrentFeaturesValue();
+        new CurrentFeaturesValue();
     /** Very real fake of the CurrentFeaturesValue class */
     class CurrentFeaturesValue {
       /**
