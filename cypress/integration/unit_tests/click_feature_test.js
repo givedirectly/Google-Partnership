@@ -7,11 +7,32 @@ let tableApi;
 
 describe('Unit test for click_feature.js', () => {
   beforeEach(() => {
+    HighlightFeatures.CurrentFeaturesValue = () => new MockValue();
+    /** Very real fake of the CurrentFeaturesValue class */
+    class MockValue {
+      /**
+       * @constructor
+       * @param {Array} dataFeatures
+       */
+      constructor(dataFeatures) {
+        this.dataFeatures = dataFeatures;
+      }
+
+      /**
+       * Stores a related popup object.
+       * @param {Object} popup
+       */
+      setPopup(popup) {
+        this.popup = popup;
+      }
+    }
+
     cy.stub(HighlightFeatures, 'highlightFeatures', (features, map) => {
       if (features.length === 0) {
         HighlightFeatures.currentFeatures.clear();
       } else {
-        HighlightFeatures.currentFeatures.set(0, {});
+        HighlightFeatures.currentFeatures.set(
+            0, new HighlightFeatures.CurrentFeaturesValue());
       }
     });
 

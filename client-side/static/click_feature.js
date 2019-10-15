@@ -1,6 +1,5 @@
 import {currentFeatures, highlightFeatures} from './highlight_features.js';
-import {geoidTag} from './property_names.js';
-
+import {blockGroupTag, geoidTag} from './property_names.js';
 export {clickFeature, selectHighlightedFeatures};
 
 /**
@@ -43,8 +42,51 @@ function clickFeature(lng, lat, map, featuresAsset, table, tableData) {
       } else {
         table.setSelection([{row: rowNumber, column: null}]);
       }
+      const infoWindow = new google.maps.InfoWindow();
+      infoWindow.setContent(createHtmlForPopup(feature, tableData, rowNumber));
+      const borderPoint = feature.geometry.coordinates[0][0];
+      infoWindow.setPosition(
+          new google.maps.LatLng({lat: borderPoint[1], lng: borderPoint[0]}));
+      infoWindow.open(map);
+      currentFeatures.get(geoid).setPopup(infoWindow);
     }
   });
+}
+
+/**
+ * Puts the information for a blockgroup into a div.
+ * @param {Feature} feature post-evaluate JSON feature
+ * @param {array} tableData 2-d array with inner arrays of form {@code headings}
+ *        in draw_table.js where the first inner array is {@code headings}.
+ * @param {?integer} rowNumber the row in the table with relevent info
+ * @return {HTMLDivElement}
+ */
+function createHtmlForPopup(feature, tableData, rowNumber) {
+  const div = document.createElement('div');
+  const heading = document.createElement('h4');
+  heading.innerText = feature.properties[blockGroupTag];
+  const properties = document.createElement('ul');
+  properties.style.listStyleType = 'none';
+  // We know the score was 0 if the block group isn't in the list
+  if (rowNumber === null) {
+    const property = document.createElement('li');
+    property.innerText = 'SCORE: 0';
+    properties.appendChild(property);
+  } else {
+    const property = document.createElement('li');
+    property.innerText = 'SCORE: ' + tableData[rowNumber][2];
+    properties.appendChild(property);
+  }
+  const headings = tableData[0];
+  for (let col = 3; col < headings.length; col++) {
+    const property = document.createElement('li');
+    property.innerText =
+        headings[col] + ': ' + feature.properties[headings[col]];
+    properties.appendChild(property);
+  }
+  div.appendChild(heading);
+  div.appendChild(properties);
+  return div;
 }
 
 /**

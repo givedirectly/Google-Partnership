@@ -67,7 +67,7 @@ class FeatureCollection {
    * @return {Feature}
    */
   first() {
-    return new Feature({id: 0}, {'GEOID': 0});
+    return new Feature({id: 0, coordinates: [[[0, 0]]]}, {'GEOID': 0});
   }
 
   /**
