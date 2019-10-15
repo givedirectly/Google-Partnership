@@ -20,16 +20,17 @@ describe('Integration test for clicking feature', () => {
     cy.awaitLoad();
 
     zoom(3);
-    cy.get('.map').click(473, 240);
+    cy.get('.map').click(515, 310);
+    cy.get('.map').should('contain', 'SCORE: 50');
     cy.get('.map').should(
-        'contain', 'Block Group 1, Census Tract 2404, Harris County, Texa');
+        'contain', 'Block Group 3, Census Tract 2415, Harris County, Texas');
 
     // Not sure why this first click isn't registering but double click seems to
     // do the job.
-    cy.get('.map').click(475, 250);
-    cy.get('.map').click(474, 250);
+    cy.get('.map').click(515, 310);
+    cy.get('.map').click(515, 310);
     cy.get('.map').should(
-        'not.contain', 'Block Group 1, Census Tract 2404, Harris County, Texa');
+        'not.contain', 'Block Group 3, Census Tract 2415, Harris County, Texas');
   });
 
   it('clicks on a feature on the map, then clicks on another', () => {
@@ -37,17 +38,17 @@ describe('Integration test for clicking feature', () => {
     cy.awaitLoad();
 
     zoom(3);
-    cy.get('.map').click(473, 240);
-    cy.get('.map').should('contain', 'SCORE: 0');
+    cy.get('.map').click(515, 310);
+    cy.get('.map').should('contain', 'SCORE: 50');
     cy.get('.map').should(
-        'contain', 'Block Group 1, Census Tract 2404, Harris County, Texa');
+        'contain', 'Block Group 3, Census Tract 2415, Harris County, Texas');
 
     // deselect
     cy.get('.map').click(783, 270);
     cy.get('.map').click(783, 270);
     // show first one is closed.
     cy.get('.map').should(
-        'not.contain', 'Block Group 1, Census Tract 2404, Harris County, Texa');
+        'contain', 'Block Group 1, Census Tract 2520, Harris County, Texas');
   });
 
   it('click highlights correct feature even after resort', () => {

@@ -40,7 +40,7 @@ function clickFeature(lng, lat, map, featuresAsset, table, tableData) {
       if (rowNumber === null) {
         table.setSelection([]);
       } else {
-        // underlaying data does not include headings row.
+        // underlying data does not include headings row.
         table.setSelection([{row: rowNumber - 1, column: null}]);
       }
       const infoWindow = new google.maps.InfoWindow();
@@ -105,7 +105,7 @@ function selectHighlightedFeatures(table, tableData) {
   const selection = [];
   for (const geoid of currentFeatures.keys()) {
     const row = findRowNumber(geoid, tableData);
-    // underlaying data does not include headings row.
+    // underlying data does not include headings row.
     selection.push({row: row - 1, column: null});
   }
   table.setSelection(selection);
