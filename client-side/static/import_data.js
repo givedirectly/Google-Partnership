@@ -67,8 +67,7 @@ function countDamageAndBuildings(feature, histo) {
   const attrDict = ee.Dictionary.fromLists(
       damageLevels,
       damageFilters.map((type) => blockDamage.filter(type).size()));
-  const damagedBuildings = ee.Number(attrDict.values().reduce(ee.Reducer.sum()))
-                               .subtract(attrDict.get('no-damage'));
+  const damagedBuildings = ee.Number(attrDict.values().reduce(ee.Reducer.sum()));
   const ratioBuildingsDamaged =
       ee.Number(damagedBuildings).divide(totalBuildings);
   const snapPop = ee.Number.parse(feature.get(snapPopTag)).long();
@@ -212,7 +211,7 @@ function run() {
   const data = joinedSnapIncomeSVI.map(
       (feature) => countDamageAndBuildings(feature, histo));
 
-  const assetName = 'harvey-data-ms-as-nod';
+  const assetName = 'harvey-data-ms-as-nod-correct';
   // TODO(#61): parameterize ee user account to write assets to or make GD
   // account.
   // TODO: delete existing asset with same name if it exists.
