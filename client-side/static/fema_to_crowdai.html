@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+<!-- Triggers the import/processing of data for other scripts' use. -->
+<title>Fema to CrowdAI conversion</title>
+<!-- Load the Roboto font. -->
+<link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet" type="text/css">
+
+    <!-- Load jQuery, a 3rd-party library. -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+
+    <!-- Load debug Earth Engine JavaScript client library. -->
+    <!-- TODO(janakr): Switch back to compiled version in production. -->
+    <!-- TODO(janakr): Verify there's no downside to using relative paths here and below. -->
+    <script src="lib/ee_api_js_debug.js"></script>
+
+    <!-- Load our script. -->
+    <script type="module" src="./fema_to_crowdai.js"></script>
+
+    <!-- Load our styles. -->
+    <link rel="stylesheet" href="./style.css">
+    </head>
+    <body>
+    <h1>Fema to CrowdAI conversion</h1>
+
+<div class="g-sign-in hidden">
+    <span class="label">Sign in with:</span>
+<div class="button">
+    <span class="icon"></span>
+    <span class="button-text">Google</span>
+    </div>
+    </div>
+
+    <div class="upload-status"></div>
+    </body>
+    </html>

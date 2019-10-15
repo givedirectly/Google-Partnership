@@ -18,7 +18,7 @@ function femaToCrowdAi(feature) {
       ee.Algorithms.IsEqual(damageLevel, ee.String('UNK')), 'no-damage',
       description);
   description = ee.Algorithms.If(
-      ee.Algorithms.IsEqual(damageLevel, ee.String('AFF')), 'no-damage',
+      ee.Algorithms.IsEqual(damageLevel, ee.String('AFF')), 'minor-damage',
       description);
   description = ee.Algorithms.If(
       ee.Algorithms.IsEqual(damageLevel, ee.String('MIN')), 'minor-damage',
@@ -41,8 +41,8 @@ function run() {
   ee.initialize();
 
   const femaDamageData = ee.FeatureCollection(
-      'users/juliexxia/FEMA_Damage_Assessments_Harvey_20170829');
-  const assetName = 'harvey-damage-crowdai-format-aff-as-nod';
+      'users/janak/FEMA_Damage_Assessments_Harvey_20170829-deduplicated');
+  const assetName = 'harvey-damage-crowdai-format-deduplicated';
   const convertedDamageData = femaDamageData.map(femaToCrowdAi);
   const task = ee.batch.Export.table.toAsset(
       convertedDamageData, assetName, 'users/juliexxia/' + assetName);
@@ -58,3 +58,37 @@ function run() {
     }
   });
 }
+
+/**
+ * Runs immediately (before document may have fully loaded). Adds a hook so that
+ * when the document is loaded, we do the work.
+ */
+function setup() {
+  // The client ID from the Google Developers Console.
+  // TODO(#13): This is from janakr's console. Should use one for GiveDirectly.
+  const CLIENT_ID = '634162034024-oodhl7ngkg63hd9ha9ho9b3okcb0bp8s' +
+      '.apps.googleusercontent.com';
+
+  $(document).ready(function() {
+    // Shows a button prompting the user to log in.
+    const onImmediateFailed = function() {
+      $('.g-sign-in').removeClass('hidden');
+      $('.output').text('(Log in to see the result.)');
+      $('.g-sign-in .button').click(function() {
+        ee.data.authenticateViaPopup(function() {
+          // If the login succeeds, hide the login button and run the analysis.
+          $('.g-sign-in').addClass('hidden');
+          run();
+        });
+      });
+    };
+
+    // Attempt to authenticate using existing credentials.
+    // TODO: deprecated, use ee.data.authenticateViaOauth()
+    ee.data.authenticate(CLIENT_ID, run, 'error', null, onImmediateFailed);
+
+    // run();
+  });
+}
+
+setup();
