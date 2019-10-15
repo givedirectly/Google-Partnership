@@ -55,8 +55,7 @@ function highlightFeatures(features, map) {
   for (const key of keys) {
     if (!newFeatures.delete(key)) {
       const currentFeatureValue = currentFeatures.get(key);
-      currentFeatureValue.dataFeatures.forEach(
-          (elt) => map.data.remove(elt));
+      currentFeatureValue.dataFeatures.forEach((elt) => map.data.remove(elt));
 
       if (currentFeatureValue.popup) {
         currentFeatureValue.popup.close();
