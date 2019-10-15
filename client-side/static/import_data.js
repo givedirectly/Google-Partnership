@@ -209,7 +209,7 @@ function run() {
 
   const data = joinedSnapIncomeSVI.map(
       (feature) => countDamageAndBuildings(feature, histo));
-  
+
   const assetName = 'harvey-data-ms-as-nod';
   // TODO(#61): parameterize ee user account to write assets to or make GD
   // account.
