@@ -361,7 +361,7 @@ function listGCSFilesRecursive(collectionName, nextPageToken, accumulatedList) {
 }
 
 /**
- * Delets a file from GCS.
+ * Deletes a file from GCS.
  * @param {string} collectionName
  * @param {string} name
  * @param {string} originalName Name before munging, to display to user
