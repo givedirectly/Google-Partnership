@@ -65,15 +65,13 @@ gapi.load('client:auth2', getAccessToken);
 
 /** Gets access token from gapi auth object after initialization. */
 function getAccessToken() {
-  gapi.client
-      .init(gapiSettings)
-      .then(() => {
-        // Already logged in because EarthEngine did it for us.
-        const auth = gapi.auth2.getAuthInstance();
-        const user = auth.currentUser.get();
-        setUpAllHeaders(user.getAuthResponse().access_token);
-        onStartupTaskCompleted();
-      });
+  gapi.client.init(gapiSettings).then(() => {
+    // Already logged in because EarthEngine did it for us.
+    const auth = gapi.auth2.getAuthInstance();
+    const user = auth.currentUser.get();
+    setUpAllHeaders(user.getAuthResponse().access_token);
+    onStartupTaskCompleted();
+  });
 }
 
 /** Enables the form once all necessary libraries are loaded. */
@@ -369,8 +367,8 @@ function addFileToDelete(file) {
       foundTopFiles === processedFiles &&
       alreadyPresentEverywhere === deletedFromGCS) {
     document.getElementById('command_div').innerHTML =
-        '# Command to delete processed files from your machine:<br/>'
-        + 'rm ' + filesToDelete.join(' ');
+        '# Command to delete processed files from your machine:<br/>' +
+        'rm ' + filesToDelete.join(' ');
     filesToDelete.length = 0;
   }
 }
@@ -399,8 +397,7 @@ function listGCSFilesRecursive(collectionName, nextPageToken, accumulatedList) {
              BASE_LISTING_URL +
                  '?prefix=' + encodeURIComponent(collectionName) +
                  (nextPageToken ? '&pageToken=' + nextPageToken : ''),
-      listRequest
-)
+             listRequest)
       .then((r) => r.json())
       .then((resp) => {
         if (!resp.items) {
@@ -432,16 +429,16 @@ function listGCSFilesRecursive(collectionName, nextPageToken, accumulatedList) {
  */
 function deleteGCSFile(collectionName, name, originalName) {
   return fetch(
-             BASE_LISTING_URL + '/' + encodeURIComponent(collectionName + '/' +
-                 name),
-      deleteRequest
-             )
+             BASE_LISTING_URL + '/' +
+                 encodeURIComponent(collectionName + '/' + name),
+             deleteRequest)
       .then((resp) => {
         if (resp.ok) {
           deletedFromGCS++;
           addFileToDelete(originalName);
         } else {
-          resultDiv.innerHTML += '<br>Error deleting ' + name + ' from GCS: ' + resp.status;
+          resultDiv.innerHTML +=
+              '<br>Error deleting ' + name + ' from GCS: ' + resp.status;
         }
       });
 }
