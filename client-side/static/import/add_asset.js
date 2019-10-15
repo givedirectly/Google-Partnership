@@ -181,7 +181,7 @@ const FileRemoteStatus = {
   'NEW': 0,
   'GCS_ONLY': 1,
   'EE_ONLY': 2,
-  'PRESENT_EVERYWHERE': 3
+  'PRESENT_EVERYWHERE': 3,
 };
 
 /**
@@ -368,7 +368,9 @@ function addFileToDelete(file) {
     document.getElementById('command_div').innerText =
         '### Error: found a file to delete (' + file +
         ') after all files should have been processed ' + currentText;
-  } else if (
+    return;
+  }
+  if (
       foundTopFiles === processedFiles &&
       alreadyPresentEverywhere === deletedFromGCS) {
     document.getElementById('command_div').innerHTML =
