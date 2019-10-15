@@ -69,7 +69,7 @@ function createAndDisplayJoinedData(
       povertyWeight);
   initializeScoreLayer(map, processedData);
   drawTable(
-      processedData, (features) => highlightFeatures(features, map),
+      processedData, (features) => highlightFeatures(features, map, true),
       (table, tableData) => {
         loadingElementFinished(tableContainerId);
         // every time we get a new table and data, reselect elements in the
