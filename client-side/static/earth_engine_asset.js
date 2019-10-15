@@ -164,7 +164,7 @@ const gdVisits = new EarthEngineAsset(
 // Images/ImageCollections, which will always be displayed below
 // FeatureCollections.
 const assets = {
-  'users/juliexxia/harvey-damage-crowdai-format': harveyDamageCrowdAIFormat,
+  'users/juliexxia/harvey-damage-crowdai-format-deduplicated': harveyDamageCrowdAIFormat,
   'users/ruthtalbot/harvey-SVI': sviData,
   'users/ruthtalbot/harvey-pathofstorm-radii': pathOfStormRadii,
   'users/ruthtalbot/fema-visits-polygon': femaVisits,
