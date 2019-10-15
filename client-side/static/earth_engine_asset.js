@@ -169,6 +169,6 @@ const assets = {
   'users/ruthtalbot/harvey-pathofstorm-radii': pathOfStormRadii,
   'users/ruthtalbot/fema-visits-polygon': femaVisits,
   'CGIAR/SRTM90_V4': elevationData,
-  'users/ruthtalbot/harvey-noaa': noaaData,
+  'users/janak/processed-noaa-harvey-js-max-pixels-bounded-scale-1': noaaData,
   'users/ruthtalbot/gd-polygons-harvey': gdVisits,
 };
