@@ -76,7 +76,7 @@ function highlightFeatures(features, map, zoom = false) {
             item, {fillColor: 'red', strokeColor: 'red'}));
   }
 
-  //TODO(juliexxia): write tests for this functionality
+  // TODO(juliexxia): write tests for this functionality
   if (zoom && currentFeatures.size > 0) {
     const bounds = new google.maps.LatLngBounds();
     for (const [geoid, currentFeatureValue] of currentFeatures.entries()) {
@@ -87,11 +87,15 @@ function highlightFeatures(features, map, zoom = false) {
     }
     // Make sure we're sufficiently zoomed out for reasonable map context.
     const extendPoint1 = new google.maps.LatLng(
-        Math.max(bounds.getNorthEast().lat(), bounds.getSouthWest().lat() + 0.1),
-        Math.max(bounds.getNorthEast().lng(), bounds.getSouthWest().lng() + 0.1));
+        Math.max(
+            bounds.getNorthEast().lat(), bounds.getSouthWest().lat() + 0.1),
+        Math.max(
+            bounds.getNorthEast().lng(), bounds.getSouthWest().lng() + 0.1));
     const extendPoint2 = new google.maps.LatLng(
-        Math.min(bounds.getSouthWest().lat(), bounds.getNorthEast().lat() - 0.1),
-        Math.min(bounds.getSouthWest().lng(), bounds.getNorthEast().lng() - 0.1));
+        Math.min(
+            bounds.getSouthWest().lat(), bounds.getNorthEast().lat() - 0.1),
+        Math.min(
+            bounds.getSouthWest().lng(), bounds.getNorthEast().lng() - 0.1));
     bounds.extend(extendPoint1);
     bounds.extend(extendPoint2);
     map.fitBounds(bounds);
