@@ -154,8 +154,8 @@ const elevationData = new EarthEngineAsset(
       const aspect = ee.Terrain.aspect(layer);
       return aspect.divide(180).multiply(Math.PI).sin();
     }, {min: -1, max: 1, opacity: .3});
-const noaaData = new EarthEngineAsset(
-    EarthEngineAsset.Type.IMAGECOLLECTION, 'NOAA Imagery', false);
+const noaaData =
+    new EarthEngineAsset(EarthEngineAsset.Type.IMAGE, 'NOAA Imagery', false);
 const gdVisits = new EarthEngineAsset(
     'FeatureCollection', 'GD Assistance', false, colorGDAssistanceLayer);
 
@@ -169,6 +169,6 @@ const assets = {
   'users/ruthtalbot/harvey-pathofstorm-radii': pathOfStormRadii,
   'users/ruthtalbot/fema-visits-polygon': femaVisits,
   'CGIAR/SRTM90_V4': elevationData,
-  'users/ruthtalbot/harvey-noaa': noaaData,
+  'users/janak/processed-noaa-harvey-js-max-pixels-bounded-scale-1': noaaData,
   'users/ruthtalbot/gd-polygons-harvey': gdVisits,
 };
