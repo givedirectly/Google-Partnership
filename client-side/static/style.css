@@ -86,6 +86,7 @@ h1 {
   position: relative;
   display: table;
   min-height: 200px;
+  width: 100%;
 }
 
 /* Form css */
