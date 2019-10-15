@@ -87,7 +87,7 @@ describe('Integration test for clicking feature', () => {
             'have.text',
             'Block Group 1, Census Tract 2525, Harris County, Texas32574');
     cy.get('#sidebar-toggle-thresholds').click();
-    cy.get('[id="damage threshold"]').type('0.8');
+    cy.get('[id="damage threshold"]').clear().type('0.8');
     cy.get('[id="update"]').click();
     cy.get('.google-visualization-table-tr-sel')
         .find('[class="google-visualization-table-td"]')
@@ -104,6 +104,6 @@ describe('Integration test for clicking feature', () => {
 function zoom(numTimes) {
   for (let i = 0; i < numTimes; i++) {
     cy.get('[title="Zoom in"]').click();
-    cy.wait(200);
+    cy.wait(500);
   }
 }

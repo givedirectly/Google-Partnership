@@ -35,6 +35,8 @@ function clickFeature(lng, lat, map, featuresAsset, table, tableData) {
     } else {
       highlightFeatures([feature], map);
       const rowNumber = findRowNumber(geoid, tableData);
+      console.log(rowNumber);
+      console.log(tableData[rowNumber]);
       // TODO: flip to page of the list the highlighted area is on if not
       // current page.
       if (rowNumber === null) {
@@ -105,7 +107,8 @@ function selectHighlightedFeatures(table, tableData) {
   const selection = [];
   for (const geoid of currentFeatures.keys()) {
     const row = findRowNumber(geoid, tableData);
-    selection.push({row: row, column: null});
+    // underlaying data does not include headings row.
+    selection.push({row: row - 1, column: null});
   }
   table.setSelection(selection);
 }
