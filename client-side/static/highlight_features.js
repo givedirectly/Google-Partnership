@@ -1,6 +1,6 @@
 import {geoidTag} from './property_names.js';
 
-export {currentFeatures, highlightFeatures};
+export {currentFeatures, highlightFeatures, CurrentFeatureValue};
 
 // TODO(janakr): should highlighted features be cleared when map is redrawn?
 // Probably, but user might also want to keep track of highlighted districts
@@ -56,7 +56,6 @@ function highlightFeatures(features, map) {
     if (!newFeatures.delete(key)) {
       const currentFeatureValue = currentFeatures.get(key);
       currentFeatureValue.dataFeatures.forEach((elt) => map.data.remove(elt));
-
       if (currentFeatureValue.popup) {
         currentFeatureValue.popup.close();
       }

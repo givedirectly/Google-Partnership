@@ -18,6 +18,7 @@ import './commands';
 import './mock_ee';
 import './mock_firebase';
 import './mock_deck';
+import './mock_maps';
 
 // Alternatively you can use CommonJS syntax:
 // require('./commands')
