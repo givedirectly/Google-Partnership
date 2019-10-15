@@ -12,11 +12,21 @@ let tableApi;
 describe('Unit test for click_feature.js', () => {
   beforeEach(() => {
     HighlightFeatures.CurrentFeaturesValue = (data) =>
-        new CurrentFeaturesValue();
+      new CurrentFeaturesValue();
+    /** Very real fake of the CurrentFeaturesValue class */
     class CurrentFeaturesValue {
+      /**
+       * @constructor
+       * @param {Array} dataFeatures
+       */
       constructor(dataFeatures) {
         this.dataFeatures = dataFeatures;
       }
+
+      /**
+       * Stores a related popup object.
+       * @param {Object} popup
+       */
       setPopup(popup) {
         this.popup = popup;
       }
@@ -26,7 +36,6 @@ describe('Unit test for click_feature.js', () => {
       if (features.length === 0) {
         HighlightFeatures.currentFeatures.clear();
       } else {
-        const blah = new CurrentFeaturesValue();
         HighlightFeatures.currentFeatures.set(
             0, new HighlightFeatures.CurrentFeaturesValue());
       }
