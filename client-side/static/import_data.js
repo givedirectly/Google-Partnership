@@ -163,8 +163,9 @@ function addTractInfo(feature) {
 
 function attachBlockGroups(feature) {
   const blockGroups = ee.FeatureCollection('users/juliexxia/harvey-data-aff-as-nod');
-  const blockGroup = blockGroups.filterBounds(feature.geometry()).first();
-  return feature.set(geoidTag, blockGroup.get(geoidTag));
+  const filtered = blockGroups.filterBounds(feature.geometry());
+  const geoid = ee.Algorithms.If(filtered.size().gt(ee.Number(0)), filtered.first().get(geoidTag), ee.Number(0));
+  return feature.set(geoidTag, geoid);
 }
 
 /** Performs operation of processing inputs and creating output asset. */
