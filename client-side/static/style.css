@@ -3,6 +3,7 @@ html, body {
   font-family: 'Roboto', sans-serif;
   margin: 0;
   width: 100%;
+  height: 100%;
   min-height: 100%;
 }
 
@@ -19,8 +20,6 @@ html, body {
 
   --background-color-transition: background-color 0.3s ease-in-out;
   --opacity-transition: opacity 0.5s ease-in-out;
-
-  --width-transition: width 0.3s ease-in-out;
 
   --sidebar-min-width: 64px;
 }
@@ -71,8 +70,8 @@ h1 {
 
 .map-container {
   position: relative;
-  width: calc(100vw - var(--sidebar-min-width) - 2 * var(--main-content-padding));
-  height: 520px;
+  width: 100%;
+  height: 75%;
   margin-bottom: 10px;
 }
 
@@ -84,10 +83,9 @@ h1 {
 
 .table-container {
   position: relative;
-  margin: 0 auto;
   display: table;
   min-height: 200px;
-  width: 745px;
+  width: 100%;
 }
 
 /* Form css */
@@ -143,25 +141,28 @@ input[type='range'] {
   vertical-align: middle;
 }
 
-.form-button {
+input[type='button'], button {
   background-color: var(--green-1);
   border: none;
   border-radius: 4px;
   color: #fff;
   font-family: Helvetica;
-  font-size: 16px;
-  line-height: 24px;
-  margin: 5px 15px 5px 0;
-  padding: 2px 8px;
   text-align: center;
   text-transform: capitalize;
   -webkit-transition: var(--background-color-transition);
   transition: var(--background-color-transition);
 }
 
-.form-button:hover {
+input[type='button']:hover, button:hover {
   background-color: var(--green-3);
   cursor: pointer;
+}
+
+.form-button {
+  font-size: 16px;
+  line-height: 24px;
+  margin: 5px 15px 5px 0;
+  padding: 2px 8px;
 }
 
 #toggles span {
@@ -287,30 +288,26 @@ input[type=checkbox]:checked {
 .main-content {
   box-sizing: border-box;
   padding: var(--main-content-padding);
-  margin-left: var(--sidebar-min-width);
   width: 75%;
   flex-grow: 1;
-  overflow-x: scroll;
+  overflow-x: auto;
 }
 
 /** Sidebar styling */
 
 .sidebar {
-  position: fixed;
   box-shadow: 3px 0 10px -2px #BEC2C1;
   left: 0;
   max-width: 400px;
-  height: 100%;
   float: left;
   top: 0;
   width: var(--sidebar-min-width);
-  overflow-x: hidden;
+  height: 100%;
   z-index: 20;
-  -webkit-transition: var(--width-transition);
-  transition: var(--width-transition);
 }
 
 .sidebar ul {
+  position: fixed;
   width: var(--sidebar-min-width);
   height: 100%;
   background-color: var(--green-6);
@@ -335,16 +332,10 @@ input[type=checkbox]:checked {
   cursor: pointer;
 }
 
-.sidebar-content-container {
-  margin-left: var(--sidebar-min-width);
-  background-color: #ffffff;
-  width: 100%;
-  height: 100%;
-}
-
 .sidebar-content {
   display: none;
-  width: 100%;
+  margin-left: var(--sidebar-min-width);
+  width: calc(100% - var(--sidebar-min-width));
   height: 100%;
   float: right;
   box-sizing: border-box;
@@ -370,7 +361,7 @@ input[type=checkbox]:checked {
   border-radius: 5px;
   font-family: sans-serif;
   overflow-y: auto;
-  max-height: 60px;
+  max-height: 200px;
   box-shadow: 0px 2px 10px 1px rgba(0,0,0,0.5);
 }
 /* The parent of the bubble. A zero-height div at the top of the tip. */
@@ -404,4 +395,20 @@ input[type=checkbox]:checked {
   position: absolute;
   /* The max width of the info window. */
   width: 200px;
+}
+
+.popup-content {
+  margin: 0 auto;
+  text-align: center;
+}
+
+.popup-button {
+  font-size: 12px;
+  line-height: 12px;
+  margin: 4px;
+  padding: 6px;
+}
+
+.popup-damage {
+  margin: 6px auto;
 }
