@@ -61,7 +61,9 @@ function countDamageAndBuildings(feature, histo) {
   const blockDamage = ee.FeatureCollection(ee.Join.simple().apply(
       damage, thisAsCollection,
       ee.Filter.intersects({leftField: '.geo', rightField: '.geo'})));
-  const totalBuildings = histo.get(feature.get(geoidTag));
+  const totalBuildings = ee.Algorithms.If(
+      histo.contains(feature.get(geoidTag)), histo.get(feature.get(geoidTag)),
+      ee.Number(0));
   const attrDict = ee.Dictionary.fromLists(
       damageLevels,
       damageFilters.map((type) => blockDamage.filter(type).size()));
@@ -203,14 +205,14 @@ function run() {
               ee.Filter.equals({leftField: tractTag, rightField: geoidTag}))
           .map(combineWithSvi);
 
-  const buildings = ee.FeatureCollection(resources.buildingsAsset)
+  const buildings = ee.FeatureCollection(resources.buildingsAsset).limit(50);
   const withBlocKGroup = buildings.map(attachBlockGroups);
   const histo = ee.Dictionary(withBlocKGroup.aggregate_histogram(geoidTag));
 
   const data = joinedSnapIncomeSVI.map(
       (feature) => countDamageAndBuildings(feature, histo));
-  
-  const assetName = 'harvey-data-ms-as-nod';
+
+  const assetName = 'harvey-data-ms-as-nod-50';
   // TODO(#61): parameterize ee user account to write assets to or make GD
   // account.
   // TODO: delete existing asset with same name if it exists.
