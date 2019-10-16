@@ -56,18 +56,14 @@ function countDamageAndBuildings(feature, histo) {
   const damageLevels = ee.List(damageLevelsList);
   const damageFilters =
       damageLevels.map((type) => ee.Filter.eq(crowdAiDamageKey, type));
-  const thisAsCollection = ee.FeatureCollection(feature);
-  const damage = ee.FeatureCollection(resources.damageAsset);
-  const blockDamage = ee.FeatureCollection(ee.Join.simple().apply(
-      damage, thisAsCollection,
-      ee.Filter.intersects({leftField: '.geo', rightField: '.geo'})));
-  const totalBuildings = ee.Algorithms.If(
-      histo.contains(feature.get(geoidTag)), histo.get(feature.get(geoidTag)),
-      ee.Number(0));
+  const blockDamage = ee.FeatureCollection(resources.damageAsset)
+                          .filterBounds(feature.geometry());
+  const totalBuildings = histo.get(feature.get(geoidTag));
   const attrDict = ee.Dictionary.fromLists(
       damageLevels,
       damageFilters.map((type) => blockDamage.filter(type).size()));
-  const damagedBuildings = ee.Number(attrDict.values().reduce(ee.Reducer.sum()));
+  const damagedBuildings =
+      ee.Number(attrDict.values().reduce(ee.Reducer.sum()));
   const ratioBuildingsDamaged =
       ee.Number(damagedBuildings).divide(totalBuildings);
   const snapPop = ee.Number.parse(feature.get(snapPopTag)).long();
@@ -162,9 +158,14 @@ function addTractInfo(feature) {
 }
 
 function attachBlockGroups(feature) {
-  const blockGroups = ee.FeatureCollection('users/juliexxia/harvey-data-aff-as-nod');
+  const blockGroups =
+      ee.FeatureCollection('users/juliexxia/harvey-data-aff-as-nod');
   const filtered = blockGroups.filterBounds(feature.geometry());
-  const geoid = ee.Algorithms.If(filtered.size().gt(ee.Number(0)), filtered.first().get(geoidTag), ee.Number(0));
+  // since we're only using block groups from damaged areas, we have buildings
+  // that won't intersect any block groups.
+  const geoid = ee.Algorithms.If(
+      filtered.size().gt(ee.Number(0)), filtered.first().get(geoidTag),
+      ee.Number(0));
   return feature.set(geoidTag, geoid);
 }
 
@@ -212,7 +213,7 @@ function run() {
   const data = joinedSnapIncomeSVI.map(
       (feature) => countDamageAndBuildings(feature, histo));
 
-  const assetName = 'harvey-data-ms-as-nod-correct';
+  const assetName = 'harvey-data-ms-as-nod';
   // TODO(#61): parameterize ee user account to write assets to or make GD
   // account.
   // TODO: delete existing asset with same name if it exists.
