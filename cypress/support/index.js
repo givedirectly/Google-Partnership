@@ -33,5 +33,6 @@ beforeEach(() => {
   cy.setCookie('IN_CYPRESS_TEST', testCookieValue);
 });
 
-before(() => cy.task('initializeTestFirebase').then((token) => {
-  global.firestoreCustomToken = token}));
+before(
+    () => cy.task('initializeTestFirebase')
+              .then((token) => {global.firestoreCustomToken = token}));

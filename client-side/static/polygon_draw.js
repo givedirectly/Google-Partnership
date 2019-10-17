@@ -206,7 +206,9 @@ function setUpPolygonDrawing(map, firebasePromise) {
  */
 function processUserRegions(map, firebasePromise) {
   addLoadingElement(mapContainerId);
-  firebasePromise.then(() => userShapes = firebase.firestore().collection(collectionName)).then(() => userShapes.get())
+  firebasePromise
+      .then(() => userShapes = firebase.firestore().collection(collectionName))
+      .then(() => userShapes.get())
       .then(
           (querySnapshot) => drawRegionsFromFirestoreQuery(querySnapshot, map))
       .catch(createError('getting user-drawn regions'));

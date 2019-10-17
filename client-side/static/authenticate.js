@@ -1,23 +1,24 @@
-export {Authenticator, authenticateToFirebase, initializeFirebase};
+export {authenticateToFirebase, Authenticator, initializeFirebase};
 
-// The client ID from https://console.cloud.google.com/apis/credentials?project=mapping-crisis
-const CLIENT_ID = '38420505624-boghq4foqi5anc9kc5c5tsq82ar9k4n0.apps.googleusercontent.com';
+// The client ID from
+// https://console.cloud.google.com/apis/credentials?project=mapping-crisis
+const CLIENT_ID =
+    '38420505624-boghq4foqi5anc9kc5c5tsq82ar9k4n0.apps.googleusercontent.com';
 
 const gapiTemplate = {
   apiKey: 'AIzaSyAbNHe9B0Wo4MV8rm3qEdy8QzFeFWZERHs',
   clientId: CLIENT_ID,
 };
 
-const firebaseConfig =
-    {
-      apiKey: "AIzaSyBAQkh-kRrYitkPafxVLoZx3E5aYM-auXM",
-      authDomain: "mapping-crisis.firebaseapp.com",
-      databaseURL: "https://mapping-crisis.firebaseio.com",
-      projectId: "mapping-crisis",
-      storageBucket: "mapping-crisis.appspot.com",
-      messagingSenderId: "38420505624",
-      appId: "1:38420505624:web:79425020e2f86c82a78f6d"
-    };
+const firebaseConfig = {
+  apiKey: 'AIzaSyBAQkh-kRrYitkPafxVLoZx3E5aYM-auXM',
+  authDomain: 'mapping-crisis.firebaseapp.com',
+  databaseURL: 'https://mapping-crisis.firebaseio.com',
+  projectId: 'mapping-crisis',
+  storageBucket: 'mapping-crisis.appspot.com',
+  messagingSenderId: '38420505624',
+  appId: '1:38420505624:web:79425020e2f86c82a78f6d'
+};
 
 /**
  * Performs EarthEngine authentication and returns an auth object usable for
@@ -52,7 +53,7 @@ class Authenticator {
     gapi.load(
         'client:auth2',
         () => gapi.client.init(gapiSettings)
-            .then(() => this.onLoginTaskCompleted()));
+                  .then(() => this.onLoginTaskCompleted()));
   }
 
   /**
@@ -64,8 +65,7 @@ class Authenticator {
    */
   eeAuthenticate(failureCallback) {
     ee.data.authenticateViaOauth(
-        CLIENT_ID, () => this.initializeEE(),
-        failureCallback,
+        CLIENT_ID, () => this.initializeEE(), failureCallback,
         this.additionalScopes);
   }
 
@@ -76,9 +76,11 @@ class Authenticator {
       // TODO(janakr): If authentication fails here, user has to reload page to
       // try again. Not clear how that can happen, but maybe should be more
       // graceful?
-      this.eeAuthenticate((err) => this.errorCallback('Error authenticating EarthEngine: ' + err));
+      this.eeAuthenticate(
+          (err) =>
+              this.errorCallback('Error authenticating EarthEngine: ' + err));
       $('.g-sign-in').addClass('hidden');
-     });
+    });
   }
 
   /** Initializes EarthEngine. */
@@ -118,13 +120,15 @@ function authenticateToFirebase(googleAuth) {
   return new Promise((resolveFunction) => {
     const unsubscribe = firebase.auth().onAuthStateChanged((firebaseUser) => {
       unsubscribe();
-      if (firebaseUser && firebaseUser.providerData && firebaseUser.providerData[0].uid) {
+      if (firebaseUser && firebaseUser.providerData &&
+          firebaseUser.providerData[0].uid) {
         console.warn('Not logging in again');
         resolveFunction(null);
         return;
       }
       // Build Firebase credential with the Google ID token.
-      const credential = firebase.auth.GoogleAuthProvider.credential(googleAuth.id_token);
+      const credential =
+          firebase.auth.GoogleAuthProvider.credential(googleAuth.id_token);
       // Sign in with credential from the Google user.
       const signinPromise = firebase.auth().signInWithCredential(credential);
       signinPromise.then(resolveFunction);
