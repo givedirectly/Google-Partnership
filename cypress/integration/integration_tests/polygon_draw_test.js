@@ -46,15 +46,16 @@ describe('Integration tests for drawing polygons', () => {
     drawPolygonAndClickOnIt();
     cy.awaitLoad(['writeWaiter']);
     pressPolygonButton('edit');
-    // assert damage text is grey while editing
-    cy.get('.popup-damage').contains('damage count: 13862');
-    cy.get('.popup-damage')
-        .should('have.css', 'color')
-        .and('eq', 'rgb(128, 128, 128)');
     cy.get('[class="notes"]').type(notes);
     pressPolygonButton('save');
     cy.get('.map').contains(notes);
-    cy.get('.popup-damage').contains('damage count: 13862');
+  });
+
+  it('Draws a polygon, calculates damage', () => {
+    cy.visit(host);
+    zoom(8);
+    drawPolygonAndClickOnIt(-250);
+    cy.get('popup-damage').contains('damage count: 23');
     cy.get('.popup-damage')
         .should('have.css', 'color')
         .and('eq', 'rgb(0, 0, 0)');
@@ -69,6 +70,7 @@ describe('Integration tests for drawing polygons', () => {
     cy.visit(host);
     drawPolygonAndClickOnIt();
     cy.get('.popup-damage').contains('damage count: calculating');
+    // assert damage text is grey while editing
     cy.get('.popup-damage')
         .should('have.css', 'color')
         .and('eq', 'rgb(128, 128, 128)');
