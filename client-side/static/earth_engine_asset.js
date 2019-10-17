@@ -90,8 +90,8 @@ function colorPathofStormRadiiLayer(feature) {
 function colorFemaAssistanceLayer(feature) {
   // Color 'public assistance' as yellow, and 'individual and public assistance'
   // as red.
-  return (feature.properties['Designatio'] == 'PA') ? [255, 255, 51, 40] :
-                                                      [220, 20, 60, 40];
+  const publicAssistance = feature.properties['Designatio'] == 'PA';
+  return publicAssistance ? [255, 255, 51, 40] : [220, 20, 60, 40];
 }
 
 /**
@@ -121,22 +121,36 @@ function colorDamageLayer(feature) {
 
 // TODO: Store these and allow users to change/set these fields on import page.
 const harveyDamageCrowdAIFormat = new EarthEngineAsset(
-    'FeatureCollection', 'Harvey Damage CrowdAI', true, colorDamageLayer);
-const sviData =
-    new EarthEngineAsset('FeatureCollection', 'SVI Data', false, colorSVILayer);
+    EarthEngineAsset.Type.FEATURECOLLECTION, 'Harvey Damge CrowdAI', true,
+    colorDamageLayer);
+const sviData = new EarthEngineAsset(
+    EarthEngineAsset.Type.FEATURECOLLECTION, 'SVI Data', false, colorSVILayer);
 const pathOfStormRadii = new EarthEngineAsset(
-    'FeatureCollection', 'Path of Storm Radii', false,
+    EarthEngineAsset.Type.FEATURECOLLECTION, 'Path of Storm Radii', false,
     colorPathofStormRadiiLayer);
 const femaVisits = new EarthEngineAsset(
-    'FeatureCollection', 'FEMA Assistance', false, colorFemaAssistanceLayer);
+    EarthEngineAsset.Type.FEATURECOLLECTION, 'FEMA Assistance', false,
+    colorFemaAssistanceLayer);
+const elevationData = new EarthEngineAsset(
+    EarthEngineAsset.Type.IMAGE, 'Elevation Data', false, (layer) => {
+      const aspect = ee.Terrain.aspect(layer);
+      return aspect.divide(180).multiply(Math.PI).sin();
+    }, {min: -1, max: 1, opacity: .3});
+const noaaData =
+    new EarthEngineAsset(EarthEngineAsset.Type.IMAGE, 'NOAA Imagery', false);
 const gdVisits = new EarthEngineAsset(
     'FeatureCollection', 'GD Assistance', false, colorGDAssistanceLayer);
 
-// List of known assets
+// List of known assets. Display priority is determined by order in this list,
+// with higher index assets being displayed above lower index assets, except for
+// Images/ImageCollections, which will always be displayed below
+// FeatureCollections.
 const assets = {
   'users/juliexxia/harvey-damage-crowdai-format': harveyDamageCrowdAIFormat,
   'users/ruthtalbot/harvey-SVI': sviData,
   'users/ruthtalbot/harvey-pathofstorm-radii': pathOfStormRadii,
   'users/ruthtalbot/fema-visits-polygon': femaVisits,
+  'CGIAR/SRTM90_V4': elevationData,
+  'users/janak/processed-noaa-harvey-js-max-pixels-bounded-scale-1': noaaData,
   'users/ruthtalbot/gd-polygons-harvey': gdVisits,
 };
