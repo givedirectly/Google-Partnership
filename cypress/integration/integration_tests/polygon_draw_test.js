@@ -35,13 +35,10 @@ describe('Integration tests for drawing polygons', () => {
     }));
   };
 
-  before(() => cy.task('initializeTestFirebase').then((token) => {
-    cy.setCookie('TEST_FIRESTORE_TOKEN', token);
-    return cy.wrap(firebaseLibrary.auth().signInWithCustomToken(token));
-  }));
-  after(() => cy.task('tearDownTestFirebase').then((val) => cy.log(val)));
+  before(() => cy.wrap(firebaseLibrary.auth().signInWithCustomToken(firestoreCustomToken)));
+  beforeEach(() =>   cy.setCookie('TEST_FIRESTORE_TOKEN', firestoreCustomToken));
   beforeEach(deleteAllRegionsDrawnByTest);
-  //
+
   afterEach(deleteAllRegionsDrawnByTest);
 
   it('Draws a polygon and edits its notes', () => {
@@ -96,7 +93,7 @@ describe('Integration tests for drawing polygons', () => {
     assertExactlyPopUps(0, notes);
   });
 
-  it.only('Draws a polygon and almost deletes it, then deletes', () => {
+  it('Draws a polygon and almost deletes it, then deletes', () => {
     // Reject confirmation when first happens, then accept it later.
     let confirmValue = false;
     cy.on('window:confirm', () => confirmValue);

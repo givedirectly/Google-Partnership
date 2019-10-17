@@ -32,3 +32,6 @@ beforeEach(() => {
   global.testCookieValue = Math.random() + '/suffix';
   cy.setCookie('IN_CYPRESS_TEST', testCookieValue);
 });
+
+before(() => cy.task('initializeTestFirebase').then((token) => {
+  global.firestoreCustomToken = token}));

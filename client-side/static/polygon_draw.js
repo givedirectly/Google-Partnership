@@ -206,11 +206,10 @@ function setUpPolygonDrawing(map, firebasePromise) {
  */
 function processUserRegions(map, firebasePromise) {
   addLoadingElement(mapContainerId);
-  firebasePromise.then(() => userShapes.get())
+  firebasePromise.then(() => userShapes = firebase.firestore().collection(collectionName)).then(() => userShapes.get())
       .then(
           (querySnapshot) => drawRegionsFromFirestoreQuery(querySnapshot, map))
       .catch(createError('getting user-drawn regions'));
-  firebasePromise.then(() => userShapes = firebase.firestore().collection(collectionName));
 }
 
 // TODO(janakr): it would be nice to unit-test this, but I don't know how to get

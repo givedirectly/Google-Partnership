@@ -39,7 +39,14 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 </head>
 <body>
-  <div class="wrapper">
+<div class="g-sign-in hidden">
+  <span class="label">Sign in with:</span>
+  <div class="button">
+    <span class="icon"></span>
+    <span class="button-text">Google</span>
+  </div>
+</div>
+<div class="wrapper">
     <div id="sidebar" class="sidebar">
       <ul>
         <li id="sidebar-toggle-thresholds" class="sidebar-list-item">
@@ -71,13 +78,6 @@
       </div>
       <div id="writeWaiter">
         <div id="writeWaiter-loader"></div>
-      </div>
-      <div class="g-sign-in hidden">
-        <span class="label">Sign in with:</span>
-        <div class="button">
-          <span class="icon"></span>
-          <span class="button-text">Google</span>
-        </div>
       </div>
     </div>
     <div class="tiles-loading"></div>

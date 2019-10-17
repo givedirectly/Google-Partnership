@@ -1,4 +1,4 @@
-export {Authenticator, authenticateToFirebase};
+export {Authenticator, authenticateToFirebase, initializeFirebase};
 
 // The client ID from https://console.cloud.google.com/apis/credentials?project=mapping-crisis
 const CLIENT_ID = '38420505624-boghq4foqi5anc9kc5c5tsq82ar9k4n0.apps.googleusercontent.com';
@@ -26,18 +26,18 @@ const firebaseConfig =
 class Authenticator {
   /**
    * @constructor
-   * @param {Function} accessTokenCallback Will receive the access token coming
-   *     from authentication
+   * @param {Function} authCallback Will receive the auth response coming from
+   * authentication
    * @param {Function} eeInitializeCallback Called after EarthEngine
    *     initialization is complete
-   * @param {Function} errorCallback Called on any errors (defaults to
    *     console.error)
    * @param {Array<string>} additionalScopes OAuth2 scopes to request
+   * @param {Function} errorCallback Called on any errors (defaults to
    */
   constructor(
-      accessTokenCallback, eeInitializeCallback, errorCallback = console.error,
-      additionalScopes = []) {
-    this.accessTokenCallback = accessTokenCallback;
+      authCallback, eeInitializeCallback, additionalScopes = [],
+      errorCallback = console.error) {
+    this.authCallback = authCallback;
     this.eeInitializeCallback = eeInitializeCallback;
     this.additionalScopes = additionalScopes;
     this.errorCallback = errorCallback;
@@ -46,16 +46,39 @@ class Authenticator {
 
   /** Kicks off all processes. */
   start() {
-    ee.data.authenticateViaOauth(
-        CLIENT_ID, () => this.initializeEE(),
-        (err) => this.errorCallback('Error authenticating EarthEngine: ' + err),
-        this.additionalScopes);
+    this.eeAuthenticate(() => this.onSigninFailedFirstTime());
     const gapiSettings = Object.assign({}, gapiTemplate);
     gapiSettings.scope = this.additionalScopes.join(' ');
     gapi.load(
         'client:auth2',
         () => gapi.client.init(gapiSettings)
             .then(() => this.onLoginTaskCompleted()));
+  }
+
+  /**
+   * Authenticates to EarthEngine. If not already logged in, tries to put up a
+   * pop-up. If that fails (or if something else goes wrong), calls
+   * failureCallback.
+   *
+   * @param {Function} failureCallback Called on failure
+   */
+  eeAuthenticate(failureCallback) {
+    ee.data.authenticateViaOauth(
+        CLIENT_ID, () => this.initializeEE(),
+        failureCallback,
+        this.additionalScopes);
+  }
+
+  onSigninFailedFirstTime() {
+    $('.g-sign-in').removeClass('hidden');
+    $('.output').text('(Log in to see the result.)');
+    $('.g-sign-in .button').click(() => {
+      // TODO(janakr): If authentication fails here, user has to reload page to
+      // try again. Not clear how that can happen, but maybe should be more
+      // graceful?
+      this.eeAuthenticate((err) => this.errorCallback('Error authenticating EarthEngine: ' + err));
+      $('.g-sign-in').addClass('hidden');
+     });
   }
 
   /** Initializes EarthEngine. */
@@ -74,24 +97,34 @@ class Authenticator {
   onLoginTaskCompleted() {
     if (--this.loginTasksToComplete === 0) {
       const user = gapi.auth2.getAuthInstance().currentUser.get();
-      this.accessTokenCallback(user.getAuthResponse().access_token);
+      this.authCallback(user.getAuthResponse());
     }
   }
 }
 
+function initializeFirebase() {
+  firebase.initializeApp(firebaseConfig);
+}
+
 // Roughly copied from https://firebase.google.com/docs/auth/web/google-signin.
 
-function authenticateToFirebase(accessToken) {
+/**
+ *
+ * @param googleAuth
+ * @return {Promise<any>}
+ */
+function authenticateToFirebase(googleAuth) {
+  initializeFirebase();
   return new Promise((resolveFunction) => {
     const unsubscribe = firebase.auth().onAuthStateChanged((firebaseUser) => {
       unsubscribe();
-      // TODO(janakr): sample code checks if already authenticated. I don't think
-      // that ever succeeds for us, though.
       if (firebaseUser && firebaseUser.providerData && firebaseUser.providerData[0].uid) {
-        console.warn('Already logged in on Firebase?? ', firebaseUser, firebaseUser.providerData);
+        console.warn('Not logging in again');
+        resolveFunction(null);
+        return;
       }
       // Build Firebase credential with the Google ID token.
-      const credential = firebase.auth.GoogleAuthProvider.credential(accessToken);
+      const credential = firebase.auth.GoogleAuthProvider.credential(googleAuth.id_token);
       // Sign in with credential from the Google user.
       const signinPromise = firebase.auth().signInWithCredential(credential);
       signinPromise.then(resolveFunction);

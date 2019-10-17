@@ -4,6 +4,7 @@ import {inProduction} from './in_test_util.js';
 import run from './run.js';
 import {initializeSidebar} from './sidebar.js';
 import {getCookieValue} from './in_test_util.js';
+import {initializeFirebase} from './authenticate.js';
 
 export {map};
 
@@ -24,13 +25,17 @@ function setup() {
 
     map = createMap(firebaseAuthPromise.getPromise());
 
+    const runOnInitialize = () => run(map, firebaseAuthPromise.getPromise());
     if (inProduction()) {
-      const authenticator = new Authenticator((token) => firebaseAuthPromise.setPromise(authenticateToFirebase(token)), () => run(map, firebaseAuthPromise.getPromise()));
+      const authenticator = new Authenticator((token) => firebaseAuthPromise.setPromise(
+          authenticateToFirebase(token)), runOnInitialize,
+          ['https://www.googleapis.com/auth/datastore']);
       authenticator.start();
     } else {
+        initializeFirebase();
         firebaseAuthPromise.setPromise(firebase.auth().signInWithCustomToken(
             getCookieValue('TEST_FIRESTORE_TOKEN')));
-      const authenticator = new Authenticator(null, () => run(map, firebaseAuthPromise.getPromise()));
+      const authenticator = new Authenticator(null, runOnInitialize);
       authenticator.initializeEE();
     }
   });

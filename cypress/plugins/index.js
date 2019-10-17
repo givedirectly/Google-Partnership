@@ -22,11 +22,11 @@ module.exports = (on, config) => {
     initializeTestFirebase() {
       currentApp = firebaseAdmin.initializeApp({credential: firebaseAdmin.credential.applicationDefault(),
     databaseURL: 'https://mapping-crisis.firebaseio.com'}, 'testFirebaseApp');
-      return currentApp.auth().createCustomToken('cypress-firestore-test-user');
+      const result = currentApp.auth().createCustomToken('cypress-firestore-test-user');
+      // Firebase really doesn't like duplicate apps lying around, so clean up
+      // immediately.
+      result.then(() => currentApp.delete());
+      return result;
     },
-    tearDownTestFirebase() {
-      // Cypress doesn't like when you return Promise<undefined>.
-      return currentApp.delete().then((result) => result || null);
-    }
   });
 };
