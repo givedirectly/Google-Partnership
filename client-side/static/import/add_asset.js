@@ -1,13 +1,11 @@
+import {Authenticator} from '../authenticate.js';
+
 export {onStartupTaskCompleted as default};
 
 const earthEngineAssetBase = 'users/janak/';
 const earthEnginePrefix =
     'projects/earthengine-legacy/assets/' + earthEngineAssetBase;
 
-// The client ID from the Google Developers Console.
-// TODO(#13): This is from janakr's console. Should use one for GiveDirectly.
-const CLIENT_ID = '634162034024-oodhl7ngkg63hd9ha9ho9b3okcb0bp8s' +
-    '.apps.googleusercontent.com';
 const BUCKET = 'givedirectly.appspot.com';
 const BASE_UPLOAD_URL =
     `https://www.googleapis.com/upload/storage/v1/b/${BUCKET}/o`;
@@ -16,12 +14,6 @@ const storageScope = 'https://www.googleapis.com/auth/devstorage.read_write';
 
 const mostOfUploadUrl =
     BASE_UPLOAD_URL + '?' + encodeURIComponent('uploadType=media') + '&name=';
-
-const gapiSettings = {
-  apiKey: 'AIzaSyAbNHe9B0Wo4MV8rm3qEdy8QzFeFWZERHs',
-  clientId: CLIENT_ID,
-  scope: storageScope,
-};
 
 const resultDiv = document.getElementById('results');
 
@@ -37,9 +29,10 @@ function setUpAllHeaders(accessToken) {
   gcsHeader = new Headers({'Authorization': 'Bearer ' + accessToken});
   deleteRequest = {method: 'DELETE', headers: gcsHeader};
   listRequest = {method: 'GET', headers: gcsHeader};
+  onStartupTaskCompleted();
 }
 
-// 3 tasks: EE authentication, Firebase authentication, and page load.
+// 3 tasks: EE authentication, OAuth2 token retrieval, and page load.
 let tasksToComplete = 3;
 
 /**
@@ -52,44 +45,18 @@ function onStartupTaskCompleted() {
   }
 }
 
-// Necessary for listAssets.
-ee.data.setCloudApiEnabled(true);
-
-/** Initializes EarthEngine. */
-function initializeEE() {
-  ee.initialize(
-      /* opt_baseurl=*/ null, /* opt_tileurl=*/ null, onStartupTaskCompleted,
-      (err) => setStatusDiv('Error initializing EarthEngine: ' + err));
-}
-
-// This call happens before gapi starts loading, so I (Janak) think that it
-// will guarantee that authentication has completely finished by the time
-// getAccessToken has been called, so we'll never have to actually authenticate
-// in there. But I could be wrong!
-ee.data.authenticateViaOauth(
-    CLIENT_ID, initializeEE,
-    (err) => setStatusDiv('Error authenticating EarthEngine: ' + err),
-    [storageScope]);
-
-gapi.load('client:auth2', getAccessToken);
-
-/** Gets access token from gapi auth object after initialization. */
-function getAccessToken() {
-  gapi.client.init(gapiSettings).then(() => {
-    // Already logged in because EarthEngine did it for us.
-    const auth = gapi.auth2.getAuthInstance();
-    const user = auth.currentUser.get();
-    setUpAllHeaders(user.getAuthResponse().access_token);
-    onStartupTaskCompleted();
-  });
-}
-
 /** Enables the form once all necessary libraries are loaded. */
 function enableWhenReady() {
   document.getElementById('fileButton').disabled = false;
   document.getElementById('fileButton').onclick = submitFiles;
   updateStatus();
 }
+
+// Necessary for listAssets.
+ee.data.setCloudApiEnabled(true);
+
+// Perform EE login/Google OAuth2 process.
+new Authenticator(setUpAllHeaders, onStartupTaskCompleted, setStatusDiv, [storageScope]).start();
 
 /**
  * Processes files and asset name user gave, mostly asynchronously.
