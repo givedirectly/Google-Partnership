@@ -35,4 +35,4 @@ beforeEach(() => {
 
 before(
     () => cy.task('initializeTestFirebase')
-              .then((token) => {global.firestoreCustomToken = token}));
+              .then((token) => global.firestoreCustomToken = token));
