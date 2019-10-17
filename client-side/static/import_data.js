@@ -57,8 +57,9 @@ function countDamageAndBuildings(feature, buildings) {
   const damageLevels = ee.List(damageLevelsList);
   const damageFilters =
       damageLevels.map((type) => ee.Filter.eq(crowdAiDamageKey, type));
+  const geometry = feature.geometry();
   const blockDamage =
-      ee.FeatureCollection(resources.damage).filterBounds(feature.geometry());
+      ee.FeatureCollection(resources.damage).filterBounds(geometry);
   const totalBuildings = buildings.get(feature.get(geoidTag));
   const attrDict = ee.Dictionary.fromLists(
       damageLevels,
@@ -70,7 +71,7 @@ function countDamageAndBuildings(feature, buildings) {
   const snapPop = ee.Number.parse(feature.get(snapPopTag)).long();
   const totalPop = ee.Number.parse(feature.get(totalPopTag)).long();
   return ee.Feature(
-      feature.geometry(),
+      geometry,
       attrDict.set(geoidTag, feature.get(geoidTag))
           .set(blockGroupTag, feature.get(blockGroupTag))
           .set(snapPopTag, ee.Number(snapPop))
@@ -182,17 +183,20 @@ function run() {
   const resources = getResources();
   const snap = ee.FeatureCollection(resources.rawSnap)
                    .map((feature) => stringifyGeoid(feature, censusGeoidKey));
-  const blockGroup = ee.Join.simple().apply(
+  // filter block groups to those with damage.
+  const blockGroups = ee.Join.simple().apply(
       ee.FeatureCollection(resources.bg),
       ee.FeatureCollection(resources.damage),
       ee.Filter.intersects({leftField: '.geo', rightField: '.geo'}));
+  // join snap stats to block group geometries
   const joinedSnap =
       ee.Join.inner()
           .apply(
-              snap, blockGroup,
+              snap, blockGroups,
               ee.Filter.equals(
                   {leftField: censusGeoidKey, rightField: tigerGeoidKey}))
           .map(combineWithSnap);
+  // join with income
   const joinedSnapIncome =
       ee.Join.inner()
           .apply(
@@ -200,6 +204,7 @@ function run() {
               ee.Filter.equals(
                   {leftField: geoidTag, rightField: censusGeoidKey}))
           .map(combineWithIncome);
+  // filter SVI to those with damage and join
   const svi = ee.Join.simple().apply(
       ee.FeatureCollection(resources.svi),
       ee.FeatureCollection(resources.damage),
@@ -210,11 +215,12 @@ function run() {
               joinedSnapIncome.map(addTractInfo), svi,
               ee.Filter.equals({leftField: tractTag, rightField: geoidTag}))
           .map(combineWithSvi);
-
+  // attach block groups to buildings and aggregate to get block group building
+  // counts
   const buildings = ee.FeatureCollection(resources.buildings);
   const withBlocKGroup = buildings.map(attachBlockGroups);
   const buildingsHisto = ee.Dictionary(withBlocKGroup.aggregate_histogram(geoidTag));
-
+  // process final feature collection
   const data = joinedSnapIncomeSVI.map(
       (feature) => countDamageAndBuildings(feature, buildingsHisto));
 
