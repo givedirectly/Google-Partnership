@@ -20,7 +20,7 @@ const firebaseConfig =
     };
 
 /**
- * Performs EarthEngine authentication and returns an access token usable for
+ * Performs EarthEngine authentication and returns an auth object usable for
  * other things like GCS or Firebase.
  */
 class Authenticator {
