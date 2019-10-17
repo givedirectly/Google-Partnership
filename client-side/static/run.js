@@ -30,7 +30,7 @@ const scoreIndex = Object.keys(assets).length;
  *
  * @param {google.maps.Map} map main map
  */
-function run(map) {
+function run(map, firebasePromise) {
   setMapToDrawLayersOn(map);
   initializeAssetLayers(map);
   createToggles(map);
@@ -40,7 +40,7 @@ function run(map) {
   createAndDisplayJoinedData(
       map, initialPovertyThreshold, initialDamageThreshold,
       initialPovertyWeight);
-  processUserRegions(map);
+  processUserRegions(map, firebasePromise);
 }
 
 let mapSelectListener = null;

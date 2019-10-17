@@ -13,17 +13,6 @@ export {
   ShapeData,
 };
 
-const firebaseConfig =
-    {
-      apiKey: "AIzaSyBAQkh-kRrYitkPafxVLoZx3E5aYM-auXM",
-      authDomain: "mapping-crisis.firebaseapp.com",
-      databaseURL: "https://mapping-crisis.firebaseio.com",
-      projectId: "mapping-crisis",
-      storageBucket: "mapping-crisis.appspot.com",
-      messagingSenderId: "38420505624",
-      appId: "1:38420505624:web:79425020e2f86c82a78f6d"
-    };
-
 /**
  * Class holding data for a user-drawn polygon, including the state of writing
  * to the backend. Does not hold the polygon itself.
@@ -169,15 +158,10 @@ ShapeData.pendingWriteCount = 0;
 // Warning before leaving the page.
 window.onbeforeunload = () => ShapeData.pendingWriteCount > 0 ? true : null;
 
-// TODO(janakr): maybe not best practice to initialize outside of a function?
-// But doesn't take much/any time.
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-
 const collectionName =
     'usershapes' + (inProduction() ? '' : ('-test/' + getTestCookie()));
 
-const userShapes = db.collection(collectionName);
+let userShapes = null;
 
 const appearance = {
   fillColor: '#4CEF64',
@@ -185,36 +169,32 @@ const appearance = {
   editable: false,
 };
 
-// TODO(janakr): fix this.
-let authPromise = Promise.resolve(null);
-
 /**
  * Create a Google Maps Drawing Manager for drawing polygons.
  *
  * @param {google.maps.Map} map
  */
-function setUpPolygonDrawing(map) {
-  if (!inProduction()) {
-    authPromise = firebase.auth().signInWithCustomToken(
-        getCookieValue('TEST_FIRESTORE_TOKEN'));
-  }
-  setUpPopup(authPromise);
-  const drawingManager = new google.maps.drawing.DrawingManager({
-    drawingControl: true,
-    drawingControlOptions: {drawingModes: ['marker', 'polygon']},
-    polygonOptions: appearance,
-  });
+function setUpPolygonDrawing(map, firebasePromise) {
+  setUpPopup();
 
-  drawingManager.addListener('overlaycomplete', (event) => {
-    const polygon = event.overlay;
-    const data = new ShapeData(null, '', 'calculating');
-    userRegionData.set(polygon, data);
-    const popup = createPopup(polygon, map);
-    addPopUpListener(popup);
-    data.update(polygon, (damage) => updateDamage(popup, damage), '');
-  });
+  return firebasePromise.then(() => {
+    const drawingManager = new google.maps.drawing.DrawingManager({
+      drawingControl: true,
+      drawingControlOptions: {drawingModes: ['marker', 'polygon']},
+      polygonOptions: appearance,
+    });
 
-  drawingManager.setMap(map);
+    drawingManager.addListener('overlaycomplete', (event) => {
+      const polygon = event.overlay;
+      const data = new ShapeData(null, '', 'calculating');
+      userRegionData.set(polygon, data);
+      const popup = createPopup(polygon, map);
+      addPopUpListener(popup);
+      data.update(polygon, (damage) => updateDamage(popup, damage), '');
+    });
+
+    drawingManager.setMap(map);
+  });
 }
 
 // TODO(#18): allow toggling visibility of user regions off and on.
@@ -224,12 +204,13 @@ function setUpPolygonDrawing(map) {
  *
  * @param {google.maps.Map} map Map to display regions on
  */
-function processUserRegions(map) {
+function processUserRegions(map, firebasePromise) {
   addLoadingElement(mapContainerId);
-  authPromise.then(() => userShapes.get())
+  firebasePromise.then(() => userShapes.get())
       .then(
           (querySnapshot) => drawRegionsFromFirestoreQuery(querySnapshot, map))
       .catch(createError('getting user-drawn regions'));
+  firebasePromise.then(() => userShapes = firebase.firestore().collection(collectionName));
 }
 
 // TODO(janakr): it would be nice to unit-test this, but I don't know how to get
