@@ -52,7 +52,8 @@ describe('Integration test for clicking feature', () => {
     cy.get('.map').click(820, 950);
     // show first one is closed.
     cy.get('.map').should(
-        'not.contain', 'Block Group 1, Census Tract 2309, Harris County, Texas');
+        'not.contain',
+        'Block Group 1, Census Tract 2309, Harris County, Texas');
     cy.get('.map').should(
         'contain', 'Block Group 1, Census Tract 3208, Harris County, Texas');
   });
