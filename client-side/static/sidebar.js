@@ -7,7 +7,7 @@ const sidebarThresholdsId = 'sidebar-thresholds';
 const sidebarDatasetsId = 'sidebar-datasets';
 const sidebarMinWidth = '64px';
 const sidebarExpandedWidth = '25%';
-const sidebarContentTransitionDuration = 300;
+const sidebarTransitionDuration = 300;
 
 // The id of the div containing the current sidebar content.
 let currentContentId;
@@ -16,10 +16,14 @@ let currentContentId;
  * Initializes the sidebar menu (i.e. the toggles to open various sidebars).
  */
 function initializeSidebar() {
-  document.getElementById(sidebarToggleThresholdsId).onclick = () =>
+  // curly braces not strictly necessary here, but keeps eslint and clang
+  // from fighting.
+  document.getElementById(sidebarToggleThresholdsId).onclick = () => {
     toggleSidebar(sidebarToggleThresholdsId, sidebarThresholdsId);
-  document.getElementById(sidebarToggleDatasetsId).onclick = () =>
+  };
+  document.getElementById(sidebarToggleDatasetsId).onclick = () => {
     toggleSidebar(sidebarToggleDatasetsId, sidebarDatasetsId);
+  };
 }
 
 /**
@@ -33,11 +37,13 @@ function toggleSidebar(toggleId, contentId) {
 
   if (currentContentId !== contentId) {
     if (currentContentId) {
-      $('#' + currentContentId).fadeOut(sidebarContentTransitionDuration,
-          () => $('#' + contentId).fadeIn(sidebarContentTransitionDuration));
+      $('#' + currentContentId)
+          .fadeOut(
+              sidebarTransitionDuration,
+              () => $('#' + contentId).fadeIn(sidebarTransitionDuration));
     } else {
       sidebar.style.width = sidebarExpandedWidth;
-      $('#' + contentId).fadeIn(sidebarContentTransitionDuration);
+      $('#' + contentId).fadeIn(sidebarTransitionDuration);
     }
     currentContentId = contentId;
   } else {
