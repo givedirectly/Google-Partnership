@@ -49,17 +49,17 @@ const crowdAiDamageKey = 'descriptio';
  * counts for all damage categories, and SNAP percentage and damage percentage.
  *
  * @param {ee.Feature} feature
- * @param {ee.Dictionary} histo
+ * @param {ee.Dictionary} buildings geoid -> # buildings
  * @return {Feature}
  */
-function countDamageAndBuildings(feature, histo) {
+function countDamageAndBuildings(feature, buildings) {
   const resources = getResources();
   const damageLevels = ee.List(damageLevelsList);
   const damageFilters =
       damageLevels.map((type) => ee.Filter.eq(crowdAiDamageKey, type));
   const blockDamage =
       ee.FeatureCollection(resources.damage).filterBounds(feature.geometry());
-  const totalBuildings = histo.get(feature.get(geoidTag));
+  const totalBuildings = buildings.get(feature.get(geoidTag));
   const attrDict = ee.Dictionary.fromLists(
       damageLevels,
       damageFilters.map((type) => blockDamage.filter(type).size()));
@@ -213,10 +213,10 @@ function run() {
 
   const buildings = ee.FeatureCollection(resources.buildings);
   const withBlocKGroup = buildings.map(attachBlockGroups);
-  const histo = ee.Dictionary(withBlocKGroup.aggregate_histogram(geoidTag));
+  const buildingsHisto = ee.Dictionary(withBlocKGroup.aggregate_histogram(geoidTag));
 
   const data = joinedSnapIncomeSVI.map(
-      (feature) => countDamageAndBuildings(feature, histo));
+      (feature) => countDamageAndBuildings(feature, buildingsHisto));
 
   const assetName = 'harvey-data-ms-as-nod';
   // TODO(#61): parameterize ee user account to write assets to or make GD
