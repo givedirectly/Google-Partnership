@@ -1,13 +1,13 @@
 export {initializeSidebar};
 
-const sidebarId = 'sidebar';
-const sidebarToggleThresholdsId = 'sidebar-toggle-thresholds';
-const sidebarToggleDatasetsId = 'sidebar-toggle-datasets';
-const sidebarThresholdsId = 'sidebar-thresholds';
-const sidebarDatasetsId = 'sidebar-datasets';
-const sidebarMinWidth = '64px';
-const sidebarExpandedWidth = '25%';
-const sidebarContentTransitionDuration = 300;
+const id = 'sidebar';
+const toggleThresholdsId = 'sidebar-toggle-thresholds';
+const toggleDatasetsId = 'sidebar-toggle-datasets';
+const thresholdsId = 'sidebar-thresholds';
+const datasetsId = 'sidebar-datasets';
+const minWidth = '64px';
+const expandedWidth = '25%';
+const transitionDuration = 300;
 
 // The id of the div containing the current sidebar content.
 let currentContentId;
@@ -16,10 +16,12 @@ let currentContentId;
  * Initializes the sidebar menu (i.e. the toggles to open various sidebars).
  */
 function initializeSidebar() {
-  document.getElementById(sidebarToggleThresholdsId).onclick = () =>
-      toggleSidebar(sidebarToggleThresholdsId, sidebarThresholdsId);
-  document.getElementById(sidebarToggleDatasetsId).onclick = () =>
-      toggleSidebar(sidebarToggleDatasetsId, sidebarDatasetsId);
+  document.getElementById(toggleThresholdsId).onclick = () => {
+    toggleSidebar(toggleThresholdsId, thresholdsId);
+  };
+  document.getElementById(toggleDatasetsId).onclick = () => {
+    toggleSidebar(toggleDatasetsId, datasetsId);
+  };
 }
 
 /**
@@ -29,23 +31,22 @@ function initializeSidebar() {
  * @param {string} contentId the id of the div containing the new content
  */
 function toggleSidebar(toggleId, contentId) {
-  const sidebar = document.getElementById(sidebarId);
+  const sidebar = document.getElementById(id);
 
   if (currentContentId !== contentId) {
     if (currentContentId) {
       $('#' + currentContentId)
           .fadeOut(
-              sidebarContentTransitionDuration,
-              () =>
-                  $('#' + contentId).fadeIn(sidebarContentTransitionDuration));
+              transitionDuration,
+              () => $('#' + contentId).fadeIn(transitionDuration));
     } else {
-      sidebar.style.width = sidebarExpandedWidth;
-      $('#' + contentId).fadeIn(sidebarContentTransitionDuration);
+      sidebar.style.width = expandedWidth;
+      $('#' + contentId).fadeIn(transitionDuration);
     }
     currentContentId = contentId;
   } else {
     // Collapse the sidebar because the current content is being toggled off.
-    sidebar.style.width = sidebarMinWidth;
+    sidebar.style.width = minWidth;
     $('#' + currentContentId).fadeOut(0);
     currentContentId = null;
   }
