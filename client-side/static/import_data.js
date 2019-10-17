@@ -49,6 +49,7 @@ const crowdAiDamageKey = 'descriptio';
  * counts for all damage categories, and SNAP percentage and damage percentage.
  *
  * @param {ee.Feature} feature
+ * @param {ee.Dictionary} histo
  * @return {Feature}
  */
 function countDamageAndBuildings(feature, histo) {
@@ -157,6 +158,11 @@ function addTractInfo(feature) {
   return feature.set(tractTag, tractGeoid);
 }
 
+/**
+ * Run throught the ms building data and attach the relevant block group to it.
+ * @param feature
+ * @return {*}
+ */
 function attachBlockGroups(feature) {
   const blockGroups =
       ee.FeatureCollection('users/juliexxia/harvey-data-aff-as-nod');

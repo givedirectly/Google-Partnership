@@ -17,9 +17,9 @@ let currentContentId;
  */
 function initializeSidebar() {
   document.getElementById(sidebarToggleThresholdsId).onclick = () =>
-      toggleSidebar(sidebarToggleThresholdsId, sidebarThresholdsId);
+    toggleSidebar(sidebarToggleThresholdsId, sidebarThresholdsId);
   document.getElementById(sidebarToggleDatasetsId).onclick = () =>
-      toggleSidebar(sidebarToggleDatasetsId, sidebarDatasetsId);
+    toggleSidebar(sidebarToggleDatasetsId, sidebarDatasetsId);
 }
 
 /**

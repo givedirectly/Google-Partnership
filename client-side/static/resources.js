@@ -25,7 +25,12 @@ class DisasterMapValue {
    * @param {string} buildingsAsset ee asset path to building footprint info
    */
   constructor(
-      damageAsset, snapAsset, bgAsset, incomeAsset, sviAsset, buildingsAsset) {
+    damageAsset,
+    snapAsset,
+    bgAsset,
+    incomeAsset,
+    sviAsset,
+    buildingsAsset) {
     this.damageAsset = damageAsset;
     this.rawSnapAsset = snapAsset;
     this.bgAsset = bgAsset;
