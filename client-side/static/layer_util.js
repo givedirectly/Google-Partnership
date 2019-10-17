@@ -194,7 +194,7 @@ function addLayerFromId(map, assetName, layerId, index, displayed) {
 function addLayerFromFeatures(layerMapValue, assetName) {
   let styleFunction;
   if (assets[assetName] && assets[assetName].getStylingFunction()) {
-    styleFunction = asset.getStylingFunction();
+    styleFunction = assets[assetName].getStylingFunction();
   } else {
     styleFunction = getColorOfFeature;
   }
