@@ -44,7 +44,6 @@ describe('Integration tests for drawing polygons', () => {
   it('Draws a polygon and edits its notes', () => {
     cy.visit(host);
     drawPolygonAndClickOnIt();
-    cy.awaitLoad(['writeWaiter']);
     pressPolygonButton('edit');
     cy.get('[class="notes"]').type(notes);
     pressPolygonButton('save');
@@ -55,7 +54,7 @@ describe('Integration tests for drawing polygons', () => {
     cy.visit(host);
     zoom(8);
     drawPolygonAndClickOnIt(-250);
-    cy.get('popup-damage').contains('damage count: 23');
+    cy.get('.popup-damage').contains('damage count: 23');
     cy.get('.popup-damage')
         .should('have.css', 'color')
         .and('eq', 'rgb(0, 0, 0)');
