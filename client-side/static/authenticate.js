@@ -70,8 +70,8 @@ class Authenticator {
   }
 
   /**
-   * Falls back to showing a sign-in button on page so that user can click on it,
-   * getting around pop-up-blocking functionality of browsers.
+   * Falls back to showing a sign-in button on page so that user can click on
+   * it, getting around pop-up-blocking functionality of browsers.
    */
   onSigninFailedFirstTime() {
     $('.g-sign-in').removeClass('hidden');

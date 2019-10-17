@@ -75,8 +75,8 @@ class SettablePromise {
   }
 
   /**
-   * Returns the Promise that will eventually resolve to the value of the Promise
-   * passed into setPromise.
+   * Returns the Promise that will eventually resolve to the value of the
+   * Promise passed into setPromise.
    *
    * @return {Promise<any>}
    */

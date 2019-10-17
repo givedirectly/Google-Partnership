@@ -29,7 +29,8 @@ const scoreIndex = Object.keys(assets).length;
  * creates/populates the map and table.
  *
  * @param {google.maps.Map} map main map
- * @param {Promise<any>} firebasePromise Promise that will complete when Firebase authentication is finished
+ * @param {Promise<any>} firebasePromise Promise that will complete when
+ *     Firebase authentication is finished
  */
 function run(map, firebasePromise) {
   setMapToDrawLayersOn(map);

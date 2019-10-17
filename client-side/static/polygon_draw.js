@@ -173,7 +173,8 @@ const appearance = {
  * Create a Google Maps Drawing Manager for drawing polygons.
  *
  * @param {google.maps.Map} map
- * @param {Promise<any>} firebasePromise Promise that will complete when Firebase authentication is finished
+ * @param {Promise<any>} firebasePromise Promise that will complete when
+ *     Firebase authentication is finished
  */
 function setUpPolygonDrawing(map, firebasePromise) {
   setUpPopup();
@@ -204,7 +205,8 @@ function setUpPolygonDrawing(map, firebasePromise) {
  * Adds a listener to display notes on pop-up.
  *
  * @param {google.maps.Map} map Map to display regions on
- * @param {Promise<any>} firebasePromise Promise that will complete when Firebase authentication is finished
+ * @param {Promise<any>} firebasePromise Promise that will complete when
+ *     Firebase authentication is finished
  */
 function processUserRegions(map, firebasePromise) {
   addLoadingElement(mapContainerId);
