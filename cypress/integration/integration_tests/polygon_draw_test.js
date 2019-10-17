@@ -5,18 +5,16 @@ const firebaseLibrary = require('firebase');
 const hackyWaitTime = 1000;
 const notes = 'Sphinx of black quartz, judge my vow';
 
-// TODO(janakr): do test authentication separately. We should have a separate
-// test account that writes to a test database, to avoid interacting with
-// production data.
-const firebaseConfig = {
-  apiKey: 'AIzaSyAbNHe9B0Wo4MV8rm3qEdy8QzFeFWZERHs',
-  authDomain: 'givedirectly.firebaseapp.com',
-  databaseURL: 'https://givedirectly.firebaseio.com',
-  projectId: 'givedirectly',
-  storageBucket: '',
-  messagingSenderId: '634162034024',
-  appId: '1:634162034024:web:c5f5b82327ba72f46d52dd',
-};
+const firebaseConfig =
+    {
+      apiKey: "AIzaSyBAQkh-kRrYitkPafxVLoZx3E5aYM-auXM",
+      authDomain: "mapping-crisis.firebaseapp.com",
+      databaseURL: "https://mapping-crisis.firebaseio.com",
+      projectId: "mapping-crisis",
+      storageBucket: "mapping-crisis.appspot.com",
+      messagingSenderId: "38420505624",
+      appId: "1:38420505624:web:79425020e2f86c82a78f6d"
+    };
 
 firebaseLibrary.initializeApp(firebaseConfig);
 const db = firebaseLibrary.firestore();
@@ -37,8 +35,13 @@ describe('Integration tests for drawing polygons', () => {
     }));
   };
 
+  before(() => cy.task('initializeTestFirebase').then((token) => {
+    cy.setCookie('TEST_FIRESTORE_TOKEN', token);
+    return cy.wrap(firebaseLibrary.auth().signInWithCustomToken(token));
+  }));
+  after(() => cy.task('tearDownTestFirebase').then((val) => cy.log(val)));
   beforeEach(deleteAllRegionsDrawnByTest);
-
+  //
   afterEach(deleteAllRegionsDrawnByTest);
 
   it('Draws a polygon and edits its notes', () => {
@@ -93,7 +96,7 @@ describe('Integration tests for drawing polygons', () => {
     assertExactlyPopUps(0, notes);
   });
 
-  it('Draws a polygon and almost deletes it, then deletes', () => {
+  it.only('Draws a polygon and almost deletes it, then deletes', () => {
     // Reject confirmation when first happens, then accept it later.
     let confirmValue = false;
     cy.on('window:confirm', () => confirmValue);

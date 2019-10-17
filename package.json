@@ -4,5 +4,9 @@
     "eslint": "^6.3.0",
     "eslint-config-google": "^0.13.0",
     "firebase": "^7.0.0"
+  },
+  "dependencies": {
+    "firebase-admin": "^8.6.1",
+    "gapi": "^0.0.3"
   }
 }

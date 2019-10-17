@@ -1,6 +1,6 @@
 import createError from './create_error.js';
 import {mapContainerId, writeWaiterId} from './dom_constants.js';
-import {getTestCookie, inProduction} from './in_test_util.js';
+import {getCookieValue, getTestCookie, inProduction} from './in_test_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {addPopUpListener, createPopup, setUpPopup, updateDamage} from './popup.js';
 import getResources from './resources.js';
@@ -13,18 +13,16 @@ export {
   ShapeData,
 };
 
-// TODO(#13): use proper keys associated to GiveDirectly account,
-// and lock down security (right now database is global read-write).
-const firebaseConfig = {
-  apiKey: 'AIzaSyAbNHe9B0Wo4MV8rm3qEdy8QzFeFWZERHs',
-  authDomain: 'givedirectly.firebaseapp.com',
-  databaseURL: 'https://givedirectly.firebaseio.com',
-  projectId: 'givedirectly',
-  storageBucket: '',
-  messagingSenderId: '634162034024',
-  appId: '1:634162034024:web:c5f5b82327ba72f46d52dd',
-};
-
+const firebaseConfig =
+    {
+      apiKey: "AIzaSyBAQkh-kRrYitkPafxVLoZx3E5aYM-auXM",
+      authDomain: "mapping-crisis.firebaseapp.com",
+      databaseURL: "https://mapping-crisis.firebaseio.com",
+      projectId: "mapping-crisis",
+      storageBucket: "mapping-crisis.appspot.com",
+      messagingSenderId: "38420505624",
+      appId: "1:38420505624:web:79425020e2f86c82a78f6d"
+    };
 
 /**
  * Class holding data for a user-drawn polygon, including the state of writing
@@ -187,14 +185,20 @@ const appearance = {
   editable: false,
 };
 
+// TODO(janakr): fix this.
+let authPromise = Promise.resolve(null);
+
 /**
  * Create a Google Maps Drawing Manager for drawing polygons.
  *
  * @param {google.maps.Map} map
  */
 function setUpPolygonDrawing(map) {
-  setUpPopup();
-
+  if (!inProduction()) {
+    authPromise = firebase.auth().signInWithCustomToken(
+        getCookieValue('TEST_FIRESTORE_TOKEN'));
+  }
+  setUpPopup(authPromise);
   const drawingManager = new google.maps.drawing.DrawingManager({
     drawingControl: true,
     drawingControlOptions: {drawingModes: ['marker', 'polygon']},
@@ -222,10 +226,10 @@ function setUpPolygonDrawing(map) {
  */
 function processUserRegions(map) {
   addLoadingElement(mapContainerId);
-  userShapes.get()
+  authPromise.then(() => userShapes.get())
       .then(
           (querySnapshot) => drawRegionsFromFirestoreQuery(querySnapshot, map))
-      .catch(createError('error getting user-drawn regions'));
+      .catch(createError('getting user-drawn regions'));
 }
 
 // TODO(janakr): it would be nice to unit-test this, but I don't know how to get
