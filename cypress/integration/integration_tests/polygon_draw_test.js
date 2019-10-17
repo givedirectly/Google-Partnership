@@ -49,13 +49,7 @@ describe('Integration tests for drawing polygons', () => {
     cy.get('[class="notes"]').type(notes);
     pressPolygonButton('save');
     cy.get('.map').contains(notes);
-  });
-
-  it('Draws a polygon, calculates damage', () => {
-    cy.visit(host);
-    zoom(8);
-    drawPolygonAndClickOnIt(-250);
-    cy.get('.popup-damage').contains('damage count: 23');
+    cy.get('.popup-damage').contains('damage count: 13862');
     cy.get('.popup-damage')
         .should('have.css', 'color')
         .and('eq', 'rgb(0, 0, 0)');
@@ -70,7 +64,6 @@ describe('Integration tests for drawing polygons', () => {
     cy.visit(host);
     drawPolygonAndClickOnIt();
     cy.get('.popup-damage').contains('damage count: calculating');
-    // assert damage text is grey while editing
     cy.get('.popup-damage')
         .should('have.css', 'color')
         .and('eq', 'rgb(128, 128, 128)');
@@ -357,16 +350,4 @@ function drawPointAndPrepareForNext(x, y) {
   // const clientY = y + 81;
   // cy.get('.map').trigger('mousemove', {clientX: clientX, clientY: clientY});
   cy.get('.map').click(x, y);
-}
-
-
-/**
- * Helper function to zoom some amount of times.
- * @param {Integer} numTimes
- */
-function zoom(numTimes) {
-  for (let i = 0; i < numTimes; i++) {
-    cy.get('[title="Zoom in"]').click();
-    cy.wait(500);
-  }
 }

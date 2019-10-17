@@ -54,7 +54,7 @@ const crowdAiDamageKey = 'descriptio';
  */
 function countDamageAndBuildings(feature) {
   const resources = disasters.get(disaster);
-  const damage = ee.FeatureCollection(resources.damageAsset);
+  const damage = ee.FeatureCollection(resources.damage);
   const damageLevels = ee.List(damageLevelsList);
   const damageFilters =
       damageLevels.map((type) => ee.Filter.eq(crowdAiDamageKey, type));
@@ -164,16 +164,16 @@ function run() {
   ee.initialize();
 
   const resources = getResources();
-  const snapAsset =
-      ee.FeatureCollection(resources.rawSnapAsset)
+  const snap =
+      ee.FeatureCollection(resources.rawSnap)
           .map((feature) => stringifyGeoid(feature, censusGeoidKey));
-  const blockGroupAsset =
-      ee.FeatureCollection(resources.bgAsset)
-          .filterBounds(ee.FeatureCollection(resources.damageAsset).geometry());
+  const blockGroup =
+      ee.FeatureCollection(resources.bg)
+          .filterBounds(ee.FeatureCollection(resources).damage.geometry());
   const joinedSnap =
       ee.Join.inner()
           .apply(
-              snapAsset, blockGroupAsset,
+              snap, blockGroup,
               ee.Filter.equals(
                   {leftField: censusGeoidKey, rightField: tigerGeoidKey}))
           .map(combineWithSnap);
@@ -181,14 +181,14 @@ function run() {
   const joinedSnapIncome =
       ee.Join.inner()
           .apply(
-              joinedSnap, ee.FeatureCollection(resources.incomeAsset),
+              joinedSnap, ee.FeatureCollection(resources.income),
               ee.Filter.equals(
                   {leftField: geoidTag, rightField: censusGeoidKey}))
           .map(combineWithIncome);
 
   const svi =
-      ee.FeatureCollection(resources.sviAsset)
-          .filterBounds(ee.FeatureCollection(resources.damageAsset).geometry());
+      ee.FeatureCollection(resources.svi)
+          .filterBounds(ee.FeatureCollection(resources).damage.geometry());
 
   const joinedSnapIncomeSVI =
       ee.Join.inner()
@@ -201,7 +201,7 @@ function run() {
   // TODO(#61): parameterize ee user account to write assets to or make GD
   // account.
   // TODO: delete existing asset with same name if it exists.
-  const task = ee.batch.Export.table.toAsset(
+  const task = ee.batch.Export.table.to(
       joinedSnapIncomeSVI.map(countDamageAndBuildings), assetName,
       'users/juliexxia/' + assetName);
   task.start();
