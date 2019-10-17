@@ -192,12 +192,11 @@ function addLayerFromId(map, assetName, layerId, index, displayed) {
  * @param {string} assetName
  */
 function addLayerFromFeatures(layerMapValue, assetName) {
-  let styleFunction;
-  if (assets[assetName] && assets[assetName].getStylingFunction()) {
-    styleFunction = assets[assetName].getStylingFunction();
-  } else {
-    styleFunction = getColorOfFeature;
-  }
+  const hasStyleFunction =
+      assets[assetName] && assets[assetName].getStylingFunction();
+  const styleFunction = hasStyleFunction ?
+      assets[assetName].getStylingFunction() :
+      getColorOfFeature;
   layerArray[layerMapValue.index] = new deck.GeoJsonLayer({
     id: assetName,
     data: layerMapValue.data,
