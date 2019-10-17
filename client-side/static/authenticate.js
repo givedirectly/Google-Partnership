@@ -21,7 +21,8 @@ class Authenticator {
    *     from authentication
    * @param {Function} eeInitializeCallback Called after EarthEngine
    *     initialization is complete
-   * @param {Function} errorCallback Called on any errors (defaults to console.error)
+   * @param {Function} errorCallback Called on any errors (defaults to
+   *     console.error)
    * @param {Array<string>} additionalScopes OAuth2 scopes to request
    */
   constructor(
