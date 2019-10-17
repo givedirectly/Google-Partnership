@@ -6,6 +6,7 @@ const CLIENT_ID = '634162034024-oodhl7ngkg63hd9ha9ho9b3okcb0bp8s' +
     '.apps.googleusercontent.com';
 
 const gapiTemplate = {
+// TODO(#13): This is from janakr's console. Should use one for GiveDirectly.
   apiKey: 'AIzaSyAbNHe9B0Wo4MV8rm3qEdy8QzFeFWZERHs',
   clientId: CLIENT_ID,
 };

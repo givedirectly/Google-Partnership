@@ -2,6 +2,7 @@ import {Authenticator} from '../authenticate.js';
 
 export {onStartupTaskCompleted as default};
 
+// TODO(janakr): change to givedirectly user.
 const earthEngineAssetBase = 'users/janak/';
 const earthEnginePrefix =
     'projects/earthengine-legacy/assets/' + earthEngineAssetBase;
@@ -66,10 +67,6 @@ authenticator.start();
  * @return {boolean}
  */
 function submitFiles(e) {
-  if (!listRequest) {
-    alert('Not signed in properly');
-    return false;
-  }
   // prevent form's default submit action.
   e.preventDefault();
   const collectionName = document.getElementById('collectionName').value;
@@ -116,7 +113,7 @@ function submitFiles(e) {
  * Given the desired asset, and a dictionary of statuses for all already known
  * files, processes each file selected by the user and either:
  *
- *   1. Tell the user to delete the file if it is already in EE
+ *   1. Tell the user to delete the file locally if it is already in EE
  * (Status.EE_ONLY);
  *   2. Do that and delete the file from GCS if it is already in GCS as well
  * (Status.PRESENT_EVERYWHERE);
@@ -179,7 +176,7 @@ const FileRemoteStatus = {
  *     file name
  */
 function uploadFileToGCS(name, contents, collectionName, callback) {
-  uploadingToGCS++;
+  startedUploadToGCS++;
   const fileName = encodeURIComponent(collectionName + '/' + name);
   // Use the simple media upload as per the spec here:
   // https://cloud.google.com/storage/docs/json_api/v1/how-tos/simple-upload
@@ -190,7 +187,7 @@ function uploadFileToGCS(name, contents, collectionName, callback) {
     headers: gcsHeader,
     body: contents,
   };
-  const gcsPromise = fetch(URL, request)
+  fetch(URL, request)
                          .then((r) => r.json())
                          .then((r) => {
                            uploadedToGCS++;
@@ -201,8 +198,7 @@ function uploadFileToGCS(name, contents, collectionName, callback) {
                            resultDiv.innerHTML +=
                                '<br>Error uploading ' + name + ': ' + err;
                            throw err;
-                         });
-  gcsPromise.then((result) => callback(result.bucket, collectionName, name))
+                         }).then((result) => callback(result.bucket, collectionName, name))
       .catch((err) => {
         console.error(err);
         resultDiv.innerHTML += '<br>Error processing ' + name + ': ' + err;
@@ -217,39 +213,33 @@ function uploadFileToGCS(name, contents, collectionName, callback) {
  * @return {Promise<undefined>} Promise to wait for operation completion on
  */
 function maybeCreateImageCollection(collectionName) {
-  let resolveFunction;
-  let rejectFunction;
-  const result = new Promise((resolve, reject) => {
-    resolveFunction = resolve;
-    rejectFunction = reject;
-  });
-  const assetName = earthEngineAssetBase + collectionName;
-  ee.data.getAsset(assetName, (getResult) => {
-    if (!getResult) {
-      // TODO(janakr): this swallows any actual errors in getting asset.
-      // TODO(janakr): track if actually created to avoid unnecessary listing?
-      ee.data.createAsset(
-          {id: assetName, type: 'ImageCollection'}, assetName, false, {},
-          (createResult, failure) => {
-            if (failure) {
-              rejectFunction(failure);
-            } else {
-              ee.data.setAssetAcl(
-                  assetName, {all_users_can_read: true},
-                  (aclResult, failure) => {
-                    if (failure) {
-                      rejectFunction(failure);
-                    } else {
-                      resolveFunction(undefined);
-                    }
-                  });
-            }
-          });
-    } else {
-      resolveFunction(undefined);
-    }
-  });
-  return result;
+  return new Promise(
+      (resolveFunction,
+       rejectFunction) => ee.data.getAsset(assetName, (getResult) => {
+        if (!getResult) {
+          // TODO(janakr): this swallows any actual errors in getting asset.
+          // TODO(janakr): track if actually created to avoid unnecessary listing?
+          ee.data.createAsset(
+              {id: assetName, type: 'ImageCollection'}, assetName, false, {},
+              (createResult, failure) => {
+                if (failure) {
+                  rejectFunction(failure);
+                } else {
+                  ee.data.setAssetAcl(
+                      assetName, {all_users_can_read: true},
+                      (aclResult, failure) => {
+                        if (failure) {
+                          rejectFunction(failure);
+                        } else {
+                          resolveFunction(undefined);
+                        }
+                      });
+                }
+              });
+        } else {
+          resolveFunction(undefined);
+        }
+      })).catch((err) => {setStatusDiv(err); throw err});
 }
 
 /**
@@ -299,9 +289,9 @@ function listGCSFiles(collectionName) {
 /**
  * Helper function. Accumulates results, issues follow-up queries with page
  * token if needed.
- * @param {string} collectionName
- * @param {string} nextPageToken
- * @param {List} accumulatedList
+ * @param {string} collectionName Name of folder
+ * @param {?string} nextPageToken Token for page of results to request, used when listing spans multiple pages
+ * @param {List} accumulatedList All files found so far
  * @return {Promise}
  */
 function listGCSFilesRecursive(collectionName, nextPageToken, accumulatedList) {
@@ -375,7 +365,7 @@ function replaceEarthEngineIllegalCharacters(fileName) {
  */
 let foundTopFiles = 0;
 let processedFiles = 0;
-let uploadingToGCS = 0;
+let startedUploadToGCS = 0;
 let alreadyUploadedToGCS = 0;
 let uploadedToGCS = 0;
 let alreadyImportedToEE = 0;
@@ -391,7 +381,7 @@ function updateStatus() {
   setStatusDiv(
       'Found ' + foundTopFiles + ' files<br/>' +
       'Processed ' + processedFiles + ' files<br/>' +
-      'Uploading ' + uploadingToGCS + ' files to GCS<br/>' +
+      'Started upload of ' + startedUploadToGCS + ' files to GCS<br/>' +
       'Found ' + (alreadyUploadedToGCS + alreadyPresentEverywhere) +
       ' files previously uploaded to GCS<br/>' +
       'Uploaded ' + uploadedToGCS + ' files to GCS<br/>' +
