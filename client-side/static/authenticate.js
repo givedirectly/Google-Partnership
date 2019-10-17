@@ -17,7 +17,7 @@ const firebaseConfig = {
   projectId: 'mapping-crisis',
   storageBucket: 'mapping-crisis.appspot.com',
   messagingSenderId: '38420505624',
-  appId: '1:38420505624:web:79425020e2f86c82a78f6d'
+  appId: '1:38420505624:web:79425020e2f86c82a78f6d',
 };
 
 /**
@@ -69,6 +69,10 @@ class Authenticator {
         this.additionalScopes);
   }
 
+  /**
+   * Falls back to showing a sign-in button on page so that user can click on it,
+   * getting around pop-up-blocking functionality of browsers.
+   */
   onSigninFailedFirstTime() {
     $('.g-sign-in').removeClass('hidden');
     $('.output').text('(Log in to see the result.)');
@@ -104,6 +108,7 @@ class Authenticator {
   }
 }
 
+/** Initializes Firebase. Exposed only for use in test codepaths. */
 function initializeFirebase() {
   firebase.initializeApp(firebaseConfig);
 }
@@ -111,9 +116,11 @@ function initializeFirebase() {
 // Roughly copied from https://firebase.google.com/docs/auth/web/google-signin.
 
 /**
+ * Initializes Firebase and authenticates using the logged-in Google user
+ * (most likely coming from Authenticator above).
  *
- * @param googleAuth
- * @return {Promise<any>}
+ * @param {gapi.auth2.AuthResponse} googleAuth
+ * @return {Promise<any>} Promise that completes when authentication is done
  */
 function authenticateToFirebase(googleAuth) {
   initializeFirebase();

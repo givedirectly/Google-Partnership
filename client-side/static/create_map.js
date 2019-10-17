@@ -13,6 +13,7 @@ const placeIconParams = {
 /**
  * Creates, initializes and returns a map with search box and drawing tools.
  *
+ * @param {Promise<any>} firebasePromise Promise that will complete when Firebase authentication is finished
  * @return {google.maps.Map}
  */
 function createMap(firebasePromise) {

@@ -42,7 +42,13 @@ function setup() {
   });
 }
 
+/**
+ * Class that provides a Promise that will be completed when the Promise passed
+ * into setPromise is complete. Useful when the Promise you want to wait for
+ * will not be created until later.
+ */
 class SettablePromise {
+  /** @constructor */
   constructor() {
     let resolveFunction = null;
     let rejectFunction = null;
@@ -55,6 +61,10 @@ class SettablePromise {
     this.promiseSet = false;
   }
 
+  /**
+   * Sets the Promise to get the value of. Can only be called once.
+   * @param {Promise<any>} promise
+   */
   setPromise(promise) {
     if (this.promiseSet) {
       console.error('Promise already set: ', this, promise);
@@ -64,6 +74,12 @@ class SettablePromise {
     promise.then(this.resolveFunction).catch(this.rejectFunction);
   }
 
+  /**
+   * Returns the Promise that will eventually resolve to the value of the Promise
+   * passed into setPromise.
+   *
+   * @return {Promise<any>}
+   */
   getPromise() {
     return this.promise;
   }

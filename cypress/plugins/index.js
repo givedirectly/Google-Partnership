@@ -10,7 +10,7 @@ const firebaseAdmin = require('firebase-admin');
 module.exports = (on, config) => {
   on('before:browser:launch', (browser = {}, args) => {
     if (browser.name === 'chromium') {
-      const newArgs = args.filter(arg => arg !== '--disable-gpu');
+      const newArgs = args.filter((arg) => arg !== '--disable-gpu');
       newArgs.push('--ignore-gpu-blacklist');
       return newArgs;
     }
@@ -31,7 +31,7 @@ module.exports = (on, config) => {
       currentApp = firebaseAdmin.initializeApp(
           {
             credential: firebaseAdmin.credential.applicationDefault(),
-            databaseURL: 'https://mapping-crisis.firebaseio.com'
+            databaseURL: 'https://mapping-crisis.firebaseio.com',
           },
           'testFirebaseApp');
       const result =

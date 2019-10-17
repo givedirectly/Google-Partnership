@@ -12,7 +12,7 @@ const firebaseConfig = {
   projectId: 'mapping-crisis',
   storageBucket: 'mapping-crisis.appspot.com',
   messagingSenderId: '38420505624',
-  appId: '1:38420505624:web:79425020e2f86c82a78f6d'
+  appId: '1:38420505624:web:79425020e2f86c82a78f6d',
 };
 
 firebaseLibrary.initializeApp(firebaseConfig);

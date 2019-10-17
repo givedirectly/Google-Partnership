@@ -1,6 +1,6 @@
 import createError from './create_error.js';
 import {mapContainerId, writeWaiterId} from './dom_constants.js';
-import {getCookieValue, getTestCookie, inProduction} from './in_test_util.js';
+import {getTestCookie, inProduction} from './in_test_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {addPopUpListener, createPopup, setUpPopup, updateDamage} from './popup.js';
 import getResources from './resources.js';
@@ -173,11 +173,12 @@ const appearance = {
  * Create a Google Maps Drawing Manager for drawing polygons.
  *
  * @param {google.maps.Map} map
+ * @param {Promise<any>} firebasePromise Promise that will complete when Firebase authentication is finished
  */
 function setUpPolygonDrawing(map, firebasePromise) {
   setUpPopup();
 
-  return firebasePromise.then(() => {
+  firebasePromise.then(() => {
     const drawingManager = new google.maps.drawing.DrawingManager({
       drawingControl: true,
       drawingControlOptions: {drawingModes: ['marker', 'polygon']},
@@ -203,6 +204,7 @@ function setUpPolygonDrawing(map, firebasePromise) {
  * Adds a listener to display notes on pop-up.
  *
  * @param {google.maps.Map} map Map to display regions on
+ * @param {Promise<any>} firebasePromise Promise that will complete when Firebase authentication is finished
  */
 function processUserRegions(map, firebasePromise) {
   addLoadingElement(mapContainerId);
