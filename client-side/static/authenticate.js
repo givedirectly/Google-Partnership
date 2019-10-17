@@ -12,7 +12,9 @@ const gapiTemplate = {
 
 
 class Authenticator {
-  constructor(accessTokenCallback, eeInitializeCallback, errorCallback = console.error, additionalScopes = []) {
+  constructor(
+      accessTokenCallback, eeInitializeCallback, errorCallback = console.error,
+      additionalScopes = []) {
     this.accessTokenCallback = accessTokenCallback;
     this.eeInitializeCallback = eeInitializeCallback;
     this.additionalScopes = additionalScopes;
@@ -27,14 +29,18 @@ class Authenticator {
         this.additionalScopes);
     const gapiSettings = Object.assign({}, gapiTemplate);
     gapiSettings.scope = this.additionalScopes.join(' ');
-    gapi.load('client:auth2', () => gapi.client.init(gapiSettings).then(() => this.onLoginTaskCompleted()));
+    gapi.load(
+        'client:auth2',
+        () => gapi.client.init(gapiSettings)
+                  .then(() => this.onLoginTaskCompleted()));
   }
 
   /** Initializes EarthEngine. */
   initializeEE() {
     this.onLoginTaskCompleted();
     ee.initialize(
-        /* opt_baseurl=*/ null, /* opt_tileurl=*/ null, this.eeInitializeCallback,
+        /* opt_baseurl=*/ null, /* opt_tileurl=*/ null,
+        this.eeInitializeCallback,
         (err) => this.errorCallback('Error initializing EarthEngine: ' + err));
   }
 

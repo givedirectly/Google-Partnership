@@ -56,7 +56,9 @@ function enableWhenReady() {
 ee.data.setCloudApiEnabled(true);
 
 // Perform EE login/Google OAuth2 process.
-new Authenticator(setUpAllHeaders, onStartupTaskCompleted, setStatusDiv, [storageScope]).start();
+new Authenticator(setUpAllHeaders, onStartupTaskCompleted, setStatusDiv, [
+  storageScope
+]).start();
 
 /**
  * Processes files and asset name user gave, mostly asynchronously.
