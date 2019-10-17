@@ -31,7 +31,7 @@ module.exports = {
       'CallExpression': {'arguments': 2},
       'SwitchCase': 1,
       'MemberExpression': 2,
-      'FunctionDeclaration': {'parameters': 2},
+      'FunctionDeclaration': {'parameters': 3},
       'ignoredNodes': [
           'CallExpression > CallExpression',
           'CallExpression > MemberExpression',],
