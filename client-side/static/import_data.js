@@ -57,8 +57,8 @@ function countDamageAndBuildings(feature, histo) {
   const damageLevels = ee.List(damageLevelsList);
   const damageFilters =
       damageLevels.map((type) => ee.Filter.eq(crowdAiDamageKey, type));
-  const blockDamage = ee.FeatureCollection(resources.damage)
-                          .filterBounds(feature.geometry());
+  const blockDamage =
+      ee.FeatureCollection(resources.damage).filterBounds(feature.geometry());
   const totalBuildings = histo.get(feature.get(geoidTag));
   const attrDict = ee.Dictionary.fromLists(
       damageLevels,
@@ -180,9 +180,8 @@ function run() {
   ee.initialize();
 
   const resources = getResources();
-  const snap =
-      ee.FeatureCollection(resources.rawSnap)
-          .map((feature) => stringifyGeoid(feature, censusGeoidKey));
+  const snap = ee.FeatureCollection(resources.rawSnap)
+                   .map((feature) => stringifyGeoid(feature, censusGeoidKey));
   const blockGroup = ee.Join.simple().apply(
       ee.FeatureCollection(resources.bg),
       ee.FeatureCollection(resources.damage),
@@ -223,8 +222,8 @@ function run() {
   // TODO(#61): parameterize ee user account to write assets to or make GD
   // account.
   // TODO: delete existing asset with same name if it exists.
-  const task = ee.batch.Export.table.to(
-      data, assetName, 'users/juliexxia/' + assetName);
+  const task =
+      ee.batch.Export.table.to(data, assetName, 'users/juliexxia/' + assetName);
   task.start();
   $('.upload-status')
       .text('Check Code Editor console for progress. Task: ' + task.id);
