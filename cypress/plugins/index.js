@@ -7,9 +7,6 @@
 
 const firebaseAdmin = require('firebase-admin');
 
-process.env.GOOGLE_APPLICATION_CREDENTIALS =
-    '/usr/local/google/home/janakr/Downloads/mapping-crisis-firebase-adminsdk-pw40g-e2e1f3a2b2.json';
-
 module.exports = (on, config) => {
   on('before:browser:launch', (browser = {}, args) => {
     if (browser.name === 'chromium') {
@@ -20,6 +17,16 @@ module.exports = (on, config) => {
   });
   let currentApp = null;
   on('task', {
+    /**
+     * Uses Firebase service account credentials (stored in the json file
+     * pointed to by the environment variable GOOGLE_APPLICATION_CREDENTIALS)
+     * to generate a "custom token" that can be used by both the test and
+     * production code to authenticate with Firebase. This token can only be
+     * used in documents that look like 'usershapes-test/<blah>/suffix/doc', as
+     * determined by the Firebase rules.
+     *
+     * @return {Promise<string>} The token to be used
+     */
     initializeTestFirebase() {
       currentApp = firebaseAdmin.initializeApp(
           {
