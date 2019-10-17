@@ -10,8 +10,20 @@ const gapiTemplate = {
   clientId: CLIENT_ID,
 };
 
-
+/**
+ * Performs EarthEngine authentication and returns an access token usable for
+ * other things like GCS or Firebase.
+ */
 class Authenticator {
+  /**
+   * @constructor
+   * @param {Function} accessTokenCallback Will receive the access token coming
+   *     from authentication
+   * @param {Function} eeInitializeCallback Called after EarthEngine
+   *     initialization is complete
+   * @param {Function} errorCallback Called on any errors (defaults to console.error)
+   * @param {Array<string>} additionalScopes OAuth2 scopes to request
+   */
   constructor(
       accessTokenCallback, eeInitializeCallback, errorCallback = console.error,
       additionalScopes = []) {
@@ -22,6 +34,7 @@ class Authenticator {
     this.loginTasksToComplete = 2;
   }
 
+  /** Kicks off all processes. */
   start() {
     ee.data.authenticateViaOauth(
         CLIENT_ID, () => this.initializeEE(),
@@ -44,15 +57,14 @@ class Authenticator {
         (err) => this.errorCallback('Error initializing EarthEngine: ' + err));
   }
 
+  /**
+   * Notes that a login task has completed, and if all have, calls the callback
+   * with the access token.
+   */
   onLoginTaskCompleted() {
     if (--this.loginTasksToComplete === 0) {
-      this.getAccessTokenFromLogin();
+      const user = gapi.auth2.getAuthInstance().currentUser.get();
+      this.accessTokenCallback(user.getAuthResponse().access_token);
     }
-  }
-
-  getAccessTokenFromLogin() {
-    const auth = gapi.auth2.getAuthInstance();
-    const user = auth.currentUser.get();
-    this.accessTokenCallback(user.getAuthResponse().access_token);
   }
 }
