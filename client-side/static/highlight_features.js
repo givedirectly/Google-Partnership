@@ -1,17 +1,40 @@
 import {geoidTag} from './property_names.js';
 
-export {currentFeatures, highlightFeatures};
+export {currentFeatures, CurrentFeatureValue, highlightFeatures};
 
 // TODO(janakr): should highlighted features be cleared when map is redrawn?
 // Probably, but user might also want to keep track of highlighted districts
 // even after a redraw.
 
 // Keep track of displayed features so that we can remove them if deselected.
-// Keys are geoids, values are DataFeature objects returned by the map.
-// We expect one DataFeature object per geoid/feature, but the Maps interface
-// returns a list, so we keep the list here unaltered to stay robust to any
-// edge cases like disconnected districts or the like.
+// Keys are geoids, values are CurrentFeatureValue objects.
 const currentFeatures = new Map();
+
+/**
+ * Values of the currentFeatures map. Contains DataFeature objects returned by
+ * the map. We expect one DataFeature object per geoid/feature, but the Maps
+ * interface returns a list, so we keep the list here unaltered to stay robust
+ * to any edge cases like disconnected districts or the like. If a popup is
+ * attached to the feature, also contains that.
+ */
+class CurrentFeatureValue {
+  /**
+   * @constructor
+   * @param {Array<google.maps.Data.Feature>} dataFeatures
+   */
+  constructor(dataFeatures) {
+    this.dataFeatures = dataFeatures;
+  }
+
+  /**
+   * If the feature was highlighted via map click, this is the attached
+   * info window.
+   * @param {google.maps.InfoWindow} popup
+   */
+  setPopup(popup) {
+    this.popup = popup;
+  }
+}
 
 /**
  * Takes a list of EE features and displays their geometries on the Google Maps
@@ -21,8 +44,9 @@ const currentFeatures = new Map();
  *     ee.ComputedObject.evaluate call, so that access to them is safe! In
  *     particular, they are JSON objects, not ee.Feature objects.
  * @param {google.maps.Map} map
+ * @param {boolean} zoom if set to true, pan and zoom to highlighted feature(s).
  */
-function highlightFeatures(features, map) {
+function highlightFeatures(features, map, zoom = false) {
   const newFeatures = new Map();
   for (const feature of features) {
     newFeatures.set(feature.properties[geoidTag], feature);
@@ -31,7 +55,12 @@ function highlightFeatures(features, map) {
   const keys = currentFeatures.keys();
   for (const key of keys) {
     if (!newFeatures.delete(key)) {
-      currentFeatures.get(key).forEach((elt) => map.data.remove(elt));
+      const currentFeatureValue = currentFeatures.get(key);
+      currentFeatureValue.dataFeatures.forEach((elt) => map.data.remove(elt));
+      if (currentFeatureValue.popup) {
+        currentFeatureValue.popup.close();
+        currentFeatureValue.popup.setMap(null);
+      }
       currentFeatures.delete(key);
     }
   }
@@ -41,9 +70,33 @@ function highlightFeatures(features, map) {
     const jsonFeature = {'type': 'Feature', 'geometry': feature.geometry};
     const dataFeatures = map.data.addGeoJson(jsonFeature);
     // Store the features so they can be removed later on deselect.
-    currentFeatures.set(id, dataFeatures);
+    currentFeatures.set(id, new CurrentFeatureValue(dataFeatures));
     dataFeatures.forEach(
         (item) => map.data.overrideStyle(
             item, {fillColor: 'red', strokeColor: 'red'}));
+  }
+
+  // TODO(juliexxia): write tests for this functionality
+  if (zoom && currentFeatures.size > 0) {
+    const bounds = new google.maps.LatLngBounds();
+    for (const currentFeatureValue of currentFeatures.values()) {
+      currentFeatureValue.dataFeatures.forEach(
+          (feature) => feature.getGeometry().forEachLatLng(
+              (latlng) => bounds.extend(latlng)));
+    }
+    // Make sure we're sufficiently zoomed out for reasonable map context.
+    const extendPoint1 = new google.maps.LatLng(
+        Math.max(
+            bounds.getNorthEast().lat(), bounds.getSouthWest().lat() + 0.1),
+        Math.max(
+            bounds.getNorthEast().lng(), bounds.getSouthWest().lng() + 0.1));
+    const extendPoint2 = new google.maps.LatLng(
+        Math.min(
+            bounds.getSouthWest().lat(), bounds.getNorthEast().lat() - 0.1),
+        Math.min(
+            bounds.getSouthWest().lng(), bounds.getNorthEast().lng() - 0.1));
+    bounds.extend(extendPoint1);
+    bounds.extend(extendPoint2);
+    map.fitBounds(bounds);
   }
 }

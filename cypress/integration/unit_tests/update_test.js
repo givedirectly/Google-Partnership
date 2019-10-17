@@ -50,7 +50,6 @@ describe('Unit test for updates.js', () => {
 
     // Without this, tests don't currently fail, but the code in update.js
     // silently errors out, so it's a hazard.
-    global.google = {maps: {event: {clearListeners: () => {}}}};
     document.getElementById('update').click();
 
     expect(toggles.get('poverty weight')).to.equals(0.01);

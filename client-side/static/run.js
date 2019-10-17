@@ -17,7 +17,7 @@ export {
 };
 
 // TODO: infer this from disaster const in import_data.js?
-const snapAndDamageAsset = 'users/juliexxia/harvey-data-aff-as-nod';
+const snapAndDamageAsset = 'users/janak/harvey-data-ms-correct-damage';
 // Promise for snapAndDamageAsset. After it's first resolved, we never need to
 // download it from EarthEngine again.
 let snapAndDamagePromise;
@@ -69,7 +69,7 @@ function createAndDisplayJoinedData(
       povertyWeight);
   initializeScoreLayer(map, processedData);
   drawTable(
-      processedData, (features) => highlightFeatures(features, map),
+      processedData, (features) => highlightFeatures(features, map, true),
       (table, tableData) => {
         loadingElementFinished(tableContainerId);
         // every time we get a new table and data, reselect elements in the
@@ -102,10 +102,10 @@ function createAssetCheckboxes(map) {
   // a better place.
   const sidebarDiv = document.getElementById(sidebarDatasetsId);
   Object.keys(assets).forEach(
-      (assetName) => createNewCheckboxForAsset(assetName, sidebarDiv));
+      (assetName) => createNewCheckboxForAsset(assetName, sidebarDiv, map));
   createCheckboxForUserFeatures(sidebarDiv);
   // score checkbox gets checked during initializeScoreLayer
-  createNewCheckboxForAsset(scoreLayerName, sidebarDiv);
+  createNewCheckboxForAsset(scoreLayerName, sidebarDiv, map);
 }
 
 /**
@@ -114,9 +114,10 @@ function createAssetCheckboxes(map) {
  * @param {String} name checkbox name, basis for id
  * @param {String} displayName checkbox display name
  * @param {div} parentDiv div to attach checkbox to
+ * @param {google.maps.Map} map main map
  * @return {HTMLInputElement} the checkbox
  */
-function createNewCheckbox(name, displayName, parentDiv) {
+function createNewCheckbox(name, displayName, parentDiv, map) {
   const newRow = document.createElement('div');
   newRow.className = 'checkbox-row';
   const newBox = document.createElement('input');
@@ -141,8 +142,9 @@ function createNewCheckbox(name, displayName, parentDiv) {
  *
  * @param {String} assetName
  * @param {Element} parentDiv
+ * @param {google.maps.Map} map main map
  */
-function createNewCheckboxForAsset(assetName, parentDiv) {
+function createNewCheckboxForAsset(assetName, parentDiv, map) {
   const newBox = createNewCheckbox(
       assetName,
       assets[assetName] ? assets[assetName].getDisplayName() : assetName,
@@ -152,9 +154,9 @@ function createNewCheckboxForAsset(assetName, parentDiv) {
   }
   newBox.onclick = () => {
     if (newBox.checked) {
-      toggleLayerOn(assetName);
+      toggleLayerOn(assetName, map);
     } else {
-      toggleLayerOff(assetName);
+      toggleLayerOff(assetName, map);
     }
   };
 }
@@ -183,7 +185,7 @@ function initializeAssetLayers(map) {
   Object.keys(assets).forEach((assetName, index) => {
     // TODO(juliexxia): generalize for ImageCollections (and Features/Images?)
     if (assets[assetName].shouldDisplayOnLoad()) {
-      addLayer(assetName, index);
+      addLayer(assetName, index, map);
     } else {
       addNullLayer(assetName, index);
     }
@@ -197,7 +199,7 @@ function initializeAssetLayers(map) {
  * score sit at index 0, but having it last ensures it displays on top.
  *
  * @param {google.maps.Map} map main map
- * @param {ee.FeatureCollection} layer the computed score features
+ * @param {Promise<Array<GeoJson>>} layer
  */
 function initializeScoreLayer(map, layer) {
   addLayerFromGeoJsonPromise(layer, scoreLayerName, scoreIndex);

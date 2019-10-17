@@ -7,12 +7,49 @@ describe('Integration test for clicking feature', () => {
     cy.visit(host);
     cy.awaitLoad();
 
-    cy.get('.map').click(343, 184);
+    cy.get('.map').click(528, 624);
     cy.get('.google-visualization-table-tr-sel')
         .find('[class="google-visualization-table-td"]')
         .should(
             'have.text',
-            'Block Group 4, Census Tract 2511, Harris County, Texas67019');
+            'Block Group 1, Census Tract 2525, Harris County, Texas32574');
+  });
+
+  it('clicks on a feature on the map, then unclicks it', () => {
+    cy.visit(host);
+    cy.awaitLoad();
+
+    zoom(3);
+    cy.get('.map').click(515, 310);
+    cy.get('.map').should('contain', 'SCORE: 50');
+    cy.get('.map').should(
+        'contain', 'Block Group 3, Census Tract 2415, Harris County, Texas');
+
+    // Not sure why this first click isn't registering but double click seems to
+    // do the job.
+    cy.get('.map').click(515, 310);
+    cy.get('.map').click(515, 310);
+    cy.get('.map').should(
+        'not.contain',
+        'Block Group 3, Census Tract 2415, Harris County, Texas');
+  });
+
+  it('clicks on a feature on the map, then clicks on another', () => {
+    cy.visit(host);
+    cy.awaitLoad();
+
+    zoom(3);
+    cy.get('.map').click(515, 310);
+    cy.get('.map').should('contain', 'SCORE: 50');
+    cy.get('.map').should(
+        'contain', 'Block Group 3, Census Tract 2415, Harris County, Texas');
+
+    // deselect
+    cy.get('.map').click(783, 270);
+    cy.get('.map').click(783, 270);
+    // show first one is closed.
+    cy.get('.map').should(
+        'contain', 'Block Group 1, Census Tract 2520, Harris County, Texas');
   });
 
   it('click highlights correct feature even after resort', () => {
@@ -23,12 +60,12 @@ describe('Integration test for clicking feature', () => {
     cy.get('.google-visualization-table-tr-head > :nth-child(4)').click();
     cy.get('.google-visualization-table-tr-head > :nth-child(4)').click();
 
-    cy.get('.map').click(343, 184);
+    cy.get('.map').click(528, 624);
     cy.get('.google-visualization-table-tr-sel')
         .find('[class="google-visualization-table-td"]')
         .should(
             'have.text',
-            'Block Group 4, Census Tract 2511, Harris County, Texas67019');
+            'Block Group 1, Census Tract 2525, Harris County, Texas32574');
   });
 
   it('clicks a place where there is no damage -> no feature', () => {
@@ -41,23 +78,34 @@ describe('Integration test for clicking feature', () => {
 
   // Ensures that listeners are cleared when table instance and data
   // are updated.
-  it.only('click highlights correct feature even after update', () => {
+  it('click highlights correct feature even after update', () => {
     cy.visit(host);
     cy.awaitLoad();
-    cy.get('#sidebar-toggle-thresholds').click();
 
-    cy.get('.map').click(343, 184);
+    cy.get('.map').click(528, 624);
     cy.get('.google-visualization-table-tr-sel')
         .find('[class="google-visualization-table-td"]')
         .should(
             'have.text',
-            'Block Group 4, Census Tract 2511, Harris County, Texas67019');
-    cy.get('[id="damage threshold"]').type('0.9');
+            'Block Group 1, Census Tract 2525, Harris County, Texas32574');
+    cy.get('#sidebar-toggle-thresholds').click();
+    cy.get('[id="damage threshold"]').clear().type('0.8');
     cy.get('[id="update"]').click();
     cy.get('.google-visualization-table-tr-sel')
         .find('[class="google-visualization-table-td"]')
         .should(
             'have.text',
-            'Block Group 4, Census Tract 2511, Harris County, Texas67019');
+            'Block Group 1, Census Tract 2525, Harris County, Texas32574');
   });
 });
+
+/**
+ * Helper function to zoom some amount of times.
+ * @param {Integer} numTimes
+ */
+function zoom(numTimes) {
+  for (let i = 0; i < numTimes; i++) {
+    cy.get('[title="Zoom in"]').click();
+    cy.wait(500);
+  }
+}

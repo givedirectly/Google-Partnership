@@ -18,6 +18,7 @@ import './commands';
 import './mock_ee';
 import './mock_firebase';
 import './mock_deck';
+import './mock_maps';
 
 // Alternatively you can use CommonJS syntax:
 // require('./commands')
@@ -26,7 +27,8 @@ global.host = 'http://localhost:8080/';
 global.tableClass = '.google-visualization-table-table';
 
 beforeEach(() => {
-  cy.viewport(1100, 1700);  // wide enough for sidebar
+  /** wide enough for sidebar */
+  cy.viewport(1100, 1700);
   global.testCookieValue = Math.random() + '/suffix';
   cy.setCookie('IN_CYPRESS_TEST', testCookieValue);
 });

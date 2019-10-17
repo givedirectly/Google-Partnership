@@ -46,7 +46,7 @@ function toggleSidebar(toggleId, contentId) {
   } else {
     // Collapse the sidebar because the current content is being toggled off.
     sidebar.style.width = sidebarMinWidth;
-    $('#' + currentContentId).fadeOut(sidebarContentTransitionDuration);
+    $('#' + currentContentId).fadeOut(0);
     currentContentId = null;
   }
 }

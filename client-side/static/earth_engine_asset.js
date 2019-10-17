@@ -1,4 +1,4 @@
-export {assets};
+export {assets, EarthEngineAsset};
 
 /**
  * EarthEngineAsset class to store relevant data about any assets, including
@@ -12,13 +12,15 @@ class EarthEngineAsset {
    * @param {String} type
    * @param {String} displayName
    * @param {boolean} displayOnLoad
-   * @param {?Function} colorFunction
+   * @param {?Function} stylingFunction
+   * @param {Object} visParams
    **/
-  constructor(type, displayName, displayOnLoad, colorFunction) {
+  constructor(type, displayName, displayOnLoad, stylingFunction, visParams) {
     this.type = type;
     this.displayName = displayName;
     this.displayOnLoad = displayOnLoad;
-    this.colorFunction = colorFunction;
+    this.stylingFunction = stylingFunction;
+    this.visParams = visParams;
   }
 
   /**
@@ -30,13 +32,13 @@ class EarthEngineAsset {
   }
 
   /**
-   * Returns the function to color the asset. Null if asset doesn't
+   * Returns the function to style the asset. Null if asset doesn't
    * need styling or is styled elsewhere.
    *
    * @return {?Function}
    */
-  getColorFunction() {
-    return this.colorFunction;
+  getStylingFunction() {
+    return this.stylingFunction;
   }
 
   /**
@@ -56,7 +58,23 @@ class EarthEngineAsset {
   getDisplayName() {
     return this.displayName;
   }
+
+  /**
+   * Returns the visual styling for the asset, if any.
+   *
+   * @return {Object}
+   */
+  getVisParams() {
+    return this.visParams;
+  }
 }
+
+EarthEngineAsset.Type = {
+  IMAGE: 'Image',
+  IMAGECOLLECTION: 'ImageCollection',
+  FEATURECOLLECTION: 'FeatureCollection',
+};
+
 
 /**
  * Colors the feature with SVI-specific logic.
@@ -146,7 +164,8 @@ const gdVisits = new EarthEngineAsset(
 // Images/ImageCollections, which will always be displayed below
 // FeatureCollections.
 const assets = {
-  'users/juliexxia/harvey-damage-crowdai-format': harveyDamageCrowdAIFormat,
+  'users/juliexxia/harvey-damage-crowdai-format-deduplicated':
+      harveyDamageCrowdAIFormat,
   'users/ruthtalbot/harvey-SVI': sviData,
   'users/ruthtalbot/harvey-pathofstorm-radii': pathOfStormRadii,
   'users/ruthtalbot/fema-visits-polygon': femaVisits,
