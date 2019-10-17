@@ -96,7 +96,7 @@ class ShapeData {
     // that feels buggy to me.
     const points = [];
     polygon.getPath().forEach((elt) => points.push(elt.lng(), elt.lat()));
-    ee.FeatureCollection(getResources().damageAsset)
+    ee.FeatureCollection(getResources().damage)
         .filterBounds(ee.Geometry.Polygon(points))
         .size()
         .evaluate((damage, failure) => {

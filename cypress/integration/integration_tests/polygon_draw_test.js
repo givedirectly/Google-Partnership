@@ -41,7 +41,7 @@ describe('Integration tests for drawing polygons', () => {
 
   afterEach(deleteAllRegionsDrawnByTest);
 
-  it('Draws a polygon and edits its notes', () => {
+  it.only('Draws a polygon and edits its notes', () => {
     cy.visit(host);
     drawPolygonAndClickOnIt();
     cy.awaitLoad(['writeWaiter']);
@@ -357,4 +357,15 @@ function drawPointAndPrepareForNext(x, y) {
   // const clientY = y + 81;
   // cy.get('.map').trigger('mousemove', {clientX: clientX, clientY: clientY});
   cy.get('.map').click(x, y);
+}
+
+/**
+ * Helper function to zoom some amount of times.
+ * @param {Integer} numTimes
+ */
+function zoom(numTimes) {
+  for (let i = 0; i < numTimes; i++) {
+    cy.get('[title="Zoom in"]').click();
+    cy.wait(500);
+  }
 }
