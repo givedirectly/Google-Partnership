@@ -1,6 +1,6 @@
-import damageLevelsList from './damage_levels.js';
-import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, snapPercentageTag, snapPopTag, sviTag, totalPopTag, tractTag} from './property_names.js';
-import getResources from './resources.js';
+import damageLevelsList from '../damage_levels.js';
+import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, snapPercentageTag, snapPopTag, sviTag, totalPopTag, tractTag} from '../property_names.js';
+import getResources from '../resources.js';
 
 export {crowdAiDamageKey};
 /** @VisibleForTesting */
