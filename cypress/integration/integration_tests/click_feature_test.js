@@ -7,7 +7,7 @@ describe('Integration test for clicking feature', () => {
     cy.visit(host);
     cy.awaitLoad();
 
-    clickAndVerifyBlockGroup()
+    clickAndVerifyBlockGroup();
   });
 
   it('clicks on a feature on the map, then unclicks it', () => {
@@ -78,6 +78,7 @@ describe('Integration test for clicking feature', () => {
   });
 });
 
+/** Convenience function for clicking on the block group we use for testing. */
 function clickAndVerifyBlockGroup() {
   zoom(4);
   cy.get('.map').click(730, 400);
