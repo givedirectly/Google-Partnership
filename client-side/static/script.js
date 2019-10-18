@@ -38,8 +38,8 @@ function setup() {
       if (!token) {
         alert('Did not receive Firestore token');
       }
-      firebaseAuthPromise.setPromise(firebase.auth().signInWithCustomToken(
-          token));
+      firebaseAuthPromise.setPromise(
+          firebase.auth().signInWithCustomToken(token));
       const authenticator = new Authenticator(null, runOnInitialize);
       authenticator.initializeEE();
     }
