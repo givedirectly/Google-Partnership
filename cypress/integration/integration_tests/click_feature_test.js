@@ -7,25 +7,14 @@ describe('Integration test for clicking feature', () => {
     cy.visit(host);
     cy.awaitLoad();
 
-    zoom(4);
-    cy.get('.map').click(730, 400);
-    cy.get('.google-visualization-table-tr-sel')
-        .find('[class="google-visualization-table-td"]')
-        .should(
-            'have.text',
-            'Block Group 1, Census Tract 2309, Harris County, Texas19688');
+    clickAndVerifyBlockGroup()
   });
 
   it('clicks on a feature on the map, then unclicks it', () => {
     cy.visit(host);
     cy.awaitLoad();
 
-    zoom(4);
-    cy.get('.map').click(730, 400);
-    cy.get('.map').should('contain', 'SCORE: 53');
-    cy.get('.map').should(
-        'contain', 'Block Group 1, Census Tract 2309, Harris County, Texas');
-
+    clickAndVerifyBlockGroup();
     // Not sure why this first click isn't registering but double click seems to
     // do the job.
     cy.get('.map').click(730, 400);
@@ -39,12 +28,7 @@ describe('Integration test for clicking feature', () => {
     cy.visit(host);
     cy.awaitLoad();
 
-    zoom(4);
-    cy.get('.map').click(730, 400);
-    cy.get('.map').should('contain', 'SCORE: 53');
-    cy.get('.map').should(
-        'contain', 'Block Group 1, Census Tract 2309, Harris County, Texas');
-
+    clickAndVerifyBlockGroup();
     // deselect
     // const polygonButton = cy.get('[title="Add a marker"]');
     // polygonButton.click();
@@ -65,14 +49,7 @@ describe('Integration test for clicking feature', () => {
     // Sort descending by damage percentage
     cy.get('.google-visualization-table-tr-head > :nth-child(4)').click();
     cy.get('.google-visualization-table-tr-head > :nth-child(4)').click();
-
-    zoom(4);
-    cy.get('.map').click(730, 400);
-    cy.get('.google-visualization-table-tr-sel')
-        .find('[class="google-visualization-table-td"]')
-        .should(
-            'have.text',
-            'Block Group 1, Census Tract 2309, Harris County, Texas19688');
+    clickAndVerifyBlockGroup();
   });
 
   it('clicks a place where there is no damage -> no feature', () => {
@@ -89,13 +66,7 @@ describe('Integration test for clicking feature', () => {
     cy.visit(host);
     cy.awaitLoad();
 
-    zoom(4);
-    cy.get('.map').click(730, 400);
-    cy.get('.google-visualization-table-tr-sel')
-        .find('[class="google-visualization-table-td"]')
-        .should(
-            'have.text',
-            'Block Group 1, Census Tract 2309, Harris County, Texas19688');
+    clickAndVerifyBlockGroup();
     cy.get('#sidebar-toggle-thresholds').click();
     cy.get('[id="damage threshold"]').clear().type('0.7');
     cy.get('[id="update"]').click();
@@ -106,6 +77,16 @@ describe('Integration test for clicking feature', () => {
             'Block Group 1, Census Tract 2309, Harris County, Texas19688');
   });
 });
+
+function clickAndVerifyBlockGroup() {
+  zoom(4);
+  cy.get('.map').click(730, 400);
+  cy.get('.google-visualization-table-tr-sel')
+      .find('[class="google-visualization-table-td"]')
+      .should(
+          'have.text',
+          'Block Group 1, Census Tract 2309, Harris County, Texas19688');
+}
 
 /**
  * Helper function to zoom some amount of times.
