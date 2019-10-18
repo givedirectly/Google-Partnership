@@ -74,6 +74,6 @@ module.exports = (on, config) => {
             () => resolve(earthEngine.data.getAuthToken().substring(7)),
             reject);
       });
-    }
+    },
   });
 };
