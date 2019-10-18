@@ -70,6 +70,7 @@ module.exports = (on, config) => {
       return new Promise((resolve, reject) => {
         earthEngine.data.authenticateViaPrivateKey(
             privateKey,
+            // TODO(janakr): no better way to do this?
             // Strip 'Bearer ' from beginning.
             () => resolve(earthEngine.data.getAuthToken().substring(7)),
             reject);
