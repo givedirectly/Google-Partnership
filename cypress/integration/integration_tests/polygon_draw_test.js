@@ -24,7 +24,8 @@ firebaseLibrary.initializeApp(firebaseConfig);
 describe('Integration tests for drawing polygons', () => {
   // Delete all test-defined polygons.
   const deleteAllRegionsDrawnByTest = () => {
-    const userShapes = firebaseLibrary.firestore().collection('usershapes-test/' + testCookieValue);
+    const userShapes = firebaseLibrary.firestore().collection(
+        'usershapes-test/' + testCookieValue);
     // Return a wrapped promise. Cypress will wait for the promise to finish.
     cy.wrap(userShapes.get().then((querySnapshot) => {
       const deletePromises = [];
