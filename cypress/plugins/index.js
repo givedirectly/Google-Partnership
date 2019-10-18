@@ -1,11 +1,11 @@
+const firebaseAdmin = require('firebase-admin');
+
 // You can read more here:
 // https://on.cypress.io/plugins-guide
 // ***********************************************************
 
 // This function is called when a project is opened or re-opened (e.g. due to
 // the project's config changing)
-
-const firebaseAdmin = require('firebase-admin');
 
 module.exports = (on, config) => {
   on('before:browser:launch', (browser = {}, args) => {
@@ -22,7 +22,7 @@ module.exports = (on, config) => {
      * pointed to by the environment variable GOOGLE_APPLICATION_CREDENTIALS)
      * to generate a "custom token" that can be used by both the test and
      * production code to authenticate with Firebase. This token can only be
-     * used in documents that look like 'usershapes-test/<blah>/suffix/doc', as
+     * used in documents that look like 'usershapes-test/<blah>/suffix/<doc>', as
      * determined by the Firebase rules.
      *
      * We do this initialization in this plugin because creating such a custom

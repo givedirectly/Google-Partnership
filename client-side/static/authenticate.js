@@ -40,7 +40,7 @@ class Authenticator {
    * @param {Function} errorCallback Called on any errors (defaults to
    */
   constructor(
-      authCallback, eeInitializeCallback, additionalScopes = [],
+      authCallback, eeInitializeCallback, additionalScopes,
       errorCallback = console.error) {
     this.authCallback = authCallback;
     this.eeInitializeCallback = eeInitializeCallback;
