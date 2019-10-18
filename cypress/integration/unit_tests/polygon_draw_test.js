@@ -37,7 +37,7 @@ describe('Unit test for ShapeData', () => {
       }
     }
     // Make sure userShapes is set in the code.
-    processUserRegions(null, Promise.resolve(null));
+    return cy.wrap(processUserRegions(null, Promise.resolve(null)));
   });
 
   it('Add shape', () => {

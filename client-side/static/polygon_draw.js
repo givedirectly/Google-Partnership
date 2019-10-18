@@ -207,10 +207,11 @@ function setUpPolygonDrawing(map, firebasePromise) {
  * @param {google.maps.Map} map Map to display regions on
  * @param {Promise<any>} firebasePromise Promise that will complete when
  *     Firebase authentication is finished
+ * @return {Promise} promise that is resolved when all initialization is done (only used by tests).
  */
 function processUserRegions(map, firebasePromise) {
   addLoadingElement(mapContainerId);
-  firebasePromise
+  return firebasePromise
       .then(() => userShapes = firebase.firestore().collection(collectionName))
       .then(() => userShapes.get())
       .then(
