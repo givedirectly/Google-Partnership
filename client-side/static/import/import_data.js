@@ -219,7 +219,8 @@ function run() {
   // counts
   const buildings = ee.FeatureCollection(resources.buildings);
   const withBlocKGroup = buildings.map(attachBlockGroups);
-  const buildingsHisto = ee.Dictionary(withBlocKGroup.aggregate_histogram(geoidTag));
+  const buildingsHisto =
+      ee.Dictionary(withBlocKGroup.aggregate_histogram(geoidTag));
   // process final feature collection
   const data = joinedSnapIncomeSVI.map(
       (feature) => countDamageAndBuildings(feature, buildingsHisto));
