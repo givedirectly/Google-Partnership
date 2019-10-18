@@ -6,10 +6,13 @@ const CLIENT_ID =
     '38420505624-boghq4foqi5anc9kc5c5tsq82ar9k4n0.apps.googleusercontent.com';
 
 const gapiTemplate = {
+  // From same page as above.
   apiKey: 'AIzaSyAbNHe9B0Wo4MV8rm3qEdy8QzFeFWZERHs',
   clientId: CLIENT_ID,
 };
 
+// Taken from
+// https://console.firebase.google.com/project/mapping-crisis/settings/general/
 const firebaseConfig = {
   apiKey: 'AIzaSyBAQkh-kRrYitkPafxVLoZx3E5aYM-auXM',
   authDomain: 'mapping-crisis.firebaseapp.com',
