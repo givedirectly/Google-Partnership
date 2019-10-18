@@ -19,21 +19,21 @@ module.exports = (on, config) => {
   let currentApp = null;
   on('task', {
     /**
-     * Uses Firebase service account credentials (stored in the json file
-     * pointed to by the environment variable GOOGLE_APPLICATION_CREDENTIALS)
-     * to generate a "custom token" that can be used by both the test and
-     * production code to authenticate with Firebase. This token can only be
-     * used in documents that look like 'usershapes-test/<blah>/suffix/<doc>',
-     * as determined by the Firebase rules.
+     * The following two functions use service account credentials (stored in the json file pointed to by the environment variable GOOGLE_APPLICATION_CREDENTIALS) to generate tokens that can be used by production
+     * code to authenticate with Firebase/EarthEngine.
      *
-     * We do this initialization in this plugin because creating such a custom
-     * token that's easy to pass around can best be done using the Firebase
-     * Admin SDK. That library is only available on Node, not client-side
-     * Javascript. Even Cypress tests, though they appear to run in Node, are
-     * actually browserified, and the firebase-admin module doesn't work there.
-     * Thus, we use the Firebase admin module here, in genuine Node, and then
-     * pass the created token back out to the test, where it can use it and also
-     * set a cookie for the production code to use.
+     * We do these initializations in this plugin because creating such a custom
+     * token that's easy to pass around can best be done in libraries that are only
+     * available on Node, not client-side Javascript (for Firebase, the Firebase
+     * Admin SDK). Even Cypress tests, though they appear to run in Node, are
+     * actually browserified, and the above modules don't work there. Thus, we use genuine Node modules, and then
+     * pass the created tokens back out to the test, where it can use them (in the case of Firebase) and also
+     * set cookies for the production code to use.
+     */
+
+    /**
+     * Produces a Firebase token that can only be used in documents that look like 'usershapes-test/<blah>/suffix/<doc>',
+     * as determined by the Firebase rules.
      *
      * @return {Promise<string>} The token to be used
      */
@@ -56,6 +56,11 @@ module.exports = (on, config) => {
         throw new Error('No token generated');
       });
     },
+    /**
+     * Produces an EarthEngine token that can be used by production code.
+     *
+     * @return {Promise<string>}
+     */
     getEarthEngineToken() {
       const privateKey = require(process.env.GOOGLE_APPLICATION_CREDENTIALS);
       return new Promise((resolve, reject) => {
