@@ -245,7 +245,7 @@ function maybeCreateImageCollection(collectionName) {
                  }))
       .catch((err) => {
         setStatusDiv(err);
-        throw err
+        throw err;
       });
 }
 
