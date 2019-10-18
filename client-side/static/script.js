@@ -50,7 +50,7 @@ function setup() {
       ee.data.setAuthToken(
           CLIENT_ID, 'Bearer', eeToken,
           // Expires in 3600 is a lie, but no need to tell the truth.
-          /* expiresIn */ 3600, /* extraScopes */ [],
+          /* expiresIn */ 3600, /* extraScopes */[],
           /* callback */ () => authenticator.initializeEE(),
 
           /* updateAuthLibrary */ false);
