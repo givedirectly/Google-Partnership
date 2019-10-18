@@ -69,8 +69,8 @@ module.exports = (on, config) => {
       const privateKey = require(process.env.GOOGLE_APPLICATION_CREDENTIALS);
       return new Promise((resolve, reject) => {
         earthEngine.data.authenticateViaPrivateKey(
-            // Strip 'Bearer ' from beginning.
             privateKey,
+            // Strip 'Bearer ' from beginning.
             () => resolve(earthEngine.data.getAuthToken().substring(7)),
             reject);
       });

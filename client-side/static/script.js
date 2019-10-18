@@ -42,12 +42,16 @@ function setup() {
       firebaseAuthPromise.setPromise(
           firebase.auth().signInWithCustomToken(firebaseToken));
       const eeToken = getCookieValue('TEST_EARTHENGINE_TOKEN');
+      if (!eeToken) {
+        console.error('Did not receive EarthEngine token in test');
+        return;
+      }
       const authenticator = new Authenticator(null, runOnInitialize);
       ee.data.setAuthToken(
           CLIENT_ID, 'Bearer', eeToken,
           // Expires in 3600 is a lie, but no need to tell the truth.
-          /* expiresIn */ 3600, /* extraScopes */[],
-          () => authenticator.initializeEE(),
+          /* expiresIn */ 3600, /* extraScopes */ [],
+          /* callback */ () => authenticator.initializeEE(),
 
           /* updateAuthLibrary */ false);
     }
