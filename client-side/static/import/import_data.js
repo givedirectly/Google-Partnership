@@ -1,6 +1,5 @@
-import damageLevelsList from '../damage_levels.js';
 import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, snapPercentageTag, snapPopTag, sviTag, totalPopTag, tractTag} from '../property_names.js';
-import getResources from '../resources.js';
+import {disaster, getResources} from '../resources.js';
 
 export {crowdAiDamageKey};
 /** @VisibleForTesting */
@@ -54,25 +53,16 @@ const crowdAiDamageKey = 'descriptio';
  */
 function countDamageAndBuildings(feature, buildings) {
   const resources = getResources();
-  const damageLevels = ee.List(damageLevelsList);
-  const damageFilters =
-      damageLevels.map((type) => ee.Filter.eq(crowdAiDamageKey, type));
   const geometry = feature.geometry();
-  const blockDamage =
-      ee.FeatureCollection(resources.damage).filterBounds(geometry);
+  const damagedBuildings = ee.FeatureCollection(resources.damage).filterBounds(geometry).size();
   const totalBuildings = buildings.get(feature.get(geoidTag));
-  const attrDict = ee.Dictionary.fromLists(
-      damageLevels,
-      damageFilters.map((type) => blockDamage.filter(type).size()));
-  const damagedBuildings =
-      ee.Number(attrDict.values().reduce(ee.Reducer.sum()));
   const ratioBuildingsDamaged =
       ee.Number(damagedBuildings).divide(totalBuildings);
   const snapPop = ee.Number.parse(feature.get(snapPopTag)).long();
   const totalPop = ee.Number.parse(feature.get(totalPopTag)).long();
   return ee.Feature(
       geometry,
-      attrDict.set(geoidTag, feature.get(geoidTag))
+      ee.Dictionary().set(geoidTag, feature.get(geoidTag))
           .set(blockGroupTag, feature.get(blockGroupTag))
           .set(snapPopTag, ee.Number(snapPop))
           .set(totalPopTag, ee.Number(totalPop))
@@ -161,19 +151,18 @@ function addTractInfo(feature) {
 
 /**
  * For a ms building, find and attach the relevant block group to it.
- * @param {ee.Feature} feature
- * @return {*}
+ * @param {ee.Feature} building
+ * @param {ee.FeatureCollection} blockGroups
+ * @return {ee.Feature}
  */
-function attachBlockGroups(feature) {
-  const blockGroups =
-      ee.FeatureCollection('users/juliexxia/harvey-data-aff-as-nod');
-  const filtered = blockGroups.filterBounds(feature.geometry());
+function attachBlockGroups(building, blockGroups) {
+  const filtered = blockGroups.filterBounds(building.geometry());
   // since we're only using block groups from damaged areas, we have buildings
   // that won't intersect any block groups.
   const geoid = ee.Algorithms.If(
       filtered.size().gt(ee.Number(0)), filtered.first().get(geoidTag),
-      ee.Number(0));
-  return feature.set(geoidTag, geoid);
+      ee.String('PLACEHOLDER GEOID VALUE'));
+  return building.set(geoidTag, geoid);
 }
 
 /** Performs operation of processing inputs and creating output asset. */
@@ -218,14 +207,14 @@ function run() {
   // attach block groups to buildings and aggregate to get block group building
   // counts
   const buildings = ee.FeatureCollection(resources.buildings);
-  const withBlocKGroup = buildings.map(attachBlockGroups);
+  const withBlockGroup = buildings.map((building) => attachBlockGroups(building, blockGroups));
   const buildingsHisto =
-      ee.Dictionary(withBlocKGroup.aggregate_histogram(geoidTag));
+      ee.Dictionary(withBlockGroup.aggregate_histogram(geoidTag));
   // process final feature collection
   const data = joinedSnapIncomeSVI.map(
       (feature) => countDamageAndBuildings(feature, buildingsHisto));
 
-  const assetName = 'harvey-data-ms-as-nod';
+  const assetName = disaster + '-data-ms-as-nod';
   // TODO(#61): parameterize ee user account to write assets to or make GD
   // account.
   // TODO: delete existing asset with same name if it exists.
