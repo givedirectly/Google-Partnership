@@ -37,7 +37,6 @@ describe('Integration tests for drawing polygons', () => {
   before(
       () => cy.wrap(
           firebaseLibrary.auth().signInWithCustomToken(firestoreCustomToken)));
-  beforeEach(() => cy.setCookie('TEST_FIRESTORE_TOKEN', firestoreCustomToken));
   beforeEach(deleteAllRegionsDrawnByTest);
 
   afterEach(deleteAllRegionsDrawnByTest);

@@ -26,13 +26,16 @@ import './mock_maps';
 global.host = 'http://localhost:8080/';
 global.tableClass = '.google-visualization-table-table';
 
+let firestoreCustomToken = null;
+
 beforeEach(() => {
   /** wide enough for sidebar */
   cy.viewport(1100, 1700);
   global.testCookieValue = Math.random() + '/suffix';
   cy.setCookie('IN_CYPRESS_TEST', testCookieValue);
+  cy.setCookie('TEST_FIRESTORE_TOKEN', firestoreCustomToken);
 });
 
 before(
     () => cy.task('initializeTestFirebase')
-              .then((token) => global.firestoreCustomToken = token));
+              .then((token) => firestoreCustomToken = token));
