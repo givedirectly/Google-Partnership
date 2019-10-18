@@ -26,13 +26,13 @@ module.exports = (on, config) => {
      * determined by the Firebase rules.
      *
      * We do this initialization in this plugin because creating such a custom
-     * token that's easy to pass around can best be done using the Firebase Admin
-     * SDK. That library is only available on Node, not client-side Javascript.
-     * Even Cypress tests, though they appear to run in Node, are actually
-     * browserified, and the firebase-admin module doesn't work there. Thus, we
-     * use the Firebase admin module here, in genuine Node, and then pass the
-     * created token back out to the test, where it can use it and also set a
-     * cookie for the production code to use.
+     * token that's easy to pass around can best be done using the Firebase
+     * Admin SDK. That library is only available on Node, not client-side
+     * Javascript. Even Cypress tests, though they appear to run in Node, are
+     * actually browserified, and the firebase-admin module doesn't work there.
+     * Thus, we use the Firebase admin module here, in genuine Node, and then
+     * pass the created token back out to the test, where it can use it and also
+     * set a cookie for the production code to use.
      *
      * @return {Promise<string>} The token to be used
      */
