@@ -26,6 +26,8 @@ module.exports = {
       'ignoreUrls': true,
     }],
     // TODO(https://github.com/google/eslint-config-google/issues/58):
+    // Was fighting with clang and we believe clang is doing a good enough
+    // job.
     'indent': 'off',
   },
 };

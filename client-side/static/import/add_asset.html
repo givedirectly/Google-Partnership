@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Add asset</title>
+<!--  <script src="./multifile.js"></script>-->
+  <script src="../lib/ee_api_js_debug.js"></script>
+  <!-- TODO(janakr): download this script to lib. -->
+  <script src="https://apis.google.com/js/api.js"></script>
+  <script type="module" src="./add_asset.js"></script>
+</head>
+<body>
+
+<form action="" id="form">
+  <label for="collectionName">Name of ImageCollection (like 'noaa-harvey' without quotes):</label><input id="collectionName"><p>
+  <input type="file" id="file" multiple="true">
+  <button type="submit" id="fileButton" disabled="true">Import to EarthEngine</button>
+</form>
+</p>
+<div id="status_div"></div>
+<hr/>
+<div id="command_div"></div>
+<hr/>
+<div id="results"></div>
+<script type="module">
+  import onStartupTaskCompleted from './add_asset.js';
+  onStartupTaskCompleted();
+</script>
+</body>
+</html>
