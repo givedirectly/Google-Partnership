@@ -26,14 +26,21 @@ import './mock_maps';
 global.host = 'http://localhost:8080/';
 global.tableClass = '.google-visualization-table-table';
 
+let eeToken = null;
+
 beforeEach(() => {
   /** wide enough for sidebar */
   cy.viewport(1100, 1700);
   global.testCookieValue = Math.random() + '/suffix';
   cy.setCookie('IN_CYPRESS_TEST', testCookieValue);
   cy.setCookie('TEST_FIREBASE_TOKEN', firestoreCustomToken);
+  cy.setCookie('TEST_EARTHENGINE_TOKEN', eeToken);
 });
 
 before(
     () => cy.task('initializeTestFirebase')
               .then((token) => global.firestoreCustomToken = token));
+
+before(
+    () => cy.task('getEarthEngineToken')
+        .then((token) => eeToken = token));

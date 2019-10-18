@@ -1,4 +1,4 @@
-import {authenticateToFirebase, Authenticator, initializeEE, initializeFirebase} from './authenticate.js';
+import {CLIENT_ID, authenticateToFirebase, Authenticator, initializeEE, initializeFirebase} from './authenticate.js';
 import createMap from './create_map.js';
 import {inProduction} from './in_test_util.js';
 import {getCookieValue} from './in_test_util.js';
@@ -36,14 +36,20 @@ function setup() {
       // directly authenticate with Firebase. We still need to be on corp for
       // EarthEngine (but see next PR).
       initializeFirebase();
-      const token = getCookieValue('TEST_FIREBASE_TOKEN');
-      if (!token) {
-        console.error('Did not receive Firestore token in test');
+      const firebaseToken = getCookieValue('TEST_FIREBASE_TOKEN');
+      if (!firebaseToken) {
+        console.error('Did not receive Firebase token in test');
         return;
       }
       firebaseAuthPromise.setPromise(
-          firebase.auth().signInWithCustomToken(token));
-      initializeEE(runOnInitialize);
+          firebase.auth().signInWithCustomToken(firebaseToken));
+      const eeToken = getCookieValue('TEST_EARTHENGINE_TOKEN');
+      const authenticator = new Authenticator(null, runOnInitialize);
+      ee.data.setAuthToken(
+          CLIENT_ID, 'Bearer', eeToken,
+          // Expires in 3600 is a lie, but no need to tell the truth.
+          /* expiresIn */ 3600, /* extraScopes */ [], () => initializeEE(runOnInitialize),
+          /* updateAuthLibrary */ false);
     }
   });
 }

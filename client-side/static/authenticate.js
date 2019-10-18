@@ -1,4 +1,5 @@
 export {
+  CLIENT_ID,
   authenticateToFirebase,
   Authenticator,
   firebaseConfig,
