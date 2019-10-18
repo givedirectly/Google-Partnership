@@ -22,8 +22,8 @@ module.exports = (on, config) => {
      * pointed to by the environment variable GOOGLE_APPLICATION_CREDENTIALS)
      * to generate a "custom token" that can be used by both the test and
      * production code to authenticate with Firebase. This token can only be
-     * used in documents that look like 'usershapes-test/<blah>/suffix/<doc>', as
-     * determined by the Firebase rules.
+     * used in documents that look like 'usershapes-test/<blah>/suffix/<doc>',
+     * as determined by the Firebase rules.
      *
      * We do this initialization in this plugin because creating such a custom
      * token that's easy to pass around can best be done using the Firebase
