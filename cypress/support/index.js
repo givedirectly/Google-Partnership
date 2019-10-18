@@ -36,8 +36,4 @@ beforeEach(() => {
 
 before(
     () => cy.task('initializeTestFirebase')
-              .then((token) => {
-                global.firestoreCustomToken = token;
-                // Avoid Cypress getting confused by undefined return.
-                return null;
-              }));
+              .then((token) => global.firestoreCustomToken = token));
