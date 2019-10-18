@@ -213,6 +213,7 @@ function uploadFileToGCS(name, contents, collectionName, callback) {
  * @return {Promise<undefined>} Promise to wait for operation completion on
  */
 function maybeCreateImageCollection(collectionName) {
+  const assetName = earthEngineAssetBase + collectionName;
   return new Promise(
       (resolveFunction,
        rejectFunction) => ee.data.getAsset(assetName, (getResult) => {
