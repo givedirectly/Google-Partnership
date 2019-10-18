@@ -162,7 +162,7 @@ function attachBlockGroups(building, blockGroups) {
   // since we're only using block groups from damaged areas, we have buildings
   // that won't intersect any block groups.
   const geoid = ee.Algorithms.If(
-      filtered.size().gt(ee.Number(0)), filtered.first().get(geoidTag),
+      filtered.size().gt(ee.Number(0)), filtered.first().get(tigerGeoidKey),
       ee.String('PLACEHOLDER GEOID VALUE'));
   return building.set(geoidTag, geoid);
 }
@@ -222,7 +222,7 @@ function run() {
   // account.
   // TODO: delete existing asset with same name if it exists.
   const task =
-      ee.batch.Export.table.to(data, assetName, 'users/juliexxia/' + assetName);
+      ee.batch.Export.table.toAsset(data, assetName, 'users/juliexxia/' + assetName);
   task.start();
   $('.upload-status')
       .text('Check Code Editor console for progress. Task: ' + task.id);
