@@ -34,8 +34,12 @@ function setup() {
       authenticator.start();
     } else {
       initializeFirebase();
+      const token = getCookieValue('TEST_FIRESTORE_TOKEN');
+      if (!token) {
+        alert('Did not receive Firestore token');
+      }
       firebaseAuthPromise.setPromise(firebase.auth().signInWithCustomToken(
-          getCookieValue('TEST_FIRESTORE_TOKEN')));
+          token));
       const authenticator = new Authenticator(null, runOnInitialize);
       authenticator.initializeEE();
     }
