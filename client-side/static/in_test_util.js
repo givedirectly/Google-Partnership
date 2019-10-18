@@ -1,5 +1,6 @@
 export {
   getTestCookie,
+    getCookieValue,
   inProduction,
 };
 
