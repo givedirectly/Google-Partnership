@@ -82,6 +82,7 @@ describe('Integration test for clicking feature', () => {
 function clickAndVerifyBlockGroup() {
   zoom(4);
   cy.get('.map').click(730, 400);
+  cy.get('.map').should('contain', 'SCORE: 53');
   cy.get('.google-visualization-table-tr-sel')
       .find('[class="google-visualization-table-td"]')
       .should(
