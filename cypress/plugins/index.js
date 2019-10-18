@@ -39,8 +39,12 @@ module.exports = (on, config) => {
       // Firebase really doesn't like duplicate apps lying around, so clean up
       // immediately.
       result.then(() => currentApp.delete());
-      return result.then((token) => {if (token) { return token; }
-      throw new Error('No token generated');});
+      return result.then((token) => {
+        if (token) {
+          return token;
+        }
+        throw new Error('No token generated');
+      });
     },
   });
 };
