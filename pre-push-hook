@@ -39,7 +39,7 @@ while read local_ref local_sha remote_ref remote_sha; do
   # locally anymore.
   # TODO(janakr): this is vulnerable to filenames with spaces.
   modified_js_files="$(git diff --diff-filter=d --name-only \
-      "$range" 'client-side/static/*.js' 'cypress/integration/**/*.js' \
+      "$range" 'client-side/static/*.js' 'client-side/static/import/*.js' 'cypress/integration/**/*.js' \
         'cypress/support/*.js' 'cypress/plugins/*.js')"
   if [[ "$modified_js_files" ]]; then
     if clang-format --style=Google -output-replacements-xml $modified_js_files \

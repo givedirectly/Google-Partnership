@@ -26,15 +26,8 @@ module.exports = {
       'ignoreUrls': true,
     }],
     // TODO(https://github.com/google/eslint-config-google/issues/58):
-    'indent': ['error', 2,
-    {
-      'CallExpression': {'arguments': 2},
-      'SwitchCase': 1,
-      'MemberExpression': 2,
-      'FunctionDeclaration': {'parameters': 2},
-      'ignoredNodes': [
-          'CallExpression > CallExpression',
-          'CallExpression > MemberExpression',],
-    }],
+    // Was fighting with clang and we believe clang is doing a good enough
+    // job.
+    'indent': 'off',
   },
 };
