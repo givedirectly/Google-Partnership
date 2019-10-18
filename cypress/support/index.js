@@ -41,6 +41,4 @@ before(
     () => cy.task('initializeTestFirebase')
               .then((token) => global.firestoreCustomToken = token));
 
-before(
-    () => cy.task('getEarthEngineToken')
-        .then((token) => eeToken = token));
+before(() => cy.task('getEarthEngineToken').then((token) => eeToken = token));

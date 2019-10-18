@@ -1,4 +1,4 @@
-import {CLIENT_ID, authenticateToFirebase, Authenticator} from './authenticate.js';
+import {authenticateToFirebase, Authenticator, CLIENT_ID} from './authenticate.js';
 import {initializeFirebase} from './authenticate.js';
 import createMap from './create_map.js';
 import {inProduction} from './in_test_util.js';
@@ -46,7 +46,8 @@ function setup() {
       ee.data.setAuthToken(
           CLIENT_ID, 'Bearer', eeToken,
           // Expires in 3600 is a lie, but no need to tell the truth.
-          /* expiresIn */ 3600, /* extraScopes */ [], () => authenticator.initializeEE(),
+          /* expiresIn */ 3600, /* extraScopes */[],
+          () => authenticator.initializeEE(),
 
           /* updateAuthLibrary */ false);
     }
