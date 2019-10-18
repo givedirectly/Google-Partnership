@@ -32,7 +32,8 @@ class Authenticator {
    * @param {Function} eeInitializeCallback Called after EarthEngine
    *     initialization is complete
    *     console.error)
-   * @param {Array<string>} additionalScopes OAuth2 scopes to request
+   * @param {Array<string>} additionalScopes OAuth2 scopes to request. Must be
+   * non-empty for gapi initialization to succeed
    * @param {Function} errorCallback Called on any errors (defaults to
    */
   constructor(
@@ -129,7 +130,10 @@ function authenticateToFirebase(googleAuth) {
       unsubscribe();
       if (firebaseUser && firebaseUser.providerData &&
           firebaseUser.providerData[0].uid) {
-        console.warn('Not logging in again');
+        // The Firebase sample code checks that this is the same user as the
+        // Google user. I don't really see how there can be a mismatch without
+        // something pretty weird going on, so punting on it for now.
+        console.warn('Not logging into Firebase again');
         resolveFunction(null);
         return;
       }
