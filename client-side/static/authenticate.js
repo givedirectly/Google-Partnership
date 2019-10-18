@@ -34,14 +34,13 @@ class Authenticator {
    * authentication
    * @param {Function} eeInitializeCallback Called after EarthEngine
    *     initialization is complete
-   *     console.error)
-   * @param {Array<string>} additionalScopes OAuth2 scopes to request. Must be
-   * non-empty for gapi initialization to succeed
    * @param {Function} errorCallback Called on any errors (defaults to
+   *     console.error)
+   * @param {Array<string>} additionalScopes OAuth2 scopes to request, if any
    */
   constructor(
-      authCallback, eeInitializeCallback, additionalScopes,
-      errorCallback = console.error) {
+      authCallback, eeInitializeCallback, errorCallback = console.error,
+      additionalScopes = []) {
     this.authCallback = authCallback;
     this.eeInitializeCallback = eeInitializeCallback;
     this.additionalScopes = additionalScopes;
@@ -55,8 +54,8 @@ class Authenticator {
     const gapiSettings = Object.assign({}, gapiTemplate);
     gapiSettings.scope = this.additionalScopes.join(' ');
     gapi.load(
-        'client:auth2',
-        () => gapi.client.init(gapiSettings)
+        'auth2',
+        () => gapi.auth2.init(gapiSettings)
                   .then(() => this.onLoginTaskCompleted()));
   }
 

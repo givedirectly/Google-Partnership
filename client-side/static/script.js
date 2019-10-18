@@ -27,10 +27,9 @@ function setup() {
 
     const runOnInitialize = () => run(map, firebaseAuthPromise.getPromise());
     if (inProduction()) {
-      const authenticator = new Authenticator(
-          (token) =>
-              firebaseAuthPromise.setPromise(authenticateToFirebase(token)),
-          runOnInitialize, ['https://www.googleapis.com/auth/datastore']);
+      const authenticator = new Authenticator((token) =>
+          firebaseAuthPromise.setPromise(
+              authenticateToFirebase(token)), runOnInitialize);
       authenticator.start();
     } else {
       initializeFirebase();
