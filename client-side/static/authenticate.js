@@ -1,4 +1,4 @@
-export {authenticateToFirebase, Authenticator, initializeFirebase};
+export {CLIENT_ID, authenticateToFirebase, Authenticator, initializeFirebase};
 
 // The client ID from
 // https://console.cloud.google.com/apis/credentials?project=mapping-crisis

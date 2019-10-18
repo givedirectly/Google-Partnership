@@ -1,4 +1,4 @@
-import {authenticateToFirebase, Authenticator} from './authenticate.js';
+import {CLIENT_ID, authenticateToFirebase, Authenticator} from './authenticate.js';
 import {initializeFirebase} from './authenticate.js';
 import createMap from './create_map.js';
 import {inProduction} from './in_test_util.js';
@@ -34,15 +34,21 @@ function setup() {
       authenticator.start();
     } else {
       initializeFirebase();
-      const token = getCookieValue('TEST_FIREBASE_TOKEN');
-      if (!token) {
-        console.error('Did not receive Firestore token in test');
+      const firebaseToken = getCookieValue('TEST_FIREBASE_TOKEN');
+      if (!firebaseToken) {
+        console.error('Did not receive Firebase token in test');
         return;
       }
       firebaseAuthPromise.setPromise(
-          firebase.auth().signInWithCustomToken(token));
+          firebase.auth().signInWithCustomToken(firebaseToken));
+      const eeToken = getCookieValue('TEST_EARTHENGINE_TOKEN');
       const authenticator = new Authenticator(null, runOnInitialize);
-      authenticator.initializeEE();
+      ee.data.setAuthToken(
+          CLIENT_ID, 'Bearer', eeToken,
+          // Expires in 3600 is a lie, but no need to tell the truth.
+          /* expiresIn */ 3600, /* extraScopes */ [], () => authenticator.initializeEE(),
+
+          /* updateAuthLibrary */ false);
     }
   });
 }
