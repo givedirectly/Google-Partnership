@@ -1,4 +1,4 @@
-export {getResources, disaster};
+export {disaster, getResources};
 
 /**
  * Gets all the ee assets relevant to the current disaster.

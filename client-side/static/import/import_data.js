@@ -54,7 +54,8 @@ const crowdAiDamageKey = 'descriptio';
 function countDamageAndBuildings(feature, buildings) {
   const resources = getResources();
   const geometry = feature.geometry();
-  const damagedBuildings = ee.FeatureCollection(resources.damage).filterBounds(geometry).size();
+  const damagedBuildings =
+      ee.FeatureCollection(resources.damage).filterBounds(geometry).size();
   const totalBuildings = buildings.get(feature.get(geoidTag));
   const ratioBuildingsDamaged =
       ee.Number(damagedBuildings).divide(totalBuildings);
@@ -62,7 +63,8 @@ function countDamageAndBuildings(feature, buildings) {
   const totalPop = ee.Number.parse(feature.get(totalPopTag)).long();
   return ee.Feature(
       geometry,
-      ee.Dictionary().set(geoidTag, feature.get(geoidTag))
+      ee.Dictionary()
+          .set(geoidTag, feature.get(geoidTag))
           .set(blockGroupTag, feature.get(blockGroupTag))
           .set(snapPopTag, ee.Number(snapPop))
           .set(totalPopTag, ee.Number(totalPop))
@@ -207,7 +209,8 @@ function run() {
   // attach block groups to buildings and aggregate to get block group building
   // counts
   const buildings = ee.FeatureCollection(resources.buildings);
-  const withBlockGroup = buildings.map((building) => attachBlockGroups(building, blockGroups));
+  const withBlockGroup =
+      buildings.map((building) => attachBlockGroups(building, blockGroups));
   const buildingsHisto =
       ee.Dictionary(withBlockGroup.aggregate_histogram(geoidTag));
   // process final feature collection
