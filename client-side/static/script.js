@@ -1,4 +1,4 @@
-import {authenticateToFirebase, Authenticator} from './authenticate.js';
+import {authenticateToFirebase, Authenticator, initializeFirebase, initializeEE} from './authenticate.js';
 import {initializeFirebase} from './authenticate.js';
 import createMap from './create_map.js';
 import {inProduction} from './in_test_util.js';
@@ -33,6 +33,9 @@ function setup() {
           runOnInitialize);
       authenticator.start();
     } else {
+      // We're inside a test. The test setup should have tokens for us that will
+      // directly authenticate with Firebase. We still need to be on corp for
+      // EarthEngine (but see next PR).
       initializeFirebase();
       const token = getCookieValue('TEST_FIREBASE_TOKEN');
       if (!token) {
@@ -41,8 +44,7 @@ function setup() {
       }
       firebaseAuthPromise.setPromise(
           firebase.auth().signInWithCustomToken(token));
-      const authenticator = new Authenticator(null, runOnInitialize);
-      authenticator.initializeEE();
+      initializeEE(runOnInitialize);
     }
   });
 }
@@ -51,6 +53,10 @@ function setup() {
  * Class that provides a Promise that will be completed when the Promise passed
  * into setPromise is complete. Useful when the Promise you want to wait for
  * will not be created until later.
+ *
+ * Users can safely call getPromise() before setPromise() has been called: the
+ * returned Promise will complete once setPromise() is called and the argument
+ * of setPromise() has completed.
  */
 class SettablePromise {
   /** @constructor */
