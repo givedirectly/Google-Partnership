@@ -1,4 +1,11 @@
-export {authenticateToFirebase, Authenticator, CLIENT_ID, initializeFirebase};
+export {
+  authenticateToFirebase,
+  Authenticator,
+  CLIENT_ID,
+  firebaseConfig,
+  initializeEE,
+  initializeFirebase,
+};
 
 // The client ID from
 // https://console.cloud.google.com/apis/credentials?project=mapping-crisis
@@ -7,7 +14,7 @@ const CLIENT_ID =
 
 const gapiTemplate = {
   // From same page as above.
-  apiKey: 'AIzaSyAbNHe9B0Wo4MV8rm3qEdy8QzFeFWZERHs',
+  apiKey: 'AIzaSyBAQkh-kRrYitkPafxVLoZx3E5aYM-auXM',
   clientId: CLIENT_ID,
 };
 
@@ -68,7 +75,7 @@ class Authenticator {
    */
   eeAuthenticate(failureCallback) {
     ee.data.authenticateViaOauth(
-        CLIENT_ID, () => this.initializeEE(), failureCallback,
+        CLIENT_ID, () => this.internalInitializeEE(), failureCallback,
         this.additionalScopes);
   }
 
@@ -91,12 +98,9 @@ class Authenticator {
   }
 
   /** Initializes EarthEngine. */
-  initializeEE() {
+  internalInitializeEE() {
     this.onLoginTaskCompleted();
-    ee.initialize(
-        /* opt_baseurl=*/ null, /* opt_tileurl=*/ null,
-        this.eeInitializeCallback,
-        (err) => this.errorCallback('Error initializing EarthEngine: ' + err));
+    initializeEE(this.eeInitializeCallback, this.errorCallback);
   }
 
   /**
@@ -114,6 +118,17 @@ class Authenticator {
 /** Initializes Firebase. Exposed only for use in test codepaths. */
 function initializeFirebase() {
   firebase.initializeApp(firebaseConfig);
+}
+
+/**
+ * Initializes EarthEngine. Exposed only for use in test codepaths.
+ * @param {Function} runCallback Called if initialization succeeds
+ * @param {Function} errorCallback Called on failure, defaults to console.error
+ */
+function initializeEE(runCallback, errorCallback = console.error) {
+  ee.initialize(
+      /* opt_baseurl=*/ null, /* opt_tileurl=*/ null, runCallback,
+      (err) => errorCallback('Error initializing EarthEngine: ' + err));
 }
 
 // Roughly copied from https://firebase.google.com/docs/auth/web/google-signin.

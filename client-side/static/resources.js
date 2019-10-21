@@ -1,4 +1,4 @@
-export {getResources as default};
+export {disaster, getResources};
 
 /**
  * Gets all the ee assets relevant to the current disaster.
@@ -17,22 +17,24 @@ const disasters = new Map();
 /** Constants for {@code disasters} map. */
 class DisasterMapValue {
   /**
-   * @param {string} damageAsset ee asset path
-   * @param {string} snapAsset ee asset path to snap info
-   * @param {string} bgAsset ee asset path to block group info
-   * @param {string} incomeAsset ee asset path to median income info
-   * @param {string} sviAsset ee asset path to svi info
+   * @param {string} damage ee asset path
+   * @param {string} snap ee asset path to snap info
+   * @param {string} bg ee asset path to block group info
+   * @param {string} income ee asset path to median income info
+   * @param {string} svi ee asset path to svi info
+   * @param {string} buildings ee asset path to building footprint info
    */
-  constructor(damageAsset, snapAsset, bgAsset, incomeAsset, sviAsset) {
-    this.damageAsset = damageAsset;
-    this.rawSnapAsset = snapAsset;
-    this.bgAsset = bgAsset;
-    this.incomeAsset = incomeAsset;
-    this.sviAsset = sviAsset;
+  constructor(damage, snap, bg, income, svi, buildings) {
+    this.damage = damage;
+    this.rawSnap = snap;
+    this.bg = bg;
+    this.income = income;
+    this.svi = svi;
+    this.buildings = buildings;
   }
 }
 
-// TODO: upload michael income and SVI data
+// TODO: upload michael income, SVI, buildings data
 disasters.set(
     'michael',
     new DisasterMapValue(
@@ -44,4 +46,5 @@ disasters.set(
     new DisasterMapValue(
         'users/juliexxia/harvey-damage-crowdai-format-deduplicated',
         'users/juliexxia/snap_texas', 'users/juliexxia/tiger_texas',
-        'users/juliexxia/income_texas', 'users/ruthtalbot/harvey-SVI'));
+        'users/juliexxia/income_texas', 'users/ruthtalbot/harvey-SVI',
+        'users/juliexxia/harvey-damage-zone-ms-buildings'));

@@ -1,5 +1,9 @@
+<<<<<<< HEAD
 import {authenticateToFirebase, Authenticator, CLIENT_ID} from './authenticate.js';
 import {initializeFirebase} from './authenticate.js';
+=======
+import {authenticateToFirebase, Authenticator, CLIENT_ID, initializeEE, initializeFirebase} from './authenticate.js';
+>>>>>>> 1cad68cb3f39f67604b3055b7a6c4bb147f645f9
 import createMap from './create_map.js';
 import {inProduction} from './in_test_util.js';
 import {getCookieValue} from './in_test_util.js';
@@ -33,6 +37,12 @@ function setup() {
           runOnInitialize);
       authenticator.start();
     } else {
+<<<<<<< HEAD
+=======
+      // We're inside a test. The test setup should have tokens for us that will
+      // directly authenticate with Firebase. We still need to be on corp for
+      // EarthEngine (but see next PR).
+>>>>>>> 1cad68cb3f39f67604b3055b7a6c4bb147f645f9
       initializeFirebase();
       const firebaseToken = getCookieValue('TEST_FIREBASE_TOKEN');
       if (!firebaseToken) {
@@ -46,12 +56,19 @@ function setup() {
         console.error('Did not receive EarthEngine token in test');
         return;
       }
+<<<<<<< HEAD
       const authenticator = new Authenticator(null, runOnInitialize);
+=======
+>>>>>>> 1cad68cb3f39f67604b3055b7a6c4bb147f645f9
       ee.data.setAuthToken(
           CLIENT_ID, 'Bearer', eeToken,
           // Expires in 3600 is a lie, but no need to tell the truth.
           /* expiresIn */ 3600, /* extraScopes */[],
+<<<<<<< HEAD
           /* callback */ () => authenticator.initializeEE(),
+=======
+          () => initializeEE(runOnInitialize),
+>>>>>>> 1cad68cb3f39f67604b3055b7a6c4bb147f645f9
           /* updateAuthLibrary */ false);
     }
   });
@@ -61,6 +78,13 @@ function setup() {
  * Class that provides a Promise that will be completed when the Promise passed
  * into setPromise is complete. Useful when the Promise you want to wait for
  * will not be created until later.
+<<<<<<< HEAD
+=======
+ *
+ * Users can safely call getPromise() before setPromise() has been called: the
+ * returned Promise will complete once setPromise() is called and the argument
+ * of setPromise() has completed.
+>>>>>>> 1cad68cb3f39f67604b3055b7a6c4bb147f645f9
  */
 class SettablePromise {
   /** @constructor */
