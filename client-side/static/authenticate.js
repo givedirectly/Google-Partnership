@@ -3,7 +3,7 @@ export {
   Authenticator,
   firebaseConfig,
   initializeEE,
-  initializeFirebase
+  initializeFirebase,
 };
 
 // The client ID from
@@ -119,7 +119,11 @@ function initializeFirebase() {
   firebase.initializeApp(firebaseConfig);
 }
 
-/** Initializes EarthEngine. Exposed only for use in test codepaths. */
+/**
+ * Initializes EarthEngine. Exposed only for use in test codepaths.
+ * @param {Function} runCallback Called if initialization succeeds
+ * @param {Function} errorCallback Called on failure, defaults to console.error
+ */
 function initializeEE(runCallback, errorCallback = console.error) {
   ee.initialize(
       /* opt_baseurl=*/ null, /* opt_tileurl=*/ null, runCallback,
