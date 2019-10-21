@@ -50,7 +50,7 @@ function setUpPopup() {
       this.containerDiv.appendChild(bubbleAnchor);
 
       // Stop clicks, etc., from bubbling up to the map.
-      // google.maps.OverlayView.preventMapHitsAndGesturesFrom(this.containerDiv);
+      google.maps.OverlayView.preventMapHitsAndGesturesFrom(this.containerDiv);
       this.addPopUpListener();
     }
 
@@ -157,7 +157,7 @@ function setUpPopup() {
                        'Exit without saving changes? Changes will be lost.')) {
           if (savedShape === null) {
             console.error(
-                'unexpected state: no shape state saved before editing polygon');
+                'unexpected: no shape state saved before editing polygon');
             return;
           }
           polygon.setMap(null);
