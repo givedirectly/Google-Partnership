@@ -66,13 +66,10 @@ function setup() {
  * Class that provides a Promise that will be completed when the Promise passed
  * into setPromise is complete. Useful when the Promise you want to wait for
  * will not be created until later.
-<<<<<<< HEAD
-=======
  *
  * Users can safely call getPromise() before setPromise() has been called: the
  * returned Promise will complete once setPromise() is called and the argument
  * of setPromise() has completed.
->>>>>>> 1cad68cb3f39f67604b3055b7a6c4bb147f645f9
  */
 class SettablePromise {
   /** @constructor */
