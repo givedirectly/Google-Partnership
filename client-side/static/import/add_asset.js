@@ -188,17 +188,17 @@ function uploadFileToGCS(name, contents, collectionName, callback) {
     body: contents,
   };
   fetch(URL, request)
-                         .then((r) => r.json())
-                         .then((r) => {
-                           uploadedToGCS++;
-                           return r;
-                         })
-                         .catch((err) => {
-                           console.error(err);
-                           resultDiv.innerHTML +=
-                               '<br>Error uploading ' + name + ': ' + err;
-                           throw err;
-                         }).then((result) => callback(result.bucket, collectionName, name))
+      .then((r) => r.json())
+      .then((r) => {
+        uploadedToGCS++;
+        return r;
+      })
+      .catch((err) => {
+        console.error(err);
+        resultDiv.innerHTML += '<br>Error uploading ' + name + ': ' + err;
+        throw err;
+      })
+      .then((result) => callback(result.bucket, collectionName, name))
       .catch((err) => {
         console.error(err);
         resultDiv.innerHTML += '<br>Error processing ' + name + ': ' + err;
@@ -213,33 +213,41 @@ function uploadFileToGCS(name, contents, collectionName, callback) {
  * @return {Promise<undefined>} Promise to wait for operation completion on
  */
 function maybeCreateImageCollection(collectionName) {
+  const assetName = earthEngineAssetBase + collectionName;
   return new Promise(
-      (resolveFunction,
-       rejectFunction) => ee.data.getAsset(assetName, (getResult) => {
-        if (!getResult) {
-          // TODO(janakr): this swallows any actual errors in getting asset.
-          // TODO(janakr): track if actually created to avoid unnecessary listing?
-          ee.data.createAsset(
-              {id: assetName, type: 'ImageCollection'}, assetName, false, {},
-              (createResult, failure) => {
-                if (failure) {
-                  rejectFunction(failure);
-                } else {
-                  ee.data.setAssetAcl(
-                      assetName, {all_users_can_read: true},
-                      (aclResult, failure) => {
-                        if (failure) {
-                          rejectFunction(failure);
-                        } else {
-                          resolveFunction(undefined);
-                        }
-                      });
-                }
-              });
-        } else {
-          resolveFunction(undefined);
-        }
-      })).catch((err) => {setStatusDiv(err); throw err});
+             (resolveFunction, rejectFunction) => ee.data.getAsset(
+                 assetName,
+                 (getResult) => {
+                   if (!getResult) {
+                     // TODO(janakr): this swallows any actual errors in getting
+                     // asset.
+                     // TODO(janakr): track if actually created to avoid
+                     // unnecessary listing?
+                     ee.data.createAsset(
+                         {id: assetName, type: 'ImageCollection'}, assetName,
+                         false, {}, (createResult, failure) => {
+                           if (failure) {
+                             rejectFunction(failure);
+                           } else {
+                             ee.data.setAssetAcl(
+                                 assetName, {all_users_can_read: true},
+                                 (aclResult, failure) => {
+                                   if (failure) {
+                                     rejectFunction(failure);
+                                   } else {
+                                     resolveFunction(undefined);
+                                   }
+                                 });
+                           }
+                         });
+                   } else {
+                     resolveFunction(undefined);
+                   }
+                 }))
+      .catch((err) => {
+        setStatusDiv(err);
+        throw err;
+      });
 }
 
 /**
@@ -290,7 +298,8 @@ function listGCSFiles(collectionName) {
  * Helper function. Accumulates results, issues follow-up queries with page
  * token if needed.
  * @param {string} collectionName Name of folder
- * @param {?string} nextPageToken Token for page of results to request, used when listing spans multiple pages
+ * @param {?string} nextPageToken Token for page of results to request, used
+ *     when listing spans multiple pages
  * @param {List} accumulatedList All files found so far
  * @return {Promise}
  */
