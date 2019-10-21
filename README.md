@@ -38,6 +38,11 @@ as `gd-earthengine-user@givedirectly.org` and generating a new key for
 `firebase-adminsdk-pw40g@mapping-crisis.iam.gserviceaccount.com`. This is needed
 for running tests.
 
+* Go to the [Firestore database](
+https://console.firebase.google.com/project/mapping-crisis/database/firestore/data~2FALLOWED_USERS~2FALL_USERS)
+when logged in as `gd-earthengine-user@givedirectly.org` and add your Google
+account's email address to the list of users.
+
 * Install [Chromium](https://www.chromium.org) if on Linux. Install via the
   usual `apt-get`-style channels. This should be relatively straightforward on
   most systems, but is difficult/impossible on Google-internal machines. If you
