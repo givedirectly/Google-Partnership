@@ -79,8 +79,8 @@ function setUpPopup() {
 
     /**
      * Creates the content of the popup's content div from scratch in the saved
-     * state (i.e. with an edit button), saves the given notes and damage to this
-     * popup object.
+     * state (i.e. with an edit button), saves the given notes and damage to
+     * this popup object.
      *
      * @param {String} notes
      * @param {Integer|String} damage
@@ -112,8 +112,8 @@ function setUpPopup() {
           userRegionData.get(polygon).update(polygon);
         }
       };
-      // lazily initialized so we don't do the deep clone unless we actually want to
-      // edit the polygon.
+      // lazily initialized so we don't do the deep clone unless we actually
+      // want to edit the polygon.
       let savedShape = null;
       const editButton = document.createElement('button');
       editButton.className = 'popup-button';
@@ -150,7 +150,7 @@ function setUpPopup() {
         if (this.saved) {
           this.closeCleanup();
         } else if (confirm(
-            'Exit without saving changes? Changes will be lost.')) {
+                       'Exit without saving changes? Changes will be lost.')) {
           if (savedShape === null) {
             console.error(
                 'unexpected state: no shape state saved before editing polygon');
@@ -204,12 +204,14 @@ function setUpPopup() {
     }
 
     /**
-     * Adds an onclick listener to a popup's polygon, popping up the given notes.
+     * Adds an onclick listener to a popup's polygon, popping up the given
+     * notes.
      */
     addPopUpListener() {
       const listener = this.polygon.addListener('click', () => {
         // Remove the listener so that duplicate windows don't pop up on another
-        // click, and the cursor doesn't become a "clicking hand" over this shape.
+        // click, and the cursor doesn't become a "clicking hand" over this
+        // shape.
         google.maps.event.removeListener(listener);
         this.show();
       });
@@ -253,7 +255,9 @@ function setUpPopup() {
       return this.containerDiv.style.visibility === 'visible';
     };
 
-    /** Updates the popup's position after its underlying polygon has changed. */
+    /**
+     * Updates the popup's position after its underlying polygon has changed.
+     */
     updatePosition() {
       this.position = this.polygon.getPath().getAt(0);
       this.draw();

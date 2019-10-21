@@ -3,9 +3,9 @@ import {mapContainerId, writeWaiterId} from './dom_constants.js';
 import {getTestCookie, inProduction} from './in_test_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {createPopup} from './popup.js';
+import {setUpPopup} from './popup.js';
 import {getResources} from './resources.js';
 import {userRegionData} from './user_region_data.js';
-import {setUpPopup} from './popup.js';
 
 // ShapeData is only for testing.
 export {
