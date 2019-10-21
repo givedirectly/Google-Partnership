@@ -1,7 +1,7 @@
 export {
-  CLIENT_ID,
   authenticateToFirebase,
   Authenticator,
+  CLIENT_ID,
   firebaseConfig,
   initializeEE,
   initializeFirebase,
