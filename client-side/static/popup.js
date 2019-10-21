@@ -254,7 +254,7 @@ function setUpPopup() {
       this.containerDiv.style.visibility = 'visible';
     };
 
-    /** Returns if the popup is currently visible. */
+    /** @return true if the popup is currently visible. */
     isVisible() {
       return this.containerDiv.style.visibility === 'visible';
     };
@@ -266,7 +266,7 @@ function setUpPopup() {
       this.position = this.polygon.getPath().getAt(0);
       this.draw();
     };
-  }
+  };
 }
 
 const allPopups = new Set();
@@ -286,7 +286,7 @@ function setUserFeatureVisibility(visibility) {
   }
   for (const popup of allPopups) {
     if (!visibility && popup.isVisible()) {
-      this.closeCleanup();
+      popup.closeCleanup();
     }
     popup.polygon.setVisible(visibility);
   }
