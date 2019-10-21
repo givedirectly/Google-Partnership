@@ -61,7 +61,7 @@ module.exports = (on, config) => {
     initializeTestFirebase() {
       const currentApp = firebaseAdmin.initializeApp(
           {
-            credential: firebase.credential.applicationDefault(),
+            credential: firebaseAdmin.credential.applicationDefault(),
             databaseURL: 'https://mapping-crisis.firebaseio.com',
           },
           'testFirebaseApp');
