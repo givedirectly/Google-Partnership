@@ -1,32 +1,20 @@
 // Call this firebaseLibrary to avoid conflicting with mock firebase defined in
 // commands.js.
-const firebaseLibrary = require('firebase');
+import * as firebaseLibrary from 'firebase';
+import {firebaseConfig} from '../../../client-side/static/authenticate';
 
 const hackyWaitTime = 1000;
 const notes = 'Sphinx of black quartz, judge my vow';
 
-// TODO(janakr): do test authentication separately. We should have a separate
-// test account that writes to a test database, to avoid interacting with
-// production data.
-const firebaseConfig = {
-  apiKey: 'AIzaSyAbNHe9B0Wo4MV8rm3qEdy8QzFeFWZERHs',
-  authDomain: 'givedirectly.firebaseapp.com',
-  databaseURL: 'https://givedirectly.firebaseio.com',
-  projectId: 'givedirectly',
-  storageBucket: '',
-  messagingSenderId: '634162034024',
-  appId: '1:634162034024:web:c5f5b82327ba72f46d52dd',
-};
-
 firebaseLibrary.initializeApp(firebaseConfig);
-const db = firebaseLibrary.firestore();
 
 // This test generally doesn't wait for the page to load, since that's not
 // necessary to draw polygons.
 describe('Integration tests for drawing polygons', () => {
   // Delete all test-defined polygons.
   const deleteAllRegionsDrawnByTest = () => {
-    const userShapes = db.collection('usershapes-test/' + testCookieValue);
+    const userShapes = firebaseLibrary.firestore().collection(
+        'usershapes-test/' + testCookieValue);
     // Return a wrapped promise. Cypress will wait for the promise to finish.
     cy.wrap(userShapes.get().then((querySnapshot) => {
       const deletePromises = [];
@@ -37,6 +25,9 @@ describe('Integration tests for drawing polygons', () => {
     }));
   };
 
+  before(
+      () => cy.wrap(
+          firebaseLibrary.auth().signInWithCustomToken(firestoreCustomToken)));
   beforeEach(deleteAllRegionsDrawnByTest);
 
   afterEach(deleteAllRegionsDrawnByTest);

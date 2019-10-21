@@ -1,6 +1,7 @@
-import createError from './create_error.js';
+import {authenticateToFirebase, Authenticator, initializeEE, initializeFirebase} from './authenticate.js';
 import createMap from './create_map.js';
 import {inProduction} from './in_test_util.js';
+import {getCookieValue} from './in_test_util.js';
 import run from './run.js';
 import {initializeSidebar} from './sidebar.js';
 
@@ -15,53 +16,83 @@ let map = null;
  * login, EE data is overlayed.
  */
 function setup() {
-  // The client ID from the Google Developers Console.
-  // TODO(#13): This is from janakr's console. Should use one for GiveDirectly.
-  // eslint-disable-next-line no-unused-vars
-  const CLIENT_ID = '634162034024-oodhl7ngkg63hd9ha9ho9b3okcb0bp8s' +
-      '.apps.googleusercontent.com';
-  // TODO(#13): This is from juliexxia's console. Should use one for
-  // GiveDirectly. Also, this client id has not been properly configured yet.
-  // const CLIENT_ID =
-  // '628350592927-tmcoolr3fv4mdbodurhainqobc6d6ibd.apps.googleusercontent.com';
-
   google.charts.load('current', {packages: ['table', 'controls']});
 
   $(document).ready(function() {
     initializeSidebar();
+    const firebaseAuthPromise = new SettablePromise();
 
-    map = createMap();
+    map = createMap(firebaseAuthPromise.getPromise());
 
-    const runOnSuccess = function() {
-      ee.initialize(
-          /* opt_baseurl=*/ null, /* opt_tileurl=*/ null, () => run(map),
-          createError('initializing EE'));
-    };
-
-    // Shows a button prompting the user to log in.
-    // eslint-disable-next-line no-unused-vars
-    const onImmediateFailed = function() {
-      $('.g-sign-in').removeClass('hidden');
-      $('.output').text('(Log in to see the result.)');
-      $('.g-sign-in .button').click(function() {
-        ee.data.authenticateViaPopup(function() {
-          // If the login succeeds, hide the login button and run the analysis.
-          $('.g-sign-in').addClass('hidden');
-          runOnSuccess();
-        });
-      });
-    };
-
+    const runOnInitialize = () => run(map, firebaseAuthPromise.getPromise());
     if (inProduction()) {
-      // Attempt to authenticate using existing credentials.
-      ee.data.authenticate(
-          CLIENT_ID, runOnSuccess, createError('authenticating'), null,
-          onImmediateFailed);
+      const authenticator = new Authenticator(
+          (token) =>
+              firebaseAuthPromise.setPromise(authenticateToFirebase(token)),
+          runOnInitialize);
+      authenticator.start();
     } else {
-      // TODO(#21): have something better for tests.
-      runOnSuccess();
+      // We're inside a test. The test setup should have tokens for us that will
+      // directly authenticate with Firebase. We still need to be on corp for
+      // EarthEngine (but see next PR).
+      initializeFirebase();
+      const token = getCookieValue('TEST_FIREBASE_TOKEN');
+      if (!token) {
+        console.error('Did not receive Firestore token in test');
+        return;
+      }
+      firebaseAuthPromise.setPromise(
+          firebase.auth().signInWithCustomToken(token));
+      initializeEE(runOnInitialize);
     }
   });
+}
+
+/**
+ * Class that provides a Promise that will be completed when the Promise passed
+ * into setPromise is complete. Useful when the Promise you want to wait for
+ * will not be created until later.
+ *
+ * Users can safely call getPromise() before setPromise() has been called: the
+ * returned Promise will complete once setPromise() is called and the argument
+ * of setPromise() has completed.
+ */
+class SettablePromise {
+  /** @constructor */
+  constructor() {
+    let resolveFunction = null;
+    let rejectFunction = null;
+    this.promise = new Promise((resolve, reject) => {
+      resolveFunction = resolve;
+      rejectFunction = reject;
+    });
+    this.resolveFunction = resolveFunction;
+    this.rejectFunction = rejectFunction;
+    this.promiseSet = false;
+  }
+
+  /**
+   * Sets the Promise to get the value of. Can only be called once.
+   * @param {Promise<any>} promise
+   */
+  setPromise(promise) {
+    if (this.promiseSet) {
+      console.error('Promise already set: ', this, promise);
+      return;
+    }
+    this.promiseSet = true;
+    promise.then(this.resolveFunction).catch(this.rejectFunction);
+  }
+
+  /**
+   * Returns the Promise that will eventually resolve to the value of the
+   * Promise passed into setPromise.
+   *
+   * @return {Promise<any>}
+   */
+  getPromise() {
+    return this.promise;
+  }
 }
 
 setup();

@@ -29,8 +29,10 @@ const scoreIndex = Object.keys(assets).length;
  * creates/populates the map and table.
  *
  * @param {google.maps.Map} map main map
+ * @param {Promise<any>} firebasePromise Promise that will complete when
+ *     Firebase authentication is finished
  */
-function run(map) {
+function run(map, firebasePromise) {
   setMapToDrawLayersOn(map);
   initializeAssetLayers(map);
   createToggles(map);
@@ -40,7 +42,7 @@ function run(map) {
   createAndDisplayJoinedData(
       map, initialPovertyThreshold, initialDamageThreshold,
       initialPovertyWeight);
-  processUserRegions(map);
+  processUserRegions(map, firebasePromise);
 }
 
 let mapSelectListener = null;

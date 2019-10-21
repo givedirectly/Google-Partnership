@@ -30,6 +30,19 @@ available. However, if you work for Google and get a failed command when you run
 
 * Install [yarn](http://yarnpkg.com/).
 
+* Set `export GOOGLE_APPLICATION_CREDENTIALS=/path/to/secret.json` in your
+shell, most likely in your `~/.bashrc`. Get the service account .json file,
+either from a collaborator or by logging into the [Service Accounts page](
+https://console.cloud.google.com/iam-admin/serviceaccounts?project=mapping-crisis)
+as `gd-earthengine-user@givedirectly.org` and generating a new key for
+`firebase-adminsdk-pw40g@mapping-crisis.iam.gserviceaccount.com`. This is needed
+for running tests.
+
+* Go to the [Firestore database](
+https://console.firebase.google.com/project/mapping-crisis/database/firestore/data~2FALLOWED_USERS~2FALL_USERS)
+when logged in as `gd-earthengine-user@givedirectly.org` and add your Google
+account's email address to the list of users.
+
 * Install [Chromium](https://www.chromium.org) if on Linux. Install via the
   usual `apt-get`-style channels. This should be relatively straightforward on
   most systems, but is difficult/impossible on Google-internal machines. If you
