@@ -30,6 +30,7 @@ function drawTable(
   const downloadButton = document.createElement('button');
   downloadButton.style.visibility = 'hidden';
   downloadButton.id = 'downloadButton';
+  downloadButton.className = 'form-button';
   downloadButton.innerHTML = 'Download';
   document.getElementById('tableContainer').appendChild(downloadButton);
   const downloadLink = document.createElement('a');
