@@ -41,11 +41,11 @@ describe('Unit test for ShapeData', () => {
   });
 
   it('Add shape', () => {
-    const underTest = new ShapeData(null, 'my notes');
     const mockPolygon = makeMockPolygon();
+    const underTest = new ShapeData(null, mockPolygon, 'my notes');
     const records = [];
     firebaseCollection.add = recordRecord(records, {id: 'new_id'});
-    underTest.update(mockPolygon);
+    underTest.update();
     expect(records).to.eql([{
       damage: 1,
       geometry: [new firebase.firestore.GeoPoint(0, 1)],
@@ -56,7 +56,7 @@ describe('Unit test for ShapeData', () => {
   });
 
   it('Update shape', () => {
-    const underTest = new ShapeData('my_id', 'my notes');
+    const underTest = new ShapeData('my_id', null, 'my notes');
     const mockPolygon = makeMockPolygon();
     const records = [];
     const ids = [];
@@ -64,7 +64,7 @@ describe('Unit test for ShapeData', () => {
       ids.push(id);
       return {set: recordRecord(records, null)};
     };
-    underTest.update(mockPolygon);
+    underTest.update();
     expect(ids).to.eql(['my_id']);
     expect(records).to.eql([{
       damage: 1,
@@ -76,7 +76,7 @@ describe('Unit test for ShapeData', () => {
   });
 
   it('Delete shape', () => {
-    const underTest = new ShapeData('my_id', 'my notes');
+    const underTest = new ShapeData('my_id', null, 'my notes');
     const mockPolygon = makeMockPolygon();
     mockPolygon.getMap = () => null;
     const ids = [];
@@ -86,20 +86,21 @@ describe('Unit test for ShapeData', () => {
         delete: () => new FakePromise(undefined),
       };
     };
-    underTest.update(mockPolygon);
+    underTest.update();
     expect(ids).to.eql(['my_id']);
     expect(underTest.id).to.eql('my_id');
     expect(ShapeData.pendingWriteCount).to.eql(0);
   });
 
   it('Update while update pending', () => {
-    const underTest = new ShapeData('my_id', 'my notes', 0);
+    const underTest = new ShapeData('my_id', null, 'my notes', 0);
     const mockPolygon = makeMockPolygon();
     const records = [];
     const ids = [];
     const setThatTriggersNewUpdate = {
       set: (record) => {
-        underTest.update(mockPolygon, () => {}, 'racing notes');
+        underTest.update(() => {
+        }, 'racing notes');
         expect(underTest.damage).to.eql(1);
         expect(underTest.notes).to.eql('racing notes');
         expect(underTest.state).to.eql(ShapeData.State.QUEUED_WRITE);
@@ -114,7 +115,7 @@ describe('Unit test for ShapeData', () => {
       ids.push(id);
       return setThatTriggersNewUpdate;
     };
-    underTest.update(mockPolygon);
+    underTest.update();
     expect(ids).to.eql(['my_id', 'my_id']);
     const geometry = [new firebase.firestore.GeoPoint(0, 1)];
     expect(records).to.eql([
