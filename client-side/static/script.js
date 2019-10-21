@@ -1,6 +1,6 @@
 import {authenticateToFirebase, Authenticator, CLIENT_ID, initializeEE, initializeFirebase} from './authenticate.js';
 import createMap from './create_map.js';
-import {getCookieValue, inProduction, earthEngineTestTokenCookieName, firebaseTestTokenCookieName} from './in_test_util.js';
+import {earthEngineTestTokenCookieName, firebaseTestTokenCookieName, getCookieValue, inProduction} from './in_test_util.js';
 import run from './run.js';
 import {initializeSidebar} from './sidebar.js';
 
