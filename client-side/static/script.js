@@ -1,9 +1,4 @@
-<<<<<<< HEAD
-import {authenticateToFirebase, Authenticator, CLIENT_ID} from './authenticate.js';
-import {initializeFirebase} from './authenticate.js';
-=======
 import {authenticateToFirebase, Authenticator, CLIENT_ID, initializeEE, initializeFirebase} from './authenticate.js';
->>>>>>> 1cad68cb3f39f67604b3055b7a6c4bb147f645f9
 import createMap from './create_map.js';
 import {inProduction} from './in_test_util.js';
 import {getCookieValue} from './in_test_util.js';
