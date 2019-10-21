@@ -1,14 +1,23 @@
-const firebaseAdmin = require('firebase-admin');
-const earthEngine = require('@google/earthengine');
+import {initializeApp as firebaseInitializeApp, credential as firebaseCredential} from 'firebase-admin';
+import {data as eeData} from '@google/earthengine';
 
 // You can read more here:
 // https://on.cypress.io/plugins-guide
 // ***********************************************************
 
-// This function is called when a project is opened or re-opened (e.g. due to
-// the project's config changing)
-
+/**
+ * This function is called when a project is opened or re-opened (e.g. due to
+ * the project's config changing).
+ *
+ * @param {Function} on
+ * @param {Object} config
+ * @return {Promise<any>}
+ */
 module.exports = (on, config) => {
+  /**
+   * Sets code that runs before browser is launched. We use this to enable GPU
+   * acceleration for Chromium.
+   */
   on('before:browser:launch', (browser = {}, args) => {
     if (browser.name === 'chromium') {
       const newArgs = args.filter((arg) => arg !== '--disable-gpu');
@@ -16,7 +25,12 @@ module.exports = (on, config) => {
       return newArgs;
     }
   });
-  let currentApp = null;
+  /**
+   * Defines "tasks" that can be run using cy.task(). The name of each task is
+   * the function name. These tasks are invoked in cypress/support/index.js in a
+   * "before" hook, but they can theoretically be called anywhere that cy.task()
+   * is legal to invoke.
+   */
   on('task', {
     /**
      * The following two functions use service account credentials (stored in
@@ -26,8 +40,8 @@ module.exports = (on, config) => {
      *
      * We do these initializations in this plugin because creating such a custom
      * token that's easy to pass around can best be done in libraries that are
-     * only available on Node, not client-side Javascript (for Firebase, the
-     * Firebase Admin SDK). Even Cypress tests, though they appear to run in
+     * only available on Node, which runs in a "server"-like environment, not client-side Javascript (for Firebase, the
+     * Firebase Admin SDK is only available in Node). Even Cypress tests, though they appear to run in
      * Node, are actually browserified, and the above modules don't work there.
      * Thus, we use genuine Node modules, and then pass the created tokens back
      * out to the test, where it can use them (in the case of Firebase) and also
@@ -42,9 +56,9 @@ module.exports = (on, config) => {
      * @return {Promise<string>} The token to be used
      */
     initializeTestFirebase() {
-      currentApp = firebaseAdmin.initializeApp(
+      const currentApp = firebaseInitializeApp(
           {
-            credential: firebaseAdmin.credential.applicationDefault(),
+            credential: firebaseCredential.applicationDefault(),
             databaseURL: 'https://mapping-crisis.firebaseio.com',
           },
           'testFirebaseApp');
@@ -68,11 +82,11 @@ module.exports = (on, config) => {
     getEarthEngineToken() {
       const privateKey = require(process.env.GOOGLE_APPLICATION_CREDENTIALS);
       return new Promise((resolve, reject) => {
-        earthEngine.data.authenticateViaPrivateKey(
+        eeData.authenticateViaPrivateKey(
             privateKey,
             // TODO(janakr): no better way to do this?
             // Strip 'Bearer ' from beginning.
-            () => resolve(earthEngine.data.getAuthToken().substring(7)),
+            () => resolve(eeData.getAuthToken().substring(7)),
             reject);
       });
     },

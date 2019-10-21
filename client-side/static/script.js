@@ -5,7 +5,18 @@ import {getCookieValue} from './in_test_util.js';
 import run from './run.js';
 import {initializeSidebar} from './sidebar.js';
 
-export {map};
+export {map, firebaseTestTokenCookieName, earthEngineTestTokenCookieName};
+
+/**
+ * These cookies are set in test setup (cypress/support/index.js) with tokens
+ * retrieved from functions defined in cypress/plugins/index.js. Those tokens
+ * grant access to Firebase and EarthEngine, respectively, even without any
+ * login action from this script, which would be impossible in a test.
+ *
+ * See cypress/plugins/index.js for more details on how that is done.
+ */
+const firebaseTestTokenCookieName = 'TEST_FIREBASE_TOKEN';
+const earthEngineTestTokenCookieName = 'TEST_EARTHENGINE_TOKEN';
 
 // The base Google Map, Initialized lazily to ensure doc is ready
 let map = null;
@@ -35,18 +46,19 @@ function setup() {
       // We're inside a test. The test setup should have tokens for us that will
       // directly authenticate with Firebase and EarthEngine.
       initializeFirebase();
-      const firebaseToken = getCookieValue('TEST_FIREBASE_TOKEN');
+      const firebaseToken = getCookieValue(firebaseTestTokenCookieName);
       if (!firebaseToken) {
         console.error('Did not receive Firebase token in test');
         return;
       }
-      firebaseAuthPromise.setPromise(
-          firebase.auth().signInWithCustomToken(firebaseToken));
-      const eeToken = getCookieValue('TEST_EARTHENGINE_TOKEN');
+      const eeToken = getCookieValue(earthEngineTestTokenCookieName);
       if (!eeToken) {
         console.error('Did not receive EarthEngine token in test');
         return;
       }
+
+      firebaseAuthPromise.setPromise(
+          firebase.auth().signInWithCustomToken(firebaseToken));
       ee.data.setAuthToken(
           CLIENT_ID, 'Bearer', eeToken,
           // Expires in 3600 is a lie, but no need to tell the truth.

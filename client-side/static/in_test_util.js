@@ -2,7 +2,10 @@ export {
   getCookieValue,
   getTestCookie,
   inProduction,
+    cypressTestCookieName,
 };
+
+const cypressTestCookieName = 'IN_CYPRESS_TEST';
 
 /**
  * Returns the value of the requested cookie. Copied from
@@ -23,7 +26,7 @@ function getCookieValue(cookieName) {
  * @return {string}
  */
 function getTestCookie() {
-  return getCookieValue('IN_CYPRESS_TEST');
+  return getCookieValue(cypressTestCookieName);
 }
 /**
  * Returns if we are in production, as determined by the IN_CYPRESS_TEST cookie.
