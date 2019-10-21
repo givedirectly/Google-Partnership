@@ -1,13 +1,22 @@
+const earthEngine = require('@google/earthengine');
 const firebaseAdmin = require('firebase-admin');
 
 // You can read more here:
 // https://on.cypress.io/plugins-guide
 // ***********************************************************
 
-// This function is called when a project is opened or re-opened (e.g. due to
-// the project's config changing)
-
+/**
+ * This function is called when a project is opened or re-opened (e.g. due to
+ * the project's config changing).
+ *
+ * @param {Function} on
+ * @param {Object} config
+ */
 module.exports = (on, config) => {
+  /**
+   * Sets code that runs before browser is launched. We use this to enable GPU
+   * acceleration for Chromium.
+   */
   on('before:browser:launch', (browser = {}, args) => {
     if (browser.name === 'chromium') {
       const newArgs = args.filter((arg) => arg !== '--disable-gpu');
@@ -15,29 +24,42 @@ module.exports = (on, config) => {
       return newArgs;
     }
   });
-  let currentApp = null;
+  /**
+   * Defines "tasks" that can be run using cy.task(). The name of each task is
+   * the function name. These tasks are invoked in cypress/support/index.js in a
+   * "before" hook, but they can theoretically be called anywhere that cy.task()
+   * is legal to invoke.
+   */
   on('task', {
     /**
-     * Uses Firebase service account credentials (stored in the json file
-     * pointed to by the environment variable GOOGLE_APPLICATION_CREDENTIALS)
-     * to generate a "custom token" that can be used by both the test and
-     * production code to authenticate with Firebase. This token can only be
-     * used in documents that look like 'usershapes-test/<blah>/suffix/<doc>',
-     * as determined by the Firebase rules.
+     * The following two functions use service account credentials (stored in
+     * the json file pointed to by the environment variable
+     * GOOGLE_APPLICATION_CREDENTIALS) to generate tokens that can be used by
+     * production code to authenticate with Firebase/EarthEngine. These tokens
+     * are different from the actual service account credentials, which cannot
+     * be used by a client-side Javascript application.
      *
-     * We do this initialization in this plugin because creating such a custom
-     * token that's easy to pass around can best be done using the Firebase
-     * Admin SDK. That library is only available on Node, not client-side
-     * Javascript. Even Cypress tests, though they appear to run in Node, are
-     * actually browserified, and the firebase-admin module doesn't work there.
-     * Thus, we use the Firebase admin module here, in genuine Node, and then
-     * pass the created token back out to the test, where it can use it and also
-     * set a cookie for the production code to use.
+     * We do these initializations in this plugin because creating such a custom
+     * token that's easy to pass around can best be done in libraries that are
+     * only available on Node, which runs in a "server"-like environment, not
+     * client-side Javascript (for Firebase, the Firebase Admin SDK is only
+     * available in Node). Even Cypress tests, though they appear to run in
+     * Node, are actually browserified, and the above modules don't work there.
+     * Thus, we use genuine Node modules, and then pass the created tokens back
+     * out to the test, where it can use them (in the case of Firebase) and also
+     * set cookies for the production code to use.
+     */
+
+    /**
+     * Produces a Firebase token that can only be used in documents that look
+     * like 'usershapes-test/<blah>/suffix/<doc>', as determined by the Firebase
+     * rules.
      *
+     * See https://firebase.google.com/docs/auth/admin/create-custom-tokens.
      * @return {Promise<string>} The token to be used
      */
     initializeTestFirebase() {
-      currentApp = firebaseAdmin.initializeApp(
+      const currentApp = firebaseAdmin.initializeApp(
           {
             credential: firebaseAdmin.credential.applicationDefault(),
             databaseURL: 'https://mapping-crisis.firebaseio.com',
@@ -53,6 +75,22 @@ module.exports = (on, config) => {
           return token;
         }
         throw new Error('No token generated');
+      });
+    },
+    /**
+     * Produces an EarthEngine token that can be used by production code.
+     *
+     * @return {Promise<string>}
+     */
+    getEarthEngineToken() {
+      const privateKey = require(process.env.GOOGLE_APPLICATION_CREDENTIALS);
+      return new Promise((resolve, reject) => {
+        earthEngine.data.authenticateViaPrivateKey(
+            privateKey,
+            // TODO(janakr): no better way to do this?
+            // Strip 'Bearer ' from beginning.
+            () => resolve(earthEngine.data.getAuthToken().substring(7)),
+            reject);
       });
     },
   });

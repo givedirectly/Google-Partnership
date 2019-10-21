@@ -1,7 +1,6 @@
-import {authenticateToFirebase, Authenticator, initializeEE, initializeFirebase} from './authenticate.js';
+import {authenticateToFirebase, Authenticator, CLIENT_ID, initializeEE, initializeFirebase} from './authenticate.js';
 import createMap from './create_map.js';
-import {inProduction} from './in_test_util.js';
-import {getCookieValue} from './in_test_util.js';
+import {earthEngineTestTokenCookieName, firebaseTestTokenCookieName, getCookieValue, inProduction} from './in_test_util.js';
 import run from './run.js';
 import {initializeSidebar} from './sidebar.js';
 
@@ -33,17 +32,27 @@ function setup() {
       authenticator.start();
     } else {
       // We're inside a test. The test setup should have tokens for us that will
-      // directly authenticate with Firebase. We still need to be on corp for
-      // EarthEngine (but see next PR).
+      // directly authenticate with Firebase and EarthEngine.
       initializeFirebase();
-      const token = getCookieValue('TEST_FIREBASE_TOKEN');
-      if (!token) {
-        console.error('Did not receive Firestore token in test');
+      const firebaseToken = getCookieValue(firebaseTestTokenCookieName);
+      if (!firebaseToken) {
+        console.error('Did not receive Firebase token in test');
         return;
       }
+      const eeToken = getCookieValue(earthEngineTestTokenCookieName);
+      if (!eeToken) {
+        console.error('Did not receive EarthEngine token in test');
+        return;
+      }
+
       firebaseAuthPromise.setPromise(
-          firebase.auth().signInWithCustomToken(token));
-      initializeEE(runOnInitialize);
+          firebase.auth().signInWithCustomToken(firebaseToken));
+      ee.data.setAuthToken(
+          CLIENT_ID, 'Bearer', eeToken,
+          // Expires in 3600 is a lie, but no need to tell the truth.
+          /* expiresIn */ 3600, /* extraScopes */[],
+          /* callback */ () => initializeEE(runOnInitialize),
+          /* updateAuthLibrary */ false);
     }
   });
 }
