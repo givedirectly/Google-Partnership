@@ -1,7 +1,7 @@
 // Call this firebaseLibrary to avoid conflicting with mock firebase defined in
 // commands.js.
 import * as firebaseLibrary from 'firebase';
-import firebaseConfig from '../../../client-side/static/authenticate';
+import {firebaseConfig} from '../../../client-side/static/authenticate';
 
 const hackyWaitTime = 1000;
 const notes = 'Sphinx of black quartz, judge my vow';
@@ -26,8 +26,9 @@ describe('Integration tests for drawing polygons', () => {
   };
 
   before(
-      () => cy.wrap(
-          firebaseLibrary.auth().signInWithCustomToken(firestoreCustomToken)));
+      () =>
+          cy.wrap(
+              firebaseLibrary.auth().signInWithCustomToken(firestoreCustomToken)));
   beforeEach(deleteAllRegionsDrawnByTest);
 
   afterEach(deleteAllRegionsDrawnByTest);
