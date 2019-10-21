@@ -37,12 +37,8 @@ function setup() {
           runOnInitialize);
       authenticator.start();
     } else {
-<<<<<<< HEAD
-=======
       // We're inside a test. The test setup should have tokens for us that will
-      // directly authenticate with Firebase. We still need to be on corp for
-      // EarthEngine (but see next PR).
->>>>>>> 1cad68cb3f39f67604b3055b7a6c4bb147f645f9
+      // directly authenticate with Firebase and EarthEngine.
       initializeFirebase();
       const firebaseToken = getCookieValue('TEST_FIREBASE_TOKEN');
       if (!firebaseToken) {
@@ -56,19 +52,11 @@ function setup() {
         console.error('Did not receive EarthEngine token in test');
         return;
       }
-<<<<<<< HEAD
-      const authenticator = new Authenticator(null, runOnInitialize);
-=======
->>>>>>> 1cad68cb3f39f67604b3055b7a6c4bb147f645f9
       ee.data.setAuthToken(
           CLIENT_ID, 'Bearer', eeToken,
           // Expires in 3600 is a lie, but no need to tell the truth.
           /* expiresIn */ 3600, /* extraScopes */[],
-<<<<<<< HEAD
-          /* callback */ () => authenticator.initializeEE(),
-=======
-          () => initializeEE(runOnInitialize),
->>>>>>> 1cad68cb3f39f67604b3055b7a6c4bb147f645f9
+          /* callback */ () => initializeEE(runOnInitialize),
           /* updateAuthLibrary */ false);
     }
   });
