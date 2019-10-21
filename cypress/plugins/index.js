@@ -11,7 +11,6 @@ import {credential as firebaseCredential, initializeApp as firebaseInitializeApp
  *
  * @param {Function} on
  * @param {Object} config
- * @return {Promise<any>}
  */
 module.exports = (on, config) => {
   /**
