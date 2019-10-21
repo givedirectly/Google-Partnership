@@ -1,4 +1,10 @@
-export {authenticateToFirebase, Authenticator, initializeFirebase, initializeEE};
+export {
+  authenticateToFirebase,
+  Authenticator,
+  initializeEE,
+  initializeFirebase,
+    firebaseConfig
+};
 
 // The client ID from
 // https://console.cloud.google.com/apis/credentials?project=mapping-crisis
@@ -116,8 +122,7 @@ function initializeFirebase() {
 /** Initializes EarthEngine. Exposed only for use in test codepaths. */
 function initializeEE(runCallback, errorCallback = console.error) {
   ee.initialize(
-      /* opt_baseurl=*/ null, /* opt_tileurl=*/ null,
-      runCallback,
+      /* opt_baseurl=*/ null, /* opt_tileurl=*/ null, runCallback,
       (err) => errorCallback('Error initializing EarthEngine: ' + err));
 }
 

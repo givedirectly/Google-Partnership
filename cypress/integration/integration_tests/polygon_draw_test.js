@@ -1,21 +1,10 @@
 // Call this firebaseLibrary to avoid conflicting with mock firebase defined in
 // commands.js.
-const firebaseLibrary = require('firebase');
+import * as firebaseLibrary from 'firebase';
+import firebaseConfig from '../../../client-side/static/authenticate';
 
 const hackyWaitTime = 1000;
 const notes = 'Sphinx of black quartz, judge my vow';
-
-// Taken from
-// https://console.firebase.google.com/project/mapping-crisis/settings/general/
-const firebaseConfig = {
-  apiKey: 'AIzaSyBAQkh-kRrYitkPafxVLoZx3E5aYM-auXM',
-  authDomain: 'mapping-crisis.firebaseapp.com',
-  databaseURL: 'https://mapping-crisis.firebaseio.com',
-  projectId: 'mapping-crisis',
-  storageBucket: 'mapping-crisis.appspot.com',
-  messagingSenderId: '38420505624',
-  appId: '1:38420505624:web:79425020e2f86c82a78f6d',
-};
 
 firebaseLibrary.initializeApp(firebaseConfig);
 

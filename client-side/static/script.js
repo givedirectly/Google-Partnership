@@ -1,4 +1,4 @@
-import {authenticateToFirebase, Authenticator, initializeFirebase, initializeEE} from './authenticate.js';
+import {authenticateToFirebase, Authenticator, initializeEE, initializeFirebase} from './authenticate.js';
 import {initializeFirebase} from './authenticate.js';
 import createMap from './create_map.js';
 import {inProduction} from './in_test_util.js';
