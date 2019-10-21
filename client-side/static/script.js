@@ -48,7 +48,6 @@ function setup() {
         console.error('Did not receive EarthEngine token in test');
         return;
       }
-      const authenticator = new Authenticator(null, runOnInitialize);
       ee.data.setAuthToken(
           CLIENT_ID, 'Bearer', eeToken,
           // Expires in 3600 is a lie, but no need to tell the truth.
