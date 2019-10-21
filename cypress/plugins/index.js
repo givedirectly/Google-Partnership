@@ -1,5 +1,5 @@
-import {data as eeData} from '@google/earthengine';
-import {credential as firebaseCredential, initializeApp as firebaseInitializeApp} from 'firebase-admin';
+const earthEngine = require('@google/earthengine');
+const firebaseAdmin = require('firebase-admin');
 
 // You can read more here:
 // https://on.cypress.io/plugins-guide
@@ -35,7 +35,9 @@ module.exports = (on, config) => {
      * The following two functions use service account credentials (stored in
      * the json file pointed to by the environment variable
      * GOOGLE_APPLICATION_CREDENTIALS) to generate tokens that can be used by
-     * production code to authenticate with Firebase/EarthEngine.
+     * production code to authenticate with Firebase/EarthEngine. These tokens
+     * are different from the actual service account credentials, which cannot
+     * be used by a client-side Javascript application.
      *
      * We do these initializations in this plugin because creating such a custom
      * token that's easy to pass around can best be done in libraries that are
@@ -53,12 +55,13 @@ module.exports = (on, config) => {
      * like 'usershapes-test/<blah>/suffix/<doc>', as determined by the Firebase
      * rules.
      *
+     * See https://firebase.google.com/docs/auth/admin/create-custom-tokens.
      * @return {Promise<string>} The token to be used
      */
     initializeTestFirebase() {
-      const currentApp = firebaseInitializeApp(
+      const currentApp = firebaseAdmin.initializeApp(
           {
-            credential: firebaseCredential.applicationDefault(),
+            credential: firebase.credential.applicationDefault(),
             databaseURL: 'https://mapping-crisis.firebaseio.com',
           },
           'testFirebaseApp');
@@ -82,11 +85,11 @@ module.exports = (on, config) => {
     getEarthEngineToken() {
       const privateKey = require(process.env.GOOGLE_APPLICATION_CREDENTIALS);
       return new Promise((resolve, reject) => {
-        eeData.authenticateViaPrivateKey(
+        earthEngine.data.authenticateViaPrivateKey(
             privateKey,
             // TODO(janakr): no better way to do this?
             // Strip 'Bearer ' from beginning.
-            () => resolve(eeData.getAuthToken().substring(7)), reject);
+            () => resolve(earthEngine.data.getAuthToken().substring(7)), reject);
       });
     },
   });
