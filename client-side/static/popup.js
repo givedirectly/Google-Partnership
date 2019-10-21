@@ -254,7 +254,7 @@ function setUpPopup() {
       this.containerDiv.style.visibility = 'visible';
     };
 
-    /** @return true if the popup is currently visible. */
+    /** @return {boolean} true if the popup is currently visible. */
     isVisible() {
       return this.containerDiv.style.visibility === 'visible';
     };
