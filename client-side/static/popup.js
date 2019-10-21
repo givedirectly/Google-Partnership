@@ -9,8 +9,7 @@ export {
 let Popup = null;
 
 // Mostly copied from example at
-// https://developers-dot-devsite-v2-prod.appspot.com/maps \
-//     /documentation/javascript/examples/overlay-popup
+// https://developers-dot-devsite-v2-prod.appspot.com/maps/documentation/javascript/examples/overlay-popup
 function setUpPopup() {
   Popup = class extends google.maps.OverlayView {
     /**

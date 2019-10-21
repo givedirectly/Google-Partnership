@@ -5,6 +5,7 @@ import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {createPopup} from './popup.js';
 import {getResources} from './resources.js';
 import {userRegionData} from './user_region_data.js';
+import {setUpPopup} from './popup.js';
 
 // ShapeData is only for testing.
 export {
@@ -177,6 +178,8 @@ const appearance = {
  *     Firebase authentication is finished
  */
 function setUpPolygonDrawing(map, firebasePromise) {
+  setUpPopup();
+
   firebasePromise.then(() => {
     const drawingManager = new google.maps.drawing.DrawingManager({
       drawingControl: true,
