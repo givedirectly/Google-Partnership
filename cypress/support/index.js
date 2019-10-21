@@ -3,8 +3,9 @@ import './mock_ee';
 import './mock_firebase';
 import './mock_deck';
 import './mock_maps';
-import {firebaseTestTokenCookieName, earthEngineTestTokenCookieName} from '../../client-side/static/script';
+
 import {cypressTestCookieName} from '../../client-side/static/in_test_util';
+import {earthEngineTestTokenCookieName, firebaseTestTokenCookieName} from '../../client-side/static/script';
 
 global.host = 'http://localhost:8080/';
 global.tableClass = '.google-visualization-table-table';

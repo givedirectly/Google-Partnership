@@ -1,8 +1,8 @@
 export {
+  cypressTestCookieName,
   getCookieValue,
   getTestCookie,
   inProduction,
-    cypressTestCookieName,
 };
 
 const cypressTestCookieName = 'IN_CYPRESS_TEST';

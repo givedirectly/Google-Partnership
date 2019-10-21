@@ -5,7 +5,7 @@ import {getCookieValue} from './in_test_util.js';
 import run from './run.js';
 import {initializeSidebar} from './sidebar.js';
 
-export {map, firebaseTestTokenCookieName, earthEngineTestTokenCookieName};
+export {earthEngineTestTokenCookieName, firebaseTestTokenCookieName, map};
 
 /**
  * These cookies are set in test setup (cypress/support/index.js) with tokens

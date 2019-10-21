@@ -1,5 +1,5 @@
-import {initializeApp as firebaseInitializeApp, credential as firebaseCredential} from 'firebase-admin';
 import {data as eeData} from '@google/earthengine';
+import {credential as firebaseCredential, initializeApp as firebaseInitializeApp} from 'firebase-admin';
 
 // You can read more here:
 // https://on.cypress.io/plugins-guide
@@ -40,8 +40,9 @@ module.exports = (on, config) => {
      *
      * We do these initializations in this plugin because creating such a custom
      * token that's easy to pass around can best be done in libraries that are
-     * only available on Node, which runs in a "server"-like environment, not client-side Javascript (for Firebase, the
-     * Firebase Admin SDK is only available in Node). Even Cypress tests, though they appear to run in
+     * only available on Node, which runs in a "server"-like environment, not
+     * client-side Javascript (for Firebase, the Firebase Admin SDK is only
+     * available in Node). Even Cypress tests, though they appear to run in
      * Node, are actually browserified, and the above modules don't work there.
      * Thus, we use genuine Node modules, and then pass the created tokens back
      * out to the test, where it can use them (in the case of Firebase) and also
@@ -86,8 +87,7 @@ module.exports = (on, config) => {
             privateKey,
             // TODO(janakr): no better way to do this?
             // Strip 'Bearer ' from beginning.
-            () => resolve(eeData.getAuthToken().substring(7)),
-            reject);
+            () => resolve(eeData.getAuthToken().substring(7)), reject);
       });
     },
   });
