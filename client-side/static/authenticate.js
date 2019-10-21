@@ -1,9 +1,9 @@
 export {
   authenticateToFirebase,
   Authenticator,
+  firebaseConfig,
   initializeEE,
-  initializeFirebase,
-    firebaseConfig
+  initializeFirebase
 };
 
 // The client ID from
