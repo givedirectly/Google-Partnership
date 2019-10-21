@@ -18,6 +18,7 @@ function setup() {
   google.charts.load('current', {packages: ['table', 'controls']});
 
   $(document).ready(function() {
+    console.log('Ready at ', new Date() - startDate);
     initializeSidebar();
     const firebaseAuthPromise = new SettablePromise();
 
