@@ -170,7 +170,6 @@ input[type='button']:hover, button:hover {
   font-weight: bold;
 }
 
-
 /* Checkbox css */
 
 .checkbox-row {
@@ -341,6 +340,11 @@ input[type=checkbox]:checked {
   box-sizing: border-box;
   padding: 10px;
   overflow-x: hidden;
+}
+
+/** Thresholds css */
+.error {
+  color: #E57373;
 }
 
 /**
