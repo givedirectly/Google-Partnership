@@ -1,22 +1,10 @@
 import {authenticateToFirebase, Authenticator, CLIENT_ID, initializeEE, initializeFirebase} from './authenticate.js';
 import createMap from './create_map.js';
-import {inProduction} from './in_test_util.js';
-import {getCookieValue} from './in_test_util.js';
+import {getCookieValue, inProduction, earthEngineTestTokenCookieName, firebaseTestTokenCookieName} from './in_test_util.js';
 import run from './run.js';
 import {initializeSidebar} from './sidebar.js';
 
-export {earthEngineTestTokenCookieName, firebaseTestTokenCookieName, map};
-
-/**
- * These cookies are set in test setup (cypress/support/index.js) with tokens
- * retrieved from functions defined in cypress/plugins/index.js. Those tokens
- * grant access to Firebase and EarthEngine, respectively, even without any
- * login action from this script, which would be impossible in a test.
- *
- * See cypress/plugins/index.js for more details on how that is done.
- */
-const firebaseTestTokenCookieName = 'TEST_FIREBASE_TOKEN';
-const earthEngineTestTokenCookieName = 'TEST_EARTHENGINE_TOKEN';
+export {map};
 
 // The base Google Map, Initialized lazily to ensure doc is ready
 let map = null;
