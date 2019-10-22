@@ -60,6 +60,7 @@ function createToggles(map) {
   };
   const errorMessage = document.createElement('p');
   errorMessage.id = 'error';
+  errorMessage.className = 'error';
   form.append(errorMessage);
 
   // threshold toggles

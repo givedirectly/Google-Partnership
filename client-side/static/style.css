@@ -22,6 +22,7 @@ html, body {
   --opacity-transition: opacity 0.5s ease-in-out;
 
   --sidebar-min-width: 64px;
+  --sidebar-edge-width: 8px;
 }
 
 .hidden {
@@ -72,7 +73,7 @@ h1 {
   position: relative;
   width: 100%;
   height: 75%;
-  margin-bottom: 10px;
+  margin: 16px auto;
 }
 
 .map {
@@ -161,7 +162,7 @@ input[type='button']:hover, button:hover {
 .form-button {
   font-size: 16px;
   line-height: 24px;
-  margin: 5px 15px 5px 0;
+  margin: 8px 0;
   padding: 2px 8px;
 }
 
@@ -169,7 +170,6 @@ input[type='button']:hover, button:hover {
   color: var(--green-3);
   font-weight: bold;
 }
-
 
 /* Checkbox css */
 
@@ -296,7 +296,7 @@ input[type=checkbox]:checked {
 /** Sidebar styling */
 
 .sidebar {
-  box-shadow: 3px 0 10px -2px #BEC2C1;
+  position: relative;
   left: 0;
   max-width: 400px;
   float: left;
@@ -304,6 +304,16 @@ input[type=checkbox]:checked {
   width: var(--sidebar-min-width);
   height: 100%;
   z-index: 20;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.15), 0 0 6px rgba(0, 0, 0, 0.10);
+}
+
+.sidebar-edge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: var(--sidebar-edge-width);
+  height: 100%;
+  background-color: var(--green-6);
 }
 
 .sidebar ul {
@@ -341,6 +351,11 @@ input[type=checkbox]:checked {
   box-sizing: border-box;
   padding: 10px;
   overflow-x: hidden;
+}
+
+/** Thresholds css */
+.error {
+  color: #E57373;
 }
 
 /**
