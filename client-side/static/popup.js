@@ -112,7 +112,7 @@ function setUpPopup() {
         if (confirm('Delete region?')) {
           polygon.setMap(null);
           this.setMap(null);
-          allPopups.delete(popup);
+          allPopups.delete(this);
           userRegionData.get(polygon).update(polygon);
         }
       };
@@ -123,7 +123,7 @@ function setUpPopup() {
       editButton.className = 'popup-button';
       editButton.innerHTML = 'edit';
       editButton.onclick = () => {
-        popup.updateState(false);
+        this.updateState(false);
 
         const currentNotes = notesDiv.innerText;
         savedShape = clonePolygonPath(polygon);
