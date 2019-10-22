@@ -2,7 +2,7 @@ import createError from './create_error.js';
 import {mapContainerId, writeWaiterId} from './dom_constants.js';
 import {getTestCookie, inProduction} from './in_test_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
-import {addPopUpListener, createPopup, setUpPopup, updateDamage} from './popup.js';
+import {createPopup, setUpPopup} from './popup.js';
 import {getResources} from './resources.js';
 import {userRegionData} from './user_region_data.js';
 
@@ -191,8 +191,7 @@ function setUpPolygonDrawing(map, firebasePromise) {
       const data = new ShapeData(null, '', 'calculating');
       userRegionData.set(polygon, data);
       const popup = createPopup(polygon, map);
-      addPopUpListener(popup);
-      data.update(polygon, (damage) => updateDamage(popup, damage), '');
+      data.update(polygon, (damage) => popup.updateDamage(damage), '');
     });
 
     drawingManager.setMap(map);
@@ -243,7 +242,7 @@ function drawRegionsFromFirestoreQuery(querySnapshot, map) {
         new ShapeData(
             userDefinedRegion.id, userDefinedRegion.get('notes'),
             userDefinedRegion.get('damage')));
-    addPopUpListener(createPopup(polygon, map));
+    createPopup(polygon, map);
     polygon.setMap(map);
   });
   loadingElementFinished(mapContainerId);
