@@ -88,8 +88,8 @@ class Authenticator {
       $('.g-sign-in').removeClass('hidden');
       $('.output').text('(Log in to see the result.)');
       $('.g-sign-in .button').click(() => {
-        // TODO(janakr): If authentication fails here, user has to reload page to
-        // try again. Not clear how that can happen, but maybe should be more
+        // TODO(janakr): If authentication fails here, user has to reload page
+        // to try again. Not clear how that can happen, but maybe should be more
         // graceful?
         this.eeAuthenticate(
             (err) =>
