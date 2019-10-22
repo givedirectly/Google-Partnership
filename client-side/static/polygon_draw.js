@@ -15,24 +15,23 @@ export {
 
 /**
  * Class holding data for a user-drawn polygon, including the state of writing
- * to the backend. Does not hold the polygon itself.
+ * to the backend. In contrast with the Popup class, this class corresponds to
+ * data that has been written to the backend. However, it keeps a reference to
+ * the corresponding Popup class so that it can inform it when data is
+ * calculated and retrieve user-modified values.
  */
 class ShapeData {
   /**
-   * Constructor. The id is null if user has just created polygon (corresponds
-   * to backend id).
+   * @constructor
    *
-   * @param {String} id Firestore id.
-   * @param {google.maps.Polygon} polygon
-   * @param {String} notes User-entered notes.
-   * @param {Integer|String} damage
+   * @param {String} id Firestore id. Null if user has just created polygon
+   * @param {Popup} popup
    */
-  constructor(id, polygon, notes, damage) {
+  constructor(id, popup) {
     this.id = id;
-    this.polygon = polygon;
-    this.polygonGeoPoints = ShapeData.polygonGeoPoints(polygon);
-    this.notes = notes;
-    this.damage = damage;
+    this.popup = popup;
+    this.polygonGeoPoints = ShapeData.polygonGeoPoints(popup.polygon);
+    this.lastNotes = popup.notes;
     this.state = ShapeData.State.SAVED;
   }
 
@@ -43,31 +42,32 @@ class ShapeData {
    *
    * If there is already a pending write, this method records that another write
    * should be performed when the pending one completes and returns immediately.
-   *
-   * @param {Function} damageReceiver
-   * @param {String} notes User-supplied notes (optional).
    */
-  update(damageReceiver = () => {}, notes = this.notes) {
-    this.notes = notes;
+  update() {
     if (this.state !== ShapeData.State.SAVED) {
       this.state = ShapeData.State.QUEUED_WRITE;
       return;
     }
+    const polygon = this.popup.polygon;
     addLoadingElement(writeWaiterId);
     this.state = ShapeData.State.WRITING;
     ShapeData.pendingWriteCount++;
     if (!polygon.getMap()) {
-      this.delete(polygon);
+      this.delete();
       return;
     }
-    const updateDamageLambda = () => {
-    };
-    const newGeometry = ShapeData.polygonGeoPoints(this.polygon);
+    const newGeometry = ShapeData.polygonGeoPoints(polygon);
     const geometriesEqual = ShapeData.compareGeoPointArrays(this.polygonGeoPoints, newGeometry);
+    const newNotesEqual = this.lastNotes !== this.popup.notes;
+    this.lastNotes = this.popup.notes;
     if (geometriesEqual) {
-      updateDamageLambda();
+      this.popup.setCalculatedData(this.popup.calculatedData);
+      if (!newNotesEqual) {
+        this.doRemoteUpdate();
+      }
       return;
     }
+
     this.polygonGeoPoints = newGeometry;
     const points = [];
     polygon.getPath().forEach((elt) => points.push(elt.lng(), elt.lat()));
@@ -77,40 +77,14 @@ class ShapeData {
         .evaluate((damage, failure) => {
           if (failure) {
             createError('error calculating damage' + this)(failure);
-          } else {
-    ee.FeatureCollection(getResources().damage)
-        .filterBounds(ee.Geometry.Polygon(points))
-        .size()
-        .evaluate((damage, failure) => {
-          if (failure) {
-            createError('error calculating damage' + this);
-          } else {
-            this.damage = damage;
-            damageReceiver(this.damage);
-            const record = {
-              geometry: geometry,
-              notes: this.notes,
-              damage: this.damage,
-            };
-            if (this.id) {
-              userShapes.doc(this.id)
-                  .set(record)
-                  .then(finishWriteAndMaybeWriteAgain)
-                  .catch(createError('error updating ' + this));
-            } else {
-              userShapes.add(record)
-                  .then((docRef) => {
-                    this.id = docRef.id;
-                    finishWriteAndMaybeWriteAgain();
-                  })
-                  .catch(createError('error adding ' + this));
-            }
+            return;
           }
+          this.popup.setCalculatedData({damage: damage});
+          this.doRemoteUpdate();
         });
-    }
   }
 
-  finishWriteAndMaybeWriteAgain(damageReceiver) {
+  finishWriteAndMaybeWriteAgain() {
     ShapeData.pendingWriteCount--;
     const oldState = this.state;
     this.state = ShapeData.State.SAVED;
@@ -120,47 +94,44 @@ class ShapeData {
         return;
       case ShapeData.State.QUEUED_WRITE:
         loadingElementFinished(writeWaiterId);
-        this.update(damageReceiver, this.notes);
+        this.update();
         return;
       case ShapeData.State.SAVED:
         console.error('Unexpected polygon state:' + this);
     }
   }
 
-  doRemoteUpdate(damageReceiver) {
-            const record = {
-              geometry: this.polygonGeoPoints,
-              notes: this.notes,
-              damage: this.damage,
-            };
-            if (this.id) {
-              userShapes.doc(this.id)
-                  .set(record)
-                  .then(() => this.finishWriteAndMaybeWriteAgain(damageReceiver))
-                  .catch(createError('error updating ' + this));
-            } else {
-              userShapes.add(record)
-                  .then((docRef) => {
-                    this.id = docRef.id;
-                    this.finishWriteAndMaybeWriteAgain(damageReceiver);
-                  })
-                  .catch(createError('error adding ' + this));
-            }
-          }
-
+  doRemoteUpdate() {
+  const record = {
+    geometry: this.polygonGeoPoints,
+    notes: this.popup.notes,
+    calculatedData: this.popup.calculatedData,
+  };
+  if (this.id) {
+    userShapes.doc(this.id)
+        .set(record)
+        .then(() => this.finishWriteAndMaybeWriteAgain())
+        .catch(createError('error updating ' + this));
+  } else {
+    userShapes.add(record)
+        .then((docRef) => {
+          this.id = docRef.id;
+          this.finishWriteAndMaybeWriteAgain();
+        })
+        .catch(createError('error adding ' + this));
+  }
+}
   /**
    * Deletes this region from storage and userRegionData. Only for internal use.
-   *
-   * @param {google.maps.Polygon} polygon
    */
-  delete(polygon) {
+  delete() {
     // Polygon has been removed from map, we should delete on backend.
-    userRegionData.delete(polygon);
+    userRegionData.delete(this.popup.polygon);
     if (!this.id) {
       // Even if the user creates a polygon and then deletes it immediately,
       // the creation should trigger an update that must complete before the
       // deletion gets here. So there should always be an id.
-      console.error('Unexpected: polygon to be deleted had no id: ', polygon);
+      console.error('Unexpected: polygon to be deleted had no id: ', this);
       return;
     }
     // Nothing more needs to be done for this element because it is
@@ -240,10 +211,10 @@ function setUpPolygonDrawing(map, firebasePromise) {
 
     drawingManager.addListener('overlaycomplete', (event) => {
       const polygon = event.overlay;
-      const popup = createPopup(polygon, map);
-      const data = new ShapeData(null, polygon, '', 'calculating');
+      const popup = createPopup(polygon, map, '', );
+      const data = new ShapeData(null, popup);
       userRegionData.set(polygon, data);
-      data.update((damage) => popup.updateDamage(damage), '');
+      data.update();
     });
 
     drawingManager.setMap(map);
@@ -262,6 +233,7 @@ function setUpPolygonDrawing(map, firebasePromise) {
  *     (only used by tests).
  */
 function processUserRegions(map, firebasePromise) {
+  console.log('starting process');
   addLoadingElement(mapContainerId);
   return firebasePromise
       .then(() => userShapes = firebase.firestore().collection(collectionName))
@@ -289,11 +261,10 @@ function drawRegionsFromFirestoreQuery(querySnapshot, map) {
     const properties = Object.assign({}, appearance);
     properties.paths = coordinates;
     const polygon = new google.maps.Polygon(properties);
-    const popup = createPopup(polygon, map);
+    const popup = createPopup(polygon, map, userDefinedRegion.get('notes'), userDefinedRegion.get('calculatedData'));
     userRegionData.set(
         polygon,
-    new ShapeData(userDefinedRegion.id, null, userDefinedRegion.get(
-        'notes'), userDefinedRegion.get('damage')));
+    new ShapeData(userDefinedRegion.id, popup));
     polygon.setMap(map);
   });
   loadingElementFinished(mapContainerId);

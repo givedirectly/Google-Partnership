@@ -15276,7 +15276,7 @@ module$contents$ee$apiclient_apiclient.handleResponse_ = function(status$jscomp$
 };
 module$contents$ee$apiclient_apiclient.ensureAuthLibLoaded_ = function(callback) {
   var done = function() {
-    goog.global.gapi.config.update(!0);
+    goog.global.gapi.config.update();
     module$contents$ee$apiclient_apiclient.authTokenRefresher_ || module$contents$ee$apiclient_apiclient.setAuthTokenRefresher(goog.global.gapi.auth.authorize);
     callback();
   };
