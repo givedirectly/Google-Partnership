@@ -15,4 +15,4 @@ cache:
     - ~/.cache
     - node_modules
 script:
-  - $(yarn bin)/cypress run --record --spec 'cypress/integration/unit_tests/*.js'
+  - $(yarn bin)/cypress run --spec 'cypress/integration/unit_tests/*.js'
