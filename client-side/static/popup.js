@@ -156,7 +156,7 @@ function setUpPopup() {
         if (this.saved) {
           this.closeCleanup();
         } else if (confirm(
-            'Exit without saving changes? Changes will be lost.')) {
+                       'Exit without saving changes? Changes will be lost.')) {
           if (savedShape === null) {
             console.error(
                 'unexpected: no shape state saved before editing polygon');
