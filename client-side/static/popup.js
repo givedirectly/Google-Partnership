@@ -68,17 +68,19 @@ function setUpPopup() {
     }
 
     /**
-     * Processes new polygon shape and notes. popup html gets created twice over
-     * the course of this method, once before we have the damage number and once
-     * after we receive the damage number.
-     * @param {String} notes
+     * Updates the saved/editing state.
+     * @param {boolean} saved
      */
-    saveNewData(notes) {
-      this.savePopup(notes, 'calculating');
-      userRegionData.get(this.polygon)
-          .update(this.polygon, (damage) => this.updateDamage(damage), notes);
-      // update where this popup pops up to match any polygon shape changes
-      this.updatePosition();
+    updateState(saved) {
+      if (saved) {
+        this.saved = true;
+        this.polygon.setEditable(false);
+        numEdits--;
+      } else {
+        this.saved = false;
+        this.polygon.setEditable(true);
+        numEdits++;
+      }
     }
 
     /**
@@ -154,7 +156,7 @@ function setUpPopup() {
         if (this.saved) {
           this.closeCleanup();
         } else if (confirm(
-                       'Exit without saving changes? Changes will be lost.')) {
+            'Exit without saving changes? Changes will be lost.')) {
           if (savedShape === null) {
             console.error(
                 'unexpected: no shape state saved before editing polygon');
@@ -176,22 +178,6 @@ function setUpPopup() {
     }
 
     /**
-     * Updates the saved/editing state.
-     * @param {boolean} saved
-     */
-    updateState(saved) {
-      if (saved) {
-        this.saved = true;
-        this.polygon.setEditable(false);
-        numEdits--;
-      } else {
-        this.saved = false;
-        this.polygon.setEditable(true);
-        numEdits++;
-      }
-    }
-
-    /**
      * Updates this popup and its polygon to their uneditable state appearances.
      * @param {String} notes
      * @param {Integer|String} damage
@@ -199,6 +185,20 @@ function setUpPopup() {
     savePopup(notes, damage) {
       this.updateState(true);
       this.createPopupHtml(notes, damage);
+    }
+
+    /**
+     * Processes new polygon shape and notes. popup html gets created twice over
+     * the course of this method, once before we have the damage number and once
+     * after we receive the damage number.
+     * @param {String} notes
+     */
+    saveNewData(notes) {
+      this.savePopup(notes, 'calculating');
+      userRegionData.get(this.polygon)
+          .update(this.polygon, (damage) => this.updateDamage(damage), notes);
+      // update where this popup pops up to match any polygon shape changes
+      this.updatePosition();
     }
 
     /** Hides popup and adds listener for next click. */
