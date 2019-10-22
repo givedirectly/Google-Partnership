@@ -1,5 +1,6 @@
 import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, snapPercentageTag, snapPopTag, sviTag, totalPopTag, tractTag} from '../property_names.js';
 import {disaster, getResources} from '../resources.js';
+import {CLIENT_ID} from '../authenticate.js';
 
 export {crowdAiDamageKey};
 /** @VisibleForTesting */
@@ -217,12 +218,12 @@ function run() {
   const data = joinedSnapIncomeSVI.map(
       (feature) => countDamageAndBuildings(feature, buildingsHisto));
 
-  const assetName = disaster + '-data-ms-as-nod';
+  const assetName = 'data-ms-as-nod';
   // TODO(#61): parameterize ee user account to write assets to or make GD
   // account.
   // TODO: delete existing asset with same name if it exists.
-  const task =
-      ee.batch.Export.table.toAsset(data, assetName, 'users/juliexxia/' + assetName);
+  const task = ee.batch.Export.table.toAsset(
+      data, assetName, 'users/gd/' + disaster + '/' + assetName);
   task.start();
   $('.upload-status')
       .text('Check Code Editor console for progress. Task: ' + task.id);
@@ -240,11 +241,6 @@ function run() {
  * when the document is loaded, we do the work.
  */
 function setup() {
-  // The client ID from the Google Developers Console.
-  // TODO(#13): This is from janakr's console. Should use one for GiveDirectly.
-  const CLIENT_ID = '634162034024-oodhl7ngkg63hd9ha9ho9b3okcb0bp8s' +
-      '.apps.googleusercontent.com';
-
   $(document).ready(function() {
     // Shows a button prompting the user to log in.
     const onImmediateFailed = function() {

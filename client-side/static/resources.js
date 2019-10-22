@@ -9,7 +9,7 @@ function getResources() {
 }
 
 /** The current disaster. */
-const disaster = 'harvey';
+const disaster = 'michael';
 
 /** Disaster asset names and other constants. */
 const disasters = new Map();
@@ -38,8 +38,9 @@ class DisasterMapValue {
 disasters.set(
     'michael',
     new DisasterMapValue(
-        'users/juliexxia/crowd_ai_michael', 'users/juliexxia/florida_snap',
-        'users/juliexxia/tiger_florida'));
+        'users/gd/michael/FEMA_Damage_Assessments', 'users/gd/michael/snap',
+        'users/gd/michael/tiger', 'users/gd/michael/median_income',
+        'users/gd/michael/svi', 'users/gd/michael/relevant_buildings'));
 
 disasters.set(
     'harvey',
