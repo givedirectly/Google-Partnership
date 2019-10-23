@@ -37,6 +37,8 @@ export {countDamageAndBuildings};
 const censusGeoidKey = 'GEOid2';
 const censusBlockGroupKey = 'GEOdisplay-label';
 const tigerGeoidKey = 'GEOID';
+const cdcGeoidKey = 'FIPS';
+const cdcSviKey = 'RPL_THEMES';
 const snapKey = 'HD01_VD02';
 const totalKey = 'HD01_VD01';
 const incomeKey = 'HD01_VD01';
@@ -93,9 +95,9 @@ function combineWithSnap(feature) {
         blockGroupTag,
         snapFeature.get(censusBlockGroupKey),
         snapPopTag,
-        snapFeature.get(snapKey),
+        ee.Number.parse(snapFeature.get(snapKey)),
         totalPopTag,
-        snapFeature.get(totalKey),
+        ee.Number.parse(snapFeature.get(totalKey)),
       ]));
 }
 
@@ -123,7 +125,7 @@ function combineWithSvi(feature) {
   const sviFeature = ee.Feature(feature.get('secondary'));
   return ee.Feature(feature.get('primary')).set(ee.Dictionary([
     sviTag,
-    sviFeature.get(sviTag),
+    sviFeature.get(cdcSviKey),
   ]));
 }
 
@@ -205,7 +207,7 @@ function run() {
       ee.Join.inner()
           .apply(
               joinedSnapIncome.map(addTractInfo), svi,
-              ee.Filter.equals({leftField: tractTag, rightField: geoidTag}))
+              ee.Filter.equals({leftField: tractTag, rightField: cdcGeoidKey}))
           .map(combineWithSvi);
   // attach block groups to buildings and aggregate to get block group building
   // counts

@@ -39,7 +39,7 @@ disasters.set(
     'michael',
     new DisasterMapValue(
         'users/gd/michael/FEMA_Damage_Assessments', 'users/gd/michael/snap',
-        'users/gd/michael/tiger', 'users/gd/michael/median_income',
+        'users/gd/michael/tiger', 'users/gd/michael/income',
         'users/gd/michael/svi', 'users/gd/michael/relevant_buildings'));
 
 disasters.set(
