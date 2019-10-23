@@ -44,7 +44,7 @@ const snapKey = 'HD01_VD02';
 const totalKey = 'HD01_VD01';
 const incomeKey = 'HD01_VD01';
 // check with crowd ai folks about name.
-const crowdAiDamageKey = 'descriptio';
+// const crowdAiDamageKey = 'descriptio';
 
 /**
  * Given a feature from the SNAP census data, returns a new
@@ -177,7 +177,7 @@ function run() {
 
   const resources = getResources();
   const damage = ee.FeatureCollection(resources.damage);
-  // storeCenter(damage);
+  storeCenter(damage);
 
   const snap = ee.FeatureCollection(resources.rawSnap)
                    .map((feature) => stringifyGeoid(feature, censusGeoidKey));
@@ -229,22 +229,22 @@ function run() {
   const data = joinedSnapIncomeSVI.map(
       (feature) => countDamageAndBuildings(feature, buildingsHisto));
 
-  // const assetName = 'data-ms-as-nod';
-  // // TODO(#61): parameterize ee user account to write assets to or make GD
-  // // account.
-  // // TODO: delete existing asset with same name if it exists.
-  // const task = ee.batch.Export.table.toAsset(
-  //     data, assetName, 'users/gd/' + disaster + '/' + assetName);
-  // task.start();
-  // $('.upload-status')
-  //     .text('Check Code Editor console for progress. Task: ' + task.id);
-  // joinedSnap.size().evaluate((val, failure) => {
-  //   if (val) {
-  //     $('.upload-status').append('\n<p>Found ' + val + ' elements');
-  //   } else {
-  //     $('.upload-status').append('\n<p>Error getting size: ' + failure);
-  //   }
-  // });
+  const assetName = 'data-ms-as-nod';
+  // TODO(#61): parameterize ee user account to write assets to or make GD
+  // account.
+  // TODO: delete existing asset with same name if it exists.
+  const task = ee.batch.Export.table.toAsset(
+      data, assetName, 'users/gd/' + disaster + '/' + assetName);
+  task.start();
+  $('.upload-status')
+      .text('Check Code Editor console for progress. Task: ' + task.id);
+  joinedSnap.size().evaluate((val, failure) => {
+    if (val) {
+      $('.upload-status').append('\n<p>Found ' + val + ' elements');
+    } else {
+      $('.upload-status').append('\n<p>Error getting size: ' + failure);
+    }
+  });
 }
 
 /**

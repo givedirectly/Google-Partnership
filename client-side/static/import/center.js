@@ -33,7 +33,7 @@ function storeCenter(features) {
   const outerBounds = ee.List([
     damageWithCoords.aggregate_max('lng'),
     damageWithCoords.aggregate_min('lat'),
-    damageWithCoords.aggregate_min('lng'), damageWithCoords.aggregate_max('lat')
+    damageWithCoords.aggregate_min('lng'), damageWithCoords.aggregate_max('lat'),
   ]);
   convertEeObjectToPromise(outerBounds).then((evaluatedBounds) => {
     bounds = evaluatedBounds;
