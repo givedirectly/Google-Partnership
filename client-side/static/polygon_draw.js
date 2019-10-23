@@ -2,6 +2,7 @@ import createError from './create_error.js';
 import {mapContainerId, writeWaiterId} from './dom_constants.js';
 import {getTestCookie, inProduction} from './in_test_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
+import {geoPointToLatLng, latLngToGeoPoint} from './map_util.js';
 import {createPopup, setUpPopup} from './popup.js';
 import {getResources} from './resources.js';
 import {userRegionData} from './user_region_data.js';
@@ -246,24 +247,4 @@ function drawRegionsFromFirestoreQuery(querySnapshot, map) {
     polygon.setMap(map);
   });
   loadingElementFinished(mapContainerId);
-}
-
-/**
- * Converts Firestore geopoint into Google Maps LatLng pair.
- *
- * @param {firebase.firestore.GeoPoint} geopoint point to convert
- * @return {Object}
- */
-function geoPointToLatLng(geopoint) {
-  return {lat: geopoint.latitude, lng: geopoint.longitude};
-}
-
-/**
- * Converts Google Maps LatLng object into Firestore geopoint.
- *
- * @param {google.maps.LatLng} latLng
- * @return {firebase.firestore.GeoPoint}
- */
-function latLngToGeoPoint(latLng) {
-  return new firebase.firestore.GeoPoint(latLng.lat(), latLng.lng());
 }
