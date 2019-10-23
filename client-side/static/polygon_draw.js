@@ -27,11 +27,11 @@ class ShapeData {
    * @param {String} id Firestore id. Null if user has just created polygon
    * @param {Popup} popup
    */
-  constructor(id, popup) {
+  constructor(id, notes, polygonGeoPoints, popup) {
     this.id = id;
+    this.polygonGeoPoints = polygonGeoPoints;
+    this.lastNotes = notes;
     this.popup = popup;
-    this.polygonGeoPoints = ShapeData.polygonGeoPoints(popup.polygon);
-    this.lastNotes = popup.notes;
     this.state = ShapeData.State.SAVED;
   }
 
@@ -58,15 +58,15 @@ class ShapeData {
     }
     const newGeometry = ShapeData.polygonGeoPoints(polygon);
     const geometriesEqual = ShapeData.compareGeoPointArrays(this.polygonGeoPoints, newGeometry);
-    const newNotesEqual = this.lastNotes !== this.popup.notes;
+    const newNotesEqual = this.lastNotes === this.popup.notes;
     this.lastNotes = this.popup.notes;
     if (geometriesEqual) {
-      this.popup.setCalculatedData(this.popup.calculatedData);
       if (!newNotesEqual) {
         this.doRemoteUpdate();
       }
       return;
     }
+    this.popup.setPendingCalculation();
 
     this.polygonGeoPoints = newGeometry;
     const points = [];
@@ -82,6 +82,10 @@ class ShapeData {
           this.popup.setCalculatedData({damage: damage});
           this.doRemoteUpdate();
         });
+  }
+
+  getLastPolygonPath() {
+    return transformGeoPointArrayToLatLng(this.polygonGeoPoints);
   }
 
   finishWriteAndMaybeWriteAgain() {
@@ -166,6 +170,11 @@ ShapeData.polygonGeoPoints = (polygon) => {
 };
 
 ShapeData.compareGeoPointArrays = (array1, array2) => {
+  // Catch if one argument is null/undefined.
+  if (!array1 !== !array2) {
+    return false;
+  }
+
   if (array1.length !== array2.length) {
     return false;
   }
@@ -211,8 +220,8 @@ function setUpPolygonDrawing(map, firebasePromise) {
 
     drawingManager.addListener('overlaycomplete', (event) => {
       const polygon = event.overlay;
-      const popup = createPopup(polygon, map, '', );
-      const data = new ShapeData(null, popup);
+      const popup = createPopup(polygon, map, '');
+      const data = new ShapeData(null, null, null, popup);
       userRegionData.set(polygon, data);
       data.update();
     });
@@ -233,7 +242,6 @@ function setUpPolygonDrawing(map, firebasePromise) {
  *     (only used by tests).
  */
 function processUserRegions(map, firebasePromise) {
-  console.log('starting process');
   addLoadingElement(mapContainerId);
   return firebasePromise
       .then(() => userShapes = firebase.firestore().collection(collectionName))
@@ -255,19 +263,25 @@ function processUserRegions(map, firebasePromise) {
 function drawRegionsFromFirestoreQuery(querySnapshot, map) {
   querySnapshot.forEach((userDefinedRegion) => {
     const storedGeometry = userDefinedRegion.get('geometry');
-    const coordinates = [];
-    storedGeometry.forEach(
-        (geopoint) => coordinates.push(geoPointToLatLng(geopoint)));
+    const coordinates = transformGeoPointArrayToLatLng(storedGeometry);
     const properties = Object.assign({}, appearance);
     properties.paths = coordinates;
     const polygon = new google.maps.Polygon(properties);
-    const popup = createPopup(polygon, map, userDefinedRegion.get('notes'), userDefinedRegion.get('calculatedData'));
+    const notes = userDefinedRegion.get('notes');
+    const popup = createPopup(polygon, map, notes, userDefinedRegion.get('calculatedData'));
     userRegionData.set(
         polygon,
-    new ShapeData(userDefinedRegion.id, popup));
+    new ShapeData(userDefinedRegion.id, notes, storedGeometry, popup));
     polygon.setMap(map);
   });
   loadingElementFinished(mapContainerId);
+}
+
+function transformGeoPointArrayToLatLng(geopoints) {
+  const coordinates = [];
+  geopoints.forEach(
+      (geopoint) => coordinates.push(geoPointToLatLng(geopoint)));
+  return coordinates;
 }
 
 /**

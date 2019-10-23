@@ -42,7 +42,7 @@ describe('Unit test for ShapeData', () => {
 
   it('Add shape', () => {
     const mockPolygon = makeMockPolygon();
-    const underTest = new ShapeData(null, mockPolygon);
+    const underTest = new ShapeData(null, null, null, mockPolygon);
     const records = [];
     firebaseCollection.add = recordRecord(records, {id: 'new_id'});
     underTest.update();
@@ -56,7 +56,7 @@ describe('Unit test for ShapeData', () => {
   });
 
   it('Update shape', () => {
-    const underTest = new ShapeData('my_id', null);
+    const underTest = new ShapeData('my_id', null, null, null);
     const mockPolygon = makeMockPolygon();
     const records = [];
     const ids = [];
@@ -76,7 +76,7 @@ describe('Unit test for ShapeData', () => {
   });
 
   it('Delete shape', () => {
-    const underTest = new ShapeData('my_id', null);
+    const underTest = new ShapeData('my_id', null, null, null);
     const mockPolygon = makeMockPolygon();
     mockPolygon.getMap = () => null;
     const ids = [];
@@ -93,7 +93,7 @@ describe('Unit test for ShapeData', () => {
   });
 
   it('Update while update pending', () => {
-    const underTest = new ShapeData('my_id', null);
+    const underTest = new ShapeData('my_id', null, null, null);
     const mockPolygon = makeMockPolygon();
     const records = [];
     const ids = [];

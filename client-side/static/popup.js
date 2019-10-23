@@ -58,8 +58,17 @@ function setUpPopup() {
       this.updateDamageDiv();
     }
 
-    /** Updates this popup's damage child div to a new damage value. */
+    setPendingCalculation() {
+      this.setCalculatedData(SENTINEL_CALCULATING);
+    }
+
+    /**
+     * Updates this popup's damage child div if it exists to a new damage value.
+     */
     updateDamageDiv() {
+      if (!this.damageDiv) {
+        return;
+      }
       const isNumber = isNaN(this.calculatedData.damage);
       this.damageDiv.innerHTML = 'damage count: ' + (isNumber ? 'calculating' : this.calculatedData.damage);
       if (isNumber || !this.saved) {
@@ -114,9 +123,6 @@ function setUpPopup() {
           userRegionData.get(polygon).update();
         }
       };
-      // lazily initialized so we don't do the deep clone unless we actually
-      // want to edit the polygon.
-      let savedShape = null;
       const editButton = document.createElement('button');
       editButton.className = 'popup-button';
       editButton.innerHTML = 'edit';
@@ -124,7 +130,6 @@ function setUpPopup() {
         this.updateState(false);
 
         const currentNotes = notesDiv.innerText;
-        savedShape = clonePolygonPath(polygon);
 
         // Grey out the damage stat until we save so it's clearly old.
         damageDiv.style.color = 'grey';
@@ -153,13 +158,8 @@ function setUpPopup() {
           this.closeCleanup();
         } else if (confirm(
                        'Exit without saving changes? Changes will be lost.')) {
-          if (savedShape === null) {
-            console.error(
-                'unexpected: no shape state saved before editing polygon');
-            return;
-          }
           polygon.setMap(null);
-          polygon.setPath(savedShape);
+          polygon.setPath(userRegionData.get(polygon).getLastPolygonPath());
           polygon.setMap(this.map);
           this.savePopup();
           this.closeCleanup();
@@ -189,7 +189,6 @@ function setUpPopup() {
      */
     saveNewData(notes) {
       this.notes = notes;
-      this.calculatedData = SENTINEL_CALCULATING;
       this.savePopup();
       userRegionData.get(this.polygon).update();
       // update where this popup pops up to match any polygon shape changes
@@ -283,7 +282,7 @@ function setUserFeatureVisibility(visibility) {
     if (!visibility && popup.isVisible()) {
       popup.closeCleanup();
     }
-    popup.popup.setVisible(visibility);
+    popup.polygon.setVisible(visibility);
   }
   return true;
 }
@@ -296,19 +295,6 @@ function removeAllChildren(div) {
   while (div.firstChild) {
     div.firstChild.remove();
   }
-}
-
-/**
- * Make a deep copy of a polygon's shape in the form of Array<LatLng>
- * (suitable for being fed into google.maps.Polygon.setPath(...)). We only
- * clone a single path because we don't support multi-path polygons right now.
- * @param {google.maps.Polygon} polygon
- * @return {Array<google.maps.LatLng>}
- */
-function clonePolygonPath(polygon) {
-  const currentShape = [];
-  polygon.getPath().forEach((latlng) => currentShape.push(latlng));
-  return currentShape;
 }
 
 /**
