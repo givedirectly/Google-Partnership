@@ -1,4 +1,4 @@
-import {processUserRegions, StoredShapeData} from '../../../client-side/static/polygon_draw';
+import {processUserRegions, StoredShapeData} from '../../../docs/polygon_draw';
 
 // Name of collection doesn't matter.
 const firebaseCollection = firebase.firestore().collection('usershapes-test');

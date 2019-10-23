@@ -1,6 +1,6 @@
-import {clickFeature} from '../../../client-side/static/click_feature.js';
-import {tableHeadings} from '../../../client-side/static/draw_table.js';
-import * as HighlightFeatures from '../../../client-side/static/highlight_features.js';
+import {clickFeature} from '../../../docs/click_feature.js';
+import {tableHeadings} from '../../../docs/draw_table.js';
+import * as HighlightFeatures from '../../../docs/highlight_features.js';
 
 let mockTable;
 let tableApi;

@@ -1,7 +1,7 @@
 // Call this firebaseLibrary to avoid conflicting with mock firebase defined in
 // commands.js.
 import * as firebaseLibrary from 'firebase';
-import {firebaseConfig} from '../../../client-side/static/authenticate';
+import {firebaseConfig} from '../../../docs/authenticate';
 
 const hackyWaitTime = 1000;
 const notes = 'Sphinx of black quartz, judge my vow';
