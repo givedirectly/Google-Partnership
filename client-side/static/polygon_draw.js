@@ -42,8 +42,8 @@ class StoredShapeData {
 
   /**
    * Writes this shape's polygon's data to the backend, using the existing id
-   * field, or adding a new document to Firestore if there is no id. The
-   * passed-in notes, if given, override the current notes value.
+   * field, or adding a new document to Firestore if there is no id. New values
+   * are retrieved from the popup object.
    *
    * If there is already a pending write, this method records that another write
    * should be performed when the pending one completes and returns immediately.
