@@ -24,7 +24,7 @@ function createMap(firebasePromise) {
   // TODO: this is centered for Harvey right now - generalize.
   const map = new google.maps.Map(
       $('.map').get(0),
-      {center: {lat: 70.76, lng: -95.36}, zoom: 8, styles: mapStyles});
+      {center: {lat: 29.76, lng: -95.36}, zoom: 8, styles: mapStyles});
 
   firebasePromise
       .then(
