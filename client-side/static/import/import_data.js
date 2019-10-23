@@ -3,7 +3,6 @@ import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, snapPer
 import {disaster, getResources} from '../resources.js';
 import storeCenter from './center.js';
 
-export {crowdAiDamageKey};
 /** @VisibleForTesting */
 export {countDamageAndBuildings};
 
@@ -178,7 +177,7 @@ function run() {
 
   const resources = getResources();
   const damage = ee.FeatureCollection(resources.damage);
-  storeCenter(damage);
+  // storeCenter(damage);
 
   const snap = ee.FeatureCollection(resources.rawSnap)
                    .map((feature) => stringifyGeoid(feature, censusGeoidKey));
@@ -187,6 +186,13 @@ function run() {
       ee.FeatureCollection(resources.bg),
       damage,
       ee.Filter.intersects({leftField: '.geo', rightField: '.geo'}));
+
+  blockGroups.size().evaluate((yes, no) => {
+    console.log(yes);
+    console.log(no);
+    console.log('blockGroups');
+  });
+
   // join snap stats to block group geometries
   const joinedSnap =
       ee.Join.inner()
@@ -225,22 +231,22 @@ function run() {
   const data = joinedSnapIncomeSVI.map(
       (feature) => countDamageAndBuildings(feature, buildingsHisto));
 
-  const assetName = 'data-ms-as-nod';
-  // TODO(#61): parameterize ee user account to write assets to or make GD
-  // account.
-  // TODO: delete existing asset with same name if it exists.
-  const task = ee.batch.Export.table.toAsset(
-      data, assetName, 'users/gd/' + disaster + '/' + assetName);
-  task.start();
-  $('.upload-status')
-      .text('Check Code Editor console for progress. Task: ' + task.id);
-  joinedSnap.size().evaluate((val, failure) => {
-    if (val) {
-      $('.upload-status').append('\n<p>Found ' + val + ' elements');
-    } else {
-      $('.upload-status').append('\n<p>Error getting size: ' + failure);
-    }
-  });
+  // const assetName = 'data-ms-as-nod';
+  // // TODO(#61): parameterize ee user account to write assets to or make GD
+  // // account.
+  // // TODO: delete existing asset with same name if it exists.
+  // const task = ee.batch.Export.table.toAsset(
+  //     data, assetName, 'users/gd/' + disaster + '/' + assetName);
+  // task.start();
+  // $('.upload-status')
+  //     .text('Check Code Editor console for progress. Task: ' + task.id);
+  // joinedSnap.size().evaluate((val, failure) => {
+  //   if (val) {
+  //     $('.upload-status').append('\n<p>Found ' + val + ' elements');
+  //   } else {
+  //     $('.upload-status').append('\n<p>Error getting size: ' + failure);
+  //   }
+  // });
 }
 
 /**

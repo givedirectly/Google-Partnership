@@ -3,7 +3,6 @@ import {convertEeObjectToPromise} from '../map_util.js';
 import {disaster, getResources} from '../resources.js';
 export {storeCenter as default};
 
-let promises = 2;
 let bounds = null;
 
 function withGeo(feature) {
@@ -14,20 +13,18 @@ function withGeo(feature) {
 /**
  * Stores an approximate bounds around a given feature collection.
  *
- * @param {ee.FeatureCollection} features the featureCollection which you want
- * to orient the map around.
+ * @param {ee.FeatureCollection} features the featureCollection around which you
+ * want to orient the map
  */
 function storeCenter(features) {
   const authenticator =
       new Authenticator((token) => authenticateToFirebase(token).then(() => {
-        promisesCompleted();
+        taskCompleted();
       }));
   authenticator.start();
 
-  const damageWithCoords = ee.FeatureCollection(damage.map(withGeo));
+  const damageWithCoords = ee.FeatureCollection(features.map(withGeo));
   // This is assuming we're not crossing the international date line...
-  // so may not work with some tiny islands in the pacific.
-  // list is [north-most, west-most, south-most, east-most]
   const outerBounds = ee.List([
     damageWithCoords.aggregate_max('lng'),
     damageWithCoords.aggregate_min('lat'),
@@ -35,12 +32,14 @@ function storeCenter(features) {
   ]);
   convertEeObjectToPromise(outerBounds).then((evaluatedBounds) => {
     bounds = evaluatedBounds;
-    promisesCompleted();
+    taskCompleted();
   });
 }
 
-function promisesCompleted() {
-  if (--promises === 0) {
+let tasks = 2;
+
+function taskCompleted() {
+  if (--tasks === 0) {
     calculateCenter();
   }
 }

@@ -10,6 +10,7 @@ import {processUserRegions} from './polygon_draw.js';
 import {setUserFeatureVisibility} from './popup.js';
 import processJoinedData from './process_joined_data.js';
 import {createToggles, initialDamageThreshold, initialPovertyThreshold, initialPovertyWeight} from './update.js';
+import {disaster} from './resources.js';
 
 export {
   createAndDisplayJoinedData,
@@ -17,7 +18,8 @@ export {
 };
 
 // TODO: infer this from disaster const in import_data.js?
-const snapAndDamageAsset = 'users/janak/harvey-data-ms-correct-damage';
+const snapAndDamageAsset = 'users/gd/' + disaster + '/data-ms-as-nod';
+// const snapAndDamageAsset = 'users/janak/harvey-data-ms-correct-damage';
 // Promise for snapAndDamageAsset. After it's first resolved, we never need to
 // download it from EarthEngine again.
 let snapAndDamagePromise;

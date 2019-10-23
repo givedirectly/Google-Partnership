@@ -36,7 +36,9 @@ class DisasterMapValue {
   }
 }
 
-// TODO: upload michael income, SVI, buildings data
+// TODO: Don't store census/svi data in relation to a disaster so we can handle
+// scenarios that are not 1:1 state:disaster e.g. michael which hit both
+// florida and georgia.
 disasters.set(
     'michael',
     new DisasterMapValue('2018',
