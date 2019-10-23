@@ -2,12 +2,12 @@ import createError from './create_error.js';
 import {mapContainerId} from './dom_constants.js';
 import {assets, EarthEngineAsset} from './earth_engine_asset.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
+import {convertEeObjectToPromise} from './map_util.js';
 
 export {
   addLayer,
   addLayerFromGeoJsonPromise,
   addNullLayer,
-  convertEeObjectToPromise,
   redrawLayers,
   removeScoreLayer,
   scoreLayerName,
@@ -336,23 +336,4 @@ function removeLayer(assetName, map) {
 function removeScoreLayer() {
   layerArray[layerMap.get(scoreLayerName).index] = null;
   redrawLayers();
-}
-
-/**
- * Transform an EE object into a standard Javascript Promise by wrapping its
- * evaluate call.
- *
- * @param {ee.ComputedObject} eeObject
- * @return {Promise<GeoJson>}
- */
-function convertEeObjectToPromise(eeObject) {
-  return new Promise((resolve, reject) => {
-    eeObject.evaluate((resolvedObject, error) => {
-      if (error) {
-        reject(error);
-        return;
-      }
-      resolve(resolvedObject);
-    });
-  });
 }

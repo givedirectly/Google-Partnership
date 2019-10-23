@@ -1,4 +1,4 @@
-import findBounds from './map_util.js';
+import {findBounds} from './map_util.js';
 import {geoidTag} from './property_names.js';
 
 export {currentFeatures, CurrentFeatureValue, highlightFeatures};

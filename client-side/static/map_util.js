@@ -1,4 +1,9 @@
-export {findBounds, geoPointToLatLng, latLngToGeoPoint};
+export {
+  convertEeObjectToPromise,
+  findBounds,
+  geoPointToLatLng,
+  latLngToGeoPoint
+};
 
 function findBounds(features) {
   const bounds = new google.maps.LatLngBounds();
@@ -35,4 +40,23 @@ function geoPointToLatLng(geopoint) {
  */
 function latLngToGeoPoint(latLng) {
   return new firebase.firestore.GeoPoint(latLng.lat(), latLng.lng());
+}
+
+/**
+ * Transform an EE object into a standard Javascript Promise by wrapping its
+ * evaluate call.
+ *
+ * @param {ee.ComputedObject} eeObject
+ * @return {Promise<GeoJson>}
+ */
+function convertEeObjectToPromise(eeObject) {
+  return new Promise((resolve, reject) => {
+    eeObject.evaluate((resolvedObject, error) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+      resolve(resolvedObject);
+    });
+  });
 }

@@ -168,6 +168,13 @@ function attachBlockGroups(building, blockGroups) {
   return building.set(geoidTag, geoid);
 }
 
+
+function withGeo(feature) {
+  const centroid = feature.centroid().geometry().coordinates();
+  return feature.set('lng', centroid.get(0), 'lat', centroid.get(1));
+}
+
+
 /** Performs operation of processing inputs and creating output asset. */
 function run() {
   ee.initialize();
@@ -178,7 +185,8 @@ function run() {
   storeCenter(damage);
 
   // const snap = ee.FeatureCollection(resources.rawSnap)
-  //                  .map((feature) => stringifyGeoid(feature, censusGeoidKey));
+  //                  .map((feature) => stringifyGeoid(feature,
+  //                  censusGeoidKey));
   // // filter block groups to those with damage.
   // const blockGroups = ee.Join.simple().apply(
   //     ee.FeatureCollection(resources.bg), damage,
@@ -209,7 +217,8 @@ function run() {
   //             joinedSnapIncome.map(addTractInfo), svi,
   //             ee.Filter.equals({leftField: tractTag, rightField: geoidTag}))
   //         .map(combineWithSvi);
-  // // attach block groups to buildings and aggregate to get block group building
+  // // attach block groups to buildings and aggregate to get block group
+  // building
   // // counts
   // const buildings = ee.FeatureCollection(resources.buildings);
   // const withBlockGroup =

@@ -17,6 +17,7 @@ const disasters = new Map();
 /** Constants for {@code disasters} map. */
 class DisasterMapValue {
   /**
+   * @param {string} year
    * @param {string} damage ee asset path
    * @param {string} snap ee asset path to snap info
    * @param {string} bg ee asset path to block group info
@@ -24,7 +25,8 @@ class DisasterMapValue {
    * @param {string} svi ee asset path to svi info
    * @param {string} buildings ee asset path to building footprint info
    */
-  constructor(damage, snap, bg, income, svi, buildings) {
+  constructor(year, damage, snap, bg, income, svi, buildings) {
+    this.year = year;
     this.damage = damage;
     this.rawSnap = snap;
     this.bg = bg;
@@ -38,13 +40,13 @@ class DisasterMapValue {
 disasters.set(
     'michael',
     new DisasterMapValue(
-        'users/juliexxia/crowd_ai_michael', 'users/juliexxia/florida_snap',
-        'users/juliexxia/tiger_florida'));
+        '2018', 'users/juliexxia/crowd_ai_michael',
+        'users/juliexxia/florida_snap', 'users/juliexxia/tiger_florida'));
 
 disasters.set(
     'harvey',
     new DisasterMapValue(
-        'users/juliexxia/harvey-damage-crowdai-format-deduplicated',
+        '2017', 'users/juliexxia/harvey-damage-crowdai-format-deduplicated',
         'users/juliexxia/snap_texas', 'users/juliexxia/tiger_texas',
         'users/juliexxia/income_texas', 'users/ruthtalbot/harvey-SVI',
         'users/juliexxia/harvey-damage-zone-ms-buildings'));

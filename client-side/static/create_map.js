@@ -1,5 +1,7 @@
 import mapStyles from './map_styles.js';
+import {geoPointToLatLng} from './map_util.js';
 import setUpPolygonDrawing from './polygon_draw.js';
+import {disaster, getResources} from './resources.js';
 
 export {createMap as default};
 
@@ -22,7 +24,21 @@ function createMap(firebasePromise) {
   // TODO: this is centered for Harvey right now - generalize.
   const map = new google.maps.Map(
       $('.map').get(0),
-      {center: {lat: 29.76, lng: -95.36}, zoom: 8, styles: mapStyles});
+      {center: {lat: 70.76, lng: -95.36}, zoom: 8, styles: mapStyles});
+
+  firebasePromise
+      .then(
+          () => firebase.firestore()
+                    .collection('disaster-metadata')
+                    .doc(getResources().year)
+                    .collection(disaster)
+                    .doc('map-bounds')
+                    .get())
+      .then((doc) => {
+        map.fitBounds(new google.maps.LatLngBounds(
+            new google.maps.LatLng(geoPointToLatLng(doc.data().sw)),
+            new google.maps.LatLng(geoPointToLatLng(doc.data().ne))));
+      });
   setUpPolygonDrawing(map, firebasePromise);
 
   // Search box code roughly taken from
