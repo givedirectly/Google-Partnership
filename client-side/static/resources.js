@@ -9,7 +9,7 @@ function getResources() {
 }
 
 /** The current disaster. */
-const disaster = 'michael';
+const disaster = 'harvey';
 
 /** Disaster asset names and other constants. */
 const disasters = new Map();
