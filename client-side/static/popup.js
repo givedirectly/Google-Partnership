@@ -70,7 +70,8 @@ function setUpPopup() {
         return;
       }
       const isNumber = isNaN(this.calculatedData.damage);
-      this.damageDiv.innerHTML = 'damage count: ' + (isNumber ? 'calculating' : this.calculatedData.damage);
+      this.damageDiv.innerHTML = 'damage count: ' +
+          (isNumber ? 'calculating' : this.calculatedData.damage);
       if (isNumber || !this.saved) {
         this.damageDiv.style.color = 'grey';
       } else {
@@ -306,7 +307,8 @@ function removeAllChildren(div) {
  * @param {google.maps.Map} map
  * @return {Popup}
  */
-function createPopup(polygon, map, notes, calculatedData = SENTINEL_CALCULATING) {
+function createPopup(
+    polygon, map, notes, calculatedData = SENTINEL_CALCULATING) {
   const popup = new Popup(polygon, notes, calculatedData, map);
   popup.setMap(map);
   popup.hide();

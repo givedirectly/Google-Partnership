@@ -57,7 +57,8 @@ class ShapeData {
       return;
     }
     const newGeometry = ShapeData.polygonGeoPoints(polygon);
-    const geometriesEqual = ShapeData.compareGeoPointArrays(this.polygonGeoPoints, newGeometry);
+    const geometriesEqual =
+        ShapeData.compareGeoPointArrays(this.polygonGeoPoints, newGeometry);
     const newNotesEqual = this.lastNotes === this.popup.notes;
     this.lastNotes = this.popup.notes;
     if (geometriesEqual) {
@@ -106,25 +107,25 @@ class ShapeData {
   }
 
   doRemoteUpdate() {
-  const record = {
-    geometry: this.polygonGeoPoints,
-    notes: this.popup.notes,
-    calculatedData: this.popup.calculatedData,
-  };
-  if (this.id) {
-    userShapes.doc(this.id)
-        .set(record)
-        .then(() => this.finishWriteAndMaybeWriteAgain())
-        .catch(createError('error updating ' + this));
-  } else {
-    userShapes.add(record)
-        .then((docRef) => {
-          this.id = docRef.id;
-          this.finishWriteAndMaybeWriteAgain();
-        })
-        .catch(createError('error adding ' + this));
+    const record = {
+      geometry: this.polygonGeoPoints,
+      notes: this.popup.notes,
+      calculatedData: this.popup.calculatedData,
+    };
+    if (this.id) {
+      userShapes.doc(this.id)
+          .set(record)
+          .then(() => this.finishWriteAndMaybeWriteAgain())
+          .catch(createError('error updating ' + this));
+    } else {
+      userShapes.add(record)
+          .then((docRef) => {
+            this.id = docRef.id;
+            this.finishWriteAndMaybeWriteAgain();
+          })
+          .catch(createError('error adding ' + this));
+    }
   }
-}
   /**
    * Deletes this region from storage and userRegionData. Only for internal use.
    */
@@ -268,10 +269,11 @@ function drawRegionsFromFirestoreQuery(querySnapshot, map) {
     properties.paths = coordinates;
     const polygon = new google.maps.Polygon(properties);
     const notes = userDefinedRegion.get('notes');
-    const popup = createPopup(polygon, map, notes, userDefinedRegion.get('calculatedData'));
+    const popup = createPopup(
+        polygon, map, notes, userDefinedRegion.get('calculatedData'));
     userRegionData.set(
         polygon,
-    new ShapeData(userDefinedRegion.id, notes, storedGeometry, popup));
+        new ShapeData(userDefinedRegion.id, notes, storedGeometry, popup));
     polygon.setMap(map);
   });
   loadingElementFinished(mapContainerId);
@@ -279,8 +281,7 @@ function drawRegionsFromFirestoreQuery(querySnapshot, map) {
 
 function transformGeoPointArrayToLatLng(geopoints) {
   const coordinates = [];
-  geopoints.forEach(
-      (geopoint) => coordinates.push(geoPointToLatLng(geopoint)));
+  geopoints.forEach((geopoint) => coordinates.push(geoPointToLatLng(geopoint)));
   return coordinates;
 }
 
