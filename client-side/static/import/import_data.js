@@ -183,8 +183,7 @@ function run() {
                    .map((feature) => stringifyGeoid(feature, censusGeoidKey));
   // filter block groups to those with damage.
   const blockGroups = ee.Join.simple().apply(
-      ee.FeatureCollection(resources.bg),
-      damage,
+      ee.FeatureCollection(resources.bg), damage,
       ee.Filter.intersects({leftField: '.geo', rightField: '.geo'}));
 
   blockGroups.size().evaluate((yes, no) => {
@@ -211,8 +210,7 @@ function run() {
           .map(combineWithIncome);
   // filter SVI to those with damage and join
   const svi = ee.Join.simple().apply(
-      ee.FeatureCollection(resources.svi),
-      damage,
+      ee.FeatureCollection(resources.svi), damage,
       ee.Filter.intersects({leftField: '.geo', rightField: '.geo'}));
   const joinedSnapIncomeSVI =
       ee.Join.inner()

@@ -9,8 +9,8 @@ import {convertEeObjectToPromise} from './map_util.js';
 import {processUserRegions} from './polygon_draw.js';
 import {setUserFeatureVisibility} from './popup.js';
 import processJoinedData from './process_joined_data.js';
-import {createToggles, initialDamageThreshold, initialPovertyThreshold, initialPovertyWeight} from './update.js';
 import {disaster} from './resources.js';
+import {createToggles, initialDamageThreshold, initialPovertyThreshold, initialPovertyWeight} from './update.js';
 
 export {
   createAndDisplayJoinedData,

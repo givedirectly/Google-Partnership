@@ -3,12 +3,17 @@ import {convertEeObjectToPromise} from '../map_util.js';
 import {disaster, getResources} from '../resources.js';
 export {storeCenter as default};
 
-let bounds = null;
-
+/**
+ * Add the lat and lng of a feature's centroid as properties.
+ * @param {ee.Feature} feature
+ * @return {ee.Feature}
+ */
 function withGeo(feature) {
   const centroid = feature.centroid().geometry().coordinates();
   return feature.set('lng', centroid.get(0), 'lat', centroid.get(1));
 }
+
+let bounds = null;
 
 /**
  * Stores an approximate bounds around a given feature collection.
@@ -36,15 +41,18 @@ function storeCenter(features) {
   });
 }
 
+// We need both firebase to authenticate and the the ee.List to evaluate.
 let tasks = 2;
 
+/** Records a task being completed and calls saveBounds if everything is ready. */
 function taskCompleted() {
   if (--tasks === 0) {
-    calculateCenter();
+    saveBounds();
   }
 }
 
-function calculateCenter() {
+/** Writes the calculated bounds to firestore. */
+function saveBounds() {
   const docData = {
     ne: new firebase.firestore.GeoPoint(bounds[3], bounds[0]),
     sw: new firebase.firestore.GeoPoint(bounds[1], bounds[2]),
