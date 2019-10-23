@@ -198,7 +198,6 @@ function setUpPolygonDrawing(map, firebasePromise) {
   });
 }
 
-// TODO(#18): allow toggling visibility of user regions off and on.
 /**
  * Retrieves user-defined regions from Firestore and displays them on given map.
  * Adds a listener to display notes on pop-up.
