@@ -131,7 +131,11 @@ describe('Unit test for ShapeData', () => {
     expect(records).to.have.length(2);
     expect(records).to.eql([
       {calculatedData: calculatedData, geometry: geometry, notes: 'new notes'},
-      {calculatedData: calculatedData, geometry: geometry, notes: 'racing notes'},
+      {
+        calculatedData: calculatedData,
+        geometry: geometry,
+        notes: 'racing notes'
+      },
     ]);
     expect(underTest.id).to.eql('my_id');
     expect(StoredShapeData.pendingWriteCount).to.eql(0);
@@ -142,11 +146,17 @@ describe('Unit test for ShapeData', () => {
     popup.notes = 'my notes';
     const calculatedData = {damage: 1};
     popup.setCalculatedData(calculatedData);
-    popup.setPendingCalculation = () => {throw new Error('Unexpected calculation');};
-    popup.setCalculatedData = () => {throw new Error('Unexpected calculation');};
+    popup.setPendingCalculation = () => {
+      throw new Error('Unexpected calculation');
+    };
+    popup.setCalculatedData = () => {
+      throw new Error('Unexpected calculation');
+    };
     const geometry = [new firebase.firestore.GeoPoint(0, 1)];
     const underTest = new StoredShapeData('my_id', 'my notes', geometry, popup);
-    firebaseCollection.doc = () => {throw new Error('Unexpected Firestore call');};
+    firebaseCollection.doc = () => {
+      throw new Error('Unexpected Firestore call');
+    };
     underTest.update();
     // Nothing crashed.
   });
@@ -155,8 +165,12 @@ describe('Unit test for ShapeData', () => {
     const popup = new StubPopup();
     const calculatedData = {damage: 1};
     popup.setCalculatedData(calculatedData);
-    popup.setPendingCalculation = () => {throw new Error('Unexpected calculation');};
-    popup.setCalculatedData = () => {throw new Error('Unexpected calculation');};
+    popup.setPendingCalculation = () => {
+      throw new Error('Unexpected calculation');
+    };
+    popup.setCalculatedData = () => {
+      throw new Error('Unexpected calculation');
+    };
     const geometry = [new firebase.firestore.GeoPoint(0, 1)];
     const ids = [];
     const records = [];

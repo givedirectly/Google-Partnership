@@ -25,8 +25,10 @@ class StoredShapeData {
    * @constructor
    *
    * @param {String} id Firestore id. Null if user has just created polygon
-   * @param {String} notes User-entered notes. Null if user has just created polygon
-   * @param {Array<firebase.firestore.GeoPoint>} polygonGeoPoints Null if user has just created polygon
+   * @param {String} notes User-entered notes. Null if user has just created
+   *     polygon
+   * @param {Array<firebase.firestore.GeoPoint>} polygonGeoPoints Null if user
+   *     has just created polygon
    * @param {Popup} popup
    */
   constructor(id, notes, polygonGeoPoints, popup) {
@@ -60,8 +62,8 @@ class StoredShapeData {
       return;
     }
     const newGeometry = StoredShapeData.polygonGeoPoints(polygon);
-    const geometriesEqual =
-        StoredShapeData.compareGeoPointArrays(this.polygonGeoPoints, newGeometry);
+    const geometriesEqual = StoredShapeData.compareGeoPointArrays(
+        this.polygonGeoPoints, newGeometry);
     const newNotesEqual = this.lastNotes === this.popup.notes;
     this.lastNotes = this.popup.notes;
     if (geometriesEqual) {
@@ -207,7 +209,8 @@ StoredShapeData.compareGeoPointArrays = (array1, array2) => {
 
 // TODO(janakr): should this be initialized somewhere better?
 // Warning before leaving the page.
-window.onbeforeunload = () => StoredShapeData.pendingWriteCount > 0 ? true : null;
+window.onbeforeunload = () =>
+    StoredShapeData.pendingWriteCount > 0 ? true : null;
 
 const collectionName =
     'usershapes' + (inProduction() ? '' : ('-test/' + getTestCookie()));
@@ -291,7 +294,8 @@ function drawRegionsFromFirestoreQuery(querySnapshot, map) {
         polygon, map, notes, userDefinedRegion.get('calculatedData'));
     userRegionData.set(
         polygon,
-        new StoredShapeData(userDefinedRegion.id, notes, storedGeometry, popup));
+        new StoredShapeData(
+            userDefinedRegion.id, notes, storedGeometry, popup));
     polygon.setMap(map);
   });
   loadingElementFinished(mapContainerId);
