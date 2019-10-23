@@ -1,6 +1,9 @@
 language: node_js
 node_js:
   - 10
+dist: xenial
+services:
+  - xvfb
 addons:
   apt:
     packages:
@@ -23,4 +26,4 @@ before_install:
 before_script:
   - yarn run ws --directory docs --port 8080 &
 script:
-  - $(yarn bin)/cypress run --browser chromium
+  - $(yarn bin)/cypress run --browser chromium --config video=false
