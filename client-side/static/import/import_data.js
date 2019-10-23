@@ -1,3 +1,4 @@
+import {CLIENT_ID} from '../authenticate.js';
 import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, snapPercentageTag, snapPopTag, sviTag, totalPopTag, tractTag} from '../property_names.js';
 import {disaster, getResources} from '../resources.js';
 import storeCenter from './center.js';
@@ -5,6 +6,7 @@ import storeCenter from './center.js';
 export {crowdAiDamageKey};
 /** @VisibleForTesting */
 export {countDamageAndBuildings};
+
 
 /**
  * Joins a state's census block-group-level SNAP/population data with building
@@ -37,6 +39,8 @@ export {countDamageAndBuildings};
 const censusGeoidKey = 'GEOid2';
 const censusBlockGroupKey = 'GEOdisplay-label';
 const tigerGeoidKey = 'GEOID';
+const cdcGeoidKey = 'FIPS';
+const cdcSviKey = 'RPL_THEMES';
 const snapKey = 'HD01_VD02';
 const totalKey = 'HD01_VD01';
 const incomeKey = 'HD01_VD01';
@@ -93,9 +97,9 @@ function combineWithSnap(feature) {
         blockGroupTag,
         snapFeature.get(censusBlockGroupKey),
         snapPopTag,
-        snapFeature.get(snapKey),
+        ee.Number.parse(snapFeature.get(snapKey)),
         totalPopTag,
-        snapFeature.get(totalKey),
+        ee.Number.parse(snapFeature.get(totalKey)),
       ]));
 }
 
@@ -123,7 +127,7 @@ function combineWithSvi(feature) {
   const sviFeature = ee.Feature(feature.get('secondary'));
   return ee.Feature(feature.get('primary')).set(ee.Dictionary([
     sviTag,
-    sviFeature.get(sviTag),
+    sviFeature.get(cdcSviKey),
   ]));
 }
 
@@ -168,83 +172,75 @@ function attachBlockGroups(building, blockGroups) {
   return building.set(geoidTag, geoid);
 }
 
-
-function withGeo(feature) {
-  const centroid = feature.centroid().geometry().coordinates();
-  return feature.set('lng', centroid.get(0), 'lat', centroid.get(1));
-}
-
-
 /** Performs operation of processing inputs and creating output asset. */
 function run() {
   ee.initialize();
 
   const resources = getResources();
   const damage = ee.FeatureCollection(resources.damage);
-
   storeCenter(damage);
 
-  // const snap = ee.FeatureCollection(resources.rawSnap)
-  //                  .map((feature) => stringifyGeoid(feature,
-  //                  censusGeoidKey));
-  // // filter block groups to those with damage.
-  // const blockGroups = ee.Join.simple().apply(
-  //     ee.FeatureCollection(resources.bg), damage,
-  //     ee.Filter.intersects({leftField: '.geo', rightField: '.geo'}));
-  // // join snap stats to block group geometries
-  // const joinedSnap =
-  //     ee.Join.inner()
-  //         .apply(
-  //             snap, blockGroups,
-  //             ee.Filter.equals(
-  //                 {leftField: censusGeoidKey, rightField: tigerGeoidKey}))
-  //         .map(combineWithSnap);
-  // // join with income
-  // const joinedSnapIncome =
-  //     ee.Join.inner()
-  //         .apply(
-  //             joinedSnap, ee.FeatureCollection(resources.income),
-  //             ee.Filter.equals(
-  //                 {leftField: geoidTag, rightField: censusGeoidKey}))
-  //         .map(combineWithIncome);
-  // // filter SVI to those with damage and join
-  // const svi = ee.Join.simple().apply(
-  //     ee.FeatureCollection(resources.svi), damage,
-  //     ee.Filter.intersects({leftField: '.geo', rightField: '.geo'}));
-  // const joinedSnapIncomeSVI =
-  //     ee.Join.inner()
-  //         .apply(
-  //             joinedSnapIncome.map(addTractInfo), svi,
-  //             ee.Filter.equals({leftField: tractTag, rightField: geoidTag}))
-  //         .map(combineWithSvi);
-  // // attach block groups to buildings and aggregate to get block group
-  // building
-  // // counts
-  // const buildings = ee.FeatureCollection(resources.buildings);
-  // const withBlockGroup =
-  //     buildings.map((building) => attachBlockGroups(building, blockGroups));
-  // const buildingsHisto =
-  //     ee.Dictionary(withBlockGroup.aggregate_histogram(geoidTag));
-  // // process final feature collection
-  // const data = joinedSnapIncomeSVI.map(
-  //     (feature) => countDamageAndBuildings(feature, buildingsHisto));
-  //
-  // const assetName = disaster + '-data-ms-as-nod';
-  // // TODO(#61): parameterize ee user account to write assets to or make GD
-  // // account.
-  // // TODO: delete existing asset with same name if it exists.
-  // const task = ee.batch.Export.table.toAsset(
-  //     data, assetName, 'users/juliexxia/' + assetName);
-  // task.start();
-  // $('.upload-status')
-  //     .text('Check Code Editor console for progress. Task: ' + task.id);
-  // joinedSnap.size().evaluate((val, failure) => {
-  //   if (val) {
-  //     $('.upload-status').append('\n<p>Found ' + val + ' elements');
-  //   } else {
-  //     $('.upload-status').append('\n<p>Error getting size: ' + failure);
-  //   }
-  // });
+  const snap = ee.FeatureCollection(resources.rawSnap)
+                   .map((feature) => stringifyGeoid(feature, censusGeoidKey));
+  // filter block groups to those with damage.
+  const blockGroups = ee.Join.simple().apply(
+      ee.FeatureCollection(resources.bg),
+      damage,
+      ee.Filter.intersects({leftField: '.geo', rightField: '.geo'}));
+  // join snap stats to block group geometries
+  const joinedSnap =
+      ee.Join.inner()
+          .apply(
+              snap, blockGroups,
+              ee.Filter.equals(
+                  {leftField: censusGeoidKey, rightField: tigerGeoidKey}))
+          .map(combineWithSnap);
+  // join with income
+  const joinedSnapIncome =
+      ee.Join.inner()
+          .apply(
+              joinedSnap, ee.FeatureCollection(resources.income),
+              ee.Filter.equals(
+                  {leftField: geoidTag, rightField: censusGeoidKey}))
+          .map(combineWithIncome);
+  // filter SVI to those with damage and join
+  const svi = ee.Join.simple().apply(
+      ee.FeatureCollection(resources.svi),
+      damage,
+      ee.Filter.intersects({leftField: '.geo', rightField: '.geo'}));
+  const joinedSnapIncomeSVI =
+      ee.Join.inner()
+          .apply(
+              joinedSnapIncome.map(addTractInfo), svi,
+              ee.Filter.equals({leftField: tractTag, rightField: cdcGeoidKey}))
+          .map(combineWithSvi);
+  // attach block groups to buildings and aggregate to get block group building
+  // counts
+  const buildings = ee.FeatureCollection(resources.buildings);
+  const withBlockGroup =
+      buildings.map((building) => attachBlockGroups(building, blockGroups));
+  const buildingsHisto =
+      ee.Dictionary(withBlockGroup.aggregate_histogram(geoidTag));
+  // process final feature collection
+  const data = joinedSnapIncomeSVI.map(
+      (feature) => countDamageAndBuildings(feature, buildingsHisto));
+
+  const assetName = 'data-ms-as-nod';
+  // TODO(#61): parameterize ee user account to write assets to or make GD
+  // account.
+  // TODO: delete existing asset with same name if it exists.
+  const task = ee.batch.Export.table.toAsset(
+      data, assetName, 'users/gd/' + disaster + '/' + assetName);
+  task.start();
+  $('.upload-status')
+      .text('Check Code Editor console for progress. Task: ' + task.id);
+  joinedSnap.size().evaluate((val, failure) => {
+    if (val) {
+      $('.upload-status').append('\n<p>Found ' + val + ' elements');
+    } else {
+      $('.upload-status').append('\n<p>Error getting size: ' + failure);
+    }
+  });
 }
 
 /**
@@ -252,11 +248,6 @@ function run() {
  * when the document is loaded, we do the work.
  */
 function setup() {
-  // The client ID from the Google Developers Console.
-  // TODO(#13): This is from janakr's console. Should use one for GiveDirectly.
-  const CLIENT_ID = '634162034024-oodhl7ngkg63hd9ha9ho9b3okcb0bp8s' +
-      '.apps.googleusercontent.com';
-
   $(document).ready(function() {
     // Shows a button prompting the user to log in.
     const onImmediateFailed = function() {
