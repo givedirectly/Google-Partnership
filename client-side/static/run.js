@@ -132,6 +132,7 @@ function createNewCheckbox(name, displayName, parentDiv, map) {
   newMark.className = 'checkmark';
   newRow.appendChild(newMark);
   const label = document.createElement('label');
+  label.className = 'checkbox-label';
   label.htmlFor = newBox.id;
   label.innerHTML = displayName;
   newRow.appendChild(label);

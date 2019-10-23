@@ -113,7 +113,6 @@ label {
   font-size: 18px;
   color: #545958;
   line-height: 26px;
-  text-transform: capitalize;
   white-space: nowrap;
   overflow: hidden;
 }
@@ -196,6 +195,10 @@ input[type=checkbox]:hover {
 input[type=checkbox]:checked {
   background-color: var(--green-1);
   border-color: var(--green-1);
+}
+
+.checkbox-label {
+  text-transform: capitalize;
 }
 
 /* Loading indicator css */
