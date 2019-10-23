@@ -21,4 +21,4 @@ before_install:
 before_script:
   - yarn run ws --directory docs --port 8080 &
 script:
-  - $(yarn bin)/cypress run 
+  - $(yarn bin)/cypress run --browser chromium
