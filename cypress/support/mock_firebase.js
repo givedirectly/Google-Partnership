@@ -21,6 +21,14 @@ class GeoPoint {
     this.latitude = latitude;
     this.longitude = longitude;
   }
+
+  /**
+   * Compares for equality.
+   * @param {firebase.firestore.GeoPoint} other
+   */
+  isEqual(other) {
+    return this.latitude === other.latitude && this.longitude === other.longitude;
+  }
 }
 
 firebase.firestore.GeoPoint = GeoPoint;

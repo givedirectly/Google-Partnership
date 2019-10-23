@@ -305,6 +305,8 @@ function removeAllChildren(div) {
  *
  * @param {google.maps.Polygon} polygon
  * @param {google.maps.Map} map
+ * @param {string} notes
+ * @param {Object} calculatedData May be omitted if currently unknown
  * @return {Popup}
  */
 function createPopup(

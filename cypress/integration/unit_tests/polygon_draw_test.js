@@ -1,4 +1,4 @@
-import {processUserRegions, ShapeData} from '../../../client-side/static/polygon_draw';
+import {processUserRegions, StoredShapeData} from '../../../client-side/static/polygon_draw';
 
 // Name of collection doesn't matter.
 const firebaseCollection = firebase.firestore().collection('usershapes-test');
@@ -36,49 +36,57 @@ describe('Unit test for ShapeData', () => {
         delete firebaseCollection[prop];
       }
     }
+    // Make sure .get() succeeds.
+    firebaseCollection.get = () => [];
     // Make sure userShapes is set in the code.
     return cy.wrap(processUserRegions(null, Promise.resolve(null)));
   });
 
   it('Add shape', () => {
-    const mockPolygon = makeMockPolygon();
-    const underTest = new ShapeData(null, null, null, mockPolygon);
+    const popup = new StubPopup();
+    const underTest = new StoredShapeData(null, null, null, popup);
     const records = [];
     firebaseCollection.add = recordRecord(records, {id: 'new_id'});
+    popup.notes = 'my notes';
     underTest.update();
     expect(records).to.eql([{
-      damage: 1,
+      calculatedData: {damage: 1},
       geometry: [new firebase.firestore.GeoPoint(0, 1)],
       notes: 'my notes',
     }]);
     expect(underTest.id).to.eql('new_id');
-    expect(ShapeData.pendingWriteCount).to.eql(0);
+    expect(StoredShapeData.pendingWriteCount).to.eql(0);
   });
 
   it('Update shape', () => {
-    const underTest = new ShapeData('my_id', null, null, null);
-    const mockPolygon = makeMockPolygon();
+    const popup = new StubPopup();
+    popup.setCalculatedData({damage: 1});
+    const geometry = [new firebase.firestore.GeoPoint(0, 1)];
+    const underTest = new StoredShapeData('my_id', 'my notes', geometry, popup);
     const records = [];
     const ids = [];
     firebaseCollection.doc = (id) => {
       ids.push(id);
       return {set: recordRecord(records, null)};
     };
+    popup.notes = 'new notes';
     underTest.update();
     expect(ids).to.eql(['my_id']);
     expect(records).to.eql([{
-      damage: 1,
-      geometry: [new firebase.firestore.GeoPoint(0, 1)],
-      notes: 'my notes',
+      calculatedData: {damage: 1},
+      geometry: geometry,
+      notes: 'new notes',
     }]);
     expect(underTest.id).to.eql('my_id');
-    expect(ShapeData.pendingWriteCount).to.eql(0);
+    expect(StoredShapeData.pendingWriteCount).to.eql(0);
   });
 
   it('Delete shape', () => {
-    const underTest = new ShapeData('my_id', null, null, null);
-    const mockPolygon = makeMockPolygon();
-    mockPolygon.getMap = () => null;
+    const popup = new StubPopup();
+    popup.setCalculatedData({damage: 1});
+    const geometry = [new firebase.firestore.GeoPoint(0, 1)];
+    const underTest = new StoredShapeData('my_id', 'my notes', geometry, popup);
+    popup.polygon.getMap = () => null;
     const ids = [];
     firebaseCollection.doc = (id) => {
       ids.push(id);
@@ -89,22 +97,25 @@ describe('Unit test for ShapeData', () => {
     underTest.update();
     expect(ids).to.eql(['my_id']);
     expect(underTest.id).to.eql('my_id');
-    expect(ShapeData.pendingWriteCount).to.eql(0);
+    expect(StoredShapeData.pendingWriteCount).to.eql(0);
   });
 
   it('Update while update pending', () => {
-    const underTest = new ShapeData('my_id', null, null, null);
-    const mockPolygon = makeMockPolygon();
+    const popup = new StubPopup();
+    const calculatedData = {damage: 1};
+    popup.setCalculatedData(calculatedData);
+    const geometry = [new firebase.firestore.GeoPoint(0, 1)];
+    const underTest = new StoredShapeData('my_id', 'my notes', geometry, popup);
     const records = [];
     const ids = [];
     const setThatTriggersNewUpdate = {
       set: (record) => {
+        popup.notes = 'racing notes';
         underTest.update();
-        expect(underTest.damage).to.eql(1);
-        expect(underTest.notes).to.eql('racing notes');
-        expect(underTest.state).to.eql(ShapeData.State.QUEUED_WRITE);
+        expect(popup.calculatedData).to.eql(calculatedData);
+        expect(underTest.state).to.eql(StoredShapeData.State.QUEUED_WRITE);
         records.push(record);
-        expect(ShapeData.pendingWriteCount).to.eql(1);
+        expect(StoredShapeData.pendingWriteCount).to.eql(1);
         // Put back usual set for next run.
         setThatTriggersNewUpdate.set = recordRecord(records, null);
         return new FakePromise(null);
@@ -114,30 +125,57 @@ describe('Unit test for ShapeData', () => {
       ids.push(id);
       return setThatTriggersNewUpdate;
     };
+    popup.notes = 'new notes';
     underTest.update();
     expect(ids).to.eql(['my_id', 'my_id']);
-    const geometry = [new firebase.firestore.GeoPoint(0, 1)];
+    expect(records).to.have.length(2);
     expect(records).to.eql([
-      {damage: 1, geometry: geometry, notes: 'my notes'},
-      {damage: 1, geometry: geometry, notes: 'racing notes'},
+      {calculatedData: calculatedData, geometry: geometry, notes: 'new notes'},
+      {calculatedData: calculatedData, geometry: geometry, notes: 'racing notes'},
     ]);
     expect(underTest.id).to.eql('my_id');
-    expect(ShapeData.pendingWriteCount).to.eql(0);
+    expect(StoredShapeData.pendingWriteCount).to.eql(0);
   });
 
-  /**
-   * Make an approximation of a google.maps.Polygon with a single-point path and
-   * a "true" getMap return value.
-   *
-   * @return {Object} fake google.maps.Polygon.
-   */
-  function makeMockPolygon() {
-    const mockPolygon = {};
-    mockPolygon.getMap = () => true;
-    const latlng = {lat: () => 0, lng: () => 1};
-    mockPolygon.getPath = () => [latlng];
-    return mockPolygon;
-  }
+  it('Skips update if nothing changed', () => {
+    const popup = new StubPopup();
+    popup.notes = 'my notes';
+    const calculatedData = {damage: 1};
+    popup.setCalculatedData(calculatedData);
+    popup.setPendingCalculation = () => {throw new Error('Unexpected calculation');};
+    popup.setCalculatedData = () => {throw new Error('Unexpected calculation');};
+    const geometry = [new firebase.firestore.GeoPoint(0, 1)];
+    const underTest = new StoredShapeData('my_id', 'my notes', geometry, popup);
+    firebaseCollection.doc = () => {throw new Error('Unexpected Firestore call');};
+    underTest.update();
+    // Nothing crashed.
+  });
+
+  it('Skips recalculation if geometry unchanged', () => {
+    const popup = new StubPopup();
+    const calculatedData = {damage: 1};
+    popup.setCalculatedData(calculatedData);
+    popup.setPendingCalculation = () => {throw new Error('Unexpected calculation');};
+    popup.setCalculatedData = () => {throw new Error('Unexpected calculation');};
+    const geometry = [new firebase.firestore.GeoPoint(0, 1)];
+    const ids = [];
+    const records = [];
+    firebaseCollection.doc = (id) => {
+      ids.push(id);
+      return {set: recordRecord(records, null)};
+    };
+    const underTest = new StoredShapeData('my_id', 'my notes', geometry, popup);
+    popup.notes = 'new notes';
+    underTest.update();
+    expect(ids).to.eql(['my_id']);
+    expect(records).to.eql([{
+      calculatedData: calculatedData,
+      geometry: geometry,
+      notes: 'new notes',
+    }]);
+    expect(underTest.id).to.eql('my_id');
+    expect(StoredShapeData.pendingWriteCount).to.eql(0);
+  });
 
   /**
    * Returns a function that will record a given record to records and then
@@ -150,9 +188,42 @@ describe('Unit test for ShapeData', () => {
    */
   function recordRecord(records, retval) {
     return (record) => {
-      expect(ShapeData.pendingWriteCount).to.eql(1);
+      expect(StoredShapeData.pendingWriteCount).to.eql(1);
       records.push(record);
       return new FakePromise(retval);
     };
   }
 });
+
+/**
+ * Make an approximation of a google.maps.Polygon with a single-point path and
+ * a "true" getMap return value.
+ *
+ * @return {Object} fake google.maps.Polygon.
+ */
+function makeMockPolygon() {
+  const mockPolygon = {};
+  mockPolygon.getMap = () => true;
+  const latlng = {lat: () => 0, lng: () => 1};
+  mockPolygon.getPath = () => [latlng];
+  return mockPolygon;
+}
+
+/** Stub of the Popup class. */
+class StubPopup {
+  /** @constructor */
+  constructor() {
+    this.polygon = makeMockPolygon();
+  }
+
+  /** Does nothing. */
+  setPendingCalculation() {}
+
+  /**
+   * Sets calculatedData property.
+   * @param {Object} calculatedData
+   */
+  setCalculatedData(calculatedData) {
+    this.calculatedData = calculatedData;
+  }
+}

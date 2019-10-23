@@ -6,5 +6,9 @@
     "eslint-config-google": "^0.13.0",
     "firebase": "^7.0.0",
     "firebase-admin": "^8.6.1"
+  },
+  "dependencies": {
+    "chai": "^4.2.0",
+    "chai-arrays": "^2.0.0"
   }
 }
