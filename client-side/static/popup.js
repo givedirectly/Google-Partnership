@@ -53,11 +53,16 @@ function setUpPopup() {
       this.addPopUpListener();
     }
 
+    /**
+     * Sets the calculatedData property of this popup.
+     * @param {Object} calculatedData
+     */
     setCalculatedData(calculatedData) {
       this.calculatedData = calculatedData;
       this.updateDamageDiv();
     }
 
+    /** Sets the status of calculated data in this popup to "calculating". */
     setPendingCalculation() {
       this.setCalculatedData(SENTINEL_CALCULATING);
     }

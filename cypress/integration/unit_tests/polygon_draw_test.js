@@ -134,7 +134,7 @@ describe('Unit test for ShapeData', () => {
       {
         calculatedData: calculatedData,
         geometry: geometry,
-        notes: 'racing notes'
+        notes: 'racing notes',
       },
     ]);
     expect(underTest.id).to.eql('my_id');
