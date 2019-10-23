@@ -1,10 +1,11 @@
+import {CLIENT_ID} from '../authenticate.js';
 import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, snapPercentageTag, snapPopTag, sviTag, totalPopTag, tractTag} from '../property_names.js';
 import {disaster, getResources} from '../resources.js';
-import {CLIENT_ID} from '../authenticate.js';
 
 export {crowdAiDamageKey};
 /** @VisibleForTesting */
 export {countDamageAndBuildings};
+
 
 /**
  * Joins a state's census block-group-level SNAP/population data with building
