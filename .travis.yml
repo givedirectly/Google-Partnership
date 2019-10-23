@@ -1,6 +1,7 @@
 language: node_js
 node_js:
   - 10
+# Dist needed for services: xvfb, which allows us to run Chromium in a "GUI".
 dist: xenial
 services:
   - xvfb
