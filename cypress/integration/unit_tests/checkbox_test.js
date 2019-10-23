@@ -1,5 +1,5 @@
-import {assets, EarthEngineAsset} from '../../../client-side/static/earth_engine_asset.js';
-import {layerArray, layerMap, LayerMapValue, toggleLayerOff, toggleLayerOn} from '../../../client-side/static/layer_util';
+import {assets, EarthEngineAsset} from '../../../docs/earth_engine_asset.js';
+import {layerArray, layerMap, LayerMapValue, toggleLayerOff, toggleLayerOn} from '../../../docs/layer_util';
 
 const mockData = {};
 
