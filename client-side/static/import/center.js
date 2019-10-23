@@ -44,7 +44,9 @@ function storeCenter(features) {
 // We need both firebase to authenticate and the the ee.List to evaluate.
 let tasks = 2;
 
-/** Records a task being completed and calls saveBounds if everything is ready. */
+/**
+ * Records a task being completed and calls saveBounds if everything is ready.
+ */
 function taskCompleted() {
   if (--tasks === 0) {
     saveBounds();
