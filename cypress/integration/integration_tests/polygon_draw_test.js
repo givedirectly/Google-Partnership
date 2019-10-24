@@ -32,7 +32,7 @@ describe('Integration tests for drawing polygons', () => {
 
   afterEach(deleteAllRegionsDrawnByTest);
 
-  it('Draws a polygon and edits its notes', () => {
+  it.only('Draws a polygon and edits its notes', () => {
     cy.visit(host);
     drawPolygonAndClickOnIt();
     pressPolygonButton('edit');

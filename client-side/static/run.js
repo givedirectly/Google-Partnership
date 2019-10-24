@@ -17,8 +17,8 @@ export {
   run as default,
 };
 
-const snapAndDamageAsset = 'users/gd/' + getDisaster() + '/data-ms-as-nod';
-// const snapAndDamageAsset = 'users/janak/harvey-data-ms-correct-damage';
+// const snapAndDamageAsset = 'users/gd/' + getDisaster() + '/data-ms-as-nod';
+const snapAndDamageAsset = 'users/janak/harvey-data-ms-correct-damage';
 // Promise for snapAndDamageAsset. After it's first resolved, we never need to
 // download it from EarthEngine again.
 let snapAndDamagePromise;
