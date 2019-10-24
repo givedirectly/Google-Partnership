@@ -10,7 +10,7 @@
 # replace with your own or specify yours as IMGUR_CLIENT_ID envionment variable
 # to avoid limits
 set -x
-default_client_id=c9a6efb3d7932fd
+default_client_id=11e3c7faa3bb30b
 client_id="${IMGUR_CLIENT_ID:=$default_client_id}"
 
 # Function to output usage instructions
