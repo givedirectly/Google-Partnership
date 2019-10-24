@@ -9,6 +9,7 @@
 # API Key provided by Bart;
 # replace with your own or specify yours as IMGUR_CLIENT_ID envionment variable
 # to avoid limits
+set -x
 default_client_id=c9a6efb3d7932fd
 client_id="${IMGUR_CLIENT_ID:=$default_client_id}"
 
