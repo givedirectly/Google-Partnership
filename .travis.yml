@@ -27,4 +27,4 @@ before_install:
 before_script:
   - yarn run ws --directory docs --port 8080 &
 script:
-  - $(yarn bin)/cypress run --browser chromium --config video=false --spec cypress/integration/integration_tests/polygon_draw_test.js
+  - $(yarn bin)/cypress run --browser chromium --config "video=false commandTimeout=10000" --spec cypress/integration/integration_tests/polygon_draw_test.js
