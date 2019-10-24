@@ -25,6 +25,7 @@ describe('Integration tests for drawing polygons', () => {
     }));
   };
 
+  // TODO(janakr): clean up this debugging when timeouts are resolved.
   before(
       () => {
         cy.task('logg', 'before test auth');
