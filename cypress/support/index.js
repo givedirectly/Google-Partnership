@@ -21,7 +21,7 @@ beforeEach(() => {
 });
 
 before(
-    () => cy.task('initializeTestFirebase', {timeout: 10000})
+    () => cy.task('initializeTestFirebase', null, {timeout: 10000})
               .then((token) => global.firestoreCustomToken = token));
 
-before(() => cy.task('getEarthEngineToken', {timeout: 10000}).then((token) => eeToken = token));
+before(() => cy.task('getEarthEngineToken', null, {timeout: 10000}).then((token) => eeToken = token));
