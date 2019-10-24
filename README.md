@@ -26,7 +26,8 @@ either from a collaborator or by logging into the [Service Accounts page](
 https://console.cloud.google.com/iam-admin/serviceaccounts?project=mapping-crisis)
 as `gd-earthengine-user@givedirectly.org` and generating a new key for
 `firebase-adminsdk-pw40g@mapping-crisis.iam.gserviceaccount.com`. This is needed
-for running tests.
+for running tests. Remember to startup a new terminal window for changes to
+take effect.
 
 * Install [Chromium](https://www.chromium.org) if on Linux. Install via the
   usual `apt-get`-style channels. This should be relatively straightforward on
