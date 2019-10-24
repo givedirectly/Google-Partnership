@@ -41,7 +41,7 @@ describe('Integration tests for drawing polygons', () => {
     cy.get('.map').contains(notes);
   });
 
-  it('Draws a polygon, calculates damage', () => {
+  it.only('Draws a polygon, calculates damage', () => {
     cy.visit(host);
     zoom(8);
     drawPolygonAndClickOnIt(-250);
