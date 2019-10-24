@@ -23,9 +23,7 @@ let bounds = null;
  */
 function storeCenter(features) {
   const authenticator =
-      new Authenticator((token) => authenticateToFirebase(token).then(() => {
-        taskCompleted();
-      }));
+      new Authenticator((token) => authenticateToFirebase(token).then(() => taskCompleted()));
   authenticator.start();
 
   const damageWithCoords = ee.FeatureCollection(features.map(withGeo));

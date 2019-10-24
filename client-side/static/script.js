@@ -19,6 +19,8 @@ function setup() {
     initializeSidebar();
     const firebaseAuthPromise = new SettablePromise();
 
+    // TODO: Have this return a map promise so that we can kick off other
+    // processes (esp ee ones) without waiting on firebase.
     map = createMap(firebaseAuthPromise.getPromise());
 
     const runOnInitialize = () => run(map, firebaseAuthPromise.getPromise());
