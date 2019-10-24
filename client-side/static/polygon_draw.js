@@ -100,10 +100,7 @@ class StoredShapeData {
     return transformGeoPointArrayToLatLng(this.polygonGeoPoints);
   }
 
-  /**
-   * Kicks off Firestore remote write.
-   * @return {Promise} Write promise
-   */
+  /** Kicks off Firestore remote write. */
   doRemoteUpdate() {
     const record = {
       geometry: this.polygonGeoPoints,
@@ -111,12 +108,12 @@ class StoredShapeData {
       calculatedData: this.popup.calculatedData,
     };
     if (this.id) {
-      return userShapes.doc(this.id)
+      userShapes.doc(this.id)
           .set(record)
           .then(() => this.finishWriteAndMaybeWriteAgain())
           .catch(createError('error updating ' + this));
     } else {
-      return userShapes.add(record)
+      userShapes.add(record)
           .then((docRef) => {
             this.id = docRef.id;
             this.finishWriteAndMaybeWriteAgain();
