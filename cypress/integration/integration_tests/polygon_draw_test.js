@@ -3,7 +3,7 @@
 import * as firebaseLibrary from 'firebase';
 import {firebaseConfig} from '../../../docs/authenticate';
 
-const hackyWaitTime = 1000;
+const hackyWaitTime = 1300;
 const notes = 'Sphinx of black quartz, judge my vow';
 
 firebaseLibrary.initializeApp(firebaseConfig);
@@ -56,7 +56,7 @@ describe('Integration tests for drawing polygons', () => {
   // of times manually this seems fairly safe, but there's a chance it flakes
   // out if something changes. If this does start to flake, we can also consider
   // lowering the wait at the end of drawPolygonAndClickOnIt.
-  xit('Draws a polygon, checks for calculating status', () => {
+  it('Draws a polygon, checks for calculating status', () => {
     cy.visit(host);
     drawPolygonAndClickOnIt();
     cy.get('.popup-damage').contains('damage count: calculating');
@@ -70,7 +70,7 @@ describe('Integration tests for drawing polygons', () => {
         .and('eq', 'rgb(0, 0, 0)');
   });
 
-  xit('Draws a polygon and deletes it', () => {
+  it('Draws a polygon and deletes it', () => {
     // Accept confirmation when it happens.
     cy.on('window:confirm', () => true);
     cy.visit(host);
@@ -85,7 +85,7 @@ describe('Integration tests for drawing polygons', () => {
     assertExactlyPopUps(0, notes);
   });
 
-  xit('Draws a polygon and almost deletes it, then deletes', () => {
+  it('Draws a polygon and almost deletes it, then deletes', () => {
     // Reject confirmation when first happens, then accept it later.
     let confirmValue = false;
     cy.on('window:confirm', () => confirmValue);
@@ -123,7 +123,7 @@ describe('Integration tests for drawing polygons', () => {
     assertExactlyPopUps(0, notes);
   });
 
-  xit('Draws a polygon, clicks it, closes its info box', () => {
+  it('Draws a polygon, clicks it, closes its info box', () => {
     cy.visit(host);
     drawPolygonAndClickOnIt();
     pressPolygonButton('edit');
@@ -135,7 +135,7 @@ describe('Integration tests for drawing polygons', () => {
     cy.get('.map').contains(notes).should('not.be.visible');
   });
 
-  xit('Draws a polygon, almost closes while editing', () => {
+  it('Draws a polygon, almost closes while editing', () => {
     cy.on('window:confirm', () => false);
 
     cy.visit(host);
@@ -147,7 +147,7 @@ describe('Integration tests for drawing polygons', () => {
     cy.get('#mapContainer').contains(notes).should('be.visible');
   });
 
-  xit('Draws a polygon, closes while editing', () => {
+  it('Draws a polygon, closes while editing', () => {
     cy.on('window:confirm', () => true);
 
     cy.visit(host);
@@ -163,7 +163,7 @@ describe('Integration tests for drawing polygons', () => {
     cy.get('#mapContainer').contains(notes).should('not.be.visible');
   });
 
-  xit('Hides polygon, re-shows, tries to hide during edit', () => {
+  it('Hides polygon, re-shows, tries to hide during edit', () => {
     cy.visit(host);
 
     drawPolygonAndClickOnIt();
@@ -207,7 +207,7 @@ describe('Integration tests for drawing polygons', () => {
     cy.get('#user-features-checkbox').should('not.be.checked');
   });
 
-  xit('Hides, draws new one, tries to hide during edit, re-shows, hides', () => {
+  it('Hides, draws new one, tries to hide during edit, re-shows, hides', () => {
     cy.visit(host);
 
     drawPolygonAndClickOnIt();
