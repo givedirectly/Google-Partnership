@@ -27,6 +27,8 @@ env:
     # Generated using
     # `travis encrypt CYPRESS_RECORD_KEY=<cypress-dashboard-record-key>`
     - secure: "IhXbsE9f3aAM/lSIxWUHcV+C3X1QLkwmxlmnH08ErUnTzhLSMZlXNknKelyhy0QAfKGi5VBBTcrFLafNoPXmSWeDZ5cMYsv25a6rZHpzU4D83A8/OumMUODLN7Hm4oc5C8jEd337HfpBb4WEtFDt3h1Bwhyw1q0NytMaVjHOPYrDxH+gBP7bFw6iM0ruTsgDUsAz8cqedJxYeLNtsmYpnVNY2mbSpBzVKU4Xo+etTGMEK9mXNPRwCjtH9ju5tqTkVR8eKu6BQematAdlCPa2n73dytEVpLYOQzuNccC+4QKbSjyrS3asgkXXRV23VMTd3gdGb3OIUo+UuF/2BM7HBraOROH4dC6vU5UAjM60aLJD/DdT37SZuUvwzkwVgx2RTiteXx8nGzAFZDQ+cdoWNVHi6+0IchuEGNZ7H/YC6pfHX8kk8TyRdnNEK/XNhtmjJkuTnDPu8FkmecCJsqtjQrIMADQ+Jp5EJUk8Wr2xGq4vPlPblHwI9QZKXxCKZqseYKvzufB82PidIAzio1M8ZZPfinKVEO8CgF3aL8zDdzikFtGA9XUYs5WMQgOl9Q9bQfgb82PdBl+8JOmYSpQeHQaiv5PqlXuv7pURDPdwPlrtXivf2rGGWQL/7vlqcWAnaYsnzawWhOyoSmcIugZbqA+6DuN7pCCx7OuZmHRrZpk="
+  - DUMMY_VARIABLE_FOR_MULTIPLE_MACHINES=1
+  - DUMMY_VARIABLE_FOR_MULTIPLE_MACHINES=2
 before_install:
   # Coming from
   # `travis encrypt-file mapping-crisis-firebase-adminsdk-pw40g-e2e1f3a2b2.json`
@@ -35,5 +37,5 @@ before_script:
   - yarn run ws --directory docs --port 8080 &
 script:
   # TODO(janakr): enable remaining test.
-  - yarn run cypress run --browser chromium --record --config video=false --spec
+  - yarn run cypress run --browser chromium --parallel --record --config video=false --spec
     'cypress/integration/integration_tests/polygon_draw_test.js,cypress/integration/integration_tests/checkbox_test.js,cypress/integration/integration_tests/highlight_features_test.js,cypress/integration/integration_tests/sidebar_test.js,cypress/integration/integration_tests/update_test.js,cypress/integration/unit_tests/*.js'
