@@ -84,7 +84,7 @@ function clickAndVerifyBlockGroup() {
   // const polygonButton = cy.get('[title="Add a marker"]');
   // polygonButton.click();
 
-  zoom(3);
+  zoomOut(3);
   cy.get('.map').click(400, 600);
   cy.get('.map').should('contain', 'SCORE: 72');
   cy.get('.google-visualization-table-tr-sel')
@@ -96,9 +96,9 @@ function clickAndVerifyBlockGroup() {
 
 /**
  * Helper function to zoom out some amount of times.
- * @param {Integer} numTimes
+ * @param {number} numTimes
  */
-function zoom(numTimes) {
+function zoomOut(numTimes) {
   for (let i = 0; i < numTimes; i++) {
     cy.get('[title="Zoom out"]').click();
     cy.wait(500);
