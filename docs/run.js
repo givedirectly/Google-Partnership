@@ -13,7 +13,6 @@ import {createToggles, initialDamageThreshold, initialPovertyThreshold, initialP
 export {
   createAndDisplayJoinedData,
   run as default,
-
 };
 
 // TODO: infer this from disaster const in import_data.js?

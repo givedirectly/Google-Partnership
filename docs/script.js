@@ -4,8 +4,6 @@ import {earthEngineTestTokenCookieName, firebaseTestTokenCookieName, getCookieVa
 import run from './run.js';
 import {initializeSidebar} from './sidebar.js';
 
-export {map};
-
 // The base Google Map, Initialized lazily to ensure doc is ready
 let map = null;
 
