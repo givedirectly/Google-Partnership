@@ -93,7 +93,7 @@ module.exports = (on, config) => {
             reject);
       });
     },
-    log(str) {
+    logg(str) {
       console.log(str);
     }
   });
