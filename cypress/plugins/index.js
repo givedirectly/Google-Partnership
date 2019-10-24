@@ -93,5 +93,15 @@ module.exports = (on, config) => {
             reject);
       });
     },
+    /**
+     * Debugging function that allows us to see output from Cypress in the
+     * (Travis) console versus in the browser.
+     * @param {string} str
+     * @return {null}
+     */
+    logg(str) {
+      console.log(str);
+      return null;
+    },
   });
 };
