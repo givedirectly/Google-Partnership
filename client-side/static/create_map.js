@@ -1,7 +1,7 @@
 import mapStyles from './map_styles.js';
 import {geoPointToLatLng} from './map_util.js';
 import setUpPolygonDrawing from './polygon_draw.js';
-import {disaster, getResources} from './resources.js';
+import {getDisaster, getResources} from './resources.js';
 
 export {createMap as default};
 
@@ -29,11 +29,11 @@ function createMap(firebasePromise) {
   firebasePromise
       .then(
           () => firebase.firestore()
-                    .collection('disaster-metadata')
-                    .doc(getResources().year)
-                    .collection(disaster)
-                    .doc('map-bounds')
-                    .get())
+              .collection('disaster-metadata')
+              .doc(getResources().year)
+              .collection(getDisaster())
+              .doc('map-bounds')
+              .get())
       .then((doc) => {
         map.fitBounds(new google.maps.LatLngBounds(
             new google.maps.LatLng(geoPointToLatLng(doc.data().sw)),

@@ -1,6 +1,6 @@
 import {authenticateToFirebase, Authenticator} from '../authenticate.js';
 import {convertEeObjectToPromise} from '../map_util.js';
-import {disaster, getResources} from '../resources.js';
+import {getDisaster, getResources} from '../resources.js';
 export {storeCenter as default};
 
 /**
@@ -60,6 +60,7 @@ function saveBounds() {
     ne: new firebase.firestore.GeoPoint(bounds[3], bounds[0]),
     sw: new firebase.firestore.GeoPoint(bounds[1], bounds[2]),
   };
+  const disaster = getDisaster();
   firebase.firestore()
       .collection('disaster-metadata')
       .doc(getResources().year)

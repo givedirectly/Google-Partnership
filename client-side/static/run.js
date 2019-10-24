@@ -9,7 +9,7 @@ import {convertEeObjectToPromise} from './map_util.js';
 import {processUserRegions} from './polygon_draw.js';
 import {setUserFeatureVisibility} from './popup.js';
 import processJoinedData from './process_joined_data.js';
-import {disaster} from './resources.js';
+import {getDisaster} from './resources.js';
 import {createToggles, initialDamageThreshold, initialPovertyThreshold, initialPovertyWeight} from './update.js';
 
 export {
@@ -17,8 +17,7 @@ export {
   run as default,
 };
 
-// TODO: infer this from disaster const in import_data.js?
-const snapAndDamageAsset = 'users/gd/' + disaster + '/data-ms-as-nod';
+const snapAndDamageAsset = 'users/gd/' + getDisaster() + '/data-ms-as-nod';
 // const snapAndDamageAsset = 'users/janak/harvey-data-ms-correct-damage';
 // Promise for snapAndDamageAsset. After it's first resolved, we never need to
 // download it from EarthEngine again.

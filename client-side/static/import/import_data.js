@@ -1,6 +1,6 @@
 import {CLIENT_ID} from '../authenticate.js';
 import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, snapPercentageTag, snapPopTag, sviTag, totalPopTag, tractTag} from '../property_names.js';
-import {disaster, getResources} from '../resources.js';
+import {getDisaster, getResources} from '../resources.js';
 import storeCenter from './center.js';
 
 /** @VisibleForTesting */
@@ -186,12 +186,6 @@ function run() {
       ee.FeatureCollection(resources.bg), damage,
       ee.Filter.intersects({leftField: '.geo', rightField: '.geo'}));
 
-  blockGroups.size().evaluate((yes, no) => {
-    console.log(yes);
-    console.log(no);
-    console.log('blockGroups');
-  });
-
   // join snap stats to block group geometries
   const joinedSnap =
       ee.Join.inner()
@@ -234,7 +228,7 @@ function run() {
   // account.
   // TODO: delete existing asset with same name if it exists.
   const task = ee.batch.Export.table.toAsset(
-      data, assetName, 'users/gd/' + disaster + '/' + assetName);
+      data, assetName, 'users/gd/' + getDisaster() + '/' + assetName);
   task.start();
   $('.upload-status')
       .text('Check Code Editor console for progress. Task: ' + task.id);

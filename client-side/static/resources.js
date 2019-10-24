@@ -1,4 +1,6 @@
-export {disaster, getResources};
+import {inProduction} from './in_test_util.js';
+
+export {getDisaster, getResources};
 
 /**
  * Gets all the ee assets relevant to the current disaster.
@@ -8,8 +10,17 @@ function getResources() {
   return disasters.get(disaster);
 }
 
+/**
+ * Always use Harvey for test cases since our tests assert against specific
+ * block groups and damage points.
+ * @return {string} current disaster
+ */
+function getDisaster() {
+  return inProduction() ? disaster : 'harvey';
+}
+
 /** The current disaster. */
-const disaster = 'michael';
+const disaster = 'harvey';
 
 /** Disaster asset names and other constants. */
 const disasters = new Map();
