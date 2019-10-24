@@ -29,5 +29,6 @@ env:
 script:
   # - $(yarn bin)/cypress run --browser chromium --config video=false --spec cypress/integration/integration_tests/polygon_draw_test.js
   - touch $TRAVIS_BUILD_DIR//cypress/screenshots/integration_tests/polygon_draw_test.js/test.png
+  - mkdir -p $TRAVIS_BUILD_DIR//cypress/screenshots/integration_tests/polygon_draw_test.js
 after_script:
   - ./imgur.bash $TRAVIS_BUILD_DIR/cypress/screenshots/integration_tests/polygon_draw_test.js/*
