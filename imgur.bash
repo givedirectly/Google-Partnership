@@ -70,6 +70,8 @@ while [ $# -gt 0 ]; do
 			errors=true
 			continue
 		fi
+		file "$file"
+		ls -l "$file"
 		response=$(upload "@$file") 2>/dev/null
 	fi
 

@@ -27,6 +27,4 @@ before_install:
 before_script:
   - yarn run ws --directory docs --port 8080 &
 script:
-  - $(yarn bin)/cypress run --browser chromium --config video=false --spec cypress/integration/integration_tests/polygon_draw_test.js
-after_failure:
-  - ./imgur.bash $TRAVIS_BUILD_DIR/cypress/screenshots/integration_tests/polygon_draw_test.js/*
+  - $(yarn bin)/cypress run --browser chromium --record --key 'e017edba-4819-4d96-9b9e-c629dc8074a2' --config video=false --spec cypress/integration/integration_tests/polygon_draw_test.js
