@@ -32,7 +32,7 @@ env:
   # realizes they're the same and distributes the work between them properly.
   jobs:
     - DUMMY_VARIABLE_FOR_MULTIPLE_MACHINES=1
-    - DUMMY_VARIABLE_FOR_MULTIPLE_MACHINES=2
+    # - DUMMY_VARIABLE_FOR_MULTIPLE_MACHINES=2
 before_install:
   # Coming from
   # `travis encrypt-file mapping-crisis-firebase-adminsdk-pw40g-e2e1f3a2b2.json`
@@ -42,4 +42,4 @@ before_script:
 script:
   # TODO(janakr): enable remaining test.
   - yarn run cypress run --browser chromium --parallel --record --config video=false --spec
-    'cypress/integration/integration_tests/polygon_draw_test.js,cypress/integration/integration_tests/checkbox_test.js,cypress/integration/integration_tests/highlight_features_test.js,cypress/integration/integration_tests/sidebar_test.js,cypress/integration/integration_tests/update_test.js,cypress/integration/unit_tests/*.js'
+    'cypress/integration/integration_tests/click_feature_test.js'

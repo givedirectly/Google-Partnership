@@ -3,7 +3,7 @@
  * starting thresholds of poverty 0.3 and damage 0.5
  */
 describe('Integration test for clicking feature', () => {
-  it('clicks a feature on the map highlights feature in list', () => {
+  it.only('clicks a feature on the map highlights feature in list', () => {
     cy.visit(host);
     cy.awaitLoad();
 
@@ -81,6 +81,7 @@ describe('Integration test for clicking feature', () => {
 /** Convenience function for clicking on the block group we use for testing. */
 function clickAndVerifyBlockGroup() {
   zoom(4);
+  cy.wait(500);
   cy.get('.map').click(730, 400);
   cy.get('.map').should('contain', 'SCORE: 53');
   cy.get('.google-visualization-table-tr-sel')
