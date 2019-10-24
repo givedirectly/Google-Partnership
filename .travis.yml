@@ -31,9 +31,5 @@ before_script:
 script:
   # TODO(janakr): enable remaining tests.
   - yarn run cypress run --browser chromium --record --config video=false --spec
-    'cypress/integration/integration_tests/checkbox_test.js,
-    cypress/integration/integration_tests/highlight_features_test.js,
-    cypress/integration/integration_tests/sidebar_test.js,
-    cypress/integration/integration_tests/update_test.js,
-    cypress/integration/unit_tests/*.js'
+    'cypress/integration/integration_tests/checkbox_test.js,cypress/integration/integration_tests/highlight_features_test.js,cypress/integration/integration_tests/sidebar_test.js,cypress/integration/integration_tests/update_test.js,cypress/integration/unit_tests/*.js'
 
