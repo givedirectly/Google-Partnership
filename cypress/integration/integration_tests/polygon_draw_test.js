@@ -3,7 +3,7 @@
 import * as firebaseLibrary from 'firebase';
 import {firebaseConfig} from '../../../docs/authenticate';
 
-const hackyWaitTime = 1300;
+const hackyWaitTime = 1000;
 const notes = 'Sphinx of black quartz, judge my vow';
 
 firebaseLibrary.initializeApp(firebaseConfig);
