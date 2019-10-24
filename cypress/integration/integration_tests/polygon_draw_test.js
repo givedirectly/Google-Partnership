@@ -271,6 +271,8 @@ function drawPolygonAndClickOnIt(offset = 0) {
   // derived by inspecting the page after starting to draw a polygon.
   cy.get(
       'div[style*="cursor: url(\\"https://maps.gstatic.com/mapfiles/crosshair.cur\\") 7 7, crosshair;"]');
+  // Without this, seeing flaky failures on Travis where first point is off map.
+  cy.wait(hackyWaitTime);
   drawPointAndPrepareForNext(150, 650 + offset);
   // TODO(janakr): test seems to fail reliably on command line without these
   // and pass with it. Figure out what to actually test for on the page and

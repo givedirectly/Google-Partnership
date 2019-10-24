@@ -59,7 +59,6 @@ module.exports = (on, config) => {
      * @return {Promise<string>} The token to be used
      */
     initializeTestFirebase() {
-      console.log('Got ', process.env.GOOGLE_APPLICATION_CREDENTIALS);
       const currentApp = firebaseAdmin.initializeApp(
           {
             credential: firebaseAdmin.credential.applicationDefault(),
