@@ -95,6 +95,7 @@ module.exports = (on, config) => {
     },
     logg(str) {
       console.log(str);
+      return null;
     }
   });
 };

@@ -29,7 +29,7 @@ describe('Integration tests for drawing polygons', () => {
       () => {
         cy.task('logg', 'before test auth');
         cy.wrap(
-            firebaseLibrary.auth().signInWithCustomToken(firestoreCustomToken))
+            firebaseLibrary.auth().signInWithCustomToken(firestoreCustomToken), {timeout: 10000});
         cy.task('logg', 'after test auth');
       });
   beforeEach(deleteAllRegionsDrawnByTest);
