@@ -57,7 +57,7 @@ class Authenticator {
 
   /** Kicks off all processes. */
   start() {
-    this.eeAuthenticate(() => this.onSigninFailedFirstTime());
+    this.eeAuthenticate(() => this.onSignInFailedFirstTime());
     const gapiSettings = Object.assign({}, gapiTemplate);
     gapiSettings.scope = this.additionalScopes.join(' ');
     gapi.load(
@@ -83,17 +83,19 @@ class Authenticator {
    * Falls back to showing a sign-in button on page so that user can click on
    * it, getting around pop-up-blocking functionality of browsers.
    */
-  onSigninFailedFirstTime() {
-    $('.g-sign-in').removeClass('hidden');
-    $('.output').text('(Log in to see the result.)');
-    $('.g-sign-in .button').click(() => {
-      // TODO(janakr): If authentication fails here, user has to reload page to
-      // try again. Not clear how that can happen, but maybe should be more
-      // graceful?
-      this.eeAuthenticate(
-          (err) =>
-              this.errorCallback('Error authenticating EarthEngine: ' + err));
-      $('.g-sign-in').addClass('hidden');
+  onSignInFailedFirstTime() {
+    $(document).ready(() => {
+      $('.g-sign-in').removeClass('hidden');
+      $('.output').text('(Log in to see the result.)');
+      $('.g-sign-in .button').click(() => {
+        // TODO(janakr): If authentication fails here, user has to reload page
+        // to try again. Not clear how that can happen, but maybe should be more
+        // graceful?
+        this.eeAuthenticate(
+            (err) =>
+                this.errorCallback('Error authenticating EarthEngine: ' + err));
+        $('.g-sign-in').addClass('hidden');
+      });
     });
   }
 

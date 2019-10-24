@@ -1,6 +1,6 @@
-import * as LayerUtil from '../../../client-side/static/layer_util.js';
-import * as Run from '../../../client-side/static/run.js';
-import {createToggles, toggles} from '../../../client-side/static/update';
+import * as LayerUtil from '../../../docs/layer_util.js';
+import * as Run from '../../../docs/run.js';
+import {createToggles, toggles} from '../../../docs/update';
 
 let lastPassedPovertyThreshold;
 let lastPassedDamageThreshold;
