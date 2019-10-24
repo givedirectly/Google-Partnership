@@ -93,5 +93,8 @@ module.exports = (on, config) => {
             reject);
       });
     },
+    log(str) {
+      console.log(str);
+    }
   });
 };
