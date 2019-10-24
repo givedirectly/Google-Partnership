@@ -2,16 +2,16 @@ language: node_js
 node_js:
   - 10
 # Dist needed for services: xvfb, which allows us to run Chromium in a "GUI".
-#dist: xenial
-#services:
-#  - xvfb
-#addons:
-#  apt:
-#    packages:
-#      # Ubuntu 16+ does not install this dependency by default, so we need to install it ourselves
-#      - libgconf-2-4
-#      # Needed for Cypress's browser.
-#      - chromium-browser
+dist: xenial
+services:
+  - xvfb
+addons:
+  apt:
+    packages:
+      # Ubuntu 16+ does not install this dependency by default, so we need to install it ourselves
+      - libgconf-2-4
+      # Needed for Cypress's browser.
+      - chromium-browser
 cache:
   # Caches $HOME/.npm when npm ci is default script command
   # Caches node_modules in all other cases
@@ -22,13 +22,11 @@ cache:
     - node_modules
 env:
   - GOOGLE_APPLICATION_CREDENTIALS=$TRAVIS_BUILD_DIR/mapping-crisis-firebase-adminsdk-pw40g-e2e1f3a2b2.json
-#before_install:
-#  - openssl aes-256-cbc -K $encrypted_8720699f085c_key -iv $encrypted_8720699f085c_iv -in mapping-crisis-firebase-adminsdk-pw40g-e2e1f3a2b2.json.enc -out $GOOGLE_APPLICATION_CREDENTIALS -d
-#before_script:
-#  - yarn run ws --directory docs --port 8080 &
+before_install:
+  - openssl aes-256-cbc -K $encrypted_8720699f085c_key -iv $encrypted_8720699f085c_iv -in mapping-crisis-firebase-adminsdk-pw40g-e2e1f3a2b2.json.enc -out $GOOGLE_APPLICATION_CREDENTIALS -d
+before_script:
+  - yarn run ws --directory docs --port 8080 &
 script:
-  # - $(yarn bin)/cypress run --browser chromium --config video=false --spec cypress/integration/integration_tests/polygon_draw_test.js
-  - mkdir -p $TRAVIS_BUILD_DIR//cypress/screenshots/integration_tests/polygon_draw_test.js
-  - touch $TRAVIS_BUILD_DIR//cypress/screenshots/integration_tests/polygon_draw_test.js/test.png
+  - $(yarn bin)/cypress run --browser chromium --config video=false --spec cypress/integration/integration_tests/polygon_draw_test.js
+after_failure:
   - ./imgur.bash $TRAVIS_BUILD_DIR/cypress/screenshots/integration_tests/polygon_draw_test.js/*
-# after_script:
