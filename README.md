@@ -42,6 +42,9 @@ for running tests.
     yarn run cypress run # --browser chromium ## (only needed on Linux) 
     ```
 
+* Travis CI runs on each push to Github, unless the commit message has
+'[skip ci]' or a similar message inside it.
+
 * Save and share test results in a web interface using
 [Cypress dashboard](https://www.cypress.io/dashboard/). The dashboard also
 provides easy access to output files, footage of the test being run, etc. To find
