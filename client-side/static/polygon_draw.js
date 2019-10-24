@@ -24,10 +24,10 @@ class StoredShapeData {
   /**
    * @constructor
    *
-   * @param {String} id Firestore id. Null if user has just created polygon
-   * @param {String} notes User-entered notes. Null if user has just created
+   * @param {?String} id Firestore id. Null if user has just created polygon
+   * @param {?String} notes User-entered notes. Null if user has just created
    *     polygon
-   * @param {Array<firebase.firestore.GeoPoint>} polygonGeoPoints Null if user
+   * @param {?Array<firebase.firestore.GeoPoint>} polygonGeoPoints Null if user
    *     has just created polygon
    * @param {Popup} popup
    */
