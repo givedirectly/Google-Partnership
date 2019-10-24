@@ -48,8 +48,8 @@ take effect.
 the [Travis main page](https://travis-ci.com/givedirectly/Google-Partnership).
 Runs are recorded to the [Cypress dashboard](https://www.cypress.io/dashboard/)
 if you modify `.travis.yml` and pass `--record` to Cypress (they are not enabled
-by default because of quota issues, so only pass `--record` if you need to
-debug Cypress).
+by default because Cypress limits the recorded runs per month, so only pass
+`--record` if you need to debug Cypress).
 
 * Save and share your personal test results in a web interface using
 [Cypress dashboard](https://www.cypress.io/dashboard/). The dashboard also
