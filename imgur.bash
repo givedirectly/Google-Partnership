@@ -54,6 +54,7 @@ errors=false
 # Loop through arguments
 while [ $# -gt 0 ]; do
 	file="$1"
+  echo "Doing $file"
 	shift
 
 	# Upload the image
