@@ -22,9 +22,17 @@ cache:
     - node_modules
 env:
   - GOOGLE_APPLICATION_CREDENTIALS=$TRAVIS_BUILD_DIR/mapping-crisis-firebase-adminsdk-pw40g-e2e1f3a2b2.json
+  secure: "IhXbsE9f3aAM/lSIxWUHcV+C3X1QLkwmxlmnH08ErUnTzhLSMZlXNknKelyhy0QAfKGi5VBBTcrFLafNoPXmSWeDZ5cMYsv25a6rZHpzU4D83A8/OumMUODLN7Hm4oc5C8jEd337HfpBb4WEtFDt3h1Bwhyw1q0NytMaVjHOPYrDxH+gBP7bFw6iM0ruTsgDUsAz8cqedJxYeLNtsmYpnVNY2mbSpBzVKU4Xo+etTGMEK9mXNPRwCjtH9ju5tqTkVR8eKu6BQematAdlCPa2n73dytEVpLYOQzuNccC+4QKbSjyrS3asgkXXRV23VMTd3gdGb3OIUo+UuF/2BM7HBraOROH4dC6vU5UAjM60aLJD/DdT37SZuUvwzkwVgx2RTiteXx8nGzAFZDQ+cdoWNVHi6+0IchuEGNZ7H/YC6pfHX8kk8TyRdnNEK/XNhtmjJkuTnDPu8FkmecCJsqtjQrIMADQ+Jp5EJUk8Wr2xGq4vPlPblHwI9QZKXxCKZqseYKvzufB82PidIAzio1M8ZZPfinKVEO8CgF3aL8zDdzikFtGA9XUYs5WMQgOl9Q9bQfgb82PdBl+8JOmYSpQeHQaiv5PqlXuv7pURDPdwPlrtXivf2rGGWQL/7vlqcWAnaYsnzawWhOyoSmcIugZbqA+6DuN7pCCx7OuZmHRrZpk="
 before_install:
   - openssl aes-256-cbc -K $encrypted_8720699f085c_key -iv $encrypted_8720699f085c_iv -in mapping-crisis-firebase-adminsdk-pw40g-e2e1f3a2b2.json.enc -out $GOOGLE_APPLICATION_CREDENTIALS -d
 before_script:
   - yarn run ws --directory docs --port 8080 &
 script:
-  - $(yarn bin)/cypress run --browser chromium --record --key 'e017edba-4819-4d96-9b9e-c629dc8074a2' --config video=false
+  # TODO(janakr): enable remaining tests.
+  - $(yarn bin)/cypress run --browser chromium --record --config video=false \
+      --spec cypress/integration/integration_tests/checkbox_test.js,\
+    cypress/integration/integration_tests/highlight_features_test.js,\
+    cypress/integration/integration_tests/sidebar_test.js,\
+    cypress/integration/integration_tests/update_test.js,\
+    'cypress/integration/unit_tests/*.js'
+
