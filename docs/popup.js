@@ -4,7 +4,7 @@ export {
   createPopup,
   setUpPopup,
   setUserFeatureVisibility,
-    isMarker,
+   isMarker,
 };
 
 let Popup = null;
