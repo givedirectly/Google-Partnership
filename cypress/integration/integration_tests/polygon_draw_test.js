@@ -257,7 +257,7 @@ describe('Integration tests for drawing polygons', () => {
     cy.get('#mapContainer').contains('new notes').should('not.be.visible');
   });
 
-  it.only('Draws marker, edits notes, deletes', () => {
+  it('Draws marker, edits notes, deletes', () => {
     cy.visit(host);
 
     cy.get('[title="Add a marker"]').click();
