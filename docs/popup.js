@@ -21,7 +21,9 @@ function setUpPopup() {
      *
      * @param {google.maps.Polygon|google.maps.Marker} mapFeature
      * @param {string} notes initial notes
-     * @param {?Object} calculatedData calculated data (damage, for instance). Null if mapFeature is a marker, and SENTINEL_CALCULATING if not known yet
+     * @param {?Object} calculatedData calculated data (damage, for instance).
+     *     Null if mapFeature is a marker, and SENTINEL_CALCULATING if not known
+     *     yet
      * @param {google.maps.Map} map
      * @constructor
      */
