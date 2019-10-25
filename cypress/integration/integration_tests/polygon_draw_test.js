@@ -257,6 +257,24 @@ describe('Integration tests for drawing polygons', () => {
     cy.get('#mapContainer').contains('new notes').should('not.be.visible');
   });
 
+  it('Degenerate polygon not allowed', () => {
+    cy.visit(host);
+
+    cy.get('[title="Draw a shape"]').click();
+    drawPointAndPrepareForNext(400, 400);
+    let alertShown = false;
+    cy.on('window:alert', () => alertShown = true);
+    cy.get('[title="Stop drawing"]').click().then(() => expect(alertShown).to.be.true);
+    // Assert there is no edit button, even invisible, showing that polygon was
+    // not drawn.
+    cy.get(':button')
+        .each(($elt) => {
+          expect($elt.html()).to.not.eql('edit');
+        });
+
+
+  });
+
   it('Draws marker, edits notes, deletes', () => {
     cy.visit(host);
 
