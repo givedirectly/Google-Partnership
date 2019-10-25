@@ -300,20 +300,23 @@ function drawRegionsFromFirestoreQuery(querySnapshot, map) {
   querySnapshot.forEach((userDefinedRegion) => {
     const storedGeometry = userDefinedRegion.get('geometry');
     const coordinates = transformGeoPointArrayToLatLng(storedGeometry);
-    let feature = null;
+    let feature;
+    let calculatedData;
     // We distinguish polygons and markers in Firestore just via the number of
     // coordinates: polygons have at least 3, and markers have only 1.
     if (coordinates.length === 1) {
       feature =
           new google.maps.Marker({draggable: false, position: coordinates[0]});
+      calculatedData = null;
     } else {
       const properties = Object.assign({}, appearance);
       properties.paths = coordinates;
       feature = new google.maps.Polygon(properties);
+      calculatedData = userDefinedRegion.get('calculatedData');
     }
     const notes = userDefinedRegion.get('notes');
     const popup = createPopup(
-        feature, map, notes, userDefinedRegion.get('calculatedData'));
+        feature, map, notes, calculatedData);
     userRegionData.set(
         feature,
         new StoredShapeData(
