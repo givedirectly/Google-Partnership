@@ -263,6 +263,7 @@ describe('Integration tests for drawing polygons', () => {
     cy.get('[title="Add a marker"]').click();
     drawPointAndPrepareForNext(400, 400);
     cy.get('[title="Stop drawing"]').click();
+    cy.wait(500);
     drawPointAndPrepareForNext(400, 395);
     pressPopupButton('edit');
     cy.get('[class="notes"]').type(notes);
