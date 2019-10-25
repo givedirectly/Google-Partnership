@@ -264,12 +264,13 @@ describe('Integration tests for drawing polygons', () => {
     drawPointAndPrepareForNext(400, 400);
     cy.get('[title="Stop drawing"]').click();
     cy.wait(500);
+    // Coordinates chosen to trigger click: trial and error.
     drawPointAndPrepareForNext(400, 360);
     pressPopupButton('edit');
     cy.get('[class="notes"]').type(notes);
     // Save happens quickly without damage calculation, so don't wait on it.
     pressPopupButton('save');
-    // There are some viewport scrolling issues when you actually close the
+    // There are some test-only viewport scrolling issues when you close the
     // popup and try to open it again that I'm too lazy to investigate.
     // Accept confirmation when it happens.
     cy.on('window:confirm', () => true);

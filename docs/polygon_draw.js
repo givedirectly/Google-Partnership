@@ -14,7 +14,7 @@ export {
 };
 
 /**
- * Class holding data for a user-drawn feature, including the state of writing
+ * Class holding data for a user-drawn feature (marker or polygon), including the state of writing
  * to the backend. In contrast with the Popup class, this class corresponds to
  * data that has been written to the backend. However, it keeps a reference to
  * the corresponding Popup object so that it can inform it when data is
@@ -24,7 +24,7 @@ class StoredShapeData {
   /**
    * @constructor
    *
-   * @param {?String} id Firestore id. Null if user has just created polygon
+   * @param {?String} id Firestore id. Null if user has just created feature
    * @param {?String} notes User-entered notes. Null if user has just created
    *     feature
    * @param {?Array<firebase.firestore.GeoPoint>} featureGeoPoints Null if user
@@ -49,7 +49,6 @@ class StoredShapeData {
    * should be performed when the pending one completes and returns immediately.
    */
   update() {
-    debugger;
     if (this.state !== StoredShapeData.State.SAVED) {
       this.state = StoredShapeData.State.QUEUED_WRITE;
       return;
@@ -150,16 +149,16 @@ class StoredShapeData {
   }
 
   /**
-   * Deletes this region from storage and userRegionData. Only for internal use.
+   * Deletes our feature from storage and userRegionData. Only for internal use.
    */
   delete() {
-    // Polygon has been removed from map, we should delete on backend.
+    // Feature has been removed from map, we should delete on backend.
     userRegionData.delete(this.popup.mapFeature);
     if (!this.id) {
-      // Even if the user creates a polygon and then deletes it immediately,
+      // Even if the user creates a feature and then deletes it immediately,
       // the creation should trigger an update that must complete before the
       // deletion gets here. So there should always be an id.
-      console.error('Unexpected: polygon to be deleted had no id: ', this);
+      console.error('Unexpected: feature to be deleted had no id: ', this);
       return;
     }
     // Nothing more needs to be done for this element because it is
@@ -231,7 +230,7 @@ const appearance = {
 };
 
 /**
- * Create a Google Maps Drawing Manager for drawing polygons.
+ * Create a Google Maps Drawing Manager for drawing polygons and markers.
  *
  * @param {google.maps.Map} map
  * @param {Promise<any>} firebasePromise Promise that will complete when
@@ -251,8 +250,8 @@ function setUpPolygonDrawing(map, firebasePromise) {
       const feature = event.overlay;
       if (!isMarker(feature) && feature.getPath().length < 3) {
         // https://b.corp.google.com/issues/35821407 (WNF) means that users will
-        // not be able to edit the polygon to have fewer than three vertices as
-        // well.
+        // not be able to later edit the polygon to have fewer than three
+        // vertices, so checking here is sufficient to prevent degenerates.
         alert('Polygons with fewer than three vertices are not supported');
         feature.setMap(null);
         return false;
@@ -301,6 +300,8 @@ function drawRegionsFromFirestoreQuery(querySnapshot, map) {
     const storedGeometry = userDefinedRegion.get('geometry');
     const coordinates = transformGeoPointArrayToLatLng(storedGeometry);
     let feature = null;
+    // We distinguish polygons and markers in Firestore just via the number of
+    // coordinates: polygons have at least 3, and markers have only 1.
     if (coordinates.length === 1) {
       feature = new google.maps.Marker({draggable: false, position: coordinates[0]});
     } else {
