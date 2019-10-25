@@ -269,9 +269,7 @@ describe('Integration tests for drawing polygons', () => {
         .then(() => expect(alertShown).to.be.true);
     // Assert there is no edit button, even invisible, showing that polygon was
     // not drawn.
-    cy.get(':button').each(($elt) => {
-      expect($elt.html()).to.not.eql('edit');
-    });
+    cy.get(':button').each(($elt) => expect($elt.html()).to.not.eql('edit'));
   });
 
   it('Draws marker, edits notes, deletes', () => {
