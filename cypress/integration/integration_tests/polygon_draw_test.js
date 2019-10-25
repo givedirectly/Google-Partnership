@@ -274,7 +274,7 @@ describe('Integration tests for drawing polygons', () => {
     cy.on('window:confirm', () => true);
     pressPopupButton('delete');
     assertExactlyPopUps(0, notes);
-  })
+  });
 });
 
 /**
