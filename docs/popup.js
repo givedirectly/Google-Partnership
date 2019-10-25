@@ -2,9 +2,9 @@ import {userRegionData} from './user_region_data.js';
 
 export {
   createPopup,
+  isMarker,
   setUpPopup,
   setUserFeatureVisibility,
-   isMarker,
 };
 
 let Popup = null;
@@ -322,7 +322,8 @@ function getPositionForPopup(mapFeature) {
 }
 
 function revertFeaturePosition(mapFeature) {
-  const lastFeatureGeometry = userRegionData.get(mapFeature).getLastFeatureGeometry();
+  const lastFeatureGeometry =
+      userRegionData.get(mapFeature).getLastFeatureGeometry();
   if (isMarker(mapFeature)) {
     mapFeature.setPosition(lastFeatureGeometry);
   } else {

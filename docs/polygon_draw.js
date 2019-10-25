@@ -2,7 +2,7 @@ import createError from './create_error.js';
 import {mapContainerId, writeWaiterId} from './dom_constants.js';
 import {getTestCookie, inProduction} from './in_test_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
-import {createPopup, setUpPopup, isMarker} from './popup.js';
+import {createPopup, isMarker, setUpPopup} from './popup.js';
 import {getResources} from './resources.js';
 import {userRegionData} from './user_region_data.js';
 
@@ -14,11 +14,11 @@ export {
 };
 
 /**
- * Class holding data for a user-drawn feature (marker or polygon), including the state of writing
- * to the backend. In contrast with the Popup class, this class corresponds to
- * data that has been written to the backend. However, it keeps a reference to
- * the corresponding Popup object so that it can inform it when data is
- * calculated and retrieve user-modified values.
+ * Class holding data for a user-drawn feature (marker or polygon), including
+ * the state of writing to the backend. In contrast with the Popup class, this
+ * class corresponds to data that has been written to the backend. However, it
+ * keeps a reference to the corresponding Popup object so that it can inform it
+ * when data is calculated and retrieve user-modified values.
  */
 class StoredShapeData {
   /**
@@ -188,7 +188,8 @@ StoredShapeData.pendingWriteCount = 0;
 
 StoredShapeData.featureGeoPoints = (feature) => {
   const geometry = [];
-  StoredShapeData.featureLatLng(feature).forEach((elt) => geometry.push(latLngToGeoPoint(elt)));
+  StoredShapeData.featureLatLng(feature).forEach(
+      (elt) => geometry.push(latLngToGeoPoint(elt)));
   return geometry;
 };
 
@@ -303,7 +304,8 @@ function drawRegionsFromFirestoreQuery(querySnapshot, map) {
     // We distinguish polygons and markers in Firestore just via the number of
     // coordinates: polygons have at least 3, and markers have only 1.
     if (coordinates.length === 1) {
-      feature = new google.maps.Marker({draggable: false, position: coordinates[0]});
+      feature =
+          new google.maps.Marker({draggable: false, position: coordinates[0]});
     } else {
       const properties = Object.assign({}, appearance);
       properties.paths = coordinates;
