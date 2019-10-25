@@ -37,7 +37,7 @@ take effect.
   link, via `sudo ln -s /path/to/file/in/extracted/zip/named/chrome-wrapper
   /usr/bin/chromium` so that Cypress knows how to find it easily.
 
-* Test changes.
+* Test changes locally.
 
     ```shell
     yarn run cypress run # --browser chromium ## (only needed on Linux) 
@@ -63,8 +63,7 @@ https://dashboard.cypress.io in the "Runs" tab under "Settings".
 
 * Install `clang-format`, probably using [`brew install clang-format`](https://brew.sh).
 
-* Set up auto-test-and-lint. You may need to modify pre-push to pass `--browser
-  chromium` if running on Linux.
+* Set up auto-lint.
 
     ```shell
     cd this/directory
