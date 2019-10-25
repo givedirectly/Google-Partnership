@@ -264,15 +264,14 @@ describe('Integration tests for drawing polygons', () => {
     drawPointAndPrepareForNext(400, 400);
     let alertShown = false;
     cy.on('window:alert', () => alertShown = true);
-    cy.get('[title="Stop drawing"]').click().then(() => expect(alertShown).to.be.true);
+    cy.get('[title="Stop drawing"]')
+        .click()
+        .then(() => expect(alertShown).to.be.true);
     // Assert there is no edit button, even invisible, showing that polygon was
     // not drawn.
-    cy.get(':button')
-        .each(($elt) => {
-          expect($elt.html()).to.not.eql('edit');
-        });
-
-
+    cy.get(':button').each(($elt) => {
+      expect($elt.html()).to.not.eql('edit');
+    });
   });
 
   it('Draws marker, edits notes, deletes', () => {
