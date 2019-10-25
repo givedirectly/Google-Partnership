@@ -2,7 +2,7 @@ import createError from './create_error.js';
 import {mapContainerId, writeWaiterId} from './dom_constants.js';
 import {getTestCookie, inProduction} from './in_test_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
-import {createPopup, setUpPopup} from './popup.js';
+import {createPopup, setUpPopup, isMarker} from './popup.js';
 import {getResources} from './resources.js';
 import {userRegionData} from './user_region_data.js';
 
@@ -14,7 +14,7 @@ export {
 };
 
 /**
- * Class holding data for a user-drawn polygon, including the state of writing
+ * Class holding data for a user-drawn feature, including the state of writing
  * to the backend. In contrast with the Popup class, this class corresponds to
  * data that has been written to the backend. However, it keeps a reference to
  * the corresponding Popup object so that it can inform it when data is
@@ -26,14 +26,14 @@ class StoredShapeData {
    *
    * @param {?String} id Firestore id. Null if user has just created polygon
    * @param {?String} notes User-entered notes. Null if user has just created
-   *     polygon
-   * @param {?Array<firebase.firestore.GeoPoint>} polygonGeoPoints Null if user
-   *     has just created polygon
+   *     feature
+   * @param {?Array<firebase.firestore.GeoPoint>} featureGeoPoints Null if user
+   *     has just created feature
    * @param {Popup} popup
    */
-  constructor(id, notes, polygonGeoPoints, popup) {
+  constructor(id, notes, featureGeoPoints, popup) {
     this.id = id;
-    this.polygonGeoPoints = polygonGeoPoints;
+    this.featureGeoPoints = featureGeoPoints;
     this.lastNotes = notes;
     /** @const */
     this.popup = popup;
@@ -41,7 +41,7 @@ class StoredShapeData {
   }
 
   /**
-   * Writes this shape's polygon's data to the backend, using the existing id
+   * Writes this shape's data to the backend, using the existing id
    * field, or adding a new document to Firestore if there is no id. New values
    * are retrieved from the popup object.
    *
@@ -53,17 +53,17 @@ class StoredShapeData {
       this.state = StoredShapeData.State.QUEUED_WRITE;
       return;
     }
-    const polygon = this.popup.polygon;
+    const feature = this.popup.mapFeature;
     addLoadingElement(writeWaiterId);
     this.state = StoredShapeData.State.WRITING;
     StoredShapeData.pendingWriteCount++;
-    if (!polygon.getMap()) {
+    if (!feature.getMap()) {
       this.delete();
       return;
     }
-    const newGeometry = StoredShapeData.polygonGeoPoints(polygon);
+    const newGeometry = StoredShapeData.featureGeoPoints(feature);
     const geometriesEqual = StoredShapeData.compareGeoPointArrays(
-        this.polygonGeoPoints, newGeometry);
+        this.featureGeoPoints, newGeometry);
     const newNotesEqual = this.lastNotes === this.popup.notes;
     this.lastNotes = this.popup.notes;
     if (geometriesEqual) {
@@ -79,9 +79,9 @@ class StoredShapeData {
     }
     this.popup.setPendingCalculation();
 
-    this.polygonGeoPoints = newGeometry;
+    this.featureGeoPoints = newGeometry;
     const points = [];
-    polygon.getPath().forEach((elt) => points.push(elt.lng(), elt.lat()));
+    feature.getPath().forEach((elt) => points.push(elt.lng(), elt.lat()));
     ee.FeatureCollection(getResources().damage)
         .filterBounds(ee.Geometry.Polygon(points))
         .size()
@@ -96,14 +96,14 @@ class StoredShapeData {
   }
 
   /** @return {Array<LatLng>} saved polygon path, to use when reverting edits */
-  getLastPolygonPath() {
-    return transformGeoPointArrayToLatLng(this.polygonGeoPoints);
+  getLastFeatureGeometry() {
+    return transformGeoPointArrayToLatLng(this.featureGeoPoints);
   }
 
   /** Kicks off Firestore remote write. */
   doRemoteUpdate() {
     const record = {
-      geometry: this.polygonGeoPoints,
+      geometry: this.featureGeoPoints,
       notes: this.popup.notes,
       calculatedData: this.popup.calculatedData,
     };
@@ -148,7 +148,7 @@ class StoredShapeData {
    */
   delete() {
     // Polygon has been removed from map, we should delete on backend.
-    userRegionData.delete(this.popup.polygon);
+    userRegionData.delete(this.popup.mapFeature);
     if (!this.id) {
       // Even if the user creates a polygon and then deletes it immediately,
       // the creation should trigger an update that must complete before the
@@ -181,9 +181,12 @@ StoredShapeData.State = {
 // Tracks global pending writes so that we can warn if user leaves page early.
 StoredShapeData.pendingWriteCount = 0;
 
-StoredShapeData.polygonGeoPoints = (polygon) => {
+StoredShapeData.featureGeoPoints = (feature) => {
+  if (isMarker(feature)) {
+    return [feature.getPosition()];
+  }
   const geometry = [];
-  polygon.getPath().forEach((elt) => geometry.push(latLngToGeoPoint(elt)));
+  feature.getPath().forEach((elt) => geometry.push(latLngToGeoPoint(elt)));
   return geometry;
 };
 
@@ -238,11 +241,11 @@ function setUpPolygonDrawing(map, firebasePromise) {
     });
 
     drawingManager.addListener('overlaycomplete', (event) => {
-      const polygon = event.overlay;
-      const popup = createPopup(polygon, map, '');
-      const data = new StoredShapeData(null, null, null, popup);
-      userRegionData.set(polygon, data);
-      data.update();
+      // const polygon = event.overlay;
+      // const popup = createPopup(polygon, map, '');
+      // const data = new StoredShapeData(null, null, null, popup);
+      // userRegionData.set(polygon, data);
+      // data.update();
     });
 
     drawingManager.setMap(map);
