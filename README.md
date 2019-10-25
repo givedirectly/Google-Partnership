@@ -44,9 +44,9 @@ take effect.
     ```
 
 * Travis CI runs on each push to Github, unless the commit message has
-'[skip ci]' or a similar message inside it. You can trigger a run manually from
-the [Travis main page](https://travis-ci.com/givedirectly/Google-Partnership).
-Runs are recorded to the [Cypress dashboard](https://www.cypress.io/dashboard/).
+'[skip ci]' inside it. You can trigger a run manually from the [Travis main
+page](https://travis-ci.com/givedirectly/Google-Partnership). Runs are recorded
+to the [Cypress dashboard](https://www.cypress.io/dashboard/).
 
 * Save and share your personal test results in a web interface using
 [Cypress dashboard](https://www.cypress.io/dashboard/). The dashboard also
