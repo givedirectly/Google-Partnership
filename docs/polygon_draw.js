@@ -315,8 +315,7 @@ function drawRegionsFromFirestoreQuery(querySnapshot, map) {
       calculatedData = userDefinedRegion.get('calculatedData');
     }
     const notes = userDefinedRegion.get('notes');
-    const popup = createPopup(
-        feature, map, notes, calculatedData);
+    const popup = createPopup(feature, map, notes, calculatedData);
     userRegionData.set(
         feature,
         new StoredShapeData(
