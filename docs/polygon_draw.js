@@ -49,6 +49,7 @@ class StoredShapeData {
    * should be performed when the pending one completes and returns immediately.
    */
   update() {
+    debugger;
     if (this.state !== StoredShapeData.State.SAVED) {
       this.state = StoredShapeData.State.QUEUED_WRITE;
       return;
@@ -77,9 +78,14 @@ class StoredShapeData {
       }
       return;
     }
+    this.featureGeoPoints = newGeometry;
+    if (isMarker(feature)) {
+      // No calculated data for a marker.
+      this.doRemoteUpdate();
+      return;
+    }
     this.popup.setPendingCalculation();
 
-    this.featureGeoPoints = newGeometry;
     const points = [];
     feature.getPath().forEach((elt) => points.push(elt.lng(), elt.lat()));
     ee.FeatureCollection(getResources().damage)
@@ -182,12 +188,13 @@ StoredShapeData.State = {
 StoredShapeData.pendingWriteCount = 0;
 
 StoredShapeData.featureGeoPoints = (feature) => {
-  if (isMarker(feature)) {
-    return [feature.getPosition()];
-  }
   const geometry = [];
-  feature.getPath().forEach((elt) => geometry.push(latLngToGeoPoint(elt)));
+  StoredShapeData.featureLatLng(feature).forEach((elt) => geometry.push(latLngToGeoPoint(elt)));
   return geometry;
+};
+
+StoredShapeData.featureLatLng = (feature) => {
+  return isMarker(feature) ? [feature.getPosition()] : feature.getPath();
 };
 
 StoredShapeData.compareGeoPointArrays = (array1, array2) => {
@@ -241,11 +248,19 @@ function setUpPolygonDrawing(map, firebasePromise) {
     });
 
     drawingManager.addListener('overlaycomplete', (event) => {
-      // const polygon = event.overlay;
-      // const popup = createPopup(polygon, map, '');
-      // const data = new StoredShapeData(null, null, null, popup);
-      // userRegionData.set(polygon, data);
-      // data.update();
+      const feature = event.overlay;
+      if (!isMarker(feature) && feature.getPath().length < 3) {
+        // https://b.corp.google.com/issues/35821407 (WNF) means that users will
+        // not be able to edit the polygon to have fewer than three vertices as
+        // well.
+        alert('Polygons with fewer than three vertices are not supported');
+        feature.setMap(null);
+        return false;
+      }
+      const popup = createPopup(feature, map, '');
+      const data = new StoredShapeData(null, null, null, popup);
+      userRegionData.set(feature, data);
+      data.update();
     });
 
     drawingManager.setMap(map);
@@ -285,17 +300,22 @@ function drawRegionsFromFirestoreQuery(querySnapshot, map) {
   querySnapshot.forEach((userDefinedRegion) => {
     const storedGeometry = userDefinedRegion.get('geometry');
     const coordinates = transformGeoPointArrayToLatLng(storedGeometry);
-    const properties = Object.assign({}, appearance);
-    properties.paths = coordinates;
-    const polygon = new google.maps.Polygon(properties);
+    let feature = null;
+    if (coordinates.length === 1) {
+      feature = new google.maps.Marker({draggable: false, position: coordinates[0]});
+    } else {
+      const properties = Object.assign({}, appearance);
+      properties.paths = coordinates;
+      feature = new google.maps.Polygon(properties);
+    }
     const notes = userDefinedRegion.get('notes');
     const popup = createPopup(
-        polygon, map, notes, userDefinedRegion.get('calculatedData'));
+        feature, map, notes, userDefinedRegion.get('calculatedData'));
     userRegionData.set(
-        polygon,
+        feature,
         new StoredShapeData(
             userDefinedRegion.id, notes, storedGeometry, popup));
-    polygon.setMap(map);
+    feature.setMap(map);
   });
   loadingElementFinished(mapContainerId);
 }

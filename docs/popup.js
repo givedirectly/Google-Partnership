@@ -110,9 +110,8 @@ function setUpPopup() {
       removeAllChildren(content);
 
       if (!isMarker(this.mapFeature)) {
-        const damageDiv = document.createElement('div');
-        damageDiv.classList.add('popup-damage');
-        this.damageDiv = damageDiv;
+        this.damageDiv = document.createElement('div');
+        this.damageDiv.classList.add('popup-damage');
         this.updateDamageDiv();
       }
 
@@ -141,7 +140,7 @@ function setUpPopup() {
 
         if (!isMarker(mapFeature)) {
           // Grey out the damage stat until we save so it's clearly old.
-          damageDiv.style.color = 'grey';
+          this.damageDiv.style.color = 'grey';
         }
         content.removeChild(notesDiv);
         content.removeChild(editButton);
@@ -179,7 +178,9 @@ function setUpPopup() {
       content.appendChild(deleteButton);
       content.appendChild(editButton);
       content.appendChild(closeButton);
-      content.appendChild(damageDiv);
+      if (!isMarker(mapFeature)) {
+        content.appendChild(this.damageDiv);
+      }
       content.appendChild(notesDiv);
     }
 
@@ -329,16 +330,16 @@ function revertFeaturePosition(mapFeature) {
   }
 }
 
-function isMarker(mapFeature) {
-  return mapFeature instanceof google.maps.Marker;
-}
-
 function setMutable(mapFeature, mutability) {
-  if (isMarker(this.mapFeature)) {
+  if (isMarker(mapFeature)) {
     mapFeature.setDraggable(mutability);
   } else {
     mapFeature.setEditable(mutability);
   }
+}
+
+function isMarker(mapFeature) {
+  return mapFeature instanceof google.maps.Marker;
 }
 
 /**

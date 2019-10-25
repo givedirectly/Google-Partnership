@@ -86,7 +86,7 @@ describe('Unit test for ShapeData', () => {
     popup.setCalculatedData({damage: 1});
     const geometry = [new firebase.firestore.GeoPoint(0, 1)];
     const underTest = new StoredShapeData('my_id', 'my notes', geometry, popup);
-    popup.polygon.getMap = () => null;
+    popup.mapFeature.getMap = () => null;
     const ids = [];
     firebaseCollection.doc = (id) => {
       ids.push(id);
@@ -227,7 +227,7 @@ function makeMockPolygon() {
 class StubPopup {
   /** @constructor */
   constructor() {
-    this.polygon = makeMockPolygon();
+    this.mapFeature = makeMockPolygon();
   }
 
   /** Does nothing. */
