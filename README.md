@@ -63,12 +63,7 @@ https://dashboard.cypress.io in the "Runs" tab under "Settings".
 
 * Install `clang-format`, probably using [`brew install clang-format`](https://brew.sh).
 
-* Set up auto-lint.
-
-    ```shell
-    cd this/directory
-    cp pre-push-hook .git/hooks/pre-push
-    ```
+* Set up auto-lint: `cp pre-push-hook .git/hooks/pre-push`
 
 * Run `clang-format` or `eslint` on all relevant files:
 
