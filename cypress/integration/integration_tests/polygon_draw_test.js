@@ -264,7 +264,7 @@ describe('Integration tests for drawing polygons', () => {
     drawPointAndPrepareForNext(400, 400);
     cy.get('[title="Stop drawing"]').click();
     cy.wait(500);
-    drawPointAndPrepareForNext(400, 395);
+    drawPointAndPrepareForNext(400, 360);
     pressPopupButton('edit');
     cy.get('[class="notes"]').type(notes);
     // Save happens quickly without damage calculation, so don't wait on it.
