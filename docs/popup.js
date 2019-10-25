@@ -321,6 +321,11 @@ function getPositionForPopup(mapFeature) {
   return mapFeature.getPath().getAt(0);
 }
 
+/**
+ * Sets the given feature back to its last-stored position, as recorded in
+ * userRegionData.
+ * @param {google.maps.Marker|google.maps.Polygon} mapFeature
+ */
 function revertFeaturePosition(mapFeature) {
   const lastFeatureGeometry =
       userRegionData.get(mapFeature).getLastFeatureGeometry();
@@ -331,6 +336,12 @@ function revertFeaturePosition(mapFeature) {
   }
 }
 
+/**
+ * Sets the given feature to be mutable (editable for a polygon, draggable for
+ * a marker) if mutability is true, and immutable if false.
+ * @param {google.maps.Marker|google.maps.Polygon} mapFeature
+ * @param {boolean} mutability
+ */
 function setMutable(mapFeature, mutability) {
   if (isMarker(mapFeature)) {
     mapFeature.setDraggable(mutability);
@@ -339,6 +350,10 @@ function setMutable(mapFeature, mutability) {
   }
 }
 
+/**
+ * @param {Object} mapFeature
+ * @return {boolean} true if mapFeature instanceof google.maps.Marker
+ */
 function isMarker(mapFeature) {
   return mapFeature instanceof google.maps.Marker;
 }
