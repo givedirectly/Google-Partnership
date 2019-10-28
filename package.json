@@ -6,13 +6,7 @@
     "eslint-config-google": "^0.13.0",
     "firebase": "^7.0.0",
     "firebase-admin": "^8.6.1",
-    "fs": "^0.0.1-security",
-    "local-web-server": "^3.0.7",
-    "request": "^2.88.0",
-    "request-promise": "^4.2.4",
-    "request-promise-native": "^1.0.7",
-    "tmp": "^0.1.0"
+    "local-web-server": "^3.0.7"
   },
-  "license": "UNLICENSED",
-  "dependencies": {}
+  "license": "UNLICENSED"
 }

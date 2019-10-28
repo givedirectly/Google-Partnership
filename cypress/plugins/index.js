@@ -1,8 +1,5 @@
 const earthEngine = require('@google/earthengine');
 const firebaseAdmin = require('firebase-admin');
-const fs = require('fs');
-const tmp = require('tmp');
-const request = require('request');
 
 // You can read more here:
 // https://on.cypress.io/plugins-guide
