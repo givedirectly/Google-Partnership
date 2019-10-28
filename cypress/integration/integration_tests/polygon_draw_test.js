@@ -1,7 +1,7 @@
 // Call this firebaseLibrary to avoid conflicting with mock firebase defined in
 // commands.js.
 import * as firebaseLibrary from 'firebase';
-import {firebaseConfig} from '../../../client-side/static/authenticate';
+import {firebaseConfig} from '../../../docs/authenticate';
 
 const hackyWaitTime = 1000;
 const notes = 'Sphinx of black quartz, judge my vow';
@@ -25,9 +25,14 @@ describe('Integration tests for drawing polygons', () => {
     }));
   };
 
-  before(
-      () => cy.wrap(
-          firebaseLibrary.auth().signInWithCustomToken(firestoreCustomToken)));
+  // TODO(janakr): clean up this debugging when timeouts are resolved.
+  before(() => {
+    cy.task('logg', 'before test auth');
+    cy.wrap(
+        firebaseLibrary.auth().signInWithCustomToken(firestoreCustomToken),
+        {timeout: 10000});
+    cy.task('logg', 'after test auth');
+  });
   beforeEach(deleteAllRegionsDrawnByTest);
 
   afterEach(deleteAllRegionsDrawnByTest);
@@ -37,7 +42,7 @@ describe('Integration tests for drawing polygons', () => {
     drawPolygonAndClickOnIt();
     pressPolygonButton('edit');
     cy.get('[class="notes"]').type(notes);
-    pressPolygonButton('save');
+    saveAndAwait();
     cy.get('.map').contains(notes);
   });
 
@@ -79,7 +84,7 @@ describe('Integration tests for drawing polygons', () => {
     drawPolygonAndClickOnIt();
     pressPolygonButton('edit');
     cy.get('[class="notes"]').type(notes);
-    pressPolygonButton('save');
+    saveAndAwait();
 
     pressPolygonButton('delete');
     // Polygon should be gone.
@@ -95,7 +100,7 @@ describe('Integration tests for drawing polygons', () => {
     drawPolygonAndClickOnIt();
     pressPolygonButton('edit');
     cy.get('[class="notes"]').type(notes);
-    pressPolygonButton('save');
+    saveAndAwait();
     pressPolygonButton('delete');
     // Assert still exists.
     clickOnDrawnPolygon();
@@ -130,7 +135,7 @@ describe('Integration tests for drawing polygons', () => {
     drawPolygonAndClickOnIt();
     pressPolygonButton('edit');
     cy.get('[class="notes"]').type(notes);
-    pressPolygonButton('save');
+    saveAndAwait();
     pressPolygonButton('close');
     // element is still there, just hidden
     assertExactlyPopUps(1, notes);
@@ -145,7 +150,7 @@ describe('Integration tests for drawing polygons', () => {
     pressPolygonButton('edit');
     cy.get('[class="notes"]').type(notes);
     pressPolygonButton('close');
-    pressPolygonButton('save');
+    saveAndAwait();
     cy.get('#mapContainer').contains(notes).should('be.visible');
   });
 
@@ -156,7 +161,7 @@ describe('Integration tests for drawing polygons', () => {
     drawPolygonAndClickOnIt();
     pressPolygonButton('edit');
     cy.get('[class="notes"]').type(notes);
-    pressPolygonButton('save');
+    saveAndAwait();
     pressPolygonButton('edit');
     cy.get('[class="notes"]').type('blahblahblah');
     pressPolygonButton('close');
@@ -171,7 +176,7 @@ describe('Integration tests for drawing polygons', () => {
     drawPolygonAndClickOnIt();
     pressPolygonButton('edit');
     cy.get('[class="notes"]').type(notes);
-    pressPolygonButton('save');
+    saveAndAwait();
     cy.get('#mapContainer').contains(notes).should('be.visible');
     cy.get('#sidebar-toggle-datasets').click();
     cy.get('#user-features-checkbox').should('be.checked');
@@ -202,7 +207,8 @@ describe('Integration tests for drawing polygons', () => {
     });
     cy.get('#user-features-checkbox').should('be.checked');
     // Confirm that save is still around to be pressed.
-    pressPolygonButton('save');
+    cy.get('[class="notes"]').type('new notes to force save');
+    saveAndAwait();
 
     // After a save, the hide is successful.
     cy.get('#user-features-checkbox').click();
@@ -215,7 +221,7 @@ describe('Integration tests for drawing polygons', () => {
     drawPolygonAndClickOnIt();
     pressPolygonButton('edit');
     cy.get('[class="notes"]').type(notes);
-    pressPolygonButton('save');
+    saveAndAwait();
     cy.get('#sidebar-toggle-datasets').click();
     cy.get('#user-features-checkbox').click();
     cy.get('#user-features-checkbox').should('not.be.checked');
@@ -233,7 +239,7 @@ describe('Integration tests for drawing polygons', () => {
     cy.get('#user-features-checkbox').should('not.be.checked');
 
     // Save the new notes and check the box, this time it succeeds.
-    pressPolygonButton('save');
+    saveAndAwait();
     cy.get('#user-features-checkbox').click();
     cy.get('#user-features-checkbox').should('be.checked');
 
@@ -272,6 +278,7 @@ function drawPolygonAndClickOnIt(offset = 0) {
   // derived by inspecting the page after starting to draw a polygon.
   cy.get(
       'div[style*="cursor: url(\\"https://maps.gstatic.com/mapfiles/crosshair.cur\\") 7 7, crosshair;"]');
+  // Without this, seeing flaky failures on Travis where first point is off map.
   cy.wait(hackyWaitTime);
   drawPointAndPrepareForNext(150, 650 + offset);
   // TODO(janakr): test seems to fail reliably on command line without these
@@ -312,9 +319,6 @@ function clickOnDrawnPolygon(offset = 0) {
 function pressPolygonButton(button) {
   cy.get('.main-content').scrollTo(0, 0);
   cy.get(':button:visible').contains(button).click();
-  if (button === 'save') {
-    cy.awaitLoad(['writeWaiter']);
-  }
 }
 
 /**
@@ -350,4 +354,13 @@ function drawPointAndPrepareForNext(x, y) {
   // const clientY = y + 81;
   // cy.get('.map').trigger('mousemove', {clientX: clientX, clientY: clientY});
   cy.get('.map').click(x, y);
+}
+
+/**
+ * Helper function that presses save button and then asserts we waited for a
+ * write.
+ */
+function saveAndAwait() {
+  pressPolygonButton('save');
+  cy.awaitLoad(['writeWaiter']);
 }

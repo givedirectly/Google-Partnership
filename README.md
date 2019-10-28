@@ -2,9 +2,6 @@
 Repository to store the work done by Google Fellows during 2019 
 
 ## Workflow for locally staging this work
-* Download Google Cloud SDK. You may have to create a new project.
-https://cloud.google.com/sdk/docs/quickstarts
-
 * Download this git repository. You will probably have to add ssh keys to your
 account so that you can access this repository. Googling "github add ssh keys"
 is good enough. [Current instructions](https://help.github.com/en/articles/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent)
@@ -12,23 +9,16 @@ available. However, if you work for Google and get a failed command when you run
 `ssh-add`, try specifying `/usr/bin/ssh-add`, since there is a Google-specific
 `ssh-add` binary that otherwise gets invoked.
 
-* `dev_appserver.py` lives wherever cloud SDK was downloaded so find it
+* Go to the [Firestore database](
+https://console.firebase.google.com/project/mapping-crisis/database/firestore/data~2FALLOWED_USERS~2FALL_USERS)
+when logged in as `gd-earthengine-user@givedirectly.org` and add your Google
+account's email address to the list of users.
 
-    ```shell
-    gcloud info --format="value(installation.sdk_root)"
+* Install [yarn](http://yarnpkg.com/) and run `yarn install` to install all
+dependencies.
 
-    ```
-
-* Run `dev_appserver.py` from `client-side/`, which contains the `.yaml` file:
-
-    ```shell
-    cd client-side/
-    path/from/last/command/bin/dev_appserver.py .
-    ```
-
-  Keep this running in your shell for all future steps.
-
-* Install [yarn](http://yarnpkg.com/).
+* Start the local web server by running
+`yarn run ws --directory docs --port 8080`.
 
 * Set `export GOOGLE_APPLICATION_CREDENTIALS=/path/to/secret.json` in your
 shell, most likely in your `~/.bashrc`. Get the service account .json file,
@@ -38,11 +28,6 @@ as `gd-earthengine-user@givedirectly.org` and generating a new key for
 `firebase-adminsdk-pw40g@mapping-crisis.iam.gserviceaccount.com`. This is needed
 for running tests. Remember to startup a new terminal window for changes to
 take effect.
-
-* Go to the [Firestore database](
-https://console.firebase.google.com/project/mapping-crisis/database/firestore/data~2FALLOWED_USERS~2FALL_USERS)
-when logged in as `gd-earthengine-user@givedirectly.org` and add your Google
-account's email address to the list of users.
 
 * Install [Chromium](https://www.chromium.org) if on Linux. Install via the
   usual `apt-get`-style channels. This should be relatively straightforward on
@@ -55,12 +40,15 @@ account's email address to the list of users.
 * Test changes.
 
     ```shell
-    cd the/directory/this/README/is/in
-    yarn install # Just once, to make sure everything is installed.
     yarn run cypress run # --browser chromium ## (only needed on Linux) 
     ```
 
-* Save and share test results in a web interface using
+* Travis CI runs on each push to Github, unless the commit message has
+'[skip ci]' or a similar message inside it. You can trigger a run manually from
+the [Travis main page](https://travis-ci.com/givedirectly/Google-Partnership).
+Runs are recorded to the [Cypress dashboard](https://www.cypress.io/dashboard/).
+
+* Save and share your personal test results in a web interface using
 [Cypress dashboard](https://www.cypress.io/dashboard/). The dashboard also
 provides easy access to output files, footage of the test being run, etc. To find
 the record key for this project go to the Google-Partnership project at

@@ -5,6 +5,8 @@
     "eslint": "^6.3.0",
     "eslint-config-google": "^0.13.0",
     "firebase": "^7.0.0",
-    "firebase-admin": "^8.6.1"
-  }
+    "firebase-admin": "^8.6.1",
+    "local-web-server": "^3.0.7"
+  },
+  "license": "UNLICENSED"
 }
