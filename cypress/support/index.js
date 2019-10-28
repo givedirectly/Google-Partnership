@@ -9,22 +9,13 @@ global.tableClass = '.google-visualization-table-table';
 
 /**
  * Load genuine scripts into local document. This gives unit tests the ability
- * to use genuine external objects. that makes them a bit less "unit"-y, but
+ * to use actual external objects. That makes them a bit less "unit"-y, but
  * they're still fast, and can be much more faithful to the external interfaces.
  */
 before(() => {
-  // cy.task('downloadScriptUrl', 'https://maps.google.com/maps/api/js?libraries=drawing,places&key=AIzaSyBAQkh-kRrYitkPafxVLoZx3E5aYM-auXM')
-  //     .then((scriptInfo) => {
-  //       cy.log(scriptInfo);
-  //       cy.wait(20000).then(() => require(scriptInfo));
-  //     //  scriptInfo.cleanupCallback();
-  //     });
-  // require(file.name);
-  // file.removeCallback();
-  // addScriptToDocument(
-  //     'https://maps.google.com/maps/api/js?libraries=drawing,places&key=AIzaSyBAQkh-kRrYitkPafxVLoZx3E5aYM-auXM');
-  addScriptToDocument('https://unpkg.com/deck.gl@latest/dist.min.js');
-//  cy.task('logg', 'this is ' + document.getElementsByTagName('head')[0].children.length);
+  addScriptToDocument(
+      'https://maps.google.com/maps/api/js?libraries=drawing,places&key=AIzaSyBAQkh-kRrYitkPafxVLoZx3E5aYM-auXM', () => {return typeof(google) !== 'undefined' && typeof(google.maps) !== 'undefined';});
+  addScriptToDocument('https://unpkg.com/deck.gl@latest/dist.min.js', () => typeof(deck) !== 'undefined')
 });
 
 let eeToken = null;
@@ -44,8 +35,6 @@ before(
 
 before(() => cy.task('getEarthEngineToken').then((token) => eeToken = token));
 
-let scriptIdCounter = 0;
-
 /**
  * Loads a script dynamically into Cypress's test-only "document". The script's
  * symbols will be available inside all Cypress functions, but are not available
@@ -54,24 +43,24 @@ let scriptIdCounter = 0;
  * To get around this, keep all such statements within functions that are called
  * at runtime.
  * @param {string} scriptUrl
+ * @param {Function} checkDefinedCallback Callback that will be repeatedly
+ *     invoked after the script is added to the document to see if the desired
+ *     symbol has been loaded yet. It can take a few cycles for the document to
+ *     be reprocessed. The callback should normally return "typeof(desiredSymbol) !== 'undefined'".
+ *
  */
-function addScriptToDocument(scriptUrl) {
-  const scriptId = 'my_script_id_' + (scriptIdCounter++);
-  // cy.document().then((document) => {
-  //   const script = document.createElement('script');
-  //   script.setAttribute('src', scriptUrl);
-  //   script.setAttribute('type', 'text/javascript');
-  //   script.setAttribute('id', scriptId);
-  //
-  //   const headElt = document.getElementsByTagName('body');
-  //   headElt[0].appendChild(script);
-  // });
-  cy.document().then((document) => {
-    const script = document.createElement('button');
-    script.setAttribute('id', scriptId);
+function addScriptToDocument(scriptUrl, checkDefinedCallback) {
+  const script = document.createElement('script');
+  script.setAttribute('src', scriptUrl);
+  script.setAttribute('type', 'text/javascript');
 
-    const headElt = document.getElementsByTagName('body');
-    headElt[0].appendChild(script);
-  });
-  cy.get(scriptId);
+  const headElt = document.getElementsByTagName('body');
+  headElt[0].appendChild(script);
+  verifyDefined(checkDefinedCallback);
+}
+
+function verifyDefined(checkDefinedCallback) {
+  if (!checkDefinedCallback()) {
+    cy.wait(1).then(() => verifyDefined(checkDefinedCallback));
+  }
 }

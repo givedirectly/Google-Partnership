@@ -21,19 +21,18 @@ describe('Unit test for toggleLayerOn', () => {
   });
 
   it('displays a hidden but loaded layer', () => {
-    cy.task('logg', 'this is ' + deck);
-    // expect(layerMap.get('asset1').displayed).to.equals(false);
-    // expect(layerMap.get('asset1').data).to.not.be.null;
-    //
-    // toggleLayerOn('asset1');
-    // expect(layerMap.get('asset1').displayed).to.equals(true);
-    // const layerProps = layerArray[1].props;
-    // expect(layerProps).to.have.property('id', 'asset1');
-    // expect(layerProps).to.have.property('visible', true);
-    // expect(layerProps).to.have.property('data', mockData);
+    expect(layerMap.get('asset1').displayed).to.equals(false);
+    expect(layerMap.get('asset1').data).to.not.be.null;
+
+    toggleLayerOn('asset1');
+    expect(layerMap.get('asset1').displayed).to.equals(true);
+    const layerProps = layerArray[1].props;
+    expect(layerProps).to.have.property('id', 'asset1');
+    expect(layerProps).to.have.property('visible', true);
+    expect(layerProps).to.have.property('data', mockData);
   });
 
-  xit('loads a hidden layer and displays', () => {
+  it('loads a hidden layer and displays', () => {
     expect(layerMap.get('asset2').displayed).to.equals(false);
     expect(layerMap.get('asset2').data).to.be.null;
 
@@ -51,7 +50,7 @@ describe('Unit test for toggleLayerOn', () => {
     }, 0);
   });
 
-  xit('check hidden layer, then uncheck before list evaluation', () => {
+  it('check hidden layer, then uncheck before list evaluation', () => {
     expect(layerMap.get('asset2').displayed).to.equals(false);
     expect(layerMap.get('asset2').data).to.be.null;
 
@@ -73,7 +72,7 @@ describe('Unit test for toggleLayerOn', () => {
 });
 
 describe('Unit test for toggleLayerOff', () => {
-  xit('hides a displayed layer', () => {
+  it('hides a displayed layer', () => {
     expect(layerMap.get('asset0').displayed).to.equals(true);
     expect(layerMap.get('asset0').data).to.not.be.null;
 
