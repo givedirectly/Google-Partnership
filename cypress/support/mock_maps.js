@@ -10,6 +10,8 @@ google.maps.InfoWindow = () => new InfoWindow();
 
 google.maps.LatLng = () => new LatLng();
 
+google.maps.Marker = () => new Marker();
+
 google.maps.event = {
   clearListeners: () => {},
 };
@@ -50,3 +52,6 @@ class LatLng {
     this.long = lng;
   }
 }
+
+/** A stub of google.maps.Marker, only needed for instanceof checks. */
+class Marker {}

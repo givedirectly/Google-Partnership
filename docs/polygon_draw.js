@@ -2,7 +2,7 @@ import createError from './create_error.js';
 import {mapContainerId, writeWaiterId} from './dom_constants.js';
 import {getTestCookie, inProduction} from './in_test_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
-import {createPopup, setUpPopup} from './popup.js';
+import {createPopup, isMarker, setUpPopup} from './popup.js';
 import {getResources} from './resources.js';
 import {userRegionData} from './user_region_data.js';
 
@@ -14,26 +14,26 @@ export {
 };
 
 /**
- * Class holding data for a user-drawn polygon, including the state of writing
- * to the backend. In contrast with the Popup class, this class corresponds to
- * data that has been written to the backend. However, it keeps a reference to
- * the corresponding Popup object so that it can inform it when data is
- * calculated and retrieve user-modified values.
+ * Class holding data for a user-drawn feature (marker or polygon), including
+ * the state of writing to the backend. In contrast with the Popup class, this
+ * class corresponds to data that has been written to the backend. However, it
+ * keeps a reference to the corresponding Popup object so that it can inform it
+ * when data is calculated and retrieve user-modified values.
  */
 class StoredShapeData {
   /**
    * @constructor
    *
-   * @param {?String} id Firestore id. Null if user has just created polygon
+   * @param {?String} id Firestore id. Null if user has just created feature
    * @param {?String} notes User-entered notes. Null if user has just created
-   *     polygon
-   * @param {?Array<firebase.firestore.GeoPoint>} polygonGeoPoints Null if user
-   *     has just created polygon
+   *     feature
+   * @param {?Array<firebase.firestore.GeoPoint>} featureGeoPoints Null if user
+   *     has just created feature
    * @param {Popup} popup
    */
-  constructor(id, notes, polygonGeoPoints, popup) {
+  constructor(id, notes, featureGeoPoints, popup) {
     this.id = id;
-    this.polygonGeoPoints = polygonGeoPoints;
+    this.featureGeoPoints = featureGeoPoints;
     this.lastNotes = notes;
     /** @const */
     this.popup = popup;
@@ -41,7 +41,7 @@ class StoredShapeData {
   }
 
   /**
-   * Writes this shape's polygon's data to the backend, using the existing id
+   * Writes this shape's data to the backend, using the existing id
    * field, or adding a new document to Firestore if there is no id. New values
    * are retrieved from the popup object.
    *
@@ -53,17 +53,17 @@ class StoredShapeData {
       this.state = StoredShapeData.State.QUEUED_WRITE;
       return;
     }
-    const polygon = this.popup.polygon;
+    const feature = this.popup.mapFeature;
     addLoadingElement(writeWaiterId);
     this.state = StoredShapeData.State.WRITING;
     StoredShapeData.pendingWriteCount++;
-    if (!polygon.getMap()) {
+    if (!feature.getMap()) {
       this.delete();
       return;
     }
-    const newGeometry = StoredShapeData.polygonGeoPoints(polygon);
+    const newGeometry = StoredShapeData.featureGeoPoints(feature);
     const geometriesEqual = StoredShapeData.compareGeoPointArrays(
-        this.polygonGeoPoints, newGeometry);
+        this.featureGeoPoints, newGeometry);
     const newNotesEqual = this.lastNotes === this.popup.notes;
     this.lastNotes = this.popup.notes;
     if (geometriesEqual) {
@@ -77,11 +77,16 @@ class StoredShapeData {
       }
       return;
     }
+    this.featureGeoPoints = newGeometry;
+    if (isMarker(feature)) {
+      // No calculated data for a marker.
+      this.doRemoteUpdate();
+      return;
+    }
     this.popup.setPendingCalculation();
 
-    this.polygonGeoPoints = newGeometry;
     const points = [];
-    polygon.getPath().forEach((elt) => points.push(elt.lng(), elt.lat()));
+    feature.getPath().forEach((elt) => points.push(elt.lng(), elt.lat()));
     ee.FeatureCollection(getResources().damage)
         .filterBounds(ee.Geometry.Polygon(points))
         .size()
@@ -95,15 +100,20 @@ class StoredShapeData {
         });
   }
 
-  /** @return {Array<LatLng>} saved polygon path, to use when reverting edits */
-  getLastPolygonPath() {
-    return transformGeoPointArrayToLatLng(this.polygonGeoPoints);
+  /**
+   * @return {LatLng|Array<LatLng>} saved geometry of feature, either array of
+   *     single
+   * point for a Marker or an array for a Polygon to use when reverting edits.
+   */
+  getSavedFeatureGeometry() {
+    const result = transformGeoPointArrayToLatLng(this.featureGeoPoints);
+    return result.length === 1 ? result[0] : result;
   }
 
   /** Kicks off Firestore remote write. */
   doRemoteUpdate() {
     const record = {
-      geometry: this.polygonGeoPoints,
+      geometry: this.featureGeoPoints,
       notes: this.popup.notes,
       calculatedData: this.popup.calculatedData,
     };
@@ -139,21 +149,22 @@ class StoredShapeData {
         this.update();
         return;
       case StoredShapeData.State.SAVED:
-        console.error('Unexpected polygon state:' + this);
+        console.error('Unexpected feature state:' + this);
     }
   }
 
   /**
-   * Deletes this region from storage and userRegionData. Only for internal use.
+   * Deletes our feature from storage and userRegionData. Only for internal use
+   * (would be "private" in Java).
    */
   delete() {
-    // Polygon has been removed from map, we should delete on backend.
-    userRegionData.delete(this.popup.polygon);
+    // Feature has been removed from map, we should delete on backend.
+    userRegionData.delete(this.popup.mapFeature);
     if (!this.id) {
-      // Even if the user creates a polygon and then deletes it immediately,
+      // Even if the user creates a feature and then deletes it immediately,
       // the creation should trigger an update that must complete before the
       // deletion gets here. So there should always be an id.
-      console.error('Unexpected: polygon to be deleted had no id: ', this);
+      console.error('Unexpected: feature to be deleted had no id: ', this);
       return;
     }
     // Nothing more needs to be done for this element because it is
@@ -181,10 +192,15 @@ StoredShapeData.State = {
 // Tracks global pending writes so that we can warn if user leaves page early.
 StoredShapeData.pendingWriteCount = 0;
 
-StoredShapeData.polygonGeoPoints = (polygon) => {
+StoredShapeData.featureGeoPoints = (feature) => {
   const geometry = [];
-  polygon.getPath().forEach((elt) => geometry.push(latLngToGeoPoint(elt)));
+  StoredShapeData.featureLatLng(feature).forEach(
+      (elt) => geometry.push(latLngToGeoPoint(elt)));
   return geometry;
+};
+
+StoredShapeData.featureLatLng = (feature) => {
+  return isMarker(feature) ? [feature.getPosition()] : feature.getPath();
 };
 
 StoredShapeData.compareGeoPointArrays = (array1, array2) => {
@@ -221,7 +237,7 @@ const appearance = {
 };
 
 /**
- * Create a Google Maps Drawing Manager for drawing polygons.
+ * Create a Google Maps Drawing Manager for drawing polygons and markers.
  *
  * @param {google.maps.Map} map
  * @param {Promise<any>} firebasePromise Promise that will complete when
@@ -238,10 +254,18 @@ function setUpPolygonDrawing(map, firebasePromise) {
     });
 
     drawingManager.addListener('overlaycomplete', (event) => {
-      const polygon = event.overlay;
-      const popup = createPopup(polygon, map, '');
+      const feature = event.overlay;
+      if (!isMarker(feature) && feature.getPath().length < 3) {
+        // https://b.corp.google.com/issues/35821407 (WNF) means that users will
+        // not be able to later edit the polygon to have fewer than three
+        // vertices, so checking here is sufficient to prevent degenerates.
+        alert('Polygons with fewer than three vertices are not supported');
+        feature.setMap(null);
+        return;
+      }
+      const popup = createPopup(feature, map, '');
       const data = new StoredShapeData(null, null, null, popup);
-      userRegionData.set(polygon, data);
+      userRegionData.set(feature, data);
       data.update();
     });
 
@@ -282,17 +306,26 @@ function drawRegionsFromFirestoreQuery(querySnapshot, map) {
   querySnapshot.forEach((userDefinedRegion) => {
     const storedGeometry = userDefinedRegion.get('geometry');
     const coordinates = transformGeoPointArrayToLatLng(storedGeometry);
-    const properties = Object.assign({}, appearance);
-    properties.paths = coordinates;
-    const polygon = new google.maps.Polygon(properties);
+    let feature;
+    let calculatedData = null;
+    // We distinguish polygons and markers in Firestore just via the number of
+    // coordinates: polygons have at least 3, and markers have only 1.
+    if (coordinates.length === 1) {
+      feature =
+          new google.maps.Marker({draggable: false, position: coordinates[0]});
+    } else {
+      const properties = Object.assign({}, appearance);
+      properties.paths = coordinates;
+      feature = new google.maps.Polygon(properties);
+      calculatedData = userDefinedRegion.get('calculatedData');
+    }
     const notes = userDefinedRegion.get('notes');
-    const popup = createPopup(
-        polygon, map, notes, userDefinedRegion.get('calculatedData'));
+    const popup = createPopup(feature, map, notes, calculatedData);
     userRegionData.set(
-        polygon,
+        feature,
         new StoredShapeData(
             userDefinedRegion.id, notes, storedGeometry, popup));
-    polygon.setMap(map);
+    feature.setMap(map);
   });
   loadingElementFinished(mapContainerId);
 }
