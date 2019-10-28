@@ -161,7 +161,10 @@ function attachBlockGroups(building, blockGroups) {
   return building.set(geoidTag, geoid);
 }
 
-/** Performs operation of processing inputs and creating output asset. */
+/**
+ * Performs operation of processing inputs and creating output asset.
+ * @param {Promise} firebaseAuthPromise
+ */
 function run(firebaseAuthPromise) {
   ee.initialize();
 
