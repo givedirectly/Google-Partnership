@@ -1,10 +1,12 @@
 import {authenticateToFirebase, Authenticator} from '../authenticate.js';
 import {convertEeObjectToPromise} from '../map_util.js';
 import {getDisaster, getResources} from '../resources.js';
+import TaskAccumulator from './task_accumulator.js';
+
 export {storeCenter as default};
 
 /**
- * Add the lat and lng of a feature's centroid as properties.
+ * Adds the lat and lng of a feature's centroid as properties.
  * @param {ee.Feature} feature
  * @return {ee.Feature}
  */
@@ -22,8 +24,10 @@ let bounds = null;
  * want to orient the map
  */
 function storeCenter(features) {
+  const taskAccumulator = new TaskAccumulator(2, saveBounds);
+
   const authenticator =
-      new Authenticator((token) => authenticateToFirebase(token).then(() => taskCompleted()));
+      new Authenticator((token) => authenticateToFirebase(token).then(() => taskAccumulator.taskCompleted()));
   authenticator.start();
 
   const damageWithCoords = ee.FeatureCollection(features.map(withGeo));
@@ -36,20 +40,8 @@ function storeCenter(features) {
   ]);
   convertEeObjectToPromise(outerBounds).then((evaluatedBounds) => {
     bounds = evaluatedBounds;
-    taskCompleted();
+    taskAccumulator.taskCompleted();
   });
-}
-
-// We need both firebase to authenticate and the the ee.List to evaluate.
-let tasks = 2;
-
-/**
- * Records a task being completed and calls saveBounds if everything is ready.
- */
-function taskCompleted() {
-  if (--tasks === 0) {
-    saveBounds();
-  }
 }
 
 /** Writes the calculated bounds to firestore. */

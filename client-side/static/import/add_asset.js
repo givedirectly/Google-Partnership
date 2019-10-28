@@ -1,4 +1,5 @@
 import {Authenticator} from '../authenticate.js';
+import TaskAccumulator from './task_accumulator.js';
 
 export {onStartupTaskCompleted as default};
 
@@ -30,20 +31,7 @@ function setUpAllHeaders(accessToken) {
   gcsHeader = new Headers({'Authorization': 'Bearer ' + accessToken});
   deleteRequest = {method: 'DELETE', headers: gcsHeader};
   listRequest = {method: 'GET', headers: gcsHeader};
-  onStartupTaskCompleted();
-}
-
-// 3 tasks: EE authentication, OAuth2 token retrieval, and page load.
-let tasksToComplete = 3;
-
-/**
- * Function to be called by every asynchronous initialization. When all have
- * completed,
- */
-function onStartupTaskCompleted() {
-  if (--tasksToComplete === 0) {
-    enableWhenReady();
-  }
+  taskAccumulator.taskCompleted();
 }
 
 /** Enables the form once all necessary libraries are loaded. */
@@ -56,9 +44,11 @@ function enableWhenReady() {
 // Necessary for listAssets.
 ee.data.setCloudApiEnabled(true);
 
+// 3 tasks: EE authentication, OAuth2 token retrieval, and page load.
+const taskAccumulator = new TaskAccumulator(3, enableWhenReady);
 // Perform EE login/Google OAuth2 process.
 const authenticator = new Authenticator(
-    setUpAllHeaders, onStartupTaskCompleted, setStatusDiv, [storageScope]);
+    setUpAllHeaders, () => taskAccumulator.taskCompleted(), setStatusDiv, [storageScope]);
 authenticator.start();
 
 /**
