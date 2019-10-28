@@ -7,7 +7,7 @@ export {
   incomeKey,
   snapKey,
   tigerGeoidKey,
-  totalKey
+  totalKey,
 };
 
 const censusGeoidKey = 'GEOid2';
