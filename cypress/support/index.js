@@ -13,9 +13,18 @@ global.tableClass = '.google-visualization-table-table';
  * they're still fast, and can be much more faithful to the external interfaces.
  */
 before(() => {
-  addScriptToDocument(
-      'https://maps.google.com/maps/api/js?libraries=drawing,places&key=AIzaSyBAQkh-kRrYitkPafxVLoZx3E5aYM-auXM');
+  // cy.task('downloadScriptUrl', 'https://maps.google.com/maps/api/js?libraries=drawing,places&key=AIzaSyBAQkh-kRrYitkPafxVLoZx3E5aYM-auXM')
+  //     .then((scriptInfo) => {
+  //       cy.log(scriptInfo);
+  //       cy.wait(20000).then(() => require(scriptInfo));
+  //     //  scriptInfo.cleanupCallback();
+  //     });
+  // require(file.name);
+  // file.removeCallback();
+  // addScriptToDocument(
+  //     'https://maps.google.com/maps/api/js?libraries=drawing,places&key=AIzaSyBAQkh-kRrYitkPafxVLoZx3E5aYM-auXM');
   addScriptToDocument('https://unpkg.com/deck.gl@latest/dist.min.js');
+//  cy.task('logg', 'this is ' + document.getElementsByTagName('head')[0].children.length);
 });
 
 let eeToken = null;
@@ -46,7 +55,9 @@ before(() => cy.task('getEarthEngineToken').then((token) => eeToken = token));
  */
 function addScriptToDocument(scriptUrl) {
   const script = document.createElement('script');
-  script.src = scriptUrl;
+  script.setAttribute('src', scriptUrl);
+  script.setAttribute('type', 'text/javascript');
+
   const headElt = document.getElementsByTagName('head');
   headElt[0].appendChild(script);
 }

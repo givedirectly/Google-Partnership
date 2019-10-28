@@ -1,5 +1,8 @@
 const earthEngine = require('@google/earthengine');
 const firebaseAdmin = require('firebase-admin');
+const fs = require('fs');
+const tmp = require('tmp');
+const request = require('request');
 
 // You can read more here:
 // https://on.cypress.io/plugins-guide
@@ -91,6 +94,25 @@ module.exports = (on, config) => {
             // Strip 'Bearer ' from beginning.
             () => resolve(earthEngine.data.getAuthToken().substring(7)),
             reject);
+      });
+    },
+    /**
+     * Downloads given script to a temporary location and returns the location,
+     * so that it can be required, bringing it into the test's namespace.
+     */
+    downloadScriptUrl(scriptUrl) {
+      return new Promise((resolve, reject) => {
+        tmp.file({postfix: '.js'}, (err, path, fd, cleanupCallback) => {
+          if (err) {
+            reject(err);
+            return;
+          }
+          const fileStream = fs.createWriteStream(null, {fd: fd});
+          request(scriptUrl).pipe(fileStream).on('finish', () => {
+            fileStream.end();
+            resolve(path);
+          }).on('error', (requestError) => reject(requestError));
+        });
       });
     },
     /**
