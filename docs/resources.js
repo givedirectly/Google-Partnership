@@ -56,7 +56,6 @@ disasters.set(
 disasters.set(
     'harvey',
     new DisasterMapValue(
-        'users/gd/harvey/FEMA_Damage_Assessments',
-        'users/gd/harvey/snap', 'users/gd/harvey/tiger',
-        'users/gd/harvey/income', 'users/gd/harvey/svi',
-        'users/gd/harvey/buildings'));
+        'users/gd/harvey/FEMA_Damage_Assessments', 'users/gd/harvey/snap',
+        'users/gd/harvey/tiger', 'users/gd/harvey/income',
+        'users/gd/harvey/svi', 'users/gd/harvey/buildings'));

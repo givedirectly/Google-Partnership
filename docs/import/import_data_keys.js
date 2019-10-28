@@ -1,4 +1,14 @@
-export {cdcSviKey, censusGeoidKey, censusBlockGroupKey, tigerGeoidKey, cdcGeoidKey, snapKey, totalKey, incomeKey, crowdAiDamageKey};
+export {
+  cdcGeoidKey,
+  cdcSviKey,
+  censusBlockGroupKey,
+  censusGeoidKey,
+  crowdAiDamageKey,
+  incomeKey,
+  snapKey,
+  tigerGeoidKey,
+  totalKey
+};
 
 const censusGeoidKey = 'GEOid2';
 const censusBlockGroupKey = 'GEOdisplay-label';
