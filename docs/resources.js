@@ -1,4 +1,6 @@
-export {disaster, getResources};
+import {inProduction} from './in_test_util.js';
+
+export {getDisaster, getResources};
 
 /**
  * Gets all the ee assets relevant to the current disaster.
@@ -6,6 +8,15 @@ export {disaster, getResources};
  */
 function getResources() {
   return disasters.get(disaster);
+}
+
+/**
+ * Always use Harvey for test cases since our tests assert against specific
+ * block groups and damage points.
+ * @return {string} current disaster
+ */
+function getDisaster() {
+  return inProduction() ? disaster : 'harvey';
 }
 
 /** The current disaster. */
@@ -45,7 +56,6 @@ disasters.set(
 disasters.set(
     'harvey',
     new DisasterMapValue(
-        'users/juliexxia/harvey-damage-crowdai-format-deduplicated',
-        'users/juliexxia/snap_texas', 'users/juliexxia/tiger_texas',
-        'users/juliexxia/income_texas', 'users/ruthtalbot/harvey-SVI',
-        'users/juliexxia/harvey-damage-zone-ms-buildings'));
+        'users/gd/harvey/FEMA_Damage_Assessments', 'users/gd/harvey/snap',
+        'users/gd/harvey/tiger', 'users/gd/harvey/income',
+        'users/gd/harvey/svi', 'users/gd/harvey/buildings'));
