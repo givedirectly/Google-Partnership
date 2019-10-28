@@ -195,7 +195,7 @@ function setUpPopup() {
     }
 
     /**
-     * Processes new feature geometry and notes. popup html gets created twice
+     * Processes new feature geometry and notes. Popup html gets created twice
      * over the course of this method, once before we have the damage number and
      * once after we receive the damage number.
      * @param {String} notes
@@ -246,6 +246,10 @@ function setUpPopup() {
     draw() {
       const divPosition =
           this.getProjection().fromLatLngToDivPixel(this.position);
+      if (isMarker(this.mapFeature)) {
+        // Give the Marker room to be visible.
+        divPosition.y -= 40;
+      }
       this.containerDiv.style.left = divPosition.x + 'px';
       this.containerDiv.style.top = divPosition.y + 'px';
     }
@@ -329,12 +333,12 @@ function getPositionForPopup(mapFeature) {
  * @param {google.maps.Marker|google.maps.Polygon} mapFeature
  */
 function revertFeaturePosition(mapFeature) {
-  const lastFeatureGeometry =
-      userRegionData.get(mapFeature).getLastFeatureGeometry();
+  const savedFeatureGeometry =
+      userRegionData.get(mapFeature).getSavedFeatureGeometry();
   if (isMarker(mapFeature)) {
-    mapFeature.setPosition(lastFeatureGeometry);
+    mapFeature.setPosition(savedFeatureGeometry);
   } else {
-    mapFeature.setPath(lastFeatureGeometry);
+    mapFeature.setPath(savedFeatureGeometry);
   }
 }
 

@@ -257,7 +257,7 @@ describe('Integration tests for drawing polygons', () => {
     cy.get('#mapContainer').contains('new notes').should('not.be.visible');
   });
 
-  it('Degenerate polygon not allowed', () => {
+  it('Degenerate polygon with one vertex not allowed', () => {
     cy.visit(host);
 
     cy.get('[title="Draw a shape"]').click();

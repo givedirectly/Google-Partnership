@@ -100,9 +100,13 @@ class StoredShapeData {
         });
   }
 
-  /** @return {Array<LatLng>} saved polygon path, to use when reverting edits */
-  getLastFeatureGeometry() {
-    return transformGeoPointArrayToLatLng(this.featureGeoPoints);
+  /**
+   * @return {LatLng|Array<LatLng>} saved geometry of feature, either array of single
+   * point for a Marker or an array for a Polygon to use when reverting edits.
+   */
+  getSavedFeatureGeometry() {
+    const result = transformGeoPointArrayToLatLng(this.featureGeoPoints);
+    return result.length === 1 ? result[0] : result;
   }
 
   /** Kicks off Firestore remote write. */
@@ -149,7 +153,8 @@ class StoredShapeData {
   }
 
   /**
-   * Deletes our feature from storage and userRegionData. Only for internal use.
+   * Deletes our feature from storage and userRegionData. Only for internal use
+   * (would be "private" in Java).
    */
   delete() {
     // Feature has been removed from map, we should delete on backend.
@@ -255,7 +260,7 @@ function setUpPolygonDrawing(map, firebasePromise) {
         // vertices, so checking here is sufficient to prevent degenerates.
         alert('Polygons with fewer than three vertices are not supported');
         feature.setMap(null);
-        return false;
+        return;
       }
       const popup = createPopup(feature, map, '');
       const data = new StoredShapeData(null, null, null, popup);
@@ -301,13 +306,12 @@ function drawRegionsFromFirestoreQuery(querySnapshot, map) {
     const storedGeometry = userDefinedRegion.get('geometry');
     const coordinates = transformGeoPointArrayToLatLng(storedGeometry);
     let feature;
-    let calculatedData;
+    let calculatedData = null;
     // We distinguish polygons and markers in Firestore just via the number of
     // coordinates: polygons have at least 3, and markers have only 1.
     if (coordinates.length === 1) {
       feature =
           new google.maps.Marker({draggable: false, position: coordinates[0]});
-      calculatedData = null;
     } else {
       const properties = Object.assign({}, appearance);
       properties.paths = coordinates;
