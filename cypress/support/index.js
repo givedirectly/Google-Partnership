@@ -13,7 +13,8 @@ global.tableClass = '.google-visualization-table-table';
  * they're still fast, and can be much more faithful to the external interfaces.
  */
 before(() => {
-  addScriptToDocument('https://maps.google.com/maps/api/js?libraries=drawing,places&key=AIzaSyBAQkh-kRrYitkPafxVLoZx3E5aYM-auXM');
+  addScriptToDocument(
+      'https://maps.google.com/maps/api/js?libraries=drawing,places&key=AIzaSyBAQkh-kRrYitkPafxVLoZx3E5aYM-auXM');
   addScriptToDocument('https://unpkg.com/deck.gl@latest/dist.min.js');
 });
 
