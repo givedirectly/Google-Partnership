@@ -12,7 +12,7 @@ global.tableClass = '.google-visualization-table-table';
  * to use genuine external objects. that makes them a bit less "unit"-y, but
  * they're still fast, and can be much more faithful to the external interfaces.
  */
-before(() => {
+beforeEach(() => {
   // cy.task('downloadScriptUrl', 'https://maps.google.com/maps/api/js?libraries=drawing,places&key=AIzaSyBAQkh-kRrYitkPafxVLoZx3E5aYM-auXM')
   //     .then((scriptInfo) => {
   //       cy.log(scriptInfo);
@@ -54,10 +54,12 @@ before(() => cy.task('getEarthEngineToken').then((token) => eeToken = token));
  * @param {string} scriptUrl
  */
 function addScriptToDocument(scriptUrl) {
-  const script = document.createElement('script');
-  script.setAttribute('src', scriptUrl);
-  script.setAttribute('type', 'text/javascript');
+  cy.document().then((document) => {
+    const script = document.createElement('script');
+    script.setAttribute('src', scriptUrl);
+    script.setAttribute('type', 'text/javascript');
 
-  const headElt = document.getElementsByTagName('head');
-  headElt[0].appendChild(script);
+    const headElt = document.getElementsByTagName('head');
+    headElt[0].appendChild(script);
+  });
 }

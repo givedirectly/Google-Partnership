@@ -14,14 +14,14 @@ describe('Unit test for toggleLayerOn', () => {
         EarthEngineAsset.Type.FEATURECOLLECTION, 'asset1', false);
     assets['asset2'] = new EarthEngineAsset(
         EarthEngineAsset.Type.FEATURECOLLECTION, 'asset2', false);
+    setMapToDrawLayersOn(null);
+    layerArray[0] = new deck.GeoJsonLayer({});
+    layerArray[1] = new deck.GeoJsonLayer({});
     ee.listEvaluateCallback = null;
   });
 
   it('displays a hidden but loaded layer', () => {
-    cy.task('logg', 'this is ' + document.getElementsByTagName('head')[0].children[2].src);
-    // setMapToDrawLayersOn(null);
-    // layerArray[0] = new deck.GeoJsonLayer({});
-    // layerArray[1] = new deck.GeoJsonLayer({});
+    cy.task('logg', 'this is ' + deck);
     // expect(layerMap.get('asset1').displayed).to.equals(false);
     // expect(layerMap.get('asset1').data).to.not.be.null;
     //
