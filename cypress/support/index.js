@@ -15,13 +15,11 @@ global.tableClass = '.google-visualization-table-table';
 before(() => {
   addScriptToDocument(
       'https://maps.google.com/maps/api/js?libraries=drawing,places&key=AIzaSyBAQkh-kRrYitkPafxVLoZx3E5aYM-auXM',
-      () => {
-        return typeof (google) !== 'undefined' &&
-            typeof (google.maps) !== 'undefined';
-      });
+      () => typeof (google) !== 'undefined' &&
+          typeof (google.maps) !== 'undefined');
   addScriptToDocument(
       'https://unpkg.com/deck.gl@latest/dist.min.js',
-      () => typeof (deck) !== 'undefined')
+      () => typeof (deck) !== 'undefined');
 });
 
 let eeToken = null;
