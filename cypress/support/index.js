@@ -12,7 +12,7 @@ global.tableClass = '.google-visualization-table-table';
  * to use genuine external objects. that makes them a bit less "unit"-y, but
  * they're still fast, and can be much more faithful to the external interfaces.
  */
-beforeEach(() => {
+before(() => {
   // cy.task('downloadScriptUrl', 'https://maps.google.com/maps/api/js?libraries=drawing,places&key=AIzaSyBAQkh-kRrYitkPafxVLoZx3E5aYM-auXM')
   //     .then((scriptInfo) => {
   //       cy.log(scriptInfo);
@@ -44,6 +44,8 @@ before(
 
 before(() => cy.task('getEarthEngineToken').then((token) => eeToken = token));
 
+let scriptIdCounter = 0;
+
 /**
  * Loads a script dynamically into Cypress's test-only "document". The script's
  * symbols will be available inside all Cypress functions, but are not available
@@ -54,12 +56,22 @@ before(() => cy.task('getEarthEngineToken').then((token) => eeToken = token));
  * @param {string} scriptUrl
  */
 function addScriptToDocument(scriptUrl) {
+  const scriptId = 'my_script_id_' + (scriptIdCounter++);
+  // cy.document().then((document) => {
+  //   const script = document.createElement('script');
+  //   script.setAttribute('src', scriptUrl);
+  //   script.setAttribute('type', 'text/javascript');
+  //   script.setAttribute('id', scriptId);
+  //
+  //   const headElt = document.getElementsByTagName('body');
+  //   headElt[0].appendChild(script);
+  // });
   cy.document().then((document) => {
-    const script = document.createElement('script');
-    script.setAttribute('src', scriptUrl);
-    script.setAttribute('type', 'text/javascript');
+    const script = document.createElement('button');
+    script.setAttribute('id', scriptId);
 
-    const headElt = document.getElementsByTagName('head');
+    const headElt = document.getElementsByTagName('body');
     headElt[0].appendChild(script);
   });
+  cy.get(scriptId);
 }
