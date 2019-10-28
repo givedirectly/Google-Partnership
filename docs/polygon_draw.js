@@ -149,7 +149,7 @@ class StoredShapeData {
         this.update();
         return;
       case StoredShapeData.State.SAVED:
-        console.error('Unexpected polygon state:' + this);
+        console.error('Unexpected feature state:' + this);
     }
   }
 
