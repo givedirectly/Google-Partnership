@@ -1,4 +1,4 @@
-import {cdcSviKey} from './import/import_data.js';
+import {cdcSviKey} from './import/import_data_keys.js';
 
 export {assets, EarthEngineAsset};
 

@@ -1,11 +1,10 @@
 import {CLIENT_ID} from '../authenticate.js';
 import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, snapPercentageTag, snapPopTag, sviTag, totalPopTag, tractTag} from '../property_names.js';
 import {getDisaster, getResources} from '../resources.js';
+import {cdcSviKey, censusGeoidKey, censusBlockGroupKey, tigerGeoidKey, cdcGeoidKey, snapKey, totalKey, incomeKey} from './import_data_keys.js';
 
-export {crowdAiDamageKey, cdcSviKey};
 /** @VisibleForTesting */
 export {countDamageAndBuildings};
-
 
 /**
  * Joins a state's census block-group-level SNAP/population data with building
@@ -34,17 +33,6 @@ export {countDamageAndBuildings};
  * editor.
  */
 // TODO: factor in margins of error?
-
-const censusGeoidKey = 'GEOid2';
-const censusBlockGroupKey = 'GEOdisplay-label';
-const tigerGeoidKey = 'GEOID';
-const cdcGeoidKey = 'FIPS';
-const cdcSviKey = 'RPL_THEMES';
-const snapKey = 'HD01_VD02';
-const totalKey = 'HD01_VD01';
-const incomeKey = 'HD01_VD01';
-// check with crowd ai folks about name.
-const crowdAiDamageKey = 'descriptio';
 
 /**
  * Given a feature from the SNAP census data, returns a new
