@@ -48,7 +48,8 @@ ee.data.setCloudApiEnabled(true);
 const taskAccumulator = new TaskAccumulator(3, enableWhenReady);
 // Perform EE login/Google OAuth2 process.
 const authenticator = new Authenticator(
-    setUpAllHeaders, () => taskAccumulator.taskCompleted(), setStatusDiv, [storageScope]);
+    setUpAllHeaders, () => taskAccumulator.taskCompleted(), setStatusDiv,
+    [storageScope]);
 authenticator.start();
 
 /**

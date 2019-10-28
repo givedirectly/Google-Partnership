@@ -2,8 +2,8 @@ import {authenticateToFirebase, Authenticator, CLIENT_ID, initializeEE, initiali
 import createMap from './create_map.js';
 import {earthEngineTestTokenCookieName, firebaseTestTokenCookieName, getCookieValue, inProduction} from './in_test_util.js';
 import run from './run.js';
-import {initializeSidebar} from './sidebar.js';
 import SettablePromise from './settable_promise.js';
+import {initializeSidebar} from './sidebar.js';
 
 // The base Google Map, Initialized lazily to ensure doc is ready
 let map = null;

@@ -1,6 +1,6 @@
 export {TaskAccumulator as default};
 
-class TaskAccumulator{
+class TaskAccumulator {
   /**
    *
    * @param {number} numTasks

@@ -42,4 +42,3 @@ function convertEeObjectToPromise(eeObject) {
     });
   });
 }
-

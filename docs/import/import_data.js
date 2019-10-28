@@ -1,11 +1,13 @@
+import {authenticateToFirebase, Authenticator} from '../authenticate';
 import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, snapPercentageTag, snapPopTag, sviTag, totalPopTag, tractTag} from '../property_names.js';
 import {getDisaster, getResources} from '../resources.js';
-import storeCenter from './center.js';
-import {Authenticator, authenticateToFirebase} from '../authenticate';
 import {SettablePromise} from '../settable_promise.js';
+
+import storeCenter from './center.js';
 
 /** @VisibleForTesting */
 export {countDamageAndBuildings};
+
 
 
 /**
@@ -250,7 +252,10 @@ function setup() {
   $(document).ready(function() {
     const firebaseAuthPromise = new SettablePromise();
     const runOnInitialize = () => run(firebaseAuthPromise.getPromise());
-    const authenticator = new Authenticator((token) => firebaseAuthPromise.setPromise(authenticateToFirebase(token)), runOnInitialize);
+    const authenticator = new Authenticator(
+        (token) =>
+            firebaseAuthPromise.setPromise(authenticateToFirebase(token)),
+        runOnInitialize);
     authenticator.start();
   });
 }
