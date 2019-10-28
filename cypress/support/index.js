@@ -35,6 +35,15 @@ before(
 
 before(() => cy.task('getEarthEngineToken').then((token) => eeToken = token));
 
+/**
+ * Loads a script dynamically into Cypress's test-only "document". The script's
+ * symbols will be available inside all Cypress functions, but are not available
+ * during file loading, so bare statements outside of functions like
+ * "const elt = deck.property" in production files will still result in errors.
+ * To get around this, keep all such statements within functions that are called
+ * at runtime.
+ * @param {string} scriptUrl
+ */
 function addScriptToDocument(scriptUrl) {
   const script = document.createElement('script');
   script.src = scriptUrl;
