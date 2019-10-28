@@ -97,25 +97,6 @@ module.exports = (on, config) => {
       });
     },
     /**
-     * Downloads given script to a temporary location and returns the location,
-     * so that it can be required, bringing it into the test's namespace.
-     */
-    downloadScriptUrl(scriptUrl) {
-      return new Promise((resolve, reject) => {
-        tmp.file({postfix: '.js'}, (err, path, fd, cleanupCallback) => {
-          if (err) {
-            reject(err);
-            return;
-          }
-          const fileStream = fs.createWriteStream(null, {fd: fd});
-          request(scriptUrl).pipe(fileStream).on('finish', () => {
-            fileStream.end();
-            resolve(path);
-          }).on('error', (requestError) => reject(requestError));
-        });
-      });
-    },
-    /**
      * Debugging function that allows us to see output from Cypress in the
      * (Travis) console versus in the browser.
      * @param {string} str
