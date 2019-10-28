@@ -20,17 +20,17 @@ function setUpPopup() {
      *
      * @param {google.maps.Polygon} polygon
      * @param {string} notes initial notes
-     * @param {Integer|String} damage initial damage
+     * @param {Object} calculatedData calculated data (damage, for instance)
      * @param {google.maps.Map} map
      * @constructor
      */
-    constructor(polygon, notes, damage, map) {
+    constructor(polygon, notes, calculatedData, map) {
       super();
       this.polygon = polygon;
       // TODO(janakr): is there a better place to pop this window up?
       this.position = polygon.getPath().getAt(0);
       this.notes = notes;
-      this.damage = damage;
+      this.calculatedData = calculatedData;
       this.map = map;
       this.content = document.createElement('div');
       this.content.className = 'popup-content';
@@ -54,12 +54,30 @@ function setUpPopup() {
     }
 
     /**
-     * Updates this popup's damage child div to a new damage value.
-     * @param {Integer|String} damage
+     * Sets the calculatedData property of this popup.
+     * @param {Object} calculatedData
      */
-    updateDamage(damage) {
-      this.damageDiv.innerHTML = 'damage count: ' + damage;
-      if (isNaN(damage) || !this.saved) {
+    setCalculatedData(calculatedData) {
+      this.calculatedData = calculatedData;
+      this.updateDamageDiv();
+    }
+
+    /** Sets the status of calculated data in this popup to "calculating". */
+    setPendingCalculation() {
+      this.setCalculatedData(SENTINEL_CALCULATING);
+    }
+
+    /**
+     * Updates this popup's damage child div if it exists to a new damage value.
+     */
+    updateDamageDiv() {
+      if (!this.damageDiv) {
+        return;
+      }
+      const isNumber = isNaN(this.calculatedData.damage);
+      this.damageDiv.innerHTML = 'damage count: ' +
+          (isNumber ? 'calculating' : this.calculatedData.damage);
+      if (isNumber || !this.saved) {
         this.damageDiv.style.color = 'grey';
       } else {
         this.damageDiv.style.color = 'black';
@@ -84,26 +102,20 @@ function setUpPopup() {
 
     /**
      * Creates the content of the popup's content div from scratch in the saved
-     * state (i.e. with an edit button), saves the given notes and damage to
-     * this popup object.
+     * state (i.e. with an edit button).
      *
-     * @param {String} notes
-     * @param {Integer|String} damage
      */
-    createPopupHtml(notes, damage) {
-      this.notes = notes;
-      this.damage = damage;
-
+    createPopupHtml() {
       const content = this.content;
       removeAllChildren(content);
 
       const damageDiv = document.createElement('div');
       damageDiv.classList.add('popup-damage');
       this.damageDiv = damageDiv;
-      this.updateDamage(damage);
+      this.updateDamageDiv();
 
       const notesDiv = document.createElement('div');
-      notesDiv.innerText = notes;
+      notesDiv.innerText = this.notes;
 
       const polygon = this.polygon;
       const deleteButton = document.createElement('button');
@@ -114,12 +126,9 @@ function setUpPopup() {
           polygon.setMap(null);
           this.setMap(null);
           allPopups.delete(this);
-          userRegionData.get(polygon).update(polygon);
+          userRegionData.get(polygon).update();
         }
       };
-      // lazily initialized so we don't do the deep clone unless we actually
-      // want to edit the polygon.
-      let savedShape = null;
       const editButton = document.createElement('button');
       editButton.className = 'popup-button';
       editButton.innerHTML = 'edit';
@@ -127,7 +136,6 @@ function setUpPopup() {
         this.updateState(false);
 
         const currentNotes = notesDiv.innerText;
-        savedShape = clonePolygonPath(polygon);
 
         // Grey out the damage stat until we save so it's clearly old.
         damageDiv.style.color = 'grey';
@@ -156,15 +164,10 @@ function setUpPopup() {
           this.closeCleanup();
         } else if (confirm(
                        'Exit without saving changes? Changes will be lost.')) {
-          if (savedShape === null) {
-            console.error(
-                'unexpected: no shape state saved before editing polygon');
-            return;
-          }
           polygon.setMap(null);
-          polygon.setPath(savedShape);
+          polygon.setPath(userRegionData.get(polygon).getLastPolygonPath());
           polygon.setMap(this.map);
-          this.savePopup(notes, damage);
+          this.savePopup();
           this.closeCleanup();
         }
       };
@@ -178,12 +181,10 @@ function setUpPopup() {
 
     /**
      * Updates this popup and its polygon to their uneditable state appearances.
-     * @param {String} notes
-     * @param {Integer|String} damage
      */
-    savePopup(notes, damage) {
+    savePopup() {
       this.updateState(true);
-      this.createPopupHtml(notes, damage);
+      this.createPopupHtml();
     }
 
     /**
@@ -193,9 +194,9 @@ function setUpPopup() {
      * @param {String} notes
      */
     saveNewData(notes) {
-      this.savePopup(notes, 'calculating');
-      userRegionData.get(this.polygon)
-          .update(this.polygon, (damage) => this.updateDamage(damage), notes);
+      this.notes = notes;
+      this.savePopup();
+      userRegionData.get(this.polygon).update();
       // update where this popup pops up to match any polygon shape changes
       this.updatePosition();
     }
@@ -223,7 +224,7 @@ function setUpPopup() {
     // Below this line are implementations of OverlayView methods.
     /** Called when the popup is added to the map. */
     onAdd() {
-      this.createPopupHtml(this.notes, this.damage);
+      this.createPopupHtml();
       this.getPanes().floatPane.appendChild(this.containerDiv);
     }
 
@@ -303,32 +304,23 @@ function removeAllChildren(div) {
 }
 
 /**
- * Make a deep copy of a polygon's shape in the form of Array<LatLng>
- * (suitable for being fed into google.maps.Polygon.setPath(...)). We only
- * clone a single path because we don't support multi-path polygons right now.
- * @param {google.maps.Polygon} polygon
- * @return {Array<google.maps.LatLng>}
- */
-function clonePolygonPath(polygon) {
-  const currentShape = [];
-  polygon.getPath().forEach((latlng) => currentShape.push(latlng));
-  return currentShape;
-}
-
-/**
  * Creates a new popup object, attaches it to the map and hides it.
  * This is meant to be called once over the lifetime of a polygon. After it's
  * created, logic should use the show/hide methods to handle its visibility.
  *
  * @param {google.maps.Polygon} polygon
  * @param {google.maps.Map} map
+ * @param {string} notes
+ * @param {Object} calculatedData May be omitted if currently unknown
  * @return {Popup}
  */
-function createPopup(polygon, map) {
-  const data = userRegionData.get(polygon);
-  const popup = new Popup(polygon, data.notes, data.damage, map);
+function createPopup(
+    polygon, map, notes, calculatedData = SENTINEL_CALCULATING) {
+  const popup = new Popup(polygon, notes, calculatedData, map);
   popup.setMap(map);
   popup.hide();
   allPopups.add(popup);
   return popup;
 }
+
+const SENTINEL_CALCULATING = {};

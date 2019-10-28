@@ -10,77 +10,76 @@ import {userRegionData} from './user_region_data.js';
 export {
   processUserRegions,
   setUpPolygonDrawing as default,
-  ShapeData,
+  StoredShapeData,
 };
 
 /**
  * Class holding data for a user-drawn polygon, including the state of writing
- * to the backend. Does not hold the polygon itself.
+ * to the backend. In contrast with the Popup class, this class corresponds to
+ * data that has been written to the backend. However, it keeps a reference to
+ * the corresponding Popup object so that it can inform it when data is
+ * calculated and retrieve user-modified values.
  */
-class ShapeData {
+class StoredShapeData {
   /**
-   * Constructor. The id is null if user has just created polygon (corresponds
-   * to backend id).
+   * @constructor
    *
-   * @param {String} id Firestore id.
-   * @param {String} notes User-entered notes.
-   * @param {Integer|String} damage
+   * @param {?String} id Firestore id. Null if user has just created polygon
+   * @param {?String} notes User-entered notes. Null if user has just created
+   *     polygon
+   * @param {?Array<firebase.firestore.GeoPoint>} polygonGeoPoints Null if user
+   *     has just created polygon
+   * @param {Popup} popup
    */
-  constructor(id, notes, damage) {
+  constructor(id, notes, polygonGeoPoints, popup) {
     this.id = id;
-    this.notes = notes;
-    this.damage = damage;
-    this.state = ShapeData.State.SAVED;
+    this.polygonGeoPoints = polygonGeoPoints;
+    this.lastNotes = notes;
+    /** @const */
+    this.popup = popup;
+    this.state = StoredShapeData.State.SAVED;
   }
 
   /**
-   * Writes this polygon's data to the backend, using the existing id field,
-   * or adding a new document to Firestore if there is no id. The passed-in
-   * notes, if given, override the current notes value.
+   * Writes this shape's polygon's data to the backend, using the existing id
+   * field, or adding a new document to Firestore if there is no id. New values
+   * are retrieved from the popup object.
    *
    * If there is already a pending write, this method records that another write
    * should be performed when the pending one completes and returns immediately.
-   *
-   * @param {google.maps.Polygon} polygon Polygon to be written to backend.
-   * @param {Function} damageReceiver
-   * @param {String} notes User-supplied notes (optional).
    */
-  update(polygon, damageReceiver = () => {}, notes = this.notes) {
-    this.notes = notes;
-    if (this.state !== ShapeData.State.SAVED) {
-      this.state = ShapeData.State.QUEUED_WRITE;
+  update() {
+    if (this.state !== StoredShapeData.State.SAVED) {
+      this.state = StoredShapeData.State.QUEUED_WRITE;
       return;
     }
+    const polygon = this.popup.polygon;
     addLoadingElement(writeWaiterId);
-    this.state = ShapeData.State.WRITING;
-    ShapeData.pendingWriteCount++;
+    this.state = StoredShapeData.State.WRITING;
+    StoredShapeData.pendingWriteCount++;
     if (!polygon.getMap()) {
-      this.delete(polygon);
+      this.delete();
       return;
     }
-    const geometry = [];
-    polygon.getPath().forEach((elt) => geometry.push(latLngToGeoPoint(elt)));
-    const finishWriteAndMaybeWriteAgain = () => {
-      ShapeData.pendingWriteCount--;
-      const oldState = this.state;
-      this.state = ShapeData.State.SAVED;
-      switch (oldState) {
-        case ShapeData.State.WRITING:
-          loadingElementFinished(writeWaiterId);
-          return;
-        case ShapeData.State.QUEUED_WRITE:
-          loadingElementFinished(writeWaiterId);
-          this.update(polygon, damageReceiver, this.notes);
-          return;
-        case ShapeData.State.SAVED:
-          console.error('Unexpected polygon state:' + this);
+    const newGeometry = StoredShapeData.polygonGeoPoints(polygon);
+    const geometriesEqual = StoredShapeData.compareGeoPointArrays(
+        this.polygonGeoPoints, newGeometry);
+    const newNotesEqual = this.lastNotes === this.popup.notes;
+    this.lastNotes = this.popup.notes;
+    if (geometriesEqual) {
+      if (!newNotesEqual) {
+        this.doRemoteUpdate();
+      } else {
+        // Because Javascript is single-threaded, during the execution of this
+        // method, no additional queued writes can have accumulated. So we don't
+        // need to check for them.
+        StoredShapeData.pendingWriteCount--;
       }
-    };
+      return;
+    }
+    this.popup.setPendingCalculation();
 
-    // TODO: don't recompute size if polygon hasn't changed. Somewhat
-    // non-trivial because we need to actually compare the geopoints. We could
-    // also pass in a boolean about whether the polygon has changed or not but
-    // that feels buggy to me.
+    this.polygonGeoPoints = newGeometry;
     const points = [];
     polygon.getPath().forEach((elt) => points.push(elt.lng(), elt.lat()));
     ee.FeatureCollection(getResources().damage)
@@ -88,58 +87,86 @@ class ShapeData {
         .size()
         .evaluate((damage, failure) => {
           if (failure) {
-            createError('error calculating damage' + this);
-          } else {
-            this.damage = damage;
-            damageReceiver(this.damage);
-            const record = {
-              geometry: geometry,
-              notes: this.notes,
-              damage: this.damage,
-            };
-            if (this.id) {
-              userShapes.doc(this.id)
-                  .set(record)
-                  .then(finishWriteAndMaybeWriteAgain)
-                  .catch(createError('error updating ' + this));
-            } else {
-              userShapes.add(record)
-                  .then((docRef) => {
-                    this.id = docRef.id;
-                    finishWriteAndMaybeWriteAgain();
-                  })
-                  .catch(createError('error adding ' + this));
-            }
+            createError('error calculating damage' + this)(failure);
+            return;
           }
+          this.popup.setCalculatedData({damage: damage});
+          this.doRemoteUpdate();
         });
+  }
+
+  /** @return {Array<LatLng>} saved polygon path, to use when reverting edits */
+  getLastPolygonPath() {
+    return transformGeoPointArrayToLatLng(this.polygonGeoPoints);
+  }
+
+  /** Kicks off Firestore remote write. */
+  doRemoteUpdate() {
+    const record = {
+      geometry: this.polygonGeoPoints,
+      notes: this.popup.notes,
+      calculatedData: this.popup.calculatedData,
+    };
+    if (this.id) {
+      userShapes.doc(this.id)
+          .set(record)
+          .then(() => this.finishWriteAndMaybeWriteAgain())
+          .catch(createError('error updating ' + this));
+    } else {
+      userShapes.add(record)
+          .then((docRef) => {
+            this.id = docRef.id;
+            this.finishWriteAndMaybeWriteAgain();
+          })
+          .catch(createError('error adding ' + this));
+    }
+  }
+
+  /**
+   * After a write completes, checks if there are pending writes and kicks off
+   * a new update if so.
+   */
+  finishWriteAndMaybeWriteAgain() {
+    StoredShapeData.pendingWriteCount--;
+    const oldState = this.state;
+    this.state = StoredShapeData.State.SAVED;
+    switch (oldState) {
+      case StoredShapeData.State.WRITING:
+        loadingElementFinished(writeWaiterId);
+        return;
+      case StoredShapeData.State.QUEUED_WRITE:
+        loadingElementFinished(writeWaiterId);
+        this.update();
+        return;
+      case StoredShapeData.State.SAVED:
+        console.error('Unexpected polygon state:' + this);
+    }
   }
 
   /**
    * Deletes this region from storage and userRegionData. Only for internal use.
-   *
-   * @param {google.maps.Polygon} polygon
    */
-  delete(polygon) {
+  delete() {
     // Polygon has been removed from map, we should delete on backend.
-    userRegionData.delete(polygon);
+    userRegionData.delete(this.popup.polygon);
     if (!this.id) {
       // Even if the user creates a polygon and then deletes it immediately,
       // the creation should trigger an update that must complete before the
       // deletion gets here. So there should always be an id.
-      console.error('Unexpected: polygon to be deleted had no id: ', polygon);
+      console.error('Unexpected: polygon to be deleted had no id: ', this);
       return;
     }
     // Nothing more needs to be done for this element because it is
     // unreachable and about to be GC'ed.
     userShapes.doc(this.id)
         .delete()
-        .then(() => ShapeData.pendingWriteCount--)
+        .then(() => StoredShapeData.pendingWriteCount--)
         .catch(createError('error deleting ' + this));
   }
 }
 
 // Inline static variables not supported in Cypress browser.
-ShapeData.State = {
+StoredShapeData.State = {
   /** Current state is same as that in backend. */
   SAVED: 0,
   /** Current state is being written to backend. No other writes needed. */
@@ -152,11 +179,35 @@ ShapeData.State = {
 };
 
 // Tracks global pending writes so that we can warn if user leaves page early.
-ShapeData.pendingWriteCount = 0;
+StoredShapeData.pendingWriteCount = 0;
+
+StoredShapeData.polygonGeoPoints = (polygon) => {
+  const geometry = [];
+  polygon.getPath().forEach((elt) => geometry.push(latLngToGeoPoint(elt)));
+  return geometry;
+};
+
+StoredShapeData.compareGeoPointArrays = (array1, array2) => {
+  // Catch if one argument is null/undefined.
+  if (!array1 !== !array2) {
+    return false;
+  }
+
+  if (array1.length !== array2.length) {
+    return false;
+  }
+  for (let i = 0; i < array1.length; i++) {
+    if (!array1[i].isEqual(array2[i])) {
+      return false;
+    }
+  }
+  return true;
+};
 
 // TODO(janakr): should this be initialized somewhere better?
 // Warning before leaving the page.
-window.onbeforeunload = () => ShapeData.pendingWriteCount > 0 ? true : null;
+window.onbeforeunload = () =>
+    StoredShapeData.pendingWriteCount > 0 ? true : null;
 
 const collectionName =
     'usershapes' + (inProduction() ? '' : ('-test/' + getTestCookie()));
@@ -188,10 +239,10 @@ function setUpPolygonDrawing(map, firebasePromise) {
 
     drawingManager.addListener('overlaycomplete', (event) => {
       const polygon = event.overlay;
-      const data = new ShapeData(null, '', 'calculating');
+      const popup = createPopup(polygon, map, '');
+      const data = new StoredShapeData(null, null, null, popup);
       userRegionData.set(polygon, data);
-      const popup = createPopup(polygon, map);
-      data.update(polygon, (damage) => popup.updateDamage(damage), '');
+      data.update();
     });
 
     drawingManager.setMap(map);
@@ -230,21 +281,31 @@ function processUserRegions(map, firebasePromise) {
 function drawRegionsFromFirestoreQuery(querySnapshot, map) {
   querySnapshot.forEach((userDefinedRegion) => {
     const storedGeometry = userDefinedRegion.get('geometry');
-    const coordinates = [];
-    storedGeometry.forEach(
-        (geopoint) => coordinates.push(geoPointToLatLng(geopoint)));
+    const coordinates = transformGeoPointArrayToLatLng(storedGeometry);
     const properties = Object.assign({}, appearance);
     properties.paths = coordinates;
     const polygon = new google.maps.Polygon(properties);
+    const notes = userDefinedRegion.get('notes');
+    const popup = createPopup(
+        polygon, map, notes, userDefinedRegion.get('calculatedData'));
     userRegionData.set(
         polygon,
-        new ShapeData(
-            userDefinedRegion.id, userDefinedRegion.get('notes'),
-            userDefinedRegion.get('damage')));
-    createPopup(polygon, map);
+        new StoredShapeData(
+            userDefinedRegion.id, notes, storedGeometry, popup));
     polygon.setMap(map);
   });
   loadingElementFinished(mapContainerId);
+}
+
+/**
+ * Transforms GeoPoint array to LatLng array.
+ * @param {Array<firebase.firestore.GeoPoint>} geopoints
+ * @return {Array<LatLng>} Array is actually just lat-lng pairs, but good enough
+ */
+function transformGeoPointArrayToLatLng(geopoints) {
+  const coordinates = [];
+  geopoints.forEach((geopoint) => coordinates.push(geoPointToLatLng(geopoint)));
+  return coordinates;
 }
 
 /**
