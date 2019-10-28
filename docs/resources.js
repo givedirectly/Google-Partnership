@@ -61,7 +61,6 @@ disasters.set(
 disasters.set(
     'harvey',
     new DisasterMapValue(
-        '2017', 'users/juliexxia/harvey-damage-crowdai-format-deduplicated',
-        'users/juliexxia/snap_texas', 'users/juliexxia/tiger_texas',
-        'users/juliexxia/income_texas', 'users/ruthtalbot/harvey-SVI',
-        'users/juliexxia/harvey-damage-zone-ms-buildings'));
+        '2017', 'users/gd/harvey/FEMA_Damage_Assessments', 'users/gd/harvey/snap',
+        'users/gd/harvey/tiger', 'users/gd/harvey/income',
+        'users/gd/harvey/svi', 'users/gd/harvey/buildings'));

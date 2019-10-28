@@ -2,13 +2,11 @@ import {authenticateToFirebase, Authenticator} from '../authenticate';
 import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, snapPercentageTag, snapPopTag, sviTag, totalPopTag, tractTag} from '../property_names.js';
 import {getDisaster, getResources} from '../resources.js';
 import {SettablePromise} from '../settable_promise.js';
-
 import storeCenter from './center.js';
+import {cdcGeoidKey, cdcSviKey, censusBlockGroupKey, censusGeoidKey, incomeKey, snapKey, tigerGeoidKey, totalKey} from './import_data_keys.js';
 
 /** @VisibleForTesting */
 export {countDamageAndBuildings};
-
-
 
 /**
  * Joins a state's census block-group-level SNAP/population data with building
@@ -37,17 +35,6 @@ export {countDamageAndBuildings};
  * editor.
  */
 // TODO: factor in margins of error?
-
-const censusGeoidKey = 'GEOid2';
-const censusBlockGroupKey = 'GEOdisplay-label';
-const tigerGeoidKey = 'GEOID';
-const cdcGeoidKey = 'FIPS';
-const cdcSviKey = 'RPL_THEMES';
-const snapKey = 'HD01_VD02';
-const totalKey = 'HD01_VD01';
-const incomeKey = 'HD01_VD01';
-// check with crowd ai folks about name.
-// const crowdAiDamageKey = 'descriptio';
 
 /**
  * Given a feature from the SNAP census data, returns a new
