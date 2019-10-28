@@ -101,7 +101,8 @@ class StoredShapeData {
   }
 
   /**
-   * @return {LatLng|Array<LatLng>} saved geometry of feature, either array of single
+   * @return {LatLng|Array<LatLng>} saved geometry of feature, either array of
+   *     single
    * point for a Marker or an array for a Polygon to use when reverting edits.
    */
   getSavedFeatureGeometry() {
