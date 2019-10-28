@@ -37,16 +37,16 @@ take effect.
   link, via `sudo ln -s /path/to/file/in/extracted/zip/named/chrome-wrapper
   /usr/bin/chromium` so that Cypress knows how to find it easily.
 
-* Test changes.
+* Test changes locally.
 
     ```shell
     yarn run cypress run # --browser chromium ## (only needed on Linux) 
     ```
 
 * Travis CI runs on each push to Github, unless the commit message has
-'[skip ci]' or a similar message inside it. You can trigger a run manually from
-the [Travis main page](https://travis-ci.com/givedirectly/Google-Partnership).
-Runs are recorded to the [Cypress dashboard](https://www.cypress.io/dashboard/).
+'[skip ci]' inside it. You can trigger a run manually from the [Travis main
+page](https://travis-ci.com/givedirectly/Google-Partnership). Runs are recorded
+to the [Cypress dashboard](https://www.cypress.io/dashboard/).
 
 * Save and share your personal test results in a web interface using
 [Cypress dashboard](https://www.cypress.io/dashboard/). The dashboard also
@@ -63,13 +63,7 @@ https://dashboard.cypress.io in the "Runs" tab under "Settings".
 
 * Install `clang-format`, probably using [`brew install clang-format`](https://brew.sh).
 
-* Set up auto-test-and-lint. You may need to modify pre-push to pass `--browser
-  chromium` if running on Linux.
-
-    ```shell
-    cd this/directory
-    cp pre-push-hook .git/hooks/pre-push
-    ```
+* Set up auto-lint: `cp pre-push-hook .git/hooks/pre-push`
 
 * Run `clang-format` or `eslint` on all relevant files:
 
