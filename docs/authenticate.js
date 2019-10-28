@@ -46,7 +46,7 @@ class Authenticator {
    * @param {Array<string>} additionalScopes OAuth2 scopes to request, if any
    */
   constructor(
-      authCallback, eeInitializeCallback = () => {},
+      authCallback, eeInitializeCallback,
       errorCallback = console.error, additionalScopes = []) {
     this.authCallback = authCallback;
     this.eeInitializeCallback = eeInitializeCallback;

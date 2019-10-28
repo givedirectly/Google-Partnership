@@ -1,7 +1,7 @@
 import {Authenticator} from '../authenticate.js';
 import TaskAccumulator from './task_accumulator.js';
 
-export {onStartupTaskCompleted as default};
+export {taskAccumulator};
 
 // TODO(janakr): change to givedirectly user.
 const earthEngineAssetBase = 'users/janak/';

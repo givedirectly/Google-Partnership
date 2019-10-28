@@ -1,4 +1,3 @@
-import {authenticateToFirebase, Authenticator} from '../authenticate.js';
 import {convertEeObjectToPromise} from '../map_util.js';
 import {getDisaster, getResources} from '../resources.js';
 import TaskAccumulator from './task_accumulator.js';
@@ -22,13 +21,13 @@ let bounds = null;
  *
  * @param {ee.FeatureCollection} features the featureCollection around which you
  * want to orient the map
+ * @param {Promise} firebaseAuthPromise
  */
-function storeCenter(features) {
+function storeCenter(features, firebaseAuthPromise) {
+  // We need both firebase to authenticate and the ee.List to evaluate.
   const taskAccumulator = new TaskAccumulator(2, saveBounds);
 
-  const authenticator =
-      new Authenticator((token) => authenticateToFirebase(token).then(() => taskAccumulator.taskCompleted()));
-  authenticator.start();
+  firebaseAuthPromise.then(() => taskAccumulator.taskCompleted());
 
   const damageWithCoords = ee.FeatureCollection(features.map(withGeo));
   // This is assuming we're not crossing the international date line...

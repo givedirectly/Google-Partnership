@@ -2,7 +2,7 @@ import createError from './create_error.js';
 import {mapContainerId, writeWaiterId} from './dom_constants.js';
 import {getTestCookie, inProduction} from './in_test_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
-import {latLngToGeoPoint} from './map_util.js';
+import {geoPointToLatLng, latLngToGeoPoint} from './map_util.js';
 import {createPopup, setUpPopup} from './popup.js';
 import {getResources} from './resources.js';
 import {userRegionData} from './user_region_data.js';
@@ -296,4 +296,15 @@ function drawRegionsFromFirestoreQuery(querySnapshot, map) {
     polygon.setMap(map);
   });
   loadingElementFinished(mapContainerId);
+}
+
+/**
+ * Transforms GeoPoint array to LatLng array.
+ * @param {Array<firebase.firestore.GeoPoint>} geopoints
+ * @return {Array<LatLng>} Array is actually just lat-lng pairs, but good enough
+ */
+function transformGeoPointArrayToLatLng(geopoints) {
+  const coordinates = [];
+  geopoints.forEach((geopoint) => coordinates.push(geoPointToLatLng(geopoint)));
+  return coordinates;
 }

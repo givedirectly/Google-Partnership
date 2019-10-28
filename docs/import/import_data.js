@@ -1,7 +1,8 @@
-import {CLIENT_ID} from '../authenticate.js';
 import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, snapPercentageTag, snapPopTag, sviTag, totalPopTag, tractTag} from '../property_names.js';
 import {getDisaster, getResources} from '../resources.js';
 import storeCenter from './center.js';
+import {Authenticator, authenticateToFirebase} from '../authenticate';
+import {SettablePromise} from '../settable_promise.js';
 
 /** @VisibleForTesting */
 export {countDamageAndBuildings};
@@ -172,12 +173,12 @@ function attachBlockGroups(building, blockGroups) {
 }
 
 /** Performs operation of processing inputs and creating output asset. */
-function run() {
+function run(firebaseAuthPromise) {
   ee.initialize();
 
   const resources = getResources();
   const damage = ee.FeatureCollection(resources.damage);
-  storeCenter(damage);
+  storeCenter(damage, firebaseAuthPromise);
 
   const snap = ee.FeatureCollection(resources.rawSnap)
                    .map((feature) => stringifyGeoid(feature, censusGeoidKey));
@@ -247,24 +248,10 @@ function run() {
  */
 function setup() {
   $(document).ready(function() {
-    // Shows a button prompting the user to log in.
-    const onImmediateFailed = function() {
-      $('.g-sign-in').removeClass('hidden');
-      $('.output').text('(Log in to see the result.)');
-      $('.g-sign-in .button').click(function() {
-        ee.data.authenticateViaPopup(function() {
-          // If the login succeeds, hide the login button and run the analysis.
-          $('.g-sign-in').addClass('hidden');
-          run();
-        });
-      });
-    };
-
-    // Attempt to authenticate using existing credentials.
-    // TODO: deprecated, use ee.data.authenticateViaOauth()
-    ee.data.authenticate(CLIENT_ID, run, 'error', null, onImmediateFailed);
-
-    // run();
+    const firebaseAuthPromise = new SettablePromise();
+    const runOnInitialize = () => run(firebaseAuthPromise.getPromise());
+    const authenticator = new Authenticator((token) => firebaseAuthPromise.setPromise(authenticateToFirebase(token)), runOnInitialize);
+    authenticator.start();
   });
 }
 

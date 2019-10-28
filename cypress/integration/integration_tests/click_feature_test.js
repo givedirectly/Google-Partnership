@@ -81,9 +81,6 @@ describe('Integration test for clicking feature', () => {
 function clickAndVerifyBlockGroup() {
   cy.get('[placeholder="Search"]').clear().type('Aldine Estates{enter}');
 
-  // const polygonButton = cy.get('[title="Add a marker"]');
-  // polygonButton.click();
-
   zoomOut(3);
   cy.get('.map').click(400, 600);
   cy.get('.map').should('contain', 'SCORE: 72');
