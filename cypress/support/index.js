@@ -14,8 +14,14 @@ global.tableClass = '.google-visualization-table-table';
  */
 before(() => {
   addScriptToDocument(
-      'https://maps.google.com/maps/api/js?libraries=drawing,places&key=AIzaSyBAQkh-kRrYitkPafxVLoZx3E5aYM-auXM', () => {return typeof(google) !== 'undefined' && typeof(google.maps) !== 'undefined';});
-  addScriptToDocument('https://unpkg.com/deck.gl@latest/dist.min.js', () => typeof(deck) !== 'undefined')
+      'https://maps.google.com/maps/api/js?libraries=drawing,places&key=AIzaSyBAQkh-kRrYitkPafxVLoZx3E5aYM-auXM',
+      () => {
+        return typeof (google) !== 'undefined' &&
+            typeof (google.maps) !== 'undefined';
+      });
+  addScriptToDocument(
+      'https://unpkg.com/deck.gl@latest/dist.min.js',
+      () => typeof (deck) !== 'undefined')
 });
 
 let eeToken = null;
@@ -46,7 +52,8 @@ before(() => cy.task('getEarthEngineToken').then((token) => eeToken = token));
  * @param {Function} checkDefinedCallback Callback that will be repeatedly
  *     invoked after the script is added to the document to see if the desired
  *     symbol has been loaded yet. It can take a few cycles for the document to
- *     be reprocessed. The callback should normally return "typeof(desiredSymbol) !== 'undefined'".
+ *     be reprocessed. The callback should normally return
+ * "typeof(desiredSymbol) !== 'undefined'".
  *
  */
 function addScriptToDocument(scriptUrl, checkDefinedCallback) {
@@ -56,11 +63,16 @@ function addScriptToDocument(scriptUrl, checkDefinedCallback) {
 
   const headElt = document.getElementsByTagName('body');
   headElt[0].appendChild(script);
-  verifyDefined(checkDefinedCallback);
+  waitForCallback(checkDefinedCallback);
 }
 
-function verifyDefined(checkDefinedCallback) {
-  if (!checkDefinedCallback()) {
-    cy.wait(1).then(() => verifyDefined(checkDefinedCallback));
+/**
+ * Function that repeatedly calls a callback until it returns true, waiting 1 ms
+ * after each failuire.
+ * @param {Function} callback
+ */
+function waitForCallback(callback) {
+  if (!callback()) {
+    cy.wait(1).then(() => waitForCallback(callback));
   }
 }
