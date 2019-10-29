@@ -17,7 +17,7 @@ class TaskAccumulator {
    * tasks are done.
    */
   taskCompleted() {
-    if (--this.numTasks) {
+    if (--this.numTasks === 0) {
       this.onCompletion();
     }
   }

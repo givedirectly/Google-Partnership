@@ -166,8 +166,6 @@ function attachBlockGroups(building, blockGroups) {
  * @param {Promise} firebaseAuthPromise
  */
 function run(firebaseAuthPromise) {
-  ee.initialize();
-
   const resources = getResources();
   const damage = ee.FeatureCollection(resources.damage);
   storeCenter(damage, firebaseAuthPromise);

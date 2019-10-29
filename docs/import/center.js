@@ -1,6 +1,7 @@
 import {convertEeObjectToPromise} from '../map_util.js';
 import {getDisaster, getResources} from '../resources.js';
 import TaskAccumulator from './task_accumulator.js';
+import createError from '../create_error.js';
 
 export {storeCenter as default};
 
@@ -56,7 +57,5 @@ function saveBounds() {
       .collection(disaster)
       .doc('map-bounds')
       .set(docData)
-      .then(() => {
-        console.log('wrote ' + disaster + ' map center to firestore');
-      });
+      .catch(createError('error saving bounds for ' + disaster + ': ' + docData));
 }
