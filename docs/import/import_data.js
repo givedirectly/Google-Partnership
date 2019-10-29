@@ -1,6 +1,8 @@
-import {CLIENT_ID} from '../authenticate.js';
+import {authenticateToFirebase, Authenticator} from '../authenticate.js';
 import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, snapPercentageTag, snapPopTag, sviTag, totalPopTag, tractTag} from '../property_names.js';
 import {getDisaster, getResources} from '../resources.js';
+import SettablePromise from '../settable_promise.js';
+import storeCenter from './center.js';
 import {cdcGeoidKey, cdcSviKey, censusBlockGroupKey, censusGeoidKey, incomeKey, snapKey, tigerGeoidKey, totalKey} from './import_data_keys.js';
 
 /** @VisibleForTesting */
@@ -159,18 +161,22 @@ function attachBlockGroups(building, blockGroups) {
   return building.set(geoidTag, geoid);
 }
 
-/** Performs operation of processing inputs and creating output asset. */
-function run() {
-  ee.initialize();
-
+/**
+ * Performs operation of processing inputs and creating output asset.
+ * @param {Promise} firebaseAuthPromise
+ */
+function run(firebaseAuthPromise) {
   const resources = getResources();
+  const damage = ee.FeatureCollection(resources.damage);
+  storeCenter(damage, firebaseAuthPromise);
+
   const snap = ee.FeatureCollection(resources.rawSnap)
                    .map((feature) => stringifyGeoid(feature, censusGeoidKey));
   // filter block groups to those with damage.
   const blockGroups = ee.Join.simple().apply(
-      ee.FeatureCollection(resources.bg),
-      ee.FeatureCollection(resources.damage),
+      ee.FeatureCollection(resources.bg), damage,
       ee.Filter.intersects({leftField: '.geo', rightField: '.geo'}));
+
   // join snap stats to block group geometries
   const joinedSnap =
       ee.Join.inner()
@@ -189,8 +195,7 @@ function run() {
           .map(combineWithIncome);
   // filter SVI to those with damage and join
   const svi = ee.Join.simple().apply(
-      ee.FeatureCollection(resources.svi),
-      ee.FeatureCollection(resources.damage),
+      ee.FeatureCollection(resources.svi), damage,
       ee.Filter.intersects({leftField: '.geo', rightField: '.geo'}));
   const joinedSnapIncomeSVI =
       ee.Join.inner()
@@ -233,24 +238,13 @@ function run() {
  */
 function setup() {
   $(document).ready(function() {
-    // Shows a button prompting the user to log in.
-    const onImmediateFailed = function() {
-      $('.g-sign-in').removeClass('hidden');
-      $('.output').text('(Log in to see the result.)');
-      $('.g-sign-in .button').click(function() {
-        ee.data.authenticateViaPopup(function() {
-          // If the login succeeds, hide the login button and run the analysis.
-          $('.g-sign-in').addClass('hidden');
-          run();
-        });
-      });
-    };
-
-    // Attempt to authenticate using existing credentials.
-    // TODO: deprecated, use ee.data.authenticateViaOauth()
-    ee.data.authenticate(CLIENT_ID, run, 'error', null, onImmediateFailed);
-
-    // run();
+    const firebaseAuthPromise = new SettablePromise();
+    const runOnInitialize = () => run(firebaseAuthPromise.getPromise());
+    const authenticator = new Authenticator(
+        (token) =>
+            firebaseAuthPromise.setPromise(authenticateToFirebase(token)),
+        runOnInitialize);
+    authenticator.start();
   });
 }
 

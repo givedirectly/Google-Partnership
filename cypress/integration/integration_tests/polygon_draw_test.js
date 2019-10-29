@@ -48,9 +48,11 @@ describe('Integration tests for drawing polygons', () => {
 
   it('Draws a polygon, calculates damage', () => {
     cy.visit(host);
-    zoom(8);
+    // Sometimes the map load interacts strangely with the search. So wait.
+    cy.awaitLoad();
+    cy.get('[placeholder="Search"]').clear().type('Aldine Estates{enter}');
     drawPolygonAndClickOnIt(-250);
-    cy.get('.popup-damage').contains('damage count: 23');
+    cy.get('.popup-damage').contains('damage count: 1');
     cy.get('.popup-damage')
         .should('have.css', 'color')
         .and('eq', 'rgb(0, 0, 0)');
@@ -388,17 +390,6 @@ function drawPointAndPrepareForNext(x, y) {
   // const clientY = y + 81;
   // cy.get('.map').trigger('mousemove', {clientX: clientX, clientY: clientY});
   cy.get('.map').click(x, y);
-}
-
-/**
- * Helper function to zoom some amount of times.
- * @param {Integer} numTimes
- */
-function zoom(numTimes) {
-  for (let i = 0; i < numTimes; i++) {
-    cy.get('[title="Zoom in"]').click();
-    cy.wait(500);
-  }
 }
 
 /**

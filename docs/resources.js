@@ -28,6 +28,7 @@ const disasters = new Map();
 /** Constants for {@code disasters} map. */
 class DisasterMapValue {
   /**
+   * @param {string} year
    * @param {string} damage ee asset path
    * @param {string} snap ee asset path to snap info
    * @param {string} bg ee asset path to block group info
@@ -35,7 +36,8 @@ class DisasterMapValue {
    * @param {string} svi ee asset path to svi info
    * @param {string} buildings ee asset path to building footprint info
    */
-  constructor(damage, snap, bg, income, svi, buildings) {
+  constructor(year, damage, snap, bg, income, svi, buildings) {
+    this.year = year;
     this.damage = damage;
     this.rawSnap = snap;
     this.bg = bg;
@@ -45,17 +47,21 @@ class DisasterMapValue {
   }
 }
 
-// TODO: upload michael income, SVI, buildings data
+// TODO: Don't store census/svi data in relation to a disaster so we can handle
+// scenarios that are not 1:1 state:disaster e.g. michael which hit both
+// florida and georgia.
 disasters.set(
     'michael',
     new DisasterMapValue(
-        'users/gd/michael/FEMA_Damage_Assessments', 'users/gd/michael/snap',
-        'users/gd/michael/tiger', 'users/gd/michael/income',
-        'users/gd/michael/svi', 'users/gd/michael/relevant_buildings'));
+        '2018', 'users/gd/michael/FEMA_Damage_Assessments',
+        'users/gd/michael/snap', 'users/gd/michael/tiger',
+        'users/gd/michael/income', 'users/gd/michael/svi',
+        'users/gd/michael/relevant_buildings'));
 
 disasters.set(
     'harvey',
     new DisasterMapValue(
-        'users/gd/harvey/FEMA_Damage_Assessments', 'users/gd/harvey/snap',
-        'users/gd/harvey/tiger', 'users/gd/harvey/income',
-        'users/gd/harvey/svi', 'users/gd/harvey/buildings'));
+        '2017', 'users/gd/harvey/FEMA_Damage_Assessments',
+        'users/gd/harvey/snap', 'users/gd/harvey/tiger',
+        'users/gd/harvey/income', 'users/gd/harvey/svi',
+        'users/gd/harvey/buildings'));
