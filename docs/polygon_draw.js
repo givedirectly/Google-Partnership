@@ -1,4 +1,4 @@
-import createError from './create_error.js';
+import {createError} from './error.js';
 import {mapContainerId, writeWaiterId} from './dom_constants.js';
 import {getTestCookie, inProduction} from './in_test_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';

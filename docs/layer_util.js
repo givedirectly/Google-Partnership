@@ -1,4 +1,4 @@
-import createError from './create_error.js';
+import {createError} from './error.js';
 import {mapContainerId} from './dom_constants.js';
 import {assets, EarthEngineAsset} from './earth_engine_asset.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';

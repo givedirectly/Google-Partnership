@@ -16,6 +16,8 @@ html, body {
   --green-6: #E4EEEC;
   --green-7: #F4FBFA;
 
+  --error-color: #F44336;
+
   --main-content-padding: 24px;
 
   --background-color-transition: background-color 0.3s ease-in-out;
@@ -355,7 +357,7 @@ input[type=checkbox]:checked {
 
 /** Thresholds css */
 .error {
-  color: #E57373;
+  color: var(--error-color);
 }
 
 /**
@@ -426,4 +428,60 @@ input[type=checkbox]:checked {
 
 .popup-damage {
   margin: 6px auto;
+}
+
+/** Snackbar css */
+#snackbar {
+  visibility: hidden;
+  min-width: 250px;
+  line-height: 32px;
+  margin-left: -125px;
+  background-color: var(--error-color);
+  color: #ffffff;
+  text-align: center;
+  border-radius: 4px;
+  padding: 16px;
+  position: fixed;
+  z-index: 1;
+  left: 50%;
+  bottom: 30px;
+  box-shadow: 0px 3px 5px -1px rgba(0,0,0,0.2),
+              0px 6px 10px 0px rgba(0,0,0,0.14),
+              0px 1px 18px 0px rgba(0,0,0,0.12);
+}
+
+.snackbar-icon {
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+
+#snackbar-text {
+  display: inline-block;
+}
+
+#snackbar.show {
+  visibility: visible;
+  -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
+  animation: fadein 0.5s, fadeout 0.5s 2.5s;
+}
+
+@-webkit-keyframes fadein {
+  from {bottom: 0; opacity: 0;}
+  to {bottom: 30px; opacity: 1;}
+}
+
+@keyframes fadein {
+  from {bottom: 0; opacity: 0;}
+  to {bottom: 30px; opacity: 1;}
+}
+
+@-webkit-keyframes fadeout {
+  from {bottom: 30px; opacity: 1;}
+  to {bottom: 0; opacity: 0;}
+}
+
+@keyframes fadeout {
+  from {bottom: 30px; opacity: 1;}
+  to {bottom: 0; opacity: 0;}
 }

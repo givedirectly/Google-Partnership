@@ -1,3 +1,4 @@
+import {showError} from './error.js';
 import {removeScoreLayer} from './layer_util.js';
 import {createAndDisplayJoinedData} from './run.js';
 
@@ -206,6 +207,7 @@ function hasErrors(threshold, toggle) {
  * @param {string} message
  */
 function setErrorMessage(message) {
+  showError(message);
   setInnerHtml('error', 'ERROR: ' + message);
 }
 
