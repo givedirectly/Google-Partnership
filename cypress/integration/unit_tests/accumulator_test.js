@@ -1,3 +1,5 @@
+import TaskAccumulator from '../../../docs/import/task_accumulator.js';
+
 describe('Unit test for TaskAccumulator', () => {
   it('successfully accumulates all tasks', () => {
     let completedCalled = false;
