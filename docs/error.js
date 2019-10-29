@@ -1,6 +1,6 @@
 export {createError, showError};
 
-const SNACKBAR_DURATION = 3000;  // ms
+const SNACKBAR_DURATION = 3000; // ms
 
 /**
  * Simple function that returns a lambda to print an error to console.
