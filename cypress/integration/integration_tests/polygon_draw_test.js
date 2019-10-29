@@ -19,8 +19,8 @@ describe('Integration tests for drawing polygons', () => {
     cy.awaitLoad();
     cy.get('[placeholder="Search"]').clear().type('Aldine Estates{enter}');
     drawPolygonAndClickOnIt(-250);
-    cy.get('.popup-damage').contains('damage count: 1');
-    cy.get('.popup-damage')
+    cy.get('.popup-calculated-data').contains('damage count: 1');
+    cy.get('.popup-calculated-data')
         .should('have.css', 'color')
         .and('eq', 'rgb(0, 0, 0)');
   });
@@ -33,13 +33,13 @@ describe('Integration tests for drawing polygons', () => {
   it('Draws a polygon, checks for calculating status', () => {
     cy.visit(host);
     drawPolygonAndClickOnIt();
-    cy.get('.popup-damage').contains('damage count: calculating');
+    cy.get('.popup-calculated-data').contains('calculating');
     // assert damage text is grey while editing
-    cy.get('.popup-damage')
+    cy.get('.popup-calculated-data')
         .should('have.css', 'color')
         .and('eq', 'rgb(128, 128, 128)');
     cy.awaitLoad(['writeWaiter']);
-    cy.get('.popup-damage')
+    cy.get('.popup-calculated-data')
         .should('have.css', 'color')
         .and('eq', 'rgb(0, 0, 0)');
   });

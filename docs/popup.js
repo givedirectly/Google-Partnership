@@ -1,4 +1,5 @@
 import {userRegionData} from './user_region_data.js';
+import {displayCalculatedData} from './polygon_draw.js';
 
 export {
   createPopup,
@@ -56,33 +57,37 @@ function setUpPopup() {
     }
 
     /**
-     * Sets the calculatedData property of this popup.
+     * Sets the calculatedData property of this popup. The calculatedData must
+     * be freshly calculated.
      * @param {Object} calculatedData
      */
     setCalculatedData(calculatedData) {
       this.calculatedData = calculatedData;
-      this.updateDamageDiv();
+      if (this.calculatedDataDiv) {
+        this.calculatedDataDiv.style.color = 'black';
+        this.updateCalculatedDataDiv();
+      }
     }
 
     /** Sets the status of calculated data in this popup to "calculating". */
     setPendingCalculation() {
-      this.setCalculatedData(SENTINEL_CALCULATING);
+      this.calculatedData = SENTINEL_CALCULATING;
+      this.updateCalculatedDataDiv();
     }
 
     /**
      * Updates this popup's damage child div if it exists to a new damage value.
      */
-    updateDamageDiv() {
-      if (!this.damageDiv) {
+    updateCalculatedDataDiv() {
+      if (!this.calculatedDataDiv) {
         return;
       }
-      const isNumber = isNaN(this.calculatedData.damage);
-      this.damageDiv.innerHTML = 'damage count: ' +
-          (isNumber ? 'calculating' : this.calculatedData.damage);
-      if (isNumber || !this.saved) {
-        this.damageDiv.style.color = 'grey';
+      removeAllChildren(this.calculatedDataDiv);
+      if (this.calculatedData === SENTINEL_CALCULATING) {
+        this.calculatedDataDiv.innerHTML = 'calculating';
+        this.calculatedDataDiv.style.color = 'grey';
       } else {
-        this.damageDiv.style.color = 'black';
+        displayCalculatedData(this.calculatedData, this.calculatedDataDiv);
       }
     }
 
@@ -112,9 +117,9 @@ function setUpPopup() {
       removeAllChildren(content);
 
       if (!isMarker(this.mapFeature)) {
-        this.damageDiv = document.createElement('div');
-        this.damageDiv.classList.add('popup-damage');
-        this.updateDamageDiv();
+        this.calculatedDataDiv = document.createElement('div');
+        this.calculatedDataDiv.classList.add('popup-calculated-data');
+        this.updateCalculatedDataDiv();
       }
 
       const notesDiv = document.createElement('div');
@@ -142,7 +147,7 @@ function setUpPopup() {
 
         if (!isMarker(mapFeature)) {
           // Grey out the damage stat until we save so it's clearly old.
-          this.damageDiv.style.color = 'grey';
+          this.calculatedDataDiv.style.color = 'grey';
         }
         content.removeChild(notesDiv);
         content.removeChild(editButton);
@@ -181,7 +186,7 @@ function setUpPopup() {
       content.appendChild(editButton);
       content.appendChild(closeButton);
       if (!isMarker(mapFeature)) {
-        content.appendChild(this.damageDiv);
+        content.appendChild(this.calculatedDataDiv);
       }
       content.appendChild(notesDiv);
     }
