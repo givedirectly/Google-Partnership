@@ -1,7 +1,6 @@
 import createError from '../create_error.js';
 import {convertEeObjectToPromise} from '../map_util.js';
 import {getDisaster, getResources} from '../resources.js';
-import TaskAccumulator from './task_accumulator.js';
 
 export {storeCenter as default};
 
@@ -15,8 +14,6 @@ function withGeo(feature) {
   return feature.set('lng', centroid.get(0), 'lat', centroid.get(1));
 }
 
-let bounds = null;
-
 /**
  * Stores an approximate bounds around a given feature collection.
  *
@@ -25,30 +22,27 @@ let bounds = null;
  * @param {Promise} firebaseAuthPromise
  */
 function storeCenter(features, firebaseAuthPromise) {
-  // We need both firebase to authenticate and the ee.List to evaluate.
-  const taskAccumulator = new TaskAccumulator(2, saveBounds);
-
-  firebaseAuthPromise.then(() => taskAccumulator.taskCompleted());
-
   const damageWithCoords = ee.FeatureCollection(features.map(withGeo));
   // This is assuming we're not crossing the international date line...
   const outerBounds = ee.List([
+    damageWithCoords.aggregate_max('lat'),
     damageWithCoords.aggregate_max('lng'),
     damageWithCoords.aggregate_min('lat'),
     damageWithCoords.aggregate_min('lng'),
-    damageWithCoords.aggregate_max('lat'),
   ]);
-  convertEeObjectToPromise(outerBounds).then((evaluatedBounds) => {
-    bounds = evaluatedBounds;
-    taskAccumulator.taskCompleted();
-  });
+  Promise.all([firebaseAuthPromise, convertEeObjectToPromise(outerBounds)])
+      .then((results) => saveBounds(results[1]))
+      .catch(createError('error finding bounds of map'));
 }
 
-/** Writes the calculated bounds to firestore. */
-function saveBounds() {
+/**
+ * Writes the calculated bounds to firestore.
+ * @param {array<number>} bounds
+ */
+function saveBounds(bounds) {
   const docData = {
-    ne: new firebase.firestore.GeoPoint(bounds[3], bounds[0]),
-    sw: new firebase.firestore.GeoPoint(bounds[1], bounds[2]),
+    ne: new firebase.firestore.GeoPoint(bounds[0], bounds[1]),
+    sw: new firebase.firestore.GeoPoint(bounds[2], bounds[3]),
   };
   const disaster = getDisaster();
   firebase.firestore()

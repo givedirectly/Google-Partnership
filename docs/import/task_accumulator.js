@@ -13,7 +13,7 @@ class TaskAccumulator {
   }
 
   /**
-   * Registers a task as completed and calls the on completion function if all
+   * Registers a task as completed and calls the "on completion" function if all
    * tasks are done.
    */
   taskCompleted() {

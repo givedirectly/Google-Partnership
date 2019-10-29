@@ -7,6 +7,7 @@ export {
   initializeFirebase,
 };
 
+
 // The client ID from
 // https://console.cloud.google.com/apis/credentials?project=mapping-crisis
 const CLIENT_ID =

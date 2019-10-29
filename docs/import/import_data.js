@@ -1,7 +1,7 @@
-import {authenticateToFirebase, Authenticator} from '../authenticate';
+import {authenticateToFirebase, Authenticator} from '../authenticate.js';
 import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, snapPercentageTag, snapPopTag, sviTag, totalPopTag, tractTag} from '../property_names.js';
 import {getDisaster, getResources} from '../resources.js';
-import {SettablePromise} from '../settable_promise.js';
+import SettablePromise from '../settable_promise.js';
 import storeCenter from './center.js';
 import {cdcGeoidKey, cdcSviKey, censusBlockGroupKey, censusGeoidKey, incomeKey, snapKey, tigerGeoidKey, totalKey} from './import_data_keys.js';
 
@@ -166,9 +166,12 @@ function attachBlockGroups(building, blockGroups) {
  * @param {Promise} firebaseAuthPromise
  */
 function run(firebaseAuthPromise) {
+  console.log('eh?');
   const resources = getResources();
   const damage = ee.FeatureCollection(resources.damage);
   storeCenter(damage, firebaseAuthPromise);
+
+  return;
 
   const snap = ee.FeatureCollection(resources.rawSnap)
                    .map((feature) => stringifyGeoid(feature, censusGeoidKey));
