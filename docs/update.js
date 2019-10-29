@@ -207,8 +207,8 @@ function hasErrors(threshold, toggle) {
  * @param {string} message
  */
 function setErrorMessage(message) {
-  showError(message);
   setInnerHtml('error', 'ERROR: ' + message);
+  showError(message);
 }
 
 /**
