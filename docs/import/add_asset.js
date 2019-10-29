@@ -1,6 +1,6 @@
 import {Authenticator} from '../authenticate.js';
-import TaskAccumulator from './task_accumulator.js';
 import {getDisaster} from '../resources.js';
+import TaskAccumulator from './task_accumulator.js';
 
 export {taskAccumulator};
 
