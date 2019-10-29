@@ -166,12 +166,9 @@ function attachBlockGroups(building, blockGroups) {
  * @param {Promise} firebaseAuthPromise
  */
 function run(firebaseAuthPromise) {
-  console.log('eh?');
   const resources = getResources();
   const damage = ee.FeatureCollection(resources.damage);
   storeCenter(damage, firebaseAuthPromise);
-
-  return;
 
   const snap = ee.FeatureCollection(resources.rawSnap)
                    .map((feature) => stringifyGeoid(feature, censusGeoidKey));
