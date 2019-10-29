@@ -215,8 +215,6 @@ function run(firebaseAuthPromise) {
       (feature) => countDamageAndBuildings(feature, buildingsHisto));
 
   const assetName = 'data-ms-as-nod';
-  // TODO(#61): parameterize ee user account to write assets to or make GD
-  // account.
   // TODO: delete existing asset with same name if it exists.
   const task = ee.batch.Export.table.toAsset(
       data, assetName, 'users/gd/' + getDisaster() + '/' + assetName);
