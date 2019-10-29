@@ -14,6 +14,7 @@ describe('Unit test for toggleLayerOn', () => {
         EarthEngineAsset.Type.FEATURECOLLECTION, 'asset1', false);
     assets['asset2'] = new EarthEngineAsset(
         EarthEngineAsset.Type.FEATURECOLLECTION, 'asset2', false);
+    // Initialize deck object in production.
     setMapToDrawLayersOn(null);
     layerArray[0] = new deck.GeoJsonLayer({});
     layerArray[1] = new deck.GeoJsonLayer({});
