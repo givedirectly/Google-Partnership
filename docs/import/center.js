@@ -1,7 +1,6 @@
 import createError from '../create_error.js';
 import {convertEeObjectToPromise} from '../map_util.js';
 import {getDisaster, getResources} from '../resources.js';
-
 import TaskAccumulator from './task_accumulator.js';
 
 export {storeCenter as default};
