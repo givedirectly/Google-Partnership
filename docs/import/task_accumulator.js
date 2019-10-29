@@ -3,7 +3,7 @@ export {TaskAccumulator as default};
 /** A util class for waiting on multiple async processes to finish. */
 class TaskAccumulator {
   /**
-   *
+   * @constructor
    * @param {number} numTasks
    * @param {function} onCompletion
    */
