@@ -1,5 +1,5 @@
-import {createError} from './error.js';
 import {mapContainerId, writeWaiterId} from './dom_constants.js';
+import {createError} from './error.js';
 import {getTestCookie, inProduction} from './in_test_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {createPopup, isMarker, setUpPopup} from './popup.js';
