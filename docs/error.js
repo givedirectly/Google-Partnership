@@ -1,6 +1,6 @@
 export {createError, showError};
 
-const SNACKBAR_DURATION = 3000; // ms
+const SNACKBAR_DURATION_MS = 3000;
 
 /**
  * Simple function that returns a lambda to print an error to console.
@@ -29,5 +29,5 @@ function showError(msg, snackbarMsg) {
   document.getElementById('snackbar-text').innerHTML = snackbarMsg;
   setTimeout(() => {
     snackbar.className = snackbar.className.replace('show', '');
-  }, SNACKBAR_DURATION);
+  }, SNACKBAR_DURATION_MS);
 }
