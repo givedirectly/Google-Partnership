@@ -2,7 +2,6 @@ import './commands';
 import './mock_firebase';
 
 import {cypressTestCookieName, earthEngineTestTokenCookieName, firebaseTestTokenCookieName} from '../../docs/in_test_util';
-import {CLIENT_ID} from '../../docs/authenticate';
 
 global.host = 'http://localhost:8080/';
 global.tableClass = '.google-visualization-table-table';
