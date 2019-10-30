@@ -3,14 +3,23 @@ import {CLIENT_ID} from '../../docs/authenticate';
 export {loadScriptsBefore};
 
 const scriptMap = new Map([
-  ['maps',
-  ['https://maps.google.com/maps/api/js?libraries=drawing,places&key=AIzaSyBAQkh-kRrYitkPafxVLoZx3E5aYM-auXM',
-    () => typeof (google) !== 'undefined' &&
-        typeof (google.maps) !== 'undefined']],
-  ['deck', ['https://unpkg.com/deck.gl@latest/dist.min.js',
-    () => typeof (deck) !== 'undefined']],
-  ['ee', [host + 'lib/ee_api_js_debug.js', () => typeof(ee) !== 'undefined']],]
-);
+  [
+    'maps',
+    [
+      'https://maps.google.com/maps/api/js?libraries=drawing,places&key=AIzaSyBAQkh-kRrYitkPafxVLoZx3E5aYM-auXM',
+      () => typeof (google) !== 'undefined' &&
+          typeof (google.maps) !== 'undefined'
+    ]
+  ],
+  [
+    'deck',
+    [
+      'https://unpkg.com/deck.gl@latest/dist.min.js',
+      () => typeof (deck) !== 'undefined'
+    ]
+  ],
+  ['ee', [host + 'lib/ee_api_js_debug.js', () => typeof (ee) !== 'undefined']],
+]);
 
 /**
  * Load genuine scripts into local document. This gives unit tests the ability
@@ -39,17 +48,17 @@ function loadScriptsBefore() {
     }
     if (usesEe) {
       // We need to make sure ee has actually loaded.
-      waitForCallback(scriptMap.get('ee')[1]).then(() => cy.wrap(
-          new Promise((resolve, reject) =>
-              ee.data.setAuthToken(
-                  CLIENT_ID, 'Bearer', earthEngineCustomToken,
-                  // Expires in 3600 is a lie, but no need to tell the truth.
-                  /* expiresIn */ 3600, /* extraScopes */[],
-                  /* callback */   () => ee.initialize(null, null, resolve,
-                      reject)
-                  ,
-                  /* updateAuthLibrary */ false)
-          )));
+      waitForCallback(scriptMap.get('ee')[1])
+          .then(
+              () => cy.wrap(new Promise(
+                  (resolve, reject) => ee.data.setAuthToken(
+                      CLIENT_ID, 'Bearer', earthEngineCustomToken,
+                      // Expires in 3600 is a lie, but no need to tell the
+                      // truth.
+                      /* expiresIn */ 3600, /* extraScopes */[],
+                      /* callback */
+                      () => ee.initialize(null, null, resolve, reject),
+                      /* updateAuthLibrary */ false))));
     }
   });
 }
