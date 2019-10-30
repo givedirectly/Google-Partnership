@@ -1,3 +1,5 @@
+import {CLIENT_ID} from './authenticate.js';
+
 export {run};
 /**
  * The script run to generate /users/juliexxia/harvey-damage-crowdai-format.
@@ -64,11 +66,6 @@ function run() {
  * when the document is loaded, we do the work.
  */
 function setup() {
-  // The client ID from the Google Developers Console.
-  // TODO(#13): This is from janakr's console. Should use one for GiveDirectly.
-  const CLIENT_ID = '634162034024-oodhl7ngkg63hd9ha9ho9b3okcb0bp8s' +
-      '.apps.googleusercontent.com';
-
   $(document).ready(function() {
     // Shows a button prompting the user to log in.
     const onImmediateFailed = function() {
@@ -86,8 +83,6 @@ function setup() {
     // Attempt to authenticate using existing credentials.
     // TODO: deprecated, use ee.data.authenticateViaOauth()
     ee.data.authenticate(CLIENT_ID, run, 'error', null, onImmediateFailed);
-
-    // run();
   });
 }
 

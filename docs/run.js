@@ -100,8 +100,6 @@ function createAndDisplayJoinedData(
  * @param {google.maps.Map} map main map
  */
 function createAssetCheckboxes(map) {
-  // TODO: these probably shouldn't just sit at the bottom of the page - move to
-  // a better place.
   const sidebarDiv = document.getElementById(sidebarDatasetsId);
   Object.keys(assets).forEach(
       (assetName) => createNewCheckboxForAsset(assetName, sidebarDiv, map));

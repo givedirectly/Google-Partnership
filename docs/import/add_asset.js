@@ -1,10 +1,10 @@
 import {Authenticator} from '../authenticate.js';
+import {getDisaster} from '../resources.js';
 import TaskAccumulator from './task_accumulator.js';
 
 export {taskAccumulator};
 
-// TODO(janakr): change to givedirectly user.
-const earthEngineAssetBase = 'users/janak/';
+const earthEngineAssetBase = 'users/gd/' + getDisaster();
 const earthEnginePrefix =
     'projects/earthengine-legacy/assets/' + earthEngineAssetBase;
 

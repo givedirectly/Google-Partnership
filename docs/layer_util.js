@@ -40,8 +40,11 @@ const layerMap = new Map();
  */
 const layerArray = [];
 
-/** Container for all deck.gl layers. */
-const deckGlOverlay = new deck.GoogleMapsOverlay();
+/**
+ * Container for all deck.gl layers. Initialized lazily so tests can load file
+ * without deck being defined yet.
+ */
+let deckGlOverlay;
 
 /** Values of layerMap. */
 class LayerMapValue {
@@ -67,6 +70,7 @@ class LayerMapValue {
  * @param {google.maps.Map} map
  */
 function setMapToDrawLayersOn(map) {
+  deckGlOverlay = new deck.GoogleMapsOverlay();
   deckGlOverlay.setMap(map);
 }
 
