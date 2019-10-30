@@ -168,7 +168,7 @@ const gdVisits = new EarthEngineAsset(
 const assets = {
   'users/juliexxia/harvey-damage-crowdai-format-deduplicated':
       harveyDamageCrowdAIFormat,
-  'users/gd/harvey/SVI': sviData,
+  'users/gd/harvey/svi': sviData,
   'users/ruthtalbot/harvey-pathofstorm-radii': pathOfStormRadii,
   'users/ruthtalbot/fema-visits-polygon': femaVisits,
   'CGIAR/SRTM90_V4': elevationData,
