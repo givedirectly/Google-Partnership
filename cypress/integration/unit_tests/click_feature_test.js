@@ -46,12 +46,17 @@ describe('Unit test for click_feature.js', () => {
     const featureProperties = {'GEOID': 0};
     const feature = ee.Feature(null, featureProperties);
     const featureCollection = ee.FeatureCollection([feature]);
-    cy.stub(ee, 'FeatureCollection').withArgs('mockAsset').returns(featureCollection);
+    cy.stub(ee, 'FeatureCollection')
+        .withArgs('mockAsset')
+        .returns(featureCollection);
     cy.stub(featureCollection, 'filterBounds').returns(featureCollection);
     cy.stub(featureCollection, 'first').returns(feature);
-    cy.stub(feature, 'evaluate').callsFake((callb) => callb({'type': 'Feature',
-      'geometry': {coordinates: [[[0, 0]]]},
-      'properties': featureProperties}));
+    cy.stub(feature, 'evaluate').callsFake((callb) => callb({
+                                             'type': 'Feature',
+                                             'geometry':
+                                                 {coordinates: [[[0, 0]]]},
+                                             'properties': featureProperties
+                                           }));
   });
 
   it('clicks on a block group in the list', () => {

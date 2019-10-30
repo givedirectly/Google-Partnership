@@ -1,6 +1,6 @@
 import {processUserRegions, StoredShapeData} from '../../../docs/polygon_draw';
-import {loadScriptsBefore} from '../../support/script_loader';
 import {getResources} from '../../../docs/resources';
+import {loadScriptsBefore} from '../../support/script_loader';
 
 // Name of collection doesn't matter.
 const firebaseCollection = firebase.firestore().collection('usershapes-test');
@@ -54,7 +54,9 @@ describe('Unit test for ShapeData', () => {
     firebaseCollection.get = () => [];
 
     // Set up EarthEngine.
-    cy.stub(ee, 'FeatureCollection').withArgs(getResources().damage).returns(featureCollectionApi);
+    cy.stub(ee, 'FeatureCollection')
+        .withArgs(getResources().damage)
+        .returns(featureCollectionApi);
     // Make sure userShapes is set in the code.
     return cy.wrap(processUserRegions(null, Promise.resolve(null)));
   });
@@ -221,7 +223,9 @@ describe('Unit test for ShapeData', () => {
   });
 
   function expectEarthEngineCalled() {
-    mockDamage.expects('filterBounds').once().returns(filteredFeatureCollectionApi);
+    mockDamage.expects('filterBounds')
+        .once()
+        .returns(filteredFeatureCollectionApi);
     mockFilteredDamage.expects('size').once().returns(sizeApi);
     mockSize.expects('evaluate').once().callsFake((callb) => callb(1));
   }
