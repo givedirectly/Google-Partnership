@@ -8,15 +8,15 @@ const scriptMap = new Map([
     [
       'https://maps.google.com/maps/api/js?libraries=drawing,places&key=AIzaSyBAQkh-kRrYitkPafxVLoZx3E5aYM-auXM',
       () => typeof (google) !== 'undefined' &&
-          typeof (google.maps) !== 'undefined'
-    ]
+          typeof (google.maps) !== 'undefined',
+    ],
   ],
   [
     'deck',
     [
       'https://unpkg.com/deck.gl@latest/dist.min.js',
-      () => typeof (deck) !== 'undefined'
-    ]
+      () => typeof (deck) !== 'undefined',
+    ],
   ],
   ['ee', [host + 'lib/ee_api_js_debug.js', () => typeof (ee) !== 'undefined']],
 ]);
@@ -26,16 +26,15 @@ const scriptMap = new Map([
  * to use actual external objects. That makes them a bit less "unit"-y, but
  * they're still fast, and can be much more faithful to the external interfaces.
  *
- * @param {...string} var_args keys from scriptMap above. These will be the
+ * @param {...string} scriptKeys keys from scriptMap above. These will be the
  *     scripts that are loaded.
  */
-function loadScriptsBefore() {
-  // Variable "arguments" is magically populated by Javascript.
-  const varArgs = arguments;
+function loadScriptsBefore(...scriptKeys) {
+  // Variable "parameters" is magically populated by Javascript.
   before(() => {
     const callbacks = [];
     let usesEe = false;
-    for (const scriptKey of varArgs) {
+    for (const scriptKey of scriptKeys) {
       const scriptPair = scriptMap.get(scriptKey);
       addScriptToDocument(scriptPair[0]);
       callbacks.push(scriptPair[1]);
