@@ -1,4 +1,5 @@
 import {processUserRegions, StoredShapeData} from '../../../docs/polygon_draw';
+import {loadScriptsBefore} from '../../support/script_loader';
 
 // Name of collection doesn't matter.
 const firebaseCollection = firebase.firestore().collection('usershapes-test');
@@ -29,6 +30,7 @@ class FakePromise {
 }
 
 describe('Unit test for ShapeData', () => {
+  loadScriptsBefore('ee', 'maps');
   // Reset firebaseCollection's dummy methods.
   beforeEach(() => {
     for (const prop in firebaseCollection) {

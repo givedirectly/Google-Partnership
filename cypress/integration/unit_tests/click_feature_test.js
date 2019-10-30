@@ -1,11 +1,13 @@
 import {clickFeature} from '../../../docs/click_feature.js';
 import {tableHeadings} from '../../../docs/draw_table.js';
 import * as HighlightFeatures from '../../../docs/highlight_features.js';
+import {loadScriptsBefore} from '../../support/script_loader';
 
 let mockTable;
 let tableApi;
 
 describe('Unit test for click_feature.js', () => {
+  loadScriptsBefore('ee');
   beforeEach(() => {
     HighlightFeatures.CurrentFeaturesValue = () => new MockValue();
     /** Very real fake of the CurrentFeaturesValue class */
@@ -41,6 +43,7 @@ describe('Unit test for click_feature.js', () => {
     };
     mockTable = Cypress.sinon.mock(tableApi);
     HighlightFeatures.currentFeatures.clear();
+    const
   });
 
   it('clicks on a block group in the list', () => {
@@ -56,7 +59,7 @@ describe('Unit test for click_feature.js', () => {
     const tableData = [tableHeadings, [1, 99, 0.46, 0.52]];
     mockTable.expects('setSelection').once().withArgs([]);
 
-    clickFeature(null, null, null, null, tableApi, tableData);
+    clickFeature(null, null, null, 'mockAsset', tableApi, tableData);
 
     mockTable.verify();
   });
@@ -66,8 +69,8 @@ describe('Unit test for click_feature.js', () => {
     mockTable.expects('setSelection').once().withArgs([{row: 0, column: null}]);
     mockTable.expects('setSelection').once().withArgs([]);
 
-    clickFeature(null, null, null, null, tableApi, tableData);
-    clickFeature(null, null, null, null, tableApi, tableData);
+    clickFeature(null, null, null, 'mockAsset', tableApi, tableData);
+    clickFeature(null, null, null, 'mockAsset', tableApi, tableData);
 
     mockTable.verify();
   });
