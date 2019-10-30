@@ -55,7 +55,7 @@ describe('Unit test for click_feature.js', () => {
                                              'type': 'Feature',
                                              'geometry':
                                                  {coordinates: [[[0, 0]]]},
-                                             'properties': featureProperties
+                                             'properties': featureProperties,
                                            }));
   });
 

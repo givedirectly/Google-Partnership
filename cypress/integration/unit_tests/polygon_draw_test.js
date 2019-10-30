@@ -222,6 +222,7 @@ describe('Unit test for ShapeData', () => {
     expect(StoredShapeData.pendingWriteCount).to.eql(0);
   });
 
+  /** Sets expectations that EarthEngine data calculations are done. */
   function expectEarthEngineCalled() {
     mockDamage.expects('filterBounds')
         .once()
@@ -230,6 +231,7 @@ describe('Unit test for ShapeData', () => {
     mockSize.expects('evaluate').once().callsFake((callb) => callb(1));
   }
 
+  /** Sets expectations that EarthEngine data calculations are not done. */
   function expectEarthEngineNotCalled() {
     mockDamage.expects('filterBounds').never();
     mockFilteredDamage.expects('size').never();

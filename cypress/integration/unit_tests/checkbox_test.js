@@ -92,6 +92,12 @@ describe('Unit test for toggleLayerOff', () => {
   });
 });
 
+/**
+ * Creates a stub for an empty ee.List object that passes the callback given to
+ * its evaluate method to the given callbackReceiver.
+ *
+ * @param {Function} callbackReceiver
+ */
 function stubForEmptyList(callbackReceiver) {
   const emptyCollection = ee.FeatureCollection([]);
   cy.stub(ee, 'FeatureCollection').withArgs('asset2').returns(emptyCollection);
