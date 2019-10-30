@@ -85,7 +85,7 @@ EarthEngineAsset.Type = {
  * @return {Array} color RGBA color specification as an array
  */
 function colorSVILayer(feature) {
-  const color = Math.min(Math.round(255 * feature.properties[cdcSviKey]), 255);
+  const color = Math.min(Math.round(255 * feature.properties['SVI']), 255);
   return [255 - color, 0, 255 - color, color];
 }
 
