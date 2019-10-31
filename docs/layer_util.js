@@ -106,9 +106,9 @@ function toggleLayerOff(assetName, map) {
  * @param {GeoJSON.Feature} feature
  * @return {Array} RGBA array
  */
-// function getColorOfFeature(feature) {
-//   return showColor(feature.properties['color']);
-// }
+function getColorOfFeature(feature) {
+  return showColor(feature.properties['color']);
+}
 
 /**
  * Asynchronous wrapper for addLayerFromId that calls getMap() with a
@@ -198,15 +198,18 @@ function addLayerFromId(map, assetName, layerId, index, displayed) {
  * @param {string} assetName
  */
 function addLayerFromFeatures(layerMapValue, assetName) {
-  // const hasStyleFunction = assets[assetName].getStylingFunction();
-  // const styleFunction = hasStyleFunction ?
-  //     assets[assetName].getStylingFunction() :
-  //     getColorOfFeature;
-
-  const colorFxn = firebaseAssets[assetName]['color-fxn'];
-  const continuous = colorFxn['continuous'];
-  const field = colorFxn['field'];
-  const opacity = colorFxn['opacity'];
+  let colorFxn = getColorOfFeature;
+  if (firebaseAssets[assetName]) {
+    const colorFxnProperties = firebaseAssets[assetName]['color-fxn'];
+    const continuous = colorFxnProperties['continuous'];
+    const field = colorFxnProperties['field'];
+    const opacity = colorFxnProperties['opacity'];
+    colorFxn = continuous ?
+        createContinuousFunction(
+            field, opacity, colorFxnProperties['min'],
+            colorFxnProperties['max'], colorFxnProperties['base-color']) :
+        createDiscreteFunction(field, opacity, colorFxnProperties['colors']);
+  }
   layerArray[layerMapValue.index] = new deck.GeoJsonLayer({
     id: assetName,
     data: layerMapValue.data,
@@ -215,10 +218,7 @@ function addLayerFromFeatures(layerMapValue, assetName) {
     // TODO(janakr): deck.gl docs claim that the "color" property should
     // automatically color the features, but it doesn't appear to work:
     // https://deck.gl/#/documentation/deckgl-api-reference/layers/geojson-layer?section=getelevation-function-number-optional-transition-enabled
-    getFillColor: continuous ?
-        createContinuousFunction(
-            field, opacity, colorFxn['min'], colorFxn['max']) :
-        createDiscreteFunction(field, opacity, colorFxn['rgbs']),
+    getFillColor: colorFxn,
     visible: layerMapValue.displayed,
   });
   redrawLayers();
@@ -232,15 +232,14 @@ function addLayerFromFeatures(layerMapValue, assetName) {
  * @param {number} maxVal
  * @return {Function}
  */
-function createContinuousFunction(field, opacity, minVal, maxVal) {
+function createContinuousFunction(field, opacity, minVal, maxVal, color) {
   return (feature) => {
-    const value = feature[field];
-    const min = [0, 128, 255];
-    const max = [51, 0, 102];
+    const value = feature['properties'][field];
+    const colorRgb = colorMap.get(color);
     const rgba = [];
     for (let i = 0; i < 3; i++) {
       rgba.push(
-          ((min[i] * (value - minVal)) + (max[i] * (maxVal - value))) / 2);
+          ((colorRgb[i] * (value - minVal)) + (white[i] * (maxVal - value))) / 2);
     }
     rgba.push(opacity);
     return rgba;
@@ -251,22 +250,24 @@ function createContinuousFunction(field, opacity, minVal, maxVal) {
  *
  * @param {string} field
  * @param {number} opacity
- * @param {Map<String, String>} rgbs
+ * @param {Map<String, String>} colors
  * @return {Function}
  */
-function createDiscreteFunction(field, opacity, rgbs) {
+function createDiscreteFunction(field, opacity, colors) {
   return (feature) => {
-    Object.keys(rgbs).forEach((rgb, index) => {
-      if (feature[field] === rgb) {
-        const rgba = rgbs[rgb].slice(0);
-        rgba.push(opacity);
-        return rgba;
-      }
-    });
+    const color = colors[feature['properties'][field]];
+    const rgba = colorMap.get(color);
+    rgba.push(opacity);
+    return rgba;
   };
 }
 
-// const black = [0, 0, 0, 255];
+const colorMap = new Map([
+  ['red', [255, 0, 0]], ['orange', [255, 140, 0]], ['purple', [128, 0, 128]]
+]);
+
+const white = [255, 255, 255];
+const black = [0, 0, 0, 255];
 
 /**
  * Utility function to return the given color if defined, or black if undefined.
@@ -274,9 +275,9 @@ function createDiscreteFunction(field, opacity, rgbs) {
  * @param {Array} color RGBA color specification as an array, or undefined/null
  * @return {Array} RGBA color specification as an array
  */
-// function showColor(color) {
-//   return color ? color : black;
-// }
+function showColor(color) {
+  return color ? color : black;
+}
 
 // 250M objects in a FeatureCollection ought to be enough for anyone.
 const maxNumFeaturesExpected = 250000000;
@@ -290,10 +291,10 @@ const maxNumFeaturesExpected = 250000000;
  */
 function addLayer(assetName, index, map) {
   switch (firebaseAssets[assetName]['asset-type']) {
-    case EarthEngineAsset.Type.IMAGE:
+    case 2:  // image
       addImageLayer(map, ee.Image(assetName), assetName, index);
       break;
-    case EarthEngineAsset.Type.IMAGECOLLECTION:
+    case 3:  // image collection
       addImageLayer(map, ee.ImageCollection(assetName), assetName, index);
       break;
     default:
@@ -371,8 +372,8 @@ function redrawLayers() {
 function removeLayer(assetName, map) {
   switch (firebaseAssets[assetName] &&
           firebaseAssets[assetName]['asset-type']) {
-    case EarthEngineAsset.Type.IMAGE:
-    case EarthEngineAsset.Type.IMAGECOLLECTION:
+    case 2:
+    case 3:
       map.overlayMapTypes.setAt(layerMap[assetName].index, null);
       layerMap[assetName].displayed = false;
       break;

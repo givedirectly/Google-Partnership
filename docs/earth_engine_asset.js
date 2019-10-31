@@ -1,7 +1,11 @@
-export {assets, EarthEngineAsset, firebaseAssets};
+export {assets, EarthEngineAsset, firebaseAssets, initializeFirebaseAssets};
 
 // TODO: move!
 let firebaseAssets;
+
+function initializeFirebaseAssets(assets) {
+  firebaseAssets = assets;
+}
 
 /**
  * EarthEngineAsset class to store relevant data about any assets, including
