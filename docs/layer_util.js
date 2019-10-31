@@ -1,6 +1,6 @@
 import createError from './create_error.js';
 import {mapContainerId} from './dom_constants.js';
-import {assets, firebaseAssets} from './earth_engine_asset.js';
+import {firebaseAssets} from './earth_engine_asset.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {convertEeObjectToPromise} from './map_util.js';
 
@@ -100,53 +100,53 @@ function toggleLayerOff(assetName, map) {
   removeLayer(assetName, map);
 }
 
-// /**
-//  * Function object to extract a color from a JSON Feature.
-//  *
-//  * @param {GeoJSON.Feature} feature
-//  * @return {Array} RGBA array
-//  */
+/**
+ * Function object to extract a color from a JSON Feature.
+ *
+ * @param {GeoJSON.Feature} feature
+ * @return {Array} RGBA array
+ */
 // function getColorOfFeature(feature) {
 //   return showColor(feature.properties['color']);
 // }
 
-// /**
-//  * Asynchronous wrapper for addLayerFromId that calls getMap() with a
-//  callback
-//  * to avoid blocking on the result. This also populates layerMap.
-//  *
-//  * This should only be called once per asset when its overlay is initialized
-//  * for the first time. After the overlay is non-null in layerMap, any
-//  displaying
-//  * should be able to call {@code map.overlayMapTypes.setAt(...)}.
-//  *
-//  * @param {google.maps.Map} map
-//  * @param {ee.Element} layer
-//  * @param {string} assetName
-//  * @param {number} index
-//  */
-// function addImageLayer(map, layer, assetName, index) {
-//   const imgStyles = assets[assetName].getVisParams();
-//   if (assets[assetName].getStylingFunction()) {
-//     layer = assets[assetName].getStylingFunction()(layer);
-//   }
-//   // Add a null-overlay entry to layerMap while waiting for the callback to
-//   // finish.
-//   layerMap[assetName] = new LayerMapValue(null, index, true);
-//   layer.getMap({
-//     visParams: imgStyles,
-//     callback: (layerId, failure) => {
-//       if (layerId) {
-//         layerMap[assetName].overlay = addLayerFromId(
-//             map, assetName, layerId, index, layerMap[assetName].displayed);
-//       } else {
-//         // TODO: if there's an error, disable checkbox, add tests for this.
-//         layerMap[assetName].displayed = false;
-//         createError('getting id')(failure);
-//       }
-//     },
-//   });
-// }
+/**
+ * Asynchronous wrapper for addLayerFromId that calls getMap() with a
+ callback
+ * to avoid blocking on the result. This also populates layerMap.
+ *
+ * This should only be called once per asset when its overlay is initialized
+ * for the first time. After the overlay is non-null in layerMap, any
+ displaying
+ * should be able to call {@code map.overlayMapTypes.setAt(...)}.
+ *
+ * @param {google.maps.Map} map
+ * @param {ee.Element} layer
+ * @param {string} assetName
+ * @param {number} index
+ */
+function addImageLayer(map, layer, assetName, index) {
+  const imgStyles = assets[assetName].getVisParams();
+  if (assets[assetName].getStylingFunction()) {
+    layer = assets[assetName].getStylingFunction()(layer);
+  }
+  // Add a null-overlay entry to layerMap while waiting for the callback to
+  // finish.
+  layerMap[assetName] = new LayerMapValue(null, index, true);
+  layer.getMap({
+    visParams: imgStyles,
+    callback: (layerId, failure) => {
+      if (layerId) {
+        layerMap[assetName].overlay = addLayerFromId(
+            map, assetName, layerId, index, layerMap[assetName].displayed);
+      } else {
+        // TODO: if there's an error, disable checkbox, add tests for this.
+        layerMap[assetName].displayed = false;
+        createError('getting id')(failure);
+      }
+    },
+  });
+}
 
 /**
  * Create an EarthEngine layer (from EEObject.getMap()), potentially add to the
@@ -244,7 +244,7 @@ function createContinuousFunction(field, opacity, minVal, maxVal) {
     }
     rgba.push(opacity);
     return rgba;
-  }
+  };
 }
 
 /**
@@ -263,7 +263,7 @@ function createDiscreteFunction(field, opacity, rgbs) {
         return rgba;
       }
     });
-  }
+  };
 }
 
 const black = [0, 0, 0, 255];
@@ -274,9 +274,9 @@ const black = [0, 0, 0, 255];
  * @param {Array} color RGBA color specification as an array, or undefined/null
  * @return {Array} RGBA color specification as an array
  */
-function showColor(color) {
-  return color ? color : black;
-}
+// function showColor(color) {
+//   return color ? color : black;
+// }
 
 // 250M objects in a FeatureCollection ought to be enough for anyone.
 const maxNumFeaturesExpected = 250000000;
@@ -290,12 +290,12 @@ const maxNumFeaturesExpected = 250000000;
  */
 function addLayer(assetName, index, map) {
   switch (firebaseAssets[assetName]['asset-type']) {
-      //   case EarthEngineAsset.Type.IMAGE:
-      //     addImageLayer(map, ee.Image(assetName), assetName, index);
-      //     break;
-      //   case EarthEngineAsset.Type.IMAGECOLLECTION:
-      //     addImageLayer(map, ee.ImageCollection(assetName), assetName,
-      //     index); break;
+        case EarthEngineAsset.Type.IMAGE:
+          addImageLayer(map, ee.Image(assetName), assetName, index);
+          break;
+        case EarthEngineAsset.Type.IMAGECOLLECTION:
+          addImageLayer(map, ee.ImageCollection(assetName), assetName,
+          index); break;
     default:
       addLayerFromGeoJsonPromise(
           convertEeObjectToPromise(
@@ -371,11 +371,11 @@ function redrawLayers() {
 function removeLayer(assetName, map) {
   switch (firebaseAssets[assetName] &&
           firebaseAssets[assetName]['asset-type']) {
-    // case EarthEngineAsset.Type.IMAGE:
-    // case EarthEngineAsset.Type.IMAGECOLLECTION:
-    //   map.overlayMapTypes.setAt(layerMap[assetName].index, null);
-    //   layerMap[assetName].displayed = false;
-    //   break;
+    case EarthEngineAsset.Type.IMAGE:
+    case EarthEngineAsset.Type.IMAGECOLLECTION:
+      map.overlayMapTypes.setAt(layerMap[assetName].index, null);
+      layerMap[assetName].displayed = false;
+      break;
     default:
       const layerMapValue = layerMap.get(assetName);
       layerMapValue.displayed = false;
