@@ -295,13 +295,16 @@ const maxNumFeaturesExpected = 250000000;
  */
 function addLayer(assetName, index, map) {
   switch (firebaseAssets[assetName]['asset-type']) {
-    case 2:  // image
+    // image
+    case 2:
       addImageLayer(map, ee.Image(assetName), assetName, index);
       break;
-    case 3:  // image collection
+    // image collection
+    case 3:
       addImageLayer(map, ee.ImageCollection(assetName), assetName, index);
       break;
-    default:  // feature collection
+    // feature collection
+    default:
       addLayerFromGeoJsonPromise(
           convertEeObjectToPromise(
               ee.FeatureCollection(assetName).toList(maxNumFeaturesExpected)),
