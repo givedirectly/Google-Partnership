@@ -82,18 +82,6 @@ EarthEngineAsset.Type = {
   FEATURECOLLECTION: 'FeatureCollection',
 };
 
-
-// /**
-//  * Colors the feature with SVI-specific logic.
-//  *
-//  * @param {GeoJSON.Feature} feature
-//  * @return {Array} color RGBA color specification as an array
-//  */
-// function colorSVILayer(feature) {
-//   const color = Math.min(Math.round(255 * feature.properties['SVI']), 255);
-//   return [255 - color, 0, 255 - color, color];
-// }
-
 /**
  * Colors the feature with Path of Storm Radii-specific logic.
  *
@@ -129,28 +117,7 @@ function colorGDAssistanceLayer(feature) {
   return [255, 255, 102, 100];
 }
 
-// /**
-//  * Colors the feature with damage-specific logic.
-//  *
-//  * @param {GeoJSON.Feature} feature
-//  * @return {Array} color RGBA color specification as an array
-//  */
-// function colorDamageLayer(feature) {
-//   switch (feature.properties['descriptio']) {
-//     case 'major-damage':
-//       return [255, 0, 0, 200];
-//     case 'minor-damage':
-//       return [255, 165, 0, 200];
-//   }
-// }
-
 // TODO: Store these and allow users to change/set these fields on import page.
-// const harveyDamageCrowdAIFormat = new EarthEngineAsset(
-//     EarthEngineAsset.Type.FEATURECOLLECTION, 'Harvey Damge CrowdAI', true,
-//     colorDamageLayer);
-// const sviData = new EarthEngineAsset(
-//     EarthEngineAsset.Type.FEATURECOLLECTION, 'SVI Data', false,
-//     colorSVILayer);
 const pathOfStormRadii = new EarthEngineAsset(
     EarthEngineAsset.Type.FEATURECOLLECTION, 'Path of Storm Radii', false,
     colorPathofStormRadiiLayer);
@@ -172,9 +139,6 @@ const gdVisits = new EarthEngineAsset(
 // Images/ImageCollections, which will always be displayed below
 // FeatureCollections.
 const assets = {
-  // 'users/juliexxia/harvey-damage-crowdai-format-deduplicated':
-  //     harveyDamageCrowdAIFormat,
-  // 'users/gd/harvey/svi': sviData,
   'users/ruthtalbot/harvey-pathofstorm-radii': pathOfStormRadii,
   'users/ruthtalbot/fema-visits-polygon': femaVisits,
   'CGIAR/SRTM90_V4': elevationData,
