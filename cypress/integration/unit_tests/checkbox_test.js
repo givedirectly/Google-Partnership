@@ -1,6 +1,6 @@
 import {initializeFirebaseLayers, LayerType} from '../../../docs/firebase_layers.js';
 import {layerArray, layerMap, LayerMapValue, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from '../../../docs/layer_util.js';
-import {loadScriptsBefore} from '../../support/script_loader.js';
+import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 
 const mockData = {};
 
@@ -26,7 +26,7 @@ const mockFirebaseLayers = {
 };
 
 describe('Unit test for toggleLayerOn', () => {
-  loadScriptsBefore('ee', 'deck', 'maps');
+  loadScriptsBeforeForUnitTests('ee', 'deck', 'maps');
   beforeEach(() => {
     layerMap.set('asset0', new LayerMapValue(mockData, 0, true));
     layerMap.set('asset1', new LayerMapValue(mockData, 1, false));

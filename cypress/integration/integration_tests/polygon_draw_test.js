@@ -1,42 +1,9 @@
-// Call this firebaseLibrary to avoid conflicting with mock firebase defined in
-// commands.js.
-import * as firebaseLibrary from 'firebase';
-import {firebaseConfig} from '../../../docs/authenticate';
-
 const hackyWaitTime = 1000;
 const notes = 'Sphinx of black quartz, judge my vow';
-
-firebaseLibrary.initializeApp(firebaseConfig);
 
 // This test generally doesn't wait for the page to load, since that's not
 // necessary to draw polygons.
 describe('Integration tests for drawing polygons', () => {
-  // Delete all test-defined polygons.
-  const deleteAllRegionsDrawnByTest = () => {
-    const userShapes = firebaseLibrary.firestore().collection(
-        'usershapes-test/' + testCookieValue);
-    // Return a wrapped promise. Cypress will wait for the promise to finish.
-    cy.wrap(userShapes.get().then((querySnapshot) => {
-      const deletePromises = [];
-      querySnapshot.forEach((userDefinedRegion) => {
-        deletePromises.push(userShapes.doc(userDefinedRegion.id).delete());
-      });
-      return Promise.all(deletePromises);
-    }));
-  };
-
-  // TODO(janakr): clean up this debugging when timeouts are resolved.
-  before(() => {
-    cy.task('logg', 'before test auth');
-    cy.wrap(
-        firebaseLibrary.auth().signInWithCustomToken(firestoreCustomToken),
-        {timeout: 10000});
-    cy.task('logg', 'after test auth');
-  });
-  beforeEach(deleteAllRegionsDrawnByTest);
-
-  afterEach(deleteAllRegionsDrawnByTest);
-
   it('Draws a polygon and edits its notes', () => {
     cy.visit(host);
     drawPolygonAndClickOnIt();

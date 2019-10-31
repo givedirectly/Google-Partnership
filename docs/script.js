@@ -1,4 +1,4 @@
-import {authenticateToFirebase, Authenticator, CLIENT_ID, initializeEE, initializeFirebase} from './authenticate.js';
+import {authenticateToFirebase, Authenticator, CLIENT_ID, getFirestoreRoot, initializeEE, initializeFirebase} from './authenticate.js';
 import createMap from './create_map.js';
 import {earthEngineTestTokenCookieName, firebaseTestTokenCookieName, getCookieValue, inProduction} from './in_test_util.js';
 import {getDisaster, getResources} from './resources.js';
@@ -69,8 +69,9 @@ function setup() {
  * @return {Promise<firebase.firestore.DocumentSnapshot>}
  */
 function getDisasterDocument() {
-  return firebase.firestore()
-      .doc('disaster-metadata/' + getResources().year + '-' + getDisaster())
+  return getFirestoreRoot()
+      .collection('disaster-metadata')
+      .doc(getResources().year + '-' + getDisaster())
       .get();
 }
 

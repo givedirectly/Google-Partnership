@@ -1,11 +1,16 @@
+import {getTestCookie, inProduction} from './in_test_util.js';
+
 export {
   authenticateToFirebase,
   Authenticator,
   CLIENT_ID,
-  firebaseConfig,
+  getFirebaseConfig,
+  getFirestoreRoot,
   initializeEE,
   initializeFirebase,
 };
+
+export {getFirebaseConfig as default};
 
 // The client ID from
 // https://console.cloud.google.com/apis/credentials?project=mapping-crisis
@@ -20,7 +25,7 @@ const gapiTemplate = {
 
 // Taken from
 // https://console.firebase.google.com/project/mapping-crisis/settings/general/
-const firebaseConfig = {
+const firebaseConfigProd = {
   apiKey: 'AIzaSyBAQkh-kRrYitkPafxVLoZx3E5aYM-auXM',
   authDomain: 'mapping-crisis.firebaseapp.com',
   databaseURL: 'https://mapping-crisis.firebaseio.com',
@@ -28,6 +33,16 @@ const firebaseConfig = {
   storageBucket: 'mapping-crisis.appspot.com',
   messagingSenderId: '38420505624',
   appId: '1:38420505624:web:79425020e2f86c82a78f6d',
+};
+
+const firebaseConfigTest = {
+  apiKey: 'AIzaSyDYBhqocosjCo6FKs-_L3gCDK5vRBXnB4k',
+  authDomain: 'mapping-test-data.firebaseapp.com',
+  databaseURL: 'https://mapping-test-data.firebaseio.com',
+  projectId: 'mapping-test-data',
+  storageBucket: 'mapping-test-data.appspot.com',
+  messagingSenderId: '340543030947',
+  appId: '1:340543030947:web:0cf3235904250687592116',
 };
 
 /**
@@ -119,7 +134,7 @@ class Authenticator {
 
 /** Initializes Firebase. Exposed only for use in test codepaths. */
 function initializeFirebase() {
-  firebase.initializeApp(firebaseConfig);
+  firebase.initializeApp(getFirebaseConfig(inProduction()));
 }
 
 /**
@@ -131,6 +146,25 @@ function initializeEE(runCallback, errorCallback = console.error) {
   ee.initialize(
       /* opt_baseurl=*/ null, /* opt_tileurl=*/ null, runCallback,
       (err) => errorCallback('Error initializing EarthEngine: ' + err));
+}
+
+/**
+ * Returns the firebase config.
+ * @param {boolean} inProduction If we are in production or a test
+ * @return {Object} firebase config
+ */
+function getFirebaseConfig(inProduction) {
+  return inProduction ? firebaseConfigProd : firebaseConfigTest;
+}
+
+/**
+ * Returns the root of the Firestore database. Just firebase.firestore() in
+ * production, but a subcollection in tests to avoid data collisions.
+ * @return {firebase.firestore.Firestore|firebase.firestore.CollectionReference}
+ */
+function getFirestoreRoot() {
+  return inProduction() ? firebase.firestore() :
+                          firebase.firestore().doc('test/' + getTestCookie());
 }
 
 // Roughly copied from https://firebase.google.com/docs/auth/web/google-signin.
