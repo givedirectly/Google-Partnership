@@ -239,7 +239,8 @@ function createContinuousFunction(field, opacity, minVal, maxVal, color) {
     const rgba = [];
     for (let i = 0; i < 3; i++) {
       rgba.push(
-          ((colorRgb[i] * (value - minVal)) + (white[i] * (maxVal - value))) / 2);
+          ((colorRgb[i] * (value - minVal)) + (white[i] * (maxVal - value))) /
+          2);
     }
     rgba.push(opacity);
     return rgba;
