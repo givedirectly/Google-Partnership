@@ -230,6 +230,7 @@ function addLayerFromFeatures(layerMapValue, assetName) {
  * @param {number} opacity
  * @param {number} minVal
  * @param {number} maxVal
+ * @param {String} color
  * @return {Function}
  */
 function createContinuousFunction(field, opacity, minVal, maxVal, color) {
@@ -264,7 +265,7 @@ function createDiscreteFunction(field, opacity, colors) {
 }
 
 const colorMap = new Map([
-  ['red', [255, 0, 0]], ['orange', [255, 140, 0]], ['purple', [128, 0, 128]]
+  ['red', [255, 0, 0]], ['orange', [255, 140, 0]], ['purple', [128, 0, 128]],
 ]);
 
 const white = [255, 255, 255];
@@ -292,13 +293,13 @@ const maxNumFeaturesExpected = 250000000;
  */
 function addLayer(assetName, index, map) {
   switch (firebaseAssets[assetName]['asset-type']) {
-    case 2:  // image
+    case 2: // image
       addImageLayer(map, ee.Image(assetName), assetName, index);
       break;
-    case 3:  // image collection
+    case 3: // image collection
       addImageLayer(map, ee.ImageCollection(assetName), assetName, index);
       break;
-    default:
+    default: // feature collection
       addLayerFromGeoJsonPromise(
           convertEeObjectToPromise(
               ee.FeatureCollection(assetName).toList(maxNumFeaturesExpected)),

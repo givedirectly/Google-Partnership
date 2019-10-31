@@ -3,6 +3,10 @@ export {assets, EarthEngineAsset, firebaseAssets, initializeFirebaseAssets};
 // TODO: move!
 let firebaseAssets;
 
+/**
+ * Initialize firebase assets.
+ * @param {Object} assets
+ */
 function initializeFirebaseAssets(assets) {
   firebaseAssets = assets;
 }
