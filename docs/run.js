@@ -98,15 +98,6 @@ function createAndDisplayJoinedData(
  *
  * @param {google.maps.Map} map main map
  */
-// function createAssetCheckboxes(assets, map) {
-//   const sidebarDiv = document.getElementById(sidebarDatasetsId);
-//   Object.keys(assets).forEach(
-//       (assetName) => createNewCheckboxForAsset(assetName, sidebarDiv, map));
-//   createCheckboxForUserFeatures(sidebarDiv);
-//   // score checkbox gets checked during initializeScoreLayer
-//   createNewCheckboxForAsset(assets, scoreLayerName, sidebarDiv, map);
-// }
-
 function createAssetCheckboxes(map) {
   const sidebarDiv = document.getElementById(sidebarDatasetsId);
   Object.keys(firebaseAssets)
