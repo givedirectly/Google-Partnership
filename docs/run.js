@@ -1,7 +1,7 @@
 import {clickFeature, selectHighlightedFeatures} from './click_feature.js';
 import {sidebarDatasetsId, tableContainerId} from './dom_constants.js';
 import {drawTable} from './draw_table.js';
-import {assets} from './earth_engine_asset.js';
+import {assets, firebaseAssets} from './earth_engine_asset.js';
 import {highlightFeatures} from './highlight_features.js';
 import {addLayer, addLayerFromGeoJsonPromise, addNullLayer, scoreLayerName, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from './layer_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
@@ -9,7 +9,7 @@ import {convertEeObjectToPromise} from './map_util.js';
 import {processUserRegions} from './polygon_draw.js';
 import {setUserFeatureVisibility} from './popup.js';
 import processJoinedData from './process_joined_data.js';
-import {getDisaster} from './resources.js';
+import {getDisaster, getResources} from './resources.js';
 import {createToggles, initialDamageThreshold, initialPovertyThreshold, initialPovertyWeight} from './update.js';
 
 export {
@@ -34,9 +34,8 @@ const scoreIndex = Object.keys(assets).length;
  */
 function run(map, firebasePromise) {
   setMapToDrawLayersOn(map);
-  initializeAssetLayers(map);
+  initializeAssetLayers(map, firebasePromise);
   createToggles(map);
-  createAssetCheckboxes(map);
   snapAndDamagePromise =
       convertEeObjectToPromise(ee.FeatureCollection(snapAndDamageAsset));
   createAndDisplayJoinedData(
@@ -99,10 +98,20 @@ function createAndDisplayJoinedData(
  *
  * @param {google.maps.Map} map main map
  */
+// function createAssetCheckboxes(assets, map) {
+//   const sidebarDiv = document.getElementById(sidebarDatasetsId);
+//   Object.keys(assets).forEach(
+//       (assetName) => createNewCheckboxForAsset(assetName, sidebarDiv, map));
+//   createCheckboxForUserFeatures(sidebarDiv);
+//   // score checkbox gets checked during initializeScoreLayer
+//   createNewCheckboxForAsset(assets, scoreLayerName, sidebarDiv, map);
+// }
+
 function createAssetCheckboxes(map) {
   const sidebarDiv = document.getElementById(sidebarDatasetsId);
-  Object.keys(assets).forEach(
-      (assetName) => createNewCheckboxForAsset(assetName, sidebarDiv, map));
+  Object.keys(firebaseAssets)
+      .forEach(
+          (assetName) => createNewCheckboxForAsset(assetName, sidebarDiv, map));
   createCheckboxForUserFeatures(sidebarDiv);
   // score checkbox gets checked during initializeScoreLayer
   createNewCheckboxForAsset(scoreLayerName, sidebarDiv, map);
@@ -140,16 +149,14 @@ function createNewCheckbox(name, displayName, parentDiv, map) {
 /**
  * Creates a new checkbox for the given asset.
  *
- * @param {String} assetName
+ * @param {String} assetName 'users/gd/...'
  * @param {Element} parentDiv
  * @param {google.maps.Map} map main map
  */
 function createNewCheckboxForAsset(assetName, parentDiv, map) {
   const newBox = createNewCheckbox(
-      assetName,
-      assets[assetName] ? assets[assetName].getDisplayName() : assetName,
-      parentDiv);
-  if (assets[assetName] && !assets[assetName].shouldDisplayOnLoad()) {
+      assetName, firebaseAssets[assetName]['display-name'], parentDiv);
+  if (!firebaseAssets[assetName]['display-on-load']) {
     newBox.checked = false;
   }
   newBox.onclick = () => {
@@ -177,19 +184,43 @@ function createCheckboxForUserFeatures(parentDiv) {
  * overlays and displays. Also populates the layerMap.
  *
  * @param {google.maps.Map} map main map
+ * @param {Promise} firebasePromise firebase authentication promise
  */
-function initializeAssetLayers(map) {
+function initializeAssetLayers(map, firebasePromise) {
+  firebasePromise
+      .then(
+          () => firebase.firestore()
+                    .collection('disaster-metadata')
+                    .doc(getResources().year)
+                    .collection(getDisaster())
+                    .doc('layers')
+                    .get())
+      .then((doc) => {
+        firebaseAssets = doc.data();
+        Object.keys(firebaseAssets).forEach((asset, index) => {
+          console.log(asset);
+          const properties = firebaseAssets[asset];
+          if (properties['display-on-load']) {
+            addLayer(asset, index, map);
+          } else {
+            // TODO: index still relevent? just alphabetical. probably want to
+            // store index at some point.
+            addNullLayer(asset, index);
+          }
+        });
+        createAssetCheckboxes(map);
+      });
   // This is the standard way to iterate over a dictionary according to
   // https://stackoverflow.com/questions/34448724/iterating-over-a-dictionary-in-javascript
-
-  Object.keys(assets).forEach((assetName, index) => {
-    // TODO(juliexxia): generalize for ImageCollections (and Features/Images?)
-    if (assets[assetName].shouldDisplayOnLoad()) {
-      addLayer(assetName, index, map);
-    } else {
-      addNullLayer(assetName, index);
-    }
-  });
+  // Object.keys(assets).forEach((assetName, index) => {
+  // TODO(juliexxia): generalize for ImageCollections (and Features/Images?)
+  // if (assets[assetName].shouldDisplayOnLoad()) {
+  //   addLayer(assetName, index, map);
+  // } else {
+  //   addNullLayer(assetName, index);
+  // }
+  // });
+  // createAssetCheckboxes(assets, map);
 }
 
 /**

@@ -1,6 +1,6 @@
 import createError from './create_error.js';
 import {mapContainerId} from './dom_constants.js';
-import {assets, EarthEngineAsset} from './earth_engine_asset.js';
+import {firebaseAssets, assets, EarthEngineAsset} from './earth_engine_asset.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {convertEeObjectToPromise} from './map_util.js';
 
@@ -196,11 +196,15 @@ function addLayerFromId(map, assetName, layerId, index, displayed) {
  * @param {string} assetName
  */
 function addLayerFromFeatures(layerMapValue, assetName) {
-  const hasStyleFunction =
-      assets[assetName] && assets[assetName].getStylingFunction();
-  const styleFunction = hasStyleFunction ?
-      assets[assetName].getStylingFunction() :
-      getColorOfFeature;
+  // const hasStyleFunction = assets[assetName].getStylingFunction();
+  // const styleFunction = hasStyleFunction ?
+  //     assets[assetName].getStylingFunction() :
+  //     getColorOfFeature;
+
+  const colorFxn = firebaseAssets[assetName]['color-fxn'];
+  const continuous = colorFxn['continuous'];
+  const field = colorFxn['field'];
+  const opacity = colorFxn['opacity'];
   layerArray[layerMapValue.index] = new deck.GeoJsonLayer({
     id: assetName,
     data: layerMapValue.data,
@@ -209,10 +213,36 @@ function addLayerFromFeatures(layerMapValue, assetName) {
     // TODO(janakr): deck.gl docs claim that the "color" property should
     // automatically color the features, but it doesn't appear to work:
     // https://deck.gl/#/documentation/deckgl-api-reference/layers/geojson-layer?section=getelevation-function-number-optional-transition-enabled
-    getFillColor: styleFunction,
+    getFillColor: continuous ? createContinuousFunction(field, opacity, colorFxn, colorFxn['min'], colorFxn['max']): createDiscreteFunction(field, opacity, colorFxn),
     visible: layerMapValue.displayed,
   });
   redrawLayers();
+}
+
+function createContinuousFunction(field, opacity, colorFxn, minVal, maxVal) {
+  return (feature) => {
+    const value = feature[field];
+    const min = [0, 128, 255];
+    const max = [51, 0, 102];
+    const rgba = [];
+    for (let i = 0; i < 3; i++) {
+      rgba.push(((min[i]*(value-minVal))+(max[i]*(maxVal-value)))/2);
+    }
+    rgba.push(opacity);
+    return rgba;
+  }
+}
+
+function createDiscreteFunction(field, opacity, colorFxn) {
+  return (feature) => {
+    Object.keys(colorFxn['rgbs']).forEach((rgb, index) => {
+      if (feature[field] === rgb) {
+        const rgba = colorFxn['rgbs'][rgb].slice(0);
+        rgba.push(opacity);
+        return rgba;
+      }
+    })
+  }
 }
 
 const black = [0, 0, 0, 255];
@@ -238,13 +268,13 @@ const maxNumFeaturesExpected = 250000000;
  * @param {google.maps.Map} map main map
  */
 function addLayer(assetName, index, map) {
-  switch (assets[assetName].getType()) {
-    case EarthEngineAsset.Type.IMAGE:
-      addImageLayer(map, ee.Image(assetName), assetName, index);
-      break;
-    case EarthEngineAsset.Type.IMAGECOLLECTION:
-      addImageLayer(map, ee.ImageCollection(assetName), assetName, index);
-      break;
+  switch (firebaseAssets[assetName]['asset-type']) {
+  //   case EarthEngineAsset.Type.IMAGE:
+  //     addImageLayer(map, ee.Image(assetName), assetName, index);
+  //     break;
+  //   case EarthEngineAsset.Type.IMAGECOLLECTION:
+  //     addImageLayer(map, ee.ImageCollection(assetName), assetName, index);
+  //     break;
     default:
       addLayerFromGeoJsonPromise(
           convertEeObjectToPromise(
@@ -318,12 +348,12 @@ function redrawLayers() {
  * @param {google.maps.Map} map main map
  */
 function removeLayer(assetName, map) {
-  switch (assets[assetName] && assets[assetName].getType()) {
-    case EarthEngineAsset.Type.IMAGE:
-    case EarthEngineAsset.Type.IMAGECOLLECTION:
-      map.overlayMapTypes.setAt(layerMap[assetName].index, null);
-      layerMap[assetName].displayed = false;
-      break;
+  switch (firebaseAssets[assetName] && firebaseAssets[assetName]['asset-type']) {
+    // case EarthEngineAsset.Type.IMAGE:
+    // case EarthEngineAsset.Type.IMAGECOLLECTION:
+    //   map.overlayMapTypes.setAt(layerMap[assetName].index, null);
+    //   layerMap[assetName].displayed = false;
+    //   break;
     default:
       const layerMapValue = layerMap.get(assetName);
       layerMapValue.displayed = false;

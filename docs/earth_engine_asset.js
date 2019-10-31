@@ -1,4 +1,7 @@
-export {assets, EarthEngineAsset};
+export {firebaseAssets, assets, EarthEngineAsset};
+
+// TODO: move!
+let firebaseAssets;
 
 /**
  * EarthEngineAsset class to store relevant data about any assets, including
@@ -138,11 +141,11 @@ function colorDamageLayer(feature) {
 }
 
 // TODO: Store these and allow users to change/set these fields on import page.
-const harveyDamageCrowdAIFormat = new EarthEngineAsset(
-    EarthEngineAsset.Type.FEATURECOLLECTION, 'Harvey Damge CrowdAI', true,
-    colorDamageLayer);
-const sviData = new EarthEngineAsset(
-    EarthEngineAsset.Type.FEATURECOLLECTION, 'SVI Data', false, colorSVILayer);
+// const harveyDamageCrowdAIFormat = new EarthEngineAsset(
+//     EarthEngineAsset.Type.FEATURECOLLECTION, 'Harvey Damge CrowdAI', true,
+//     colorDamageLayer);
+// const sviData = new EarthEngineAsset(
+//     EarthEngineAsset.Type.FEATURECOLLECTION, 'SVI Data', false, colorSVILayer);
 const pathOfStormRadii = new EarthEngineAsset(
     EarthEngineAsset.Type.FEATURECOLLECTION, 'Path of Storm Radii', false,
     colorPathofStormRadiiLayer);
@@ -164,9 +167,9 @@ const gdVisits = new EarthEngineAsset(
 // Images/ImageCollections, which will always be displayed below
 // FeatureCollections.
 const assets = {
-  'users/juliexxia/harvey-damage-crowdai-format-deduplicated':
-      harveyDamageCrowdAIFormat,
-  'users/gd/harvey/svi': sviData,
+  // 'users/juliexxia/harvey-damage-crowdai-format-deduplicated':
+  //     harveyDamageCrowdAIFormat,
+  // 'users/gd/harvey/svi': sviData,
   'users/ruthtalbot/harvey-pathofstorm-radii': pathOfStormRadii,
   'users/ruthtalbot/fema-visits-polygon': femaVisits,
   'CGIAR/SRTM90_V4': elevationData,
