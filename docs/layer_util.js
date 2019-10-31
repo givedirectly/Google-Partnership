@@ -266,7 +266,7 @@ function createDiscreteFunction(field, opacity, rgbs) {
   };
 }
 
-const black = [0, 0, 0, 255];
+// const black = [0, 0, 0, 255];
 
 /**
  * Utility function to return the given color if defined, or black if undefined.
