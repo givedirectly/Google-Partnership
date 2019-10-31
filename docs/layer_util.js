@@ -1,6 +1,6 @@
 import createError from './create_error.js';
 import {mapContainerId} from './dom_constants.js';
-import {firebaseAssets, assets, EarthEngineAsset} from './earth_engine_asset.js';
+import {assets, EarthEngineAsset, firebaseAssets} from './earth_engine_asset.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {convertEeObjectToPromise} from './map_util.js';
 
@@ -213,7 +213,10 @@ function addLayerFromFeatures(layerMapValue, assetName) {
     // TODO(janakr): deck.gl docs claim that the "color" property should
     // automatically color the features, but it doesn't appear to work:
     // https://deck.gl/#/documentation/deckgl-api-reference/layers/geojson-layer?section=getelevation-function-number-optional-transition-enabled
-    getFillColor: continuous ? createContinuousFunction(field, opacity, colorFxn, colorFxn['min'], colorFxn['max']): createDiscreteFunction(field, opacity, colorFxn),
+    getFillColor: continuous ?
+        createContinuousFunction(
+            field, opacity, colorFxn, colorFxn['min'], colorFxn['max']) :
+        createDiscreteFunction(field, opacity, colorFxn),
     visible: layerMapValue.displayed,
   });
   redrawLayers();
@@ -226,7 +229,8 @@ function createContinuousFunction(field, opacity, colorFxn, minVal, maxVal) {
     const max = [51, 0, 102];
     const rgba = [];
     for (let i = 0; i < 3; i++) {
-      rgba.push(((min[i]*(value-minVal))+(max[i]*(maxVal-value)))/2);
+      rgba.push(
+          ((min[i] * (value - minVal)) + (max[i] * (maxVal - value))) / 2);
     }
     rgba.push(opacity);
     return rgba;
@@ -269,12 +273,12 @@ const maxNumFeaturesExpected = 250000000;
  */
 function addLayer(assetName, index, map) {
   switch (firebaseAssets[assetName]['asset-type']) {
-  //   case EarthEngineAsset.Type.IMAGE:
-  //     addImageLayer(map, ee.Image(assetName), assetName, index);
-  //     break;
-  //   case EarthEngineAsset.Type.IMAGECOLLECTION:
-  //     addImageLayer(map, ee.ImageCollection(assetName), assetName, index);
-  //     break;
+      //   case EarthEngineAsset.Type.IMAGE:
+      //     addImageLayer(map, ee.Image(assetName), assetName, index);
+      //     break;
+      //   case EarthEngineAsset.Type.IMAGECOLLECTION:
+      //     addImageLayer(map, ee.ImageCollection(assetName), assetName,
+      //     index); break;
     default:
       addLayerFromGeoJsonPromise(
           convertEeObjectToPromise(
@@ -348,7 +352,8 @@ function redrawLayers() {
  * @param {google.maps.Map} map main map
  */
 function removeLayer(assetName, map) {
-  switch (firebaseAssets[assetName] && firebaseAssets[assetName]['asset-type']) {
+  switch (firebaseAssets[assetName] &&
+          firebaseAssets[assetName]['asset-type']) {
     // case EarthEngineAsset.Type.IMAGE:
     // case EarthEngineAsset.Type.IMAGECOLLECTION:
     //   map.overlayMapTypes.setAt(layerMap[assetName].index, null);

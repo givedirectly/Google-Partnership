@@ -1,4 +1,4 @@
-export {firebaseAssets, assets, EarthEngineAsset};
+export {assets, EarthEngineAsset, firebaseAssets};
 
 // TODO: move!
 let firebaseAssets;
@@ -145,7 +145,8 @@ function colorDamageLayer(feature) {
 //     EarthEngineAsset.Type.FEATURECOLLECTION, 'Harvey Damge CrowdAI', true,
 //     colorDamageLayer);
 // const sviData = new EarthEngineAsset(
-//     EarthEngineAsset.Type.FEATURECOLLECTION, 'SVI Data', false, colorSVILayer);
+//     EarthEngineAsset.Type.FEATURECOLLECTION, 'SVI Data', false,
+//     colorSVILayer);
 const pathOfStormRadii = new EarthEngineAsset(
     EarthEngineAsset.Type.FEATURECOLLECTION, 'Path of Storm Radii', false,
     colorPathofStormRadiiLayer);
