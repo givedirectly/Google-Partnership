@@ -111,11 +111,13 @@ function toggleLayerOff(assetName, map) {
 // }
 
 // /**
-//  * Asynchronous wrapper for addLayerFromId that calls getMap() with a callback
+//  * Asynchronous wrapper for addLayerFromId that calls getMap() with a
+//  callback
 //  * to avoid blocking on the result. This also populates layerMap.
 //  *
 //  * This should only be called once per asset when its overlay is initialized
-//  * for the first time. After the overlay is non-null in layerMap, any displaying
+//  * for the first time. After the overlay is non-null in layerMap, any
+//  displaying
 //  * should be able to call {@code map.overlayMapTypes.setAt(...)}.
 //  *
 //  * @param {google.maps.Map} map
