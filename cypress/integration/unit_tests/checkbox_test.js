@@ -44,6 +44,8 @@ describe('Unit test for toggleLayerOn', () => {
     toggleLayerOn('asset2');
     callback(emptyList);
     // Evaluate after the promise finishes by using an instant wait.
+    // TODO(janakr): Here and below, consider returning a Promise from
+    //  toggleLayerOn that can be waited on instead of this event-loop push.
     cy.wait(0).then(() => {
       expect(layerMap.get('asset2').displayed).to.equals(true);
       expect(layerMap.get('asset2').data).to.not.be.null;
@@ -93,8 +95,9 @@ describe('Unit test for toggleLayerOff', () => {
 });
 
 /**
- * Creates a stub for an empty ee.List object that passes the callback given to
- * its evaluate method to the given callbackReceiver.
+ * Mocks out a FeatureCollection created for 'asset2'. Assumes that production
+ * code will call toList().evaluate(callback) on the resulting collection, and
+ * passes that callback to the given callbackReceiver.
  *
  * @param {Function} callbackReceiver
  */

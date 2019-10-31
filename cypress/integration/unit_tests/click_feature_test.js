@@ -50,7 +50,6 @@ describe('Unit test for click_feature.js', () => {
         .withArgs('mockAsset')
         .returns(featureCollection);
     cy.stub(featureCollection, 'filterBounds').returns(featureCollection);
-    cy.stub(featureCollection, 'first').returns(feature);
     cy.stub(feature, 'evaluate').callsFake((callb) => callb({
                                              'type': 'Feature',
                                              'geometry':

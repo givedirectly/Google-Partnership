@@ -40,8 +40,12 @@ function loadScriptsBefore(...scriptKeys) {
       callbacks.push(scriptPair[1]);
       usesEe |= scriptKey === 'ee';
     }
-    // Note that these may all be waiting in parallel, since cy.wait(1).then...
-    // will trigger each of them to run pretty independently.
+    // waitForCallback may return before the callback is actually ready, just
+    // enqueuing itself to run again on a different thread, so this loop
+    // finishing does not mean that all the callbacks are true. But we've done
+    // our job enqueuing work that will not terminate until all the callbacks
+    // are true, which will keep Cypress from proceeding until all that work is
+    // done.
     for (const callback of callbacks) {
       waitForCallback(callback);
     }
@@ -95,5 +99,7 @@ function waitForCallback(callback) {
   if (!callback()) {
     return cy.wait(1).then(() => waitForCallback(callback));
   }
+  // If callback is true, return a Cypress Chainable so that we can chain work
+  // off of this function.
   return cy.wait(0);
 }
