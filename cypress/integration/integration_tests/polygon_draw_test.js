@@ -262,7 +262,7 @@ describe('Integration tests for drawing polygons', () => {
   it('Degenerate polygon with one vertex not allowed', () => {
     cy.visit(host);
 
-    cy.get('[title="Draw a shape"]').click();
+    startDrawing();
     drawPointAndPrepareForNext(400, 400);
     let alertShown = false;
     cy.on('window:alert', () => alertShown = true);
@@ -302,8 +302,7 @@ describe('Integration tests for drawing polygons', () => {
  * @param {number} offset Shift polygon down this many pixels
  */
 function drawPolygonAndClickOnIt(offset = 0) {
-  const polygonButton = cy.get('[title="Draw a shape"]');
-  polygonButton.click();
+  startDrawing();
   // Wait for polygon selection overlay to appear.
   // Fragile, but ensures that "clicking" layer is present.
   // Explanation of string: 'div' means we're searching for elements that are
@@ -399,4 +398,12 @@ function drawPointAndPrepareForNext(x, y) {
 function saveAndAwait() {
   pressPopupButton('save');
   cy.awaitLoad(['writeWaiter']);
+}
+
+/**
+ * Clicks on the "Draw a shape" button on map. Waits longer than usual for it to
+ * be found because it requires Firebase authentication to finish.
+ */
+function startDrawing() {
+  cy.get('[title="Draw a shape"]', {timeout: 10000}).click();
 }
