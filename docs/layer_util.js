@@ -290,12 +290,12 @@ const maxNumFeaturesExpected = 250000000;
  */
 function addLayer(assetName, index, map) {
   switch (firebaseAssets[assetName]['asset-type']) {
-        case EarthEngineAsset.Type.IMAGE:
-          addImageLayer(map, ee.Image(assetName), assetName, index);
-          break;
-        case EarthEngineAsset.Type.IMAGECOLLECTION:
-          addImageLayer(map, ee.ImageCollection(assetName), assetName,
-          index); break;
+    case EarthEngineAsset.Type.IMAGE:
+      addImageLayer(map, ee.Image(assetName), assetName, index);
+      break;
+    case EarthEngineAsset.Type.IMAGECOLLECTION:
+      addImageLayer(map, ee.ImageCollection(assetName), assetName, index);
+      break;
     default:
       addLayerFromGeoJsonPromise(
           convertEeObjectToPromise(
