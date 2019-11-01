@@ -1,7 +1,7 @@
 import createError from './create_error.js';
 import {mapContainerId} from './dom_constants.js';
 import {assets} from './earth_engine_asset.js';
-import {firebaseAssets} from './firebase_assets.js';
+import {colorMap, firebaseAssets, getStyleFunction} from './firebase_assets.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {convertEeObjectToPromise} from './map_util.js';
 
@@ -197,22 +197,6 @@ function addLayerFromId(map, assetName, layerId, index, displayed) {
  * @param {string} assetName
  */
 function addLayerFromFeatures(layerMapValue, assetName) {
-  let colorFxn = getColorOfFeature;
-  if (firebaseAssets[assetName]) {
-    const colorFxnProperties = firebaseAssets[assetName]['color-fxn'];
-    if (colorFxnProperties['single-color']) {
-      colorFxn = () => colorMap.get(colorFxnProperties['single-color']);
-    } else {
-      const continuous = colorFxnProperties['continuous'];
-      const field = colorFxnProperties['field'];
-      const opacity = colorFxnProperties['opacity'];
-      colorFxn = continuous ?
-          createContinuousFunction(
-              field, opacity, colorFxnProperties['min'],
-              colorFxnProperties['max'], colorFxnProperties['base-color']) :
-          createDiscreteFunction(field, opacity, colorFxnProperties['colors']);
-    }
-  }
   layerArray[layerMapValue.index] = new deck.GeoJsonLayer({
     id: assetName,
     data: layerMapValue.data,
@@ -221,67 +205,12 @@ function addLayerFromFeatures(layerMapValue, assetName) {
     // TODO(janakr): deck.gl docs claim that the "color" property should
     // automatically color the features, but it doesn't appear to work:
     // https://deck.gl/#/documentation/deckgl-api-reference/layers/geojson-layer?section=getelevation-function-number-optional-transition-enabled
-    getFillColor: colorFxn,
+    getFillColor: firebaseAssets[assetName] ? getStyleFunction(assetName) :
+                                              getColorOfFeature,
     visible: layerMapValue.displayed,
   });
   redrawLayers();
 }
-
-/**
- * Creates a continuous color function for a feature collection from the given
- * base color to white.
- *
- * @param {String} field property whose value is used to determine color
- * @param {number} opacity
- * @param {number} minVal minVal of {@code field}
- * @param {number} maxVal maxVal of {@code field}
- * @param {String} color base color
- * @return {Function}
- */
-function createContinuousFunction(field, opacity, minVal, maxVal, color) {
-  return (feature) => {
-    const value = feature['properties'][field];
-    const colorRgb = colorMap.get(color);
-    const rgba = [];
-    for (let i = 0; i < 3; i++) {
-      rgba.push(
-          ((colorRgb[i] * (value - minVal)) + (white[i] * (maxVal - value))) /
-          2);
-    }
-    rgba.push(opacity);
-    return rgba;
-  };
-}
-
-/**
- * Creates a discrete color function for a feature collection.
- * @param {String} field property whose value is used to determine color
- * @param {number} opacity
- * @param {Map<String, String>} colors field value:color (e.g. 'minor-damage':
- *     'red')
- * @return {Function}
- */
-function createDiscreteFunction(field, opacity, colors) {
-  // TODO: allow for a default color if field value color isn't specified.
-  return (feature) => {
-    const color = colors[feature['properties'][field]];
-    const rgba = colorMap.get(color);
-    rgba.push(opacity);
-    return rgba;
-  };
-}
-
-const colorMap = new Map([
-  ['red', [255, 0, 0]],
-  ['orange', [255, 140, 0]],
-  ['yellow', [255, 255, 0]],
-  ['green', [0, 255, 0]],
-  ['blue', [0, 0, 255]],
-  ['purple', [128, 0, 128]],
-  ['black', [0, 0, 0]],
-]);
-
-const white = [255, 255, 255];
 
 /**
  * Utility function to return the given color if defined, or black if undefined.
