@@ -153,7 +153,7 @@ function createNewCheckbox(name, displayName, parentDiv, map) {
 }
 
 /**
- * Creates a new checkbox for the given asset.
+ * Creates a new checkbox for the given firebase asset.
  *
  * @param {String} assetName 'users/gd/...'
  * @param {Element} parentDiv
@@ -169,13 +169,7 @@ function createNewCheckboxForFirebaseAsset(assetName, parentDiv, map) {
       !firebaseAssets[assetName]['display-on-load']) {
     newBox.checked = false;
   }
-  newBox.onclick = () => {
-    if (newBox.checked) {
-      toggleLayerOn(assetName, map);
-    } else {
-      toggleLayerOff(assetName, map);
-    }
-  };
+  setBoxOnclick(newBox, assetName, map);
 }
 
 /**
@@ -186,7 +180,8 @@ function createNewCheckboxForFirebaseAsset(assetName, parentDiv, map) {
  * @param {google.maps.Map} map main map
  */
 function createNewCheckboxForAsset(assetName, parentDiv, map) {
-  // TODO: remove this function when all assets info is stored in firebase
+  // TODO: remove this function in follow up CL when all assets info is stored
+  // in firebase
   const newBox = createNewCheckbox(
       assetName,
       assets[assetName] ? assets[assetName].getDisplayName() : assetName,
@@ -194,8 +189,12 @@ function createNewCheckboxForAsset(assetName, parentDiv, map) {
   if (assets[assetName] && !assets[assetName].shouldDisplayOnLoad()) {
     newBox.checked = false;
   }
-  newBox.onclick = () => {
-    if (newBox.checked) {
+  setBoxOnclick(newBox, assetName, map);
+}
+
+function setBoxOnclick(box, assetName, map) {
+  box.onclick = () => {
+    if (box.checked) {
       toggleLayerOn(assetName, map);
     } else {
       toggleLayerOff(assetName, map);

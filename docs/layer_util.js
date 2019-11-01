@@ -1,5 +1,6 @@
 import createError from './create_error.js';
 import {mapContainerId} from './dom_constants.js';
+import {EarthEngineAsset} from './earth_engine_asset';
 import {assets} from './earth_engine_asset.js';
 import {colorMap, firebaseAssets, getStyleFunction} from './firebase_assets.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
@@ -234,9 +235,12 @@ const maxNumFeaturesExpected = 250000000;
  */
 function addLayer(assetName, index, map) {
   // TODO: move image assets to firestore
-  if (assets[assetName]) {
+  if (assets[assetName] &&
+      assets[assetName].getType() === EarthEngineAsset.Type.IMAGE) {
     addImageLayer(map, ee.Image(assetName), assetName, index);
-  } else if (firebaseAssets[assetName]) {
+  } else if (
+      firebaseAssets[assetName] &&
+      firebaseAssets[assetName]['asset-type'] === 1) {
     addLayerFromGeoJsonPromise(
         convertEeObjectToPromise(
             ee.FeatureCollection(assetName).toList(maxNumFeaturesExpected)),
@@ -309,19 +313,16 @@ function redrawLayers() {
  */
 function removeLayer(assetName, map) {
   // TODO: move image assets to firestore
-  if (assets[assetName]) {
+  if (assets[assetName] &&
+      assets[assetName].getType() === EarthEngineAsset.Type.IMAGE) {
     map.overlayMapTypes.setAt(layerMap[assetName].index, null);
     layerMap[assetName].displayed = false;
-  } else if (firebaseAssets[assetName]) {
-    switch (firebaseAssets[assetName]['asset-type']) {
-      case 1:
-        const layerMapValue = layerMap.get(assetName);
-        layerMapValue.displayed = false;
-        addLayerFromFeatures(layerMapValue, assetName);
-        break;
-      default:
-        break;
-    }
+  } else if (
+      firebaseAssets[assetName] &&
+      firebaseAssets[assetName]['asset-type'] === 1) {
+    const layerMapValue = layerMap.get(assetName);
+    layerMapValue.displayed = false;
+    addLayerFromFeatures(layerMapValue, assetName);
   }
 }
 
