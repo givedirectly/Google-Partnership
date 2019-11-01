@@ -111,9 +111,11 @@ function createAndDisplayJoinedData(
  */
 function createAssetCheckboxes(map) {
   const sidebarDiv = document.getElementById(sidebarDatasetsId);
+  Object.keys(assets).forEach(
+      (assetName) => createNewCheckboxForAsset(assetName, sidebarDiv, map));
   Object.keys(firebaseAssets)
       .forEach(
-          (assetName) => createNewCheckboxForAsset(assetName, sidebarDiv, map));
+          (assetName) => createNewCheckboxForFirebaseAsset(assetName, sidebarDiv, map));
   createCheckboxForUserFeatures(sidebarDiv);
   // score checkbox gets checked during initializeScoreLayer
   createNewCheckboxForAsset(scoreLayerName, sidebarDiv, map);
@@ -155,14 +157,39 @@ function createNewCheckbox(name, displayName, parentDiv, map) {
  * @param {Element} parentDiv
  * @param {google.maps.Map} map main map
  */
-function createNewCheckboxForAsset(assetName, parentDiv, map) {
+function createNewCheckboxForFirebaseAsset(assetName, parentDiv, map) {
   const newBox = createNewCheckbox(
       assetName,
       firebaseAssets[assetName] ? firebaseAssets[assetName]['display-name'] :
-                                  assetName,
+          assetName,
       parentDiv);
   if (firebaseAssets[assetName] &&
       !firebaseAssets[assetName]['display-on-load']) {
+    newBox.checked = false;
+  }
+  newBox.onclick = () => {
+    if (newBox.checked) {
+      toggleLayerOn(assetName, map);
+    } else {
+      toggleLayerOff(assetName, map);
+    }
+  };
+}
+
+/**
+ * Creates a new checkbox for the given asset.
+ *
+ * @param {String} assetName
+ * @param {Element} parentDiv
+ * @param {google.maps.Map} map main map
+ */
+// TODO: remove this function when all assets info is stored in firebase
+function createNewCheckboxForAsset(assetName, parentDiv, map) {
+  const newBox = createNewCheckbox(
+      assetName,
+      assets[assetName] ? assets[assetName].getDisplayName() : assetName,
+      parentDiv);
+  if (assets[assetName] && !assets[assetName].shouldDisplayOnLoad()) {
     newBox.checked = false;
   }
   newBox.onclick = () => {
@@ -190,9 +217,16 @@ function createCheckboxForUserFeatures(parentDiv) {
  * overlays and displays. Also populates the layerMap.
  *
  * @param {google.maps.Map} map main map
- * @param {Promise} firebasePromise firebase authentication promise
  */
-function initializeAssetLayers(map, firebasePromise) {
+function initializeAssetLayers(map) {
+  // TODO: remove when we store all assets in firestore
+  Object.keys(assets).forEach((assetName, index) => {
+    if (assets[assetName].shouldDisplayOnLoad()) {
+      addLayer(assetName, index, map);
+    } else {
+      addNullLayer(assetName, index);
+    }
+  });
   Object.keys(firebaseAssets).forEach((asset, index) => {
     const properties = firebaseAssets[asset];
     if (properties['display-on-load']) {
@@ -204,17 +238,6 @@ function initializeAssetLayers(map, firebasePromise) {
     }
   });
   createAssetCheckboxes(map);
-  // This is the standard way to iterate over a dictionary according to
-  // https://stackoverflow.com/questions/34448724/iterating-over-a-dictionary-in-javascript
-  // Object.keys(assets).forEach((assetName, index) => {
-  // TODO(juliexxia): generalize for ImageCollections (and Features/Images?)
-  // if (assets[assetName].shouldDisplayOnLoad()) {
-  //   addLayer(assetName, index, map);
-  // } else {
-  //   addNullLayer(assetName, index);
-  // }
-  // });
-  // createAssetCheckboxes(assets, map);
 }
 
 /**

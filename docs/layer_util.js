@@ -1,6 +1,6 @@
 import createError from './create_error.js';
 import {mapContainerId} from './dom_constants.js';
-import {firebaseAssets} from './earth_engine_asset.js';
+import {assets, EarthEngineAsset, firebaseAssets} from './earth_engine_asset.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {convertEeObjectToPromise} from './map_util.js';
 
@@ -111,13 +111,11 @@ function getColorOfFeature(feature) {
 }
 
 /**
- * Asynchronous wrapper for addLayerFromId that calls getMap() with a
- callback
+ * Asynchronous wrapper for addLayerFromId that calls getMap() with a callback
  * to avoid blocking on the result. This also populates layerMap.
  *
  * This should only be called once per asset when its overlay is initialized
- * for the first time. After the overlay is non-null in layerMap, any
- displaying
+ * for the first time. After the overlay is non-null in layerMap, any displaying
  * should be able to call {@code map.overlayMapTypes.setAt(...)}.
  *
  * @param {google.maps.Map} map
@@ -201,14 +199,18 @@ function addLayerFromFeatures(layerMapValue, assetName) {
   let colorFxn = getColorOfFeature;
   if (firebaseAssets[assetName]) {
     const colorFxnProperties = firebaseAssets[assetName]['color-fxn'];
-    const continuous = colorFxnProperties['continuous'];
-    const field = colorFxnProperties['field'];
-    const opacity = colorFxnProperties['opacity'];
-    colorFxn = continuous ?
-        createContinuousFunction(
-            field, opacity, colorFxnProperties['min'],
-            colorFxnProperties['max'], colorFxnProperties['base-color']) :
-        createDiscreteFunction(field, opacity, colorFxnProperties['colors']);
+    if (colorFxnProperties['single-color']) {
+      colorFxn = () => colorMap.get(colorFxnProperties['single-color']);
+    } else {
+      const continuous = colorFxnProperties['continuous'];
+      const field = colorFxnProperties['field'];
+      const opacity = colorFxnProperties['opacity'];
+      colorFxn = continuous ?
+          createContinuousFunction(
+              field, opacity, colorFxnProperties['min'],
+              colorFxnProperties['max'], colorFxnProperties['base-color']) :
+          createDiscreteFunction(field, opacity, colorFxnProperties['colors']);
+    }
   }
   layerArray[layerMapValue.index] = new deck.GeoJsonLayer({
     id: assetName,
@@ -255,9 +257,10 @@ function createContinuousFunction(field, opacity, minVal, maxVal, color) {
  * @param {Map<String, String>} colors
  * @return {Function}
  */
+// TODO: allow for a default color if field value color isn't specified.
 function createDiscreteFunction(field, opacity, colors) {
   return (feature) => {
-    const color = colors[feature['properties'][field]];
+    let color = colors[feature['properties'][field]];
     const rgba = colorMap.get(color);
     rgba.push(opacity);
     return rgba;
@@ -267,7 +270,11 @@ function createDiscreteFunction(field, opacity, colors) {
 const colorMap = new Map([
   ['red', [255, 0, 0]],
   ['orange', [255, 140, 0]],
+  ['yellow', [255, 255, 0]],
+  ['green', [0, 255, 0]],
+  ['blue', [0, 0, 255]],
   ['purple', [128, 0, 128]],
+  ['black', [0, 0, 0]],
 ]);
 
 const white = [255, 255, 255];
@@ -293,23 +300,24 @@ const maxNumFeaturesExpected = 250000000;
  * @param {number} index Ordering of layer (higher is more visible).
  * @param {google.maps.Map} map main map
  */
+// TODO: move image/image colletion assets to firestore + support feature
+// assets.
 function addLayer(assetName, index, map) {
-  switch (firebaseAssets[assetName]['asset-type']) {
-    // image
-    case 2:
-      addImageLayer(map, ee.Image(assetName), assetName, index);
-      break;
-    // image collection
-    case 3:
-      addImageLayer(map, ee.ImageCollection(assetName), assetName, index);
-      break;
-    // feature collection
-    default:
-      addLayerFromGeoJsonPromise(
-          convertEeObjectToPromise(
-              ee.FeatureCollection(assetName).toList(maxNumFeaturesExpected)),
-          assetName, index);
-      break;
+  if (assets[assetName]) {
+    switch (assets[assetName].getType()) {
+      case EarthEngineAsset.Type.IMAGE:
+        addImageLayer(map, ee.Image(assetName), assetName, index);
+        break;
+      // image collection
+      default:
+        addImageLayer(map, ee.ImageCollection(assetName), assetName, index);
+        break;
+    }
+  } else if (firebase[assetName]) {
+    addLayerFromGeoJsonPromise(
+        convertEeObjectToPromise(
+            ee.FeatureCollection(assetName).toList(maxNumFeaturesExpected)),
+        assetName, index);
   }
 }
 
@@ -376,19 +384,22 @@ function redrawLayers() {
  * @param {string} assetName
  * @param {google.maps.Map} map main map
  */
+// TODO: stop supporting javascript defined image assets
 function removeLayer(assetName, map) {
-  switch (firebaseAssets[assetName] &&
-          firebaseAssets[assetName]['asset-type']) {
-    case 2:
-    case 3:
-      map.overlayMapTypes.setAt(layerMap[assetName].index, null);
-      layerMap[assetName].displayed = false;
-      break;
-    default:
-      const layerMapValue = layerMap.get(assetName);
-      layerMapValue.displayed = false;
-      addLayerFromFeatures(layerMapValue, assetName);
-      break;
+  if (assets[assetName]) {
+    // at this point we only have images stores in {@code assets}
+    map.overlayMapTypes.setAt(layerMap[assetName].index, null);
+    layerMap[assetName].displayed = false;
+  } else if (firebaseAssets[assetName]) {
+    switch (firebaseAssets['asset-type']) {
+      case 1:
+        const layerMapValue = layerMap.get(assetName);
+        layerMapValue.displayed = false;
+        addLayerFromFeatures(layerMapValue, assetName);
+        break;
+      default:
+        break;
+    }
   }
 }
 

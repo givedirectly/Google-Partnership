@@ -82,52 +82,9 @@ class EarthEngineAsset {
 
 EarthEngineAsset.Type = {
   IMAGE: 'Image',
-  IMAGECOLLECTION: 'ImageCollection',
-  FEATURECOLLECTION: 'FeatureCollection',
 };
 
-/**
- * Colors the feature with Path of Storm Radii-specific logic.
- *
- * @param {GeoJSON.Feature} feature
- * @return {Array} color RGBA color specification as an array
- */
-function colorPathofStormRadiiLayer(feature) {
-  const color =
-      Math.min(Math.round(255 * feature.properties['RADII'] / 100), 255);
-  return [255 - color, 255 - color, 255 - color, 40];
-}
-
-/**
- * Colors the feature with FEMA Assistance-specific logic.
- *
- * @param {GeoJSON.Feature} feature
- * @return {Array} color RGBA color specification as an array
- */
-function colorFemaAssistanceLayer(feature) {
-  // Color 'public assistance' as yellow, and 'individual and public assistance'
-  // as red.
-  const publicAssistance = feature.properties['Designatio'] == 'PA';
-  return publicAssistance ? [255, 255, 51, 40] : [220, 20, 60, 40];
-}
-
-/**
- * Colors the feature with GD Assistance-specific logic.
- *
- * @param {GeoJSON.Feature} feature
- * @return {Array} color RGBA color specification as an array
- */
-function colorGDAssistanceLayer(feature) {
-  return [255, 255, 102, 100];
-}
-
 // TODO: Store these and allow users to change/set these fields on import page.
-const pathOfStormRadii = new EarthEngineAsset(
-    EarthEngineAsset.Type.FEATURECOLLECTION, 'Path of Storm Radii', false,
-    colorPathofStormRadiiLayer);
-const femaVisits = new EarthEngineAsset(
-    EarthEngineAsset.Type.FEATURECOLLECTION, 'FEMA Assistance', false,
-    colorFemaAssistanceLayer);
 const elevationData = new EarthEngineAsset(
     EarthEngineAsset.Type.IMAGE, 'Elevation Data', false, (layer) => {
       const aspect = ee.Terrain.aspect(layer);
@@ -135,17 +92,12 @@ const elevationData = new EarthEngineAsset(
     }, {min: -1, max: 1, opacity: .3});
 const noaaData =
     new EarthEngineAsset(EarthEngineAsset.Type.IMAGE, 'NOAA Imagery', false);
-const gdVisits = new EarthEngineAsset(
-    'FeatureCollection', 'GD Assistance', false, colorGDAssistanceLayer);
 
 // List of known assets. Display priority is determined by order in this list,
 // with higher index assets being displayed above lower index assets, except for
 // Images/ImageCollections, which will always be displayed below
 // FeatureCollections.
 const assets = {
-  'users/ruthtalbot/harvey-pathofstorm-radii': pathOfStormRadii,
-  'users/ruthtalbot/fema-visits-polygon': femaVisits,
   'CGIAR/SRTM90_V4': elevationData,
   'users/janak/processed-noaa-harvey-js-max-pixels-bounded-scale-1': noaaData,
-  'users/ruthtalbot/gd-polygons-harvey': gdVisits,
 };
