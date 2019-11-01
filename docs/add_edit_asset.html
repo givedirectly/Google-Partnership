@@ -35,15 +35,24 @@
   <div class="formTitle"> Add/Edit Asset</div><br>
   <div class="form" id="asset-form-div">
     <div class="input-container"> 
-      <label>Display Name</label>
+      <label>Display Name</label><br>
       <input type="text" id ="display-name-input"><br>
     </div>
     <div class="input-container"> 
-      <label>Asset Path</label>
+      <label>Asset Path</label><br>
       <input type="text" id ="asset-path-input"><br>
     </div>
     <div class="input-container"> 
       <label>Display on Load </label><input type="checkbox" id="display-on-load-checkbox" class="checkbox"><br>
+    </div>
+    <div class="input-container"> 
+      <label style="font-weight:bold">Display Details </label><br>
+      <div class="input-container" style="padding-left: 20px"> 
+      <label>Opacity </label><input type="number" min="0" max="255" id="opacity-input"><br>
+      <label>Field to Color </label><input type="text" id="color-field-input"><br>
+      <label>Colors: </label><br>
+      <div class="input-container" id="display-colors-container"> </div>
+    </div>
     </div>
     <button type="submit" class="form-button"> Update </button>
   </div>

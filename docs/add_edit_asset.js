@@ -4,11 +4,11 @@ import {getDisaster, getResources} from '../resources.js';
 import SettablePromise from '../settable_promise.js';
 
 //TODO: get this from the url 
-const assetName = 'users/gd/harvey/FEMA_Damage_Assessments';
+const assetName = 'users/gd/harvey/fema-visits';
 
 
 function initializeAsset(firebaseAuthPromise) {
-	// var urlAssetName = /assetName=([^&]+)/.exec(url)[1]; 
+	// var urlAssetName = /assetName=([^&]+)/.exec(window.location.href)[1]; 
 	if (assetName) {
 	 firebaseAuthPromise.then(() => {
 		return firebase.firestore()
@@ -39,6 +39,29 @@ function populateForm(data) {
 	document.getElementById('display-on-load-checkbox').checked = asset['display-on-load'];
 	document.getElementById('display-name-input').value = asset['display-name'];
 	document.getElementById('asset-path-input').value = assetName;
+
+	if (asset['color-fxn']['single-color']) {
+		createColorChild('Color', asset['color-fxn']['single-color'])
+	} else{
+		const colors = asset['color-fxn']['colors'];
+		for (var key in colors) {
+			createColorChild(key, colors[key])
+		}
+	}
+}
+
+function createColorChild(color, value) {
+	const colorsContainer = document.getElementById('display-colors-container');
+	const label = document.createElement('label');
+	label.innerHTML = color;
+	colorsContainer.appendChild(label);
+
+	const input = document.createElement('input');
+	input.value = value;
+	input.type = 'text';
+	colorsContainer.appendChild(input);
+
+	colorsContainer.appendChild(document.createElement('br'));
 }
 
 /**
