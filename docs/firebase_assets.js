@@ -65,6 +65,7 @@ function createContinuousFunction(field, opacity, minVal, maxVal, color) {
     const value = feature['properties'][field];
     const colorRgb = colorMap.get(color);
     const rgba = [];
+    const white = colorMap.get('white');
     for (let i = 0; i < 3; i++) {
       rgba.push(
           ((colorRgb[i] * (value - minVal)) + (white[i] * (maxVal - value))) /
@@ -101,6 +102,5 @@ const colorMap = new Map([
   ['blue', [0, 0, 255]],
   ['purple', [128, 0, 128]],
   ['black', [0, 0, 0]],
+  ['white', [255, 255, 255]],
 ]);
-
-const white = [255, 255, 255];
