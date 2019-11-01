@@ -1,6 +1,7 @@
 import createError from './create_error.js';
 import {mapContainerId} from './dom_constants.js';
-import {assets, firebaseAssets} from './earth_engine_asset.js';
+import {assets} from './earth_engine_asset.js';
+import {firebaseAssets} from './firebase_assets.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {convertEeObjectToPromise} from './map_util.js';
 
@@ -227,12 +228,14 @@ function addLayerFromFeatures(layerMapValue, assetName) {
 }
 
 /**
+ * Creates a continuous color function for a feature collection from the given
+ * base color to white.
  *
- * @param {String} field
+ * @param {String} field property whose value is used to determine color
  * @param {number} opacity
- * @param {number} minVal
- * @param {number} maxVal
- * @param {String} color
+ * @param {number} minVal minVal of {@code field}
+ * @param {number} maxVal maxVal of {@code field}
+ * @param {String} color base color
  * @return {Function}
  */
 function createContinuousFunction(field, opacity, minVal, maxVal, color) {
@@ -251,10 +254,10 @@ function createContinuousFunction(field, opacity, minVal, maxVal, color) {
 }
 
 /**
- *
- * @param {string} field
+ * Creates a discrete color function for a feature collection.
+ * @param {String} field property whose value is used to determine color
  * @param {number} opacity
- * @param {Map<String, String>} colors
+ * @param {Map<String, String>} colors field value:color (e.g. 'minor-damage': 'red')
  * @return {Function}
  */
 function createDiscreteFunction(field, opacity, colors) {
@@ -278,7 +281,6 @@ const colorMap = new Map([
 ]);
 
 const white = [255, 255, 255];
-const black = [0, 0, 0, 255];
 
 /**
  * Utility function to return the given color if defined, or black if undefined.
@@ -287,7 +289,7 @@ const black = [0, 0, 0, 255];
  * @return {Array} RGBA color specification as an array
  */
 function showColor(color) {
-  return color ? color : black;
+  return color ? color : colorMap.get('black');
 }
 
 // 250M objects in a FeatureCollection ought to be enough for anyone.
@@ -304,7 +306,7 @@ function addLayer(assetName, index, map) {
   // TODO: move image assets to firestore
   if (assets[assetName]) {
     addImageLayer(map, ee.Image(assetName), assetName, index);
-  } else if (firebase[assetName]) {
+  } else if (firebaseAssets[assetName]) {
     addLayerFromGeoJsonPromise(
         convertEeObjectToPromise(
             ee.FeatureCollection(assetName).toList(maxNumFeaturesExpected)),

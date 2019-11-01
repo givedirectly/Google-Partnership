@@ -1,7 +1,8 @@
 import {clickFeature, selectHighlightedFeatures} from './click_feature.js';
 import {sidebarDatasetsId, tableContainerId} from './dom_constants.js';
 import {drawTable} from './draw_table.js';
-import {assets, firebaseAssets, initializeFirebaseAssets} from './earth_engine_asset.js';
+import {assets} from './earth_engine_asset.js';
+import {firebaseAssets, initializeFirebaseAssets} from './firebase_assets.js';
 import {highlightFeatures} from './highlight_features.js';
 import {addLayer, addLayerFromGeoJsonPromise, addNullLayer, scoreLayerName, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from './layer_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
@@ -35,6 +36,9 @@ const scoreIndex = Object.keys(assets).length;
 function run(map, firebasePromise) {
   setMapToDrawLayersOn(map);
   createToggles(map);
+  snapAndDamagePromise =
+      convertEeObjectToPromise(ee.FeatureCollection(snapAndDamageAsset));
+  processUserRegions(map, firebasePromise);
   firebasePromise
       .then(
           () => firebase.firestore()
@@ -46,13 +50,11 @@ function run(map, firebasePromise) {
       .then((doc) => {
         initializeFirebaseAssets(doc.data());
         initializeAssetLayers(map);
-        snapAndDamagePromise =
-            convertEeObjectToPromise(ee.FeatureCollection(snapAndDamageAsset));
-        createAndDisplayJoinedData(
-            map, initialPovertyThreshold, initialDamageThreshold,
-            initialPovertyWeight);
       });
-  processUserRegions(map, firebasePromise);
+  createNewCheckboxForAsset(scoreLayerName, document.getElementById(sidebarDatasetsId), map);
+  createAndDisplayJoinedData(
+      map, initialPovertyThreshold, initialDamageThreshold,
+      initialPovertyWeight);
 }
 
 let mapSelectListener = null;
@@ -118,8 +120,6 @@ function createAssetCheckboxes(map) {
           (assetName) =>
               createNewCheckboxForFirebaseAsset(assetName, sidebarDiv, map));
   createCheckboxForUserFeatures(sidebarDiv);
-  // score checkbox gets checked during initializeScoreLayer
-  createNewCheckboxForAsset(scoreLayerName, sidebarDiv, map);
 }
 
 /**

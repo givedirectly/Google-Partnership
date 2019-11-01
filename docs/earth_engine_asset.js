@@ -1,15 +1,4 @@
-export {assets, EarthEngineAsset, firebaseAssets, initializeFirebaseAssets};
-
-// TODO: move!
-let firebaseAssets;
-
-/**
- * Initialize firebase assets.
- * @param {Object} assets
- */
-function initializeFirebaseAssets(assets) {
-  firebaseAssets = assets;
-}
+export {assets, EarthEngineAsset};
 
 /**
  * EarthEngineAsset class to store relevant data about any assets, including
@@ -93,10 +82,7 @@ const elevationData = new EarthEngineAsset(
 const noaaData =
     new EarthEngineAsset(EarthEngineAsset.Type.IMAGE, 'NOAA Imagery', false);
 
-// List of known assets. Display priority is determined by order in this list,
-// with higher index assets being displayed above lower index assets, except for
-// Images/ImageCollections, which will always be displayed below
-// FeatureCollections.
+// List of known assets we have yet to export to firestore.
 const assets = {
   'CGIAR/SRTM90_V4': elevationData,
   'users/janak/processed-noaa-harvey-js-max-pixels-bounded-scale-1': noaaData,
