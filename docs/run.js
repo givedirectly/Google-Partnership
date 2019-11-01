@@ -115,7 +115,8 @@ function createAssetCheckboxes(map) {
       (assetName) => createNewCheckboxForAsset(assetName, sidebarDiv, map));
   Object.keys(firebaseAssets)
       .forEach(
-          (assetName) => createNewCheckboxForFirebaseAsset(assetName, sidebarDiv, map));
+          (assetName) =>
+              createNewCheckboxForFirebaseAsset(assetName, sidebarDiv, map));
   createCheckboxForUserFeatures(sidebarDiv);
   // score checkbox gets checked during initializeScoreLayer
   createNewCheckboxForAsset(scoreLayerName, sidebarDiv, map);
@@ -161,7 +162,7 @@ function createNewCheckboxForFirebaseAsset(assetName, parentDiv, map) {
   const newBox = createNewCheckbox(
       assetName,
       firebaseAssets[assetName] ? firebaseAssets[assetName]['display-name'] :
-          assetName,
+                                  assetName,
       parentDiv);
   if (firebaseAssets[assetName] &&
       !firebaseAssets[assetName]['display-on-load']) {
