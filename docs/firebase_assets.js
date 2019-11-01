@@ -1,4 +1,4 @@
-export {firebaseAssets, initializeFirebaseAssets, getStyleFunction, colorMap};
+export {colorMap, firebaseAssets, getStyleFunction, initializeFirebaseAssets};
 
 // The collection of firebase assets.
 let firebaseAssets;
@@ -21,7 +21,8 @@ const styleFunctions = new Map();
  * @return {Function}
  */
 function getStyleFunction(assetName) {
-  return styleFunctions.has(assetName) ? styleFunctions.get(assetName) : createStyleFunction(assetName);
+  return styleFunctions.has(assetName) ? styleFunctions.get(assetName) :
+                                         createStyleFunction(assetName);
 }
 
 /**
