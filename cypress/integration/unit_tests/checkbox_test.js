@@ -1,6 +1,4 @@
-import {assets, EarthEngineAsset} from '../../../docs/earth_engine_asset.js';
 import {initializeFirebaseAssets} from '../../../docs/firebase_assets';
-import {firebaseAssets} from '../../../docs/firebase_assets.js';
 import {layerArray, layerMap, LayerMapValue, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from '../../../docs/layer_util';
 import {loadScriptsBefore} from '../../support/script_loader';
 
@@ -11,19 +9,19 @@ const mockFirebaseAssets = {
     'asset-type': 1,
     'display-name': 'asset0',
     'display-on-load': true,
-    'color-fxn': {'single-color': 'yellow'}
+    'color-fxn': {'single-color': 'yellow'},
   },
   'asset1': {
     'asset-type': 1,
     'display-name': 'asset1',
     'display-on-load': false,
-    'color-fxn': {'single-color': 'yellow'}
+    'color-fxn': {'single-color': 'yellow'},
   },
   'asset2': {
     'asset-type': 1,
     'display-name': 'asset2',
     'display-on-load': false,
-    'color-fxn': {'single-color': 'yellow'}
+    'color-fxn': {'single-color': 'yellow'},
   },
 };
 
