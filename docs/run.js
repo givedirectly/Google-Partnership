@@ -192,6 +192,12 @@ function createNewCheckboxForAsset(assetName, parentDiv, map) {
   setBoxOnclick(newBox, assetName, map);
 }
 
+/**
+ * Temporary helper fxn while we have two different createNewCheckbox fxns.
+ * @param {HTMLElement} box
+ * @param {String} assetName
+ * @param {google.maps.Map} map main map
+ */
 function setBoxOnclick(box, assetName, map) {
   box.onclick = () => {
     if (box.checked) {
