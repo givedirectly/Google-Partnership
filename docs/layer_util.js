@@ -257,7 +257,8 @@ function createContinuousFunction(field, opacity, minVal, maxVal, color) {
  * Creates a discrete color function for a feature collection.
  * @param {String} field property whose value is used to determine color
  * @param {number} opacity
- * @param {Map<String, String>} colors field value:color (e.g. 'minor-damage': 'red')
+ * @param {Map<String, String>} colors field value:color (e.g. 'minor-damage':
+ *     'red')
  * @return {Function}
  */
 function createDiscreteFunction(field, opacity, colors) {

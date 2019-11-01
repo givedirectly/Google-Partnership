@@ -51,7 +51,8 @@ function run(map, firebasePromise) {
         initializeFirebaseAssets(doc.data());
         initializeAssetLayers(map);
       });
-  createNewCheckboxForAsset(scoreLayerName, document.getElementById(sidebarDatasetsId), map);
+  createNewCheckboxForAsset(
+      scoreLayerName, document.getElementById(sidebarDatasetsId), map);
   createAndDisplayJoinedData(
       map, initialPovertyThreshold, initialDamageThreshold,
       initialPovertyWeight);
