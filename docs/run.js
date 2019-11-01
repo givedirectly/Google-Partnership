@@ -184,8 +184,8 @@ function createNewCheckboxForFirebaseAsset(assetName, parentDiv, map) {
  * @param {Element} parentDiv
  * @param {google.maps.Map} map main map
  */
-// TODO: remove this function when all assets info is stored in firebase
 function createNewCheckboxForAsset(assetName, parentDiv, map) {
+  // TODO: remove this function when all assets info is stored in firebase
   const newBox = createNewCheckbox(
       assetName,
       assets[assetName] ? assets[assetName].getDisplayName() : assetName,

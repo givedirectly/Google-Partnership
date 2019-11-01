@@ -257,10 +257,10 @@ function createContinuousFunction(field, opacity, minVal, maxVal, color) {
  * @param {Map<String, String>} colors
  * @return {Function}
  */
-// TODO: allow for a default color if field value color isn't specified.
 function createDiscreteFunction(field, opacity, colors) {
+  // TODO: allow for a default color if field value color isn't specified.
   return (feature) => {
-    let color = colors[feature['properties'][field]];
+    const color = colors[feature['properties'][field]];
     const rgba = colorMap.get(color);
     rgba.push(opacity);
     return rgba;
@@ -300,19 +300,10 @@ const maxNumFeaturesExpected = 250000000;
  * @param {number} index Ordering of layer (higher is more visible).
  * @param {google.maps.Map} map main map
  */
-// TODO: move image/image colletion assets to firestore + support feature
-// assets.
 function addLayer(assetName, index, map) {
+  // TODO: move image assets to firestore
   if (assets[assetName]) {
-    switch (assets[assetName].getType()) {
-      case EarthEngineAsset.Type.IMAGE:
-        addImageLayer(map, ee.Image(assetName), assetName, index);
-        break;
-      // image collection
-      default:
-        addImageLayer(map, ee.ImageCollection(assetName), assetName, index);
-        break;
-    }
+    addImageLayer(map, ee.Image(assetName), assetName, index);
   } else if (firebase[assetName]) {
     addLayerFromGeoJsonPromise(
         convertEeObjectToPromise(
@@ -384,10 +375,9 @@ function redrawLayers() {
  * @param {string} assetName
  * @param {google.maps.Map} map main map
  */
-// TODO: stop supporting javascript defined image assets
 function removeLayer(assetName, map) {
+  // TODO: move image assets to firestore
   if (assets[assetName]) {
-    // at this point we only have images stores in {@code assets}
     map.overlayMapTypes.setAt(layerMap[assetName].index, null);
     layerMap[assetName].displayed = false;
   } else if (firebaseAssets[assetName]) {
