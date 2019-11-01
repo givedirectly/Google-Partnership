@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!-- Allows user to add/edit metadata associated with an asset. -->
+  <title>Add/Edit Asset</title>
+  <!-- Load the Roboto font. -->
+  <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet" type="text/css">
+
+  <!-- Load jQuery, a 3rd-party library. -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+
+  <!-- Load debug Earth Engine JavaScript client library. -->
+  <!-- TODO(janakr): Switch back to compiled version in production. -->
+  <!-- TODO(janakr): Verify there's no downside to using relative paths here and below. -->
+  <script src="../lib/ee_api_js_debug.js"></script>
+
+  <!-- TODO(janakr): download this script to lib. -->
+  <script src="https://apis.google.com/js/api.js"></script>
+
+  <script src="https://www.gstatic.com/firebasejs/6.3.3/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/6.3.3/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/7.2.1/firebase-auth.js"></script>
+
+  <!-- Load our script. It imports the other scripts it needs.  -->
+  <script type="module" src="./add_edit_asset.js"></script>
+
+  <!-- Load our styles. -->
+  <link rel="stylesheet" href="./style.css">
+
+  <!-- Load icons. -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+<body>
+  <div style="padding:20px">
+  <div class="formTitle"> Add/Edit Asset</div><br>
+  <div class="form" id="asset-form-div">
+    <div class="input-container"> 
+      <label>Display Name</label>
+      <input type="text" id ="display-name-input"><br>
+    </div>
+    <div class="input-container"> 
+      <label>Asset Path</label>
+      <input type="text" id ="asset-path-input"><br>
+    </div>
+    <div class="input-container"> 
+      <label>Display on Load </label><input type="checkbox" id="display-on-load-checkbox" class="checkbox"><br>
+    </div>
+    <button type="submit" class="form-button"> Update </button>
+  </div>
+</div>
+</body>
+</html>
