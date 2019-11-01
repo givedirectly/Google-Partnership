@@ -1,8 +1,31 @@
 import {assets, EarthEngineAsset} from '../../../docs/earth_engine_asset.js';
+import {initializeFirebaseAssets} from '../../../docs/firebase_assets';
+import {firebaseAssets} from '../../../docs/firebase_assets.js';
 import {layerArray, layerMap, LayerMapValue, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from '../../../docs/layer_util';
 import {loadScriptsBefore} from '../../support/script_loader';
 
 const mockData = {};
+
+const mockFirebaseAssets = {
+  'asset0': {
+    'asset-type': 1,
+    'display-name': 'asset0',
+    'display-on-load': true,
+    'color-fxn': {'single-color': 'yellow'}
+  },
+  'asset1': {
+    'asset-type': 1,
+    'display-name': 'asset1',
+    'display-on-load': false,
+    'color-fxn': {'single-color': 'yellow'}
+  },
+  'asset2': {
+    'asset-type': 1,
+    'display-name': 'asset2',
+    'display-on-load': false,
+    'color-fxn': {'single-color': 'yellow'}
+  },
+};
 
 describe('Unit test for toggleLayerOn', () => {
   loadScriptsBefore('ee', 'deck', 'maps');
@@ -10,12 +33,7 @@ describe('Unit test for toggleLayerOn', () => {
     layerMap.set('asset0', new LayerMapValue(mockData, 0, true));
     layerMap.set('asset1', new LayerMapValue(mockData, 1, false));
     layerMap.set('asset2', new LayerMapValue(null, 2, false));
-    assets['asset0'] = new EarthEngineAsset(
-        EarthEngineAsset.Type.FEATURECOLLECTION, 'asset0', true);
-    assets['asset1'] = new EarthEngineAsset(
-        EarthEngineAsset.Type.FEATURECOLLECTION, 'asset1', false);
-    assets['asset2'] = new EarthEngineAsset(
-        EarthEngineAsset.Type.FEATURECOLLECTION, 'asset2', false);
+    initializeFirebaseAssets(mockFirebaseAssets);
     // Initialize deck object in production.
     setMapToDrawLayersOn(null);
     layerArray[0] = new deck.GeoJsonLayer({});

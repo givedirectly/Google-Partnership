@@ -384,7 +384,7 @@ function removeLayer(assetName, map) {
     map.overlayMapTypes.setAt(layerMap[assetName].index, null);
     layerMap[assetName].displayed = false;
   } else if (firebaseAssets[assetName]) {
-    switch (firebaseAssets['asset-type']) {
+    switch (firebaseAssets[assetName]['asset-type']) {
       case 1:
         const layerMapValue = layerMap.get(assetName);
         layerMapValue.displayed = false;

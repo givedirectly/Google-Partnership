@@ -85,5 +85,6 @@ const noaaData =
 // List of known assets we have yet to export to firestore.
 const assets = {
   'CGIAR/SRTM90_V4': elevationData,
+  // ready at users/gd/harvey/noaa when we need it
   'users/janak/processed-noaa-harvey-js-max-pixels-bounded-scale-1': noaaData,
 };
