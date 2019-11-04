@@ -235,7 +235,6 @@ const maxNumFeaturesExpected = 250000000;
  * @param {number} index Ordering of layer (higher is more visible).
  * @param {google.maps.Map} map main map
  */
-
 function addLayer(assetName, index, map) {
   switch (firebaseAssets[assetName]['asset-type']) {
     case 2:
