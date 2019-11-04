@@ -125,7 +125,9 @@ function getColorOfFeature(feature) {
  * @param {number} index
  */
 function addImageLayer(map, layer, assetName, index) {
-  const imgStyles = firebaseAssets[assetName]['vis-params'] ? firebaseAssets[assetName]['vis-params'] : null;
+  const imgStyles = firebaseAssets[assetName]['vis-params'] ?
+      firebaseAssets[assetName]['vis-params'] :
+      null;
   console.log(imgStyles);
   if (firebaseAssets[assetName]['use-terrain-style']) {
     layer = terrainStyle(layer);

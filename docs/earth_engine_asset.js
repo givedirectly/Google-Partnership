@@ -78,9 +78,10 @@ function terrainStyle(layer) {
   return aspect.divide(180).multiply(Math.PI).sin();
 }
 //
-// // TODO: Store these and allow users to change/set these fields on import page.
-// const elevationData = new EarthEngineAsset(
-//     EarthEngineAsset.Type.IMAGE, 'Elevation Data', false, (layer) => terrainStyle(layer), {min: -1, max: 1, opacity: .3});
+// // TODO: Store these and allow users to change/set these fields on import
+// page. const elevationData = new EarthEngineAsset(
+//     EarthEngineAsset.Type.IMAGE, 'Elevation Data', false, (layer) =>
+//     terrainStyle(layer), {min: -1, max: 1, opacity: .3});
 // const noaaData =
 //     new EarthEngineAsset(EarthEngineAsset.Type.IMAGE, 'NOAA Imagery', false);
 //
@@ -88,5 +89,6 @@ function terrainStyle(layer) {
 // const assets = {
 //   'CGIAR/SRTM90_V4': elevationData,
 //   // ready at users/gd/harvey/noaa when we need it
-//   'users/janak/processed-noaa-harvey-js-max-pixels-bounded-scale-1': noaaData,
+//   'users/janak/processed-noaa-harvey-js-max-pixels-bounded-scale-1':
+//   noaaData,
 // };
