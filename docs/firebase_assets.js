@@ -16,7 +16,7 @@ function initializeFirebaseAssets(assets) {
 const styleFunctions = new Map();
 
 /**
- * Return style function for this asset.
+ * Returns style function for this asset.
  * @param {String} assetName asset path
  * @return {Function}
  */

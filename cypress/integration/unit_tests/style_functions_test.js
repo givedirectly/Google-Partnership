@@ -29,9 +29,7 @@ describe('Unit test for generating style functions', () => {
     }
     const banana = fxn({'properties': {'flavor': 'banana'}});
     const expectedBanana = colorMap.get('yellow');
-    for (let i = 0; i < 4; i++) {
-      expect(banana[i]).to.eq(expectedBanana[i]);
-    }
+    expect(banana).to.eql(expectedBanana);
   });
 
   it('calculates a continuous function', () => {
@@ -67,8 +65,6 @@ describe('Unit test for generating style functions', () => {
     const fxn = getStyleFunction('asset2');
     const trueBlue = fxn({});
     const blue = colorMap.get('blue');
-    for (let i = 0; i < 4; i++) {
-      expect(trueBlue[i]).to.eq(blue[i]);
-    }
+    expect(trueBlue).to.eql(blue);
   });
 });

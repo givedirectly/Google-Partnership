@@ -193,7 +193,8 @@ function createNewCheckboxForAsset(assetName, parentDiv, map) {
 }
 
 /**
- * Temporary helper fxn while we have two different createNewCheckbox fxns.
+ * Temporary helper function while we have two different createNewCheckbox
+ * functions.
  * @param {HTMLElement} box
  * @param {String} assetName
  * @param {google.maps.Map} map main map
