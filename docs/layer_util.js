@@ -1,7 +1,7 @@
-import createError from './create_error.js';
 import {mapContainerId} from './dom_constants.js';
 import {terrainStyle} from './earth_engine_asset.js';
 import {colorMap, firebaseLayers, getStyleFunction} from './firebase_layers.js';
+import {createError} from './error.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {convertEeObjectToPromise} from './map_util.js';
 
