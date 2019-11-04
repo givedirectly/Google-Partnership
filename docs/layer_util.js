@@ -1,6 +1,6 @@
 import createError from './create_error.js';
 import {mapContainerId} from './dom_constants.js';
-import {assets, EarthEngineAsset} from './earth_engine_asset.js';
+import {terrainStyle} from './earth_engine_asset.js';
 import {colorMap, firebaseAssets, getStyleFunction} from './firebase_assets.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {convertEeObjectToPromise} from './map_util.js';
@@ -125,9 +125,10 @@ function getColorOfFeature(feature) {
  * @param {number} index
  */
 function addImageLayer(map, layer, assetName, index) {
-  const imgStyles = assets[assetName].getVisParams();
-  if (assets[assetName].getStylingFunction()) {
-    layer = assets[assetName].getStylingFunction()(layer);
+  const imgStyles = firebaseAssets[assetName]['vis-params'] ? firebaseAssets[assetName]['vis-params'] : null;
+  console.log(imgStyles);
+  if (firebaseAssets[assetName]['use-terrain-style']) {
+    layer = terrainStyle(layer);
   }
   // Add a null-overlay entry to layerMap while waiting for the callback to
   // finish.
@@ -232,18 +233,21 @@ const maxNumFeaturesExpected = 250000000;
  * @param {number} index Ordering of layer (higher is more visible).
  * @param {google.maps.Map} map main map
  */
+
 function addLayer(assetName, index, map) {
-  // TODO: move image assets to firestore
-  if (assets[assetName] &&
-      assets[assetName].getType() === EarthEngineAsset.Type.IMAGE) {
-    addImageLayer(map, ee.Image(assetName), assetName, index);
-  } else if (
-      firebaseAssets[assetName] &&
-      firebaseAssets[assetName]['asset-type'] === 1) {
-    addLayerFromGeoJsonPromise(
-        convertEeObjectToPromise(
-            ee.FeatureCollection(assetName).toList(maxNumFeaturesExpected)),
-        assetName, index);
+  switch (firebaseAssets[assetName]['asset-type']) {
+    case 2:
+      addImageLayer(map, ee.Image(assetName), assetName, index);
+      break;
+    case 3:
+      addImageLayer(map, ee.ImageCollection(assetName), assetName, index);
+      break;
+    default:
+      addLayerFromGeoJsonPromise(
+          convertEeObjectToPromise(
+              ee.FeatureCollection(assetName).toList(maxNumFeaturesExpected)),
+          assetName, index);
+      break;
   }
 }
 
@@ -311,17 +315,19 @@ function redrawLayers() {
  * @param {google.maps.Map} map main map
  */
 function removeLayer(assetName, map) {
-  // TODO: move image assets to firestore
-  if (assets[assetName] &&
-      assets[assetName].getType() === EarthEngineAsset.Type.IMAGE) {
-    map.overlayMapTypes.setAt(layerMap[assetName].index, null);
-    layerMap[assetName].displayed = false;
-  } else if (
-      firebaseAssets[assetName] &&
-      firebaseAssets[assetName]['asset-type'] === 1) {
-    const layerMapValue = layerMap.get(assetName);
-    layerMapValue.displayed = false;
-    addLayerFromFeatures(layerMapValue, assetName);
+  // todo: do we need this check?
+  switch (firebaseAssets[assetName] &&
+          firebaseAssets[assetName]['asset-type']) {
+    case 2:
+    case 3:
+      map.overlayMapTypes.setAt(layerMap[assetName].index, null);
+      layerMap[assetName].displayed = false;
+      break;
+    default:
+      const layerMapValue = layerMap.get(assetName);
+      layerMapValue.displayed = false;
+      addLayerFromFeatures(layerMapValue, assetName);
+      break;
   }
 }
 

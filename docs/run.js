@@ -1,7 +1,6 @@
 import {clickFeature, selectHighlightedFeatures} from './click_feature.js';
 import {sidebarDatasetsId, tableContainerId} from './dom_constants.js';
 import {drawTable} from './draw_table.js';
-import {assets} from './earth_engine_asset.js';
 import {firebaseAssets, initializeFirebaseAssets} from './firebase_assets.js';
 import {highlightFeatures} from './highlight_features.js';
 import {addLayer, addLayerFromGeoJsonPromise, addNullLayer, scoreLayerName, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from './layer_util.js';
@@ -23,7 +22,6 @@ const snapAndDamageAsset = 'users/gd/' + getDisaster() + '/data-ms-as-nod';
 // download it from EarthEngine again.
 let snapAndDamagePromise;
 const scalingFactor = 100;
-const scoreIndex = Object.keys(assets).length;
 
 /**
  * Main function that processes the known assets (FEMA damage, etc., SNAP) and
@@ -50,12 +48,12 @@ function run(map, firebasePromise) {
       .then((doc) => {
         initializeFirebaseAssets(doc.data());
         initializeAssetLayers(map);
+        createNewCheckboxForLayer(
+            scoreLayerName, document.getElementById(sidebarDatasetsId), map);
+        createAndDisplayJoinedData(
+            map, initialPovertyThreshold, initialDamageThreshold,
+            initialPovertyWeight, Object.keys(doc.data()).length);
       });
-  createNewCheckboxForAsset(
-      scoreLayerName, document.getElementById(sidebarDatasetsId), map);
-  createAndDisplayJoinedData(
-      map, initialPovertyThreshold, initialDamageThreshold,
-      initialPovertyWeight);
 }
 
 let mapSelectListener = null;
@@ -72,9 +70,11 @@ let featureSelectListener = null;
  * @param {number} povertyWeight float between 0 and 1 that describes what
  *     percentage of the score should be based on poverty (this is also a proxy
  *     for damageWeight which is 1-this value).
+ * @param {number} numAssets number of assets stored in firebase for this
+ *     disaster.
  */
 function createAndDisplayJoinedData(
-    map, povertyThreshold, damageThreshold, povertyWeight) {
+    map, povertyThreshold, damageThreshold, povertyWeight, numAssets) {
   addLoadingElement(tableContainerId);
   // clear old listeners
   google.maps.event.removeListener(mapSelectListener);
@@ -82,7 +82,7 @@ function createAndDisplayJoinedData(
   const processedData = processJoinedData(
       snapAndDamagePromise, scalingFactor, povertyThreshold, damageThreshold,
       povertyWeight);
-  initializeScoreLayer(map, processedData);
+  initializeScoreLayer(processedData, numAssets);
   drawTable(
       processedData, (features) => highlightFeatures(features, map, true),
       (table, tableData) => {
@@ -114,12 +114,9 @@ function createAndDisplayJoinedData(
  */
 function createAssetCheckboxes(map) {
   const sidebarDiv = document.getElementById(sidebarDatasetsId);
-  Object.keys(assets).forEach(
-      (assetName) => createNewCheckboxForAsset(assetName, sidebarDiv, map));
   Object.keys(firebaseAssets)
       .forEach(
-          (assetName) =>
-              createNewCheckboxForFirebaseAsset(assetName, sidebarDiv, map));
+          (assetName) => createNewCheckboxForLayer(assetName, sidebarDiv, map));
   createCheckboxForUserFeatures(sidebarDiv);
 }
 
@@ -129,10 +126,9 @@ function createAssetCheckboxes(map) {
  * @param {String} name checkbox name, basis for id
  * @param {String} displayName checkbox display name
  * @param {div} parentDiv div to attach checkbox to
- * @param {google.maps.Map} map main map
  * @return {HTMLInputElement} the checkbox
  */
-function createNewCheckbox(name, displayName, parentDiv, map) {
+function createNewCheckbox(name, displayName, parentDiv) {
   const newRow = document.createElement('div');
   newRow.className = 'checkbox-row';
   const newBox = document.createElement('input');
@@ -153,13 +149,14 @@ function createNewCheckbox(name, displayName, parentDiv, map) {
 }
 
 /**
- * Creates a new checkbox for the given firebase asset.
+ * Creates a new checkbox for the given layer. The only layer not recorded in
+ * firebase should be the score layer.
  *
  * @param {String} assetName 'users/gd/...'
  * @param {Element} parentDiv
  * @param {google.maps.Map} map main map
  */
-function createNewCheckboxForFirebaseAsset(assetName, parentDiv, map) {
+function createNewCheckboxForLayer(assetName, parentDiv, map) {
   const newBox = createNewCheckbox(
       assetName,
       firebaseAssets[assetName] ? firebaseAssets[assetName]['display-name'] :
@@ -169,39 +166,8 @@ function createNewCheckboxForFirebaseAsset(assetName, parentDiv, map) {
       !firebaseAssets[assetName]['display-on-load']) {
     newBox.checked = false;
   }
-  setBoxOnclick(newBox, assetName, map);
-}
-
-/**
- * Creates a new checkbox for the given asset.
- *
- * @param {String} assetName
- * @param {Element} parentDiv
- * @param {google.maps.Map} map main map
- */
-function createNewCheckboxForAsset(assetName, parentDiv, map) {
-  // TODO: remove this function in follow up CL when all assets info is stored
-  // in firebase
-  const newBox = createNewCheckbox(
-      assetName,
-      assets[assetName] ? assets[assetName].getDisplayName() : assetName,
-      parentDiv);
-  if (assets[assetName] && !assets[assetName].shouldDisplayOnLoad()) {
-    newBox.checked = false;
-  }
-  setBoxOnclick(newBox, assetName, map);
-}
-
-/**
- * Temporary helper function while we have two different createNewCheckbox
- * functions.
- * @param {HTMLElement} box
- * @param {String} assetName
- * @param {google.maps.Map} map main map
- */
-function setBoxOnclick(box, assetName, map) {
-  box.onclick = () => {
-    if (box.checked) {
+  newBox.onclick = () => {
+    if (newBox.checked) {
       toggleLayerOn(assetName, map);
     } else {
       toggleLayerOff(assetName, map);
@@ -227,14 +193,6 @@ function createCheckboxForUserFeatures(parentDiv) {
  * @param {google.maps.Map} map main map
  */
 function initializeAssetLayers(map) {
-  // TODO: remove when we store all assets in firestore
-  Object.keys(assets).forEach((assetName, index) => {
-    if (assets[assetName].shouldDisplayOnLoad()) {
-      addLayer(assetName, index, map);
-    } else {
-      addNullLayer(assetName, index);
-    }
-  });
   Object.keys(firebaseAssets).forEach((asset, index) => {
     const properties = firebaseAssets[asset];
     if (properties['display-on-load']) {
@@ -254,11 +212,12 @@ function initializeAssetLayers(map) {
  * add dynamically addable layers, it might be easier book keeping to have
  * score sit at index 0, but having it last ensures it displays on top.
  *
- * @param {google.maps.Map} map main map
  * @param {Promise<Array<GeoJson>>} layer
+ * @param {number} numAssets number of assets stored in firebase for this
+ *     disaster.
  */
-function initializeScoreLayer(map, layer) {
-  addLayerFromGeoJsonPromise(layer, scoreLayerName, scoreIndex);
+function initializeScoreLayer(layer, numAssets) {
+  addLayerFromGeoJsonPromise(layer, scoreLayerName, numAssets);
   document.getElementById(getCheckBoxId(scoreLayerName)).checked = true;
 }
 
