@@ -1,10 +1,10 @@
-import {initializeFirebaseAssets} from '../../../docs/firebase_layers';
+import {initializeFirebaseLayers} from '../../../docs/firebase_layers';
 import {layerArray, layerMap, LayerMapValue, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from '../../../docs/layer_util';
 import {loadScriptsBefore} from '../../support/script_loader';
 
 const mockData = {};
 
-const mockFirebaseAssets = {
+const mockFirebaseLayers = {
   'asset0': {
     'asset-type': 1,
     'display-name': 'asset0',
@@ -31,7 +31,7 @@ describe('Unit test for toggleLayerOn', () => {
     layerMap.set('asset0', new LayerMapValue(mockData, 0, true));
     layerMap.set('asset1', new LayerMapValue(mockData, 1, false));
     layerMap.set('asset2', new LayerMapValue(null, 2, false));
-    initializeFirebaseAssets(mockFirebaseAssets);
+    initializeFirebaseLayers(mockFirebaseLayers);
     // Initialize deck object in production.
     setMapToDrawLayersOn(null);
     layerArray[0] = new deck.GeoJsonLayer({});

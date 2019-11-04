@@ -23,7 +23,7 @@ const scoreLayerName = 'score';
 
 /**
  * Keep a map of asset name -> data, index, display status. Data is lazily
- * generated i.e. pre-known assets that don't display by default will have an
+ * generated i.e. pre-known layers that don't display by default will have an
  * entry in this map, but the LayerMapValue will have a null data field until we
  * fetch the data when the user wants to display it. Currently assume we're only
  * working with one map.
@@ -278,7 +278,7 @@ function addLayerFromGeoJsonPromise(featuresPromise, assetName, index) {
 
 /**
  * Adds an entry to layerMap when we haven't actually gotten the data yet.
- * Useful for assets that we don't want to display by default.
+ * Useful for layers that we don't want to display by default.
  *
  * @param {string} assetName
  * @param {number} index

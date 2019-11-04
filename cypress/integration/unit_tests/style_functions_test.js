@@ -1,8 +1,8 @@
 import {firebaseLayers} from '../../../docs/firebase_layers';
-import {colorMap, getStyleFunction, initializeFirebaseAssets} from '../../../docs/firebase_layers.js';
+import {colorMap, getStyleFunction, initializeFirebaseLayers} from '../../../docs/firebase_layers.js';
 
 describe('Unit test for generating style functions', () => {
-  before(() => initializeFirebaseAssets({}));
+  before(() => initializeFirebaseLayers({}));
 
   after(
       () => Object.keys(firebaseLayers)

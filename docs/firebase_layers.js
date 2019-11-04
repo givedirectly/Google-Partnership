@@ -1,22 +1,22 @@
-export {colorMap, firebaseLayers, getStyleFunction, initializeFirebaseAssets};
+export {colorMap, firebaseLayers, getStyleFunction, initializeFirebaseLayers};
 
-// The collection of firebase assets.
+// The collection of firebase layers.
 let firebaseLayers;
 
 /**
- * Initialize the var once we receive the assets from firebase.
- * @param {Object} assets
+ * Initialize the var once we receive the layers from firebase.
+ * @param {Object} layers
  */
-function initializeFirebaseAssets(assets) {
-  firebaseLayers = assets;
+function initializeFirebaseLayers(layers) {
+  firebaseLayers = layers;
 }
 
-// Map of FeatureCollection asset path to style function so we don't need to
+// Map of FeatureCollection ee asset path to style function so we don't need to
 // recreate it every time.
 const styleFunctions = new Map();
 
 /**
- * Returns style function for this asset.
+ * Returns style function for this FeatureCollection ee asset.
  * @param {String} assetName asset path
  * @return {Function}
  */
@@ -26,7 +26,7 @@ function getStyleFunction(assetName) {
 }
 
 /**
- * Creates and stores the style function for an asset.
+ * Creates and stores the style function for a FeatureCollection ee asset.
  * @param {String} assetName asset path
  * @return {Function}
  */
@@ -55,8 +55,8 @@ function createStyleFunction(assetName) {
  *
  * @param {String} field property whose value is used to determine color
  * @param {number} opacity
- * @param {number} minVal minVal of {@code field}
- * @param {number} maxVal maxVal of {@code field}
+ * @param {number} minVal minVal of {@param field}
+ * @param {number} maxVal maxVal of {@param field}
  * @param {String} color base color
  * @return {Function}
  */

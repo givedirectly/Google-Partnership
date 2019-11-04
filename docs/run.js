@@ -1,7 +1,7 @@
 import {clickFeature, selectHighlightedFeatures} from './click_feature.js';
 import {sidebarDatasetsId, tableContainerId} from './dom_constants.js';
 import {drawTable} from './draw_table.js';
-import {firebaseLayers, initializeFirebaseAssets} from './firebase_layers.js';
+import {firebaseLayers, initializeFirebaseLayers} from './firebase_layers.js';
 import {highlightFeatures} from './highlight_features.js';
 import {addLayer, addLayerFromGeoJsonPromise, addNullLayer, scoreLayerName, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from './layer_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
@@ -24,7 +24,7 @@ let snapAndDamagePromise;
 const scalingFactor = 100;
 
 /**
- * Main function that processes the known assets (FEMA damage, etc., SNAP) and
+ * Main function that processes the known layers (damage, SNAP) and
  * creates/populates the map and table.
  *
  * @param {google.maps.Map} map main map
@@ -46,7 +46,7 @@ function run(map, firebasePromise) {
                     .doc('layers')
                     .get())
       .then((doc) => {
-        initializeFirebaseAssets(doc.data());
+        initializeFirebaseLayers(doc.data());
         initializeAssetLayers(map);
         createAndDisplayJoinedData(
             map, initialPovertyThreshold, initialDamageThreshold,
@@ -68,11 +68,11 @@ let featureSelectListener = null;
  * @param {number} povertyWeight float between 0 and 1 that describes what
  *     percentage of the score should be based on poverty (this is also a proxy
  *     for damageWeight which is 1-this value).
- * @param {number} numAssets number of assets stored in firebase for this
+ * @param {number} numLayers number of layers stored in firebase for this
  *     disaster.
  */
 function createAndDisplayJoinedData(
-    map, povertyThreshold, damageThreshold, povertyWeight, numAssets) {
+    map, povertyThreshold, damageThreshold, povertyWeight, numLayers) {
   addLoadingElement(tableContainerId);
   // clear old listeners
   google.maps.event.removeListener(mapSelectListener);
@@ -80,7 +80,7 @@ function createAndDisplayJoinedData(
   const processedData = processJoinedData(
       snapAndDamagePromise, scalingFactor, povertyThreshold, damageThreshold,
       povertyWeight);
-  initializeScoreLayer(processedData, numAssets);
+  initializeScoreLayer(processedData, numLayers);
   drawTable(
       processedData, (features) => highlightFeatures(features, map, true),
       (table, tableData) => {
@@ -105,8 +105,7 @@ function createAndDisplayJoinedData(
 }
 
 /**
- * Creates checkboxes for all known assets, user features, and the score
- * overlay.
+ * Creates checkboxes for all known layers (including user features and score).
  *
  * @param {google.maps.Map} map main map
  */
@@ -152,7 +151,7 @@ function createNewCheckbox(name, displayName, parentDiv) {
  * Creates a new checkbox for the given layer. The only layer not recorded in
  * firebase should be the score layer.
  *
- * @param {String} assetName 'users/gd/...'
+ * @param {String} assetName
  * @param {Element} parentDiv
  * @param {google.maps.Map} map main map
  */
@@ -192,14 +191,15 @@ function createCheckboxForUserFeatures(parentDiv) {
  *
  * @param {google.maps.Map} map main map
  */
+// TODO: right now layers are automatically indexed (and therefore ordered)
+// alphabetically (except for the score layer which is always on top). Maybe
+// allow for way to rearrange layers.
 function initializeAssetLayers(map) {
   Object.keys(firebaseLayers).forEach((asset, index) => {
     const properties = firebaseLayers[asset];
     if (properties['display-on-load']) {
       addLayer(asset, index, map);
     } else {
-      // TODO: index still relevent? just alphabetical. probably want to
-      // store index at some point.
       addNullLayer(asset, index);
     }
   });
@@ -208,16 +208,16 @@ function initializeAssetLayers(map) {
 
 /**
  * Creates and displays overlay for score + adds layerMap entry. The score
- * layer sits at the index of (# regular assets) i.e. the last index. Once we
+ * layer sits at the index of (# regular layers) i.e. the last index. Once we
  * add dynamically addable layers, it might be easier book keeping to have
  * score sit at index 0, but having it last ensures it displays on top.
  *
  * @param {Promise<Array<GeoJson>>} layer
- * @param {number} numAssets number of assets stored in firebase for this
+ * @param {number} numLayers number of layers stored in firebase for this
  *     disaster.
  */
-function initializeScoreLayer(layer, numAssets) {
-  addLayerFromGeoJsonPromise(layer, scoreLayerName, numAssets);
+function initializeScoreLayer(layer, numLayers) {
+  addLayerFromGeoJsonPromise(layer, scoreLayerName, numLayers);
   document.getElementById(getCheckBoxId(scoreLayerName)).checked = true;
 }
 
