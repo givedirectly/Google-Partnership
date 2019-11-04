@@ -1,7 +1,7 @@
 import createError from './create_error.js';
 import {mapContainerId} from './dom_constants.js';
 import {terrainStyle} from './earth_engine_asset.js';
-import {colorMap, firebaseAssets, getStyleFunction} from './firebase_assets.js';
+import {colorMap, firebaseLayers, getStyleFunction} from './firebase_layers.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {convertEeObjectToPromise} from './map_util.js';
 
@@ -125,11 +125,8 @@ function getColorOfFeature(feature) {
  * @param {number} index
  */
 function addImageLayer(map, layer, assetName, index) {
-  const imgStyles = firebaseAssets[assetName]['vis-params'] ?
-      firebaseAssets[assetName]['vis-params'] :
-      null;
-  console.log(imgStyles);
-  if (firebaseAssets[assetName]['use-terrain-style']) {
+  const imgStyles = firebaseLayers[assetName]['vis-params'];
+  if (firebaseLayers[assetName]['use-terrain-style']) {
     layer = terrainStyle(layer);
   }
   // Add a null-overlay entry to layerMap while waiting for the callback to
@@ -208,7 +205,7 @@ function addLayerFromFeatures(layerMapValue, assetName) {
     // TODO(janakr): deck.gl docs claim that the "color" property should
     // automatically color the features, but it doesn't appear to work:
     // https://deck.gl/#/documentation/deckgl-api-reference/layers/geojson-layer?section=getelevation-function-number-optional-transition-enabled
-    getFillColor: firebaseAssets[assetName] ? getStyleFunction(assetName) :
+    getFillColor: firebaseLayers[assetName] ? getStyleFunction(assetName) :
                                               getColorOfFeature,
     visible: layerMapValue.displayed,
   });
@@ -236,7 +233,7 @@ const maxNumFeaturesExpected = 250000000;
  * @param {google.maps.Map} map main map
  */
 function addLayer(assetName, index, map) {
-  switch (firebaseAssets[assetName]['asset-type']) {
+  switch (firebaseLayers[assetName]['asset-type']) {
     case 2:
       addImageLayer(map, ee.Image(assetName), assetName, index);
       break;
@@ -316,9 +313,7 @@ function redrawLayers() {
  * @param {google.maps.Map} map main map
  */
 function removeLayer(assetName, map) {
-  // todo: do we need this check?
-  switch (firebaseAssets[assetName] &&
-          firebaseAssets[assetName]['asset-type']) {
+  switch (firebaseLayers[assetName]['asset-type']) {
     case 2:
     case 3:
       map.overlayMapTypes.setAt(layerMap[assetName].index, null);

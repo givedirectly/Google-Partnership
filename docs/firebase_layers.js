@@ -1,14 +1,14 @@
-export {colorMap, firebaseAssets, getStyleFunction, initializeFirebaseAssets};
+export {colorMap, firebaseLayers, getStyleFunction, initializeFirebaseAssets};
 
 // The collection of firebase assets.
-let firebaseAssets;
+let firebaseLayers;
 
 /**
  * Initialize the var once we receive the assets from firebase.
  * @param {Object} assets
  */
 function initializeFirebaseAssets(assets) {
-  firebaseAssets = assets;
+  firebaseLayers = assets;
 }
 
 // Map of FeatureCollection asset path to style function so we don't need to
@@ -31,7 +31,7 @@ function getStyleFunction(assetName) {
  * @return {Function}
  */
 function createStyleFunction(assetName) {
-  const colorFxnProperties = firebaseAssets[assetName]['color-fxn'];
+  const colorFxnProperties = firebaseLayers[assetName]['color-fxn'];
   let styleFunction;
   if (colorFxnProperties['single-color']) {
     styleFunction = () => colorMap.get(colorFxnProperties['single-color']);

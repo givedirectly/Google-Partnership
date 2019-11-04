@@ -1,15 +1,15 @@
-import {firebaseAssets} from '../../../docs/firebase_assets';
-import {colorMap, getStyleFunction, initializeFirebaseAssets} from '../../../docs/firebase_assets.js';
+import {firebaseLayers} from '../../../docs/firebase_layers';
+import {colorMap, getStyleFunction, initializeFirebaseAssets} from '../../../docs/firebase_layers.js';
 
 describe('Unit test for generating style functions', () => {
   before(() => initializeFirebaseAssets({}));
 
   after(
-      () => Object.keys(firebaseAssets)
-                .forEach((asset) => firebaseAssets[asset] = undefined));
+      () => Object.keys(firebaseLayers)
+                .forEach((asset) => firebaseLayers[asset] = undefined));
 
   it('calculates a discrete function', () => {
-    firebaseAssets['asset0'] = {
+    firebaseLayers['asset0'] = {
       'color-fxn': {
         'continuous': false,
         'field': 'flavor',
@@ -33,7 +33,7 @@ describe('Unit test for generating style functions', () => {
   });
 
   it('calculates a continuous function', () => {
-    firebaseAssets['asset1'] = {
+    firebaseLayers['asset1'] = {
       'color-fxn': {
         'continuous': true,
         'field': 'oranges',
@@ -55,7 +55,7 @@ describe('Unit test for generating style functions', () => {
   });
 
   it('calculates a single-color function', () => {
-    firebaseAssets['asset2'] = {
+    firebaseLayers['asset2'] = {
       'color-fxn': {
         'single-color': 'blue',
         'opacity': 83,

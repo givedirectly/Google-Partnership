@@ -1,7 +1,7 @@
 import {clickFeature, selectHighlightedFeatures} from './click_feature.js';
 import {sidebarDatasetsId, tableContainerId} from './dom_constants.js';
 import {drawTable} from './draw_table.js';
-import {firebaseAssets, initializeFirebaseAssets} from './firebase_assets.js';
+import {firebaseLayers, initializeFirebaseAssets} from './firebase_layers.js';
 import {highlightFeatures} from './highlight_features.js';
 import {addLayer, addLayerFromGeoJsonPromise, addNullLayer, scoreLayerName, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from './layer_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
@@ -48,8 +48,6 @@ function run(map, firebasePromise) {
       .then((doc) => {
         initializeFirebaseAssets(doc.data());
         initializeAssetLayers(map);
-        createNewCheckboxForLayer(
-            scoreLayerName, document.getElementById(sidebarDatasetsId), map);
         createAndDisplayJoinedData(
             map, initialPovertyThreshold, initialDamageThreshold,
             initialPovertyWeight, Object.keys(doc.data()).length);
@@ -114,10 +112,12 @@ function createAndDisplayJoinedData(
  */
 function createAssetCheckboxes(map) {
   const sidebarDiv = document.getElementById(sidebarDatasetsId);
-  Object.keys(firebaseAssets)
+  Object.keys(firebaseLayers)
       .forEach(
           (assetName) => createNewCheckboxForLayer(assetName, sidebarDiv, map));
   createCheckboxForUserFeatures(sidebarDiv);
+  // score checkbox gets checked during initializeScoreLayer
+  createNewCheckboxForLayer(scoreLayerName, sidebarDiv, map);
 }
 
 /**
@@ -159,11 +159,11 @@ function createNewCheckbox(name, displayName, parentDiv) {
 function createNewCheckboxForLayer(assetName, parentDiv, map) {
   const newBox = createNewCheckbox(
       assetName,
-      firebaseAssets[assetName] ? firebaseAssets[assetName]['display-name'] :
+      firebaseLayers[assetName] ? firebaseLayers[assetName]['display-name'] :
                                   assetName,
       parentDiv);
-  if (firebaseAssets[assetName] &&
-      !firebaseAssets[assetName]['display-on-load']) {
+  if (firebaseLayers[assetName] &&
+      !firebaseLayers[assetName]['display-on-load']) {
     newBox.checked = false;
   }
   newBox.onclick = () => {
@@ -193,8 +193,8 @@ function createCheckboxForUserFeatures(parentDiv) {
  * @param {google.maps.Map} map main map
  */
 function initializeAssetLayers(map) {
-  Object.keys(firebaseAssets).forEach((asset, index) => {
-    const properties = firebaseAssets[asset];
+  Object.keys(firebaseLayers).forEach((asset, index) => {
+    const properties = firebaseLayers[asset];
     if (properties['display-on-load']) {
       addLayer(asset, index, map);
     } else {

@@ -1,4 +1,4 @@
-import {initializeFirebaseAssets} from '../../../docs/firebase_assets';
+import {initializeFirebaseAssets} from '../../../docs/firebase_layers';
 import {layerArray, layerMap, LayerMapValue, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from '../../../docs/layer_util';
 import {loadScriptsBefore} from '../../support/script_loader';
 
