@@ -2,7 +2,7 @@ export {terrainStyle};
 
 /**
  * Style function for earth engine elevation data.
- * @param layer
+ * @param {ee.Element} layer
  * @return {number}
  */
 function terrainStyle(layer) {
