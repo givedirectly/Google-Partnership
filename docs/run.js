@@ -193,12 +193,12 @@ function addLayers(map) {
   // TODO: right now layers are automatically indexed (and therefore ordered)
   // alphabetically (except for the score layer which is always on top). Maybe
   // allow for way to rearrange layers.
-  Object.keys(firebaseLayers).forEach((layer, index) => {
+  Object.keys(firebaseLayers).forEach((layer) => {
     const properties = firebaseLayers[layer];
     if (properties['display-on-load']) {
-      addLayer(layer, index, map);
+      addLayer(layer, properties['index'], map);
     } else {
-      addNullLayer(layer, index);
+      addNullLayer(layer, properties['index']);
     }
   });
   createLayerCheckboxes(map);
