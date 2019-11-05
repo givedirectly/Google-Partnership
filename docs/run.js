@@ -190,9 +190,6 @@ function createCheckboxForUserFeatures(parentDiv) {
  * @param {google.maps.Map} map main map
  */
 function addLayers(map) {
-  // TODO: right now layers are automatically indexed (and therefore ordered)
-  // alphabetically (except for the score layer which is always on top). Maybe
-  // allow for way to rearrange layers.
   Object.keys(firebaseLayers).forEach((layer) => {
     const properties = firebaseLayers[layer];
     if (properties['display-on-load']) {
