@@ -46,11 +46,12 @@ function run(map, firebasePromise) {
                     .doc('layers')
                     .get())
       .then((doc) => {
-        initializeFirebaseLayers(doc.data());
-        initializeAssetLayers(map);
+        const data = doc.data();
+        initializeFirebaseLayers(data);
+        addLayers(map);
         createAndDisplayJoinedData(
             map, initialPovertyThreshold, initialDamageThreshold,
-            initialPovertyWeight, Object.keys(doc.data()).length);
+            initialPovertyWeight, Object.keys(data).length);
       });
 }
 
@@ -80,7 +81,7 @@ function createAndDisplayJoinedData(
   const processedData = processJoinedData(
       snapAndDamagePromise, scalingFactor, povertyThreshold, damageThreshold,
       povertyWeight);
-  initializeScoreLayer(processedData, numLayers);
+  addScoreLayer(processedData, numLayers);
   drawTable(
       processedData, (features) => highlightFeatures(features, map, true),
       (table, tableData) => {
@@ -109,13 +110,13 @@ function createAndDisplayJoinedData(
  *
  * @param {google.maps.Map} map main map
  */
-function createAssetCheckboxes(map) {
+function createLayerCheckboxes(map) {
   const sidebarDiv = document.getElementById(sidebarDatasetsId);
   Object.keys(firebaseLayers)
       .forEach(
-          (assetName) => createNewCheckboxForLayer(assetName, sidebarDiv, map));
+          (layerName) => createNewCheckboxForLayer(layerName, sidebarDiv, map));
   createCheckboxForUserFeatures(sidebarDiv);
-  // score checkbox gets checked during initializeScoreLayer
+  // score checkbox gets checked during addScoreLayer
   createNewCheckboxForLayer(scoreLayerName, sidebarDiv, map);
 }
 
@@ -151,25 +152,23 @@ function createNewCheckbox(name, displayName, parentDiv) {
  * Creates a new checkbox for the given layer. The only layer not recorded in
  * firebase should be the score layer.
  *
- * @param {String} assetName
+ * @param {String} layerName
  * @param {Element} parentDiv
  * @param {google.maps.Map} map main map
  */
-function createNewCheckboxForLayer(assetName, parentDiv, map) {
+function createNewCheckboxForLayer(layerName, parentDiv, map) {
+  const properties = firebaseLayers[layerName];
   const newBox = createNewCheckbox(
-      assetName,
-      firebaseLayers[assetName] ? firebaseLayers[assetName]['display-name'] :
-                                  assetName,
+      layerName, properties ? properties['display-name'] : layerName,
       parentDiv);
-  if (firebaseLayers[assetName] &&
-      !firebaseLayers[assetName]['display-on-load']) {
+  if (properties && !properties['display-on-load']) {
     newBox.checked = false;
   }
   newBox.onclick = () => {
     if (newBox.checked) {
-      toggleLayerOn(assetName, map);
+      toggleLayerOn(layerName, map);
     } else {
-      toggleLayerOff(assetName, map);
+      toggleLayerOff(layerName, map);
     }
   };
 }
@@ -186,24 +185,24 @@ function createCheckboxForUserFeatures(parentDiv) {
 }
 
 /**
- * Runs through asset map. For those that we auto-display on page load, creates
+ * Runs through layers map. For those that we auto-display on page load, creates
  * overlays and displays. Also populates the layerMap.
  *
  * @param {google.maps.Map} map main map
  */
-function initializeAssetLayers(map) {
+function addLayers(map) {
   // TODO: right now layers are automatically indexed (and therefore ordered)
   // alphabetically (except for the score layer which is always on top). Maybe
   // allow for way to rearrange layers.
-  Object.keys(firebaseLayers).forEach((asset, index) => {
-    const properties = firebaseLayers[asset];
+  Object.keys(firebaseLayers).forEach((layer, index) => {
+    const properties = firebaseLayers[layer];
     if (properties['display-on-load']) {
-      addLayer(asset, index, map);
+      addLayer(layer, index, map);
     } else {
-      addNullLayer(asset, index);
+      addNullLayer(layer, index);
     }
   });
-  createAssetCheckboxes(map);
+  createLayerCheckboxes(map);
 }
 
 /**

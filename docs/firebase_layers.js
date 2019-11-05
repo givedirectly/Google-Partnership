@@ -1,4 +1,4 @@
-export {colorMap, firebaseLayers, getStyleFunction, initializeFirebaseLayers};
+export {colorMap, firebaseLayers, getStyleFunction, initializeFirebaseLayers, LayerType};
 
 // The collection of firebase layers.
 let firebaseLayers;
@@ -10,6 +10,14 @@ let firebaseLayers;
 function initializeFirebaseLayers(layers) {
   firebaseLayers = layers;
 }
+
+const LayerType = {
+  FEATURE: 0,
+  FEATURE_COLLECTION: 1,
+  IMAGE: 2,
+  IMAGE_COLLECTION: 3
+};
+Object.freeze(LayerType);
 
 // Map of FeatureCollection ee asset path to style function so we don't need to
 // recreate it every time.
@@ -31,19 +39,19 @@ function getStyleFunction(assetName) {
  * @return {Function}
  */
 function createStyleFunction(assetName) {
-  const colorFxnProperties = firebaseLayers[assetName]['color-fxn'];
+  const colorFunctionProperties = firebaseLayers[assetName]['color-function'];
   let styleFunction;
-  if (colorFxnProperties['single-color']) {
-    styleFunction = () => colorMap.get(colorFxnProperties['single-color']);
+  if (colorFunctionProperties['single-color']) {
+    styleFunction = () => colorMap.get(colorFunctionProperties['single-color']);
   } else {
-    const continuous = colorFxnProperties['continuous'];
-    const field = colorFxnProperties['field'];
-    const opacity = colorFxnProperties['opacity'];
+    const continuous = colorFunctionProperties['continuous'];
+    const field = colorFunctionProperties['field'];
+    const opacity = colorFunctionProperties['opacity'];
     styleFunction = continuous ?
         createContinuousFunction(
-            field, opacity, colorFxnProperties['min'],
-            colorFxnProperties['max'], colorFxnProperties['base-color']) :
-        createDiscreteFunction(field, opacity, colorFxnProperties['colors']);
+            field, opacity, colorFunctionProperties['min'],
+            colorFunctionProperties['max'], colorFunctionProperties['base-color']) :
+        createDiscreteFunction(field, opacity, colorFunctionProperties['colors']);
   }
   styleFunctions.set(assetName, styleFunction);
   return styleFunction;

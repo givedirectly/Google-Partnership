@@ -1,27 +1,27 @@
-import {initializeFirebaseLayers} from '../../../docs/firebase_layers';
-import {layerArray, layerMap, LayerMapValue, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from '../../../docs/layer_util';
-import {loadScriptsBefore} from '../../support/script_loader';
+import {initializeFirebaseLayers, LayerType} from '../../../docs/firebase_layers.js';
+import {layerArray, layerMap, LayerMapValue, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from '../../../docs/layer_util.js';
+import {loadScriptsBefore} from '../../support/script_loader.js';
 
 const mockData = {};
 
 const mockFirebaseLayers = {
   'asset0': {
-    'asset-type': 1,
+    'asset-type': LayerType.FEATURE_COLLECTION,
     'display-name': 'asset0',
     'display-on-load': true,
-    'color-fxn': {'single-color': 'yellow'},
+    'color-function': {'single-color': 'yellow'},
   },
   'asset1': {
-    'asset-type': 1,
+    'asset-type': LayerType.FEATURE_COLLECTION,
     'display-name': 'asset1',
     'display-on-load': false,
-    'color-fxn': {'single-color': 'yellow'},
+    'color-function': {'single-color': 'yellow'},
   },
   'asset2': {
-    'asset-type': 1,
+    'asset-type': LayerType.FEATURE_COLLECTION,
     'display-name': 'asset2',
     'display-on-load': false,
-    'color-fxn': {'single-color': 'yellow'},
+    'color-function': {'single-color': 'yellow'},
   },
 };
 

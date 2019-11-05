@@ -10,7 +10,7 @@ describe('Unit test for generating style functions', () => {
 
   it('calculates a discrete function', () => {
     firebaseLayers['asset0'] = {
-      'color-fxn': {
+      'color-function': {
         'continuous': false,
         'field': 'flavor',
         'opacity': 100,
@@ -24,9 +24,7 @@ describe('Unit test for generating style functions', () => {
     const fxn = getStyleFunction('asset0');
     const cherry = fxn({'properties': {'flavor': 'cherry'}});
     const expectedCherry = colorMap.get('red');
-    for (let i = 0; i < 4; i++) {
-      expect(cherry[i]).to.eq(expectedCherry[i]);
-    }
+    expect(cherry).to.eql(expectedCherry);
     const banana = fxn({'properties': {'flavor': 'banana'}});
     const expectedBanana = colorMap.get('yellow');
     expect(banana).to.eql(expectedBanana);
@@ -34,7 +32,7 @@ describe('Unit test for generating style functions', () => {
 
   it('calculates a continuous function', () => {
     firebaseLayers['asset1'] = {
-      'color-fxn': {
+      'color-function': {
         'continuous': true,
         'field': 'oranges',
         'base-color': 'orange',
@@ -56,7 +54,7 @@ describe('Unit test for generating style functions', () => {
 
   it('calculates a single-color function', () => {
     firebaseLayers['asset2'] = {
-      'color-fxn': {
+      'color-function': {
         'single-color': 'blue',
         'opacity': 83,
       },
