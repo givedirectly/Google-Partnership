@@ -247,7 +247,8 @@ function addLayer(layerName, index, map) {
           layerName, index);
       break;
     default:
-      createError('parsing layer type during add')('[' + index + ']: ' + layerName + ' not recognized layer type');
+      createError('parsing layer type during add')(
+          '[' + index + ']: ' + layerName + ' not recognized layer type');
   }
 }
 
@@ -330,7 +331,8 @@ function removeLayer(layerName, map) {
       removeFeatureCollection(layerName);
       break;
     default:
-      createError('parsing layer type during remove')('[' + index + ']: ' + layerName + ' not recognized layer type');
+      createError('parsing layer type during remove')(
+          '[' + index + ']: ' + layerName + ' not recognized layer type');
   }
 }
 
