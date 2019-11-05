@@ -4,7 +4,7 @@ import {colorMap, getStyleFunction, initializeFirebaseLayers} from '../../../doc
 describe('Unit test for generating style functions', () => {
   before(() => initializeFirebaseLayers({}));
 
-  after(
+  afterEach(
       () => Object.keys(firebaseLayers)
                 .forEach((asset) => firebaseLayers[asset] = undefined));
 

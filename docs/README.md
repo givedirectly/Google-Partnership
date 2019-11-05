@@ -16,7 +16,7 @@ all `<data>` instances contain the following fields:
 * Image Collection: 3
 
 ### Color Functions
-We have three types of coloring schemes: continuous, discrete, and single color. Each has a different schema for the <code>color-fxn</code> object:
+We have three types of coloring schemes: continuous, discrete, and single color. Each has a different schema for the <code>color-function</code> object:
 
 **continuous:**
 * continuous `{boolean}`: set to true

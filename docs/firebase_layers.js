@@ -48,7 +48,8 @@ function createStyleFunction(assetName) {
   const colorFunctionProperties = firebaseLayers[assetName]['color-function'];
   let styleFunction;
   if (colorFunctionProperties['single-color']) {
-    styleFunction = () => colorMap.get(colorFunctionProperties['single-color']);
+    const color = colorMap.get(colorFunctionProperties['single-color']);
+    styleFunction = () => color;
   } else {
     const continuous = colorFunctionProperties['continuous'];
     const field = colorFunctionProperties['field'];
@@ -77,11 +78,11 @@ function createStyleFunction(assetName) {
  * @return {Function}
  */
 function createContinuousFunction(field, opacity, minVal, maxVal, color) {
+  const colorRgb = colorMap.get(color);
+  const white = colorMap.get('white');
   return (feature) => {
     const value = feature['properties'][field];
-    const colorRgb = colorMap.get(color);
     const rgba = [];
-    const white = colorMap.get('white');
     for (let i = 0; i < 3; i++) {
       rgba.push(
           ((colorRgb[i] * (value - minVal)) + (white[i] * (maxVal - value))) /

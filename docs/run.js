@@ -39,11 +39,7 @@ function run(map, firebasePromise) {
   processUserRegions(map, firebasePromise);
   firebasePromise
       .then(
-          () => firebase.firestore()
-                    .collection('disaster-metadata')
-                    .doc(getResources().year)
-                    .collection(getDisaster())
-                    .doc('layers')
+          () => firebase.firestore().doc('disaster-metadata/' + getResources().year + '/' + getDisaster() + '/layers')
                     .get())
       .then((doc) => {
         const data = doc.data();

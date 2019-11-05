@@ -22,11 +22,10 @@ export {layerArray, layerMap, LayerMapValue};
 const scoreLayerName = 'score';
 
 /**
- * Keep a map of asset name -> data, index, display status. Data is lazily
+ * Keep a map of layer name -> data, index, display status. Data is lazily
  * generated i.e. pre-known layers that don't display by default will have an
  * entry in this map, but the LayerMapValue will have a null data field until we
- * fetch the data when the user wants to display it. Currently assume we're only
- * working with one map.
+ * fetch the data when the user wants to display it.
  */
 const layerMap = new Map();
 
@@ -248,7 +247,7 @@ function addLayer(layerName, index, map) {
           layerName, index);
       break;
     default:
-      createError('parsing layer type during add');
+      createError('parsing layer type during add')('[' + index + ']: ' + layerName + ' not recognized layer type');
   }
 }
 
@@ -331,7 +330,7 @@ function removeLayer(layerName, map) {
       removeFeatureCollection(layerName);
       break;
     default:
-      createError('parsing layer type during remove');
+      createError('parsing layer type during remove')('[' + index + ']: ' + layerName + ' not recognized layer type');
   }
 }
 
