@@ -1,4 +1,10 @@
-export {colorMap, firebaseLayers, getStyleFunction, initializeFirebaseLayers, LayerType};
+export {
+  colorMap,
+  firebaseLayers,
+  getStyleFunction,
+  initializeFirebaseLayers,
+  LayerType
+};
 
 // The collection of firebase layers.
 let firebaseLayers;
@@ -50,8 +56,10 @@ function createStyleFunction(assetName) {
     styleFunction = continuous ?
         createContinuousFunction(
             field, opacity, colorFunctionProperties['min'],
-            colorFunctionProperties['max'], colorFunctionProperties['base-color']) :
-        createDiscreteFunction(field, opacity, colorFunctionProperties['colors']);
+            colorFunctionProperties['max'],
+            colorFunctionProperties['base-color']) :
+        createDiscreteFunction(
+            field, opacity, colorFunctionProperties['colors']);
   }
   styleFunctions.set(assetName, styleFunction);
   return styleFunction;
