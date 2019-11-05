@@ -13,6 +13,7 @@ describe('Unit test for generating style functions', () => {
       'color-function': {
         'continuous': false,
         'field': 'flavor',
+
         'opacity': 100,
         'colors': {
           'cherry': 'red',

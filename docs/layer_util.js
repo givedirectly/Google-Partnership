@@ -335,6 +335,10 @@ function removeLayer(layerName, map) {
   }
 }
 
+/**
+ * convenience function for removeLayer on feature collections.
+ * @param {string} layerName
+ */
 function removeFeatureCollection(layerName) {
   const layerMapValue = layerMap.get(layerName);
   layerMapValue.displayed = false;

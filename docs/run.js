@@ -215,7 +215,7 @@ function addLayers(map) {
  * @param {number} numLayers number of layers stored in firebase for this
  *     disaster.
  */
-function initializeScoreLayer(layer, numLayers) {
+function addScoreLayer(layer, numLayers) {
   addLayerFromGeoJsonPromise(layer, scoreLayerName, numLayers);
   document.getElementById(getCheckBoxId(scoreLayerName)).checked = true;
 }

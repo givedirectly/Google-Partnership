@@ -3,7 +3,7 @@ export {
   firebaseLayers,
   getStyleFunction,
   initializeFirebaseLayers,
-  LayerType
+  LayerType,
 };
 
 // The collection of firebase layers.
@@ -21,7 +21,7 @@ const LayerType = {
   FEATURE: 0,
   FEATURE_COLLECTION: 1,
   IMAGE: 2,
-  IMAGE_COLLECTION: 3
+  IMAGE_COLLECTION: 3,
 };
 Object.freeze(LayerType);
 
