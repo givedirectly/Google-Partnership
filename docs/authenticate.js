@@ -1,8 +1,11 @@
+import {getResources, getDisaster} from './resources.js';
+
 export {
   authenticateToFirebase,
   Authenticator,
   CLIENT_ID,
   firebaseConfig,
+  getDisasterDocument,
   initializeEE,
   initializeFirebase,
 };
@@ -165,4 +168,8 @@ function authenticateToFirebase(googleAuth) {
       return signinPromise;
     });
   });
+}
+
+function getDisasterDocument() {
+  return firebase.firestore().doc('disaster-metadata/' + getResources().year + '-' + getDisaster()).get();
 }

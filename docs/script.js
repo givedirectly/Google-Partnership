@@ -1,4 +1,4 @@
-import {authenticateToFirebase, Authenticator, CLIENT_ID, initializeEE, initializeFirebase} from './authenticate.js';
+import {authenticateToFirebase, Authenticator, CLIENT_ID, getDisasterDocument, initializeEE, initializeFirebase} from './authenticate.js';
 import createMap from './create_map.js';
 import {earthEngineTestTokenCookieName, firebaseTestTokenCookieName, getCookieValue, inProduction} from './in_test_util.js';
 import run from './run.js';
@@ -18,17 +18,19 @@ function setup() {
 
   $(document).ready(function() {
     initializeSidebar();
-    const firebaseAuthPromise = new SettablePromise();
+    const firebaseAuthPromiseWrapper = new SettablePromise();
 
     // TODO: Have this return a map promise so that we can kick off other
     // processes (esp ee ones) without waiting on firebase.
-    map = createMap(firebaseAuthPromise.getPromise());
+    const firebaseAuthPromise = firebaseAuthPromiseWrapper.getPromise();
+    const disasterMetadataPromise = firebaseAuthPromise.then(getDisasterDocument);
+    map = createMap(disasterMetadataPromise);
 
-    const runOnInitialize = () => run(map, firebaseAuthPromise.getPromise());
+    const runOnInitialize = () => run(map, firebaseAuthPromise, disasterMetadataPromise);
     if (inProduction()) {
       const authenticator = new Authenticator(
           (token) =>
-              firebaseAuthPromise.setPromise(authenticateToFirebase(token)),
+              firebaseAuthPromiseWrapper.setPromise(authenticateToFirebase(token)),
           runOnInitialize);
       authenticator.start();
     } else {
@@ -46,7 +48,7 @@ function setup() {
         return;
       }
 
-      firebaseAuthPromise.setPromise(
+      firebaseAuthPromiseWrapper.setPromise(
           firebase.auth().signInWithCustomToken(firebaseToken));
       ee.data.setAuthToken(
           CLIENT_ID, 'Bearer', eeToken,

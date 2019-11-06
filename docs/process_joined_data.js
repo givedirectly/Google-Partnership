@@ -59,7 +59,7 @@ function colorAndRate(
  * @param {number} povertyWeight float between 0 and 1 that describes what
  *     percentage of the score should be based on poverty (this is also a proxy
  *     for damageWeight which is 1-this value).
- * @return {Promise}
+ * @return {Promise} Promise with resolved data
  */
 function processJoinedData(
     dataPromise, scalingFactor, povertyThreshold, damageThreshold,
