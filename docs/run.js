@@ -203,6 +203,11 @@ function addLayers(map) {
  */
 function addScoreLayer(layer) {
   addLayerFromGeoJsonPromise(layer, scoreLayerName, 'lastElement');
+  // Checkbox may not exist yet if layer metadata not retrieved yet.
+  const checkbox = document.getElementById(getCheckBoxId(scoreLayerName));
+  if (checkbox) {
+    checkbox.checked = true;
+  }
 }
 
 /**
