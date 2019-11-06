@@ -22,6 +22,7 @@ const snapAndDamageAsset = 'users/gd/' + getDisaster() + '/data-ms-as-nod';
 // download it from EarthEngine again.
 let snapAndDamagePromise;
 const scalingFactor = 100;
+let scoreLayerIndex;
 
 /**
  * Main function that processes the known layers (damage, SNAP) and
@@ -48,9 +49,10 @@ function run(map, firebasePromise) {
         const data = doc.data();
         initializeFirebaseLayers(data);
         addLayers(map);
+        scoreLayerIndex = Object.keys(data).length;
         createAndDisplayJoinedData(
             map, initialPovertyThreshold, initialDamageThreshold,
-            initialPovertyWeight, Object.keys(data).length);
+            initialPovertyWeight);
       });
 }
 
@@ -72,7 +74,7 @@ let featureSelectListener = null;
  *     disaster.
  */
 function createAndDisplayJoinedData(
-    map, povertyThreshold, damageThreshold, povertyWeight, numLayers) {
+    map, povertyThreshold, damageThreshold, povertyWeight) {
   addLoadingElement(tableContainerId);
   // clear old listeners
   google.maps.event.removeListener(mapSelectListener);
@@ -80,7 +82,7 @@ function createAndDisplayJoinedData(
   const processedData = processJoinedData(
       snapAndDamagePromise, scalingFactor, povertyThreshold, damageThreshold,
       povertyWeight);
-  addScoreLayer(processedData, numLayers);
+  addScoreLayer(processedData);
   drawTable(
       processedData, (features) => highlightFeatures(features, map, true),
       (table, tableData) => {
@@ -208,11 +210,9 @@ function addLayers(map) {
  * score sit at index 0, but having it last ensures it displays on top.
  *
  * @param {Promise<Array<GeoJson>>} layer
- * @param {number} numLayers number of layers stored in firebase for this
- *     disaster.
  */
-function addScoreLayer(layer, numLayers) {
-  addLayerFromGeoJsonPromise(layer, scoreLayerName, numLayers);
+function addScoreLayer(layer) {
+  addLayerFromGeoJsonPromise(layer, scoreLayerName, scoreLayerIndex);
   document.getElementById(getCheckBoxId(scoreLayerName)).checked = true;
 }
 
