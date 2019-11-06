@@ -1,5 +1,3 @@
 export {addDisaster};
 
-function addDisaster() {
-  
-}
+function addDisaster() {}
