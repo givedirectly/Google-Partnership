@@ -15,8 +15,7 @@ const placeIconParams = {
 /**
  * Creates, initializes and returns a map with search box and drawing tools.
  *
- * @param {Promise<any>} firebasePromise Promise that will complete when
- *     Firebase authentication is finished
+ * @param {Promise<firebase.firestore.DocumentSnapshot>} firebasePromise Promise with disaster metadata
  * @return {google.maps.Map}
  */
 function createMap(firebasePromise) {
@@ -29,17 +28,10 @@ function createMap(firebasePromise) {
       {center: {lat: 39.8283, lng: -98.5795}, styles: mapStyles});
 
   firebasePromise
-      .then(
-          () => firebase.firestore()
-                    .collection('disaster-metadata')
-                    .doc(getResources().year)
-                    .collection(getDisaster())
-                    .doc('map-bounds')
-                    .get())
       .then((doc) => {
         map.fitBounds(new google.maps.LatLngBounds(
-            new google.maps.LatLng(geoPointToLatLng(doc.data().sw)),
-            new google.maps.LatLng(geoPointToLatLng(doc.data().ne))));
+            new google.maps.LatLng(geoPointToLatLng(doc.data()['map-bounds'].sw)),
+            new google.maps.LatLng(geoPointToLatLng(doc.data()['map-bounds'].ne))));
       });
   setUpPolygonDrawing(map, firebasePromise);
 
