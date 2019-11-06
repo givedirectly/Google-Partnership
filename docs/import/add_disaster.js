@@ -1,0 +1,5 @@
+export {addDisaster};
+
+function addDisaster() {
+  
+}
