@@ -1,7 +1,6 @@
 import mapStyles from './map_styles.js';
 import {geoPointToLatLng} from './map_util.js';
 import setUpPolygonDrawing from './polygon_draw.js';
-import {getDisaster, getResources} from './resources.js';
 
 export {createMap as default};
 
