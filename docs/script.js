@@ -1,9 +1,10 @@
-import {authenticateToFirebase, Authenticator, CLIENT_ID, getDisasterDocument, initializeEE, initializeFirebase} from './authenticate.js';
+import {authenticateToFirebase, Authenticator, CLIENT_ID, initializeEE, initializeFirebase} from './authenticate.js';
 import createMap from './create_map.js';
 import {earthEngineTestTokenCookieName, firebaseTestTokenCookieName, getCookieValue, inProduction} from './in_test_util.js';
 import run from './run.js';
 import SettablePromise from './settable_promise.js';
 import {initializeSidebar} from './sidebar.js';
+import {getDisaster, getResources} from './resources.js';
 
 // The base Google Map, Initialized lazily to ensure doc is ready
 let map = null;
@@ -60,6 +61,17 @@ function setup() {
           /* updateAuthLibrary */ false);
     }
   });
+}
+
+/**
+ * Fetches the document with all metadata for the current disaster. Should only
+ * be called once to avoid excessive fetches.
+ * @return {Promise<firebase.firestore.DocumentSnapshot>}
+ */
+function getDisasterDocument() {
+  return firebase.firestore()
+      .doc('disaster-metadata/' + getResources().year + '-' + getDisaster())
+      .get();
 }
 
 setup();
