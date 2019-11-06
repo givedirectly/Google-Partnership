@@ -304,7 +304,8 @@ function redrawLayers() {
 }
 
 /**
- * Filters out null elements and appends 'lastElement' to end of filtered array.
+ * Filters out null elements and appends element at 'lastElement' to end of
+ * filtered array.
  * @return {deck.GeoJsonLayer[]}
  */
 function processLayerArray() {
