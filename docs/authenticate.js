@@ -1,4 +1,4 @@
-import {getResources, getDisaster} from './resources.js';
+import {getDisaster, getResources} from './resources.js';
 
 export {
   authenticateToFirebase,
@@ -171,5 +171,7 @@ function authenticateToFirebase(googleAuth) {
 }
 
 function getDisasterDocument() {
-  return firebase.firestore().doc('disaster-metadata/' + getResources().year + '-' + getDisaster()).get();
+  return firebase.firestore()
+      .doc('disaster-metadata/' + getResources().year + '-' + getDisaster())
+      .get();
 }

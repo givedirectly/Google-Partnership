@@ -30,7 +30,8 @@ const scalingFactor = 100;
  * @param {google.maps.Map} map main map
  * @param {Promise<any>} firebaseAuthPromise Promise that will complete when
  *     Firebase authentication is finished
- * @param {Promise<firebase.firestore.DocumentSnapshot>} disasterMetadataPromise Promise with disaster metadata for this disaster
+ * @param {Promise<firebase.firestore.DocumentSnapshot>} disasterMetadataPromise
+ *     Promise with disaster metadata for this disaster
  */
 function run(map, firebaseAuthPromise, disasterMetadataPromise) {
   setMapToDrawLayersOn(map);
@@ -42,8 +43,8 @@ function run(map, firebaseAuthPromise, disasterMetadataPromise) {
       initialPovertyWeight);
   processUserRegions(map, firebaseAuthPromise);
   disasterMetadataPromise.then((doc) => {
-        initializeFirebaseLayers(doc.data().layers);
-        addLayers(map);
+    initializeFirebaseLayers(doc.data().layers);
+    addLayers(map);
   });
 }
 

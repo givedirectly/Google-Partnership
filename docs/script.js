@@ -23,14 +23,16 @@ function setup() {
     // TODO: Have this return a map promise so that we can kick off other
     // processes (esp ee ones) without waiting on firebase.
     const firebaseAuthPromise = firebaseAuthPromiseWrapper.getPromise();
-    const disasterMetadataPromise = firebaseAuthPromise.then(getDisasterDocument);
+    const disasterMetadataPromise =
+        firebaseAuthPromise.then(getDisasterDocument);
     map = createMap(disasterMetadataPromise);
 
-    const runOnInitialize = () => run(map, firebaseAuthPromise, disasterMetadataPromise);
+    const runOnInitialize = () =>
+        run(map, firebaseAuthPromise, disasterMetadataPromise);
     if (inProduction()) {
       const authenticator = new Authenticator(
-          (token) =>
-              firebaseAuthPromiseWrapper.setPromise(authenticateToFirebase(token)),
+          (token) => firebaseAuthPromiseWrapper.setPromise(
+              authenticateToFirebase(token)),
           runOnInitialize);
       authenticator.start();
     } else {

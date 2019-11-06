@@ -52,7 +52,8 @@ class LayerMapValue {
    * Constructor.
    *
    * @param {GeoJSON} data Data to be rendered, null if not yet available.
-   * @param {number|string} index Z-index of layer when displayed. Does not change.
+   * @param {number|string} index Z-index of layer when displayed. Does not
+   *     change.
    *   Number except for the magic string 'lastElement', which always keeps this
    *   layer on top (used for the score layer)
    * @param {boolean} displayed True if layer is currently displayed
@@ -266,7 +267,8 @@ function addLayer(layerName, index, map) {
  * @param {Promise<Array<GeoJson>>}featuresPromise
  * @param {string} layerName
  * @param {number|string} index Ordering of layer (higher is more visible). The
- *     special string 'lastElement' keeps this always on top (only for the score layer)
+ *     special string 'lastElement' keeps this always on top (only for the score
+ layer)
  */
 function addLayerFromGeoJsonPromise(featuresPromise, layerName, index) {
   addLoadingElement(mapContainerId);
