@@ -91,45 +91,31 @@ class StoredShapeData {
     const points = [];
     feature.getPath().forEach((elt) => points.push(elt.lng(), elt.lat()));
     const polygon = ee.Geometry.Polygon(points);
-    console.log(points);
-    console.log(polygon);
     const numDamagePoints = StoredShapeData.prepareDamageCalculation(polygon);
-    numDamagePoints.evaluate((list, failure) => {
-      console.warn(list, failure);
-    });
-    console.log('got damage');
     const intersectingBlockGroups =
         StoredShapeData.getIntersectingBlockGroups(polygon);
-    console.log('got intersections');
     const weightedSnapHouseholds = StoredShapeData.calculateWeightedTotal(
         intersectingBlockGroups, 'SNAP HOUSEHOLDS');
-    console.log('got weighted snap');
     const weightedTotalHouseholds = StoredShapeData.calculateWeightedTotal(
         intersectingBlockGroups, 'TOTAL HOUSEHOLDS');
-    console.log('got total');
     return new Promise(((resolve, reject) => {
       ee.List([
         numDamagePoints,
         weightedSnapHouseholds,
         weightedTotalHouseholds,
-          intersectingBlockGroups.first() ,
       ]).evaluate((list, failure) => {
         if (failure) {
-          createError('error calculating damage' + this)(failure);
+          createError('calculating data ' + this)(failure);
           reject(failure);
           return;
         }
-        console.log(list);
         const calculatedData = {
           damage: list[0],
           snapFraction: list[2] > 0 ? roundToOneDecimal(list[1] / list[2]) : 0,
         };
-        console.log('about to do update', calculatedData);
         this.popup.setCalculatedData(calculatedData);
 
-        const promise = this.doRemoteUpdate();
-        console.log('update', promise);
-        promise.then(() => resolve(null)).catch((err) => reject(err));
+        this.doRemoteUpdate().then(() => resolve(null)).catch((err) => reject(err));
       });
     }));
   }
@@ -157,15 +143,13 @@ class StoredShapeData {
     if (this.id) {
       return userShapes.doc(this.id)
           .set(record)
-          .then(() => this.finishWriteAndMaybeWriteAgain())
-          .catch(createError('error updating ' + this));
+          .then(() => this.finishWriteAndMaybeWriteAgain());
     } else {
       return userShapes.add(record)
           .then((docRef) => {
             this.id = docRef.id;
             return this.finishWriteAndMaybeWriteAgain();
-          })
-          .catch(createError('error adding ' + this));
+          });
     }
   }
 
@@ -258,31 +242,25 @@ StoredShapeData.compareGeoPointArrays = (array1, array2) => {
 };
 
 StoredShapeData.prepareDamageCalculation = (polygon) => {
-  const featureCollection = ee.FeatureCollection(getResources().damage);
-  console.log(featureCollection.filterBounds(polygon));
-  return featureCollection
+  return ee.FeatureCollection(getResources().damage)
       .filterBounds(polygon)
       .size();
 };
 
 StoredShapeData.getIntersectingBlockGroups = (polygon) => {
-  const collection1 = ee.FeatureCollection(getResources().getCombinedAsset())
-      .filterBounds(polygon);
-  console.log('got filterd ', collection1);
-  const collection = collection1
+  return ee.FeatureCollection(getResources().getCombinedAsset())
+      .filterBounds(polygon)
       .map((feature) => {
         const geometry = feature.geometry();
         return feature.set(
             'blockGroupFraction',
             geometry.intersection(polygon).area().divide(geometry.area()));
       });
-  console.log('got mapped', collection);
-  return collection;
 };
 
 StoredShapeData.calculateWeightedTotal =
     (intersectingBlockGroups, property) => {
-      const aggregateSum = intersectingBlockGroups
+      return intersectingBlockGroups
           .map((feature) => {
             return new ee.Feature(null, {
               'weightedSum': ee.Number(feature.get(property))
@@ -290,8 +268,6 @@ StoredShapeData.calculateWeightedTotal =
             });
           })
           .aggregate_sum('weightedSum');
-      console.log('weighted for ' + property, aggregateSum);
-      return aggregateSum;
     };
 
 /**
@@ -374,14 +350,8 @@ function setUpPolygonDrawing(map, firebasePromise) {
 function processUserRegions(map, firebasePromise) {
   addLoadingElement(mapContainerId);
   return firebasePromise
-      .then(() => {
-        console.log('got first then');
-        return userShapes = getFirestoreRoot().collection(collectionName);
-      })
-      .then(() => {
-        console.log('got second then');
-        return userShapes.get();
-      })
+      .then(() => userShapes = getFirestoreRoot().collection(collectionName))
+      .then(() => userShapes.get())
       .then(
           (querySnapshot) => drawRegionsFromFirestoreQuery(querySnapshot, map))
       .catch(createError('getting user-drawn regions'));

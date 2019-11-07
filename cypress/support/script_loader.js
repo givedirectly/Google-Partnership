@@ -90,14 +90,16 @@ function loadScriptsBeforeForUnitTests(...scriptKeys) {
                   /* expiresIn */ 3600, /* extraScopes */[],
                   /* callback */
                   () => ee.initialize(null, null, resolve, reject),
-                  /* updateAuthLibrary */ false)).then((res) => console.log('inner done ', res))).then((res) => console.log('outer done', res));
+                  /* updateAuthLibrary */ false)));
     });
   }
   if (usesFirebase) {
-    addFirebaseHooks();
+    // Currently no unit test actually writes to Firestore, they just use the
+    // library. A unit test that really writes to Firestore will be responsible
+    // for calling the necessary functions (addFirebaseHooks and logging in with
+    // the custom token, similar to what is done in prod).
     before(() => {
       firebase.initializeApp(getFirebaseConfig(/* inProduction */ false));
-      cy.wrap(firebase.auth().signInWithCustomToken(firestoreCustomToken));
     });
   }
 }

@@ -1,34 +1,38 @@
 import {getFirestoreRoot} from '../../../docs/authenticate';
 import {processUserRegions, StoredShapeData} from '../../../docs/polygon_draw';
 import * as resourceGetter from '../../../docs/resources';
+import * as loading from '../../../docs/loading';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
+
+// First coordinate is x, or longitude, second is y, latitude.
+const polyCoords = [[1, 1], [1, 2], [13, 2], [13, 1], [1, 1]];
+
+const polyLatLng = polyCoords.map((pair) => makeLatLng(pair[1], pair[0]));
+const firebaseCollection = {};
+const calculatedData = {damage: 1, snapFraction: 0.6};
 
 describe('Unit test for ShapeData', () => {
   loadScriptsBeforeForUnitTests('ee', 'maps', 'firebase');
-  const firebaseCollection = {};
-  const calculatedData = {damage: 1, snapFraction: 0.5};
-  let mockDamage;
-  let mockFilteredDamage;
-  let mockSize;
   let polygonGeometry;
-  const featureCollectionApi = {filterBounds: (poly) => {}};
-  const filteredFeatureCollectionApi = {size: () => {}};
-  const sizeApi = {evaluate: (callb) => {}};
   before(() => {
-    mockDamage = Cypress.sinon.mock(featureCollectionApi);
-    mockFilteredDamage = Cypress.sinon.mock(filteredFeatureCollectionApi);
-    mockSize = Cypress.sinon.mock(sizeApi);
-    polygonGeometry = [new firebase.firestore.GeoPoint(1, 1), new firebase.firestore.GeoPoint(2, 1),
-      new firebase.firestore.GeoPoint(2, 13), new firebase.firestore.GeoPoint(1, 13), new firebase.firestore.GeoPoint(1, 1)];
+    polygonGeometry = polyLatLng.map((latlng) => new firebase.firestore.GeoPoint(latlng.lat(), latlng.lng()));
+    // Stub out loading update attempts: they pollute console with errors.
+    loading.addLoadingElement = () => {};
+    loading.loadingElementFinished = () => {};
   });
   // Reset firebaseCollection's dummy methods.
   beforeEach(() => {
+    // Polygon intersects feature1 and feature2, not feature3.
     const feature1 = ee.Feature(ee.Geometry.Polygon(0, 0, 0, 10, 10, 10, 10, 0), {'SNAP HOUSEHOLDS': 1, 'TOTAL HOUSEHOLDS': 2});
-    const feature2 = ee.Feature(ee.Geometry.Polygon(10, 0, 10, 10, 20, 10, 20, 0), {'SNAP HOUSEHOLDS': 400, 'TOTAL HOUSEHOLDS': 400});
-    const feature3 = ee.Feature(ee.Geometry.Polygon(20, 0, 20, 10, 30, 10, 30, 0), {'SNAP HOUSEHOLDS': 0, 'TOTAL HOUSEHOLDS': 4});
+    const feature2 = ee.Feature(ee.Geometry.Polygon(10, 0, 10, 10, 20, 10, 20, 0), {'SNAP HOUSEHOLDS': 3, 'TOTAL HOUSEHOLDS': 4});
+    const feature3 = ee.Feature(ee.Geometry.Polygon(20, 0, 20, 10, 30, 10, 30, 0), {'SNAP HOUSEHOLDS': 1000, 'TOTAL HOUSEHOLDS': 1000});
     const featureCollection = ee.FeatureCollection([feature1, feature2, feature3]);
+    // Polygon intersects only first damage point.
     const damageCollection = ee.FeatureCollection([ee.Feature(ee.Geometry.Point([1.5, 1.5])), ee.Feature(ee.Geometry.Point([200, 200]))]);
-    damageCollection.myattr = 'jdr';
+    // Use our custom EarthEngine FeatureCollections.
+    cy.stub(resourceGetter, 'getResources').returns({damage: damageCollection, getCombinedAsset: () => featureCollection});
+
+    // Set up appropriate Firestore mocks.
     cy.stub(getFirestoreRoot(), 'collection')
         .withArgs('usershapes')
         .returns(firebaseCollection);
@@ -37,16 +41,13 @@ describe('Unit test for ShapeData', () => {
         delete firebaseCollection[prop];
       }
     }
-    // Use our custom EarthEngine FeatureCollections.
-    cy.stub(resourceGetter, 'getResources').returns({damage: damageCollection, getCombinedAsset: () => featureCollection});
-
     // Make sure .get() succeeds.
     firebaseCollection.get = () => [];
     // Make sure userShapes is set in the code.
     return cy.wrap(processUserRegions(null, Promise.resolve(null)));
   });
 
-  it.only('Add shape', () => {
+  it('Add shape', () => {
     const popup = new StubPopup();
     const underTest = new StoredShapeData(null, null, null, popup);
     const records = [];
@@ -54,7 +55,6 @@ describe('Unit test for ShapeData', () => {
     popup.notes = 'my notes';
     cy.wrap(underTest.update()).then(
         () => {
-          console.log(records);
           expect(records).to.eql([{
             calculatedData: calculatedData,
             geometry: polygonGeometry,
@@ -230,7 +230,7 @@ function recordRecord(records, retval) {
 function makeMockPolygon() {
   const mockPolygon = {};
   mockPolygon.getMap = () => true;
-  mockPolygon.getPath = () => [makeLatLng(1, 1), makeLatLng(1, 2), makeLatLng(13, 2),makeLatLng(13, 1), makeLatLng(1, 1)];
+  mockPolygon.getPath = () => [makeLatLng(1, 1), makeLatLng(2, 1), makeLatLng(2, 13),makeLatLng(1, 13), makeLatLng(1, 1)];
   return mockPolygon;
 }
 
