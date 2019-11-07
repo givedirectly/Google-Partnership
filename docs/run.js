@@ -203,7 +203,10 @@ function addLayers(map) {
  */
 function addScoreLayer(layer) {
   addLayerFromGeoJsonPromise(layer, scoreLayerName, 'lastElement');
-  // Checkbox may not exist yet if layer metadata not retrieved yet.
+  // Checkbox may not exist yet if layer metadata not retrieved yet. The
+  // checkbox creation will check the box by default. We check it here in case
+  // it was unchecked by the user, and this is coming from a weight/threshold
+  // update.
   const checkbox = document.getElementById(getCheckBoxId(scoreLayerName));
   if (checkbox) {
     checkbox.checked = true;
