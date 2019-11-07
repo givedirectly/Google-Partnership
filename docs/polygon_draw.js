@@ -91,19 +91,26 @@ class StoredShapeData {
     feature.getPath().forEach((elt) => points.push(elt.lng(), elt.lat()));
     const polygon = ee.Geometry.Polygon(points);
     const numDamagePoints = StoredShapeData.prepareDamageCalculation(polygon);
-    const intersectingBlockGroups = StoredShapeData.getIntersectingBlockGroups(polygon);
-    const weightedSnapHouseholds = StoredShapeData.calculateWeightedTotal(intersectingBlockGroups, 'SNAP HOUSEHOLDS');
-    const weightedTotalHouseholds = StoredShapeData.calculateWeightedTotal(intersectingBlockGroups, 'TOTAL HOUSEHOLDS');
-    ee.List([numDamagePoints, weightedSnapHouseholds, weightedTotalHouseholds])
-        .evaluate((list, failure) => {
-          if (failure) {
-            createError('error calculating damage' + this)(failure);
-            return;
-          }
-          const calculatedData = {damage: list[0], snapFraction: list[2] > 0 ? (list[1] / list[2]).toFixed(1) : 0};
-          this.popup.setCalculatedData(calculatedData);
-          this.doRemoteUpdate();
-        });
+    const intersectingBlockGroups =
+        StoredShapeData.getIntersectingBlockGroups(polygon);
+    const weightedSnapHouseholds = StoredShapeData.calculateWeightedTotal(
+        intersectingBlockGroups, 'SNAP HOUSEHOLDS');
+    const weightedTotalHouseholds = StoredShapeData.calculateWeightedTotal(
+        intersectingBlockGroups, 'TOTAL HOUSEHOLDS');
+    ee.List([
+        numDamagePoints, weightedSnapHouseholds, weightedTotalHouseholds
+      ]).evaluate((list, failure) => {
+      if (failure) {
+        createError('error calculating damage' + this)(failure);
+        return;
+      }
+      const calculatedData = {
+        damage: list[0],
+        snapFraction: list[2] > 0 ? (list[1] / list[2]).toFixed(1) : 0
+      };
+      this.popup.setCalculatedData(calculatedData);
+      this.doRemoteUpdate();
+    });
   }
 
   /**
@@ -233,24 +240,34 @@ StoredShapeData.prepareDamageCalculation = (polygon) => {
 };
 
 StoredShapeData.getIntersectingBlockGroups = (polygon) => {
-  return ee.FeatureCollection(getResources().getCombinedAsset()).filterBounds(polygon)
+  return ee.FeatureCollection(getResources().getCombinedAsset())
+      .filterBounds(polygon)
       .map((feature) => {
         const geometry = feature.geometry();
-        return feature.set('blockGroupFraction', geometry.intersection(polygon).area().divide(geometry.area()));
+        return feature.set(
+            'blockGroupFraction',
+            geometry.intersection(polygon).area().divide(geometry.area()));
       });
 };
 
-StoredShapeData.calculateWeightedTotal = (intersectingBlockGroups, property) => {
-  return intersectingBlockGroups.map((feature) => {
-    return new ee.Feature(null, {'weightedSum': ee.Number(feature.get(property)).multiply(feature.get('blockGroupFraction'))});
-  }).aggregate_sum('weightedSum');
-};
+StoredShapeData.calculateWeightedTotal =
+    (intersectingBlockGroups, property) => {
+      return intersectingBlockGroups
+          .map((feature) => {
+            return new ee.Feature(null, {
+              'weightedSum': ee.Number(feature.get(property))
+                                 .multiply(feature.get('blockGroupFraction'))
+            });
+          })
+          .aggregate_sum('weightedSum');
+    };
 
 function displayCalculatedData(calculatedData, parentDiv) {
   const damageDiv = document.createElement('div');
   damageDiv.innerHTML = 'damage count: ' + calculatedData.damage;
   const snapDiv = document.createElement('div');
-  snapDiv.innerHTML = 'Approximate snap fraction: ' + calculatedData.snapFraction;
+  snapDiv.innerHTML =
+      'Approximate snap fraction: ' + calculatedData.snapFraction;
   parentDiv.appendChild(damageDiv);
   parentDiv.appendChild(snapDiv);
 }

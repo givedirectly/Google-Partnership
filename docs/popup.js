@@ -1,5 +1,5 @@
-import {userRegionData} from './user_region_data.js';
 import {displayCalculatedData} from './polygon_draw.js';
+import {userRegionData} from './user_region_data.js';
 
 export {
   createPopup,
