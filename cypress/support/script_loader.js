@@ -90,7 +90,7 @@ function loadScriptsBeforeForUnitTests(...scriptKeys) {
                   /* expiresIn */ 3600, /* extraScopes */[],
                   /* callback */
                   () => ee.initialize(null, null, resolve, reject),
-                  /* updateAuthLibrary */ false)));
+                  /* updateAuthLibrary */ false)).then((res) => console.log('inner done ', res))).then((res) => console.log('outer done', res));
     });
   }
   if (usesFirebase) {
