@@ -4,7 +4,10 @@ import {processUserRegions, StoredShapeData} from '../../../docs/polygon_draw';
 import * as resourceGetter from '../../../docs/resources';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 
-const polyCoords = [{lng: 1, lat: 1}, {lng: 1, lat: 2}, {lng: 13, lat: 2}, {lng: 13, lat: 1}, {lng: 1, lat: 1}];
+const polyCoords = [
+  {lng: 1, lat: 1}, {lng: 1, lat: 2}, {lng: 13, lat: 2}, {lng: 13, lat: 1},
+  {lng: 1, lat: 1}
+];
 
 let polyLatLng;
 const firebaseCollection = {};
