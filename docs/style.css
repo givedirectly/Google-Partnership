@@ -440,7 +440,6 @@ input[type=checkbox]:checked {
   position: fixed;
   width: var(--sidebar-min-width);
   height: 100%;
-  background-color: var(--green-6);
   float: left;
   padding-inline-start: 0;
   margin-block-start: 0;
@@ -463,6 +462,7 @@ input[type=checkbox]:checked {
 }
 
 .sidebar-content {
+  background-color: #FAFAFA;
   display: none;
   margin-left: var(--sidebar-min-width);
   width: calc(100% - var(--sidebar-min-width));
