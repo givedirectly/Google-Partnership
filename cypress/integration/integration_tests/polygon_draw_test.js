@@ -245,7 +245,8 @@ describe('Integration tests for drawing polygons', () => {
   it('Draws marker, edits notes, deletes', () => {
     cy.visit(host);
 
-    cy.get('[title="Add a marker"]').click();
+    // Give Firebase some time to retrieve data.
+    cy.get('[title="Add a marker"]', {timeout: 10000}).click();
     drawPointAndPrepareForNext(400, 400);
     cy.get('[title="Stop drawing"]').click();
     cy.wait(500);
