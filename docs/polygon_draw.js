@@ -98,7 +98,7 @@ class StoredShapeData {
     const weightedTotalHouseholds = StoredShapeData.calculateWeightedTotal(
         intersectingBlockGroups, 'TOTAL HOUSEHOLDS');
     ee.List([
-        numDamagePoints, weightedSnapHouseholds, weightedTotalHouseholds
+        numDamagePoints, weightedSnapHouseholds, weightedTotalHouseholds,
       ]).evaluate((list, failure) => {
       if (failure) {
         createError('error calculating damage' + this)(failure);
@@ -106,7 +106,7 @@ class StoredShapeData {
       }
       const calculatedData = {
         damage: list[0],
-        snapFraction: list[2] > 0 ? (list[1] / list[2]).toFixed(1) : 0
+        snapFraction: list[2] > 0 ? (list[1] / list[2]).toFixed(1) : 0,
       };
       this.popup.setCalculatedData(calculatedData);
       this.doRemoteUpdate();
@@ -256,12 +256,17 @@ StoredShapeData.calculateWeightedTotal =
           .map((feature) => {
             return new ee.Feature(null, {
               'weightedSum': ee.Number(feature.get(property))
-                                 .multiply(feature.get('blockGroupFraction'))
+                                 .multiply(feature.get('blockGroupFraction')),
             });
           })
           .aggregate_sum('weightedSum');
     };
 
+/**
+ * Renders the given calculated data into the given div.
+ * @param {Object} calculatedData Coming from Firestore doc retrieval
+ * @param {HTMLDivElement} parentDiv
+ */
 function displayCalculatedData(calculatedData, parentDiv) {
   const damageDiv = document.createElement('div');
   damageDiv.innerHTML = 'damage count: ' + calculatedData.damage;

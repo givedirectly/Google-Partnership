@@ -49,6 +49,7 @@ class DisasterMapValue {
     this.buildings = buildings;
   }
 
+  /** @return {string} The combined SNAP/damage asset name */
   getCombinedAsset() {
     return 'users/gd/' + this.name + '/data-ms-as-nod';
   }
