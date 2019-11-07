@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Add New Disaster</title>
+  <script src="../lib/ee_api_js_debug.js"></script>
   <script type="module" src="./add_disaster.js"></script>
 </head>
 <body>
@@ -62,12 +63,11 @@
     <option value="WI">Wisconsin</option>
     <option value="WY">Wyoming</option>
   </select><p></p>
-  <button type="button" id="add-disaster-button">Look for Resources</button>
-  <script type="module">
-    import {addDisaster} from './add_disaster.js';
-    document.getElementById('add-disaster-button').onclick = addDisaster;
-  </script>
+  <button type="submit" id="add-disaster-button" disabled="true">Look for Resources</button>
 </form>
-
+<script type="module">
+  import taskAccumulator from './add_disaster.js';
+  taskAccumulator.taskCompleted();
+</script>
 </body>
 </html>
