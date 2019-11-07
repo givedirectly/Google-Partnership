@@ -274,7 +274,7 @@ function displayCalculatedData(calculatedData, parentDiv) {
   damageDiv.innerHTML = 'damage count: ' + calculatedData.damage;
   const snapDiv = document.createElement('div');
   snapDiv.innerHTML =
-      'Approximate snap fraction: ' + calculatedData.snapFraction;
+      'Approximate SNAP fraction: ' + calculatedData.snapFraction;
   parentDiv.appendChild(damageDiv);
   parentDiv.appendChild(snapDiv);
 }
