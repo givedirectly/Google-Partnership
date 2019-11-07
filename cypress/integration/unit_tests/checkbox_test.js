@@ -1,22 +1,41 @@
-import {assets, EarthEngineAsset} from '../../../client-side/static/earth_engine_asset.js';
-import {layerArray, layerMap, LayerMapValue, toggleLayerOff, toggleLayerOn} from '../../../client-side/static/layer_util';
+import {initializeFirebaseLayers, LayerType} from '../../../docs/firebase_layers.js';
+import {layerArray, layerMap, LayerMapValue, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from '../../../docs/layer_util.js';
+import {loadScriptsBefore} from '../../support/script_loader.js';
 
 const mockData = {};
 
+const mockFirebaseLayers = {
+  'asset0': {
+    'asset-type': LayerType.FEATURE_COLLECTION,
+    'display-name': 'asset0',
+    'display-on-load': true,
+    'color-function': {'single-color': 'yellow'},
+  },
+  'asset1': {
+    'asset-type': LayerType.FEATURE_COLLECTION,
+    'display-name': 'asset1',
+    'display-on-load': false,
+    'color-function': {'single-color': 'yellow'},
+  },
+  'asset2': {
+    'asset-type': LayerType.FEATURE_COLLECTION,
+    'display-name': 'asset2',
+    'display-on-load': false,
+    'color-function': {'single-color': 'yellow'},
+  },
+};
+
 describe('Unit test for toggleLayerOn', () => {
+  loadScriptsBefore('ee', 'deck', 'maps');
   beforeEach(() => {
     layerMap.set('asset0', new LayerMapValue(mockData, 0, true));
     layerMap.set('asset1', new LayerMapValue(mockData, 1, false));
     layerMap.set('asset2', new LayerMapValue(null, 2, false));
-    assets['asset0'] = new EarthEngineAsset(
-        EarthEngineAsset.Type.FEATURECOLLECTION, 'asset0', true);
-    assets['asset1'] = new EarthEngineAsset(
-        EarthEngineAsset.Type.FEATURECOLLECTION, 'asset1', false);
-    assets['asset2'] = new EarthEngineAsset(
-        EarthEngineAsset.Type.FEATURECOLLECTION, 'asset2', false);
+    initializeFirebaseLayers(mockFirebaseLayers);
+    // Initialize deck object in production.
+    setMapToDrawLayersOn(null);
     layerArray[0] = new deck.GeoJsonLayer({});
     layerArray[1] = new deck.GeoJsonLayer({});
-    ee.listEvaluateCallback = null;
   });
 
   it('displays a hidden but loaded layer', () => {
@@ -35,31 +54,37 @@ describe('Unit test for toggleLayerOn', () => {
     expect(layerMap.get('asset2').displayed).to.equals(false);
     expect(layerMap.get('asset2').data).to.be.null;
 
-    toggleLayerOn('asset2');
     const emptyList = [];
-    ee.listEvaluateCallback(emptyList);
-    // Evaluate after the promise finishes by using an instant timer.
-    setTimeout(() => {
+    let callback = null;
+    stubForEmptyList((callb) => callback = callb);
+    toggleLayerOn('asset2');
+    callback(emptyList);
+    // Evaluate after the promise finishes by using an instant wait.
+    // TODO(janakr): Here and below, consider returning a Promise from
+    //  toggleLayerOn that can be waited on instead of this event-loop push.
+    cy.wait(0).then(() => {
       expect(layerMap.get('asset2').displayed).to.equals(true);
       expect(layerMap.get('asset2').data).to.not.be.null;
       const layerProps = layerArray[2].props;
       expect(layerProps).to.have.property('id', 'asset2');
       expect(layerProps).to.have.property('visible', true);
       expect(layerProps).to.have.property('data', emptyList);
-    }, 0);
+    });
   });
 
   it('check hidden layer, then uncheck before list evaluation', () => {
     expect(layerMap.get('asset2').displayed).to.equals(false);
     expect(layerMap.get('asset2').data).to.be.null;
 
+    const emptyList = [];
+    let callback = null;
+    stubForEmptyList((callb) => callback = callb);
     toggleLayerOn('asset2');
     toggleLayerOff('asset2');
-    const emptyList = [];
-    ee.listEvaluateCallback(emptyList);
+    callback(emptyList);
 
-    // Evaluate after the promise finishes by using an instant timer.
-    setTimeout(() => {
+    // Evaluate after the promise finishes by using an instant wait.
+    cy.wait(0).then(() => {
       expect(layerMap.get('asset2').displayed).to.equals(false);
       expect(layerMap.get('asset2').data).to.not.be.null;
       const layerProps = layerArray[2].props;
@@ -84,3 +109,18 @@ describe('Unit test for toggleLayerOff', () => {
     expect(layerProps).to.have.property('data', mockData);
   });
 });
+
+/**
+ * Mocks out a FeatureCollection created for 'asset2'. Assumes that production
+ * code will call toList().evaluate(callback) on the resulting collection, and
+ * passes that callback to the given callbackReceiver.
+ *
+ * @param {Function} callbackReceiver
+ */
+function stubForEmptyList(callbackReceiver) {
+  const emptyCollection = ee.FeatureCollection([]);
+  cy.stub(ee, 'FeatureCollection').withArgs('asset2').returns(emptyCollection);
+  const emptyEeList = ee.List([]);
+  cy.stub(emptyCollection, 'toList').returns(emptyEeList);
+  cy.stub(emptyEeList, 'evaluate').callsFake(callbackReceiver);
+}

@@ -1,5 +1,7 @@
 import mapStyles from './map_styles.js';
+import {geoPointToLatLng} from './map_util.js';
 import setUpPolygonDrawing from './polygon_draw.js';
+import {getDisaster, getResources} from './resources.js';
 
 export {createMap as default};
 
@@ -18,11 +20,27 @@ const placeIconParams = {
  * @return {google.maps.Map}
  */
 function createMap(firebasePromise) {
-  // Create the base Google Map. Takes ~7 ms to execute this step..
-  // TODO: this is centered for Harvey right now - generalize.
+  // Create the base Google Map. Takes ~7 ms to execute this step.
+  // Temporarily center on the center of the continental 48 states.
+  // In practice, the firebase promise finishes so fast we don't actually
+  // see this happen.
   const map = new google.maps.Map(
       $('.map').get(0),
-      {center: {lat: 29.76, lng: -95.36}, zoom: 8, styles: mapStyles});
+      {center: {lat: 39.8283, lng: -98.5795}, styles: mapStyles});
+
+  firebasePromise
+      .then(
+          () => firebase.firestore()
+                    .collection('disaster-metadata')
+                    .doc(getResources().year)
+                    .collection(getDisaster())
+                    .doc('map-bounds')
+                    .get())
+      .then((doc) => {
+        map.fitBounds(new google.maps.LatLngBounds(
+            new google.maps.LatLng(geoPointToLatLng(doc.data().sw)),
+            new google.maps.LatLng(geoPointToLatLng(doc.data().ne))));
+      });
   setUpPolygonDrawing(map, firebasePromise);
 
   // Search box code roughly taken from

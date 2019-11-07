@@ -1,6 +1,6 @@
-import * as LayerUtil from '../../../client-side/static/layer_util.js';
-import * as Run from '../../../client-side/static/run.js';
-import {createToggles, toggles} from '../../../client-side/static/update';
+import * as LayerUtil from '../../../docs/layer_util.js';
+import * as Run from '../../../docs/run.js';
+import {createToggles, toggles} from '../../../docs/update';
 
 let lastPassedPovertyThreshold;
 let lastPassedDamageThreshold;
@@ -26,6 +26,13 @@ describe('Unit test for updates.js', () => {
     document.body.appendChild(formDiv);
     const map = {};
     createToggles(map);
+
+    const snackbarDiv = document.createElement('div');
+    snackbarDiv.id = 'snackbar';
+    const snackbarText = document.createElement('span');
+    snackbarText.id = 'snackbar-text';
+    snackbarDiv.appendChild(snackbarText);
+    document.body.appendChild(snackbarDiv);
 
     lastPassedDamageThreshold = null;
     lastPassedPovertyThreshold = null;
@@ -64,6 +71,8 @@ describe('Unit test for updates.js', () => {
 
     document.getElementById('update').click();
 
+    expect(document.getElementById('snackbar-text').innerHTML)
+        .to.equals('poverty threshold must be between 0.00 and 1.00');
     expect(document.getElementById('error').innerHTML)
         .to.equals('ERROR: poverty threshold must be between 0.00 and 1.00');
     expect(lastPassedPovertyThreshold).to.be.null;

@@ -1,7 +1,10 @@
+import {authenticateToFirebase, Authenticator} from '../authenticate.js';
 import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, snapPercentageTag, snapPopTag, sviTag, totalPopTag, tractTag} from '../property_names.js';
-import {disaster, getResources} from '../resources.js';
+import {getDisaster, getResources} from '../resources.js';
+import SettablePromise from '../settable_promise.js';
+import storeCenter from './center.js';
+import {cdcGeoidKey, cdcSviKey, censusBlockGroupKey, censusGeoidKey, incomeKey, snapKey, tigerGeoidKey, totalKey} from './import_data_keys.js';
 
-export {crowdAiDamageKey};
 /** @VisibleForTesting */
 export {countDamageAndBuildings};
 
@@ -32,15 +35,6 @@ export {countDamageAndBuildings};
  * editor.
  */
 // TODO: factor in margins of error?
-
-const censusGeoidKey = 'GEOid2';
-const censusBlockGroupKey = 'GEOdisplay-label';
-const tigerGeoidKey = 'GEOID';
-const snapKey = 'HD01_VD02';
-const totalKey = 'HD01_VD01';
-const incomeKey = 'HD01_VD01';
-// check with crowd ai folks about name.
-const crowdAiDamageKey = 'descriptio';
 
 /**
  * Given a feature from the SNAP census data, returns a new
@@ -92,9 +86,9 @@ function combineWithSnap(feature) {
         blockGroupTag,
         snapFeature.get(censusBlockGroupKey),
         snapPopTag,
-        snapFeature.get(snapKey),
+        ee.Number.parse(snapFeature.get(snapKey)),
         totalPopTag,
-        snapFeature.get(totalKey),
+        ee.Number.parse(snapFeature.get(totalKey)),
       ]));
 }
 
@@ -122,7 +116,7 @@ function combineWithSvi(feature) {
   const sviFeature = ee.Feature(feature.get('secondary'));
   return ee.Feature(feature.get('primary')).set(ee.Dictionary([
     sviTag,
-    sviFeature.get(sviTag),
+    sviFeature.get(cdcSviKey),
   ]));
 }
 
@@ -167,18 +161,22 @@ function attachBlockGroups(building, blockGroups) {
   return building.set(geoidTag, geoid);
 }
 
-/** Performs operation of processing inputs and creating output asset. */
-function run() {
-  ee.initialize();
-
+/**
+ * Performs operation of processing inputs and creating output asset.
+ * @param {Promise} firebaseAuthPromise
+ */
+function run(firebaseAuthPromise) {
   const resources = getResources();
+  const damage = ee.FeatureCollection(resources.damage);
+  storeCenter(damage, firebaseAuthPromise);
+
   const snap = ee.FeatureCollection(resources.rawSnap)
                    .map((feature) => stringifyGeoid(feature, censusGeoidKey));
   // filter block groups to those with damage.
   const blockGroups = ee.Join.simple().apply(
-      ee.FeatureCollection(resources.bg),
-      ee.FeatureCollection(resources.damage),
+      ee.FeatureCollection(resources.bg), damage,
       ee.Filter.intersects({leftField: '.geo', rightField: '.geo'}));
+
   // join snap stats to block group geometries
   const joinedSnap =
       ee.Join.inner()
@@ -197,14 +195,13 @@ function run() {
           .map(combineWithIncome);
   // filter SVI to those with damage and join
   const svi = ee.Join.simple().apply(
-      ee.FeatureCollection(resources.svi),
-      ee.FeatureCollection(resources.damage),
+      ee.FeatureCollection(resources.svi), damage,
       ee.Filter.intersects({leftField: '.geo', rightField: '.geo'}));
   const joinedSnapIncomeSVI =
       ee.Join.inner()
           .apply(
               joinedSnapIncome.map(addTractInfo), svi,
-              ee.Filter.equals({leftField: tractTag, rightField: geoidTag}))
+              ee.Filter.equals({leftField: tractTag, rightField: cdcGeoidKey}))
           .map(combineWithSvi);
   // attach block groups to buildings and aggregate to get block group building
   // counts
@@ -217,12 +214,10 @@ function run() {
   const data = joinedSnapIncomeSVI.map(
       (feature) => countDamageAndBuildings(feature, buildingsHisto));
 
-  const assetName = disaster + '-data-ms-as-nod';
-  // TODO(#61): parameterize ee user account to write assets to or make GD
-  // account.
+  const assetName = 'data-ms-as-nod';
   // TODO: delete existing asset with same name if it exists.
-  const task =
-      ee.batch.Export.table.toAsset(data, assetName, 'users/juliexxia/' + assetName);
+  const task = ee.batch.Export.table.toAsset(
+      data, assetName, 'users/gd/' + getDisaster() + '/' + assetName);
   task.start();
   $('.upload-status')
       .text('Check Code Editor console for progress. Task: ' + task.id);
@@ -240,30 +235,14 @@ function run() {
  * when the document is loaded, we do the work.
  */
 function setup() {
-  // The client ID from the Google Developers Console.
-  // TODO(#13): This is from janakr's console. Should use one for GiveDirectly.
-  const CLIENT_ID = '634162034024-oodhl7ngkg63hd9ha9ho9b3okcb0bp8s' +
-      '.apps.googleusercontent.com';
-
   $(document).ready(function() {
-    // Shows a button prompting the user to log in.
-    const onImmediateFailed = function() {
-      $('.g-sign-in').removeClass('hidden');
-      $('.output').text('(Log in to see the result.)');
-      $('.g-sign-in .button').click(function() {
-        ee.data.authenticateViaPopup(function() {
-          // If the login succeeds, hide the login button and run the analysis.
-          $('.g-sign-in').addClass('hidden');
-          run();
-        });
-      });
-    };
-
-    // Attempt to authenticate using existing credentials.
-    // TODO: deprecated, use ee.data.authenticateViaOauth()
-    ee.data.authenticate(CLIENT_ID, run, 'error', null, onImmediateFailed);
-
-    // run();
+    const firebaseAuthPromise = new SettablePromise();
+    const runOnInitialize = () => run(firebaseAuthPromise.getPromise());
+    const authenticator = new Authenticator(
+        (token) =>
+            firebaseAuthPromise.setPromise(authenticateToFirebase(token)),
+        runOnInitialize);
+    authenticator.start();
   });
 }
 

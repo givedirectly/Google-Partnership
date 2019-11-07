@@ -1,14 +1,16 @@
-import {clickFeature} from '../../../client-side/static/click_feature.js';
-import {tableHeadings} from '../../../client-side/static/draw_table.js';
-import * as HighlightFeatures from '../../../client-side/static/highlight_features.js';
+import {clickFeature} from '../../../docs/click_feature.js';
+import {tableHeadings} from '../../../docs/draw_table.js';
+import * as HighlightFeatures from '../../../docs/highlight_features.js';
+import {loadScriptsBefore} from '../../support/script_loader';
 
 let mockTable;
 let tableApi;
 
 describe('Unit test for click_feature.js', () => {
+  loadScriptsBefore('ee', 'maps');
   beforeEach(() => {
-    HighlightFeatures.CurrentFeaturesValue = () => new MockValue();
-    /** Very real fake of the CurrentFeaturesValue class */
+    HighlightFeatures.CurrentFeatureValue = () => new MockValue();
+    /** Very real fake of the CurrentFeatureValue class */
     class MockValue {
       /**
        * @constructor
@@ -32,7 +34,7 @@ describe('Unit test for click_feature.js', () => {
         HighlightFeatures.currentFeatures.clear();
       } else {
         HighlightFeatures.currentFeatures.set(
-            0, new HighlightFeatures.CurrentFeaturesValue());
+            0, new HighlightFeatures.CurrentFeatureValue());
       }
     });
 
@@ -41,13 +43,26 @@ describe('Unit test for click_feature.js', () => {
     };
     mockTable = Cypress.sinon.mock(tableApi);
     HighlightFeatures.currentFeatures.clear();
+    const featureProperties = {'GEOID': 0};
+    const feature = ee.Feature(null, featureProperties);
+    const featureCollection = ee.FeatureCollection([feature]);
+    cy.stub(ee, 'FeatureCollection')
+        .withArgs('mockAsset')
+        .returns(featureCollection);
+    cy.stub(featureCollection, 'filterBounds').returns(featureCollection);
+    cy.stub(feature, 'evaluate').callsFake((callb) => callb({
+                                             'type': 'Feature',
+                                             'geometry':
+                                                 {coordinates: [[[0, 0]]]},
+                                             'properties': featureProperties,
+                                           }));
   });
 
   it('clicks on a block group in the list', () => {
     const tableData = [tableHeadings, [0, 99, 0.46, 0.52]];
     mockTable.expects('setSelection').once().withArgs([{row: 0, column: null}]);
 
-    clickFeature(null, null, null, null, tableApi, tableData);
+    clickFeature(0, 0, null, 'mockAsset', tableApi, tableData);
 
     mockTable.verify();
   });
@@ -56,7 +71,7 @@ describe('Unit test for click_feature.js', () => {
     const tableData = [tableHeadings, [1, 99, 0.46, 0.52]];
     mockTable.expects('setSelection').once().withArgs([]);
 
-    clickFeature(null, null, null, null, tableApi, tableData);
+    clickFeature(0, 0, null, 'mockAsset', tableApi, tableData);
 
     mockTable.verify();
   });
@@ -66,8 +81,8 @@ describe('Unit test for click_feature.js', () => {
     mockTable.expects('setSelection').once().withArgs([{row: 0, column: null}]);
     mockTable.expects('setSelection').once().withArgs([]);
 
-    clickFeature(null, null, null, null, tableApi, tableData);
-    clickFeature(null, null, null, null, tableApi, tableData);
+    clickFeature(0, 0, null, 'mockAsset', tableApi, tableData);
+    clickFeature(0, 0, null, 'mockAsset', tableApi, tableData);
 
     mockTable.verify();
   });

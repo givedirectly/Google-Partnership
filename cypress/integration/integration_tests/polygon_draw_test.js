@@ -1,7 +1,7 @@
 // Call this firebaseLibrary to avoid conflicting with mock firebase defined in
 // commands.js.
 import * as firebaseLibrary from 'firebase';
-import {firebaseConfig} from '../../../client-side/static/authenticate';
+import {firebaseConfig} from '../../../docs/authenticate';
 
 const hackyWaitTime = 1000;
 const notes = 'Sphinx of black quartz, judge my vow';
@@ -25,9 +25,14 @@ describe('Integration tests for drawing polygons', () => {
     }));
   };
 
-  before(
-      () => cy.wrap(
-          firebaseLibrary.auth().signInWithCustomToken(firestoreCustomToken)));
+  // TODO(janakr): clean up this debugging when timeouts are resolved.
+  before(() => {
+    cy.task('logg', 'before test auth');
+    cy.wrap(
+        firebaseLibrary.auth().signInWithCustomToken(firestoreCustomToken),
+        {timeout: 10000});
+    cy.task('logg', 'after test auth');
+  });
   beforeEach(deleteAllRegionsDrawnByTest);
 
   afterEach(deleteAllRegionsDrawnByTest);
@@ -35,17 +40,19 @@ describe('Integration tests for drawing polygons', () => {
   it('Draws a polygon and edits its notes', () => {
     cy.visit(host);
     drawPolygonAndClickOnIt();
-    pressPolygonButton('edit');
+    pressPopupButton('edit');
     cy.get('[class="notes"]').type(notes);
-    pressPolygonButton('save');
+    saveAndAwait();
     cy.get('.map').contains(notes);
   });
 
   it('Draws a polygon, calculates damage', () => {
     cy.visit(host);
-    zoom(8);
+    // Sometimes the map load interacts strangely with the search. So wait.
+    cy.awaitLoad();
+    cy.get('[placeholder="Search"]').clear().type('Aldine Estates{enter}');
     drawPolygonAndClickOnIt(-250);
-    cy.get('.popup-damage').contains('damage count: 23');
+    cy.get('.popup-damage').contains('damage count: 1');
     cy.get('.popup-damage')
         .should('have.css', 'color')
         .and('eq', 'rgb(0, 0, 0)');
@@ -75,11 +82,11 @@ describe('Integration tests for drawing polygons', () => {
     cy.on('window:confirm', () => true);
     cy.visit(host);
     drawPolygonAndClickOnIt();
-    pressPolygonButton('edit');
+    pressPopupButton('edit');
     cy.get('[class="notes"]').type(notes);
-    pressPolygonButton('save');
+    saveAndAwait();
 
-    pressPolygonButton('delete');
+    pressPopupButton('delete');
     // Polygon should be gone.
     clickOnDrawnPolygon();
     assertExactlyPopUps(0, notes);
@@ -91,10 +98,10 @@ describe('Integration tests for drawing polygons', () => {
     cy.on('window:confirm', () => confirmValue);
     cy.visit(host);
     drawPolygonAndClickOnIt();
-    pressPolygonButton('edit');
+    pressPopupButton('edit');
     cy.get('[class="notes"]').type(notes);
-    pressPolygonButton('save');
-    pressPolygonButton('delete');
+    saveAndAwait();
+    pressPopupButton('delete');
     // Assert still exists.
     clickOnDrawnPolygon();
     assertExactlyPopUps(1, notes);
@@ -107,11 +114,11 @@ describe('Integration tests for drawing polygons', () => {
     clickOnDrawnPolygon();
     assertExactlyPopUps(1, notes);
 
-    pressPolygonButton('delete');
+    pressPopupButton('delete');
     // Polygon is still there.
     // Accept confirmation when it happens.
     clickOnDrawnPolygon().then(() => confirmValue = true);
-    pressPolygonButton('delete');
+    pressPopupButton('delete');
     // Polygon should be gone.
     clickOnDrawnPolygon();
     assertExactlyPopUps(0, notes);
@@ -126,10 +133,10 @@ describe('Integration tests for drawing polygons', () => {
   it('Draws a polygon, clicks it, closes its info box', () => {
     cy.visit(host);
     drawPolygonAndClickOnIt();
-    pressPolygonButton('edit');
+    pressPopupButton('edit');
     cy.get('[class="notes"]').type(notes);
-    pressPolygonButton('save');
-    pressPolygonButton('close');
+    saveAndAwait();
+    pressPopupButton('close');
     // element is still there, just hidden
     assertExactlyPopUps(1, notes);
     cy.get('.map').contains(notes).should('not.be.visible');
@@ -140,10 +147,10 @@ describe('Integration tests for drawing polygons', () => {
 
     cy.visit(host);
     drawPolygonAndClickOnIt();
-    pressPolygonButton('edit');
+    pressPopupButton('edit');
     cy.get('[class="notes"]').type(notes);
-    pressPolygonButton('close');
-    pressPolygonButton('save');
+    pressPopupButton('close');
+    saveAndAwait();
     cy.get('#mapContainer').contains(notes).should('be.visible');
   });
 
@@ -152,12 +159,12 @@ describe('Integration tests for drawing polygons', () => {
 
     cy.visit(host);
     drawPolygonAndClickOnIt();
-    pressPolygonButton('edit');
+    pressPopupButton('edit');
     cy.get('[class="notes"]').type(notes);
-    pressPolygonButton('save');
-    pressPolygonButton('edit');
+    saveAndAwait();
+    pressPopupButton('edit');
     cy.get('[class="notes"]').type('blahblahblah');
-    pressPolygonButton('close');
+    pressPopupButton('close');
     // element is still there, just hidden
     assertExactlyPopUps(1, notes);
     cy.get('#mapContainer').contains(notes).should('not.be.visible');
@@ -167,9 +174,9 @@ describe('Integration tests for drawing polygons', () => {
     cy.visit(host);
 
     drawPolygonAndClickOnIt();
-    pressPolygonButton('edit');
+    pressPopupButton('edit');
     cy.get('[class="notes"]').type(notes);
-    pressPolygonButton('save');
+    saveAndAwait();
     cy.get('#mapContainer').contains(notes).should('be.visible');
     cy.get('#sidebar-toggle-datasets').click();
     cy.get('#user-features-checkbox').should('be.checked');
@@ -192,7 +199,7 @@ describe('Integration tests for drawing polygons', () => {
     cy.get('#mapContainer').contains(notes).should('be.visible');
 
     // Try to hide user features in the middle of editing: will fail.
-    pressPolygonButton('edit');
+    pressPopupButton('edit');
     let alertCameUp = false;
     cy.on('window:alert', () => alertCameUp = true);
     cy.get('#user-features-checkbox').click().then(() => {
@@ -200,7 +207,8 @@ describe('Integration tests for drawing polygons', () => {
     });
     cy.get('#user-features-checkbox').should('be.checked');
     // Confirm that save is still around to be pressed.
-    pressPolygonButton('save');
+    cy.get('[class="notes"]').type('new notes to force save');
+    saveAndAwait();
 
     // After a save, the hide is successful.
     cy.get('#user-features-checkbox').click();
@@ -211,16 +219,16 @@ describe('Integration tests for drawing polygons', () => {
     cy.visit(host);
 
     drawPolygonAndClickOnIt();
-    pressPolygonButton('edit');
+    pressPopupButton('edit');
     cy.get('[class="notes"]').type(notes);
-    pressPolygonButton('save');
+    saveAndAwait();
     cy.get('#sidebar-toggle-datasets').click();
     cy.get('#user-features-checkbox').click();
     cy.get('#user-features-checkbox').should('not.be.checked');
     // With the box unchecked, draw a new polygon, below the first one, and set
     // its notes, but don't finish editing.
     drawPolygonAndClickOnIt(100);
-    pressPolygonButton('edit');
+    pressPopupButton('edit');
     cy.get('[class="notes"]').type('new notes');
     // Try to re-check the box. It will fail because we're editing.
     let alertCameUp = false;
@@ -231,7 +239,7 @@ describe('Integration tests for drawing polygons', () => {
     cy.get('#user-features-checkbox').should('not.be.checked');
 
     // Save the new notes and check the box, this time it succeeds.
-    pressPolygonButton('save');
+    saveAndAwait();
     cy.get('#user-features-checkbox').click();
     cy.get('#user-features-checkbox').should('be.checked');
 
@@ -250,6 +258,42 @@ describe('Integration tests for drawing polygons', () => {
     clickOnDrawnPolygon(100);
     cy.get('#mapContainer').contains('new notes').should('not.be.visible');
   });
+
+  it('Degenerate polygon with one vertex not allowed', () => {
+    cy.visit(host);
+
+    startDrawing();
+    drawPointAndPrepareForNext(400, 400);
+    let alertShown = false;
+    cy.on('window:alert', () => alertShown = true);
+    cy.get('[title="Stop drawing"]')
+        .click()
+        .then(() => expect(alertShown).to.be.true);
+    // Assert there is no edit button, even invisible, showing that polygon was
+    // not drawn.
+    cy.get(':button').each(($elt) => expect($elt.html()).to.not.eql('edit'));
+  });
+
+  it('Draws marker, edits notes, deletes', () => {
+    cy.visit(host);
+
+    cy.get('[title="Add a marker"]').click();
+    drawPointAndPrepareForNext(400, 400);
+    cy.get('[title="Stop drawing"]').click();
+    cy.wait(500);
+    // Coordinates chosen to trigger click: trial and error.
+    drawPointAndPrepareForNext(400, 360);
+    pressPopupButton('edit');
+    cy.get('[class="notes"]').type(notes);
+    // Save happens quickly without damage calculation, so don't wait on it.
+    pressPopupButton('save');
+    // There are some test-only viewport scrolling issues when you close the
+    // popup and try to open it again that I'm too lazy to investigate.
+    // Accept confirmation when it happens.
+    cy.on('window:confirm', () => true);
+    pressPopupButton('delete');
+    assertExactlyPopUps(0, notes);
+  });
 });
 
 /**
@@ -258,8 +302,7 @@ describe('Integration tests for drawing polygons', () => {
  * @param {number} offset Shift polygon down this many pixels
  */
 function drawPolygonAndClickOnIt(offset = 0) {
-  const polygonButton = cy.get('[title="Draw a shape"]');
-  polygonButton.click();
+  startDrawing();
   // Wait for polygon selection overlay to appear.
   // Fragile, but ensures that "clicking" layer is present.
   // Explanation of string: 'div' means we're searching for elements that are
@@ -270,6 +313,8 @@ function drawPolygonAndClickOnIt(offset = 0) {
   // derived by inspecting the page after starting to draw a polygon.
   cy.get(
       'div[style*="cursor: url(\\"https://maps.gstatic.com/mapfiles/crosshair.cur\\") 7 7, crosshair;"]');
+  // Without this, seeing flaky failures on Travis where first point is off map.
+  cy.wait(hackyWaitTime);
   drawPointAndPrepareForNext(150, 650 + offset);
   // TODO(janakr): test seems to fail reliably on command line without these
   // and pass with it. Figure out what to actually test for on the page and
@@ -306,12 +351,9 @@ function clickOnDrawnPolygon(offset = 0) {
  * continuing on.
  * @param {string} button id of html button we want to click
  */
-function pressPolygonButton(button) {
+function pressPopupButton(button) {
   cy.get('.main-content').scrollTo(0, 0);
   cy.get(':button:visible').contains(button).click();
-  if (button === 'save') {
-    cy.awaitLoad(['writeWaiter']);
-  }
 }
 
 /**
@@ -350,12 +392,18 @@ function drawPointAndPrepareForNext(x, y) {
 }
 
 /**
- * Helper function to zoom some amount of times.
- * @param {Integer} numTimes
+ * Helper function that presses save button and then asserts we waited for a
+ * write.
  */
-function zoom(numTimes) {
-  for (let i = 0; i < numTimes; i++) {
-    cy.get('[title="Zoom in"]').click();
-    cy.wait(500);
-  }
+function saveAndAwait() {
+  pressPopupButton('save');
+  cy.awaitLoad(['writeWaiter']);
+}
+
+/**
+ * Clicks on the "Draw a shape" button on map. Waits longer than usual for it to
+ * be found because it requires Firebase authentication to finish.
+ */
+function startDrawing() {
+  cy.get('[title="Draw a shape"]', {timeout: 10000}).click();
 }
