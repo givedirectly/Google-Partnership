@@ -412,7 +412,7 @@ function transformGeoPointArrayToLatLng(geopoints) {
 /**
  * Rounds the given number to one decimal place.
  * @param {number} number
- * @returns {number}
+ * @return {number}
  */
 function roundToOneDecimal(number) {
   return Math.round(10 * number) / 10;

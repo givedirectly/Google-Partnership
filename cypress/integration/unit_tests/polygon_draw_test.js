@@ -257,7 +257,7 @@ function makeMockPolygon() {
  * Makes a google.maps.LatLng object.
  * @param {number} lat
  * @param {number} lng
- * @returns {google.maps.LatLng}
+ * @return {google.maps.LatLng}
  */
 function makeLatLng(lat, lng) {
   return new google.maps.google.maps.LatLng({latitude: lat, longitude: lng});
