@@ -2,76 +2,76 @@ import {authenticateToFirebase, Authenticator} from '../authenticate.js';
 import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, snapPercentageTag, snapPopTag, sviTag, totalPopTag, tractTag} from '../property_names.js';
 import {getDisaster, getResources} from '../resources.js';
 import SettablePromise from '../settable_promise.js';
+import createError from '../create_error.js';
 
-//TODO: get this from the url 
-const assetName = 'users/gd/harvey/fema-visits';
-
+//TODO: change this all to be 'layer' naming convention
 
 function initializeAsset(firebaseAuthPromise) {
-	// var urlAssetName = /assetName=([^&]+)/.exec(window.location.href)[1]; 
-	if (assetName) {
-	 firebaseAuthPromise.then(() => {
-		return firebase.firestore()
-	                    .collection('disaster-metadata')
-	                    .doc(getResources().year)
-	                    .collection(getDisaster())
-	                    .doc('layers').get();
-	                }).then((data) => {populateForm(data.data())});
-	}
-	document.getElementById('asset-form').form.onsubmit = onAssetFormSubmit;
-}
-
-function onAssetFormSubmit() {
-	// firebase.firestore()
- //      .collection('disaster-metadata')
- //      .doc(getResources().year)
- //      .collection(disaster)
- //      .doc('layers')
- //      .collection(assetName)
- //      .set(docData)
- //      .catch(
- //          createError('error saving bounds for ' + disaster + ': ' + docData));
-	return false;
+  firebaseAuthPromise
+      .then(() => {
+        return firebase.firestore()
+            .collection('disaster-metadata')
+            .doc(getResources().year)
+            .collection(getDisaster())
+            .doc('layers')
+            .get();
+      })
+      .then((data) => {populateForm(data.data())});
 }
 
 function populateForm(data) {
-	const asset = data[assetName];
-	document.getElementById('display-on-load-checkbox').checked = asset['display-on-load'];
-	document.getElementById('display-name-input').value = asset['display-name'];
-	document.getElementById('asset-path-input').value = assetName;
+  const assetBody = document.getElementById('asset-table-body');
+  for (let key in data) {
+    const values = [];
+    values.push(data[key]['index']);
+    values.push(data[key]['display-name']);
+    values.push(new String(data[key]['asset-type']));
+    values.push(key);
 
-	if (asset['color-fxn']['single-color']) {
-		createColorChild('Color', asset['color-fxn']['single-color'])
-	} else{
-		const colors = asset['color-fxn']['colors'];
-		for (var key in colors) {
-			createColorChild(key, colors[key])
-		}
-	}
-}
+    const colorFunction = data[key]['color-function'];
+    if (!colorFunction) {
+      values.push('N/A');
+    }
+    else if (colorFunction['single-color']) {
+      values.push(colorFunction['single-color']);
+    } else if (colorFunction['base-color']) {
+      values.push(colorFunction['single-color']);
+    } else {
+      // Add logic to display multiple colors here
+      values.push('Temp');
+    }
+    
 
-function createColorChild(color, value) {
-	const colorsContainer = document.getElementById('display-colors-container');
-	const label = document.createElement('label');
-	label.innerHTML = color;
-	colorsContainer.appendChild(label);
+    const row = document.createElement('tr');
+    for (let i= 0; i < values.length; i++) {
+      const cell = document.createElement('td');
 
-	const input = document.createElement('input');
-	input.value = value;
-	input.type = 'text';
-	colorsContainer.appendChild(input);
+      cell.innerHTML = values[i];
+      row.appendChild(cell);
+    }
+    assetBody.appendChild(row);
 
-	colorsContainer.appendChild(document.createElement('br'));
+  }
+  $('#asset-table-body').sortable();
+  $('#asset-table').Tabledit({
+    columns: {
+      identifier: [[3, 'assetpath'], [4, 'color']],
+      editable: [[0, 'index'], [1, 'displayname'], [2, 'assettype', '{"1": "FeatureCollection", "2": "Image", "3": "ImageCollection"}']],
+    },
+    restoreButton: false,
+});
 }
 
 /**
  * Runs immediately (before document may have fully loaded). Adds a hook so that
  * when the document is loaded, we do the work.
  */
-function setup() {
+function
+setup() {
   $(document).ready(function() {
     const firebaseAuthPromise = new SettablePromise();
-    const runOnInitialize = () => initializeAsset(firebaseAuthPromise.getPromise());
+    const runOnInitialize = () =>
+        initializeAsset(firebaseAuthPromise.getPromise());
     const authenticator = new Authenticator(
         (token) =>
             firebaseAuthPromise.setPromise(authenticateToFirebase(token)),
