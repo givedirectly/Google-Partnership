@@ -1,6 +1,7 @@
 import {mapContainerId} from './dom_constants.js';
-import {assets, EarthEngineAsset} from './earth_engine_asset.js';
+import {terrainStyle} from './earth_engine_asset.js';
 import {createError} from './error.js';
+import {colorMap, firebaseLayers, getStyleFunction, LayerType} from './firebase_layers.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {convertEeObjectToPromise} from './map_util.js';
 
@@ -21,11 +22,10 @@ export {layerArray, layerMap, LayerMapValue};
 const scoreLayerName = 'score';
 
 /**
- * Keep a map of asset name -> data, index, display status. Data is lazily
- * generated i.e. pre-known assets that don't display by default will have an
+ * Keep a map of layer name -> data, index, display status. Data is lazily
+ * generated i.e. pre-known layers that don't display by default will have an
  * entry in this map, but the LayerMapValue will have a null data field until we
- * fetch the data when the user wants to display it. Currently assume we're only
- * working with one map.
+ * fetch the data when the user wants to display it.
  */
 const layerMap = new Map();
 
@@ -77,27 +77,27 @@ function setMapToDrawLayersOn(map) {
 /**
  * Toggles on displaying an asset on the map.
  *
- * @param {string} assetName
+ * @param {string} layerName
  * @param {google.maps.Map} map main map
  */
-function toggleLayerOn(assetName, map) {
-  const currentLayerMapValue = layerMap.get(assetName);
+function toggleLayerOn(layerName, map) {
+  const currentLayerMapValue = layerMap.get(layerName);
   currentLayerMapValue.displayed = true;
   if (currentLayerMapValue.data) {
-    addLayerFromFeatures(currentLayerMapValue, assetName);
+    addLayerFromFeatures(currentLayerMapValue, layerName);
   } else {
-    addLayer(assetName, currentLayerMapValue.index, map);
+    addLayer(layerName, currentLayerMapValue.index, map);
   }
 }
 
 /**
  * Toggles off displaying an asset on the map.
  *
- * @param {string} assetName
+ * @param {string} layerName
  * @param {google.maps.Map} map main map
  */
-function toggleLayerOff(assetName, map) {
-  removeLayer(assetName, map);
+function toggleLayerOff(layerName, map) {
+  removeLayer(layerName, map);
 }
 
 /**
@@ -120,26 +120,26 @@ function getColorOfFeature(feature) {
  *
  * @param {google.maps.Map} map
  * @param {ee.Element} layer
- * @param {string} assetName
+ * @param {string} layerName
  * @param {number} index
  */
-function addImageLayer(map, layer, assetName, index) {
-  const imgStyles = assets[assetName].getVisParams();
-  if (assets[assetName].getStylingFunction()) {
-    layer = assets[assetName].getStylingFunction()(layer);
+function addImageLayer(map, layer, layerName, index) {
+  const imgStyles = firebaseLayers[layerName]['vis-params'];
+  if (firebaseLayers[layerName]['use-terrain-style']) {
+    layer = terrainStyle(layer);
   }
   // Add a null-overlay entry to layerMap while waiting for the callback to
   // finish.
-  layerMap[assetName] = new LayerMapValue(null, index, true);
+  layerMap[layerName] = new LayerMapValue(null, index, true);
   layer.getMap({
     visParams: imgStyles,
     callback: (layerId, failure) => {
       if (layerId) {
-        layerMap[assetName].overlay = addLayerFromId(
-            map, assetName, layerId, index, layerMap[assetName].displayed);
+        layerMap[layerName].overlay = addLayerFromId(
+            map, layerName, layerId, index, layerMap[layerName].displayed);
       } else {
         // TODO: if there's an error, disable checkbox, add tests for this.
-        layerMap[assetName].displayed = false;
+        layerMap[layerName].displayed = false;
         createError('getting id')(failure);
       }
     },
@@ -152,13 +152,13 @@ function addImageLayer(map, layer, assetName, index) {
  * callbacks or similar to that overlay.
  *
  * @param {google.maps.Map} map
- * @param {string} assetName
+ * @param {string} layerName
  * @param {Object} layerId
  * @param {number} index
  * @param {boolean} displayed
  * @return {ee.MapLayerOverlay}
  */
-function addLayerFromId(map, assetName, layerId, index, displayed) {
+function addLayerFromId(map, layerName, layerId, index, displayed) {
   const overlay = new ee.MapLayerOverlay(
       'https://earthengine.googleapis.com/map', layerId.mapid, layerId.token,
       {});
@@ -166,9 +166,9 @@ function addLayerFromId(map, assetName, layerId, index, displayed) {
   overlay.addTileCallback((tileEvent) => {
     if (tileEvent.count == 0) {
       loadingElementFinished(mapContainerId);
-      layerMap[assetName].loading = false;
-    } else if (!layerMap[assetName].loading) {
-      layerMap[assetName].loading = true;
+      layerMap[layerName].loading = false;
+    } else if (!layerMap[layerName].loading) {
+      layerMap[layerName].loading = true;
       addLoadingElement(mapContainerId);
     }
   });
@@ -193,29 +193,23 @@ function addLayerFromId(map, assetName, layerId, index, displayed) {
  * special handling, so deck.gl is forced to re-render it on parameter changes.
  *
  * @param {LayerMapValue} layerMapValue
- * @param {string} assetName
+ * @param {string} layerName
  */
-function addLayerFromFeatures(layerMapValue, assetName) {
-  const hasStyleFunction =
-      assets[assetName] && assets[assetName].getStylingFunction();
-  const styleFunction = hasStyleFunction ?
-      assets[assetName].getStylingFunction() :
-      getColorOfFeature;
+function addLayerFromFeatures(layerMapValue, layerName) {
   layerArray[layerMapValue.index] = new deck.GeoJsonLayer({
-    id: assetName,
+    id: layerName,
     data: layerMapValue.data,
     pointRadiusMinPixels: 1,
     getRadius: 10,
     // TODO(janakr): deck.gl docs claim that the "color" property should
     // automatically color the features, but it doesn't appear to work:
     // https://deck.gl/#/documentation/deckgl-api-reference/layers/geojson-layer?section=getelevation-function-number-optional-transition-enabled
-    getFillColor: styleFunction,
+    getFillColor: firebaseLayers[layerName] ? getStyleFunction(layerName) :
+                                              getColorOfFeature,
     visible: layerMapValue.displayed,
   });
   redrawLayers();
 }
-
-const black = [0, 0, 0, 255];
 
 /**
  * Utility function to return the given color if defined, or black if undefined.
@@ -224,7 +218,7 @@ const black = [0, 0, 0, 255];
  * @return {Array} RGBA color specification as an array
  */
 function showColor(color) {
-  return color ? color : black;
+  return color ? color : colorMap.get('black');
 }
 
 // 250M objects in a FeatureCollection ought to be enough for anyone.
@@ -233,24 +227,28 @@ const maxNumFeaturesExpected = 250000000;
 /**
  * Convenience wrapper for addLayerFromGeoJsonPromise.
  *
- * @param {string} assetName Name of EarthEngine FeatureCollection.
+ * @param {string} layerName Name of EarthEngine FeatureCollection.
  * @param {number} index Ordering of layer (higher is more visible).
  * @param {google.maps.Map} map main map
  */
-function addLayer(assetName, index, map) {
-  switch (assets[assetName].getType()) {
-    case EarthEngineAsset.Type.IMAGE:
-      addImageLayer(map, ee.Image(assetName), assetName, index);
+function addLayer(layerName, index, map) {
+  switch (firebaseLayers[layerName]['asset-type']) {
+    case LayerType.IMAGE:
+      addImageLayer(map, ee.Image(layerName), layerName, index);
       break;
-    case EarthEngineAsset.Type.IMAGECOLLECTION:
-      addImageLayer(map, ee.ImageCollection(assetName), assetName, index);
+    case LayerType.IMAGE_COLLECTION:
+      addImageLayer(map, ee.ImageCollection(layerName), layerName, index);
       break;
-    default:
+    case LayerType.FEATURE:
+    case LayerType.FEATURE_COLLECTION:
       addLayerFromGeoJsonPromise(
           convertEeObjectToPromise(
-              ee.FeatureCollection(assetName).toList(maxNumFeaturesExpected)),
-          assetName, index);
+              ee.FeatureCollection(layerName).toList(maxNumFeaturesExpected)),
+          layerName, index);
       break;
+    default:
+      createError('parsing layer type during add')(
+          '[' + index + ']: ' + layerName + ' not recognized layer type');
   }
 }
 
@@ -264,32 +262,32 @@ function addLayer(assetName, index, map) {
  * should be able to set its visibility and redraw the layers.
  *
  * @param {Promise<Array<GeoJson>>}featuresPromise
- * @param {string} assetName
+ * @param {string} layerName
  * @param {number} index Ordering of layer (higher is more visible)
  */
-function addLayerFromGeoJsonPromise(featuresPromise, assetName, index) {
+function addLayerFromGeoJsonPromise(featuresPromise, layerName, index) {
   addLoadingElement(mapContainerId);
   // Add entry to map.
   const layerMapValue = new LayerMapValue(null, index, true);
-  layerMap.set(assetName, layerMapValue);
+  layerMap.set(layerName, layerMapValue);
   featuresPromise
       .then((features) => {
         layerMapValue.data = features;
-        addLayerFromFeatures(layerMapValue, assetName);
+        addLayerFromFeatures(layerMapValue, layerName);
         loadingElementFinished(mapContainerId);
       })
-      .catch(createError('Error rendering ' + assetName));
+      .catch(createError('Error rendering ' + layerName));
 }
 
 /**
  * Adds an entry to layerMap when we haven't actually gotten the data yet.
- * Useful for assets that we don't want to display by default.
+ * Useful for layers that we don't want to display by default.
  *
- * @param {string} assetName
+ * @param {string} layerName
  * @param {number} index
  */
-function addNullLayer(assetName, index) {
-  layerMap.set(assetName, new LayerMapValue(null, index, false));
+function addNullLayer(layerName, index) {
+  layerMap.set(layerName, new LayerMapValue(null, index, false));
 }
 
 /**
@@ -314,22 +312,38 @@ function redrawLayers() {
  * Removes an entry from the map by setting its displayed attribute to false and
  * recreating the layer.
  *
- * @param {string} assetName
+ * @param {string} layerName
  * @param {google.maps.Map} map main map
  */
-function removeLayer(assetName, map) {
-  switch (assets[assetName] && assets[assetName].getType()) {
-    case EarthEngineAsset.Type.IMAGE:
-    case EarthEngineAsset.Type.IMAGECOLLECTION:
-      map.overlayMapTypes.setAt(layerMap[assetName].index, null);
-      layerMap[assetName].displayed = false;
+function removeLayer(layerName, map) {
+  if (layerName === scoreLayerName) {
+    removeFeatureCollection(layerName);
+    return;
+  }
+  switch (firebaseLayers[layerName]['asset-type']) {
+    case LayerType.IMAGE:
+    case LayerType.IMAGE_COLLECTION:
+      map.overlayMapTypes.setAt(layerMap[layerName].index, null);
+      layerMap[layerName].displayed = false;
+      break;
+    case LayerType.FEATURE:
+    case LayerType.FEATURE_COLLECTION:
+      removeFeatureCollection(layerName);
       break;
     default:
-      const layerMapValue = layerMap.get(assetName);
-      layerMapValue.displayed = false;
-      addLayerFromFeatures(layerMapValue, assetName);
-      break;
+      createError('parsing layer type during remove')(
+          '[' + index + ']: ' + layerName + ' not recognized layer type');
   }
+}
+
+/**
+ * convenience function for removeLayer on feature collections.
+ * @param {string} layerName
+ */
+function removeFeatureCollection(layerName) {
+  const layerMapValue = layerMap.get(layerName);
+  layerMapValue.displayed = false;
+  addLayerFromFeatures(layerMapValue, layerName);
 }
 
 /**
