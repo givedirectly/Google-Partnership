@@ -13,7 +13,7 @@ describe('Integration tests for drawing polygons', () => {
     cy.get('.map').contains(notes);
   });
 
-  it.only('Draws a polygon, calculates damage', () => {
+  it('Draws a polygon, calculates damage', () => {
     cy.visit(host);
     // Sometimes the map load interacts strangely with the search. So wait.
     cy.awaitLoad();

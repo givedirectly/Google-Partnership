@@ -25,7 +25,6 @@ describe('Unit test for ShapeData', () => {
     loading.addLoadingElement = () => {};
     loading.loadingElementFinished = () => {};
   });
-  // Reset firebaseCollection's dummy methods.
   beforeEach(() => {
     // Polygon intersects feature1 and feature2, not feature3.
     const feature1 = ee.Feature(
