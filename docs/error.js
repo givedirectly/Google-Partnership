@@ -10,11 +10,7 @@ const SNACKBAR_DURATION_MS = 3000;
  */
 function createError(msg) {
   // TODO(janakr): use some standard error library?
-  return (error) => {
-    const message = 'Error ' + msg + ': ' + error;
-    console.error(message);
-    throw new Error(message);
-  }
+  return (error) => console.error('Error ' + msg + ': ' + error);
 }
 
 /**

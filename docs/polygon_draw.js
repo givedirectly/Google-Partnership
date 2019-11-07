@@ -49,9 +49,9 @@ class StoredShapeData {
    *
    * If there is already a pending write, this method records that another write
    * should be performed when the pending one completes and returns immediately.
-   * @return {!Promise} Promise that resolves when all writes are complete, or
-   *     null if there were already writes in flight, in which case this method
-   *     does not know when its write will complete.
+   * @return {!Promise} Promise that resolves when all writes queued when this
+   *     call started are complete, or null if there were already writes in flight, in which case this method
+   *     does not know when those writes will complete.
    */
   update() {
     if (this.state !== StoredShapeData.State.SAVED) {
@@ -156,6 +156,8 @@ class StoredShapeData {
   /**
    * After a write completes, checks if there are pending writes and kicks off
    * a new update if so.
+   * @return {!Promise} Promise that completes when all currently known writes
+   *    are done (or null if an unexpected error is encountered)
    */
   finishWriteAndMaybeWriteAgain() {
     StoredShapeData.pendingWriteCount--;
@@ -164,12 +166,13 @@ class StoredShapeData {
     switch (oldState) {
       case StoredShapeData.State.WRITING:
         loadingElementFinished(writeWaiterId);
-        return;
+        return Promise.resolve();
       case StoredShapeData.State.QUEUED_WRITE:
         loadingElementFinished(writeWaiterId);
         return this.update();
       case StoredShapeData.State.SAVED:
         console.error('Unexpected feature state:' + this);
+        return null;
     }
   }
 
@@ -405,6 +408,11 @@ function transformGeoPointArrayToLatLng(geopoints) {
   return coordinates;
 }
 
+/**
+ * Rounds the given number to one decimal place.
+ * @param {number} number
+ * @returns {number}
+ */
 function roundToOneDecimal(number) {
   return Math.round(10 * number) / 10;
 }

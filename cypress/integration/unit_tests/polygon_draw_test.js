@@ -11,7 +11,7 @@ const polyLatLng = polyCoords.map((pair) => makeLatLng(pair[1], pair[0]));
 const firebaseCollection = {};
 const calculatedData = {
   damage: 1,
-  snapFraction: 0.6
+  snapFraction: 0.6,
 };
 
 describe('Unit test for ShapeData', () => {
@@ -39,15 +39,15 @@ describe('Unit test for ShapeData', () => {
         {'SNAP HOUSEHOLDS': 1000, 'TOTAL HOUSEHOLDS': 1000});
     const featureCollection =
         ee.FeatureCollection([feature1, feature2, feature3]);
-    // Polygon intersects only first damage point.
+    // Polygon contains only first damage point.
     const damageCollection = ee.FeatureCollection([
       ee.Feature(ee.Geometry.Point([1.5, 1.5])),
-      ee.Feature(ee.Geometry.Point([200, 200]))
+      ee.Feature(ee.Geometry.Point([200, 200])),
     ]);
     // Use our custom EarthEngine FeatureCollections.
     cy.stub(resourceGetter, 'getResources').returns({
       damage: damageCollection,
-      getCombinedAsset: () => featureCollection
+      getCombinedAsset: () => featureCollection,
     });
 
     // Set up appropriate Firestore mocks.
@@ -158,7 +158,7 @@ describe('Unit test for ShapeData', () => {
         {
           calculatedData: calculatedData,
           geometry: polygonGeometry,
-          notes: 'new notes'
+          notes: 'new notes',
         },
         {
           calculatedData: calculatedData,
@@ -253,8 +253,14 @@ function makeMockPolygon() {
   return mockPolygon;
 }
 
+/**
+ * Makes a google.maps.LatLng object.
+ * @param {number} lat
+ * @param {number} lng
+ * @returns {google.maps.LatLng}
+ */
 function makeLatLng(lat, lng) {
-  return {lat: () => lat, lng: () => lng};
+  return new google.maps.google.maps.LatLng({latitude: lat, longitude: lng});
 }
 
 /** Stub of the Popup class. */
