@@ -4,10 +4,9 @@ import {processUserRegions, StoredShapeData} from '../../../docs/polygon_draw';
 import * as resourceGetter from '../../../docs/resources';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 
-// First coordinate is x, or longitude, second is y, latitude.
-const polyCoords = [[1, 1], [1, 2], [13, 2], [13, 1], [1, 1]];
+const polyCoords = [{lng: 1, lat: 1}, {lng: 1, lat: 2}, {lng: 13, lat: 2}, {lng: 13, lat: 1}, {lng: 1, lat: 1}];
 
-const polyLatLng = polyCoords.map((pair) => makeLatLng(pair[1], pair[0]));
+let polyLatLng;
 const firebaseCollection = {};
 const calculatedData = {
   damage: 1,
@@ -18,6 +17,7 @@ describe('Unit test for ShapeData', () => {
   loadScriptsBeforeForUnitTests('ee', 'maps', 'firebase');
   let polygonGeometry;
   before(() => {
+    polyLatLng = polyCoords.map((pair) => new google.maps.LatLng(pair));
     polygonGeometry = polyLatLng.map(
         (latlng) =>
             new firebase.firestore.GeoPoint(latlng.lat(), latlng.lng()));
@@ -246,20 +246,8 @@ function recordRecord(records, retval) {
 function makeMockPolygon() {
   const mockPolygon = {};
   mockPolygon.getMap = () => true;
-  mockPolygon.getPath = () =>
-      [makeLatLng(1, 1), makeLatLng(2, 1), makeLatLng(2, 13), makeLatLng(1, 13),
-       makeLatLng(1, 1)];
+  mockPolygon.getPath = () => polyLatLng;
   return mockPolygon;
-}
-
-/**
- * Makes a google.maps.LatLng object.
- * @param {number} lat
- * @param {number} lng
- * @return {google.maps.LatLng}
- */
-function makeLatLng(lat, lng) {
-  return new google.maps.google.maps.LatLng({latitude: lat, longitude: lng});
 }
 
 /** Stub of the Popup class. */
