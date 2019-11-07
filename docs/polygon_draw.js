@@ -236,8 +236,10 @@ StoredShapeData.compareGeoPointArrays = (array1, array2) => {
 };
 
 StoredShapeData.prepareDamageCalculation = (polygon) => {
-  return ee.FeatureCollection(getResources().damage)
-      .filterBounds(polygon)
+  const collection = ee.FeatureCollection(getResources().damage)
+      .filterBounds(polygon);
+  cy.log('here with colleciton', collection);
+  return collection
       .size();
 };
 
