@@ -98,7 +98,9 @@ class StoredShapeData {
     const weightedTotalHouseholds = StoredShapeData.calculateWeightedTotal(
         intersectingBlockGroups, 'TOTAL HOUSEHOLDS');
     ee.List([
-        numDamagePoints, weightedSnapHouseholds, weightedTotalHouseholds,
+        numDamagePoints,
+        weightedSnapHouseholds,
+        weightedTotalHouseholds,
       ]).evaluate((list, failure) => {
       if (failure) {
         createError('error calculating damage' + this)(failure);
