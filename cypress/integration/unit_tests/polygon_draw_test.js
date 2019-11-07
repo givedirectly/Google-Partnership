@@ -231,7 +231,6 @@ describe('Unit test for ShapeData', () => {
         .once()
         .returns(filteredFeatureCollectionApi);
     mockFilteredDamage.expects('size').once().returns(sizeApi);
-    mockSize.expects('evaluate').once().callsFake((callb) => callb(1));
   }
 
   /** Sets expectations that EarthEngine data calculations are not done. */
