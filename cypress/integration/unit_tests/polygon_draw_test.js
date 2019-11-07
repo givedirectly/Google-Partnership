@@ -1,7 +1,7 @@
 import {getFirestoreRoot} from '../../../docs/authenticate';
+import * as loading from '../../../docs/loading';
 import {processUserRegions, StoredShapeData} from '../../../docs/polygon_draw';
 import * as resourceGetter from '../../../docs/resources';
-import * as loading from '../../../docs/loading';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 
 // First coordinate is x, or longitude, second is y, latitude.
@@ -9,13 +9,18 @@ const polyCoords = [[1, 1], [1, 2], [13, 2], [13, 1], [1, 1]];
 
 const polyLatLng = polyCoords.map((pair) => makeLatLng(pair[1], pair[0]));
 const firebaseCollection = {};
-const calculatedData = {damage: 1, snapFraction: 0.6};
+const calculatedData = {
+  damage: 1,
+  snapFraction: 0.6
+};
 
 describe('Unit test for ShapeData', () => {
   loadScriptsBeforeForUnitTests('ee', 'maps', 'firebase');
   let polygonGeometry;
   before(() => {
-    polygonGeometry = polyLatLng.map((latlng) => new firebase.firestore.GeoPoint(latlng.lat(), latlng.lng()));
+    polygonGeometry = polyLatLng.map(
+        (latlng) =>
+            new firebase.firestore.GeoPoint(latlng.lat(), latlng.lng()));
     // Stub out loading update attempts: they pollute console with errors.
     loading.addLoadingElement = () => {};
     loading.loadingElementFinished = () => {};
@@ -23,14 +28,27 @@ describe('Unit test for ShapeData', () => {
   // Reset firebaseCollection's dummy methods.
   beforeEach(() => {
     // Polygon intersects feature1 and feature2, not feature3.
-    const feature1 = ee.Feature(ee.Geometry.Polygon(0, 0, 0, 10, 10, 10, 10, 0), {'SNAP HOUSEHOLDS': 1, 'TOTAL HOUSEHOLDS': 2});
-    const feature2 = ee.Feature(ee.Geometry.Polygon(10, 0, 10, 10, 20, 10, 20, 0), {'SNAP HOUSEHOLDS': 3, 'TOTAL HOUSEHOLDS': 4});
-    const feature3 = ee.Feature(ee.Geometry.Polygon(20, 0, 20, 10, 30, 10, 30, 0), {'SNAP HOUSEHOLDS': 1000, 'TOTAL HOUSEHOLDS': 1000});
-    const featureCollection = ee.FeatureCollection([feature1, feature2, feature3]);
+    const feature1 = ee.Feature(
+        ee.Geometry.Polygon(0, 0, 0, 10, 10, 10, 10, 0),
+        {'SNAP HOUSEHOLDS': 1, 'TOTAL HOUSEHOLDS': 2});
+    const feature2 = ee.Feature(
+        ee.Geometry.Polygon(10, 0, 10, 10, 20, 10, 20, 0),
+        {'SNAP HOUSEHOLDS': 3, 'TOTAL HOUSEHOLDS': 4});
+    const feature3 = ee.Feature(
+        ee.Geometry.Polygon(20, 0, 20, 10, 30, 10, 30, 0),
+        {'SNAP HOUSEHOLDS': 1000, 'TOTAL HOUSEHOLDS': 1000});
+    const featureCollection =
+        ee.FeatureCollection([feature1, feature2, feature3]);
     // Polygon intersects only first damage point.
-    const damageCollection = ee.FeatureCollection([ee.Feature(ee.Geometry.Point([1.5, 1.5])), ee.Feature(ee.Geometry.Point([200, 200]))]);
+    const damageCollection = ee.FeatureCollection([
+      ee.Feature(ee.Geometry.Point([1.5, 1.5])),
+      ee.Feature(ee.Geometry.Point([200, 200]))
+    ]);
     // Use our custom EarthEngine FeatureCollections.
-    cy.stub(resourceGetter, 'getResources').returns({damage: damageCollection, getCombinedAsset: () => featureCollection});
+    cy.stub(resourceGetter, 'getResources').returns({
+      damage: damageCollection,
+      getCombinedAsset: () => featureCollection
+    });
 
     // Set up appropriate Firestore mocks.
     cy.stub(getFirestoreRoot(), 'collection')
@@ -53,23 +71,22 @@ describe('Unit test for ShapeData', () => {
     const records = [];
     firebaseCollection.add = recordRecord(records, {id: 'new_id'});
     popup.notes = 'my notes';
-    cy.wrap(underTest.update()).then(
-        () => {
-          expect(records).to.eql([{
-            calculatedData: calculatedData,
-            geometry: polygonGeometry,
-            notes: 'my notes',
-          }]);
-          expect(underTest.id).to.eql('new_id');
-          expect(StoredShapeData.pendingWriteCount).to.eql(0);
-        }
-    );
+    cy.wrap(underTest.update()).then(() => {
+      expect(records).to.eql([{
+        calculatedData: calculatedData,
+        geometry: polygonGeometry,
+        notes: 'my notes',
+      }]);
+      expect(underTest.id).to.eql('new_id');
+      expect(StoredShapeData.pendingWriteCount).to.eql(0);
+    });
   });
 
   it('Update shape', () => {
     const popup = new StubPopup();
     popup.setCalculatedData(calculatedData);
-    const underTest = new StoredShapeData('my_id', 'my notes', polygonGeometry, popup);
+    const underTest =
+        new StoredShapeData('my_id', 'my notes', polygonGeometry, popup);
     const records = [];
     const ids = [];
     firebaseCollection.doc = (id) => {
@@ -77,23 +94,23 @@ describe('Unit test for ShapeData', () => {
       return {set: recordRecord(records, null)};
     };
     popup.notes = 'new notes';
-    cy.wrap(underTest.update()).then(
-        () => {
-          expect(ids).to.eql(['my_id']);
-          expect(records).to.eql([{
-            calculatedData: calculatedData,
-            geometry: polygonGeometry,
-            notes: 'new notes',
-          }]);
-          expect(underTest.id).to.eql('my_id');
-          expect(StoredShapeData.pendingWriteCount).to.eql(0);
-        });
+    cy.wrap(underTest.update()).then(() => {
+      expect(ids).to.eql(['my_id']);
+      expect(records).to.eql([{
+        calculatedData: calculatedData,
+        geometry: polygonGeometry,
+        notes: 'new notes',
+      }]);
+      expect(underTest.id).to.eql('my_id');
+      expect(StoredShapeData.pendingWriteCount).to.eql(0);
+    });
   });
 
   it('Delete shape', () => {
     const popup = new StubPopup();
     popup.setCalculatedData(calculatedData);
-    const underTest = new StoredShapeData('my_id', 'my notes', polygonGeometry, popup);
+    const underTest =
+        new StoredShapeData('my_id', 'my notes', polygonGeometry, popup);
     popup.mapFeature.getMap = () => null;
     const ids = [];
     firebaseCollection.doc = (id) => {
@@ -102,18 +119,18 @@ describe('Unit test for ShapeData', () => {
         delete: () => Promise.resolve(),
       };
     };
-    cy.wrap(underTest.update()).then(
-        () => {
-          expect(ids).to.eql(['my_id']);
-          expect(underTest.id).to.eql('my_id');
-          expect(StoredShapeData.pendingWriteCount).to.eql(0);
-        });
+    cy.wrap(underTest.update()).then(() => {
+      expect(ids).to.eql(['my_id']);
+      expect(underTest.id).to.eql('my_id');
+      expect(StoredShapeData.pendingWriteCount).to.eql(0);
+    });
   });
 
   it('Update while update pending', () => {
     const popup = new StubPopup();
     popup.setCalculatedData(calculatedData);
-    const underTest = new StoredShapeData('my_id', 'my notes', polygonGeometry, popup);
+    const underTest =
+        new StoredShapeData('my_id', 'my notes', polygonGeometry, popup);
     const records = [];
     const ids = [];
     const setThatTriggersNewUpdate = {
@@ -134,25 +151,24 @@ describe('Unit test for ShapeData', () => {
       return setThatTriggersNewUpdate;
     };
     popup.notes = 'new notes';
-    cy.wrap(underTest.update()).then(
-        () => {
-          expect(ids).to.eql(['my_id', 'my_id']);
-          expect(records).to.have.length(2);
-          expect(records).to.eql([
-            {
-              calculatedData: calculatedData,
-              geometry: polygonGeometry,
-              notes: 'new notes'
-            },
-            {
-              calculatedData: calculatedData,
-              geometry: polygonGeometry,
-              notes: 'racing notes',
-            },
-          ]);
-          expect(underTest.id).to.eql('my_id');
-          expect(StoredShapeData.pendingWriteCount).to.eql(0);
-        });
+    cy.wrap(underTest.update()).then(() => {
+      expect(ids).to.eql(['my_id', 'my_id']);
+      expect(records).to.have.length(2);
+      expect(records).to.eql([
+        {
+          calculatedData: calculatedData,
+          geometry: polygonGeometry,
+          notes: 'new notes'
+        },
+        {
+          calculatedData: calculatedData,
+          geometry: polygonGeometry,
+          notes: 'racing notes',
+        },
+      ]);
+      expect(underTest.id).to.eql('my_id');
+      expect(StoredShapeData.pendingWriteCount).to.eql(0);
+    });
   });
 
   it('Skips update if nothing changed', () => {
@@ -165,7 +181,8 @@ describe('Unit test for ShapeData', () => {
     popup.setCalculatedData = () => {
       throw new Error('Unexpected calculation');
     };
-    const underTest = new StoredShapeData('my_id', 'my notes', polygonGeometry, popup);
+    const underTest =
+        new StoredShapeData('my_id', 'my notes', polygonGeometry, popup);
     firebaseCollection.doc = () => {
       throw new Error('Unexpected Firestore call');
     };
@@ -188,19 +205,19 @@ describe('Unit test for ShapeData', () => {
       ids.push(id);
       return {set: recordRecord(records, null)};
     };
-    const underTest = new StoredShapeData('my_id', 'my notes', polygonGeometry, popup);
+    const underTest =
+        new StoredShapeData('my_id', 'my notes', polygonGeometry, popup);
     popup.notes = 'new notes';
-    cy.wrap(underTest.update()).then(
-        () => {
-          expect(ids).to.eql(['my_id']);
-          expect(records).to.eql([{
-            calculatedData: calculatedData,
-            geometry: polygonGeometry,
-            notes: 'new notes',
-          }]);
-          expect(underTest.id).to.eql('my_id');
-          expect(StoredShapeData.pendingWriteCount).to.eql(0);
-        });
+    cy.wrap(underTest.update()).then(() => {
+      expect(ids).to.eql(['my_id']);
+      expect(records).to.eql([{
+        calculatedData: calculatedData,
+        geometry: polygonGeometry,
+        notes: 'new notes',
+      }]);
+      expect(underTest.id).to.eql('my_id');
+      expect(StoredShapeData.pendingWriteCount).to.eql(0);
+    });
   });
 });
 
@@ -230,7 +247,9 @@ function recordRecord(records, retval) {
 function makeMockPolygon() {
   const mockPolygon = {};
   mockPolygon.getMap = () => true;
-  mockPolygon.getPath = () => [makeLatLng(1, 1), makeLatLng(2, 1), makeLatLng(2, 13),makeLatLng(1, 13), makeLatLng(1, 1)];
+  mockPolygon.getPath = () =>
+      [makeLatLng(1, 1), makeLatLng(2, 1), makeLatLng(2, 13), makeLatLng(1, 13),
+       makeLatLng(1, 1)];
   return mockPolygon;
 }
 

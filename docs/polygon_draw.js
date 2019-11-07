@@ -100,10 +100,10 @@ class StoredShapeData {
         intersectingBlockGroups, 'TOTAL HOUSEHOLDS');
     return new Promise(((resolve, reject) => {
       ee.List([
-        numDamagePoints,
-        weightedSnapHouseholds,
-        weightedTotalHouseholds,
-      ]).evaluate((list, failure) => {
+          numDamagePoints,
+          weightedSnapHouseholds,
+          weightedTotalHouseholds,
+        ]).evaluate((list, failure) => {
         if (failure) {
           createError('calculating data ' + this)(failure);
           reject(failure);
@@ -115,7 +115,9 @@ class StoredShapeData {
         };
         this.popup.setCalculatedData(calculatedData);
 
-        this.doRemoteUpdate().then(() => resolve(null)).catch((err) => reject(err));
+        this.doRemoteUpdate()
+            .then(() => resolve(null))
+            .catch((err) => reject(err));
       });
     }));
   }
@@ -141,15 +143,13 @@ class StoredShapeData {
       calculatedData: this.popup.calculatedData,
     };
     if (this.id) {
-      return userShapes.doc(this.id)
-          .set(record)
-          .then(() => this.finishWriteAndMaybeWriteAgain());
+      return userShapes.doc(this.id).set(record).then(
+          () => this.finishWriteAndMaybeWriteAgain());
     } else {
-      return userShapes.add(record)
-          .then((docRef) => {
-            this.id = docRef.id;
-            return this.finishWriteAndMaybeWriteAgain();
-          });
+      return userShapes.add(record).then((docRef) => {
+        this.id = docRef.id;
+        return this.finishWriteAndMaybeWriteAgain();
+      });
     }
   }
 
@@ -264,7 +264,7 @@ StoredShapeData.calculateWeightedTotal =
           .map((feature) => {
             return new ee.Feature(null, {
               'weightedSum': ee.Number(feature.get(property))
-                  .multiply(feature.get('blockGroupFraction')),
+                                 .multiply(feature.get('blockGroupFraction')),
             });
           })
           .aggregate_sum('weightedSum');
