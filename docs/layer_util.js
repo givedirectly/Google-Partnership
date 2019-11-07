@@ -52,7 +52,10 @@ class LayerMapValue {
    * Constructor.
    *
    * @param {GeoJSON} data Data to be rendered, null if not yet available.
-   * @param {number} index Z-index of layer when displayed. Does not change.
+   * @param {number|string} index Z-index of layer when displayed. Does not
+   *     change.
+   *   Number except for the magic string 'lastElement', which always keeps this
+   *   layer on top (used for the score layer)
    * @param {boolean} displayed True if layer is currently displayed
    */
   constructor(data, index, displayed) {
@@ -263,7 +266,9 @@ function addLayer(layerName, index, map) {
  *
  * @param {Promise<Array<GeoJson>>}featuresPromise
  * @param {string} layerName
- * @param {number} index Ordering of layer (higher is more visible)
+ * @param {number|string} index Ordering of layer (higher is more visible). The
+ *     special string 'lastElement' keeps this always on top (only for the score
+ layer)
  */
 function addLayerFromGeoJsonPromise(featuresPromise, layerName, index) {
   addLoadingElement(mapContainerId);
@@ -291,6 +296,27 @@ function addNullLayer(layerName, index) {
 }
 
 /**
+ * Sets the "layers" attribute of deckGlOverlay to the non-null elements of
+ * layerArray, which has the effect of redrawing it on the map.
+ */
+function redrawLayers() {
+  deckGlOverlay.setProps({layers: processLayerArray()});
+}
+
+/**
+ * Filters out null elements and appends element at 'lastElement' to end of
+ * filtered array.
+ * @return {deck.GeoJsonLayer[]}
+ */
+function processLayerArray() {
+  const filteredArray = layerArray.filter(valIsNotNull);
+  if (layerArray['lastElement']) {
+    filteredArray.push(layerArray['lastElement']);
+  }
+  return filteredArray;
+}
+
+/**
  * Dumb function that just returns true if its input is not null, for a filter.
  *
  * @param {Object} val
@@ -298,14 +324,6 @@ function addNullLayer(layerName, index) {
  */
 function valIsNotNull(val) {
   return val !== null;
-}
-
-/**
- * Sets the "layers" attribute of deckGlOverlay to the non-null elements of
- * layerArray, which has the effect of redrawing it on the map.
- */
-function redrawLayers() {
-  deckGlOverlay.setProps({layers: layerArray.filter(valIsNotNull)});
 }
 
 /**

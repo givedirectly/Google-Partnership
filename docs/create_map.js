@@ -1,7 +1,6 @@
 import mapStyles from './map_styles.js';
 import {geoPointToLatLng} from './map_util.js';
 import setUpPolygonDrawing from './polygon_draw.js';
-import {getDisaster, getResources} from './resources.js';
 
 export {createMap as default};
 
@@ -15,8 +14,8 @@ const placeIconParams = {
 /**
  * Creates, initializes and returns a map with search box and drawing tools.
  *
- * @param {Promise<any>} firebasePromise Promise that will complete when
- *     Firebase authentication is finished
+ * @param {Promise<firebase.firestore.DocumentSnapshot>} firebasePromise Promise
+ *     with disaster metadata
  * @return {google.maps.Map}
  */
 function createMap(firebasePromise) {
@@ -28,19 +27,11 @@ function createMap(firebasePromise) {
       $('.map').get(0),
       {center: {lat: 39.8283, lng: -98.5795}, styles: mapStyles});
 
-  firebasePromise
-      .then(
-          () => firebase.firestore()
-                    .collection('disaster-metadata')
-                    .doc(getResources().year)
-                    .collection(getDisaster())
-                    .doc('map-bounds')
-                    .get())
-      .then((doc) => {
-        map.fitBounds(new google.maps.LatLngBounds(
-            new google.maps.LatLng(geoPointToLatLng(doc.data().sw)),
-            new google.maps.LatLng(geoPointToLatLng(doc.data().ne))));
-      });
+  firebasePromise.then((doc) => {
+    map.fitBounds(new google.maps.LatLngBounds(
+        new google.maps.LatLng(geoPointToLatLng(doc.data()['map-bounds'].sw)),
+        new google.maps.LatLng(geoPointToLatLng(doc.data()['map-bounds'].ne))));
+  });
   setUpPolygonDrawing(map, firebasePromise);
 
   // Search box code roughly taken from

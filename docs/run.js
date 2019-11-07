@@ -9,7 +9,7 @@ import {convertEeObjectToPromise} from './map_util.js';
 import {processUserRegions} from './polygon_draw.js';
 import {setUserFeatureVisibility} from './popup.js';
 import processJoinedData from './process_joined_data.js';
-import {getDisaster, getResources} from './resources.js';
+import {getDisaster} from './resources.js';
 import {createToggles, initialDamageThreshold, initialPovertyThreshold, initialPovertyWeight} from './update.js';
 
 export {
@@ -22,38 +22,30 @@ const snapAndDamageAsset = 'users/gd/' + getDisaster() + '/data-ms-as-nod';
 // download it from EarthEngine again.
 let snapAndDamagePromise;
 const scalingFactor = 100;
-let scoreLayerIndex;
 
 /**
  * Main function that processes the known layers (damage, SNAP) and
  * creates/populates the map and table.
  *
  * @param {google.maps.Map} map main map
- * @param {Promise<any>} firebasePromise Promise that will complete when
+ * @param {Promise<any>} firebaseAuthPromise Promise that will complete when
  *     Firebase authentication is finished
+ * @param {Promise<firebase.firestore.DocumentSnapshot>} disasterMetadataPromise
+ *     Promise with disaster metadata for this disaster
  */
-function run(map, firebasePromise) {
+function run(map, firebaseAuthPromise, disasterMetadataPromise) {
   setMapToDrawLayersOn(map);
   createToggles(map);
   snapAndDamagePromise =
       convertEeObjectToPromise(ee.FeatureCollection(snapAndDamageAsset));
-  processUserRegions(map, firebasePromise);
-  firebasePromise
-      .then(
-          () => firebase.firestore()
-                    .doc(
-                        'disaster-metadata/' + getResources().year + '/' +
-                        getDisaster() + '/layers')
-                    .get())
-      .then((doc) => {
-        const data = doc.data();
-        initializeFirebaseLayers(data);
-        addLayers(map);
-        scoreLayerIndex = Object.keys(data).length;
-        createAndDisplayJoinedData(
-            map, initialPovertyThreshold, initialDamageThreshold,
-            initialPovertyWeight);
-      });
+  createAndDisplayJoinedData(
+      map, initialPovertyThreshold, initialDamageThreshold,
+      initialPovertyWeight);
+  processUserRegions(map, firebaseAuthPromise);
+  disasterMetadataPromise.then((doc) => {
+    initializeFirebaseLayers(doc.data().layers);
+    addLayers(map);
+  });
 }
 
 let mapSelectListener = null;
@@ -117,7 +109,6 @@ function createLayerCheckboxes(map) {
       .forEach(
           (layerName) => createNewCheckboxForLayer(layerName, sidebarDiv, map));
   createCheckboxForUserFeatures(sidebarDiv);
-  // score checkbox gets checked during addScoreLayer
   createNewCheckboxForLayer(scoreLayerName, sidebarDiv, map);
 }
 
@@ -205,15 +196,21 @@ function addLayers(map) {
 
 /**
  * Creates and displays overlay for score + adds layerMap entry. The score
- * layer sits at the index of (# regular layers) i.e. the last index. Once we
- * add dynamically addable layers, it might be easier book keeping to have
- * score sit at index 0, but having it last ensures it displays on top.
+ * layer sits at the end of all the layers. Having it last ensures it displays
+ * on top.
  *
  * @param {Promise<Array<GeoJson>>} layer
  */
 function addScoreLayer(layer) {
-  addLayerFromGeoJsonPromise(layer, scoreLayerName, scoreLayerIndex);
-  document.getElementById(getCheckBoxId(scoreLayerName)).checked = true;
+  addLayerFromGeoJsonPromise(layer, scoreLayerName, 'lastElement');
+  // Checkbox may not exist yet if layer metadata not retrieved yet. The
+  // checkbox creation will check the box by default. We check it here in case
+  // it was unchecked by the user, and this is coming from a weight/threshold
+  // update.
+  const checkbox = document.getElementById(getCheckBoxId(scoreLayerName));
+  if (checkbox) {
+    checkbox.checked = true;
+  }
 }
 
 /**
