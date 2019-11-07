@@ -1,9 +1,8 @@
+import {getFirestoreRoot} from '../../../docs/authenticate';
 import {processUserRegions, StoredShapeData} from '../../../docs/polygon_draw';
 import {getResources} from '../../../docs/resources';
-import {loadScriptsBefore} from '../../support/script_loader';
+import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 
-// Name of collection doesn't matter.
-const firebaseCollection = firebase.firestore().collection('usershapes-test');
 /**
  * Fake of the Promise class. Needed because Promise executes async, so if we
  * use real Promises, we lose control of execution order in the test.
@@ -31,7 +30,8 @@ class FakePromise {
 }
 
 describe('Unit test for ShapeData', () => {
-  loadScriptsBefore('ee', 'maps');
+  loadScriptsBeforeForUnitTests('ee', 'maps', 'firebase');
+  const firebaseCollection = {};
   let mockDamage;
   let mockFilteredDamage;
   let mockSize;
@@ -45,6 +45,9 @@ describe('Unit test for ShapeData', () => {
   });
   // Reset firebaseCollection's dummy methods.
   beforeEach(() => {
+    cy.stub(getFirestoreRoot(), 'collection')
+        .withArgs('usershapes')
+        .returns(firebaseCollection);
     for (const prop in firebaseCollection) {
       if (firebaseCollection.hasOwnProperty(prop)) {
         delete firebaseCollection[prop];
