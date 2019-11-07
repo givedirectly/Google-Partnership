@@ -5,7 +5,10 @@ import * as resourceGetter from '../../../docs/resources';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 
 const polyCoords = [
-  {lng: 1, lat: 1}, {lng: 1, lat: 2}, {lng: 13, lat: 2}, {lng: 13, lat: 1},
+  {lng: 1, lat: 1},
+  {lng: 1, lat: 2},
+  {lng: 13, lat: 2},
+  {lng: 13, lat: 1},
   {lng: 1, lat: 1},
 ];
 
