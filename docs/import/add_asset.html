@@ -8,8 +8,32 @@
   <!-- TODO(janakr): download this script to lib. -->
   <script src="https://apis.google.com/js/api.js"></script>
   <script type="module" src="./add_asset.js"></script>
+
+  <!-- Load our styles. -->
+  <link rel="stylesheet" href="../style.css">
 </head>
 <body>
+
+<div class="navbar">
+  <h1 class="nav-header">Add Asset</h1>
+
+  <nav role="navigation">
+    <div id="nav-toggle">
+      <!-- A hidden checkbox just to be the click reciever the :checked selector can be used. -->
+      <input id="nav-input" type="checkbox" />
+
+      <!-- Hamburger. -->
+      <span></span>
+      <span></span>
+      <span></span>
+
+      <ul class="nav-menu">
+        <a href=""><li>Map</li></a>
+        <a href="import/add_asset.html"><li>Upload Asset</li></a>
+      </ul>
+    </div>
+  </nav>
+</div>
 
 <form action="" id="form">
   <label for="collectionName">Name of ImageCollection (like 'noaa-harvey' without quotes):</label><input id="collectionName"><p>
