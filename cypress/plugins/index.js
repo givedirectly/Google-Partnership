@@ -163,7 +163,7 @@ function createTestFirebaseAdminApp() {
         credential: firebaseAdmin.credential.applicationDefault(),
         databaseURL: 'https://mapping-test-data.firebaseio.com',
       },
-      'testAdminApp-' + Math.random());
+      'testAdminApp');
 }
 
 /**
