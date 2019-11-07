@@ -194,6 +194,12 @@ input[type='button']:hover, button:hover {
   padding: 6px;
 }
 
+.form-button:disabled {
+  cursor: auto;
+  background-color: #888888;
+  box-shadow: none;
+}
+
 #toggles span {
   color: var(--green-3);
   font-weight: bold;
