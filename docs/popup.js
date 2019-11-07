@@ -58,7 +58,7 @@ function setUpPopup() {
 
     /**
      * Sets the calculatedData property of this popup. The calculatedData must
-     * be freshly calculated.
+     * be freshly calculated (not stale).
      * @param {Object} calculatedData
      */
     setCalculatedData(calculatedData) {
