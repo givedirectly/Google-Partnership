@@ -106,6 +106,14 @@ h1 {
   z-index: 30;
 }
 
+.nav-header {
+  display: inline-block;
+  float: left;
+  line-height: calc(var(--navbar-height) - 8px);
+  margin: 0;
+  padding: 4px 8px;
+}
+
 #nav-toggle {
   display: block;
   position: relative;
@@ -177,7 +185,7 @@ h1 {
   transform: translate(-100%, 0);
 }
 
-#nav-menu {
+.nav-menu {
   position: absolute;
   width: 300px;
   margin: -100px 0 0 50px;
@@ -191,7 +199,7 @@ h1 {
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.15), 64px 0px 6px rgba(0, 0, 0, 0.10);
 }
 
-#nav-menu li {
+.nav-menu li {
   width: 100%;
   padding: 12px;
   font-size: 18px;
@@ -199,11 +207,11 @@ h1 {
   transition: var(--background-color-transition);
 }
 
-#nav-menu li:hover {
+.nav-menu li:hover {
   background-color: var(--green-7);
 }
 
-#nav-menu a {
+.nav-menu a {
   text-decoration: none;
   color: var(--green-1);
 }
