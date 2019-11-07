@@ -50,8 +50,9 @@ class StoredShapeData {
    * If there is already a pending write, this method records that another write
    * should be performed when the pending one completes and returns immediately.
    * @return {!Promise} Promise that resolves when all writes queued when this
-   *     call started are complete, or null if there were already writes in flight, in which case this method
-   *     does not know when those writes will complete.
+   *     call started are complete, or null if there were already writes in
+   * flight, in which case this method does not know when those writes will
+   * complete.
    */
   update() {
     if (this.state !== StoredShapeData.State.SAVED) {
