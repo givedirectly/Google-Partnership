@@ -39,7 +39,7 @@ function storeCenter(features, firebaseAuthPromise) {
 /**
  * Writes the calculated bounds to firestore.
  * @param {Array<number>} bounds
- * @return {Promise<Array{number}>} Promise that completes with array of bounds
+ * @return {Promise<Array<number>>} Promise that completes with array of bounds
  * after Firestore write is complete.
  */
 function saveBounds(bounds) {
@@ -47,7 +47,7 @@ function saveBounds(bounds) {
     'map-bounds': {
       sw: new firebase.firestore.GeoPoint(bounds[0], bounds[1]),
       ne: new firebase.firestore.GeoPoint(bounds[2], bounds[3]),
-    }
+    },
   };
   return disasterDocumentReference()
       .set(docData, {merge: true})
