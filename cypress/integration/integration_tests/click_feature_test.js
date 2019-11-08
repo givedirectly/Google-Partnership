@@ -83,7 +83,7 @@ function clickAndVerifyBlockGroup() {
 
   zoomOut(3);
   // This wait is embarrassing, but otherwise Travis fails flakily.
-  cy.wait(2000);
+  cy.wait(4000);
   cy.get('.map').click(400, 600);
   cy.get('.map').should('contain', 'SCORE: 72');
   cy.get('.google-visualization-table-tr-sel')
