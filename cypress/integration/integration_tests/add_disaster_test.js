@@ -28,7 +28,8 @@ describe('Integration tests for add_disaster page', () => {
 
     cy.get('#name').type('Harry');
     cy.get('#states').select(['Alaska', 'Texas']);
-    cy.get('#year').type('front');  // yeehaw
+    // yeehaw
+    cy.get('#year').type('front');
     cy.get('#add-disaster-button').click();
     cy.get('#status').contains('Error: year must be a number');
   });
@@ -45,6 +46,7 @@ describe('Integration tests for add_disaster page', () => {
   });
 });
 
+/** Assert states pickers for harry are behaving.*/
 function assertHarryStatePickers() {
   cy.get('#disaster').should('have.value', '2020-Harry');
   // 2 x <label> <select> <br>
