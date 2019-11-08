@@ -9,6 +9,7 @@ import {userRegionData} from './user_region_data.js';
 
 // ShapeData is only for testing.
 export {
+  displayCalculatedData,
   processUserRegions,
   setUpPolygonDrawing as default,
   StoredShapeData,
@@ -48,19 +49,22 @@ class StoredShapeData {
    *
    * If there is already a pending write, this method records that another write
    * should be performed when the pending one completes and returns immediately.
+   * @return {!Promise} Promise that resolves when all writes queued when this
+   *     call started are complete, or null if there were already writes in
+   * flight, in which case this method does not know when those writes will
+   * complete.
    */
   update() {
     if (this.state !== StoredShapeData.State.SAVED) {
       this.state = StoredShapeData.State.QUEUED_WRITE;
-      return;
+      return null;
     }
     const feature = this.popup.mapFeature;
     addLoadingElement(writeWaiterId);
     this.state = StoredShapeData.State.WRITING;
     StoredShapeData.pendingWriteCount++;
     if (!feature.getMap()) {
-      this.delete();
-      return;
+      return this.delete();
     }
     const newGeometry = StoredShapeData.featureGeoPoints(feature);
     const geometriesEqual = StoredShapeData.compareGeoPointArrays(
@@ -69,36 +73,54 @@ class StoredShapeData {
     this.lastNotes = this.popup.notes;
     if (geometriesEqual) {
       if (!newNotesEqual) {
-        this.doRemoteUpdate();
+        return this.doRemoteUpdate();
       } else {
         // Because Javascript is single-threaded, during the execution of this
         // method, no additional queued writes can have accumulated. So we don't
         // need to check for them.
         StoredShapeData.pendingWriteCount--;
       }
-      return;
+      return Promise.resolve();
     }
     this.featureGeoPoints = newGeometry;
     if (isMarker(feature)) {
       // No calculated data for a marker.
-      this.doRemoteUpdate();
-      return;
+      return this.doRemoteUpdate();
     }
     this.popup.setPendingCalculation();
 
     const points = [];
     feature.getPath().forEach((elt) => points.push(elt.lng(), elt.lat()));
-    ee.FeatureCollection(getResources().damage)
-        .filterBounds(ee.Geometry.Polygon(points))
-        .size()
-        .evaluate((damage, failure) => {
-          if (failure) {
-            createError('error calculating damage' + this)(failure);
-            return;
-          }
-          this.popup.setCalculatedData({damage: damage});
-          this.doRemoteUpdate();
-        });
+    const polygon = ee.Geometry.Polygon(points);
+    const numDamagePoints = StoredShapeData.prepareDamageCalculation(polygon);
+    const intersectingBlockGroups =
+        StoredShapeData.getIntersectingBlockGroups(polygon);
+    const weightedSnapHouseholds = StoredShapeData.calculateWeightedTotal(
+        intersectingBlockGroups, 'SNAP HOUSEHOLDS');
+    const weightedTotalHouseholds = StoredShapeData.calculateWeightedTotal(
+        intersectingBlockGroups, 'TOTAL HOUSEHOLDS');
+    return new Promise(((resolve, reject) => {
+      ee.List([
+          numDamagePoints,
+          weightedSnapHouseholds,
+          weightedTotalHouseholds,
+        ]).evaluate((list, failure) => {
+        if (failure) {
+          createError('calculating data ' + this)(failure);
+          reject(failure);
+          return;
+        }
+        const calculatedData = {
+          damage: list[0],
+          snapFraction: list[2] > 0 ? roundToOneDecimal(list[1] / list[2]) : 0,
+        };
+        this.popup.setCalculatedData(calculatedData);
+
+        this.doRemoteUpdate()
+            .then(() => resolve(null))
+            .catch((err) => reject(err));
+      });
+    }));
   }
 
   /**
@@ -111,7 +133,10 @@ class StoredShapeData {
     return result.length === 1 ? result[0] : result;
   }
 
-  /** Kicks off Firestore remote write. */
+  /**
+   * Kicks off Firestore remote write.
+   * @return {Promise} Promise that completes when write is complete
+   */
   doRemoteUpdate() {
     const record = {
       geometry: this.featureGeoPoints,
@@ -119,23 +144,21 @@ class StoredShapeData {
       calculatedData: this.popup.calculatedData,
     };
     if (this.id) {
-      userShapes.doc(this.id)
-          .set(record)
-          .then(() => this.finishWriteAndMaybeWriteAgain())
-          .catch(createError('error updating ' + this));
+      return userShapes.doc(this.id).set(record).then(
+          () => this.finishWriteAndMaybeWriteAgain());
     } else {
-      userShapes.add(record)
-          .then((docRef) => {
-            this.id = docRef.id;
-            this.finishWriteAndMaybeWriteAgain();
-          })
-          .catch(createError('error adding ' + this));
+      return userShapes.add(record).then((docRef) => {
+        this.id = docRef.id;
+        return this.finishWriteAndMaybeWriteAgain();
+      });
     }
   }
 
   /**
    * After a write completes, checks if there are pending writes and kicks off
    * a new update if so.
+   * @return {!Promise} Promise that completes when all currently known writes
+   *    are done (or null if an unexpected error is encountered)
    */
   finishWriteAndMaybeWriteAgain() {
     StoredShapeData.pendingWriteCount--;
@@ -144,19 +167,20 @@ class StoredShapeData {
     switch (oldState) {
       case StoredShapeData.State.WRITING:
         loadingElementFinished(writeWaiterId);
-        return;
+        return Promise.resolve();
       case StoredShapeData.State.QUEUED_WRITE:
         loadingElementFinished(writeWaiterId);
-        this.update();
-        return;
+        return this.update();
       case StoredShapeData.State.SAVED:
         console.error('Unexpected feature state:' + this);
+        return null;
     }
   }
 
   /**
    * Deletes our feature from storage and userRegionData. Only for internal use
    * (would be "private" in Java).
+   * @return {Promise} Promise that completes when deletion is complete.
    */
   delete() {
     // Feature has been removed from map, we should delete on backend.
@@ -166,11 +190,11 @@ class StoredShapeData {
       // the creation should trigger an update that must complete before the
       // deletion gets here. So there should always be an id.
       console.error('Unexpected: feature to be deleted had no id: ', this);
-      return;
+      return Promise.resolve();
     }
     // Nothing more needs to be done for this element because it is
     // unreachable and about to be GC'ed.
-    userShapes.doc(this.id)
+    return userShapes.doc(this.id)
         .delete()
         .then(() => StoredShapeData.pendingWriteCount--)
         .catch(createError('error deleting ' + this));
@@ -220,6 +244,50 @@ StoredShapeData.compareGeoPointArrays = (array1, array2) => {
   }
   return true;
 };
+
+StoredShapeData.prepareDamageCalculation = (polygon) => {
+  return ee.FeatureCollection(getResources().damage)
+      .filterBounds(polygon)
+      .size();
+};
+
+StoredShapeData.getIntersectingBlockGroups = (polygon) => {
+  return ee.FeatureCollection(getResources().getCombinedAsset())
+      .filterBounds(polygon)
+      .map((feature) => {
+        const geometry = feature.geometry();
+        return feature.set(
+            'blockGroupFraction',
+            geometry.intersection(polygon).area().divide(geometry.area()));
+      });
+};
+
+StoredShapeData.calculateWeightedTotal =
+    (intersectingBlockGroups, property) => {
+      return intersectingBlockGroups
+          .map((feature) => {
+            return new ee.Feature(null, {
+              'weightedSum': ee.Number(feature.get(property))
+                                 .multiply(feature.get('blockGroupFraction')),
+            });
+          })
+          .aggregate_sum('weightedSum');
+    };
+
+/**
+ * Renders the given calculated data into the given div.
+ * @param {Object} calculatedData Coming from Firestore doc retrieval
+ * @param {HTMLDivElement} parentDiv
+ */
+function displayCalculatedData(calculatedData, parentDiv) {
+  const damageDiv = document.createElement('div');
+  damageDiv.innerHTML = 'damage count: ' + calculatedData.damage;
+  const snapDiv = document.createElement('div');
+  snapDiv.innerHTML =
+      'Approximate SNAP fraction: ' + calculatedData.snapFraction;
+  parentDiv.appendChild(damageDiv);
+  parentDiv.appendChild(snapDiv);
+}
 
 // TODO(janakr): should this be initialized somewhere better?
 // Warning before leaving the page.
@@ -339,4 +407,13 @@ function transformGeoPointArrayToLatLng(geopoints) {
   const coordinates = [];
   geopoints.forEach((geopoint) => coordinates.push(geoPointToLatLng(geopoint)));
   return coordinates;
+}
+
+/**
+ * Rounds the given number to one decimal place.
+ * @param {number} number
+ * @return {number}
+ */
+function roundToOneDecimal(number) {
+  return Math.round(10 * number) / 10;
 }

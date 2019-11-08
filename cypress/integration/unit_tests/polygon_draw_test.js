@@ -1,50 +1,61 @@
 import {getFirestoreRoot} from '../../../docs/authenticate';
+import * as loading from '../../../docs/loading';
 import {processUserRegions, StoredShapeData} from '../../../docs/polygon_draw';
-import {getResources} from '../../../docs/resources';
+import * as resourceGetter from '../../../docs/resources';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 
-/**
- * Fake of the Promise class. Needed because Promise executes async, so if we
- * use real Promises, we lose control of execution order in the test.
- */
-class FakePromise {
-  /**
-   * Constructor.
-   *
-   * @param {Object} thenArg Argument to invoke then with.
-   */
-  constructor(thenArg) {
-    this.thenArg = thenArg;
-  }
+const polyCoords = [
+  {lng: 1, lat: 1},
+  {lng: 1, lat: 2},
+  {lng: 13, lat: 2},
+  {lng: 13, lat: 1},
+  {lng: 1, lat: 1},
+];
 
-  /**
-   * Mirrors Promise.then. Calls func with this.thenArg.
-   *
-   * @param {Function} func Function to invoke.
-   * @return {Object} dummy object with dummy catch method.
-   */
-  then(func) {
-    func(this.thenArg);
-    return {catch: () => undefined};
-  }
-}
+let polyLatLng;
+const firebaseCollection = {};
+const calculatedData = {
+  damage: 1,
+  snapFraction: 0.6,
+};
 
 describe('Unit test for ShapeData', () => {
   loadScriptsBeforeForUnitTests('ee', 'maps', 'firebase');
-  const firebaseCollection = {};
-  let mockDamage;
-  let mockFilteredDamage;
-  let mockSize;
-  const featureCollectionApi = {filterBounds: (poly) => {}};
-  const filteredFeatureCollectionApi = {size: () => {}};
-  const sizeApi = {evaluate: (callb) => {}};
+  let polygonGeometry;
   before(() => {
-    mockDamage = Cypress.sinon.mock(featureCollectionApi);
-    mockFilteredDamage = Cypress.sinon.mock(filteredFeatureCollectionApi);
-    mockSize = Cypress.sinon.mock(sizeApi);
+    polyLatLng = polyCoords.map((pair) => new google.maps.LatLng(pair));
+    polygonGeometry = polyLatLng.map(
+        (latlng) =>
+            new firebase.firestore.GeoPoint(latlng.lat(), latlng.lng()));
+    // Stub out loading update attempts: they pollute console with errors.
+    loading.addLoadingElement = () => {};
+    loading.loadingElementFinished = () => {};
   });
-  // Reset firebaseCollection's dummy methods.
   beforeEach(() => {
+    // Polygon intersects feature1 and feature2, not feature3.
+    const feature1 = ee.Feature(
+        ee.Geometry.Polygon(0, 0, 0, 10, 10, 10, 10, 0),
+        {'SNAP HOUSEHOLDS': 1, 'TOTAL HOUSEHOLDS': 2});
+    const feature2 = ee.Feature(
+        ee.Geometry.Polygon(10, 0, 10, 10, 20, 10, 20, 0),
+        {'SNAP HOUSEHOLDS': 3, 'TOTAL HOUSEHOLDS': 4});
+    const feature3 = ee.Feature(
+        ee.Geometry.Polygon(20, 0, 20, 10, 30, 10, 30, 0),
+        {'SNAP HOUSEHOLDS': 1000, 'TOTAL HOUSEHOLDS': 1000});
+    const featureCollection =
+        ee.FeatureCollection([feature1, feature2, feature3]);
+    // Polygon contains only first damage point.
+    const damageCollection = ee.FeatureCollection([
+      ee.Feature(ee.Geometry.Point([1.5, 1.5])),
+      ee.Feature(ee.Geometry.Point([200, 200])),
+    ]);
+    // Use our custom EarthEngine FeatureCollections.
+    cy.stub(resourceGetter, 'getResources').returns({
+      damage: damageCollection,
+      getCombinedAsset: () => featureCollection,
+    });
+
+    // Set up appropriate Firestore mocks.
     cy.stub(getFirestoreRoot(), 'collection')
         .withArgs('usershapes')
         .returns(firebaseCollection);
@@ -55,44 +66,32 @@ describe('Unit test for ShapeData', () => {
     }
     // Make sure .get() succeeds.
     firebaseCollection.get = () => [];
-
-    // Set up EarthEngine.
-    cy.stub(ee, 'FeatureCollection')
-        .withArgs(getResources().damage)
-        .returns(featureCollectionApi);
     // Make sure userShapes is set in the code.
     return cy.wrap(processUserRegions(null, Promise.resolve(null)));
   });
 
-  afterEach(() => {
-    mockDamage.verify();
-    mockFilteredDamage.verify();
-    mockSize.verify();
-  });
-
   it('Add shape', () => {
-    expectEarthEngineCalled();
     const popup = new StubPopup();
     const underTest = new StoredShapeData(null, null, null, popup);
     const records = [];
     firebaseCollection.add = recordRecord(records, {id: 'new_id'});
     popup.notes = 'my notes';
-    underTest.update();
-    expect(records).to.eql([{
-      calculatedData: {damage: 1},
-      geometry: [new firebase.firestore.GeoPoint(0, 1)],
-      notes: 'my notes',
-    }]);
-    expect(underTest.id).to.eql('new_id');
-    expect(StoredShapeData.pendingWriteCount).to.eql(0);
+    cy.wrap(underTest.update()).then(() => {
+      expect(records).to.eql([{
+        calculatedData: calculatedData,
+        geometry: polygonGeometry,
+        notes: 'my notes',
+      }]);
+      expect(underTest.id).to.eql('new_id');
+      expect(StoredShapeData.pendingWriteCount).to.eql(0);
+    });
   });
 
   it('Update shape', () => {
-    expectEarthEngineNotCalled();
     const popup = new StubPopup();
-    popup.setCalculatedData({damage: 1});
-    const geometry = [new firebase.firestore.GeoPoint(0, 1)];
-    const underTest = new StoredShapeData('my_id', 'my notes', geometry, popup);
+    popup.setCalculatedData(calculatedData);
+    const underTest =
+        new StoredShapeData('my_id', 'my notes', polygonGeometry, popup);
     const records = [];
     const ids = [];
     firebaseCollection.doc = (id) => {
@@ -100,57 +99,56 @@ describe('Unit test for ShapeData', () => {
       return {set: recordRecord(records, null)};
     };
     popup.notes = 'new notes';
-    underTest.update();
-    expect(ids).to.eql(['my_id']);
-    expect(records).to.eql([{
-      calculatedData: {damage: 1},
-      geometry: geometry,
-      notes: 'new notes',
-    }]);
-    expect(underTest.id).to.eql('my_id');
-    expect(StoredShapeData.pendingWriteCount).to.eql(0);
+    cy.wrap(underTest.update()).then(() => {
+      expect(ids).to.eql(['my_id']);
+      expect(records).to.eql([{
+        calculatedData: calculatedData,
+        geometry: polygonGeometry,
+        notes: 'new notes',
+      }]);
+      expect(underTest.id).to.eql('my_id');
+      expect(StoredShapeData.pendingWriteCount).to.eql(0);
+    });
   });
 
   it('Delete shape', () => {
-    expectEarthEngineNotCalled();
     const popup = new StubPopup();
-    popup.setCalculatedData({damage: 1});
-    const geometry = [new firebase.firestore.GeoPoint(0, 1)];
-    const underTest = new StoredShapeData('my_id', 'my notes', geometry, popup);
+    popup.setCalculatedData(calculatedData);
+    const underTest =
+        new StoredShapeData('my_id', 'my notes', polygonGeometry, popup);
     popup.mapFeature.getMap = () => null;
     const ids = [];
     firebaseCollection.doc = (id) => {
       ids.push(id);
       return {
-        delete: () => new FakePromise(undefined),
+        delete: () => Promise.resolve(),
       };
     };
-    underTest.update();
-    expect(ids).to.eql(['my_id']);
-    expect(underTest.id).to.eql('my_id');
-    expect(StoredShapeData.pendingWriteCount).to.eql(0);
+    cy.wrap(underTest.update()).then(() => {
+      expect(ids).to.eql(['my_id']);
+      expect(underTest.id).to.eql('my_id');
+      expect(StoredShapeData.pendingWriteCount).to.eql(0);
+    });
   });
 
   it('Update while update pending', () => {
-    expectEarthEngineNotCalled();
     const popup = new StubPopup();
-    const calculatedData = {damage: 1};
     popup.setCalculatedData(calculatedData);
-    const geometry = [new firebase.firestore.GeoPoint(0, 1)];
-    const underTest = new StoredShapeData('my_id', 'my notes', geometry, popup);
+    const underTest =
+        new StoredShapeData('my_id', 'my notes', polygonGeometry, popup);
     const records = [];
     const ids = [];
     const setThatTriggersNewUpdate = {
       set: (record) => {
         popup.notes = 'racing notes';
-        underTest.update();
+        expect(underTest.update()).to.be.null;
         expect(popup.calculatedData).to.eql(calculatedData);
         expect(underTest.state).to.eql(StoredShapeData.State.QUEUED_WRITE);
         records.push(record);
         expect(StoredShapeData.pendingWriteCount).to.eql(1);
         // Put back usual set for next run.
         setThatTriggersNewUpdate.set = recordRecord(records, null);
-        return new FakePromise(null);
+        return Promise.resolve(null);
       },
     };
     firebaseCollection.doc = (id) => {
@@ -158,26 +156,29 @@ describe('Unit test for ShapeData', () => {
       return setThatTriggersNewUpdate;
     };
     popup.notes = 'new notes';
-    underTest.update();
-    expect(ids).to.eql(['my_id', 'my_id']);
-    expect(records).to.have.length(2);
-    expect(records).to.eql([
-      {calculatedData: calculatedData, geometry: geometry, notes: 'new notes'},
-      {
-        calculatedData: calculatedData,
-        geometry: geometry,
-        notes: 'racing notes',
-      },
-    ]);
-    expect(underTest.id).to.eql('my_id');
-    expect(StoredShapeData.pendingWriteCount).to.eql(0);
+    cy.wrap(underTest.update()).then(() => {
+      expect(ids).to.eql(['my_id', 'my_id']);
+      expect(records).to.have.length(2);
+      expect(records).to.eql([
+        {
+          calculatedData: calculatedData,
+          geometry: polygonGeometry,
+          notes: 'new notes',
+        },
+        {
+          calculatedData: calculatedData,
+          geometry: polygonGeometry,
+          notes: 'racing notes',
+        },
+      ]);
+      expect(underTest.id).to.eql('my_id');
+      expect(StoredShapeData.pendingWriteCount).to.eql(0);
+    });
   });
 
   it('Skips update if nothing changed', () => {
-    expectEarthEngineNotCalled();
     const popup = new StubPopup();
     popup.notes = 'my notes';
-    const calculatedData = {damage: 1};
     popup.setCalculatedData(calculatedData);
     popup.setPendingCalculation = () => {
       throw new Error('Unexpected calculation');
@@ -185,19 +186,17 @@ describe('Unit test for ShapeData', () => {
     popup.setCalculatedData = () => {
       throw new Error('Unexpected calculation');
     };
-    const geometry = [new firebase.firestore.GeoPoint(0, 1)];
-    const underTest = new StoredShapeData('my_id', 'my notes', geometry, popup);
+    const underTest =
+        new StoredShapeData('my_id', 'my notes', polygonGeometry, popup);
     firebaseCollection.doc = () => {
       throw new Error('Unexpected Firestore call');
     };
-    underTest.update();
+    cy.wrap(underTest.update());
     // Nothing crashed.
   });
 
   it('Skips recalculation if geometry unchanged', () => {
-    expectEarthEngineNotCalled();
     const popup = new StubPopup();
-    const calculatedData = {damage: 1};
     popup.setCalculatedData(calculatedData);
     popup.setPendingCalculation = () => {
       throw new Error('Unexpected calculation');
@@ -205,41 +204,26 @@ describe('Unit test for ShapeData', () => {
     popup.setCalculatedData = () => {
       throw new Error('Unexpected calculation');
     };
-    const geometry = [new firebase.firestore.GeoPoint(0, 1)];
     const ids = [];
     const records = [];
     firebaseCollection.doc = (id) => {
       ids.push(id);
       return {set: recordRecord(records, null)};
     };
-    const underTest = new StoredShapeData('my_id', 'my notes', geometry, popup);
+    const underTest =
+        new StoredShapeData('my_id', 'my notes', polygonGeometry, popup);
     popup.notes = 'new notes';
-    underTest.update();
-    expect(ids).to.eql(['my_id']);
-    expect(records).to.eql([{
-      calculatedData: calculatedData,
-      geometry: geometry,
-      notes: 'new notes',
-    }]);
-    expect(underTest.id).to.eql('my_id');
-    expect(StoredShapeData.pendingWriteCount).to.eql(0);
+    cy.wrap(underTest.update()).then(() => {
+      expect(ids).to.eql(['my_id']);
+      expect(records).to.eql([{
+        calculatedData: calculatedData,
+        geometry: polygonGeometry,
+        notes: 'new notes',
+      }]);
+      expect(underTest.id).to.eql('my_id');
+      expect(StoredShapeData.pendingWriteCount).to.eql(0);
+    });
   });
-
-  /** Sets expectations that EarthEngine data calculations are done. */
-  function expectEarthEngineCalled() {
-    mockDamage.expects('filterBounds')
-        .once()
-        .returns(filteredFeatureCollectionApi);
-    mockFilteredDamage.expects('size').once().returns(sizeApi);
-    mockSize.expects('evaluate').once().callsFake((callb) => callb(1));
-  }
-
-  /** Sets expectations that EarthEngine data calculations are not done. */
-  function expectEarthEngineNotCalled() {
-    mockDamage.expects('filterBounds').never();
-    mockFilteredDamage.expects('size').never();
-    mockSize.expects('evaluate').never();
-  }
 });
 
 /**
@@ -255,7 +239,7 @@ function recordRecord(records, retval) {
   return (record) => {
     expect(StoredShapeData.pendingWriteCount).to.eql(1);
     records.push(record);
-    return new FakePromise(retval);
+    return Promise.resolve(retval);
   };
 }
 
@@ -268,8 +252,7 @@ function recordRecord(records, retval) {
 function makeMockPolygon() {
   const mockPolygon = {};
   mockPolygon.getMap = () => true;
-  const latlng = {lat: () => 0, lng: () => 1};
-  mockPolygon.getPath = () => [latlng];
+  mockPolygon.getPath = () => polyLatLng;
   return mockPolygon;
 }
 
