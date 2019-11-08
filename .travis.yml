@@ -46,7 +46,5 @@ script:
 # with an undiagnosable error. Since Electron runs faster anyway, just use
 # that for now.
 # TODO(janakr): diagnose and fix.
-# TODO(janakr): click_feature_test is failing on Travis, but it may also have
-# been broken before this PR. Currently trying to diagnose.
 - yarn run cypress run --spec 'cypress/integration/unit_tests/*.js' --record --config video=false
 - yarn run cypress run --spec 'cypress/integration/integration_tests/*.js' --record --browser=chromium --config video=false

@@ -19,8 +19,9 @@ describe('Integration tests for drawing polygons', () => {
     cy.awaitLoad();
     cy.get('[placeholder="Search"]').clear().type('Aldine Estates{enter}');
     drawPolygonAndClickOnIt(-250);
-    cy.get('.popup-damage').contains('damage count: 1');
-    cy.get('.popup-damage')
+    cy.get('.popup-calculated-data').contains('damage count: 1');
+    cy.get('.popup-calculated-data').contains('Approximate SNAP fraction: 0.4');
+    cy.get('.popup-calculated-data')
         .should('have.css', 'color')
         .and('eq', 'rgb(0, 0, 0)');
   });
@@ -33,13 +34,13 @@ describe('Integration tests for drawing polygons', () => {
   it('Draws a polygon, checks for calculating status', () => {
     cy.visit(host);
     drawPolygonAndClickOnIt();
-    cy.get('.popup-damage').contains('damage count: calculating');
+    cy.get('.popup-calculated-data').contains('calculating');
     // assert damage text is grey while editing
-    cy.get('.popup-damage')
+    cy.get('.popup-calculated-data')
         .should('have.css', 'color')
         .and('eq', 'rgb(128, 128, 128)');
     cy.awaitLoad(['writeWaiter']);
-    cy.get('.popup-damage')
+    cy.get('.popup-calculated-data')
         .should('have.css', 'color')
         .and('eq', 'rgb(0, 0, 0)');
   });
@@ -244,7 +245,8 @@ describe('Integration tests for drawing polygons', () => {
   it('Draws marker, edits notes, deletes', () => {
     cy.visit(host);
 
-    cy.get('[title="Add a marker"]').click();
+    // Give Firebase some time to retrieve data.
+    cy.get('[title="Add a marker"]', {timeout: 10000}).click();
     drawPointAndPrepareForNext(400, 400);
     cy.get('[title="Stop drawing"]').click();
     cy.wait(500);
