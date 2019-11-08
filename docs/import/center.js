@@ -19,7 +19,7 @@ function withGeo(feature) {
  * @param {ee.FeatureCollection} features the featureCollection around which you
  * want to orient the map
  * @param {Promise} firebaseAuthPromise
- * @return {Promise<Array{number}>} Promise that completes with array of bounds
+ * @return {Promise<Array<number>>} Promise that completes with array of bounds
  * after Firestore write is complete.
  */
 function storeCenter(features, firebaseAuthPromise) {
