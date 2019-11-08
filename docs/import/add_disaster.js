@@ -45,7 +45,8 @@ function enableWhenReady() {
     disasterPicker.appendChild(
         createOption('ADD NEW DISASTER', SENTINEL_NEW_DISASTER_VALUE));
 
-    disasterPicker.addEventListener('change', () => toggleState($('#disaster').val()));
+    disasterPicker.addEventListener(
+        'change', () => toggleState($('#disaster').val()));
   });
 
   // enable add disaster button now that firestore is ready.

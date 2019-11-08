@@ -2,7 +2,7 @@
 const addDisasterUrl = host + 'import/add_disaster.html';
 
 describe('Integration tests for add_disaster page', () => {
-  it ('adds a new disaster', () => {
+  it('adds a new disaster', () => {
     cy.visit(addDisasterUrl);
 
     cy.get('#new-disaster').should('be.hidden');
@@ -23,11 +23,12 @@ describe('Integration tests for add_disaster page', () => {
 
     cy.get('#disaster').select('ADD NEW DISASTER');
     cy.get('#add-disaster-button').click();
-    cy.get('#status').contains('Error: Disaster name, year, and states are required.');
+    cy.get('#status').contains(
+        'Error: Disaster name, year, and states are required.');
 
     cy.get('#name').type('Harry');
     cy.get('#states').select(['Alaska', 'Texas']);
-    cy.get('#year').type('front'); // yeehaw
+    cy.get('#year').type('front');  // yeehaw
     cy.get('#add-disaster-button').click();
     cy.get('#status').contains('Error: year must be a number');
   });
