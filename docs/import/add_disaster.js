@@ -25,6 +25,10 @@ const authenticator = new Authenticator(
     () => taskAccumulator.taskCompleted());
 authenticator.start();
 
+/**
+ * Populates disaster picker with disasters from firebase + enables the ability
+ * to add a new disaster and store to firebase.
+ * */
 function enableWhenReady() {
   // popuplate disaster picker.
   const disasterPicker = document.getElementById('disaster');
@@ -41,11 +45,9 @@ function enableWhenReady() {
 
     disasterPicker.addEventListener('change', () => {
       if ($('#disaster').val() === SENTINEL_NEW_DISASTER_VALUE) {
-        hideDisasterInfoForm();
-        showNewDisasterForm();
+        toggleDisasterDivs()
       } else {
-        hideNewDisasterForm();
-        showDisasterInfoForm($('#disaster').val());
+        toggleDisasterDivs($('#disaster').val());
       }
     });
   });
@@ -56,23 +58,28 @@ function enableWhenReady() {
   addDisasterButton.onclick = addDisaster;
 }
 
-function showNewDisasterForm() {
-  document.getElementById('new-disaster').hidden = false;
+/**
+ * Utility method to switch between the page creating a new disaster and the page
+ * editing a current disaster. If a disaster id (year-name) is passed in, then
+ * we switch to editing that disaster - else we assume we're adding a new one.
+ * @param {?String} disaster
+ */
+function toggleDisasterDivs(disaster = null) {
+  if (disaster) {
+    document.getElementById('new-disaster').hidden = true;
+    document.getElementById('selected-disaster').hidden = false;
+    createStateAssetPickers(disasters.get(disaster));
+  } else {
+    document.getElementById('new-disaster').hidden = false;
+    document.getElementById('selected-disaster').hidden = true;
+  }
 }
 
-function hideNewDisasterForm() {
-  document.getElementById('new-disaster').hidden = true;
-}
-
-function showDisasterInfoForm(disaster) {
-  document.getElementById('selected-disaster').hidden = false;
-  createStateAssetPickers(disasters.get(disaster));
-}
-
-function hideDisasterInfoForm() {
-  document.getElementById('selected-disaster').hidden = true;
-}
-
+/**
+ * Onclick function for the new disaster form. Writes new disaster to firestore,
+ * local disasters map and disaster picker. Doesn't allow name, year or states
+ * to be empty fields.
+ */
 function addDisaster() {
   const year = $('#year').val();
   const name = $('#name').val();
@@ -84,14 +91,12 @@ function addDisaster() {
   }
   setStatus();
 
-  // write new disaster with states back to firestore
   const disasterId = year + '-' + name;
   firebase.firestore().collection('disaster-metadata').doc(disasterId).set({
     states: states
   });
   disasters.set(disasterId, states);
 
-  // add to disaster picker
   const newDisasterPick = createOptionFrom(disasterId);
   newDisasterPick.selected = true;
   const disasterPicker = document.getElementById('disaster');
@@ -105,17 +110,18 @@ function addDisaster() {
     }
   }
 
-  // hide new disaster form
-  hideNewDisasterForm();
-  showDisasterInfoForm(disasterId);
+  toggleDisasterDivs(disasterId);
 }
 
 const gdEePathPrefix = 'users/gd/';
 const eeLegacyPathPrefix =
     'projects/earthengine-legacy/assets/' + gdEePathPrefix;
 
+// TODO: add functionality for adding assets to disaster records from these pickers.
 /**
- *
+ * Requests all assets in ee directories corresponding to given states and
+ * displays them in pickers. Right now, selecting on those pickers doesn't actually
+ * do anything.
  * @param {Array<String>} states
  */
 function createStateAssetPickers(states) {
@@ -160,14 +166,29 @@ function createStateAssetPickers(states) {
       })
 }
 
+/**
+ * Utility function for setting the status div.
+ * @param {String} text
+ */
 function setStatus(text = '') {
   document.getElementById('status').innerHTML = text;
 }
 
+/**
+ * Utility function for creating an option with the same val and innerText.
+ * @param {String} innerTextAndValue
+ * @return {HTMLOptionElement}
+ */
 function createOptionFrom(innerTextAndValue) {
   return createOption(innerTextAndValue, innerTextAndValue);
 }
 
+/**
+ * Utility function for creating an option.
+ * @param {String} innerText
+ * @param {String} value
+ * @return {HTMLOptionElement}
+ */
 function createOption(innerText, value) {
   const defaultOption = document.createElement('option');
   defaultOption.innerText = innerText;
