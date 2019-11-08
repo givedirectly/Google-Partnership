@@ -1,12 +1,13 @@
+import {readDisasterDocument} from '../../../docs/firestore_document';
 import storeCenter from '../../../docs/import/center';
 import {addFirebaseHooks, loadScriptsBeforeForUnitTests} from '../../support/script_loader';
-import {readDisasterDocument} from '../../../docs/firestore_document';
 
 describe('Unit test for center.js', () => {
   loadScriptsBeforeForUnitTests('ee', 'firebase');
   addFirebaseHooks();
-  before(() => cy.wrap(
-      firebase.auth().signInWithCustomToken(firestoreCustomToken)));
+  before(
+      () =>
+          cy.wrap(firebase.auth().signInWithCustomToken(firestoreCustomToken)));
 
   it('calculates bounds', () => {
     const damageCollection = ee.FeatureCollection([
@@ -23,11 +24,17 @@ describe('Unit test for center.js', () => {
           // Expect that result returned from function is correct.
           expectArrayWithin(bounds, expectedBounds);
           return readDisasterDocument();
-        }).then((doc) => {
+        })
+        .then((doc) => {
           // Expect that result retrieved from Firestore is correct.
           const mapBounds = doc.data()['map-bounds'];
-          expectArrayWithin([mapBounds.sw.latitude, mapBounds.sw.longitude, mapBounds.ne.latitude, mapBounds.ne.longitude], expectedBounds);
-    });
+          expectArrayWithin(
+              [
+                mapBounds.sw.latitude, mapBounds.sw.longitude,
+                mapBounds.ne.latitude, mapBounds.ne.longitude
+              ],
+              expectedBounds);
+        });
   });
 });
 
