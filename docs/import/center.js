@@ -1,5 +1,5 @@
-import {convertEeObjectToPromise} from '../map_util.js';
 import {disasterDocumentReference} from '../firestore_document.js';
+import {convertEeObjectToPromise} from '../map_util.js';
 
 export {storeCenter as default};
 
@@ -31,7 +31,8 @@ function storeCenter(features, firebaseAuthPromise) {
     damageWithCoords.aggregate_max('lat'),
     damageWithCoords.aggregate_max('lng'),
   ]);
-  return Promise.all([firebaseAuthPromise, convertEeObjectToPromise(outerBounds)])
+  return Promise
+      .all([firebaseAuthPromise, convertEeObjectToPromise(outerBounds)])
       .then((results) => saveBounds(results[1]));
 }
 
@@ -48,5 +49,7 @@ function saveBounds(bounds) {
       ne: new firebase.firestore.GeoPoint(bounds[2], bounds[3]),
     }
   };
-  return disasterDocumentReference().set(docData, {merge: true}).then(() => bounds);
+  return disasterDocumentReference()
+      .set(docData, {merge: true})
+      .then(() => bounds);
 }

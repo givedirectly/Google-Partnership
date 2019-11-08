@@ -1,8 +1,8 @@
+import {getFirestoreRoot} from '../../../docs/firestore_document';
 import * as loading from '../../../docs/loading';
 import {processUserRegions, StoredShapeData} from '../../../docs/polygon_draw';
 import * as resourceGetter from '../../../docs/resources';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
-import {getFirestoreRoot} from '../../../docs/firestore_document';
 
 const polyCoords = [
   {lng: 1, lat: 1},

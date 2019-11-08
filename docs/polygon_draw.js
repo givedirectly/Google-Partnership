@@ -1,11 +1,11 @@
 import {mapContainerId, writeWaiterId} from './dom_constants.js';
 import {createError} from './error.js';
+import {getFirestoreRoot} from './firestore_document.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {geoPointToLatLng, latLngToGeoPoint} from './map_util.js';
 import {createPopup, isMarker, setUpPopup} from './popup.js';
 import {getResources} from './resources.js';
 import {userRegionData} from './user_region_data.js';
-import {getFirestoreRoot} from './firestore_document.js';
 
 // ShapeData is only for testing.
 export {

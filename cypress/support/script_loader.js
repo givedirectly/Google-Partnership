@@ -1,7 +1,7 @@
 import {CLIENT_ID, getFirebaseConfig} from '../../docs/authenticate';
 import {cypressTestCookieName, earthEngineTestTokenCookieName, firebaseTestTokenCookieName} from '../../docs/in_test_util';
 
-export {loadScriptsBeforeForUnitTests, addFirebaseHooks};
+export {addFirebaseHooks, loadScriptsBeforeForUnitTests};
 
 global.host = 'http://localhost:8080/';
 

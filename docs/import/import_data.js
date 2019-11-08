@@ -172,9 +172,12 @@ function run(firebaseAuthPromise) {
   centerStatusLabel.innerText = 'Computing and storing center of map: ';
   const centerStatusSpan = document.createElement('span');
   centerStatusSpan.innerText = 'in progress';
-  storeCenter(damage, firebaseAuthPromise).then((bounds) => {
-    centerStatusSpan.innerText = 'Found bounds (' + bounds[0] + ', ' + bounds[1] + '), (' + bounds[2] + ', ' + bounds[3] + ')';
-  }).catch((err) => centerStatusSpan.innerText = err);
+  storeCenter(damage, firebaseAuthPromise)
+      .then((bounds) => {
+        centerStatusSpan.innerText = 'Found bounds (' + bounds[0] + ', ' +
+            bounds[1] + '), (' + bounds[2] + ', ' + bounds[3] + ')';
+      })
+      .catch((err) => centerStatusSpan.innerText = err);
   $('.compute-status').append(centerStatusLabel);
   $('.compute-status').append(centerStatusSpan);
 
