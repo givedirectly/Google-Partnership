@@ -169,7 +169,7 @@ function run(firebaseAuthPromise) {
   const resources = getResources();
   const damage = ee.FeatureCollection(resources.damage);
   const centerStatusLabel = document.createElement('span');
-  centerStatusLabel.innerText = 'Computing and storing center of map: ';
+  centerStatusLabel.innerText = 'Computing and storing bounds of map: ';
   const centerStatusSpan = document.createElement('span');
   centerStatusSpan.innerText = 'in progress';
   storeCenter(damage, firebaseAuthPromise)
