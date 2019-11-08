@@ -85,7 +85,6 @@ function clickAndVerifyBlockGroup() {
   // These waits are embarrassing, but otherwise Travis fails flakily.
   cy.wait(2000);
   cy.get('.map').click(400, 600);
-  cy.wait(2000);
   cy.get('.map').should('contain', 'SCORE: 72');
   cy.get('.google-visualization-table-tr-sel')
       .find('[class="google-visualization-table-td"]')
