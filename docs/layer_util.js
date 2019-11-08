@@ -240,7 +240,7 @@ function addLayer(layerName, index, map) {
       addImageLayer(map, ee.Image(layerName), layerName, index);
       break;
     case LayerType.IMAGE_COLLECTION:
-      addImageLayer(map, ee.ImageCollection(layerName), layerName, index);
+      addImageLayer(map, processImageCollection(layerName), layerName, index);
       break;
     case LayerType.FEATURE:
     case LayerType.FEATURE_COLLECTION:
@@ -253,6 +253,10 @@ function addLayer(layerName, index, map) {
       createError('parsing layer type during add')(
           '[' + index + ']: ' + layerName + ' not recognized layer type');
   }
+}
+
+function processImageCollection(layerName) {
+  return ee.ImageCollection(layerName).map((image) => image.selfMask());
 }
 
 /**
