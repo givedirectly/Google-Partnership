@@ -255,6 +255,13 @@ function addLayer(layerName, index, map) {
   }
 }
 
+/**
+ * Given a layer name, turns it into an ImageCollection. Masks images with
+ * themselves to avoid displaying black pixels (which are usually just points
+ * that weren't captured by the imagery).
+ * @param {string} layerName Name of ImageCollection
+ * @return {ee.ImageCollection}
+ */
 function processImageCollection(layerName) {
   return ee.ImageCollection(layerName).map((image) => image.selfMask());
 }
