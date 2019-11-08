@@ -6,40 +6,11 @@ export {taskAccumulator};
 
 let disasterMetadata;
 
-const SENTINEL_NEW_DISASTER_VALUE = "NEW DISASTER";
-const SENTINEL_PICK_VALUE = "...";
+// Currently a list of disaster name to states.
+const disasters = new Map();
 
-function enableWhenReady() {
-  // popuplate disaster picker.
-  const disasterPicker = document.getElementById('disaster');
-  disasterMetadata = firebase.firestore().collection('disaster-metadata').get();
-
-  const option = document.createElement('option');
-  option.innerText = SENTINEL_PICK_VALUE;
-  option.value = SENTINEL_PICK_VALUE;
-  disasterPicker.appendChild(option);
-  disasterMetadata.then((querySnapshot) => {
-    querySnapshot.forEach((snapshot) => {
-      const option = document.createElement('option');
-      option.innerText = snapshot.id;
-      option.value = snapshot.id;
-      disasterPicker.appendChild(option);
-    });
-    const option = document.createElement('option');
-    option.innerText = 'ADD NEW DISASTER';
-    option.value = SENTINEL_NEW_DISASTER_VALUE;
-    disasterPicker.appendChild(option);
-
-    disasterPicker.addEventListener(
-        'change',
-        () => {toggleNewOld($('#disaster').val() === 'NEW DISASTER')});
-  });
-
-  // enable add disaster button.
-  const addDisasterButton = document.getElementById('add-disaster-button');
-  addDisasterButton.disabled = false;
-  addDisasterButton.onclick = addDisaster;
-}
+const SENTINEL_NEW_DISASTER_VALUE = 'NEW DISASTER';
+const SENTINEL_OPTION_VALUE = '...';
 
 // Necessary for listAssets.
 ee.data.setCloudApiEnabled(true);
@@ -54,57 +25,107 @@ const authenticator = new Authenticator(
     () => taskAccumulator.taskCompleted());
 authenticator.start();
 
-function toggleNewOld(newDisaster, states = undefined) {
-  document.getElementById('selected-disaster').hidden = newDisaster;
-  document.getElementById('new-disaster').hidden = !newDisaster;
+function enableWhenReady() {
+  // popuplate disaster picker.
+  const disasterPicker = document.getElementById('disaster');
+  disasterMetadata = firebase.firestore().collection('disaster-metadata').get();
+  disasterPicker.appendChild(createOptionFrom(SENTINEL_OPTION_VALUE));
+  disasterMetadata.then((querySnapshot) => {
+    querySnapshot.forEach((doc) => {
+      const name = doc.id;
+      disasterPicker.appendChild(createOptionFrom(name));
+      disasters.set(name, doc.data().states);
+    });
+    disasterPicker.appendChild(
+        createOption('ADD NEW DISASTER', SENTINEL_NEW_DISASTER_VALUE));
 
-  //TODO: working here
-  if (!newDisaster) {
-    if (!states) {
-      firebase.firestore().collection('disaster-metadata').get()
-    } else {
-      createStateAssetPickers(states);
-    }
-  }
+    disasterPicker.addEventListener('change', () => {
+      if ($('#disaster').val() === SENTINEL_NEW_DISASTER_VALUE) {
+        hideDisasterInfoForm();
+        showNewDisasterForm();
+      } else {
+        hideNewDisasterForm();
+        showDisasterInfoForm($('#disaster').val());
+      }
+    });
+  });
+
+  // enable add disaster button now that firestore is ready.
+  const addDisasterButton = document.getElementById('add-disaster-button');
+  addDisasterButton.disabled = false;
+  addDisasterButton.onclick = addDisaster;
+}
+
+function showNewDisasterForm() {
+  document.getElementById('new-disaster').hidden = false;
+}
+
+function hideNewDisasterForm() {
+  document.getElementById('new-disaster').hidden = true;
+}
+
+function showDisasterInfoForm(disaster) {
+  document.getElementById('selected-disaster').hidden = false;
+  createStateAssetPickers(disasters.get(disaster));
+}
+
+function hideDisasterInfoForm() {
+  document.getElementById('selected-disaster').hidden = true;
 }
 
 function addDisaster() {
-  const newDisasterPick = document.createElement('option');
-  newDisasterPick.innerText = disasterId;
-  newDisasterPick.value = disasterId;
+  const year = $('#year').val();
+  const name = $('#name').val();
+  const states = $('#states').val();
+
+  if (!year || !name || !states) {
+    setStatus('Error: Disaster name, year, and states are required.');
+    return;
+  }
+  setStatus();
+
+  // write new disaster with states back to firestore
+  const disasterId = year + '-' + name;
+  firebase.firestore().collection('disaster-metadata').doc(disasterId).set({
+    states: states
+  });
+  disasters.set(disasterId, states);
+
+  // add to disaster picker
+  const newDisasterPick = createOptionFrom(disasterId);
   newDisasterPick.selected = true;
   const disasterPicker = document.getElementById('disaster');
   const pickableDisasters = disasterPicker.childNodes;
-  for (let i = 1; i < pickableDisasters.length - 1; i++) {
-    if (i === pickableDisasters.length-1 || pickableDisasters[i].value > disasterId) {
+  for (let i = 1; i < pickableDisasters.length; i++) {
+    if (i === pickableDisasters.length - 1 ||
+        pickableDisasters[i].value > disasterId) {
+      console.log('hello');
       disasterPicker.insertBefore(newDisasterPick, pickableDisasters[i]);
       break;
     }
   }
 
-  const disasterId = $('#year').val() + '-' + $('#name').val();
-  const states = $('#states').val();
-  firebase.firestore().collection('disaster-metadata').doc(disasterId).set({
-    states: states
-  });
-
-  toggleNewOld(false, states);
+  // hide new disaster form
+  hideNewDisasterForm();
+  showDisasterInfoForm(disasterId);
 }
+
+const gdEePathPrefix = 'users/gd/';
+const eeLegacyPathPrefix =
+    'projects/earthengine-legacy/assets/' + gdEePathPrefix;
 
 /**
  *
  * @param {Array<String>} states
  */
 function createStateAssetPickers(states) {
-  // TODO: should read from firestore or element
-  const selectedDisasterDiv = document.getElementById('selected-disaster');
-  ee.data
-      .listAssets(
-          'projects/earthengine-legacy/assets/users/gd/states', {}, () => {})
+  const statePickerDiv = document.getElementById('state-pickers');
+  removeAllChildren(statePickerDiv);
+  ee.data.listAssets(eeLegacyPathPrefix + 'states', {}, () => {})
       .then((result) => {
         let folders = new Set();
         for (const folder of result.assets) {
-          folders.add(folder.id.substring('users/gd/states/'.length));
+          folders.add(folder.id.substring((gdEePathPrefix + 'states/').length));
         }
         for (const state of states) {
           const assetPicker = document.createElement('select');
@@ -113,35 +134,53 @@ function createStateAssetPickers(states) {
           const assetPickerLabel = document.createElement('label');
           assetPickerLabel.for = state + 'adder';
           assetPickerLabel.innerHTML = 'Add EE asset(s) for ' + state + ': ';
-          const dir =
-              'projects/earthengine-legacy/assets/users/gd/states/' + state;
+          const dir = eeLegacyPathPrefix + 'states/' + state;
           if (!folders.has(state)) {
             ee.data.createFolder(dir, false, () => {});
           } else {
             ee.data.listAssets(dir, {}, () => {}).then((result) => {
-              console.log(state);
+              // empty state directory
+              if (!result.assets) {
+                return;
+              }
               for (const asset of result.assets) {
                 const assetPath = asset.id;
-                const option = document.createElement('option');
-                option.innerText = assetPath;
-                option.val = assetPath;
-                assetPicker.appendChild(option);
+                assetPicker.appendChild(createOptionFrom(assetPath));
               }
             });
           }
-          assetPicker.appendChild(createDefaultOption());
-          selectedDisasterDiv.appendChild(assetPickerLabel);
-          selectedDisasterDiv.appendChild(assetPicker);
-          selectedDisasterDiv.appendChild(document.createElement('br'))
+          assetPicker.appendChild(createOption(
+              '<Upload additional assets via the code editor>',
+              SENTINEL_OPTION_VALUE));
+
+          statePickerDiv.appendChild(assetPickerLabel);
+          statePickerDiv.appendChild(assetPicker);
+          statePickerDiv.appendChild(document.createElement('br'))
         }
-      });
+      })
 }
 
-function createDefaultOption() {
+function setStatus(text = '') {
+  document.getElementById('status').innerHTML = text;
+}
+
+function createOptionFrom(innerTextAndValue) {
+  return createOption(innerTextAndValue, innerTextAndValue);
+}
+
+function createOption(innerText, value) {
   const defaultOption = document.createElement('option');
-  defaultOption.innerText = '<Upload additional assets via the code editor>';
-  defaultOption.value = SENTINEL_PICK_VALUE;
+  defaultOption.innerText = innerText;
+  defaultOption.value = value;
   return defaultOption;
 }
 
-function getDisasterInfo() {}
+/**
+ * Utility function to remove all children of a given div.
+ * @param {Element} div
+ */
+function removeAllChildren(div) {
+  while (div.firstChild) {
+    div.firstChild.remove();
+  }
+}

@@ -20,9 +20,7 @@
 <form action="" id="disaster-picker">
   <label for="disaster">Disaster: </label><select id="disaster"></select>
 </form><p></p>
-
-<div id="selected-disaster" hidden="true">
-</div>
+<div id="status"></div>
 <div id="new-disaster" hidden="true">
   <div id="create-new-disaster">
     <form action="" id="new-disaster-form">
@@ -103,6 +101,9 @@
     </form>
   </div>
   <div id="asset-new-disaster"></div>
+</div>
+<div id="selected-disaster" hidden="true">
+  <div id="state-pickers"></div>
 </div>
 <script type="module">
   import {taskAccumulator} from './add_disaster.js';
