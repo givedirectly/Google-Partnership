@@ -168,7 +168,15 @@ function attachBlockGroups(building, blockGroups) {
 function run(firebaseAuthPromise) {
   const resources = getResources();
   const damage = ee.FeatureCollection(resources.damage);
-  storeCenter(damage, firebaseAuthPromise);
+  const centerStatusLabel = document.createElement('span');
+  centerStatusLabel.innerText = 'Computing and storing center of map: ';
+  const centerStatusSpan = document.createElement('span');
+  centerStatusSpan.innerText = 'in progress';
+  storeCenter(damage, firebaseAuthPromise).then((bounds) => {
+    centerStatusSpan.innerText = 'Found bounds (' + bounds[0] + ', ' + bounds[1] + '), (' + bounds[2] + ', ' + bounds[3] + ')';
+  }).catch((err) => centerStatusSpan.innerText = err);
+  $('.compute-status').append(centerStatusLabel);
+  $('.compute-status').append(centerStatusSpan);
 
   const snap = ee.FeatureCollection(resources.rawSnap)
                    .map((feature) => stringifyGeoid(feature, censusGeoidKey));
@@ -220,7 +228,7 @@ function run(firebaseAuthPromise) {
       data, assetName, 'users/gd/' + getDisaster() + '/' + assetName);
   task.start();
   $('.upload-status')
-      .text('Check Code Editor console for progress. Task: ' + task.id);
+      .text('Check Code Editor console for upload progress. Task: ' + task.id);
   joinedSnap.size().evaluate((val, failure) => {
     if (val) {
       $('.upload-status').append('\n<p>Found ' + val + ' elements');

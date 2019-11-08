@@ -1,11 +1,10 @@
-import {getTestCookie, inProduction} from './in_test_util.js';
+import {inProduction} from './in_test_util.js';
 
 export {
   authenticateToFirebase,
   Authenticator,
   CLIENT_ID,
   getFirebaseConfig,
-  getFirestoreRoot,
   initializeEE,
   initializeFirebase,
 };
@@ -155,16 +154,6 @@ function initializeEE(runCallback, errorCallback = console.error) {
  */
 function getFirebaseConfig(inProduction) {
   return inProduction ? firebaseConfigProd : firebaseConfigTest;
-}
-
-/**
- * Returns the root of the Firestore database. Just firebase.firestore() in
- * production, but a subcollection in tests to avoid data collisions.
- * @return {firebase.firestore.Firestore|firebase.firestore.CollectionReference}
- */
-function getFirestoreRoot() {
-  return inProduction() ? firebase.firestore() :
-                          firebase.firestore().doc('test/' + getTestCookie());
 }
 
 // Roughly copied from https://firebase.google.com/docs/auth/web/google-signin.
