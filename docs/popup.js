@@ -58,15 +58,13 @@ function setUpPopup() {
 
     /**
      * Sets the calculatedData property of this popup. The calculatedData must
-     * be freshly calculated (not stale).
+     * be accurate for the current polygon.
      * @param {Object} calculatedData
      */
     setCalculatedData(calculatedData) {
       this.calculatedData = calculatedData;
-      if (this.calculatedDataDiv) {
-        this.calculatedDataDiv.style.color = 'black';
-        this.updateCalculatedDataDiv();
-      }
+      this.calculatedDataDiv.style.color = 'black';
+      this.updateCalculatedDataDiv();
     }
 
     /** Sets the status of calculated data in this popup to "calculating". */
