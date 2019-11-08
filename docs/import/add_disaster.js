@@ -32,9 +32,9 @@ authenticator.start();
 function enableWhenReady() {
   // popuplate disaster picker.
   const disasterPicker = document.getElementById('disaster');
-  disasterMetadata = firebase.firestore().collection('disaster-metadata').get();
+  disasterMetadata = firebase.firestore().collection('disaster-metadata');
   disasterPicker.appendChild(createOptionFrom(SENTINEL_OPTION_VALUE));
-  disasterMetadata.then((querySnapshot) => {
+  disasterMetadata.get().then((querySnapshot) => {
     querySnapshot.forEach((doc) => {
       const name = doc.id;
       disasterPicker.appendChild(createOptionFrom(name));
@@ -90,10 +90,15 @@ function addDisaster() {
     setStatus('Error: Disaster name, year, and states are required.');
     return;
   }
+  if (typeof year !== 'number') {
+    setStatus('Error: year must be a number');
+    return;
+  }
   setStatus();
 
   const disasterId = year + '-' + name;
-  firebase.firestore().collection('disaster-metadata').doc(disasterId).set({
+
+  disasterMetadata.doc(disasterId).set({
     states: states,
   });
   disasters.set(disasterId, states);
