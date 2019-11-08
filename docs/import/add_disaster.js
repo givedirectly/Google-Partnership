@@ -59,9 +59,10 @@ function enableWhenReady() {
 }
 
 /**
- * Utility method to switch between the page creating a new disaster and the page
- * editing a current disaster. If a disaster id (year-name) is passed in, then
- * we switch to editing that disaster - else we assume we're adding a new one.
+ * Utility method to switch between the page creating a new disaster and the
+ * page editing a current disaster. If a disaster id (year-name) is passed in,
+ * then we switch to editing that disaster - else we assume we're adding a new
+ * one.
  * @param {?String} disaster
  */
 function toggleDisasterDivs(disaster = null) {
@@ -117,11 +118,12 @@ const gdEePathPrefix = 'users/gd/';
 const eeLegacyPathPrefix =
     'projects/earthengine-legacy/assets/' + gdEePathPrefix;
 
-// TODO: add functionality for adding assets to disaster records from these pickers.
+// TODO: add functionality for adding assets to disaster records from these
+// pickers.
 /**
  * Requests all assets in ee directories corresponding to given states and
- * displays them in pickers. Right now, selecting on those pickers doesn't actually
- * do anything.
+ * displays them in pickers. Right now, selecting on those pickers doesn't
+ * actually do anything.
  * @param {Array<String>} states
  */
 function createStateAssetPickers(states) {
