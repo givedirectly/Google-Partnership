@@ -31,13 +31,18 @@ describe('Unit test for center.js', () => {
           expectArrayWithin(
               [
                 mapBounds.sw.latitude, mapBounds.sw.longitude,
-                mapBounds.ne.latitude, mapBounds.ne.longitude
+                mapBounds.ne.latitude, mapBounds.ne.longitude,
               ],
               expectedBounds);
         });
   });
 });
 
+/**
+ * Utility function to compare two numerical arrays within a tolerance.
+ * @param {Array<number>} actualArray
+ * @param {Array<number>} expectedArray
+ */
 function expectArrayWithin(actualArray, expectedArray) {
   expect(actualArray).to.have.length(expectedArray.length);
   for (let i = 0; i < actualArray.length; i++) {
@@ -45,6 +50,11 @@ function expectArrayWithin(actualArray, expectedArray) {
   }
 }
 
+/**
+ * Utility function to compare two numbers within a tolerance of 0.1.
+ * @param {number} actualNumber
+ * @param {number} expectedNumber
+ */
 function expectWithin(actualNumber, expectedNumber) {
   expect(actualNumber).to.be.within(expectedNumber - 0.1, expectedNumber + 0.1);
 }
