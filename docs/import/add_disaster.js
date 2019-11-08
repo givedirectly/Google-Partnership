@@ -45,7 +45,7 @@ function enableWhenReady() {
 
     disasterPicker.addEventListener('change', () => {
       if ($('#disaster').val() === SENTINEL_NEW_DISASTER_VALUE) {
-        toggleDisasterDivs()
+        toggleDisasterDivs();
       } else {
         toggleDisasterDivs($('#disaster').val());
       }
@@ -94,7 +94,7 @@ function addDisaster() {
 
   const disasterId = year + '-' + name;
   firebase.firestore().collection('disaster-metadata').doc(disasterId).set({
-    states: states
+    states: states,
   });
   disasters.set(disasterId, states);
 
@@ -131,7 +131,7 @@ function createStateAssetPickers(states) {
   removeAllChildren(statePickerDiv);
   ee.data.listAssets(eeLegacyPathPrefix + 'states', {}, () => {})
       .then((result) => {
-        let folders = new Set();
+        const folders = new Set();
         for (const folder of result.assets) {
           folders.add(folder.id.substring((gdEePathPrefix + 'states/').length));
         }
@@ -163,9 +163,9 @@ function createStateAssetPickers(states) {
 
           statePickerDiv.appendChild(assetPickerLabel);
           statePickerDiv.appendChild(assetPicker);
-          statePickerDiv.appendChild(document.createElement('br'))
+          statePickerDiv.appendChild(document.createElement('br'));
         }
-      })
+      });
 }
 
 /**
