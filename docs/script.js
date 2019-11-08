@@ -1,6 +1,7 @@
-import {authenticateToFirebase, Authenticator, CLIENT_ID, initializeEE, initializeFirebase} from './authenticate.js';
+import {authenticateToFirebase, Authenticator, CLIENT_ID, getFirestoreRoot, initializeEE, initializeFirebase} from './authenticate.js';
 import createMap from './create_map.js';
 import {earthEngineTestTokenCookieName, firebaseTestTokenCookieName, getCookieValue, inProduction} from './in_test_util.js';
+import {getDisaster, getResources} from './resources.js';
 import run from './run.js';
 import SettablePromise from './settable_promise.js';
 import {initializeSidebar} from './sidebar.js';
@@ -18,17 +19,21 @@ function setup() {
 
   $(document).ready(function() {
     initializeSidebar();
-    const firebaseAuthPromise = new SettablePromise();
+    const firebaseAuthPromiseWrapper = new SettablePromise();
 
     // TODO: Have this return a map promise so that we can kick off other
     // processes (esp ee ones) without waiting on firebase.
-    map = createMap(firebaseAuthPromise.getPromise());
+    const firebaseAuthPromise = firebaseAuthPromiseWrapper.getPromise();
+    const disasterMetadataPromise =
+        firebaseAuthPromise.then(getDisasterDocument);
+    map = createMap(disasterMetadataPromise);
 
-    const runOnInitialize = () => run(map, firebaseAuthPromise.getPromise());
+    const runOnInitialize = () =>
+        run(map, firebaseAuthPromise, disasterMetadataPromise);
     if (inProduction()) {
       const authenticator = new Authenticator(
-          (token) =>
-              firebaseAuthPromise.setPromise(authenticateToFirebase(token)),
+          (token) => firebaseAuthPromiseWrapper.setPromise(
+              authenticateToFirebase(token)),
           runOnInitialize);
       authenticator.start();
     } else {
@@ -46,7 +51,7 @@ function setup() {
         return;
       }
 
-      firebaseAuthPromise.setPromise(
+      firebaseAuthPromiseWrapper.setPromise(
           firebase.auth().signInWithCustomToken(firebaseToken));
       ee.data.setAuthToken(
           CLIENT_ID, 'Bearer', eeToken,
@@ -56,6 +61,18 @@ function setup() {
           /* updateAuthLibrary */ false);
     }
   });
+}
+
+/**
+ * Fetches the document with all metadata for the current disaster. Should only
+ * be called once to avoid excessive fetches.
+ * @return {Promise<firebase.firestore.DocumentSnapshot>}
+ */
+function getDisasterDocument() {
+  return getFirestoreRoot()
+      .collection('disaster-metadata')
+      .doc(getResources().year + '-' + getDisaster())
+      .get();
 }
 
 setup();

@@ -23,9 +23,9 @@ dependencies.
 * Set `export GOOGLE_APPLICATION_CREDENTIALS=/path/to/secret.json` in your
 shell, most likely in your `~/.bashrc`. Get the service account .json file,
 either from a collaborator or by logging into the [Service Accounts page](
-https://console.cloud.google.com/iam-admin/serviceaccounts?project=mapping-crisis)
-as `gd-earthengine-user@givedirectly.org` and generating a new key for
-`firebase-adminsdk-pw40g@mapping-crisis.iam.gserviceaccount.com`. This is needed
+https://console.cloud.google.com/iam-admin/serviceaccounts?project=mapping-test-data)
+as `gd-earthengine-test-user@givedirectly.org` and generating a new key for
+`firebase-adminsdk-j6emn@mapping-test-data.iam.gserviceaccount.com`. This is needed
 for running tests. Remember to startup a new terminal window for changes to
 take effect.
 

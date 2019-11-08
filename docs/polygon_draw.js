@@ -1,6 +1,6 @@
+import {getFirestoreRoot} from './authenticate.js';
 import {mapContainerId, writeWaiterId} from './dom_constants.js';
 import {createError} from './error.js';
-import {getTestCookie, inProduction} from './in_test_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {geoPointToLatLng, latLngToGeoPoint} from './map_util.js';
 import {createPopup, isMarker, setUpPopup} from './popup.js';
@@ -226,8 +226,7 @@ StoredShapeData.compareGeoPointArrays = (array1, array2) => {
 window.onbeforeunload = () =>
     StoredShapeData.pendingWriteCount > 0 ? true : null;
 
-const collectionName =
-    'usershapes' + (inProduction() ? '' : ('-test/' + getTestCookie()));
+const collectionName = 'usershapes';
 
 let userShapes = null;
 
@@ -287,7 +286,7 @@ function setUpPolygonDrawing(map, firebasePromise) {
 function processUserRegions(map, firebasePromise) {
   addLoadingElement(mapContainerId);
   return firebasePromise
-      .then(() => userShapes = firebase.firestore().collection(collectionName))
+      .then(() => userShapes = getFirestoreRoot().collection(collectionName))
       .then(() => userShapes.get())
       .then(
           (querySnapshot) => drawRegionsFromFirestoreQuery(querySnapshot, map))
