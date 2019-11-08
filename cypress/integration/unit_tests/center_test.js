@@ -30,8 +30,10 @@ describe('Unit test for center.js', () => {
           const mapBounds = doc.data()['map-bounds'];
           expectArrayWithin(
               [
-                mapBounds.sw.latitude, mapBounds.sw.longitude,
-                mapBounds.ne.latitude, mapBounds.ne.longitude,
+                mapBounds.sw.latitude,
+                mapBounds.sw.longitude,
+                mapBounds.ne.latitude,
+                mapBounds.ne.longitude,
               ],
               expectedBounds);
         });
