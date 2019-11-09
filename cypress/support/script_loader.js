@@ -132,6 +132,7 @@ function doServerEeSetup() {
 }
 
 if (Cypress.spec.relative.startsWith('cypress/integration/integration_tests')) {
+  addFirebaseHooks();
   // EE authentication.
   before(doServerEeSetup);
   beforeEach(() => {
