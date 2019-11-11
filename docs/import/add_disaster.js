@@ -35,7 +35,7 @@ function enableWhenReady() {
   disasterMetadata = getFirestoreRoot().collection('disaster-metadata');
 
   // populate disaster picker.
-  const disasterPicker = $("#disaster");
+  const disasterPicker = $('#disaster');
   disasterPicker.append(createOptionFrom(SENTINEL_OPTION_VALUE));
   disasterMetadata.get().then((querySnapshot) => {
     querySnapshot.forEach((doc) => {
@@ -46,7 +46,7 @@ function enableWhenReady() {
     disasterPicker.append(
         createOption('ADD NEW DISASTER', SENTINEL_NEW_DISASTER_VALUE));
 
-    disasterPicker.on('change',() => toggleState($('#disaster').val()));
+    disasterPicker.on('change', () => toggleState($('#disaster').val()));
   });
 
   // enable add disaster button now that firestore is ready.
