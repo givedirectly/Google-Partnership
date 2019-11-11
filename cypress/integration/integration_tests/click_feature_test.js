@@ -81,8 +81,7 @@ describe('Integration test for clicking feature', () => {
 function clickAndVerifyBlockGroup() {
   cy.get('[placeholder="Search"]').clear().type('Greater Greenspoint{enter}');
 
-  // This wait is embarrassing, but otherwise Travis fails flakily.
-  cy.wait(1000);
+  cy.wait(500);
   cy.get('.map').click(900, 500);
   cy.get('.map').should('contain', 'SCORE: 72');
   cy.get('.google-visualization-table-tr-sel')
