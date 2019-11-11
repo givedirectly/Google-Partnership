@@ -1,7 +1,7 @@
-import {authenticateToFirebase, Authenticator, CLIENT_ID, getFirestoreRoot, initializeEE, initializeFirebase} from './authenticate.js';
+import {authenticateToFirebase, Authenticator, CLIENT_ID, initializeEE, initializeFirebase} from './authenticate.js';
 import createMap from './create_map.js';
+import {readDisasterDocument} from './firestore_document.js';
 import {earthEngineTestTokenCookieName, firebaseTestTokenCookieName, getCookieValue, inProduction} from './in_test_util.js';
-import {getDisaster, getResources} from './resources.js';
 import run from './run.js';
 import SettablePromise from './settable_promise.js';
 import {initializeSidebar} from './sidebar.js';
@@ -25,7 +25,7 @@ function setup() {
     // processes (esp ee ones) without waiting on firebase.
     const firebaseAuthPromise = firebaseAuthPromiseWrapper.getPromise();
     const disasterMetadataPromise =
-        firebaseAuthPromise.then(getDisasterDocument);
+        firebaseAuthPromise.then(readDisasterDocument);
     map = createMap(disasterMetadataPromise);
 
     const runOnInitialize = () =>
@@ -61,18 +61,6 @@ function setup() {
           /* updateAuthLibrary */ false);
     }
   });
-}
-
-/**
- * Fetches the document with all metadata for the current disaster. Should only
- * be called once to avoid excessive fetches.
- * @return {Promise<firebase.firestore.DocumentSnapshot>}
- */
-function getDisasterDocument() {
-  return getFirestoreRoot()
-      .collection('disaster-metadata')
-      .doc(getResources().year + '-' + getDisaster())
-      .get();
 }
 
 setup();

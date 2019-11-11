@@ -1,6 +1,6 @@
-import {getFirestoreRoot} from './authenticate.js';
 import {mapContainerId, writeWaiterId} from './dom_constants.js';
 import {createError} from './error.js';
+import {getFirestoreRoot} from './firestore_document.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {geoPointToLatLng, latLngToGeoPoint} from './map_util.js';
 import {createPopup, isMarker, setUpPopup} from './popup.js';

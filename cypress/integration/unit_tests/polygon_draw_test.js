@@ -1,4 +1,4 @@
-import {getFirestoreRoot} from '../../../docs/authenticate';
+import {getFirestoreRoot} from '../../../docs/firestore_document';
 import * as loading from '../../../docs/loading';
 import {processUserRegions, StoredShapeData} from '../../../docs/polygon_draw';
 import * as resourceGetter from '../../../docs/resources';
