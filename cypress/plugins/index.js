@@ -95,12 +95,15 @@ module.exports = (on, config) => {
     /**
      * Recursively deletes all data under the test/currentTestRoot tree, and
      * creates necessary data for tests to consume, pulling that data from prod
-     * Firebase. For use before a test case runs.
+     * Firebase. For use before a test case runs. Also deletes all test data
+     * older than 24 hours, so there isn't indefinite build-up if tests are
+     * frequently aborted before they clean up.
      * @param {string} currentTestRoot document name directly underneath test/
      * @return {Promise<null>} Promise that resolves when deletion and data
      * creation is complete
      */
     clearAndPopulateTestFirestoreData(currentTestRoot) {
+      console.log('about to do it for ', currentTestRoot);
       const testAdminApp = createTestFirebaseAdminApp();
       const prodApp = firebase.initializeApp(firebaseConfigProd, 'prodapp');
       // We use a test app, created using normal firebase, versus a test admin
@@ -113,9 +116,10 @@ module.exports = (on, config) => {
               .createCustomToken('cypress-firestore-test-user')
               .then((token) => testApp.auth().signInWithCustomToken(token));
       const deletePromise = deleteTestData(currentTestRoot, testAdminApp);
+      const deleteOldPromise = deleteAllOldTestData(testAdminApp);
       const documentPath = 'disaster-metadata/2017-harvey';
       const harveyDoc = prodApp.firestore().doc(documentPath);
-      return Promise.all([harveyDoc.get(), signinPromise, deletePromise])
+      return Promise.all([harveyDoc.get(), signinPromise, deletePromise, deleteOldPromise])
           .then(
               (result) =>
                   testApp.firestore()
@@ -176,6 +180,35 @@ function createTestFirebaseAdminApp() {
 function deleteTestData(currentTestRoot, app) {
   return deleteDocRecursively(
       app.firestore().doc(testPrefix + currentTestRoot));
+}
+
+const millisecondsInADay = 60 * 60 * 24 * 1000;
+
+/**
+ * Recursively deletes all test data older than 24 hours, under the assumption
+ * that no test runs for that long. This prevents old unfinished tests from
+ * using too much quota.
+ * @param {admin.app.App} app
+ */
+function deleteAllOldTestData(app) {
+  const currentDate = new Date();
+  app.firestore().collection(testPrefix).get().then((queryResult) => {
+    const promises = [];
+    queryResult.forEach((doc) => {
+          const ref = doc.ref;
+          const testRunName = ref.id;
+          const dateElement = testRunName.split('-')[0];
+          // isNaN helpfully returns false for strings that are numerical.
+          if (!isNaN(dateElement)) {
+            const date = new Date(dateElement);
+            if (currentDate - date > millisecondsInADay) {
+              promises.push(deleteDocRecursively(ref))
+            }
+          }
+    }
+    );
+    return Promise.all(promises);
+  });
 }
 
 /**
