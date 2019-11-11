@@ -1,9 +1,7 @@
 import {CLIENT_ID, getFirebaseConfig} from '../../docs/authenticate';
 import {cypressTestCookieName, earthEngineTestTokenCookieName, firebaseTestTokenCookieName} from '../../docs/in_test_util';
 
-export {loadScriptsBeforeForUnitTests};
-
-let testCookieValue = null;
+export {addFirebaseHooks, loadScriptsBeforeForUnitTests};
 
 const scriptMap = new Map([
   [
@@ -109,6 +107,7 @@ const testPrefix = new Date().getTime() + '-';
  * the appropriate cookie.
  */
 function addFirebaseHooks() {
+  let testCookieValue = null;
   before(() => cy.task('initializeTestFirebase', null, {
                    timeout: 10000,
                  }).then((token) => global.firestoreCustomToken = token));
@@ -116,6 +115,7 @@ function addFirebaseHooks() {
     testCookieValue = testPrefix + Math.random();
     cy.task(
         'clearAndPopulateTestFirestoreData', testCookieValue, {timeout: 15000});
+    cy.setCookie(cypressTestCookieName, testCookieValue);
   });
   afterEach(() => cy.task('deleteTestData', testCookieValue));
 }
@@ -131,14 +131,12 @@ function doServerEeSetup() {
 }
 
 if (Cypress.spec.relative.startsWith('cypress/integration/integration_tests')) {
-  // Firebase hooks populate/clear test Firebase data.
   addFirebaseHooks();
   // EE authentication.
   before(doServerEeSetup);
   beforeEach(() => {
     /** wide enough for sidebar */
     cy.viewport(1100, 1700);
-    cy.setCookie(cypressTestCookieName, testCookieValue);
     cy.setCookie(firebaseTestTokenCookieName, firestoreCustomToken);
     cy.setCookie(earthEngineTestTokenCookieName, earthEngineCustomToken);
   });

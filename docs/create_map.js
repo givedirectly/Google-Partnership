@@ -28,9 +28,10 @@ function createMap(firebasePromise) {
       {center: {lat: 39.8283, lng: -98.5795}, styles: mapStyles});
 
   firebasePromise.then((doc) => {
+    const mapBounds = doc.data()['map-bounds'];
     map.fitBounds(new google.maps.LatLngBounds(
-        new google.maps.LatLng(geoPointToLatLng(doc.data()['map-bounds'].sw)),
-        new google.maps.LatLng(geoPointToLatLng(doc.data()['map-bounds'].ne))));
+        new google.maps.LatLng(geoPointToLatLng(mapBounds.sw)),
+        new google.maps.LatLng(geoPointToLatLng(mapBounds.ne))));
   });
   setUpPolygonDrawing(map, firebasePromise);
 
