@@ -3,7 +3,7 @@
  * starting thresholds of poverty 0.3 and damage 0.5
  */
 describe('Integration test for clicking feature', () => {
-  it.only('clicks a feature on the map highlights feature in list', () => {
+  it('clicks a feature on the map highlights feature in list', () => {
     cy.visit(host);
     cy.awaitLoad();
 
