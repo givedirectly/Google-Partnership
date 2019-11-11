@@ -174,9 +174,10 @@ function run(firebaseAuthPromise) {
   centerStatusSpan.innerText = 'in progress';
   storeCenter(damage, firebaseAuthPromise)
       .then(trimGeoNumbers)
-      .then((bounds) =>
-          centerStatusSpan.innerText = 'Found bounds (' + bounds[0] + ', ' +
-              bounds[1] + '), (' + bounds[2] + ', ' + bounds[3] + ')')
+      .then(
+          (bounds) => centerStatusSpan.innerText = 'Found bounds (' +
+              bounds[0] + ', ' + bounds[1] + '), (' + bounds[2] + ', ' +
+              bounds[3] + ')')
       .catch((err) => centerStatusSpan.innerText = err);
   $('.compute-status').append(centerStatusLabel);
   $('.compute-status').append(centerStatusSpan);
