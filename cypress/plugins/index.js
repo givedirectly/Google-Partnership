@@ -57,21 +57,24 @@ module.exports = (on, config) => {
     /**
      * Produces a Firebase token that can be used for our Firestore database.
      * Because the database belongs to a test-only user, this user is given free
-     * reign to do whatever it likes.
+     * reign to do whatever it likes. Also deletes all test data older than 24
+     * hours, so there isn't indefinite build-up if tests are frequently aborted
+     * before they clean up.
      *
      * See https://firebase.google.com/docs/auth/admin/create-custom-tokens.
      * @return {Promise<string>} The token to be used
      */
     initializeTestFirebase() {
       const currentApp = createTestFirebaseAdminApp();
+      const deleteOldPromise = deleteAllOldTestData(currentApp);
       const result =
           currentApp.auth().createCustomToken('cypress-firestore-test-user');
-      return result.then(async (token) => {
+      return Promise.all([result, deleteOldPromise]).then(async (list) => {
         // Firebase really doesn't like duplicate apps lying around, so clean up
         // immediately.
         await currentApp.delete();
-        if (token) {
-          return token;
+        if (list[0]) {
+          return list[0];
         }
         throw new Error('No token generated');
       });
@@ -95,15 +98,14 @@ module.exports = (on, config) => {
     /**
      * Recursively deletes all data under the test/currentTestRoot tree, and
      * creates necessary data for tests to consume, pulling that data from prod
-     * Firebase. For use before a test case runs. Also deletes all test data
-     * older than 24 hours, so there isn't indefinite build-up if tests are
-     * frequently aborted before they clean up.
+     * Firebase. For use before a test case runs. We add a dummy field inside
+     * test/currentTestRoot so that Firestore will deign to list this document
+     * later (https://stackoverflow.com/questions/47043651/this-document-does-not-exist-and-will-not-appear-in-queries-or-snapshots-but-id)
      * @param {string} currentTestRoot document name directly underneath test/
      * @return {Promise<null>} Promise that resolves when deletion and data
      * creation is complete
      */
     clearAndPopulateTestFirestoreData(currentTestRoot) {
-      console.log('about to do it for ', currentTestRoot);
       const testAdminApp = createTestFirebaseAdminApp();
       const prodApp = firebase.initializeApp(firebaseConfigProd, 'prodapp');
       // We use a test app, created using normal firebase, versus a test admin
@@ -116,15 +118,15 @@ module.exports = (on, config) => {
               .createCustomToken('cypress-firestore-test-user')
               .then((token) => testApp.auth().signInWithCustomToken(token));
       const deletePromise = deleteTestData(currentTestRoot, testAdminApp);
-      const deleteOldPromise = deleteAllOldTestData(testAdminApp);
       const documentPath = 'disaster-metadata/2017-harvey';
       const harveyDoc = prodApp.firestore().doc(documentPath);
-      return Promise.all([harveyDoc.get(), signinPromise, deletePromise, deleteOldPromise])
+      const documentReference = testApp.firestore()
+          .doc('test/' + currentTestRoot + '/' + documentPath);
+      return Promise.all([harveyDoc.get(), signinPromise, deletePromise])
           .then(
               (result) =>
-                  testApp.firestore()
-                      .doc('test/' + currentTestRoot + '/' + documentPath)
-                      .set(result[0].data()))
+                  Promise.all([documentReference.set(result[0].data(), {merge: true}),
+                  documentReference.set({dummy: true}, {merge: true})]))
           .then(
               () => Promise.all(
                   [testAdminApp.delete(), prodApp.delete(), testApp.delete()]))
@@ -187,23 +189,23 @@ const millisecondsInADay = 60 * 60 * 24 * 1000;
 /**
  * Recursively deletes all test data older than 24 hours, under the assumption
  * that no test runs for that long. This prevents old unfinished tests from
- * using too much quota.
+ * using too much quota. Note that documents in the list must have a field set
+ * to show up in a listing of the parent collection (https://stackoverflow.com/questions/47043651/this-document-does-not-exist-and-will-not-appear-in-queries-or-snapshots-but-id).
+ * That field is set in clearAndPopulateTestFirestoreData.
  * @param {admin.app.App} app
  */
 function deleteAllOldTestData(app) {
   const currentDate = new Date();
-  app.firestore().collection(testPrefix).get().then((queryResult) => {
+  const querySnapshotPromise = app.firestore().collection(testPrefix).get();
+  return querySnapshotPromise.then((queryResult) => {
     const promises = [];
     queryResult.forEach((doc) => {
           const ref = doc.ref;
           const testRunName = ref.id;
           const dateElement = testRunName.split('-')[0];
-          // isNaN helpfully returns false for strings that are numerical.
-          if (!isNaN(dateElement)) {
-            const date = new Date(dateElement);
-            if (currentDate - date > millisecondsInADay) {
-              promises.push(deleteDocRecursively(ref))
-            }
+          const date = new Date(parseInt(dateElement, 10));
+          if (currentDate - date > millisecondsInADay) {
+            promises.push(deleteDocRecursively(ref));
           }
     }
     );

@@ -3,11 +3,7 @@ import {cypressTestCookieName, earthEngineTestTokenCookieName, firebaseTestToken
 
 export {loadScriptsBeforeForUnitTests};
 
-global.host = 'http://localhost:8080/';
-
 let testCookieValue = null;
-
-beforeEach(() => cy.task('logg', 'in before each'));
 
 const scriptMap = new Map([
   [
@@ -25,7 +21,7 @@ const scriptMap = new Map([
       () => typeof (deck) !== 'undefined',
     ],
   ],
-  ['ee', [host + 'lib/ee_api_js_debug.js', () => typeof (ee) !== 'undefined']],
+  ['ee', ['lib/ee_api_js_debug.js', () => typeof (ee) !== 'undefined']],
   [
     'firebase',
     [
@@ -113,17 +109,15 @@ const testPrefix = new Date().getTime() + '-';
  * the appropriate cookie.
  */
 function addFirebaseHooks() {
-  // before(() => cy.task('initializeTestFirebase', null, {
-  //                  timeout: 10000,
-  //                }).then((token) => global.firestoreCustomToken = token));
+  before(() => cy.task('initializeTestFirebase', null, {
+                   timeout: 10000,
+                 }).then((token) => global.firestoreCustomToken = token));
   beforeEach(() => {
     testCookieValue = testPrefix + Math.random();
-    cy.task('logg', 'Our spec is ' + Cypress.spec.relative);
-    cy.log('Our spec is', Cypress.spec.relative);
-    // cy.task(
-    //     'clearAndPopulateTestFirestoreData', testCookieValue, {timeout: 15000});
+    cy.task(
+        'clearAndPopulateTestFirestoreData', testCookieValue, {timeout: 15000});
   });
-  // afterEach(() => cy.task('deleteTestData', testCookieValue));
+  afterEach(() => cy.task('deleteTestData', testCookieValue));
 }
 
 /**
@@ -139,15 +133,15 @@ function doServerEeSetup() {
 if (Cypress.spec.relative.startsWith('cypress/integration/integration_tests')) {
   // Firebase hooks populate/clear test Firebase data.
   addFirebaseHooks();
-//   // EE authentication.
-//   before(doServerEeSetup);
-//   beforeEach(() => {
-//     /** wide enough for sidebar */
-//     cy.viewport(1100, 1700);
-//     cy.setCookie(cypressTestCookieName, testCookieValue);
-// //    cy.setCookie(firebaseTestTokenCookieName, firestoreCustomToken);
-//     cy.setCookie(earthEngineTestTokenCookieName, earthEngineCustomToken);
-//   });
+  // EE authentication.
+  before(doServerEeSetup);
+  beforeEach(() => {
+    /** wide enough for sidebar */
+    cy.viewport(1100, 1700);
+    cy.setCookie(cypressTestCookieName, testCookieValue);
+   cy.setCookie(firebaseTestTokenCookieName, firestoreCustomToken);
+    cy.setCookie(earthEngineTestTokenCookieName, earthEngineCustomToken);
+  });
 }
 
 /**
