@@ -5,6 +5,8 @@
   <title>Add asset</title>
 <!--  <script src="./multifile.js"></script>-->
   <script src="../lib/ee_api_js_debug.js"></script>
+  <!-- Load jQuery, a 3rd-party library. -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
   <!-- TODO(janakr): download this script to lib. -->
   <script src="https://apis.google.com/js/api.js"></script>
   <script type="module" src="./add_asset.js"></script>
@@ -14,26 +16,7 @@
 </head>
 <body>
 
-<div class="navbar">
-  <h1 class="nav-header">Add Asset</h1>
-
-  <nav role="navigation">
-    <div id="nav-toggle">
-      <!-- A hidden checkbox just to be the click receiver the :checked selector can be used. -->
-      <input id="nav-input" type="checkbox" />
-
-      <!-- Hamburger. -->
-      <span></span>
-      <span></span>
-      <span></span>
-
-      <ul class="nav-menu">
-        <a href="/"><li>Map</li></a>
-        <a href="/import/add_asset.html"><li>Upload Asset</li></a>
-      </ul>
-    </div>
-  </nav>
-</div>
+<div id="navbar"></div>
 
 <br><br><br>  <!-- TODO(ramvellanki): switch to using a margin above the main content of this page -->
 

@@ -425,3 +425,5 @@ function addFileToDelete(file) {
     filesToDelete.length = 0;
   }
 }
+
+$(() => $('#navbar').load('/navbar.html'));

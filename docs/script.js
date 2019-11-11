@@ -59,3 +59,5 @@ function setup() {
 }
 
 setup();
+
+$(() => $('#navbar').load('/navbar.html'));
