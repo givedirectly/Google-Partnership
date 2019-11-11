@@ -1,8 +1,8 @@
 import {getFirestoreRoot} from '../../../docs/firestore_document';
 import * as loading from '../../../docs/loading';
-import SettablePromise from '../../../docs/settable_promise';
-import {processUserRegions, StoredShapeData, setUpPolygonDrawing} from '../../../docs/polygon_draw';
+import {processUserRegions, setUpPolygonDrawing, StoredShapeData} from '../../../docs/polygon_draw';
 import * as resourceGetter from '../../../docs/resources';
+import SettablePromise from '../../../docs/settable_promise';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 
 const polyCoords = [
@@ -189,25 +189,24 @@ describe('Unit test for ShapeData', () => {
     event.overlay = polygon;
     firebaseCollection.add = () => Promise.resolve({id: 'id'});
     const updatePromise = new SettablePromise();
-    cy.wrap(setUpPolygonDrawing(map, Promise.resolve())).then((drawingManager) => {
-      google.maps.event.trigger(drawingManager, 'overlaycomplete', event);
-      updatePromise.setPromise(event.resultPromise);
-    });
+    cy.wrap(setUpPolygonDrawing(map, Promise.resolve()))
+        .then((drawingManager) => {
+          google.maps.event.trigger(drawingManager, 'overlaycomplete', event);
+          updatePromise.setPromise(event.resultPromise);
+        });
     let calculatingDiv;
     // Popup initialization happens async, apparently, and takes a bit of time.
-    cy.wait(50)
-        .then(() => {
-          calculatingDiv =
-              document.getElementsByClassName('popup-calculated-data')[0];
-          expect(calculatingDiv).to.contain('calculating');
-          expect(getComputedStyle(calculatingDiv).color)
-              .to.eql('rgb(128, 128, 128)');
-        });
+    cy.wait(50).then(() => {
+      calculatingDiv =
+          document.getElementsByClassName('popup-calculated-data')[0];
+      expect(calculatingDiv).to.contain('calculating');
+      expect(getComputedStyle(calculatingDiv).color)
+          .to.eql('rgb(128, 128, 128)');
+    });
     cy.wrap(updatePromise.getPromise())
         .then(
             () => expect(getComputedStyle(calculatingDiv).color)
                       .to.eql('rgb(0, 0, 0)'));
-
   });
 
   it('Skips update if nothing changed', () => {
