@@ -3,6 +3,7 @@ import * as loading from '../../../docs/loading';
 import {processUserRegions, StoredShapeData} from '../../../docs/polygon_draw';
 import * as resourceGetter from '../../../docs/resources';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
+import {createPopup, setUpPopup} from "../../../docs/popup";
 
 const polyCoords = [
   {lng: 1, lat: 1},
@@ -174,6 +175,28 @@ describe('Unit test for ShapeData', () => {
       expect(underTest.id).to.eql('my_id');
       expect(StoredShapeData.pendingWriteCount).to.eql(0);
     });
+  });
+
+  it('Shows calculating before update finishes', () => {
+    const div = document.createElement('div');
+    document.getElementsByTagName('body')[0].appendChild(div);
+    const map = new google.maps.Map(div, {center: {lat: 0, lng: 0}, zoom: 1});
+    const polygon = new google.maps.Polygon({map: map, paths: [{lat: 0, lng: 0}, {lat: 1, lng: 1}, {lat: 0, lng: 1}]});
+    setUpPopup();
+    const popup = createPopup(polygon, map, 'notes');
+    const storedShapeData = new StoredShapeData(null, null, null, popup);
+    firebaseCollection.add = () => Promise.resolve({id: 'id'});
+    let calculatingDiv;
+    cy.wait(50).then(() => {
+      calculatingDiv = document.getElementsByClassName('popup-calculated-data')[0];
+      expect(calculatingDiv).to.contain('calculating');
+      expect(getComputedStyle(calculatingDiv).color).to.eql('rgb(128, 128, 128)');
+      const resultPromise = storedShapeData.update();
+      // Promise is definitely not done: we're still in the same thread.
+      expect(calculatingDiv).to.contain('calculating');
+      expect(getComputedStyle(calculatingDiv).color).to.eql('rgb(128, 128, 128)');
+      return resultPromise;
+    }).then(() => expect(getComputedStyle(calculatingDiv).color).to.eql('rgb(0, 0, 0)'));
   });
 
   it('Skips update if nothing changed', () => {

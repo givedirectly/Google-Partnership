@@ -26,27 +26,6 @@ describe('Integration tests for drawing polygons', () => {
         .and('eq', 'rgb(0, 0, 0)');
   });
 
-  // This test relies on the earth engine damage count calculation happening
-  // slower than the cypress gets for the grey 'calculating'. Running a bunch
-  // of times manually this seems fairly safe, but there's a chance it flakes
-  // out if something changes. If this does start to flake, we can also consider
-  // lowering the wait at the end of drawPolygonAndClickOnIt.
-  it('Draws a polygon, checks for calculating status', () => {
-    cy.visit(host);
-    drawPolygonAndClickOnIt();
-    // TODO(janakr): remove when test is no longer flaky.
-    cy.get('.popup-calculated-data').then(($elt) => cy.task('logg', $elt.text()));
-    cy.get('.popup-calculated-data').contains('calculating');
-    // assert damage text is grey while editing
-    cy.get('.popup-calculated-data')
-        .should('have.css', 'color')
-        .and('eq', 'rgb(128, 128, 128)');
-    cy.awaitLoad(['writeWaiter']);
-    cy.get('.popup-calculated-data')
-        .should('have.css', 'color')
-        .and('eq', 'rgb(0, 0, 0)');
-  });
-
   it('Draws a polygon and deletes it', () => {
     // Accept confirmation when it happens.
     cy.on('window:confirm', () => true);
