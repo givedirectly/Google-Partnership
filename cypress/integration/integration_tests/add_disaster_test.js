@@ -10,7 +10,7 @@ before(() => {
       () => {});
   authenticator.start();
   firebaseAuthPromise.then(
-      () => {firebase.firestore().collection('disaster-metadata')})
+      () => firebase.firestore().collection('disaster-metadata'));
 });
 
 describe('Integration tests for add_disaster page', () => {

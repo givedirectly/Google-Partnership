@@ -94,7 +94,7 @@ function addDisaster() {
   const disasterId = year + '-' + name;
   disasterMetadata.doc(disasterId).get().then((doc) => {
     if (doc.exists) {
-      setStatus('Error: disaster with that name and year already exists.')
+      setStatus('Error: disaster with that name and year already exists.');
     } else {
       clearStatus();
       disasterMetadata.doc(disasterId).set({
@@ -180,6 +180,7 @@ function setStatus(text) {
   $('#status').prop('innerHTML', text).show();
 }
 
+/** Utility function for clearing status div. */
 function clearStatus() {
   $('#status').empty().hide();
 }
