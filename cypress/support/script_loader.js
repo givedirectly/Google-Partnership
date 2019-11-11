@@ -104,6 +104,7 @@ function loadScriptsBeforeForUnitTests(...scriptKeys) {
   }
 }
 
+const testPrefix = new Date();
 /**
  * Adds all necessary hooks to set up Firebase, for either unit or integration
  * tests. Populates test Firestore database. Integration tests need to also set
@@ -114,7 +115,7 @@ function addFirebaseHooks() {
                    timeout: 10000,
                  }).then((token) => global.firestoreCustomToken = token));
   beforeEach(() => {
-    testCookieValue = 'id-' + Math.random();
+    testCookieValue = testPrefix + ',' + Math.random();
     cy.task(
         'clearAndPopulateTestFirestoreData', testCookieValue, {timeout: 15000});
   });
