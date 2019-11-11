@@ -1,3 +1,4 @@
+import {getFirestoreRoot} from '../authenticate.js';
 import {authenticateToFirebase, Authenticator} from '../authenticate.js';
 import SettablePromise from '../settable_promise.js';
 import TaskAccumulator from './task_accumulator.js';
@@ -31,28 +32,27 @@ authenticator.start();
  * to add a new disaster and store to firebase.
  * */
 function enableWhenReady() {
-  disasterMetadata = firebase.firestore().collection('disaster-metadata');
+  disasterMetadata = getFirestoreRoot().collection('disaster-metadata');
 
   // populate disaster picker.
-  const disasterPicker = document.getElementById('disaster');
-  disasterPicker.appendChild(createOptionFrom(SENTINEL_OPTION_VALUE));
+  const disasterPicker = $("#disaster");
+  disasterPicker.append(createOptionFrom(SENTINEL_OPTION_VALUE));
   disasterMetadata.get().then((querySnapshot) => {
     querySnapshot.forEach((doc) => {
       const name = doc.id;
-      disasterPicker.appendChild(createOptionFrom(name));
+      disasterPicker.append(createOptionFrom(name));
       disasters.set(name, doc.data().states);
     });
-    disasterPicker.appendChild(
+    disasterPicker.append(
         createOption('ADD NEW DISASTER', SENTINEL_NEW_DISASTER_VALUE));
 
-    disasterPicker.addEventListener(
-        'change', () => toggleState($('#disaster').val()));
+    disasterPicker.on('change',() => toggleState($('#disaster').val()));
   });
 
   // enable add disaster button now that firestore is ready.
-  const addDisasterButton = document.getElementById('add-disaster-button');
-  addDisasterButton.disabled = false;
-  addDisasterButton.onclick = addDisaster;
+  const addDisasterButton = $('#add-disaster-button');
+  addDisasterButton.prop('disabled', false);
+  addDisasterButton.on('click', addDisaster);
 }
 
 /**
@@ -62,12 +62,13 @@ function enableWhenReady() {
  */
 function toggleState(disaster) {
   if (disaster === SENTINEL_NEW_DISASTER_VALUE) {
-    document.getElementById('new-disaster').hidden = false;
-    document.getElementById('selected-disaster').hidden = true;
+    $('#new-disaster').show();
+    $('#selected-disaster').hide();
   } else {
+    console.log(disaster);
     // TODO: display more disaster info including current layers etc.
-    document.getElementById('new-disaster').hidden = true;
-    document.getElementById('selected-disaster').hidden = false;
+    $('#new-disaster').hide();
+    $('#selected-disaster').show();
     createStateAssetPickers(disasters.get(disaster));
   }
 }
@@ -87,32 +88,37 @@ function addDisaster() {
     return;
   }
   if (isNaN(year)) {
-    setStatus('Error: year must be a number');
+    setStatus('Error: Year must be a number.');
     return;
   }
-  setStatus();
-
   const disasterId = year + '-' + name;
-  disasterMetadata.doc(disasterId).set({
-    states: states,
-  });
-  disasters.set(disasterId, states);
+  disasterMetadata.doc(disasterId).get().then((doc) => {
+    if (doc.exists) {
+      setStatus('Error: disaster with that name and year already exists.')
+    } else {
+      clearStatus();
+      disasterMetadata.doc(disasterId).set({
+        states: states,
+      });
+      disasters.set(disasterId, states);
 
-  const newDisasterPick = createOptionFrom(disasterId);
-  newDisasterPick.selected = true;
-  const disasterPicker = document.getElementById('disaster');
-  const pickableDisasters = disasterPicker.childNodes;
-  for (let i = 1; i < pickableDisasters.length; i++) {
-    // This is a little wonky, but done to ensure the ADD NEW DISASTER choice
-    // is always at the end.
-    if (i === pickableDisasters.length - 1 ||
-        pickableDisasters[i].value > disasterId) {
-      disasterPicker.insertBefore(newDisasterPick, pickableDisasters[i]);
-      break;
+      const newDisasterPick = createOptionFrom(disasterId);
+      newDisasterPick.selected = true;
+      const disasterPicker = document.getElementById('disaster');
+      const pickableDisasters = disasterPicker.childNodes;
+      for (let i = 1; i < pickableDisasters.length; i++) {
+        // This is a little wonky, but done to ensure the ADD NEW DISASTER
+        // choice is always at the end.
+        if (i === pickableDisasters.length - 1 ||
+            pickableDisasters[i].value > disasterId) {
+          disasterPicker.insertBefore(newDisasterPick, pickableDisasters[i]);
+          break;
+        }
+      }
+
+      toggleState(disasterId);
     }
-  }
-
-  toggleState(disasterId);
+  });
 }
 
 const gdEePathPrefix = 'users/gd/';
@@ -128,8 +134,8 @@ const eeLegacyPathPrefix =
  * @param {Array<String>} states
  */
 function createStateAssetPickers(states) {
-  const assetPickerDiv = document.getElementById('asset-pickers');
-  removeAllChildren(assetPickerDiv);
+  const assetPickerDiv = $('#asset-pickers');
+  assetPickerDiv.empty();
   ee.data.listAssets(eeLegacyPathPrefix + 'states', {}, () => {})
       .then((result) => {
         const folders = new Set();
@@ -143,28 +149,25 @@ function createStateAssetPickers(states) {
           const assetPickerLabel = document.createElement('label');
           assetPickerLabel.for = state + 'adder';
           assetPickerLabel.innerHTML = 'Add EE asset(s) for ' + state + ': ';
+          assetPicker.appendChild(createOption(
+              '<Upload additional assets via the code editor>',
+              SENTINEL_OPTION_VALUE));
+
           const dir = eeLegacyPathPrefix + 'states/' + state;
           if (!folders.has(state)) {
             ee.data.createFolder(dir, false, () => {});
           } else {
             ee.data.listAssets(dir, {}, () => {}).then((result) => {
-              // empty state directory
-              if (!result.assets) {
-                return;
-              }
-              for (const asset of result.assets) {
-                const assetPath = asset.id;
-                assetPicker.appendChild(createOptionFrom(assetPath));
+              if (result.assets) {
+                for (const asset of result.assets) {
+                  assetPicker.appendChild(createOptionFrom(asset.id));
+                }
               }
             });
           }
-          assetPicker.appendChild(createOption(
-              '<Upload additional assets via the code editor>',
-              SENTINEL_OPTION_VALUE));
-
-          assetPickerDiv.appendChild(assetPickerLabel);
-          assetPickerDiv.appendChild(assetPicker);
-          assetPickerDiv.appendChild(document.createElement('br'));
+          assetPickerDiv.append(assetPickerLabel);
+          assetPickerDiv.append(assetPicker);
+          assetPickerDiv.append(document.createElement('br'));
         }
       });
 }
@@ -173,8 +176,12 @@ function createStateAssetPickers(states) {
  * Utility function for setting the status div.
  * @param {String} text
  */
-function setStatus(text = '') {
-  document.getElementById('status').innerHTML = text;
+function setStatus(text) {
+  $('#status').prop('innerHTML', text).show();
+}
+
+function clearStatus() {
+  $('#status').empty().hide();
 }
 
 /**
@@ -197,14 +204,4 @@ function createOption(innerText, value) {
   defaultOption.innerText = innerText;
   defaultOption.value = value;
   return defaultOption;
-}
-
-/**
- * Utility function to remove all children of a given div.
- * @param {Element} div
- */
-function removeAllChildren(div) {
-  while (div.firstChild) {
-    div.firstChild.remove();
-  }
 }

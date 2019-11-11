@@ -1,5 +1,17 @@
+import {authenticateToFirebase, Authenticator} from '../../../docs/authenticate';
+import SettablePromise from '../../../docs/settable_promise';
 
 const addDisasterUrl = host + 'import/add_disaster.html';
+
+before(() => {
+  const firebaseAuthPromise = new SettablePromise();
+  const authenticator = new Authenticator(
+      (token) => firebaseAuthPromise.setPromise(authenticateToFirebase(token)),
+      () => {});
+  authenticator.start();
+  firebaseAuthPromise.then(
+      () => {firebase.firestore().collection('disaster-metadata')})
+});
 
 describe('Integration tests for add_disaster page', () => {
   it('adds a new disaster', () => {
