@@ -7,6 +7,9 @@ let lastPassedDamageThreshold;
 let lastPassedPovertyWeight;
 
 describe('Unit test for updates.js', () => {
+  before(() => {
+    global.google = {maps: {event: {clearListeners: () => {}}}};
+  });
   // creates the form div and stubs the relevent document methods.
   beforeEach(() => {
     cy.stub(

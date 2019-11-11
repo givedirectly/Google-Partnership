@@ -1,13 +1,13 @@
 import {clickFeature} from '../../../docs/click_feature.js';
 import {tableHeadings} from '../../../docs/draw_table.js';
 import * as HighlightFeatures from '../../../docs/highlight_features.js';
-import {loadScriptsBefore} from '../../support/script_loader';
+import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 
 let mockTable;
 let tableApi;
 
 describe('Unit test for click_feature.js', () => {
-  loadScriptsBefore('ee', 'maps');
+  loadScriptsBeforeForUnitTests('ee', 'maps');
   beforeEach(() => {
     HighlightFeatures.CurrentFeatureValue = () => new MockValue();
     /** Very real fake of the CurrentFeatureValue class */
@@ -50,6 +50,7 @@ describe('Unit test for click_feature.js', () => {
         .withArgs('mockAsset')
         .returns(featureCollection);
     cy.stub(featureCollection, 'filterBounds').returns(featureCollection);
+    cy.stub(featureCollection, 'first').returns(feature);
     cy.stub(feature, 'evaluate').callsFake((callb) => callb({
                                              'type': 'Feature',
                                              'geometry':

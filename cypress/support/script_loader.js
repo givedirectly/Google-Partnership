@@ -1,6 +1,11 @@
-import {CLIENT_ID} from '../../docs/authenticate';
+import {CLIENT_ID, getFirebaseConfig} from '../../docs/authenticate';
+import {cypressTestCookieName, earthEngineTestTokenCookieName, firebaseTestTokenCookieName} from '../../docs/in_test_util';
 
-export {loadScriptsBefore};
+export {loadScriptsBeforeForUnitTests};
+
+global.host = 'http://localhost:8080/';
+
+let testCookieValue = null;
 
 const scriptMap = new Map([
   [
@@ -19,26 +24,52 @@ const scriptMap = new Map([
     ],
   ],
   ['ee', [host + 'lib/ee_api_js_debug.js', () => typeof (ee) !== 'undefined']],
+  [
+    'firebase',
+    [
+      [
+        'https://www.gstatic.com/firebasejs/6.3.3/firebase-app.js',
+        'https://www.gstatic.com/firebasejs/6.3.3/firebase-firestore.js',
+        'https://www.gstatic.com/firebasejs/7.2.1/firebase-auth.js',
+      ],
+      () => typeof (firebase) != 'undefined' &&
+          typeof (firebase.firestore) != 'undefined' &&
+          typeof (firebase.auth) != 'undefined',
+    ],
+  ],
 ]);
+
+let earthEngineCustomToken = null;
 
 /**
  * Load genuine scripts into local document. This gives unit tests the ability
  * to use actual external objects. That makes them a bit less "unit"-y, but
  * they're still fast, and can be much more faithful to the external interfaces.
  *
+ * Integration tests cannot use this because then the same script would be on
+ * the page multiple times, from this and from the actual site, which can cause
+ * confusion.
+ *
  * @param {...string} scriptKeys keys from scriptMap above. These will be the
  *     scripts that are loaded.
  */
-function loadScriptsBefore(...scriptKeys) {
-  // Variable "parameters" is magically populated by Javascript.
+function loadScriptsBeforeForUnitTests(...scriptKeys) {
+  const scriptsSet = new Set(scriptKeys);
+  const usesEe = scriptsSet.has('ee');
+  const usesFirebase = scriptsSet.has('firebase');
   before(() => {
     const callbacks = [];
-    let usesEe = false;
     for (const scriptKey of scriptKeys) {
       const scriptPair = scriptMap.get(scriptKey);
-      addScriptToDocument(scriptPair[0]);
+      const scripts = scriptPair[0];
+      if (Array.isArray(scripts)) {
+        for (const script of scripts) {
+          addScriptToDocument(script);
+        }
+      } else {
+        addScriptToDocument(scripts);
+      }
       callbacks.push(scriptPair[1]);
-      usesEe |= scriptKey === 'ee';
     }
     // waitForCallback may return before the callback is actually ready, just
     // enqueuing itself to run again on a different thread, so this loop
@@ -49,20 +80,68 @@ function loadScriptsBefore(...scriptKeys) {
     for (const callback of callbacks) {
       waitForCallback(callback);
     }
-    if (usesEe) {
-      // We need to make sure ee has actually loaded.
-      waitForCallback(scriptMap.get('ee')[1])
-          .then(
-              () => cy.wrap(new Promise(
-                  (resolve, reject) => ee.data.setAuthToken(
-                      CLIENT_ID, 'Bearer', earthEngineCustomToken,
-                      // Expires in 3600 is a lie, but no need to tell the
-                      // truth.
-                      /* expiresIn */ 3600, /* extraScopes */[],
-                      /* callback */
-                      () => ee.initialize(null, null, resolve, reject),
-                      /* updateAuthLibrary */ false))));
-    }
+  });
+  if (usesEe) {
+    before(() => {
+      doServerEeSetup().then(
+          () => new Promise(
+              (resolve, reject) => ee.data.setAuthToken(
+                  CLIENT_ID, 'Bearer', earthEngineCustomToken,
+                  /* expiresIn */ 3600, /* extraScopes */[],
+                  /* callback */
+                  () => ee.initialize(null, null, resolve, reject),
+                  /* updateAuthLibrary */ false)));
+    });
+  }
+  if (usesFirebase) {
+    // Currently no unit test actually writes to Firestore, they just use the
+    // library. A unit test that really writes to Firestore will be responsible
+    // for calling the necessary functions (addFirebaseHooks and logging in with
+    // the custom token, similar to what is done in prod).
+    before(() => {
+      firebase.initializeApp(getFirebaseConfig(/* inProduction */ false));
+    });
+  }
+}
+
+/**
+ * Adds all necessary hooks to set up Firebase, for either unit or integration
+ * tests. Populates test Firestore database. Integration tests need to also set
+ * the appropriate cookie.
+ */
+function addFirebaseHooks() {
+  before(() => cy.task('initializeTestFirebase', null, {
+                   timeout: 10000,
+                 }).then((token) => global.firestoreCustomToken = token));
+  beforeEach(() => {
+    testCookieValue = 'id-' + Math.random();
+    cy.task(
+        'clearAndPopulateTestFirestoreData', testCookieValue, {timeout: 15000});
+  });
+  afterEach(() => cy.task('deleteTestData', testCookieValue));
+}
+
+/**
+ * Performs task of creating EarthEngine token and setting it to
+ * earthEngineCustomToken variable. Should be called inside a before() hook.
+ * @return {Cypress.Chainable<any>}
+ */
+function doServerEeSetup() {
+  return cy.task('getEarthEngineToken')
+      .then((token) => earthEngineCustomToken = token);
+}
+
+if (Cypress.spec.relative.startsWith('cypress/integration/integration_tests')) {
+  // Firebase hooks populate/clear test Firebase data.
+  addFirebaseHooks();
+  // EE authentication.
+  before(doServerEeSetup);
+  beforeEach(() => {
+    /** wide enough for sidebar */
+    cy.viewport(1100, 1700);
+    cy.setCookie(cypressTestCookieName, testCookieValue);
+    cy.setCookie(firebaseTestTokenCookieName, firestoreCustomToken);
+    cy.setCookie(earthEngineTestTokenCookieName, earthEngineCustomToken);
   });
 }
 
@@ -85,7 +164,7 @@ function addScriptToDocument(scriptUrl) {
   script.setAttribute('src', scriptUrl);
   script.setAttribute('type', 'text/javascript');
 
-  const headElt = document.getElementsByTagName('body');
+  const headElt = document.getElementsByTagName('head');
   headElt[0].appendChild(script);
 }
 
