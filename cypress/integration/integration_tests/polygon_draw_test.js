@@ -34,6 +34,8 @@ describe('Integration tests for drawing polygons', () => {
   it('Draws a polygon, checks for calculating status', () => {
     cy.visit(host);
     drawPolygonAndClickOnIt();
+    // TODO(janakr): remove when test is no longer flaky.
+    cy.get('.popup-calculated-data').then(($elt) => cy.task('logg', $elt.text()));
     cy.get('.popup-calculated-data').contains('calculating');
     // assert damage text is grey while editing
     cy.get('.popup-calculated-data')
