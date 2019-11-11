@@ -126,7 +126,7 @@ module.exports = (on, config) => {
       return Promise.all([harveyDoc.get(), signinPromise, deletePromise])
           .then((result) => Promise.all([
             documentReference.set(result[0].data(), {merge: true}),
-            documentReference.set({dummy: true}, {merge: true})
+            documentReference.set({dummy: true}, {merge: true}),
           ]))
           .then(
               () => Promise.all(
@@ -195,6 +195,7 @@ const millisecondsInADay = 60 * 60 * 24 * 1000;
  * (https://stackoverflow.com/questions/47043651/this-document-does-not-exist-and-will-not-appear-in-queries-or-snapshots-but-id).
  * That field is set in clearAndPopulateTestFirestoreData.
  * @param {admin.app.App} app
+ * @return {Promise} Promise that completes when all deletions are finished
  */
 function deleteAllOldTestData(app) {
   const currentDate = new Date();
