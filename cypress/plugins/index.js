@@ -100,7 +100,8 @@ module.exports = (on, config) => {
      * creates necessary data for tests to consume, pulling that data from prod
      * Firebase. For use before a test case runs. We add a dummy field inside
      * test/currentTestRoot so that Firestore will deign to list this document
-     * later (https://stackoverflow.com/questions/47043651/this-document-does-not-exist-and-will-not-appear-in-queries-or-snapshots-but-id)
+     * later
+     * (https://stackoverflow.com/questions/47043651/this-document-does-not-exist-and-will-not-appear-in-queries-or-snapshots-but-id)
      * @param {string} currentTestRoot document name directly underneath test/
      * @return {Promise<null>} Promise that resolves when deletion and data
      * creation is complete
@@ -120,13 +121,13 @@ module.exports = (on, config) => {
       const deletePromise = deleteTestData(currentTestRoot, testAdminApp);
       const documentPath = 'disaster-metadata/2017-harvey';
       const harveyDoc = prodApp.firestore().doc(documentPath);
-      const documentReference = testApp.firestore()
-          .doc('test/' + currentTestRoot + '/' + documentPath);
+      const documentReference = testApp.firestore().doc(
+          'test/' + currentTestRoot + '/' + documentPath);
       return Promise.all([harveyDoc.get(), signinPromise, deletePromise])
-          .then(
-              (result) =>
-                  Promise.all([documentReference.set(result[0].data(), {merge: true}),
-                  documentReference.set({dummy: true}, {merge: true})]))
+          .then((result) => Promise.all([
+            documentReference.set(result[0].data(), {merge: true}),
+            documentReference.set({dummy: true}, {merge: true})
+          ]))
           .then(
               () => Promise.all(
                   [testAdminApp.delete(), prodApp.delete(), testApp.delete()]))
@@ -190,7 +191,8 @@ const millisecondsInADay = 60 * 60 * 24 * 1000;
  * Recursively deletes all test data older than 24 hours, under the assumption
  * that no test runs for that long. This prevents old unfinished tests from
  * using too much quota. Note that documents in the list must have a field set
- * to show up in a listing of the parent collection (https://stackoverflow.com/questions/47043651/this-document-does-not-exist-and-will-not-appear-in-queries-or-snapshots-but-id).
+ * to show up in a listing of the parent collection
+ * (https://stackoverflow.com/questions/47043651/this-document-does-not-exist-and-will-not-appear-in-queries-or-snapshots-but-id).
  * That field is set in clearAndPopulateTestFirestoreData.
  * @param {admin.app.App} app
  */
@@ -200,15 +202,14 @@ function deleteAllOldTestData(app) {
   return querySnapshotPromise.then((queryResult) => {
     const promises = [];
     queryResult.forEach((doc) => {
-          const ref = doc.ref;
-          const testRunName = ref.id;
-          const dateElement = testRunName.split('-')[0];
-          const date = new Date(parseInt(dateElement, 10));
-          if (currentDate - date > millisecondsInADay) {
-            promises.push(deleteDocRecursively(ref));
-          }
-    }
-    );
+      const ref = doc.ref;
+      const testRunName = ref.id;
+      const dateElement = testRunName.split('-')[0];
+      const date = new Date(parseInt(dateElement, 10));
+      if (currentDate - date > millisecondsInADay) {
+        promises.push(deleteDocRecursively(ref));
+      }
+    });
     return Promise.all(promises);
   });
 }

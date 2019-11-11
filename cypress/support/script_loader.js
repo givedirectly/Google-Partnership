@@ -139,7 +139,7 @@ if (Cypress.spec.relative.startsWith('cypress/integration/integration_tests')) {
     /** wide enough for sidebar */
     cy.viewport(1100, 1700);
     cy.setCookie(cypressTestCookieName, testCookieValue);
-   cy.setCookie(firebaseTestTokenCookieName, firestoreCustomToken);
+    cy.setCookie(firebaseTestTokenCookieName, firestoreCustomToken);
     cy.setCookie(earthEngineTestTokenCookieName, earthEngineCustomToken);
   });
 }
