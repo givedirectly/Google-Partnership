@@ -183,7 +183,7 @@ describe('Unit test for ShapeData', () => {
     const map = new google.maps.Map(div, {center: {lat: 0, lng: 0}, zoom: 1});
     const polygon = new google.maps.Polygon({
       map: map,
-      paths: [{lat: 0, lng: 0}, {lat: 1, lng: 1}, {lat: 0, lng: 1}]
+      paths: [{lat: 0, lng: 0}, {lat: 1, lng: 1}, {lat: 0, lng: 1}],
     });
     setUpPopup();
     const popup = createPopup(polygon, map, 'notes');
