@@ -190,8 +190,8 @@ const millisecondsInADay = 60 * 60 * 24 * 1000;
 /**
  * Recursively deletes all test data older than 24 hours, under the assumption
  * that no test runs for that long. This prevents old unfinished tests from
- * using too much quota. Note that documents in the list must have a field set
- * to show up in a listing of the parent collection
+ * using too much quota. Note that documents must have a field set to show up in
+ * a listing of the parent collection
  * (https://stackoverflow.com/questions/47043651/this-document-does-not-exist-and-will-not-appear-in-queries-or-snapshots-but-id).
  * That field is set in clearAndPopulateTestFirestoreData.
  * @param {admin.app.App} app
