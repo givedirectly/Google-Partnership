@@ -91,14 +91,3 @@ function clickAndVerifyBlockGroup() {
           'have.text',
           'Block Group 4, Census Tract 2415, Harris County, Texas21681');
 }
-
-/**
- * Helper function to zoom out some amount of times.
- * @param {number} numTimes
- */
-function zoomOut(numTimes) {
-  for (let i = 0; i < numTimes; i++) {
-    cy.get('[title="Zoom out"]').click();
-    cy.wait(500);
-  }
-}
