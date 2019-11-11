@@ -7,12 +7,12 @@ import {createPopup, isMarker, setUpPopup} from './popup.js';
 import {getResources} from './resources.js';
 import {userRegionData} from './user_region_data.js';
 
-// StoredShapeData and setUpPolygonDrawing are only for testing.
+// StoredShapeData is only for testing.
 export {
   displayCalculatedData,
   processUserRegions,
   setUpPolygonDrawing,
-  StoredShapeData
+  StoredShapeData,
 };
 
 /**
