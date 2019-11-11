@@ -173,10 +173,10 @@ function run(firebaseAuthPromise) {
   const centerStatusSpan = document.createElement('span');
   centerStatusSpan.innerText = 'in progress';
   storeCenter(damage, firebaseAuthPromise)
-      .then((bounds) => {
-        centerStatusSpan.innerText = 'Found bounds (' + bounds[0] + ', ' +
-            bounds[1] + '), (' + bounds[2] + ', ' + bounds[3] + ')';
-      })
+      .then(trimGeoNumbers)
+      .then((bounds) =>
+          centerStatusSpan.innerText = 'Found bounds (' + bounds[0] + ', ' +
+              bounds[1] + '), (' + bounds[2] + ', ' + bounds[3] + ')')
       .catch((err) => centerStatusSpan.innerText = err);
   $('.compute-status').append(centerStatusLabel);
   $('.compute-status').append(centerStatusSpan);
@@ -255,6 +255,15 @@ function setup() {
         runOnInitialize);
     authenticator.start();
   });
+}
+
+/**
+ * Displays latitude/longitude in a reasonable way. https://xkcd.com/2170/.
+ * @param {Array<number>} latOrLngs
+ * @return {Array<string>} numbers truncated to 4 digits.
+ */
+function trimGeoNumbers(latOrLngs) {
+  return latOrLngs.map((num) => num.toFixed(4));
 }
 
 setup();
