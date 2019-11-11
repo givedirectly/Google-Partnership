@@ -90,4 +90,3 @@ function clickAndVerifyBlockGroup() {
           'have.text',
           'Block Group 4, Census Tract 2415, Harris County, Texas21681');
 }
-
