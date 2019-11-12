@@ -65,6 +65,7 @@ function processJoinedData(
     dataPromise, scalingFactor, povertyThreshold, damageThreshold,
     povertyWeight) {
   return dataPromise.then((featureCollection) => {
+    document.getElementById('caption').innerText = 'Got collection';
     for (const feature of featureCollection.features) {
       colorAndRate(
           feature, scalingFactor, povertyThreshold, damageThreshold,
