@@ -355,5 +355,5 @@ function saveAndAwait() {
  * be found because it requires Firebase authentication to finish.
  */
 function startDrawing() {
-  cy.get('[title="Draw a shape"]', {timeout: 10000}).click();
+  cy.get('[title="Draw a shape"]', {timeout: 20000}).click();
 }
