@@ -301,7 +301,7 @@ function clickOnDrawnPolygon(offset = 0) {
  */
 function pressPopupButton(button) {
   cy.get('.main-content').scrollTo(0, 0);
-  cy.get(':button:visible', {timeout: 5000}).contains(button).click();
+  cy.get(':button:visible').contains(button).click();
 }
 
 /**

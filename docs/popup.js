@@ -14,8 +14,9 @@ let Popup = null;
 // https://developers-dot-devsite-v2-prod.appspot.com/maps/documentation/javascript/examples/overlay-popup
 /**
  * Sets up the Popup class. See link above for more context.
+ * @param {Window} window DOM Window (for test injection)
  */
-function setUpPopup() {
+function setUpPopup(window) {
   Popup = class extends google.maps.OverlayView {
     /**
      * A customized popup on the map.
@@ -128,7 +129,7 @@ function setUpPopup() {
       deleteButton.className = 'popup-button';
       deleteButton.innerHTML = 'delete';
       deleteButton.onclick = () => {
-        if (confirm('Delete feature?')) {
+        if (window.confirm('Delete feature?')) {
           mapFeature.setMap(null);
           this.setMap(null);
           allPopups.delete(this);
@@ -170,7 +171,7 @@ function setUpPopup() {
       closeButton.onclick = () => {
         if (this.saved) {
           this.closeCleanup();
-        } else if (confirm(
+        } else if (window.confirm(
                        'Exit without saving changes? Changes will be lost.')) {
           mapFeature.setMap(null);
           revertFeaturePosition(mapFeature);
