@@ -3,7 +3,7 @@ import * as AddDisaster from '../../../docs/import/add_disaster.js';
 import {addFirebaseHooks, loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
 const KNOWN_STATE = 'WF';
-const UNKNOWN_STATE = 'DN'; 
+const UNKNOWN_STATE = 'DN';
 
 describe('Unit tests for add_disaster page', () => {
   loadScriptsBeforeForUnitTests('ee', 'firebase', 'jquery');
@@ -23,19 +23,19 @@ describe('Unit tests for add_disaster page', () => {
             AddDisaster.eeLegacyPathPrefix + 'states', {},
             AddDisaster.emptyCallback)
         .returns(Promise.resolve({
-          'assets':
-              [{id: AddDisaster.gdEePathPrefix + 'states/' + KNOWN_STATE,}]
-        ,}));
+          'assets': [{
+            id: AddDisaster.gdEePathPrefix + 'states/' + KNOWN_STATE,
+          }],
+        }));
     listAssetsStub
         .withArgs(
             AddDisaster.eeLegacyPathPrefix + 'states/' + KNOWN_STATE, {},
             AddDisaster.emptyCallback)
         .returns(Promise.resolve({
           'assets': [{
-            id: AddDisaster.gdEePathPrefix + 'states/' + KNOWN_STATE +
-                '/snap',
-          }]
-        ,}));
+            id: AddDisaster.gdEePathPrefix + 'states/' + KNOWN_STATE + '/snap',
+          }],
+        }));
     cy.stub(ee.data, 'createFolder');
 
     AddDisaster.createStateAssetPickers([KNOWN_STATE, UNKNOWN_STATE])
@@ -46,12 +46,11 @@ describe('Unit tests for add_disaster page', () => {
                   AddDisaster.emptyCallback);
           expect(ee.data.listAssets)
               .to.be.calledWith(
-                  AddDisaster.eeLegacyPathPrefix + 'states/' + KNOWN_STATE,
-                  {}, AddDisaster.emptyCallback);
+                  AddDisaster.eeLegacyPathPrefix + 'states/' + KNOWN_STATE, {},
+                  AddDisaster.emptyCallback);
           expect(ee.data.createFolder)
               .to.be.calledWith(
-                  AddDisaster.eeLegacyPathPrefix + 'states/' +
-                      UNKNOWN_STATE,
+                  AddDisaster.eeLegacyPathPrefix + 'states/' + UNKNOWN_STATE,
                   false, AddDisaster.emptyCallback);
 
           // 2 x <label> <select> <br>
@@ -60,8 +59,7 @@ describe('Unit tests for add_disaster page', () => {
           // asset
           const picker = $('#' + KNOWN_STATE + '-adder');
           expect(picker).to.contain(
-              AddDisaster.gdEePathPrefix + 'states/' + KNOWN_STATE +
-              '/snap');
+              AddDisaster.gdEePathPrefix + 'states/' + KNOWN_STATE + '/snap');
           expect(picker.children().length).to.equal(2);
           expect($('#' + UNKNOWN_STATE + '-adder').children().length)
               .to.equal(1);
