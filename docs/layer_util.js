@@ -201,7 +201,13 @@ function addLayerFromId(map, layerName, layerId, index, displayed) {
 function addLayerFromFeatures(layerMapValue, layerName) {
   if (layerName === 'score') {
     document.getElementById('caption').innerText =
-        'About to add to layer array ' + layerName;
+        'About to add to layer array ' + layerName + ', ' + deck.GeoJsonLayer;
+  }
+  const fillColor = firebaseLayers[layerName] ? getStyleFunction(layerName) :
+      getColorOfFeature;
+  if (layerName === 'score') {
+    document.getElementById('caption').innerText =
+        'Got color  ' + fillColor;
   }
   layerArray[layerMapValue.index] = new deck.GeoJsonLayer({
     id: layerName,
@@ -211,8 +217,7 @@ function addLayerFromFeatures(layerMapValue, layerName) {
     // TODO(janakr): deck.gl docs claim that the "color" property should
     // automatically color the features, but it doesn't appear to work:
     // https://deck.gl/#/documentation/deckgl-api-reference/layers/geojson-layer?section=getelevation-function-number-optional-transition-enabled
-    getFillColor: firebaseLayers[layerName] ? getStyleFunction(layerName) :
-                                              getColorOfFeature,
+    getFillColor: fillColor,
     visible: layerMapValue.displayed,
   });
   if (layerName === 'score') {

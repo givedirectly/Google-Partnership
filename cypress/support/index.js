@@ -9,5 +9,6 @@ afterEach(function() {
   // eslint-disable-next-line no-invalid-this
   if (this.currentTest.state === 'failed' && Cypress.env('ON_TRAVIS')) {
     cy.screenshot({capture: 'viewport'});
+    cy.get('elementthatdoesnotexistforimmediatefailure');
   }
 });
