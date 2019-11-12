@@ -178,37 +178,81 @@ describe('Unit test for ShapeData', () => {
   });
 
   it('Shows calculating before update finishes', () => {
-    const div = document.createElement('div');
-    document.body.appendChild(div);
-    const map = new google.maps.Map(div, {center: {lat: 0, lng: 0}, zoom: 1});
-    const polygon = new google.maps.Polygon({
-      map: map,
-      paths: [{lat: 0, lng: 0}, {lat: 1, lng: 1}, {lat: 0, lng: 1}],
-    });
     const event = new Event('overlaycomplete');
-    event.overlay = polygon;
-    firebaseCollection.add = () => Promise.resolve({id: 'id'});
-    const updatePromise = new SettablePromise();
-    cy.wrap(setUpPolygonDrawing(map, Promise.resolve()))
+    cy.document()
+        .then((document) => {
+          const div = document.createElement('div');
+          document.body.appendChild(div);
+          const map =
+              new google.maps.Map(div, {center: {lat: 0, lng: 0}, zoom: 1});
+          event.overlay = new google.maps.Polygon({
+            map: map,
+            paths: [{lat: 0, lng: 0}, {lat: 1, lng: 1}, {lat: 0, lng: 1}],
+          });
+          return cy.window().then(
+              (win) => setUpPolygonDrawing(map, Promise.resolve(), win));
+        })
         .then((drawingManager) => {
           google.maps.event.trigger(drawingManager, 'overlaycomplete', event);
           updatePromise.setPromise(event.resultPromise);
         });
-    let calculatingDiv;
-    // Popup initialization happens async, apparently, and takes a bit of time.
-    // Update is also happening. 50 ms is in the sweet spot of >popup init but
-    // <update.
-    cy.wait(50).then(() => {
-      calculatingDiv =
-          document.getElementsByClassName('popup-calculated-data')[0];
-      expect(calculatingDiv).to.contain('calculating');
-      expect(getComputedStyle(calculatingDiv).color)
-          .to.eql('rgb(128, 128, 128)');
-    });
-    cy.wrap(updatePromise.getPromise())
-        .then(
-            () => expect(getComputedStyle(calculatingDiv).color)
-                      .to.eql('rgb(0, 0, 0)'));
+    firebaseCollection.add = () => Promise.resolve({id: 'id'});
+    const updatePromise = new SettablePromise();
+    cy.get('.popup-calculated-data').contains('calculating');
+    cy.get('.popup-calculated-data')
+        .should('have.css', 'color')
+        .and('eq', 'rgb(128, 128, 128)');
+    cy.wrap(updatePromise.getPromise());
+    cy.get('.popup-calculated-data')
+        .should('have.css', 'color')
+        .and('eq', 'rgb(0, 0, 0)');
+  });
+
+  it('Draws marker, edits notes, then deletes', () => {
+    firebaseCollection.add = () => {};
+    firebaseCollection.doc = () => {};
+    const addStub =
+        cy.stub(firebaseCollection, 'add').returns(Promise.resolve({id: 'id'}));
+    const docStubObject = {};
+    docStubObject.set = () => {};
+    docStubObject.delete = () => {};
+    const setStub = cy.stub(docStubObject, 'set').returns(Promise.resolve());
+    const deleteStub =
+        cy.stub(docStubObject, 'delete').returns(Promise.resolve());
+    const docStub = cy.stub(firebaseCollection, 'doc').returns(docStubObject);
+    const updatePromise = new SettablePromise();
+    const event = new Event('overlaycomplete');
+    let marker;
+    cy.document()
+        .then((document) => {
+          const div = document.createElement('div');
+          document.body.appendChild(div);
+          const map =
+              new google.maps.Map(div, {center: {lat: 0, lng: 0}, zoom: 1});
+          marker =
+              new google.maps.Marker({map: map, position: {lat: 0, lng: 0}});
+          event.overlay = marker;
+          return cy.window().then(
+              (win) => setUpPolygonDrawing(map, Promise.resolve(), win));
+        })
+        .then((drawingManager) => {
+          google.maps.event.trigger(drawingManager, 'overlaycomplete', event);
+          updatePromise.setPromise(event.resultPromise);
+        })
+        .then(() => google.maps.event.trigger(marker, 'click'))
+        .then(() => {
+          expect(addStub).to.be.calledOnce;
+          pressPopupButton('edit');
+          // Force-type because we don't have a real page, so may not be
+          // visible.
+          cy.get('[class="notes"]').type('my notes', {force: true});
+          pressPopupButton('save').then(() => {
+            expect(docStub).to.be.calledOnce;
+            expect(setStub).to.be.calledOnce;
+          });
+          pressPopupButton('delete').then(
+              () => expect(deleteStub).to.be.calledOnce);
+        });
   });
 
   it('Skips update if nothing changed', () => {
@@ -308,4 +352,15 @@ class StubPopup {
   setCalculatedData(calculatedData) {
     this.calculatedData = calculatedData;
   }
+}
+
+/**
+ * Clicks a button inside the map with the given id.
+ * @param {string} button id of html button we want to click
+ * @return {Cypress.Chainable} result of get
+ */
+function pressPopupButton(button) {
+  // Force-click because we don't have a real page, so who knows what elements
+  // are "visible".
+  return cy.get(':button').contains(button).click({force: true});
 }
