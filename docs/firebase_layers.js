@@ -50,7 +50,8 @@ function createStyleFunction(assetName) {
   }
   const colorFunctionProperties = firebaseLayers[assetName]['color-function'];
   if (assetName === 'score') {
-    document.getElementById('caption').innerText = 'got properties ' + firebaseLayers[assetName];
+    document.getElementById('caption').innerText =
+        'got properties ' + firebaseLayers[assetName];
   }
   let styleFunction;
   if (colorFunctionProperties['single-color']) {
