@@ -35,7 +35,7 @@ describe('Integration test for clicking feature', () => {
     cy.get('.map').should(
         'not.contain',
         'Block Group 1, Census Tract 2309, Harris County, Texas');
-    cy.get('.map').should('contain', 'Block Group');
+    cy.get('.map').should('contain', 'Block Group').then(($elt) => cy.log($elt.text()));
 
     cy.get('.map').should(
         'contain', 'Block Group 1, Census Tract 5501, Harris County, Texas');
