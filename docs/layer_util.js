@@ -199,6 +199,10 @@ function addLayerFromId(map, layerName, layerId, index, displayed) {
  * @param {string} layerName
  */
 function addLayerFromFeatures(layerMapValue, layerName) {
+  if (layerName === 'score') {
+    document.getElementById('caption').innerText =
+        'About to add to layer array ' + layerName;
+  }
   layerArray[layerMapValue.index] = new deck.GeoJsonLayer({
     id: layerName,
     data: layerMapValue.data,

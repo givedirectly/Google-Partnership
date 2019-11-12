@@ -24,7 +24,7 @@ describe('Integration test for clicking feature', () => {
         'Block Group 1, Census Tract 2309, Harris County, Texas');
   });
 
-  it('clicks on a feature on the map, then clicks on another', () => {
+  it.only('clicks on a feature on the map, then clicks on another', () => {
     cy.visit(host);
     cy.awaitLoad();
 
@@ -35,6 +35,7 @@ describe('Integration test for clicking feature', () => {
     cy.get('.map').should(
         'not.contain',
         'Block Group 1, Census Tract 2309, Harris County, Texas');
+    // TODO(janakr): Remove this debugging when flakiness resolved.
     cy.get('.map')
         .should('contain', 'Block Group')
         .then(($elt) => cy.log($elt.text()));
