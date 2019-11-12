@@ -12,7 +12,6 @@ describe('Unit tests for add_disaster page', () => {
   addFirebaseHooks();
   before(() => {
     cy.wrap(firebase.auth().signInWithCustomToken(firestoreCustomToken));
-    AddDisaster.setDisasterMetadata();
   });
 
   it('creates asset pickers', () => {
@@ -71,81 +70,59 @@ describe('Unit tests for add_disaster page', () => {
         });
   });
 
-  it.only('adds a new disaster to firestore', () => {
-    const disasterPicker = document.createElement('select');
-    disasterPicker.id = 'disaster';
-    disasterPicker.appendChild(AddDisaster.createOptionFrom('2001-summer'));
-    disasterPicker.appendChild(AddDisaster.createOptionFrom('2003-spring'));
+  it('writes a new disaster to firestore', () => {
+    AddDisasterPickerAndStatus();
+    const id = '2002-winter';
+    const states = ['DN, WF'];
 
-    document.body.appendChild(disasterPicker);
+    AddDisaster.writeDisaster(id, states)
+        .then(() => {
+          expect($('#status').is(':visible')).to.be.false;
+          const options = $('#disaster').children();
+          expect(options.length).to.eql(4);
+          expect(options.eq(2).val()).to.eql('2002-winter');
+          expect(options.eq(2).is(':selected')).to.be.true;
+
+          return getFirestoreRoot()
+              .collection('disaster-metadata')
+              .doc(id)
+              .get()
+        })
+        .then((doc) => {
+          expect(doc.exists).to.be.true;
+          expect(doc.data()['states']).to.eql(states);
+        });
+  });
+
+  it.only('tries to write a disaster id that already exists', () => {
+    AddDisasterPickerAndStatus();
 
     const id = 'winter-2002';
+    const states = ['DN, WF'];
 
-    AddDisaster.writeDisaster(id, ['HG'])
-        .then(
-            () => {return getFirestoreRoot()
-                       .collection('disaster-metadata')
-                       .doc(id)
-                       .get()})
-        .then((doc) => {
-          console.log(doc);
-          expect(doc.exists).to.be.true;
-          expect(doc.data()['states']).to.eql(['DN', 'WF']);
-        });
-  })
-
-
-  //
-  // it('adds a new disaster', () => {
-  //   cy.visit(addDisasterUrl);
-  //
-  //   cy.get('#new-disaster').should('be.hidden');
-  //   cy.get('#disaster').select('ADD NEW DISASTER');
-  //   cy.get('#new-disaster').should('not.be.hidden');
-  //   cy.get('#selected-disaster').should('be.hidden');
-  //
-  //   cy.get('#name').type('Harry');
-  //   cy.get('#year').type(2020);
-  //   cy.get('#states').select(['Alaska', 'Texas']);
-  //   cy.get('#add-disaster-button').click();
-  //
-  //   assertHarryStatePickers();
-  // });
-  //
-  // it('attempts to add disaster with missing/bad values', () => {
-  //   cy.visit(addDisasterUrl);
-  //
-  //   cy.get('#disaster').select('ADD NEW DISASTER');
-  //   cy.get('#add-disaster-button').click();
-  //   cy.get('#status').contains(
-  //       'Error: Disaster name, year, and states are required.');
-  //
-  //   cy.get('#name').type('Harry');
-  //   cy.get('#states').select(['Alaska', 'Texas']);
-  //   // yeehaw
-  //   cy.get('#year').type('front');
-  //   cy.get('#add-disaster-button').click();
-  //   cy.get('#status').contains('Error: year must be a number');
-  // });
-  //
-  // it('pulls up an already known disaster - harry', () => {
-  //   cy.visit(addDisasterUrl);
-  //
-  //   cy.get('#selected-disaster').should('be.hidden');
-  //   cy.get('#disaster').select('2020-Harry');
-  //   cy.get('#new-disaster').should('be.hidden');
-  //   cy.get('#selected-disaster').should('not.be.hidden');
-  //
-  //   assertHarryStatePickers();
-  // });
+    AddDisaster.writeDisaster(id, states)
+        .then(() => AddDisaster.writeDisaster(id, states))
+        .then(() => {
+          const status = $('#status');
+          expect(status.is(':visible')).to.be.true;
+          expect(status.text())
+              .to.eql('Error: disaster with that name and year already exists.')
+        })
+  });
 });
 
-/** Assert states pickers for harry are behaving.*/
-function assertHarryStatePickers() {
-  cy.get('#disaster').should('have.value', '2020-Harry');
-  // 2 x <label> <select> <br>
-  cy.get('#asset-pickers').children().should('have.length', 6);
+function AddDisasterPickerAndStatus() {
+  const disasterPicker =
+      $(document.createElement('select')).attr('id', 'disaster');
+  disasterPicker.append(AddDisaster.createOptionFrom('...'));
+  disasterPicker.append(AddDisaster.createOptionFrom('2001-summer'));
 
-  cy.get('#TX-adder').children().should('have.length', 2);
-  cy.get('#AK-adder').children().should('have.length', 1);
+  const selectedChild = $(AddDisaster.createOptionFrom('2003-spring'));
+  disasterPicker.append(selectedChild);
+  disasterPicker.val('2003-spring');
+
+  document.body.appendChild(disasterPicker.get(0));
+
+  const status = $(document.createElement('div')).hide().attr('id', 'status');
+  document.body.appendChild(status.get(0));
 }

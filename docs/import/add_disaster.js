@@ -2,57 +2,52 @@ import {getFirestoreRoot} from '../firestore_document.js';
 
 // Visible for testing
 export {
-  createStateAssetPickers,
-  setDisasterMetadata,
-  enableWhenReady,
+  clearStatus,
   createOptionFrom,
-    setStatus,
-    clearStatus,
-  gdEePathPrefix,
+  createStateAssetPickers,
   eeLegacyPathPrefix,
   emptyCallback,
-    toggleState,
-    writeDisaster
+  enableWhenReady,
+  gdEePathPrefix,
+  setStatus,
+  toggleState,
+  writeDisaster
 };
 
-let disasterMetadata;
-
 // Currently a map of disaster name to states. This pulls once on firebase
-// authentication and then makes local updates afterwards.
+// authentication and then makes local updates afterwards so we don't need to
+// wait on firebase writes to read new info.
 const disasters = new Map();
 
 const SENTINEL_OPTION_VALUE = '...';
 const SENTINEL_NEW_DISASTER_VALUE = 'NEW DISASTER';
 
 /**
- * Populates disaster picker with disasters from firebase + enables the ability
- * to add a new disaster and store to firebase.
- * */
+ *
+ * @return {Promise<firebase.firestore.QuerySnapshot>}
+ */
 function enableWhenReady() {
-  setDisasterMetadata();
-  // populate disaster picker.
-  const disasterPicker = $('#disaster');
-  disasterPicker.append(createOptionFrom(SENTINEL_OPTION_VALUE));
-  disasterMetadata.get().then((querySnapshot) => {
-    querySnapshot.forEach((doc) => {
-      const name = doc.id;
-      disasterPicker.append(createOptionFrom(name));
-      disasters.set(name, doc.data().states);
-    });
-    disasterPicker.append(
-        createOption('ADD NEW DISASTER', SENTINEL_NEW_DISASTER_VALUE));
-
-    disasterPicker.on('change', () => toggleState($('#disaster').val()));
-  });
-
-  // enable add disaster button now that firestore is ready.
+  // enable (currently hidden) add disaster button now that firestore is ready.
   const addDisasterButton = $('#add-disaster-button');
   addDisasterButton.prop('disabled', false);
   addDisasterButton.on('click', addDisaster);
-}
 
-function setDisasterMetadata() {
-  disasterMetadata = getFirestoreRoot().collection('disaster-metadata');
+  // populate disaster picker.
+  const disasterPicker = $('#disaster');
+  disasterPicker.append(createOptionFrom(SENTINEL_OPTION_VALUE));
+  return getFirestoreRoot()
+      .collection('disaster-metadata')
+      .get()
+      .then((querySnapshot) => {
+        querySnapshot.forEach((doc) => {
+          const name = doc.id;
+          disasterPicker.append(createOptionFrom(name));
+          disasters.set(name, doc.data().states);
+        });
+        disasterPicker.append(
+            createOption('ADD NEW DISASTER', SENTINEL_NEW_DISASTER_VALUE));
+        disasterPicker.on('change', () => toggleState($('#disaster').val()));
+      });
 }
 
 /**
@@ -79,26 +74,22 @@ function toggleState(disaster) {
  * @return {Promise<void>}
  */
 function writeDisaster(disasterId, states) {
-  const docRef = disasterMetadata.doc(disasterId);
+  const docRef =
+      getFirestoreRoot().collection('disaster-metadata').doc(disasterId);
   return docRef.get().then((doc) => {
     if (doc.exists) {
       setStatus('Error: disaster with that name and year already exists.');
     } else {
-      console.log(doc.id, " => ", doc.data());
       clearStatus();
-      const newDisasterPick = createOptionFrom(disasterId);
-      newDisasterPick.selected = true;
-      const disasterPicker = document.getElementById('disaster');
-      const pickableDisasters = disasterPicker.childNodes;
-      for (let i = 1; i < pickableDisasters.length; i++) {
-        // This is a little wonky, but done to ensure the ADD NEW DISASTER
-        // choice is always at the end.
-        if (i === pickableDisasters.length - 1 ||
-            pickableDisasters[i].value > disasterId) {
-          disasterPicker.insertBefore(newDisasterPick, pickableDisasters[i]);
-          break;
+      const disasters = $('#disaster > option');
+      disasters.each(function() {
+        if ($(this).val() > disasterId) {
+          $(createOptionFrom(disasterId)).insertBefore($(this));
+          return false;
         }
-      }
+      });
+
+      $('#disaster').val(disasterId);
       return docRef.set({states: states});
     }
   });
@@ -152,16 +143,17 @@ function createStateAssetPickers(states) {
         for (const folder of result.assets) {
           folders.add(folder.id.substring((gdEePathPrefix + 'states/').length));
         }
-        console.log(states);
         for (const state of states) {
-          const assetPicker = document.createElement('select');
-          assetPicker.multiple = 'multiple';
-          assetPicker.id = state + '-adder';
-          const assetPickerLabel = document.createElement('label');
-          assetPickerLabel.for = state + '-adder';
-          assetPickerLabel.innerHTML = 'Add EE asset(s) for ' + state + ': ';
-          assetPicker.appendChild(createOption(
-              '<Upload additional assets via the code editor>',
+          const assetPicker = $(document.createElement('select')).attr({
+            multiple: 'multiple',
+            id: state + '-adder',
+          });
+          const assetPickerLabel = $(document.createElement('label')).attr({
+            innerText: 'Add EE asset(s) for ' + state + ': ',
+                for: state + '-adder',
+          });
+          assetPicker.append(createOption(
+              'Upload additional assets via the code editor',
               SENTINEL_OPTION_VALUE));
 
           const dir = eeLegacyPathPrefix + 'states/' + state;
@@ -171,7 +163,7 @@ function createStateAssetPickers(states) {
             ee.data.listAssets(dir, {}, emptyCallback).then((result) => {
               if (result.assets) {
                 for (const asset of result.assets) {
-                  assetPicker.appendChild(createOptionFrom(asset.id));
+                  assetPicker.append(createOptionFrom(asset.id));
                 }
               }
             });
@@ -188,18 +180,18 @@ function createStateAssetPickers(states) {
  * @param {String} text
  */
 function setStatus(text) {
-  $('#status').prop('innerHTML', text).show();
+  $('#status').html(text).show();
 }
 
 /** Utility function for clearing status div. */
 function clearStatus() {
-  $('#status').empty().hide();
+  $('#status').hide();
 }
 
 /**
  * Utility function for creating an option with the same val and innerText.
  * @param {String} innerTextAndValue
- * @return {HTMLOptionElement}
+ * @return {JQuery<HTMLOptionElement>}
  */
 function createOptionFrom(innerTextAndValue) {
   return createOption(innerTextAndValue, innerTextAndValue);
@@ -207,26 +199,10 @@ function createOptionFrom(innerTextAndValue) {
 
 /**
  * Utility function for creating an option.
- * @param {String} innerText
- * @param {String} value
- * @return {HTMLOptionElement}
+ * @param innerText
+ * @param value
+ * @return {JQuery<HTMLOptionElement>}
  */
 function createOption(innerText, value) {
-  const defaultOption = document.createElement('option');
-  defaultOption.innerText = innerText;
-  defaultOption.value = value;
-  return defaultOption;
+  return $(document.createElement('option')).html(innerText).val(value);
 }
-
-
-/**
- * Utility function to remove all children of a given div.
- * @param {Element} div
- */
-function removeAllChildren(div) {
-  while (div.firstChild) {
-    div.firstChild.remove();
-  }
-}
-
-// setup();
