@@ -47,7 +47,8 @@ function addLoadingElement(divId) {
  */
 function loadingElementFinished(divId) {
   // if (divId === 'mapContainer') {
-  //   document.getElementById('caption').innerText = 'In loading finished for ' + divId;
+  //   document.getElementById('caption').innerText = 'In loading finished for '
+  //   + divId;
   // }
   const overlay = getLoadingOverlay(divId);
   // if (divId === 'mapContainer') {
@@ -62,7 +63,8 @@ function loadingElementFinished(divId) {
   }
   loadingCounterMap[divId]--;
   // if (divId === 'mapContainer') {
-  //   document.getElementById('caption').innerText = 'Got ' + loadingCounterMap[divId];
+  //   document.getElementById('caption').innerText = 'Got ' +
+  //   loadingCounterMap[divId];
   // }
 
   if (loadingCounterMap[divId] === 0) overlay.style.opacity = 0;

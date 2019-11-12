@@ -212,11 +212,13 @@ function addLayerFromFeatures(layerMapValue, layerName) {
     visible: layerMapValue.displayed,
   });
   if (layerName === 'score') {
-    document.getElementById('caption').innerText = 'About to redrawn ' + layerName;
+    document.getElementById('caption').innerText =
+        'About to redrawn ' + layerName;
   }
   redrawLayers();
   if (layerName === 'score') {
-    document.getElementById('caption').innerText = 'Finished redrawn ' + layerName;
+    document.getElementById('caption').innerText =
+        'Finished redrawn ' + layerName;
   }
 }
 
@@ -301,7 +303,8 @@ function addLayerFromGeoJsonPromise(featuresPromise, layerName, index) {
         layerMapValue.data = features;
         addLayerFromFeatures(layerMapValue, layerName);
         if (layerName === 'score') {
-          document.getElementById('caption').innerText = 'About to finish loading for ' + layerName;
+          document.getElementById('caption').innerText =
+              'About to finish loading for ' + layerName;
         }
         loadingElementFinished(mapContainerId);
       })
