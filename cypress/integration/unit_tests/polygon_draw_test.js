@@ -239,9 +239,7 @@ describe('Unit test for ShapeData', () => {
           google.maps.event.trigger(drawingManager, 'overlaycomplete', event);
           updatePromise.setPromise(event.resultPromise);
         })
-        .then(() => {
-          google.maps.event.trigger(marker, 'click');
-        })
+        .then(() => google.maps.event.trigger(marker, 'click'))
         .then(() => {
           expect(addStub).to.be.calledOnce;
           pressPopupButton('edit');
@@ -252,9 +250,8 @@ describe('Unit test for ShapeData', () => {
             expect(docStub).to.be.calledOnce;
             expect(setStub).to.be.calledOnce;
           });
-          pressPopupButton('delete').then(() => {
-            expect(deleteStub).to.be.calledOnce;
-          })
+          pressPopupButton('delete').then(
+              () => expect(deleteStub).to.be.calledOnce);
         });
   });
 
@@ -360,6 +357,7 @@ class StubPopup {
 /**
  * Clicks a button inside the map with the given id.
  * @param {string} button id of html button we want to click
+ * @return {Cypress.Chainable} result of get
  */
 function pressPopupButton(button) {
   // Force-click because we don't have a real page, so who knows what elements
