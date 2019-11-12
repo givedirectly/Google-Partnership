@@ -79,14 +79,13 @@ describe('Unit tests for add_disaster page', () => {
 
     document.body.appendChild(disasterPicker);
 
-    const name = 'winter';
-    const year = 2002;
+    const id = 'winter-2002';
 
-    AddDisaster.writeDisaster('2002-winter', ['HG'])
+    AddDisaster.writeDisaster(id, ['HG'])
         .then(
             () => {return getFirestoreRoot()
                        .collection('disaster-metadata')
-                       .doc(year + '-' + name)
+                       .doc(id)
                        .get()})
         .then((doc) => {
           console.log(doc);
