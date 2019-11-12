@@ -7,10 +7,11 @@ global.tableClass = '.google-visualization-table-table';
 // Grab a screenshot of the page as well.
 afterEach(function() {
   // eslint-disable-next-line no-invalid-this
-  cy.task('logg', 'What about ' + this.currentTest.state + ', ' + Cypress.env('TRAVIS'));
+  cy.task(
+      'logg',
+      'What about ' + this.currentTest.state + ', ' + Cypress.env('TRAVIS'));
   // eslint-disable-next-line no-invalid-this
   if (this.currentTest.state === 'failed' && Cypress.env('TRAVIS')) {
     cy.screenshot({capture: 'viewport'});
   }
 });
-
