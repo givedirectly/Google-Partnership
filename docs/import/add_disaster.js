@@ -81,7 +81,7 @@ function toggleState(disaster) {
 function writeDisaster(disasterId, states) {
   const docRef = disasterMetadata.doc(disasterId);
   return docRef.get().then((doc) => {
-    if (!doc.exists) {
+    if (doc.exists) {
       setStatus('Error: disaster with that name and year already exists.');
     } else {
       console.log(doc.id, " => ", doc.data());
