@@ -11,4 +11,3 @@ afterEach(function() {
     cy.screenshot({capture: 'viewport'});
   }
 });
-
