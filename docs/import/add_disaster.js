@@ -1,9 +1,19 @@
-import {getFirestoreRoot} from '../authenticate.js';
-import {authenticateToFirebase, Authenticator} from '../authenticate.js';
-import SettablePromise from '../settable_promise.js';
-import TaskAccumulator from './task_accumulator.js';
+import {getFirestoreRoot} from '../firestore_document.js';
 
-export {taskAccumulator};
+// Visible for testing
+export {
+  createStateAssetPickers,
+  setDisasterMetadata,
+  enableWhenReady,
+  createOptionFrom,
+    setStatus,
+    clearStatus,
+  gdEePathPrefix,
+  eeLegacyPathPrefix,
+  emptyCallback,
+    toggleState,
+    writeDisaster
+};
 
 let disasterMetadata;
 
@@ -14,26 +24,12 @@ const disasters = new Map();
 const SENTINEL_OPTION_VALUE = '...';
 const SENTINEL_NEW_DISASTER_VALUE = 'NEW DISASTER';
 
-// Necessary for listAssets.
-ee.data.setCloudApiEnabled(true);
-
-// 2 tasks: EE authentication, page load
-const taskAccumulator = new TaskAccumulator(2, enableWhenReady);
-// TODO: do something with this promise, pass it somewhere - probably once
-// tagging happens.
-const firebaseAuthPromise = new SettablePromise();
-const authenticator = new Authenticator(
-    (token) => firebaseAuthPromise.setPromise(authenticateToFirebase(token)),
-    () => taskAccumulator.taskCompleted());
-authenticator.start();
-
 /**
  * Populates disaster picker with disasters from firebase + enables the ability
  * to add a new disaster and store to firebase.
  * */
 function enableWhenReady() {
-  disasterMetadata = getFirestoreRoot().collection('disaster-metadata');
-
+  setDisasterMetadata();
   // populate disaster picker.
   const disasterPicker = $('#disaster');
   disasterPicker.append(createOptionFrom(SENTINEL_OPTION_VALUE));
@@ -55,6 +51,10 @@ function enableWhenReady() {
   addDisasterButton.on('click', addDisaster);
 }
 
+function setDisasterMetadata() {
+  disasterMetadata = getFirestoreRoot().collection('disaster-metadata');
+}
+
 /**
  * Utility method to switch between the page creating a new disaster and the
  * page editing a current disaster.
@@ -65,12 +65,43 @@ function toggleState(disaster) {
     $('#new-disaster').show();
     $('#selected-disaster').hide();
   } else {
-    console.log(disaster);
     // TODO: display more disaster info including current layers etc.
     $('#new-disaster').hide();
     $('#selected-disaster').show();
     createStateAssetPickers(disasters.get(disaster));
   }
+}
+
+/**
+ *
+ * @param disasterId
+ * @param states
+ * @return {Promise<void>}
+ */
+function writeDisaster(disasterId, states) {
+  const docRef = disasterMetadata.doc(disasterId);
+  return docRef.get().then((doc) => {
+    if (!doc.exists) {
+      setStatus('Error: disaster with that name and year already exists.');
+    } else {
+      console.log(doc.id, " => ", doc.data());
+      clearStatus();
+      const newDisasterPick = createOptionFrom(disasterId);
+      newDisasterPick.selected = true;
+      const disasterPicker = document.getElementById('disaster');
+      const pickableDisasters = disasterPicker.childNodes;
+      for (let i = 1; i < pickableDisasters.length; i++) {
+        // This is a little wonky, but done to ensure the ADD NEW DISASTER
+        // choice is always at the end.
+        if (i === pickableDisasters.length - 1 ||
+            pickableDisasters[i].value > disasterId) {
+          disasterPicker.insertBefore(newDisasterPick, pickableDisasters[i]);
+          break;
+        }
+      }
+      return docRef.set({states: states});
+    }
+  });
 }
 
 /**
@@ -92,38 +123,17 @@ function addDisaster() {
     return;
   }
   const disasterId = year + '-' + name;
-  disasterMetadata.doc(disasterId).get().then((doc) => {
-    if (doc.exists) {
-      setStatus('Error: disaster with that name and year already exists.');
-    } else {
-      clearStatus();
-      disasterMetadata.doc(disasterId).set({
-        states: states,
-      });
-      disasters.set(disasterId, states);
-
-      const newDisasterPick = createOptionFrom(disasterId);
-      newDisasterPick.selected = true;
-      const disasterPicker = document.getElementById('disaster');
-      const pickableDisasters = disasterPicker.childNodes;
-      for (let i = 1; i < pickableDisasters.length; i++) {
-        // This is a little wonky, but done to ensure the ADD NEW DISASTER
-        // choice is always at the end.
-        if (i === pickableDisasters.length - 1 ||
-            pickableDisasters[i].value > disasterId) {
-          disasterPicker.insertBefore(newDisasterPick, pickableDisasters[i]);
-          break;
-        }
-      }
-
-      toggleState(disasterId);
-    }
-  });
+  disasters.set(disasterId, states);
+  writeDisaster(disasterId, states);
+  toggleState(disasterId);
 }
 
 const gdEePathPrefix = 'users/gd/';
 const eeLegacyPathPrefix =
     'projects/earthengine-legacy/assets/' + gdEePathPrefix;
+
+// Needed for testing :/
+const emptyCallback = () => {};
 
 // TODO: add functionality for adding assets to disaster records from these
 // pickers.
@@ -136,18 +146,19 @@ const eeLegacyPathPrefix =
 function createStateAssetPickers(states) {
   const assetPickerDiv = $('#asset-pickers');
   assetPickerDiv.empty();
-  ee.data.listAssets(eeLegacyPathPrefix + 'states', {}, () => {})
+  return ee.data.listAssets(eeLegacyPathPrefix + 'states', {}, emptyCallback)
       .then((result) => {
         const folders = new Set();
         for (const folder of result.assets) {
           folders.add(folder.id.substring((gdEePathPrefix + 'states/').length));
         }
+        console.log(states);
         for (const state of states) {
           const assetPicker = document.createElement('select');
           assetPicker.multiple = 'multiple';
           assetPicker.id = state + '-adder';
           const assetPickerLabel = document.createElement('label');
-          assetPickerLabel.for = state + 'adder';
+          assetPickerLabel.for = state + '-adder';
           assetPickerLabel.innerHTML = 'Add EE asset(s) for ' + state + ': ';
           assetPicker.appendChild(createOption(
               '<Upload additional assets via the code editor>',
@@ -155,9 +166,9 @@ function createStateAssetPickers(states) {
 
           const dir = eeLegacyPathPrefix + 'states/' + state;
           if (!folders.has(state)) {
-            ee.data.createFolder(dir, false, () => {});
+            ee.data.createFolder(dir, false, emptyCallback);
           } else {
-            ee.data.listAssets(dir, {}, () => {}).then((result) => {
+            ee.data.listAssets(dir, {}, emptyCallback).then((result) => {
               if (result.assets) {
                 for (const asset of result.assets) {
                   assetPicker.appendChild(createOptionFrom(asset.id));
@@ -206,3 +217,16 @@ function createOption(innerText, value) {
   defaultOption.value = value;
   return defaultOption;
 }
+
+
+/**
+ * Utility function to remove all children of a given div.
+ * @param {Element} div
+ */
+function removeAllChildren(div) {
+  while (div.firstChild) {
+    div.firstChild.remove();
+  }
+}
+
+// setup();
