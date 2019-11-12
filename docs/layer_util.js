@@ -203,8 +203,7 @@ function addLayerFromFeatures(layerMapValue, layerName) {
     document.getElementById('caption').innerText =
         'About to add to layer array ' + layerName + ', ' + firebaseLayers;
   }
-  const fillColor = firebaseLayers[layerName] ? getStyleFunction(layerName) :
-                                                getColorOfFeature;
+  const fillColor = layerName === scoreLayerName ? getColorOfFeature : getStyleFunction(layerName);
   if (layerName === 'score') {
     document.getElementById('caption').innerText = 'Got color  ' + fillColor;
   }
