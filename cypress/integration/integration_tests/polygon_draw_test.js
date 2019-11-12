@@ -5,7 +5,7 @@ const notes = 'Sphinx of black quartz, judge my vow';
 // necessary to draw polygons.
 describe('Integration tests for drawing polygons', () => {
   it('Draws a polygon and edits its notes', () => {
-    cy.visit(host);
+    cy.visit('');
     drawPolygonAndClickOnIt();
     pressPopupButton('edit');
     cy.get('[class="notes"]').type(notes);
@@ -14,7 +14,7 @@ describe('Integration tests for drawing polygons', () => {
   });
 
   it('Draws a polygon, calculates damage', () => {
-    cy.visit(host);
+    cy.visit('');
     // Sometimes the map load interacts strangely with the search. So wait.
     cy.awaitLoad();
     cy.get('[placeholder="Search"]').clear().type('Aldine Estates{enter}');
@@ -29,7 +29,7 @@ describe('Integration tests for drawing polygons', () => {
   it('Draws a polygon and deletes it', () => {
     // Accept confirmation when it happens.
     cy.on('window:confirm', () => true);
-    cy.visit(host);
+    cy.visit('');
     drawPolygonAndClickOnIt();
     pressPopupButton('edit');
     cy.get('[class="notes"]').type(notes);
@@ -45,7 +45,7 @@ describe('Integration tests for drawing polygons', () => {
     // Reject confirmation when first happens, then accept it later.
     let confirmValue = false;
     cy.on('window:confirm', () => confirmValue);
-    cy.visit(host);
+    cy.visit('');
     drawPolygonAndClickOnIt();
     pressPopupButton('edit');
     cy.get('[class="notes"]').type(notes);
@@ -57,7 +57,7 @@ describe('Integration tests for drawing polygons', () => {
     // TODO(#18): wait for a notification that all writes have completed instead
     // of a hardcoded wait.
     cy.wait(1000);
-    cy.visit(host);
+    cy.visit('');
     cy.awaitLoad();
     // Polygon is still there.
     clickOnDrawnPolygon();
@@ -72,7 +72,7 @@ describe('Integration tests for drawing polygons', () => {
     clickOnDrawnPolygon();
     assertExactlyPopUps(0, notes);
     cy.wait(1000);
-    cy.visit(host);
+    cy.visit('');
     cy.awaitLoad();
     // Polygon is gone.
     clickOnDrawnPolygon();
@@ -80,7 +80,7 @@ describe('Integration tests for drawing polygons', () => {
   });
 
   it('Draws a polygon, clicks it, closes its info box', () => {
-    cy.visit(host);
+    cy.visit('');
     drawPolygonAndClickOnIt();
     pressPopupButton('edit');
     cy.get('[class="notes"]').type(notes);
@@ -94,7 +94,7 @@ describe('Integration tests for drawing polygons', () => {
   it('Draws a polygon, almost closes while editing', () => {
     cy.on('window:confirm', () => false);
 
-    cy.visit(host);
+    cy.visit('');
     drawPolygonAndClickOnIt();
     pressPopupButton('edit');
     cy.get('[class="notes"]').type(notes);
@@ -106,7 +106,7 @@ describe('Integration tests for drawing polygons', () => {
   it('Draws a polygon, closes while editing', () => {
     cy.on('window:confirm', () => true);
 
-    cy.visit(host);
+    cy.visit('');
     drawPolygonAndClickOnIt();
     pressPopupButton('edit');
     cy.get('[class="notes"]').type(notes);
@@ -120,7 +120,7 @@ describe('Integration tests for drawing polygons', () => {
   });
 
   it('Hides polygon, re-shows, tries to hide during edit', () => {
-    cy.visit(host);
+    cy.visit('');
 
     drawPolygonAndClickOnIt();
     pressPopupButton('edit');
@@ -165,7 +165,7 @@ describe('Integration tests for drawing polygons', () => {
   });
 
   it('Hides, draws new one, tries to hide during edit, re-shows, hides', () => {
-    cy.visit(host);
+    cy.visit('');
 
     drawPolygonAndClickOnIt();
     pressPopupButton('edit');
@@ -209,7 +209,7 @@ describe('Integration tests for drawing polygons', () => {
   });
 
   it('Degenerate polygon with one vertex not allowed', () => {
-    cy.visit(host);
+    cy.visit('');
 
     startDrawing();
     drawPointAndPrepareForNext(400, 400);
@@ -224,7 +224,7 @@ describe('Integration tests for drawing polygons', () => {
   });
 
   it('Draws marker, edits notes, deletes', () => {
-    cy.visit(host);
+    cy.visit('');
 
     // Give Firebase some time to retrieve data.
     cy.get('[title="Add a marker"]', {timeout: 10000}).click();
