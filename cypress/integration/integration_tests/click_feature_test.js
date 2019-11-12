@@ -24,13 +24,13 @@ describe('Integration test for clicking feature', () => {
         'Block Group 1, Census Tract 2309, Harris County, Texas');
   });
 
-  it.only('clicks on a feature on the map, then clicks on another', () => {
+  it('clicks on a feature on the map, then clicks on another', () => {
     cy.visit(host);
     cy.awaitLoad();
 
     clickAndVerifyBlockGroup();
 
-    cy.get('.map').click(250, 585);
+    cy.get('.map').click(300, 525);
     // show first one is closed.
     cy.get('.map').should(
         'not.contain',
