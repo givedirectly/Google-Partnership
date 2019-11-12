@@ -296,14 +296,12 @@ function clickOnDrawnPolygon(offset = 0) {
 }
 
 /**
- * Clicks a visible button inside the map with the given id. If we're clicking
- * save, automatically wait on the result of the save to be written before
- * continuing on.
+ * Clicks a visible button inside the map with the given id.
  * @param {string} button id of html button we want to click
  */
 function pressPopupButton(button) {
   cy.get('.main-content').scrollTo(0, 0);
-  cy.get(':button:visible').contains(button).click();
+  cy.get(':button:visible', {timeout: 5000}).contains(button).click();
 }
 
 /**
