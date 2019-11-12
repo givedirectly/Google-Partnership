@@ -1,4 +1,5 @@
-const LOADING_TIMEOUT = 600000;
+// Travis will error if no output is received for 10 minutes, so 9 is safe.
+const LOADING_TIMEOUT = 540000;
 
 /**
  * Awaits loading. If no divId is provided, then a full page load is awaited.
