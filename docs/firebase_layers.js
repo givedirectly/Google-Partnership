@@ -45,7 +45,13 @@ function getStyleFunction(assetName) {
  * @return {Function}
  */
 function createStyleFunction(assetName) {
+  if (assetName === 'score') {
+    document.getElementById('caption').innerText = 'about to create style';
+  }
   const colorFunctionProperties = firebaseLayers[assetName]['color-function'];
+  if (assetName === 'score') {
+    document.getElementById('caption').innerText = 'got properties ' + firebaseLayers[assetName];
+  }
   let styleFunction;
   if (colorFunctionProperties['single-color']) {
     const color = colorMap.get(colorFunctionProperties['single-color']);
