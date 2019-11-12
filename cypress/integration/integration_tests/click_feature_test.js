@@ -4,14 +4,14 @@
  */
 describe('Integration test for clicking feature', () => {
   it('clicks a feature on the map highlights feature in list', () => {
-    cy.visit(host);
+    cy.visit('');
     cy.awaitLoad();
 
     clickAndVerifyBlockGroup();
   });
 
   it('clicks on a feature on the map, then unclicks it', () => {
-    cy.visit(host);
+    cy.visit('');
     cy.awaitLoad();
 
     clickAndVerifyBlockGroup();
@@ -25,7 +25,7 @@ describe('Integration test for clicking feature', () => {
   });
 
   it('clicks on a feature on the map, then clicks on another', () => {
-    cy.visit(host);
+    cy.visit('');
     cy.awaitLoad();
 
     clickAndVerifyBlockGroup();
@@ -45,7 +45,7 @@ describe('Integration test for clicking feature', () => {
   });
 
   it('click highlights correct feature even after resort', () => {
-    cy.visit(host);
+    cy.visit('');
     cy.awaitLoad();
 
     // Sort descending by damage percentage
@@ -55,7 +55,7 @@ describe('Integration test for clicking feature', () => {
   });
 
   it('clicks a place where there is no damage -> no feature', () => {
-    cy.visit(host);
+    cy.visit('');
     cy.awaitLoad();
 
     cy.get('.map').click(200, 200);
@@ -65,7 +65,7 @@ describe('Integration test for clicking feature', () => {
   // Ensures that listeners are cleared when table instance and data
   // are updated.
   it('click highlights correct feature even after update', () => {
-    cy.visit(host);
+    cy.visit('');
     cy.awaitLoad();
 
     clickAndVerifyBlockGroup();
