@@ -201,7 +201,7 @@ function addLayerFromId(map, layerName, layerId, index, displayed) {
 function addLayerFromFeatures(layerMapValue, layerName) {
   if (layerName === 'score') {
     document.getElementById('caption').innerText =
-        'About to add to layer array ' + layerName + ', ' + deck.GeoJsonLayer;
+        'About to add to layer array ' + layerName + ', ' + firebaseLayers;
   }
   const fillColor = firebaseLayers[layerName] ? getStyleFunction(layerName) :
                                                 getColorOfFeature;

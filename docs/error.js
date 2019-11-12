@@ -14,7 +14,7 @@ function createError(msg) {
     document.getElementById('caption').innerText =
         'Error ' + msg + ': ' + error;
     console.error('Error ' + msg + ': ' + error);
-  }
+  };
 }
 
 /**
