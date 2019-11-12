@@ -199,10 +199,6 @@ function addLayerFromId(map, layerName, layerId, index, displayed) {
  * @param {string} layerName
  */
 function addLayerFromFeatures(layerMapValue, layerName) {
-  if (layerName === 'score') {
-    document.getElementById('caption').innerText =
-        'About to add to layer array ' + layerName;
-  }
   layerArray[layerMapValue.index] = new deck.GeoJsonLayer({
     id: layerName,
     data: layerMapValue.data,
@@ -215,15 +211,7 @@ function addLayerFromFeatures(layerMapValue, layerName) {
                                               getColorOfFeature,
     visible: layerMapValue.displayed,
   });
-  if (layerName === 'score') {
-    document.getElementById('caption').innerText =
-        'About to redrawn ' + layerName;
-  }
   redrawLayers();
-  if (layerName === 'score') {
-    document.getElementById('caption').innerText =
-        'Finished redrawn ' + layerName;
-  }
 }
 
 /**
@@ -300,16 +288,8 @@ function addLayerFromGeoJsonPromise(featuresPromise, layerName, index) {
   layerMap.set(layerName, layerMapValue);
   featuresPromise
       .then((features) => {
-        if (layerName === 'score') {
-          document.getElementById('caption').innerText =
-              'Got features for geojson ' + layerName;
-        }
         layerMapValue.data = features;
         addLayerFromFeatures(layerMapValue, layerName);
-        if (layerName === 'score') {
-          document.getElementById('caption').innerText =
-              'About to finish loading for ' + layerName;
-        }
         loadingElementFinished(mapContainerId);
       })
       .catch(createError('Error rendering ' + layerName));
