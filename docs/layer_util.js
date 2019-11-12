@@ -288,7 +288,8 @@ function addLayerFromGeoJsonPromise(featuresPromise, layerName, index) {
   layerMap.set(layerName, layerMapValue);
   featuresPromise
       .then((features) => {
-        document.getElementById('caption').innerText = 'Got features for geojson';
+        document.getElementById('caption').innerText =
+            'Got features for geojson';
         layerMapValue.data = features;
         addLayerFromFeatures(layerMapValue, layerName);
         loadingElementFinished(mapContainerId);
@@ -314,7 +315,8 @@ function addNullLayer(layerName, index) {
 function redrawLayers() {
   document.getElementById('caption').innerText = 'About to redraw';
   deckGlOverlay.setProps({layers: processLayerArray()});
-  document.getElementById('caption').innerText = 'Redrawn';}
+  document.getElementById('caption').innerText = 'Redrawn';
+}
 
 /**
  * Filters out null elements and appends element at 'lastElement' to end of
