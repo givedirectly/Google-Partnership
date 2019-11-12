@@ -1,6 +1,6 @@
 describe('Integration test for the sidebar', () => {
   it('Enables toggling', () => {
-    cy.visit(host);
+    cy.visit('');
     cy.awaitLoad();
 
     // The sidebar should be collapsed to start.
