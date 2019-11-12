@@ -80,9 +80,11 @@ function writeDisaster(disasterId, states) {
   return docRef.get().then((doc) => {
     if (doc.exists) {
       setStatus('Error: disaster with that name and year already exists.');
+      return false;
     } else {
       clearStatus();
       const disasters = $('#disaster > option');
+      // comment needed to quiet eslint on no-invalid-this rules
       disasters.each(/* @this HTMLElement */ function() {
         if ($(this).val() > disasterId) {
           $(createOptionFrom(disasterId)).insertBefore($(this));
@@ -91,7 +93,8 @@ function writeDisaster(disasterId, states) {
       });
 
       $('#disaster').val(disasterId);
-      return docRef.set({states: states});
+      docRef.set({states: states});
+      return true;
     }
   });
 }
@@ -116,8 +119,9 @@ function addDisaster() {
   }
   const disasterId = year + '-' + name;
   disasters.set(disasterId, states);
-  writeDisaster(disasterId, states);
-  toggleState(disasterId);
+  writeDisaster(disasterId, states).then((success) => {
+    if (success) toggleState(disasterId);
+  });
 }
 
 const gdEePathPrefix = 'users/gd/';
