@@ -211,7 +211,13 @@ function addLayerFromFeatures(layerMapValue, layerName) {
                                               getColorOfFeature,
     visible: layerMapValue.displayed,
   });
+  if (layerName === 'score') {
+    document.getElementById('caption').innerText = 'About to redrawn ' + layerName;
+  }
   redrawLayers();
+  if (layerName === 'score') {
+    document.getElementById('caption').innerText = 'Finished redrawn ' + layerName;
+  }
 }
 
 /**
@@ -288,10 +294,15 @@ function addLayerFromGeoJsonPromise(featuresPromise, layerName, index) {
   layerMap.set(layerName, layerMapValue);
   featuresPromise
       .then((features) => {
-        document.getElementById('caption').innerText =
-            'Got features for geojson';
+        if (layerName === 'score') {
+          document.getElementById('caption').innerText =
+              'Got features for geojson ' + layerName;
+        }
         layerMapValue.data = features;
         addLayerFromFeatures(layerMapValue, layerName);
+        if (layerName === 'score') {
+          document.getElementById('caption').innerText = 'About to finish loading for ' + layerName;
+        }
         loadingElementFinished(mapContainerId);
       })
       .catch(createError('Error rendering ' + layerName));
@@ -313,9 +324,7 @@ function addNullLayer(layerName, index) {
  * layerArray, which has the effect of redrawing it on the map.
  */
 function redrawLayers() {
-  document.getElementById('caption').innerText = 'About to redraw';
   deckGlOverlay.setProps({layers: processLayerArray()});
-  document.getElementById('caption').innerText = 'Redrawn';
 }
 
 /**
