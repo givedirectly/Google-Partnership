@@ -164,12 +164,9 @@ if (Cypress.spec.relative.startsWith('cypress/integration/integration_tests')) {
  */
 function addScriptToDocument(scriptUrl) {
   const script = document.createElement('script');
-
-  document.body.appendChild(script);
-  script.setAttribute('type', 'text/javascript');
-  // script.innerText = 'var a = 0';
   script.setAttribute('src', scriptUrl);
-  cy.log(document.body);
+  script.setAttribute('type', 'text/javascript');
+  document.head.appendChild(script);
 }
 
 /**
