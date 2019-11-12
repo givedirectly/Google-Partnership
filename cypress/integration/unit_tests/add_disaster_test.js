@@ -1,11 +1,9 @@
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
-import * as AddDisaster from '../../../docs/import/add_disaster.js'
+import * as AddDisaster from '../../../docs/import/add_disaster.js';
 import {addFirebaseHooks, loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
-// const addDisasterUrl = host + 'import/add_disaster.html';
-
-const KNOWN_FAKE_STATE = 'WF';    // winterfell
-const UNKNOWN_FAKE_STATE = 'DN';  // dorne
+const KNOWN_STATE = 'WF';
+const UNKNOWN_STATE = 'DN'; 
 
 describe('Unit tests for add_disaster page', () => {
   loadScriptsBeforeForUnitTests('ee', 'firebase', 'jquery');
@@ -26,21 +24,21 @@ describe('Unit tests for add_disaster page', () => {
             AddDisaster.emptyCallback)
         .returns(Promise.resolve({
           'assets':
-              [{id: AddDisaster.gdEePathPrefix + 'states/' + KNOWN_FAKE_STATE}]
-        }));
+              [{id: AddDisaster.gdEePathPrefix + 'states/' + KNOWN_STATE,}]
+        ,}));
     listAssetsStub
         .withArgs(
-            AddDisaster.eeLegacyPathPrefix + 'states/' + KNOWN_FAKE_STATE, {},
+            AddDisaster.eeLegacyPathPrefix + 'states/' + KNOWN_STATE, {},
             AddDisaster.emptyCallback)
         .returns(Promise.resolve({
           'assets': [{
-            id: AddDisaster.gdEePathPrefix + 'states/' + KNOWN_FAKE_STATE +
-                '/snap'
+            id: AddDisaster.gdEePathPrefix + 'states/' + KNOWN_STATE +
+                '/snap',
           }]
-        }));
+        ,}));
     cy.stub(ee.data, 'createFolder');
 
-    AddDisaster.createStateAssetPickers([KNOWN_FAKE_STATE, UNKNOWN_FAKE_STATE])
+    AddDisaster.createStateAssetPickers([KNOWN_STATE, UNKNOWN_STATE])
         .then(() => {
           expect(ee.data.listAssets)
               .to.be.calledWith(
@@ -48,30 +46,30 @@ describe('Unit tests for add_disaster page', () => {
                   AddDisaster.emptyCallback);
           expect(ee.data.listAssets)
               .to.be.calledWith(
-                  AddDisaster.eeLegacyPathPrefix + 'states/' + KNOWN_FAKE_STATE,
+                  AddDisaster.eeLegacyPathPrefix + 'states/' + KNOWN_STATE,
                   {}, AddDisaster.emptyCallback);
           expect(ee.data.createFolder)
               .to.be.calledWith(
                   AddDisaster.eeLegacyPathPrefix + 'states/' +
-                      UNKNOWN_FAKE_STATE,
+                      UNKNOWN_STATE,
                   false, AddDisaster.emptyCallback);
 
           // 2 x <label> <select> <br>
           expect($('#asset-pickers').children().length).to.equal(6);
           // expect known state adder to contain an option for the known ee
           // asset
-          const picker = $('#' + KNOWN_FAKE_STATE + '-adder');
+          const picker = $('#' + KNOWN_STATE + '-adder');
           expect(picker).to.contain(
-              AddDisaster.gdEePathPrefix + 'states/' + KNOWN_FAKE_STATE +
+              AddDisaster.gdEePathPrefix + 'states/' + KNOWN_STATE +
               '/snap');
           expect(picker.children().length).to.equal(2);
-          expect($('#' + UNKNOWN_FAKE_STATE + '-adder').children().length)
+          expect($('#' + UNKNOWN_STATE + '-adder').children().length)
               .to.equal(1);
         });
   });
 
   it('writes a new disaster to firestore', () => {
-    AddDisasterPickerAndStatus();
+    addDisasterPickerAndStatus();
     const id = '2002-winter';
     const states = ['DN, WF'];
 
@@ -86,7 +84,7 @@ describe('Unit tests for add_disaster page', () => {
           return getFirestoreRoot()
               .collection('disaster-metadata')
               .doc(id)
-              .get()
+              .get();
         })
         .then((doc) => {
           expect(doc.exists).to.be.true;
@@ -95,7 +93,7 @@ describe('Unit tests for add_disaster page', () => {
   });
 
   it.only('tries to write a disaster id that already exists', () => {
-    AddDisasterPickerAndStatus();
+    addDisasterPickerAndStatus();
 
     const id = 'winter-2002';
     const states = ['DN, WF'];
@@ -107,11 +105,12 @@ describe('Unit tests for add_disaster page', () => {
           expect(status.is(':visible')).to.be.true;
           expect(status.text())
               .to.eql('Error: disaster with that name and year already exists.')
-        })
+        });
   });
 });
 
-function AddDisasterPickerAndStatus() {
+/** Util function for creating necessary DOM elements */
+function addDisasterPickerAndStatus() {
   const disasterPicker =
       $(document.createElement('select')).attr('id', 'disaster');
   disasterPicker.append(AddDisaster.createOptionFrom('...'));

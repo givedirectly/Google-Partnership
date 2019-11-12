@@ -11,7 +11,7 @@ export {
   gdEePathPrefix,
   setStatus,
   toggleState,
-  writeDisaster
+  writeDisaster,
 };
 
 // Currently a map of disaster name to states. This pulls once on firebase
@@ -68,9 +68,10 @@ function toggleState(disaster) {
 }
 
 /**
- *
- * @param disasterId
- * @param states
+ * Writes the given details to a new disaster entry in firestore. Fails if
+ * there is an existing disaster with the same details.
+ * @param {string} disasterId of the form <year>-<name>
+ * @param {Array<string>} states array of state (abbreviations)
  * @return {Promise<void>}
  */
 function writeDisaster(disasterId, states) {
@@ -199,8 +200,8 @@ function createOptionFrom(innerTextAndValue) {
 
 /**
  * Utility function for creating an option.
- * @param innerText
- * @param value
+ * @param {String} innerText
+ * @param {String} value
  * @return {JQuery<HTMLOptionElement>}
  */
 function createOption(innerText, value) {
