@@ -179,71 +179,83 @@ describe('Unit test for ShapeData', () => {
 
   it('Shows calculating before update finishes', () => {
     const event = new Event('overlaycomplete');
-    cy.document().then((document) => {
-      const div = document.createElement('div');
-      document.body.appendChild(div);
-      const map = new google.maps.Map(div, {center: {lat: 0, lng: 0}, zoom: 1});
-      event.overlay = new google.maps.Polygon({
-        map: map,
-        paths: [{lat: 0, lng: 0}, {lat: 1, lng: 1}, {lat: 0, lng: 1}],
-      });
-      return cy.window().then((win) => setUpPolygonDrawing(map, Promise.resolve(), win));
-    }).then((drawingManager) => {
-      google.maps.event.trigger(drawingManager, 'overlaycomplete', event);
-      updatePromise.setPromise(event.resultPromise);
-    });
+    cy.document()
+        .then((document) => {
+          const div = document.createElement('div');
+          document.body.appendChild(div);
+          const map =
+              new google.maps.Map(div, {center: {lat: 0, lng: 0}, zoom: 1});
+          event.overlay = new google.maps.Polygon({
+            map: map,
+            paths: [{lat: 0, lng: 0}, {lat: 1, lng: 1}, {lat: 0, lng: 1}],
+          });
+          return cy.window().then(
+              (win) => setUpPolygonDrawing(map, Promise.resolve(), win));
+        })
+        .then((drawingManager) => {
+          google.maps.event.trigger(drawingManager, 'overlaycomplete', event);
+          updatePromise.setPromise(event.resultPromise);
+        });
     firebaseCollection.add = () => Promise.resolve({id: 'id'});
     const updatePromise = new SettablePromise();
     cy.get('.popup-calculated-data').contains('calculating');
-    cy.get('.popup-calculated-data').should('have.css', 'color').and('eq', 'rgb(128, 128, 128)');
+    cy.get('.popup-calculated-data')
+        .should('have.css', 'color')
+        .and('eq', 'rgb(128, 128, 128)');
     cy.wrap(updatePromise.getPromise());
-    cy.get('.popup-calculated-data').should('have.css', 'color').and('eq', 'rgb(0, 0, 0)');
+    cy.get('.popup-calculated-data')
+        .should('have.css', 'color')
+        .and('eq', 'rgb(0, 0, 0)');
   });
 
   it('Draws marker, edits notes, then deletes', () => {
     firebaseCollection.add = () => {};
     firebaseCollection.doc = () => {};
-    const addStub = cy.stub(firebaseCollection, 'add').returns(Promise.resolve({id: 'id'}));
+    const addStub =
+        cy.stub(firebaseCollection, 'add').returns(Promise.resolve({id: 'id'}));
     const docStubObject = {};
     docStubObject.set = () => {};
     docStubObject.delete = () => {};
     const setStub = cy.stub(docStubObject, 'set').returns(Promise.resolve());
-    const deleteStub = cy.stub(docStubObject, 'delete').returns(Promise.resolve());
+    const deleteStub =
+        cy.stub(docStubObject, 'delete').returns(Promise.resolve());
     const docStub = cy.stub(firebaseCollection, 'doc').returns(docStubObject);
     const updatePromise = new SettablePromise();
     const event = new Event('overlaycomplete');
     let marker;
     cy.document()
-        .then(
-        (document) => {
+        .then((document) => {
           const div = document.createElement('div');
           document.body.appendChild(div);
-          const map = new google.maps.Map(div, {center: {lat: 0, lng: 0}, zoom: 1});
-          marker = new google.maps.Marker(
-              {map: map, position: {lat: 0, lng: 0}});
+          const map =
+              new google.maps.Map(div, {center: {lat: 0, lng: 0}, zoom: 1});
+          marker =
+              new google.maps.Marker({map: map, position: {lat: 0, lng: 0}});
           event.overlay = marker;
-          return cy.window().then((win) => setUpPolygonDrawing(map, Promise.resolve(), win));
+          return cy.window().then(
+              (win) => setUpPolygonDrawing(map, Promise.resolve(), win));
         })
         .then((drawingManager) => {
-                google.maps.event.trigger(drawingManager, 'overlaycomplete', event);
-                updatePromise.setPromise(event.resultPromise);
-              })
+          google.maps.event.trigger(drawingManager, 'overlaycomplete', event);
+          updatePromise.setPromise(event.resultPromise);
+        })
         .then(() => {
-            google.maps.event.trigger(marker, 'click');
+          google.maps.event.trigger(marker, 'click');
+        })
+        .then(() => {
+          expect(addStub).to.be.calledOnce;
+          pressPopupButton('edit');
+          // Force-type because we don't have a real page, so may not be
+          // visible.
+          cy.get('[class="notes"]').type('my notes', {force: true});
+          pressPopupButton('save').then(() => {
+            expect(docStub).to.be.calledOnce;
+            expect(setStub).to.be.calledOnce;
+          });
+          pressPopupButton('delete').then(() => {
+            expect(deleteStub).to.be.calledOnce;
           })
-        .then(() => {
-      expect(addStub).to.be.calledOnce;
-      pressPopupButton('edit');
-      // Force-type because we don't have a real page, so may not be visible.
-      cy.get('[class="notes"]').type('my notes', {force: true});
-      pressPopupButton('save').then(() => {
-        expect(docStub).to.be.calledOnce;
-        expect(setStub).to.be.calledOnce;
-      });
-      pressPopupButton('delete').then(() => {
-        expect(deleteStub).to.be.calledOnce;
-      })
-    });
+        });
   });
 
   it('Skips update if nothing changed', () => {
@@ -354,4 +366,3 @@ function pressPopupButton(button) {
   // are "visible".
   return cy.get(':button').contains(button).click({force: true});
 }
-
