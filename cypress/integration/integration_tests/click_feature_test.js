@@ -31,7 +31,9 @@ describe('Integration test for clicking feature', () => {
     clickAndVerifyBlockGroup();
     // deselect
 
+    cy.wait(500);
     cy.get('.map').click(250, 585);
+    cy.wait(500);
     cy.get('.map').click(250, 585);
     // show first one is closed.
     cy.get('.map').should(
