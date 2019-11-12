@@ -83,7 +83,7 @@ function writeDisaster(disasterId, states) {
     } else {
       clearStatus();
       const disasters = $('#disaster > option');
-      disasters.each(function() {
+      disasters.each(/* @this HTMLElement */ function() {
         if ($(this).val() > disasterId) {
           $(createOptionFrom(disasterId)).insertBefore($(this));
           return false;
@@ -133,7 +133,9 @@ const emptyCallback = () => {};
  * Requests all assets in ee directories corresponding to given states and
  * displays them in pickers. Right now, selecting on those pickers doesn't
  * actually do anything.
- * @param {Array<String>} states
+ * @param states
+ * @return {Promise<void>} completes after either a new folder is created or
+ *  we've finished listing assets
  */
 function createStateAssetPickers(states) {
   const assetPickerDiv = $('#asset-pickers');
@@ -153,15 +155,19 @@ function createStateAssetPickers(states) {
             innerText: 'Add EE asset(s) for ' + state + ': ',
                 for: state + '-adder',
           });
+
+          const dir = eeLegacyPathPrefix + 'states/' + state;
+          assetPickerDiv.append(assetPickerLabel);
+          assetPickerDiv.append(assetPicker);
+          assetPickerDiv.append(document.createElement('br'));
+
           assetPicker.append(createOption(
               'Upload additional assets via the code editor',
               SENTINEL_OPTION_VALUE));
-
-          const dir = eeLegacyPathPrefix + 'states/' + state;
           if (!folders.has(state)) {
-            ee.data.createFolder(dir, false, emptyCallback);
+            return ee.data.createFolder(dir, false, emptyCallback);
           } else {
-            ee.data.listAssets(dir, {}, emptyCallback).then((result) => {
+            return ee.data.listAssets(dir, {}, emptyCallback).then((result) => {
               if (result.assets) {
                 for (const asset of result.assets) {
                   assetPicker.append(createOptionFrom(asset.id));
@@ -169,9 +175,6 @@ function createStateAssetPickers(states) {
               }
             });
           }
-          assetPickerDiv.append(assetPickerLabel);
-          assetPickerDiv.append(assetPicker);
-          assetPickerDiv.append(document.createElement('br'));
         }
       });
 }

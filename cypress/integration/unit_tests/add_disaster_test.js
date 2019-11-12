@@ -102,7 +102,8 @@ describe('Unit tests for add_disaster page', () => {
           const status = $('#status');
           expect(status.is(':visible')).to.be.true;
           expect(status.text())
-              .to.eql('Error: disaster with that name and year already exists.')
+              .to.eql(
+                  'Error: disaster with that name and year already exists.');
         });
   });
 });
