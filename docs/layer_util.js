@@ -207,7 +207,8 @@ function addLayerFromFeatures(layerMapValue, layerName) {
     // TODO(janakr): deck.gl docs claim that the "color" property should
     // automatically color the features, but it doesn't appear to work:
     // https://deck.gl/#/documentation/deckgl-api-reference/layers/geojson-layer?section=getelevation-function-number-optional-transition-enabled
-    getFillColor: layerName === scoreLayerName ? getColorOfFeature : getStyleFunction(layerName),
+    getFillColor: layerName === scoreLayerName ? getColorOfFeature :
+                                                 getStyleFunction(layerName),
     visible: layerMapValue.displayed,
   });
   redrawLayers();
