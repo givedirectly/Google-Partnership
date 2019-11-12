@@ -46,26 +46,14 @@ function addLoadingElement(divId) {
  * @param {string} divId The id of the div that needs to update loading state
  */
 function loadingElementFinished(divId) {
-  // if (divId === 'mapContainer') {
-  //   document.getElementById('caption').innerText = 'In loading finished for '
-  //   + divId;
-  // }
   const overlay = getLoadingOverlay(divId);
-  // if (divId === 'mapContainer') {
-  //   document.getElementById('caption').innerText = 'Got overlay ' + overlay;
-  // }
   if (!overlay) return;
 
   if (!loadingCounterMap[divId]) {
-    document.getElementById('caption').innerText = 'Error with counter map';
     console.error('Inaccurately marking a loading element as finished!');
     return;
   }
   loadingCounterMap[divId]--;
-  // if (divId === 'mapContainer') {
-  //   document.getElementById('caption').innerText = 'Got ' +
-  //   loadingCounterMap[divId];
-  // }
 
   if (loadingCounterMap[divId] === 0) overlay.style.opacity = 0;
 }

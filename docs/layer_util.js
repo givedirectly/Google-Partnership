@@ -304,10 +304,6 @@ function addLayerFromGeoJsonPromise(featuresPromise, layerName, index) {
   layerMap.set(layerName, layerMapValue);
   featuresPromise
       .then((features) => {
-        if (layerName === 'score') {
-          document.getElementById('caption').innerText =
-              'Got features for geojson ' + layerName;
-        }
         layerMapValue.data = features;
         addLayerFromFeatures(layerMapValue, layerName);
         if (layerName === 'score') {
