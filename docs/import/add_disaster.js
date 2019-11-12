@@ -133,7 +133,7 @@ const emptyCallback = () => {};
  * Requests all assets in ee directories corresponding to given states and
  * displays them in pickers. Right now, selecting on those pickers doesn't
  * actually do anything.
- * @param states
+ * @param {Array<string>} states e.g. ['WA']
  * @return {Promise<void>} completes after either a new folder is created or
  *  we've finished listing assets
  */
