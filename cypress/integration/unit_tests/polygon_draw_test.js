@@ -179,7 +179,7 @@ describe('Unit test for ShapeData', () => {
 
   it('Shows calculating before update finishes', () => {
     const div = document.createElement('div');
-    document.getElementsByTagName('body')[0].appendChild(div);
+    document.body.appendChild(div);
     const map = new google.maps.Map(div, {center: {lat: 0, lng: 0}, zoom: 1});
     const polygon = new google.maps.Polygon({
       map: map,
@@ -196,6 +196,8 @@ describe('Unit test for ShapeData', () => {
         });
     let calculatingDiv;
     // Popup initialization happens async, apparently, and takes a bit of time.
+    // Update is also happening. 50 ms is in the sweet spot of >popup init but
+    // <update.
     cy.wait(50).then(() => {
       calculatingDiv =
           document.getElementsByClassName('popup-calculated-data')[0];
