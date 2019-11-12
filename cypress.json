@@ -1,4 +1,5 @@
 {
   "projectId": "jr8ks8",
-  "nodeVersion": "system"
+  "nodeVersion": "system",
+  "animationDistanceThreshold": 20
 }
