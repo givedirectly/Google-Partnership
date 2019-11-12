@@ -31,7 +31,7 @@ describe('Integration tests for drawing polygons', () => {
   // of times manually this seems fairly safe, but there's a chance it flakes
   // out if something changes. If this does start to flake, we can also consider
   // lowering the wait at the end of drawPolygonAndClickOnIt.
-  it('Draws a polygon, checks for calculating status', () => {
+  xit('Draws a polygon, checks for calculating status', () => {
     cy.visit(host);
     drawPolygonAndClickOnIt();
     cy.get('.popup-calculated-data').contains('calculating');

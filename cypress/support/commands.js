@@ -1,4 +1,4 @@
-const LOADING_TIMEOUT = 240000;
+const LOADING_TIMEOUT = 600000;
 
 /**
  * Awaits loading. If no divId is provided, then a full page load is awaited.
