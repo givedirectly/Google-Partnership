@@ -17,8 +17,8 @@ describe('Integration test for clicking feature', () => {
     clickAndVerifyBlockGroup();
     // Not sure why this first click isn't registering but double click seems to
     // do the job.
-    cy.get('.map').click(400, 600);
-    cy.get('.map').click(400, 600);
+    cy.get('.map').click(900, 500);
+    cy.get('.map').click(900, 500);
     cy.get('.map').should(
         'not.contain',
         'Block Group 1, Census Tract 2309, Harris County, Texas');
@@ -29,16 +29,19 @@ describe('Integration test for clicking feature', () => {
     cy.awaitLoad();
 
     clickAndVerifyBlockGroup();
-    // deselect
 
-    cy.get('.map').click(250, 585);
-    cy.get('.map').click(250, 585);
+    cy.get('.map').click(300, 525);
     // show first one is closed.
     cy.get('.map').should(
         'not.contain',
         'Block Group 1, Census Tract 2309, Harris County, Texas');
+    // TODO(janakr): Remove this debugging when flakiness resolved.
+    cy.get('.map')
+        .should('contain', 'Block Group')
+        .then(($elt) => cy.log($elt.text()));
+
     cy.get('.map').should(
-        'contain', 'Block Group 1, Census Tract 2405.02, Harris County, Texas');
+        'contain', 'Block Group 1, Census Tract 5501, Harris County, Texas');
   });
 
   it('click highlights correct feature even after resort', () => {
@@ -79,27 +82,14 @@ describe('Integration test for clicking feature', () => {
 
 /** Convenience function for clicking on the block group we use for testing. */
 function clickAndVerifyBlockGroup() {
-  cy.get('[placeholder="Search"]').clear().type('Aldine Estates{enter}');
+  cy.get('[placeholder="Search"]').clear().type('Greater Greenspoint{enter}');
 
-  zoomOut(3);
-  // This wait is embarrassing, but otherwise Travis fails flakily.
-  cy.wait(4000);
-  cy.get('.map').click(400, 600);
+  cy.wait(1000);
+  cy.get('.map').click(900, 500);
   cy.get('.map').should('contain', 'SCORE: 72');
   cy.get('.google-visualization-table-tr-sel')
       .find('[class="google-visualization-table-td"]')
       .should(
           'have.text',
           'Block Group 4, Census Tract 2415, Harris County, Texas21681');
-}
-
-/**
- * Helper function to zoom out some amount of times.
- * @param {number} numTimes
- */
-function zoomOut(numTimes) {
-  for (let i = 0; i < numTimes; i++) {
-    cy.get('[title="Zoom out"]').click();
-    cy.wait(500);
-  }
 }
