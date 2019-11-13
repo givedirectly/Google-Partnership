@@ -156,11 +156,6 @@ if (Cypress.spec.relative.startsWith('cypress/integration/integration_tests')) {
  * To get around this, keep all such statements within functions that are called
  * at runtime.
  * @param {string} scriptUrl
- *     invoked after the script is added to the document to see if the desired
- *     symbol has been loaded yet. It can take a few cycles for the document to
- *     be reprocessed. The callback should normally return
- * "typeof(desiredSymbol) !== 'undefined'".
- *
  */
 function addScriptToDocument(scriptUrl) {
   const script = document.createElement('script');
