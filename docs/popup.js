@@ -240,7 +240,7 @@ function setUpPopup(window) {
     // Below this line are implementations of OverlayView methods.
     /** Called when the popup is added to the map. */
     onAdd() {
-      console.log('in onAdd');
+      cy.log('in onAdd');
       this.createPopupHtml();
       this.getPanes().floatPane.appendChild(this.containerDiv);
     }
