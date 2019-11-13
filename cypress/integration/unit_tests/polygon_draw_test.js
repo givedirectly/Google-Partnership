@@ -216,8 +216,7 @@ describe('Unit test for ShapeData', () => {
     cy.get('.popup-calculated-data').contains('calculating');
     cy.get('.popup-calculated-data')
         .should('have.css', 'color')
-        .and('eq', 'rgb(128, 128, 128)');
-    waiterDone(null);
+        .and('eq', 'rgb(128, 128, 128)').then(() => waiterDone(null));
     cy.wrap(updatePromise.getPromise());
     cy.get('.popup-calculated-data')
         .should('have.css', 'color')
