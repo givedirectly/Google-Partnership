@@ -4,6 +4,7 @@ import {processUserRegions, setUpPolygonDrawing, StoredShapeData} from '../../..
 import * as resourceGetter from '../../../docs/resources';
 import SettablePromise from '../../../docs/settable_promise';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
+import {userRegionData} from '../../../docs/user_region_data';
 
 const polyCoords = [
   {lng: 1, lat: 1},

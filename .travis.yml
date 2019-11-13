@@ -12,7 +12,7 @@ addons:
       # Ubuntu 16+ does not install this dependency by default, so we need to install it ourselves
       - libgconf-2-4
       # Needed for Cypress's browser.
-      # - chromium-browser
+      - chromium-browser
 cache:
   # Caches $HOME/.npm when npm ci is default script command
   # Caches node_modules in all other cases
@@ -40,4 +40,4 @@ before_install:
 before_script:
   - yarn run ws --directory docs --port 8080 &
 script:
-- yarn run cypress run --spec cypress/integration/unit_tests/polygon_draw_test.js --record --config video=false
+- yarn run cypress run --spec cypress/integration/unit_tests/polygon_draw_test.js --record --config video=false --browser chromium
