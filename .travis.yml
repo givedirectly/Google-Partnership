@@ -31,7 +31,9 @@ env:
   # each line. Since the $TRAVIS_BUILD_ID is the same for both jobs, Cypress
   # realizes they're the same and distributes the work between them properly.
 # Commented out because right now we're running enough builds that there's often
-# queueing. If this changes, uncomment and add --parallel to Cypress arguments.
+# queueing. Also, we have to run unit tests separately, which makes it annoying
+# to have parallel jobs. If this changes, uncomment and add --parallel to
+# Cypress arguments.
 #  jobs:
 #    - DUMMY_VARIABLE_FOR_MULTIPLE_MACHINES=1
 #    - DUMMY_VARIABLE_FOR_MULTIPLE_MACHINES=2

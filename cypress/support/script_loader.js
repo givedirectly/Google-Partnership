@@ -19,7 +19,13 @@ const scriptMap = new Map([
       () => typeof (deck) !== 'undefined',
     ],
   ],
-  ['ee', ['lib/ee_api_js_debug.js', () => typeof (ee) !== 'undefined']],
+  [
+    'ee',
+    [
+      'https://rawcdn.githack.com/google/earthengine-api/3bb86bfc4f3d9eed98220f3d225b414982915b86/javascript/build/ee_api_js_debug.js',
+      () => typeof (ee) !== 'undefined',
+    ],
+  ],
   [
     'firebase',
     [
@@ -160,9 +166,7 @@ function addScriptToDocument(scriptUrl) {
   const script = document.createElement('script');
   script.setAttribute('src', scriptUrl);
   script.setAttribute('type', 'text/javascript');
-
-  const headElt = document.getElementsByTagName('head');
-  headElt[0].appendChild(script);
+  document.head.appendChild(script);
 }
 
 /**
