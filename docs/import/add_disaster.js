@@ -1,23 +1,26 @@
 import {eeLegacyPathPrefix, gdEePathPrefix} from '../ee_paths.js';
 import {getFirestoreRoot} from '../firestore_document.js';
 
-export {
-  enableWhenReady,
-};
+export {enableWhenReady, SENTINEL_NEW_DISASTER_VALUE, toggleState};
 // Visible for testing
 export {
   addDisaster,
+  createAssetPickers,
   createOptionFrom,
-  createStateAssetPickers,
   disasters,
   emptyCallback,
-  writeDisaster,
+  getAssetsFromEe,
+  stateAssets,
+  writeNewDisaster,
 };
 
 // Currently a map of disaster name to states. This pulls once on firebase
 // authentication and then makes local updates afterwards so we don't need to
 // wait on firebase writes to read new info.
 const disasters = new Map();
+
+// Map of state to list of known assets
+const stateAssets = new Map();
 
 const SENTINEL_OPTION_VALUE = '...';
 const SENTINEL_NEW_DISASTER_VALUE = 'NEW DISASTER';
@@ -34,20 +37,18 @@ function enableWhenReady() {
   addDisasterButton.on('click', addDisaster);
 
   // populate disaster picker.
-  const disasterPicker = $('#disaster');
-  disasterPicker.append(createOptionFrom(SENTINEL_OPTION_VALUE));
   return getFirestoreRoot()
       .collection('disaster-metadata')
       .get()
       .then((querySnapshot) => {
+        const disasterPicker = $('#disaster');
+        disasterPicker.append(createOptionFrom(SENTINEL_OPTION_VALUE));
         querySnapshot.forEach((doc) => {
           const name = doc.id;
           disasterPicker.append(createOptionFrom(name));
           disasters.set(name, doc.data().states);
         });
-        disasterPicker.append(
-            createOption('ADD NEW DISASTER', SENTINEL_NEW_DISASTER_VALUE));
-        disasterPicker.on('change', () => toggleState($('#disaster').val()));
+        disasterPicker.on('change', () => toggleState(disasterPicker.val()));
       });
 }
 
@@ -62,14 +63,37 @@ function toggleState(disaster) {
   if (disaster === SENTINEL_NEW_DISASTER_VALUE) {
     $('#new-disaster').show();
     $('#selected-disaster').hide();
+  } else if (disaster === SENTINEL_OPTION_VALUE) {
+    $('#new-disaster').hide();
+    $('#selected-disaster').hide();
   } else {
+    const states = disasters.get(disaster);
+    const statesToFetch = [];
+    for (const state of states) {
+      if (!stateAssets.has(state)) statesToFetch.push(state);
+    }
+
+    // TODO: add functionality to repull all cached states from ee without
+    // reloading the page.
+    const assetPickersDone = getAssetsFromEe(statesToFetch).then((assets) => {
+      for (const asset of assets) {
+        stateAssets.set(asset[0], asset[1]);
+      }
+      createAssetPickers(states)
+    });
+
     // TODO: display more disaster info including current layers etc. We
-    // might not want want to create these asset pickers every time we toggle
+    // might not want to create these asset pickers every time we toggle
     // between disasters because it requires ee calls. For now it's quite fast,
-    // will handle in follow up PRs if it begins to be problem.
+    // will handle in follow up PRs if it begins to be a problem.
     $('#new-disaster').hide();
     $('#selected-disaster').show();
-    return createStateAssetPickers(disasters.get(disaster));
+    const assetPickerDiv = $('#asset-pickers');
+    // We are already doing this inside createAssetPickers but not until
+    // after the first promise completes so also do it here so lingering
+    // pickers from previous disasters don't hang around.
+    assetPickerDiv.empty();
+    return assetPickersDone;
   }
 }
 
@@ -80,7 +104,7 @@ function toggleState(disaster) {
  * @param {Array<string>} states array of state (abbreviations)
  * @return {Promise<boolean>} returns true after successful write to firestore.
  */
-function writeDisaster(disasterId, states) {
+function writeNewDisaster(disasterId, states) {
   if (disasters.has(disasterId)) {
     setStatus('Error: disaster with that name and year already exists.');
     return Promise.resolve(false);
@@ -127,7 +151,7 @@ function addDisaster() {
     return Promise.resolve(false);
   }
   const disasterId = year + '-' + name;
-  return writeDisaster(disasterId, states);
+  return writeNewDisaster(disasterId, states);
 }
 
 // Needed for testing :/
@@ -143,9 +167,7 @@ const emptyCallback = () => {};
  * @return {Promise<void>} completes when we've finished filling all state
  * pickers.
  */
-function createStateAssetPickers(states) {
-  const assetPickerDiv = $('#asset-pickers');
-  assetPickerDiv.empty();
+function getAssetsFromEe(states) {
   return ee.data.listAssets(eeLegacyPathPrefix + 'states', {}, emptyCallback)
       .then((result) => {
         const folders = new Set();
@@ -154,37 +176,46 @@ function createStateAssetPickers(states) {
         }
         const promises = [];
         for (const state of states) {
-          const assetPicker = $(document.createElement('select')).attr({
-            multiple: 'multiple',
-            id: state + '-adder',
-          });
           const dir = eeLegacyPathPrefix + 'states/' + state;
           if (!folders.has(state)) {
-            promises.push(ee.data.createFolder(dir, false, emptyCallback));
+            ee.data.createFolder(dir, false, emptyCallback);
+            promises.push(Promise.resolve([state, []]));
           } else {
             promises.push(
                 ee.data.listAssets(dir, {}, emptyCallback).then((result) => {
+                  const assets = [];
                   if (result.assets) {
                     for (const asset of result.assets) {
-                      assetPicker.append(createOptionFrom(asset.id));
+                      assets.push(asset.id);
                     }
                   }
+                  return [state, assets];
                 }));
           }
-          const assetPickerLabel = $(document.createElement('label')).attr({
-            innerText: 'Add EE asset(s) for ' + state + ': ',
-                for: state + '-adder',
-          });
-          assetPickerDiv.append(assetPickerLabel);
-          assetPickerDiv.append(assetPicker);
-          assetPickerDiv.append(document.createElement('br'));
-
-          assetPicker.append(createOption(
-              'Upload additional assets via the code editor',
-              SENTINEL_OPTION_VALUE));
         }
         return Promise.all(promises);
       });
+}
+
+function createAssetPickers(states) {
+  const assetPickerDiv = $('#asset-pickers');
+  for (const state of states) {
+    const assetPicker = $(document.createElement('select')).attr({
+      multiple: 'multiple',
+      id: state + '-adder',
+    });
+    assetPicker.append(createOption(
+        'Upload additional assets via the code editor', SENTINEL_OPTION_VALUE));
+    for (const asset of stateAssets.get(state)) {
+      assetPicker.append(createOptionFrom(asset));
+    }
+    const assetPickerLabel = $(document.createElement('label')).attr({
+      innerText: 'Add EE asset(s) for ' + state + ': ', for: state + '-adder',
+    });
+    assetPickerDiv.append(assetPickerLabel);
+    assetPickerDiv.append(assetPicker);
+    assetPickerDiv.append(document.createElement('br'));
+  }
 }
 
 /**

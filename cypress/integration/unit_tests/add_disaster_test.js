@@ -1,10 +1,12 @@
 import {eeLegacyPathPrefix, gdEePathPrefix} from '../../../docs/ee_paths.js';
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
-import {addDisaster, createOptionFrom, createStateAssetPickers, disasters, emptyCallback, writeDisaster} from '../../../docs/import/add_disaster.js';
+import {addDisaster, createAssetPickers, createOptionFrom, disasters, emptyCallback, getAssetsFromEe, stateAssets, writeNewDisaster} from '../../../docs/import/add_disaster.js';
 import {addFirebaseHooks, loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
 const KNOWN_STATE = 'WF';
 const UNKNOWN_STATE = 'DN';
+
+const KNOWN_STATE_ASSET = gdEePathPrefix + 'states/' + KNOWN_STATE + '/snap';
 
 describe('Unit tests for add_disaster page', () => {
   loadScriptsBeforeForUnitTests('ee', 'firebase', 'jquery');
@@ -48,11 +50,13 @@ describe('Unit tests for add_disaster page', () => {
 
   afterEach(() => {
     disasters.clear();
+    stateAssets.clear();
   });
 
-  it('creates asset pickers', () => {
-    const assetPickers = createAndAppend('div', 'asset-pickers');
-    createStateAssetPickers([KNOWN_STATE, UNKNOWN_STATE]).then(() => {
+  it('gets state asset info from ee', () => {
+    getAssetsFromEe([KNOWN_STATE, UNKNOWN_STATE]).then((assets) => {
+      expect(assets[0]).to.eql([KNOWN_STATE, [KNOWN_STATE_ASSET]]);
+      expect(assets[1]).to.eql([UNKNOWN_STATE, []]);
       expect(ee.data.listAssets)
           .to.be.calledWith(eeLegacyPathPrefix + 'states', {}, emptyCallback);
       expect(ee.data.listAssets)
@@ -62,22 +66,30 @@ describe('Unit tests for add_disaster page', () => {
           .to.be.calledWith(
               eeLegacyPathPrefix + 'states/' + UNKNOWN_STATE, false,
               emptyCallback);
-
-      // 2 x <label> <select> <br>
-      expect(assetPickers.children().length).to.equal(6);
-      const picker = $('#' + KNOWN_STATE + '-adder');
-      expect(picker).to.contain(
-          gdEePathPrefix + 'states/' + KNOWN_STATE + '/snap');
-      expect(picker.children().length).to.equal(2);
-      expect($('#' + UNKNOWN_STATE + '-adder').children().length).to.equal(1);
     });
+  });
+
+  it('populates state asset pickers', () => {
+    const assetPickers = createAndAppend('div', 'asset-pickers');
+    const assets = [KNOWN_STATE, UNKNOWN_STATE];
+    stateAssets.set(KNOWN_STATE, [KNOWN_STATE_ASSET]);
+    stateAssets.set(UNKNOWN_STATE, []);
+    createAssetPickers(assets);
+
+    // 2 x <label> <select> <br>
+    expect(assetPickers.children().length).to.equal(6);
+    const picker = $('#' + KNOWN_STATE + '-adder');
+    expect(picker).to.contain(
+        gdEePathPrefix + 'states/' + KNOWN_STATE + '/snap');
+    expect(picker.children().length).to.equal(2);
+    expect($('#' + UNKNOWN_STATE + '-adder').children().length).to.equal(1);
   });
 
   it('writes a new disaster to firestore', () => {
     const id = '2002-winter';
     const states = ['DN, WF'];
 
-    writeDisaster(id, states)
+    writeNewDisaster(id, states)
         .then((success) => {
           expect(success).to.be.true;
           expect($('#status').is(':visible')).to.be.false;
@@ -101,10 +113,10 @@ describe('Unit tests for add_disaster page', () => {
     const id = '2005-summer';
     const states = [KNOWN_STATE];
 
-    writeDisaster(id, states)
+    writeNewDisaster(id, states)
         .then((success) => {
           expect(success).to.be.true;
-          return writeDisaster(id, states);
+          return writeNewDisaster(id, states);
         })
         .then((success) => {
           expect(success).to.be.false;
