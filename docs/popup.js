@@ -14,8 +14,9 @@ let Popup = null;
 // https://developers-dot-devsite-v2-prod.appspot.com/maps/documentation/javascript/examples/overlay-popup
 /**
  * Sets up the Popup class. See link above for more context.
+ * @param {Window} window DOM Window (for test injection)
  */
-function setUpPopup() {
+function setUpPopup(window) {
   Popup = class extends google.maps.OverlayView {
     /**
      * A customized popup on the map.
@@ -63,6 +64,8 @@ function setUpPopup() {
      */
     setCalculatedData(calculatedData) {
       this.calculatedData = calculatedData;
+      checkPresent(
+          this.calculatedDataDiv, 'calculatedDataDiv not present when setting');
       this.calculatedDataDiv.style.color = 'black';
       this.updateCalculatedDataDiv();
     }
@@ -128,7 +131,7 @@ function setUpPopup() {
       deleteButton.className = 'popup-button';
       deleteButton.innerHTML = 'delete';
       deleteButton.onclick = () => {
-        if (confirm('Delete feature?')) {
+        if (window.confirm('Delete feature?')) {
           mapFeature.setMap(null);
           this.setMap(null);
           allPopups.delete(this);
@@ -144,6 +147,9 @@ function setUpPopup() {
         const currentNotes = notesDiv.innerText;
 
         if (!isMarker(mapFeature)) {
+          checkPresent(
+              this.calculatedDataDiv,
+              'calculatedDataDiv not present when greying');
           // Grey out the damage stat until we save so it's clearly old.
           this.calculatedDataDiv.style.color = 'grey';
         }
@@ -170,7 +176,7 @@ function setUpPopup() {
       closeButton.onclick = () => {
         if (this.saved) {
           this.closeCleanup();
-        } else if (confirm(
+        } else if (window.confirm(
                        'Exit without saving changes? Changes will be lost.')) {
           mapFeature.setMap(null);
           revertFeaturePosition(mapFeature);
@@ -253,23 +259,27 @@ function setUpPopup() {
         // Give the Marker room to be visible.
         divPosition.y -= 40;
       }
+      checkPresent(this.containerDiv, 'not present when drawing');
       this.containerDiv.style.left = divPosition.x + 'px';
       this.containerDiv.style.top = divPosition.y + 'px';
     }
 
     /** Sets the visibility to 'hidden'. */
     hide() {
+      checkPresent(this.containerDiv, 'not present when hiding');
       // The visibility property must be a string enclosed in quotes.
       this.containerDiv.style.visibility = 'hidden';
     }
 
     /** Sets the visibility to 'visible'. */
     show() {
+      checkPresent(this.containerDiv, 'not present when showing');
       this.containerDiv.style.visibility = 'visible';
     };
 
     /** @return {boolean} true if the popup is currently visible. */
     isVisible() {
+      checkPresent(this.containerDiv, 'not present when checking visible');
       return this.containerDiv.style.visibility === 'visible';
     };
 
@@ -388,3 +398,14 @@ function createPopup(
 }
 
 const SENTINEL_CALCULATING = {};
+
+/**
+ * Throws an error if obj does not evaluate to true, for debugging ease.
+ * @param {Object} obj
+ * @param {string} msg
+ */
+function checkPresent(obj, msg) {
+  if (!obj) {
+    throw new Error(msg);
+  }
+}

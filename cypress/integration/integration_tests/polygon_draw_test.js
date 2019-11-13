@@ -222,28 +222,6 @@ describe('Integration tests for drawing polygons', () => {
     // not drawn.
     cy.get(':button').each(($elt) => expect($elt.html()).to.not.eql('edit'));
   });
-
-  it('Draws marker, edits notes, deletes', () => {
-    cy.visit('');
-
-    // Give Firebase some time to retrieve data.
-    cy.get('[title="Add a marker"]', {timeout: 10000}).click();
-    drawPointAndPrepareForNext(400, 400);
-    cy.get('[title="Stop drawing"]').click();
-    cy.wait(500);
-    // Coordinates chosen to trigger click: trial and error.
-    drawPointAndPrepareForNext(400, 360);
-    pressPopupButton('edit');
-    cy.get('[class="notes"]').type(notes);
-    // Save happens quickly without damage calculation, so don't wait on it.
-    pressPopupButton('save');
-    // There are some test-only viewport scrolling issues when you close the
-    // popup and try to open it again that I'm too lazy to investigate.
-    // Accept confirmation when it happens.
-    cy.on('window:confirm', () => true);
-    pressPopupButton('delete');
-    assertExactlyPopUps(0, notes);
-  });
 });
 
 /**
@@ -296,9 +274,7 @@ function clickOnDrawnPolygon(offset = 0) {
 }
 
 /**
- * Clicks a visible button inside the map with the given id. If we're clicking
- * save, automatically wait on the result of the save to be written before
- * continuing on.
+ * Clicks a visible button inside the map with the given id.
  * @param {string} button id of html button we want to click
  */
 function pressPopupButton(button) {
