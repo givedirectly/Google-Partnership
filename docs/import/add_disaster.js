@@ -3,17 +3,16 @@ import {getFirestoreRoot} from '../firestore_document.js';
 export {
   enableWhenReady,
 };
-
 // Visible for testing
 export {
+  addDisaster,
   createOptionFrom,
   createStateAssetPickers,
+  disasters,
   eeLegacyPathPrefix,
   emptyCallback,
   gdEePathPrefix,
   writeDisaster,
-  addDisaster,
-  disasters,
 };
 
 // Currently a map of disaster name to states. This pulls once on firebase
