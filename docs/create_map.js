@@ -92,5 +92,8 @@ function createMap(firebasePromise) {
     });
     map.fitBounds(bounds);
   });
+
   return map;
 }
+
+const TILE_URL = 'https://stormscdn.ngs.noaa.gov/20170830-rgb/{Z}/{X}/{Y}';
