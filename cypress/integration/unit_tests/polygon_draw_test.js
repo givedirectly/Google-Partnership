@@ -225,6 +225,8 @@ describe('Unit test for ShapeData', () => {
   });
 
   it('Draws marker, edits notes, then deletes', () => {
+    // Accept confirmation when it happens.
+    cy.on('window:confirm', () => true);
     firebaseCollection.add = () => {};
     firebaseCollection.doc = () => {};
     const addStub =

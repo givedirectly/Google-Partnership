@@ -294,7 +294,7 @@ function setUpPopup(window) {
 
     /** @return {boolean} true if the popup is currently visible. */
     isVisible() {
-      checkPresent(this.containerDiv, 'not present when is visible');
+      checkPresent(this.containerDiv, 'not present when checking visible');
       return this.containerDiv.style.visibility === 'visible';
     };
 
