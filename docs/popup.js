@@ -64,7 +64,8 @@ function setUpPopup(window) {
      */
     setCalculatedData(calculatedData) {
       this.calculatedData = calculatedData;
-      checkPresent(this.calculatedDataDiv, 'calculatedDataDiv not present when setting');
+      checkPresent(
+          this.calculatedDataDiv, 'calculatedDataDiv not present when setting');
       this.calculatedDataDiv.style.color = 'black';
       this.updateCalculatedDataDiv();
     }
@@ -146,7 +147,9 @@ function setUpPopup(window) {
         const currentNotes = notesDiv.innerText;
 
         if (!isMarker(mapFeature)) {
-          checkPresent(this.calculatedDataDiv, 'calculatedDataDiv not present when greying');
+          checkPresent(
+              this.calculatedDataDiv,
+              'calculatedDataDiv not present when greying');
           // Grey out the damage stat until we save so it's clearly old.
           this.calculatedDataDiv.style.color = 'grey';
         }
