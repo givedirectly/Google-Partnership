@@ -124,7 +124,7 @@ function addDisaster() {
     return Promise.resolve(false);
   }
   const disasterId = year + '-' + name;
-  return writeDisaster(disasterId, states)
+  return writeDisaster(disasterId, states);
 }
 
 const gdEePathPrefix = 'users/gd/';

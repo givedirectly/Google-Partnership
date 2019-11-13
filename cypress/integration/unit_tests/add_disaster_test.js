@@ -88,7 +88,7 @@ describe('Unit tests for add_disaster page', () => {
           return getFirestoreRoot()
               .collection('disaster-metadata')
               .doc(id)
-              .get()
+              .get();
         })
         .then((doc) => {
           expect(doc.exists).to.be.true;
@@ -103,7 +103,7 @@ describe('Unit tests for add_disaster page', () => {
     writeDisaster(id, states)
         .then((success) => {
           expect(success).to.be.true;
-          return writeDisaster(id, states)
+          return writeDisaster(id, states);
         })
         .then((success) => {
           expect(success).to.be.false;
@@ -131,7 +131,7 @@ describe('Unit tests for add_disaster page', () => {
           year.val('hello');
           name.val('my name is');
           states.val(['IG', 'MY']);
-          return addDisaster()
+          return addDisaster();
         })
         .then((success) => {
           expect(success).to.be.false;
