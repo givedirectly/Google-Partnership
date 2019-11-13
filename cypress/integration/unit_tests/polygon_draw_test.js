@@ -208,7 +208,7 @@ describe('Unit test for ShapeData', () => {
         .and('eq', 'rgb(0, 0, 0)');
   });
 
-  it.only('Draws marker, edits notes, then deletes', () => {
+  it('Draws marker, edits notes, then deletes', () => {
     firebaseCollection.add = () => {};
     firebaseCollection.doc = () => {};
     const addStub =
