@@ -160,8 +160,8 @@ describe('Unit tests for add_disaster page', () => {
           expect(status.is(':visible')).to.be.true;
           expect(status.text())
               .to.eql(
-                  'Error: disaster name must be comprised of only '
-              + 'lowercase letters');
+                  'Error: disaster name must be comprised of only ' +
+                  'lowercase letters');
 
           year.val('2000');
           return addDisaster();
