@@ -23,6 +23,7 @@ const calculatedData = {
 describe('Unit test for ShapeData', () => {
   loadScriptsBeforeForUnitTests('ee', 'maps', 'firebase');
   let polygonGeometry;
+  let damageCollection;
   before(() => {
     polyLatLng = polyCoords.map((pair) => new google.maps.LatLng(pair));
     polygonGeometry = polyLatLng.map(
@@ -46,7 +47,7 @@ describe('Unit test for ShapeData', () => {
     const featureCollection =
         ee.FeatureCollection([feature1, feature2, feature3]);
     // Polygon contains only first damage point.
-    const damageCollection = ee.FeatureCollection([
+    damageCollection = ee.FeatureCollection([
       ee.Feature(ee.Geometry.Point([1.5, 1.5])),
       ee.Feature(ee.Geometry.Point([200, 200])),
     ]);
@@ -179,6 +180,19 @@ describe('Unit test for ShapeData', () => {
 
   it('Shows calculating before update finishes', () => {
     cy.visit('empty.html');
+    let waiterDone = null;
+    const waiter = new Promise((resolve) => waiterDone = resolve);
+    const oldList = ee.List;
+    ee.List = (list) => {
+      ee.List = oldList;
+      const returnValue = ee.List(list);
+      const oldEvaluate = returnValue.evaluate;
+      returnValue.evaluate = (callback) => {
+        returnValue.evaluate = oldEvaluate;
+        waiter.then(() => returnValue.evaluate(callback));
+      };
+      return returnValue;
+    };
     const event = new Event('overlaycomplete');
     cy.document()
         .then((document) => {
@@ -203,6 +217,7 @@ describe('Unit test for ShapeData', () => {
     cy.get('.popup-calculated-data')
         .should('have.css', 'color')
         .and('eq', 'rgb(128, 128, 128)');
+    waiterDone(null);
     cy.wrap(updatePromise.getPromise());
     cy.get('.popup-calculated-data')
         .should('have.css', 'color')
