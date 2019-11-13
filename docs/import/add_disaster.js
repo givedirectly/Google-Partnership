@@ -147,8 +147,21 @@ function addDisaster() {
     setStatus('Error: Year must be a number.');
     return Promise.resolve(false);
   }
+  if (notAllLowercase(name)) {
+    setStatus('Error: disaster name must be comprised of only lowercase letters');
+    return Promise.resolve(false);
+  }
   const disasterId = year + '-' + name;
   return writeNewDisaster(disasterId, states);
+}
+
+/**
+ * Returns true if the given string is *not* all lowercase letters.
+ * @param {string} val
+ * @return {boolean}
+ */
+function notAllLowercase(val) {
+  return !/^[a-z]+$/.test(val);
 }
 
 // Needed for testing :/
@@ -173,7 +186,9 @@ function getAssetsFromEe(states) {
         for (const state of states) {
           const dir = eeLegacyPathPrefix + 'states/' + state;
           if (!folders.has(state)) {
-            ee.data.createFolder(dir, false, emptyCallback);
+            ee.data.createFolder(dir, false, () => {
+              ee.data.setAssetAcl(dir, {all_users_can_read: true});
+            });
             promises.push(Promise.resolve([state, []]));
           } else {
             promises.push(

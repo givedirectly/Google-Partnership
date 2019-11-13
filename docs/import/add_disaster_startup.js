@@ -8,15 +8,18 @@ export {taskAccumulator};
 // 2 tasks: EE authentication, page load
 const taskAccumulator = new TaskAccumulator(2, enableWhenReady);
 
-// Necessary for listAssets.
-ee.data.setCloudApiEnabled(true);
+
 
 // TODO: do something with this promise, pass it somewhere - probably once
 // tagging happens.
 const firebaseAuthPromise = new SettablePromise();
 const authenticator = new Authenticator(
     (token) => firebaseAuthPromise.setPromise(authenticateToFirebase(token)),
-    () => taskAccumulator.taskCompleted());
+    () => {
+      // Necessary for listAssets.
+      ee.data.setCloudApiEnabled(true);
+      taskAccumulator.taskCompleted()
+    });
 authenticator.start();
 
 $('#create-new-disaster')
