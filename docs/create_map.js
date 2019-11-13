@@ -1,6 +1,7 @@
 import mapStyles from './map_styles.js';
 import {geoPointToLatLng} from './map_util.js';
 import {setUpPolygonDrawing} from './polygon_draw.js';
+import {setUpTolerantImageMapType, TolerantImageMapType} from './fetch.js';
 
 export {createMap as default};
 
@@ -93,7 +94,35 @@ function createMap(firebasePromise) {
     map.fitBounds(bounds);
   });
 
+  setUpTolerantImageMapType();
+
+  for (let i = 0; i < TILE_URLS.length; i++) {
+    const tileUrl = TILE_URLS[i];
+    const tileOverlay = new TolerantImageMapType({
+      getTileUrl: (coord, zoom) => tileUrl.replace('{Z}', zoom)
+          .replace('{X}', coord.x)
+          .replace('{Y}', coord.y),
+      tileSize: new google.maps.Size(256, 256),
+    });
+    map.overlayMapTypes.insertAt(i, tileOverlay);
+  }
   return map;
 }
 
-const TILE_URL = 'https://stormscdn.ngs.noaa.gov/20170830-rgb/{Z}/{X}/{Y}';
+const TILE_URLS = [
+'https://stormscdn.ngs.noaa.gov/20170827-rgb/{Z}/{X}/{Y}',
+'https://stormscdn.ngs.noaa.gov/20170828a-rgb/{Z}/{X}/{Y}',
+'https://stormscdn.ngs.noaa.gov/20170828b-rgb/{Z}/{X}/{Y}',
+'https://stormscdn.ngs.noaa.gov/20170829a-rgb/{Z}/{X}/{Y}',
+'https://stormscdn.ngs.noaa.gov/20170829b-rgb/{Z}/{X}/{Y}',
+'https://stormscdn.ngs.noaa.gov/20170830-rgb/{Z}/{X}/{Y}',
+  'https://stormscdn.ngs.noaa.gov/20170831a-rgb/{Z}/{X}/{Y}',
+  'https://stormscdn.ngs.noaa.gov/20170831b-rgb/{Z}/{X}/{Y}',
+  'https://stormscdn.ngs.noaa.gov/20170901a-rgb/{Z}/{X}/{Y}',
+  'https://stormscdn.ngs.noaa.gov/20170901b-rgb/{Z}/{X}/{Y}',
+  'https://stormscdn.ngs.noaa.gov/20170901c-rgb/{Z}/{X}/{Y}',
+  'https://stormscdn.ngs.noaa.gov/20170902a-rgb/{Z}/{X}/{Y}',
+  'https://stormscdn.ngs.noaa.gov/20170902b-rgb/{Z}/{X}/{Y}',
+  'https://stormscdn.ngs.noaa.gov/20170902c-rgb/{Z}/{X}/{Y}',
+  'https://stormscdn.ngs.noaa.gov/20170903-rgb/{Z}/{X}/{Y}',
+];
