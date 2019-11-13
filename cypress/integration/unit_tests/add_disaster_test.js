@@ -99,7 +99,7 @@ describe('Unit tests for add_disaster page', () => {
 
   it('tries to write a disaster id that already exists', () => {
     const id = '2001-summer';
-    const states = ['DN, WF'];
+    const states = [KNOWN_STATE];
 
     writeDisaster(id, states).then(() => writeDisaster(id, states)).then(() => {
       const status = $('#status');
