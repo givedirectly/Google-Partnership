@@ -122,19 +122,20 @@ function getColorOfFeature(feature) {
  * should be able to call {@code map.overlayMapTypes.setAt(...)}.
  *
  * @param {google.maps.Map} map
- * @param {ee.Element} layer
- * @param {string} layerName
+ * @param {ee.Element} imageAsset
+ * @param {Object} layer
  * @param {number} index
  */
-function addImageLayer(map, layer, layerName, index) {
-  const imgStyles = firebaseLayers[layerName]['vis-params'];
-  if (firebaseLayers[layerName]['use-terrain-style']) {
-    layer = terrainStyle(layer);
+function addImageLayer(map, imageAsset, layer, index) {
+  const imgStyles = layer['vis-params'];
+  if (layer['use-terrain-style']) {
+    imageAsset = terrainStyle(imageAsset);
   }
   // Add a null-overlay entry to layerMap while waiting for the callback to
   // finish.
+  const layerName = layer['ee-name'];
   layerMap[layerName] = new LayerMapValue(null, index, true);
-  layer.getMap({
+  imageAsset.getMap({
     visParams: imgStyles,
     callback: (layerId, failure) => {
       if (layerId) {
@@ -229,29 +230,29 @@ const maxNumFeaturesExpected = 250000000;
 
 /**
  * Convenience wrapper for addLayerFromGeoJsonPromise.
- *
- * @param {string} layerName Name of EarthEngine FeatureCollection.
- * @param {number} index Ordering of layer (higher is more visible).
+ * @param {string} layer Asset
+ * @param {number} index Ordering of layer (higher is more visible)
  * @param {google.maps.Map} map main map
  */
-function addLayer(layerName, index, map) {
-  switch (firebaseLayers[layerName]['asset-type']) {
+function addLayer(layer, index, map) {
+  switch (layer['asset-type']) {
     case LayerType.IMAGE:
-      addImageLayer(map, ee.Image(layerName), layerName, index);
+      addImageLayer(map, ee.Image(layer['ee-name']), layer, index);
       break;
     case LayerType.IMAGE_COLLECTION:
-      addImageLayer(map, processImageCollection(layerName), layerName, index);
+      addImageLayer(map, processImageCollection(layer['ee-name']), layer, index);
       break;
     case LayerType.FEATURE:
     case LayerType.FEATURE_COLLECTION:
+      const layerName = layer['ee-name'];
       addLayerFromGeoJsonPromise(
           convertEeObjectToPromise(
               ee.FeatureCollection(layerName).toList(maxNumFeaturesExpected)),
-          layerName, index);
+          layer['ee-name'], index);
       break;
     default:
       createError('parsing layer type during add')(
-          '[' + index + ']: ' + layerName + ' not recognized layer type');
+          '[' + index + ']: ' + layer + ' not recognized layer type');
   }
 }
 
