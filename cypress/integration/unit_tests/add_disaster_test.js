@@ -1,4 +1,5 @@
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
+import {disasters} from '../../../docs/import/add_disaster';
 import * as AddDisaster from '../../../docs/import/add_disaster.js';
 import {addFirebaseHooks, loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
@@ -10,6 +11,26 @@ describe('Unit tests for add_disaster page', () => {
   addFirebaseHooks();
   before(() => {
     cy.wrap(firebase.auth().signInWithCustomToken(firestoreCustomToken));
+
+    const disasterPicker = createAndAppend('select', 'disaster');
+    disasterPicker.append(AddDisaster.createOptionFrom('...'));
+    disasterPicker.append(AddDisaster.createOptionFrom('2001-summer'));
+    disasterPicker.append(AddDisaster.createOptionFrom('2003-spring'));
+    disasterPicker.val('2003-spring');
+
+    createAndAppend('div', 'status').hide();
+  });
+
+  beforeEach(() => {
+    // In prod this would happen in enableWhenReady which would read from
+    // firestore.
+    disasters.clear();
+    disasters.set('2001-summer', []);
+    disasters.set('2003-spring', []);
+  });
+
+  afterEach(() => {
+    disasters.clear();
   });
 
   it('creates asset pickers', () => {
@@ -67,7 +88,6 @@ describe('Unit tests for add_disaster page', () => {
   });
 
   it('writes a new disaster to firestore', () => {
-    addDisasterPickerAndStatus();
     const id = '2002-winter';
     const states = ['DN, WF'];
 
@@ -90,10 +110,8 @@ describe('Unit tests for add_disaster page', () => {
         });
   });
 
-  it.only('tries to write a disaster id that already exists', () => {
-    addDisasterPickerAndStatus();
-
-    const id = 'winter-2002';
+  it('tries to write a disaster id that already exists', () => {
+    const id = '2001-summer';
     const states = ['DN, WF'];
 
     AddDisaster.writeDisaster(id, states)
@@ -106,21 +124,32 @@ describe('Unit tests for add_disaster page', () => {
                   'Error: disaster with that name and year already exists.');
         });
   });
+
+  it('tries to write a disaster with bad info, then fixes', () => {
+    const year = createAndAppend('input', 'year');
+    const name = createAndAppend('input', 'name');
+    const states = createAndAppend('input', 'states');
+    const status = $('#status');
+
+    AddDisaster.addDisaster();
+
+    expect(status.is(':visible')).to.be.true;
+    expect(status.text())
+        .to.eql('Error: Disaster name, year, and states are required.');
+
+    year.val('hello');
+    name.val('my name is');
+    states.val(['IG', 'MY']);
+
+    AddDisaster.addDisaster();
+
+    expect(status.is(':visible')).to.be.true;
+    expect(status.text()).to.eql('Error: Year must be a number.');
+  })
 });
 
-/** Util function for creating necessary DOM elements */
-function addDisasterPickerAndStatus() {
-  const disasterPicker =
-      $(document.createElement('select')).attr('id', 'disaster');
-  disasterPicker.append(AddDisaster.createOptionFrom('...'));
-  disasterPicker.append(AddDisaster.createOptionFrom('2001-summer'));
-
-  const selectedChild = $(AddDisaster.createOptionFrom('2003-spring'));
-  disasterPicker.append(selectedChild);
-  disasterPicker.val('2003-spring');
-
-  document.body.appendChild(disasterPicker.get(0));
-
-  const status = $(document.createElement('div')).hide().attr('id', 'status');
-  document.body.appendChild(status.get(0));
+function createAndAppend(tag, id) {
+  const element = document.createElement(tag);
+  document.body.appendChild(element);
+  return $(element).attr('id', id);
 }

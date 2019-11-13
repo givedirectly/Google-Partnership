@@ -1,17 +1,19 @@
 import {getFirestoreRoot} from '../firestore_document.js';
 
+export {
+  enableWhenReady,
+}
+
 // Visible for testing
 export {
-  clearStatus,
   createOptionFrom,
   createStateAssetPickers,
   eeLegacyPathPrefix,
   emptyCallback,
-  enableWhenReady,
   gdEePathPrefix,
-  setStatus,
-  toggleState,
   writeDisaster,
+  addDisaster,
+  disasters,
 };
 
 // Currently a map of disaster name to states. This pulls once on firebase
@@ -75,28 +77,26 @@ function toggleState(disaster) {
  * @return {Promise<void>}
  */
 function writeDisaster(disasterId, states) {
-  const docRef =
-      getFirestoreRoot().collection('disaster-metadata').doc(disasterId);
-  return docRef.get().then((doc) => {
-    if (doc.exists) {
-      setStatus('Error: disaster with that name and year already exists.');
-      return false;
-    } else {
-      clearStatus();
-      const disasters = $('#disaster > option');
-      // comment needed to quiet eslint on no-invalid-this rules
-      disasters.each(/* @this HTMLElement */ function() {
-        if ($(this).val() > disasterId) {
-          $(createOptionFrom(disasterId)).insertBefore($(this));
-          return false;
-        }
-      });
+  if (disasters.has(disasterId)) {
+    setStatus('Error: disaster with that name and year already exists.');
+    return Promise.resolve(false);
+  }
 
-      $('#disaster').val(disasterId);
-      docRef.set({states: states});
-      return true;
+  clearStatus();
+  const disasterOptions = $('#disaster > option');
+  // comment needed to quiet eslint on no-invalid-this rules
+  disasterOptions.each(/* @this HTMLElement */ function() {
+    if ($(this).val() > disasterId) {
+      $(createOptionFrom(disasterId)).insertBefore($(this));
+      return false;
     }
   });
+  $('#disaster').val(disasterId);
+  return getFirestoreRoot()
+      .collection('disaster-metadata')
+      .doc(disasterId)
+      .set({states: states})
+      .then(() => true);
 }
 
 /**
@@ -118,9 +118,11 @@ function addDisaster() {
     return;
   }
   const disasterId = year + '-' + name;
-  disasters.set(disasterId, states);
   writeDisaster(disasterId, states).then((success) => {
-    if (success) toggleState(disasterId);
+    if (success) {
+      disasters.set(disasterId, states);
+      toggleState(disasterId);
+    }
   });
 }
 
@@ -150,17 +152,29 @@ function createStateAssetPickers(states) {
         for (const folder of result.assets) {
           folders.add(folder.id.substring((gdEePathPrefix + 'states/').length));
         }
+        const promises = [];
         for (const state of states) {
           const assetPicker = $(document.createElement('select')).attr({
             multiple: 'multiple',
             id: state + '-adder',
           });
+          const dir = eeLegacyPathPrefix + 'states/' + state;
+          if (!folders.has(state)) {
+            promises.push(ee.data.createFolder(dir, false, emptyCallback));
+          } else {
+            promises.push(
+                ee.data.listAssets(dir, {}, emptyCallback).then((result) => {
+                  if (result.assets) {
+                    for (const asset of result.assets) {
+                      assetPicker.append(createOptionFrom(asset.id));
+                    }
+                  }
+                }));
+          }
           const assetPickerLabel = $(document.createElement('label')).attr({
             innerText: 'Add EE asset(s) for ' + state + ': ',
                 for: state + '-adder',
           });
-
-          const dir = eeLegacyPathPrefix + 'states/' + state;
           assetPickerDiv.append(assetPickerLabel);
           assetPickerDiv.append(assetPicker);
           assetPickerDiv.append(document.createElement('br'));
@@ -168,18 +182,8 @@ function createStateAssetPickers(states) {
           assetPicker.append(createOption(
               'Upload additional assets via the code editor',
               SENTINEL_OPTION_VALUE));
-          if (!folders.has(state)) {
-            return ee.data.createFolder(dir, false, emptyCallback);
-          } else {
-            return ee.data.listAssets(dir, {}, emptyCallback).then((result) => {
-              if (result.assets) {
-                for (const asset of result.assets) {
-                  assetPicker.append(createOptionFrom(asset.id));
-                }
-              }
-            });
-          }
         }
+        return Promise.all(promises);
       });
 }
 
