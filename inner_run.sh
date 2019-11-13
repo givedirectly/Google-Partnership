@@ -1,1 +1,1 @@
-yarn run cypress run --spec 'cypress/integration/unit_tests/*.js' --env ON_TRAVIS=1 --record
+yarn run cypress run --spec 'cypress/integration/unit_tests/*.js' --env ON_TRAVIS=1 --record --browser chromium --config video=false
