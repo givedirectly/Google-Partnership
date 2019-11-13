@@ -34,9 +34,7 @@ describe('Unit tests for add_disaster page', () => {
   });
 
   it('creates asset pickers', () => {
-    const assetPickersDiv = document.createElement('div');
-    assetPickersDiv.id = 'asset-pickers';
-    document.body.appendChild(assetPickersDiv);
+    const assetPickers = createAndAppend('div', 'asset-pickers');
 
     const listAssetsStub = cy.stub(ee.data, 'listAssets');
     listAssetsStub
@@ -75,7 +73,7 @@ describe('Unit tests for add_disaster page', () => {
                   false, AddDisaster.emptyCallback);
 
           // 2 x <label> <select> <br>
-          expect($('#asset-pickers').children().length).to.equal(6);
+          expect(assetPickers.children().length).to.equal(6);
           // expect known state adder to contain an option for the known ee
           // asset
           const picker = $('#' + KNOWN_STATE + '-adder');
