@@ -21,7 +21,10 @@
 <body>
 
 <form action="" id="disaster-picker">
-  <label for="disaster">Disaster: </label><select id="disaster"></select><span> </span><button type="button" id="create-new-disaster">Create New Disaster</button>
+  <label for="disaster">Disaster: </label>
+  <select id="disaster" style="width: 160px"></select>
+  <span> </span>
+  <button type="button" id="create-new-disaster">Create New Disaster</button>
 </form><p></p>
 <div id="status"></div>
 <div id="new-disaster" hidden="true">
@@ -82,8 +85,7 @@
       <option value="WI">Wisconsin</option>
       <option value="WY">Wyoming</option>
     </select><br>
-<!--    <button type="button" id="add-disaster-button" disabled="true">Add Disaster</button>-->
-    <button type="button" id="add-disaster-button">Add Disaster</button>
+    <button type="button" id="add-disaster-button" disabled="true">Add Disaster</button>
   </form>
 </div>
 <div id="selected-disaster" hidden="true">

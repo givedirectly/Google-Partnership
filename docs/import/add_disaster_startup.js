@@ -5,12 +5,13 @@ import TaskAccumulator from './task_accumulator.js';
 
 export {taskAccumulator};
 
-// 2 tasks: EE authentication, page load
-const taskAccumulator = new TaskAccumulator(2, enableWhenReady);
+// 2 tasks: EE authentication, page load, firebase is ready.
+const taskAccumulator = new TaskAccumulator(3, enableWhenReady);
 
 // TODO: do something with this promise, pass it somewhere - probably once
 // tagging happens.
 const firebaseAuthPromise = new SettablePromise();
+firebaseAuthPromise.getPromise().then(() => taskAccumulator.taskCompleted());
 const authenticator = new Authenticator(
     (token) => firebaseAuthPromise.setPromise(authenticateToFirebase(token)),
     () => {

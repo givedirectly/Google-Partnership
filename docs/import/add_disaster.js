@@ -42,13 +42,15 @@ function enableWhenReady() {
       .get()
       .then((querySnapshot) => {
         const disasterPicker = $('#disaster');
-        disasterPicker.append(createOptionFrom(SENTINEL_OPTION_VALUE));
         querySnapshot.forEach((doc) => {
           const name = doc.id;
-          disasterPicker.append(createOptionFrom(name));
+          disasterPicker.prepend(createOptionFrom(name));
           disasters.set(name, doc.data().states);
         });
+
         disasterPicker.on('change', () => toggleState(disasterPicker.val()));
+        const mostRecent = querySnapshot.docs[querySnapshot.size - 1].id;
+        disasterPicker.val(mostRecent).trigger('change');
       });
 }
 
@@ -75,12 +77,17 @@ function toggleState(disaster) {
 
     // TODO: add functionality to re-pull all cached states from ee without
     // reloading the page.
-    const assetPickersDone = getAssetsFromEe(statesToFetch).then((assets) => {
-      for (const asset of assets) {
-        stateAssets.set(asset[0], asset[1]);
-      }
+    let assetPickersDone = Promise.resolve();
+    if (statesToFetch.length === 0) {
       createAssetPickers(states);
-    });
+    } else {
+      assetPickersDone = getAssetsFromEe(statesToFetch).then((assets) => {
+        for (const asset of assets) {
+          stateAssets.set(asset[0], asset[1]);
+        }
+        createAssetPickers(states);
+      });
+    }
 
     // TODO: display more disaster info including current layers etc.
     $('#new-disaster').hide();
@@ -167,25 +174,27 @@ function notAllLowercase(val) {
 
 // Needed for testing :/
 const emptyCallback = () => {};
+const legacyStateDir = eeLegacyPathPrefix + 'states';
+const eeStatePrefixLength = (gdEePathPrefix + 'states/').length;
 
 // TODO: add functionality for adding assets to disaster records from these
 // pickers.
 /**
  * Requests all assets in ee directories corresponding to given states.
  * @param {Array<string>} states e.g. ['WA']
- * @return {Promise<void>} completes when we've finished filling all state
- * pickers.
+ * @return {Promise<Array<string | Array<string>>>} 2-d array of all retrieved
+ * assets in the form [['WA', ['asset/path']], ...]
  */
 function getAssetsFromEe(states) {
-  return ee.data.listAssets(eeLegacyPathPrefix + 'states', {}, emptyCallback)
+  return ee.data.listAssets(legacyStateDir, {}, emptyCallback)
       .then((result) => {
         const folders = new Set();
         for (const folder of result.assets) {
-          folders.add(folder.id.substring((gdEePathPrefix + 'states/').length));
+          folders.add(folder.id.substring(eeStatePrefixLength));
         }
         const promises = [];
         for (const state of states) {
-          const dir = eeLegacyPathPrefix + 'states/' + state;
+          const dir = legacyStateDir + '/' + state;
           if (!folders.has(state)) {
             ee.data.createFolder(dir, false, () => {
               ee.data.setAssetAcl(dir, {all_users_can_read: true});
@@ -197,7 +206,9 @@ function getAssetsFromEe(states) {
                   const assets = [];
                   if (result.assets) {
                     for (const asset of result.assets) {
-                      assets.push(asset.id);
+                      if (checkSupportedAssetType(asset)) {
+                        assets.push(asset.id);
+                      }
                     }
                   }
                   return [state, assets];
@@ -206,6 +217,20 @@ function getAssetsFromEe(states) {
         }
         return Promise.all(promises);
       });
+}
+
+// TODO: surface a warning if unsupported asset types are found?
+/**
+ * Check that the type of the given asset is one we support (Unsupported:
+ * ALGORITHM, FOLDER, UNKNOWN).
+ * @param {Object} asset
+ * @return {boolean}
+ */
+function checkSupportedAssetType(asset) {
+  const type = asset.type;
+  return type === 'IMAGE' ||
+      type === 'IMAGE_COLLECTION' ||
+      type === 'TABLE';
 }
 
 /**
@@ -227,11 +252,10 @@ function createAssetPickers(states) {
         assetPicker.append(createOptionFrom(asset));
       }
     }
-    const assetPickerLabel = $(document.createElement('label')).attr({
-      innerText: 'Add EE asset(s) for ' + state + ': ', for: state + '-adder',
-    });
+    const assetPickerLabel = $(document.createElement('label'))
+                                 .html('Add EE asset(s) for ' + state + ': ');
+    assetPickerLabel.append(assetPicker);
     assetPickerDiv.append(assetPickerLabel);
-    assetPickerDiv.append(assetPicker);
     assetPickerDiv.append(document.createElement('br'));
   }
 }

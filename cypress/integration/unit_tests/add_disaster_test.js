@@ -14,7 +14,6 @@ describe('Unit tests for add_disaster page', () => {
     cy.wrap(firebase.auth().signInWithCustomToken(firestoreCustomToken));
 
     const disasterPicker = createAndAppend('select', 'disaster');
-    disasterPicker.append(createOptionFrom('...'));
     disasterPicker.append(createOptionFrom('2001-summer'));
     disasterPicker.append(createOptionFrom('2003-spring'));
     disasterPicker.val('2003-spring');
@@ -36,7 +35,11 @@ describe('Unit tests for add_disaster page', () => {
         .returns(Promise.resolve({
           'assets': [{
             id: gdEePathPrefix + 'states/' + KNOWN_STATE + '/snap',
-          }],
+            type: 'TABLE',
+          }, {
+            id: gdEePathPrefix + 'states/' + KNOWN_STATE + '/folder',
+            type: 'FOLDER',
+          },],
         }));
     cy.stub(ee.data, 'createFolder');
 
@@ -55,6 +58,7 @@ describe('Unit tests for add_disaster page', () => {
 
   it('gets state asset info from ee', () => {
     getAssetsFromEe([KNOWN_STATE, UNKNOWN_STATE]).then((assets) => {
+      // tests folder type asset doesn't make it through
       expect(assets[0]).to.eql([KNOWN_STATE, [KNOWN_STATE_ASSET]]);
       expect(assets[1]).to.eql([UNKNOWN_STATE, []]);
       expect(ee.data.listAssets)
@@ -62,10 +66,7 @@ describe('Unit tests for add_disaster page', () => {
       expect(ee.data.listAssets)
           .to.be.calledWith(
               eeLegacyPathPrefix + 'states/' + KNOWN_STATE, {}, emptyCallback);
-      expect(ee.data.createFolder)
-          .to.be.calledWith(
-              eeLegacyPathPrefix + 'states/' + UNKNOWN_STATE, false,
-              emptyCallback);
+      expect(ee.data.createFolder).to.be.calledOnce;
     });
   });
 
@@ -76,8 +77,8 @@ describe('Unit tests for add_disaster page', () => {
     stateAssets.set(UNKNOWN_STATE, []);
     createAssetPickers(assets);
 
-    // 2 x <label> <select> <br>
-    expect(assetPickers.children().length).to.equal(6);
+    // 2 x <label> (w/ select nested inside) <br>
+    expect(assetPickers.children().length).to.equal(4);
     const picker = $('#' + KNOWN_STATE + '-adder');
     expect(picker).to.contain(
         gdEePathPrefix + 'states/' + KNOWN_STATE + '/snap');
@@ -94,9 +95,9 @@ describe('Unit tests for add_disaster page', () => {
           expect(success).to.be.true;
           expect($('#status').is(':visible')).to.be.false;
           const options = $('#disaster').children();
-          expect(options.length).to.eql(4);
-          expect(options.eq(2).val()).to.eql('2002-winter');
-          expect(options.eq(2).is(':selected')).to.be.true;
+          expect(options.length).to.eql(3);
+          expect(options.eq(1).val()).to.eql('2002-winter');
+          expect(options.eq(1).is(':selected')).to.be.true;
 
           return getFirestoreRoot()
               .collection('disaster-metadata')
@@ -163,12 +164,10 @@ describe('Unit tests for add_disaster page', () => {
                   'Error: disaster name must be comprised of only ' +
                   'lowercase letters');
 
-          year.val('2000');
+          name.val('harvey');
           return addDisaster();
         })
-        .then((success) => {
-          expect(success).to.be.true;
-        });
+        .then((success) => expect(success).to.be.true);
   });
 });
 
