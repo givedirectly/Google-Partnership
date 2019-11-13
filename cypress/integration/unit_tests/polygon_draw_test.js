@@ -198,6 +198,7 @@ describe('Unit test for ShapeData', () => {
         });
     firebaseCollection.add = () => Promise.resolve({id: 'id'});
     const updatePromise = new SettablePromise();
+    cy.wait(100);
     cy.get('.popup-calculated-data').contains('calculating');
     cy.get('.popup-calculated-data')
         .should('have.css', 'color')
