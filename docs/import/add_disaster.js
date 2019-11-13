@@ -148,7 +148,8 @@ function addDisaster() {
     return Promise.resolve(false);
   }
   if (notAllLowercase(name)) {
-    setStatus('Error: disaster name must be comprised of only lowercase letters');
+    setStatus(
+        'Error: disaster name must be comprised of only lowercase letters');
     return Promise.resolve(false);
   }
   const disasterId = year + '-' + name;
