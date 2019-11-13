@@ -3,8 +3,8 @@ import * as loading from '../../../docs/loading';
 import {processUserRegions, setUpPolygonDrawing, StoredShapeData} from '../../../docs/polygon_draw';
 import * as resourceGetter from '../../../docs/resources';
 import SettablePromise from '../../../docs/settable_promise';
-import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 import {userRegionData} from '../../../docs/user_region_data';
+import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 
 const polyCoords = [
   {lng: 1, lat: 1},
