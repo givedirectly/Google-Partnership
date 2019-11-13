@@ -17,6 +17,10 @@ let Popup = null;
  * @param {Window} window DOM Window (for test injection)
  */
 function setUpPopup(window) {
+  /**
+   * Writes a message to the document.
+   * @param {string} msg
+   */
   function writeMessage(msg) {
     const div = window.document.createElement('div');
     const date = new Date();
