@@ -179,6 +179,8 @@ describe('Unit test for ShapeData', () => {
   });
 
   it('Shows calculating before update finishes', () => {
+    // To make sure that update calculation does not finish until we're ready,
+    // lightly wrap ee.List.evaluate and wait on a Promise to finish.
     let waiterDone = null;
     const waiter = new Promise((resolve) => waiterDone = resolve);
     const oldList = ee.List;
