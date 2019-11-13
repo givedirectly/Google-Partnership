@@ -12,7 +12,8 @@ async function fetchWithBackoff(url, options) {
   let retryCount = 0;
   let response;
   while (retryCount++ < MAX_RETRIES) {
-    response = fetch(url, options);
+    response = await fetch(url, options);
+    console.log(response);
     if (response.ok === true) {
       const blob = await response.blob();
       return URL.createObjectURL(blob);
@@ -20,14 +21,14 @@ async function fetchWithBackoff(url, options) {
     if (response.status === TOO_MANY_REQUESTS_STATUS_CODE) {
       await pause(1000 * Math.pow(2, retryCount));
     } else {
-      makeAndThrowError(response);
+      makeAndThrowError(response, url);
     }
   }
-  makeAndThrowError(response);
+  makeAndThrowError(response, url);
 }
 
-function makeAndThrowError(response) {
-  const error = new Error(response.status + ': ' + makeErrorMessage(response.statusText));
+function makeAndThrowError(response, url) {
+  const error = new Error(response.status + ': ' + makeErrorMessage(response.statusText, url));
   error.statusCode = response.status;
   throw error;
 }
@@ -42,6 +43,7 @@ function setUpTolerantImageMapType() {
   TolerantImageMapType = class extends google.maps.ImageMapType {
     constructor(options) {
       super(options);
+      this.getTileUrl = options.getTileUrl;
     }
 
     getTile(tileCoord, zoom, ownerDocument) {
@@ -52,7 +54,8 @@ function setUpTolerantImageMapType() {
       if (zoom < 0 || tileCoord.y < 0 || tileCoord.y >= maxCoord) {
         return tileDiv;
       }
-      fetchWithBackoff(this.getTileUrl(tileCoord, zoom))
+      const tileUrl = this.getTileUrl(tileCoord, zoom);
+      fetchWithBackoff(tileUrl)
           .then((url) => {
             tileDiv.src = url;
             tileDiv.style.opacity = this.getOpacity();
@@ -60,8 +63,9 @@ function setUpTolerantImageMapType() {
           })
           .catch((e) => {
             if (e.statusCode !== NOT_FOUND_STATUS_CODE) {
-              console.error(e);
+              console.warn(e.statusCode);
             }
+            return false;
           });
       // Return the image div
       return tileDiv;
