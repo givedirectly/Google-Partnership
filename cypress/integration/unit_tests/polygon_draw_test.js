@@ -179,18 +179,30 @@ describe('Unit test for ShapeData', () => {
   });
 
   it('Shows calculating before update finishes', () => {
+    // polygon_draw.update creates an ee.List to evaluate the numbers it needs.
     // To make sure that update calculation does not finish until we're ready,
     // lightly wrap ee.List.evaluate and wait on a Promise to finish.
-    let waiterDone = null;
-    const waiter = new Promise((resolve) => waiterDone = resolve);
+    // This function will be called below when we're ready for the calculation
+    // to be finished.
+    let callWhenCalculationCanComplete = null;
+    const promiseThatAllPreCalculationAssertionsAreDone =
+        new Promise((resolve) => callWhenCalculationCanComplete = resolve);
+    // Replace ee.List so that we can have access to the returned object and
+    // change its evaluate call.
     const oldList = ee.List;
     ee.List = (list) => {
       ee.List = oldList;
       const returnValue = ee.List(list);
+      // Replace returnValue.evaluate so that we can delay calling the callback
+      // until the calculation is supposed to have completed.
       const oldEvaluate = returnValue.evaluate;
       returnValue.evaluate = (callback) => {
         returnValue.evaluate = oldEvaluate;
-        waiter.then(() => returnValue.evaluate(callback));
+        // Do the evaluate, but don't return back to polygon_draw.update's
+        // callback handler until our pre-calculation assertions are done.
+        returnValue.evaluate(
+            (result, err) => promiseThatAllPreCalculationAssertionsAreDone.then(
+                () => callback(result, err)));
       };
       return returnValue;
     };
@@ -218,7 +230,7 @@ describe('Unit test for ShapeData', () => {
     cy.get('.popup-calculated-data')
         .should('have.css', 'color')
         .and('eq', 'rgb(128, 128, 128)')
-        .then(() => waiterDone(null));
+        .then(() => callWhenCalculationCanComplete(null));
     cy.wrap(updatePromise.getPromise());
     cy.get('.popup-calculated-data')
         .should('have.css', 'color')
