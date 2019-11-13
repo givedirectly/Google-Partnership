@@ -3,8 +3,6 @@ import {cypressTestCookieName, earthEngineTestTokenCookieName, firebaseTestToken
 
 export {addFirebaseHooks, loadScriptsBeforeForUnitTests};
 
-global.host = 'http://localhost:8080/';
-
 const scriptMap = new Map([
   [
     'maps',
@@ -21,7 +19,7 @@ const scriptMap = new Map([
       () => typeof (deck) !== 'undefined',
     ],
   ],
-  ['ee', [host + 'lib/ee_api_js_debug.js', () => typeof (ee) !== 'undefined']],
+  ['ee', ['lib/ee_api_js_debug.js', () => typeof (ee) !== 'undefined']],
   [
     'firebase',
     [
@@ -109,6 +107,7 @@ function loadScriptsBeforeForUnitTests(...scriptKeys) {
   }
 }
 
+const testPrefix = new Date().getTime() + '-';
 /**
  * Adds all necessary hooks to set up Firebase, for either unit or integration
  * tests. Populates test Firestore database. Integration tests need to also set
@@ -120,7 +119,7 @@ function addFirebaseHooks() {
                    timeout: 10000,
                  }).then((token) => global.firestoreCustomToken = token));
   beforeEach(() => {
-    testCookieValue = 'id-' + Math.random();
+    testCookieValue = testPrefix + Math.random();
     cy.task(
         'clearAndPopulateTestFirestoreData', testCookieValue, {timeout: 15000});
     cy.setCookie(cypressTestCookieName, testCookieValue);
