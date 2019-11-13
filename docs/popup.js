@@ -399,6 +399,11 @@ function createPopup(
 
 const SENTINEL_CALCULATING = {};
 
+/**
+ * Throws an error if obj does not evaluate to true.
+ * @param {Object} obj
+ * @param {string} msg
+ */
 function checkPresent(obj, msg) {
   if (!obj) {
     throw new Error(msg);
