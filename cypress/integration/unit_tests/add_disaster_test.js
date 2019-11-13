@@ -1,7 +1,7 @@
+import {eeLegacyPathPrefix, gdEePathPrefix} from '../../../docs/ee_paths.js';
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
 import {addDisaster, createOptionFrom, createStateAssetPickers, disasters, emptyCallback, writeDisaster} from '../../../docs/import/add_disaster.js';
 import {addFirebaseHooks, loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
-import {eeLegacyPathPrefix, gdEePathPrefix} from '../../../docs/ee_paths.js';
 
 const KNOWN_STATE = 'WF';
 const UNKNOWN_STATE = 'DN';

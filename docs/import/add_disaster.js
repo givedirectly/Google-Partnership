@@ -1,5 +1,5 @@
+import {eeLegacyPathPrefix, gdEePathPrefix} from '../ee_paths.js';
 import {getFirestoreRoot} from '../firestore_document.js';
-import {gdEePathPrefix, eeLegacyPathPrefix} from '../ee_paths.js';
 
 export {
   enableWhenReady,

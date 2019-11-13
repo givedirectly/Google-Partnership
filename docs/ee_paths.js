@@ -1,4 +1,4 @@
-export {gdEePathPrefix, eeLegacyPathPrefix};
+export {eeLegacyPathPrefix, gdEePathPrefix};
 
 const gdEePathPrefix = 'users/gd/';
 const eeLegacyPathPrefix =
