@@ -400,7 +400,7 @@ function createPopup(
 const SENTINEL_CALCULATING = {};
 
 /**
- * Throws an error if obj does not evaluate to true.
+ * Throws an error if obj does not evaluate to true, for debugging ease.
  * @param {Object} obj
  * @param {string} msg
  */
