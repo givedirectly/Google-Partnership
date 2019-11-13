@@ -198,7 +198,8 @@ describe('Unit test for ShapeData', () => {
         });
     firebaseCollection.add = () => Promise.resolve({id: 'id'});
     const updatePromise = new SettablePromise();
-    cy.get('.popup-calculated-data').then(($elt) => cy.task('logg', $elt.text()));
+    cy.get('.popup-calculated-data')
+        .then(($elt) => cy.task('logg', $elt.text()));
     cy.get('.popup-calculated-data').contains('calculating');
     cy.get('.popup-calculated-data')
         .should('have.css', 'color')
