@@ -55,6 +55,8 @@ function enableWhenReady() {
  * Utility method to switch between the page creating a new disaster and the
  * page editing a current disaster.
  * @param {String} disaster
+ * @return {Promise<void>} completes when we've finished filling all state
+ * pickers.
  */
 function toggleState(disaster) {
   if (disaster === SENTINEL_NEW_DISASTER_VALUE) {
@@ -64,7 +66,7 @@ function toggleState(disaster) {
     // TODO: display more disaster info including current layers etc.
     $('#new-disaster').hide();
     $('#selected-disaster').show();
-    createStateAssetPickers(disasters.get(disaster));
+    return createStateAssetPickers(disasters.get(disaster));
   }
 }
 
@@ -73,13 +75,16 @@ function toggleState(disaster) {
  * there is an existing disaster with the same details.
  * @param {string} disasterId of the form <year>-<name>
  * @param {Array<string>} states array of state (abbreviations)
- * @return {Promise<void>}
+ * @return {Promise<boolean>} returns true after successful write to firestore.
  */
 function writeDisaster(disasterId, states) {
   if (disasters.has(disasterId)) {
     setStatus('Error: disaster with that name and year already exists.');
     return Promise.resolve(false);
   }
+
+  disasters.set(disasterId, states);
+  toggleState(disasterId);
 
   clearStatus();
   const disasterOptions = $('#disaster > option');
@@ -102,6 +107,8 @@ function writeDisaster(disasterId, states) {
  * Onclick function for the new disaster form. Writes new disaster to firestore,
  * local disasters map and disaster picker. Doesn't allow name, year or states
  * to be empty fields.
+ * @return {Promise<boolean>} resolves true if new disaster was successfully
+ *     written.
  */
 function addDisaster() {
   const year = $('#year').val();
@@ -110,19 +117,14 @@ function addDisaster() {
 
   if (!year || !name || !states) {
     setStatus('Error: Disaster name, year, and states are required.');
-    return;
+    return Promise.resolve(false);
   }
   if (isNaN(year)) {
     setStatus('Error: Year must be a number.');
-    return;
+    return Promise.resolve(false);
   }
   const disasterId = year + '-' + name;
-  writeDisaster(disasterId, states).then((success) => {
-    if (success) {
-      disasters.set(disasterId, states);
-      toggleState(disasterId);
-    }
-  });
+  return writeDisaster(disasterId, states)
 }
 
 const gdEePathPrefix = 'users/gd/';
@@ -139,8 +141,8 @@ const emptyCallback = () => {};
  * displays them in pickers. Right now, selecting on those pickers doesn't
  * actually do anything.
  * @param {Array<string>} states e.g. ['WA']
- * @return {Promise<void>} completes after either a new folder is created or
- *  we've finished listing assets
+ * @return {Promise<void>} completes when we've finished filling all state
+ * pickers.
  */
 function createStateAssetPickers(states) {
   const assetPickerDiv = $('#asset-pickers');
