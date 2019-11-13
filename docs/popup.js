@@ -17,11 +17,12 @@ let Popup = null;
  * @param {Window} window DOM Window (for test injection)
  */
 function setUpPopup(window) {
-
   function writeMessage(msg) {
     const div = window.document.createElement('div');
     const date = new Date();
-    div.innerText = date.getMinutes() + ':' + date.getSeconds() + '.' + date.getMilliseconds() + ': ' + msg + '\n' + new Error().stack.substring(133);
+    div.innerText = date.getMinutes() + ':' + date.getSeconds() + '.' +
+        date.getMilliseconds() + ': ' + msg + '\n' +
+        new Error().stack.substring(133);
     window.document.body.appendChild(div);
   }
 
