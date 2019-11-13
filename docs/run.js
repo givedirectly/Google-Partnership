@@ -109,7 +109,7 @@ function createLayerCheckboxes(map) {
       .forEach(
           (layerName) => createNewCheckboxForLayer(layerName, sidebarDiv, map));
   createCheckboxForUserFeatures(sidebarDiv);
-  createNewCheckboxForLayer(scoreLayerName, sidebarDiv, map);
+  createNewCheckboxForLayer({'display-name': scoreLayerName, index: scoreLayerName, 'display-on-load': true}, sidebarDiv, map);
 }
 
 /**
@@ -145,23 +145,22 @@ function createNewCheckbox(name, displayName, parentDiv) {
  * Creates a new checkbox for the given layer. The only layer not recorded in
  * firebase should be the score layer.
  *
- * @param {String} layerName
+ * @param {Object} layer
  * @param {Element} parentDiv
  * @param {google.maps.Map} map main map
  */
-function createNewCheckboxForLayer(layerName, parentDiv, map) {
-  const properties = firebaseLayers[layerName];
+function createNewCheckboxForLayer(layer, parentDiv, map) {
+  const index = layer['index'];
   const newBox = createNewCheckbox(
-      layerName, properties ? properties['display-name'] : layerName,
-      parentDiv);
-  if (properties && !properties['display-on-load']) {
+      index, layer['display-name'], parentDiv);
+  if (!layer['display-on-load']) {
     newBox.checked = false;
   }
   newBox.onclick = () => {
     if (newBox.checked) {
-      toggleLayerOn(layerName, map);
+      toggleLayerOn(layer, map);
     } else {
-      toggleLayerOff(layerName, map);
+      toggleLayerOff(index, map);
     }
   };
 }
@@ -179,24 +178,25 @@ function createCheckboxForUserFeatures(parentDiv) {
 
 /**
  * Runs through layers map. For those that we auto-display on page load, creates
- * overlays and displays. Also populates the layerMap.
+ * overlays and displays. Also populates the mapOverlayArray.
  *
  * @param {google.maps.Map} map main map
  */
 function addLayers(map) {
-  Object.keys(firebaseLayers).forEach((layer) => {
-    const properties = firebaseLayers[layer];
+  for (let i = 0; i < firebaseLayers.length; i++) {
+    const properties = firebaseLayers[i];
+    properties['index'] = i;
     if (properties['display-on-load']) {
-      addLayer(layer, properties['index'], map);
+      addLayer(properties, map);
     } else {
-      addNullLayer(layer, properties['index']);
+      addNullLayer(properties);
     }
-  });
+  }
   createLayerCheckboxes(map);
 }
 
 /**
- * Creates and displays overlay for score + adds layerMap entry. The score
+ * Creates and displays overlay for score + adds mapOverlayArray entry. The score
  * layer sits at the end of all the layers. Having it last ensures it displays
  * on top.
  *
