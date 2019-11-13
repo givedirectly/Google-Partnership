@@ -23,7 +23,8 @@ const SENTINEL_OPTION_VALUE = '...';
 const SENTINEL_NEW_DISASTER_VALUE = 'NEW DISASTER';
 
 /**
- *
+ * Populates the disaster picker with disasters from firestore, and enables
+ * the ability to add a new disaster.
  * @return {Promise<firebase.firestore.QuerySnapshot>}
  */
 function enableWhenReady() {
@@ -51,8 +52,8 @@ function enableWhenReady() {
 }
 
 /**
- * Utility method to switch between the page creating a new disaster and the
- * page editing a current disaster.
+ * Switch between the page creating a new disaster and the page editing a
+ * current disaster.
  * @param {String} disaster
  * @return {Promise<void>} completes when we've finished filling all state
  * pickers.
@@ -62,7 +63,10 @@ function toggleState(disaster) {
     $('#new-disaster').show();
     $('#selected-disaster').hide();
   } else {
-    // TODO: display more disaster info including current layers etc.
+    // TODO: display more disaster info including current layers etc. We
+    // might not want want to create these asset pickers every time we toggle
+    // between disasters because it requires ee calls. For now it's quite fast,
+    // will handle in follow up PRs if it begins to be problem.
     $('#new-disaster').hide();
     $('#selected-disaster').show();
     return createStateAssetPickers(disasters.get(disaster));

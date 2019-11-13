@@ -1,7 +1,6 @@
 import {Authenticator} from '../authenticate.js';
 import {eeLegacyPathPrefix, gdEePathPrefix} from '../ee_paths.js';
 import {getDisaster} from '../resources.js';
-
 import TaskAccumulator from './task_accumulator.js';
 
 export {taskAccumulator};
