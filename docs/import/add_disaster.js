@@ -228,9 +228,7 @@ function getAssetsFromEe(states) {
  */
 function checkSupportedAssetType(asset) {
   const type = asset.type;
-  return type === 'IMAGE' ||
-      type === 'IMAGE_COLLECTION' ||
-      type === 'TABLE';
+  return type === 'IMAGE' || type === 'IMAGE_COLLECTION' || type === 'TABLE';
 }
 
 /**

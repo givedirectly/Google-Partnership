@@ -33,13 +33,16 @@ describe('Unit tests for add_disaster page', () => {
         .withArgs(
             eeLegacyPathPrefix + 'states/' + KNOWN_STATE, {}, emptyCallback)
         .returns(Promise.resolve({
-          'assets': [{
-            id: gdEePathPrefix + 'states/' + KNOWN_STATE + '/snap',
-            type: 'TABLE',
-          }, {
-            id: gdEePathPrefix + 'states/' + KNOWN_STATE + '/folder',
-            type: 'FOLDER',
-          },],
+          'assets': [
+            {
+              id: gdEePathPrefix + 'states/' + KNOWN_STATE + '/snap',
+              type: 'TABLE',
+            },
+            {
+              id: gdEePathPrefix + 'states/' + KNOWN_STATE + '/folder',
+              type: 'FOLDER',
+            },
+          ],
         }));
     cy.stub(ee.data, 'createFolder');
 
