@@ -179,7 +179,6 @@ describe('Unit test for ShapeData', () => {
   });
 
   it('Shows calculating before update finishes', () => {
-    cy.visit('empty.html');
     let waiterDone = null;
     const waiter = new Promise((resolve) => waiterDone = resolve);
     const oldList = ee.List;

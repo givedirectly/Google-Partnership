@@ -17,19 +17,6 @@ let Popup = null;
  * @param {Window} window DOM Window (for test injection)
  */
 function setUpPopup(window) {
-  /**
-   * Writes a message to the document.
-   * @param {string} msg
-   */
-  function writeMessage(msg) {
-    const div = window.document.createElement('div');
-    const date = new Date();
-    div.innerText = date.getMinutes() + ':' + date.getSeconds() + '.' +
-        date.getMilliseconds() + ': ' + msg + '\n' +
-        new Error().stack.substring(133);
-    window.document.body.appendChild(div);
-  }
-
   Popup = class extends google.maps.OverlayView {
     /**
      * A customized popup on the map.
@@ -76,7 +63,6 @@ function setUpPopup(window) {
      * @param {Object} calculatedData
      */
     setCalculatedData(calculatedData) {
-      writeMessage('setting');
       this.calculatedData = calculatedData;
       checkPresent(
           this.calculatedDataDiv, 'calculatedDataDiv not present when setting');
@@ -254,7 +240,6 @@ function setUpPopup(window) {
     // Below this line are implementations of OverlayView methods.
     /** Called when the popup is added to the map. */
     onAdd() {
-      writeMessage('Adding');
       this.createPopupHtml();
       this.getPanes().floatPane.appendChild(this.containerDiv);
     }
