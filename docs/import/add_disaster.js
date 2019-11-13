@@ -2,7 +2,7 @@ import {getFirestoreRoot} from '../firestore_document.js';
 
 export {
   enableWhenReady,
-}
+};
 
 // Visible for testing
 export {

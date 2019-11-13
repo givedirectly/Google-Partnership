@@ -145,9 +145,16 @@ describe('Unit tests for add_disaster page', () => {
 
     expect(status.is(':visible')).to.be.true;
     expect(status.text()).to.eql('Error: Year must be a number.');
-  })
+  });
 });
 
+/**
+ * Utility function for creating an element and returning it wrapped as a
+ * jquery object.
+ * @param {string} tag
+ * @param {string} id
+ * @return {JQuery<HTMLElement>}
+ */
 function createAndAppend(tag, id) {
   const element = document.createElement(tag);
   document.body.appendChild(element);
