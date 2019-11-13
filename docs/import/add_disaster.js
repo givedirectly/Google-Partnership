@@ -79,7 +79,7 @@ function toggleState(disaster) {
       for (const asset of assets) {
         stateAssets.set(asset[0], asset[1]);
       }
-      createAssetPickers(states)
+      createAssetPickers(states);
     });
 
     // TODO: display more disaster info including current layers etc. We
@@ -160,9 +160,7 @@ const emptyCallback = () => {};
 // TODO: add functionality for adding assets to disaster records from these
 // pickers.
 /**
- * Requests all assets in ee directories corresponding to given states and
- * displays them in pickers. Right now, selecting on those pickers doesn't
- * actually do anything.
+ * Requests all assets in ee directories corresponding to given states.
  * @param {Array<string>} states e.g. ['WA']
  * @return {Promise<void>} completes when we've finished filling all state
  * pickers.
@@ -197,6 +195,11 @@ function getAssetsFromEe(states) {
       });
 }
 
+/**
+ * Given states, displays their assets in pickers. Right now, selecting on
+ * those pickers doesn't actually do anything.
+ * @param {Array<string>} states e.g. ['WA']
+ */
 function createAssetPickers(states) {
   const assetPickerDiv = $('#asset-pickers');
   for (const state of states) {
@@ -206,8 +209,10 @@ function createAssetPickers(states) {
     });
     assetPicker.append(createOption(
         'Upload additional assets via the code editor', SENTINEL_OPTION_VALUE));
-    for (const asset of stateAssets.get(state)) {
-      assetPicker.append(createOptionFrom(asset));
+    if (stateAssets.get(state)) {
+      for (const asset of stateAssets.get(state)) {
+        assetPicker.append(createOptionFrom(asset));
+      }
     }
     const assetPickerLabel = $(document.createElement('label')).attr({
       innerText: 'Add EE asset(s) for ' + state + ': ', for: state + '-adder',
