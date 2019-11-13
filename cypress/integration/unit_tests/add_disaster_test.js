@@ -1,6 +1,7 @@
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
-import {addDisaster, createOptionFrom, createStateAssetPickers, disasters, eeLegacyPathPrefix, emptyCallback, gdEePathPrefix, writeDisaster} from '../../../docs/import/add_disaster.js';
+import {addDisaster, createOptionFrom, createStateAssetPickers, disasters, emptyCallback, writeDisaster} from '../../../docs/import/add_disaster.js';
 import {addFirebaseHooks, loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
+import {eeLegacyPathPrefix, gdEePathPrefix} from '../../../docs/ee_paths.js';
 
 const KNOWN_STATE = 'WF';
 const UNKNOWN_STATE = 'DN';
@@ -96,7 +97,7 @@ describe('Unit tests for add_disaster page', () => {
         });
   });
 
-  it.only('tries to write a disaster id that already exists', () => {
+  it('tries to write a disaster id that already exists', () => {
     const id = '2005-summer';
     const states = [KNOWN_STATE];
 
@@ -115,7 +116,7 @@ describe('Unit tests for add_disaster page', () => {
         });
   });
 
-  it('tries to write a disaster with bad info, then fixes', () => {
+  it('tries to write a disaster with bad info, then fixes it', () => {
     const year = createAndAppend('input', 'year');
     const name = createAndAppend('input', 'name');
     const states = createAndAppend('input', 'states');
@@ -137,6 +138,12 @@ describe('Unit tests for add_disaster page', () => {
           expect(success).to.be.false;
           expect(status.is(':visible')).to.be.true;
           expect(status.text()).to.eql('Error: Year must be a number.');
+
+          year.val('2000');
+          return addDisaster();
+        })
+        .then((success) => {
+          expect(success).to.be.true;
         });
   });
 });

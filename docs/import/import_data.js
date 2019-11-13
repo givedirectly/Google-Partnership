@@ -4,6 +4,7 @@ import {getDisaster, getResources} from '../resources.js';
 import SettablePromise from '../settable_promise.js';
 import storeCenter from './center.js';
 import {cdcGeoidKey, cdcSviKey, censusBlockGroupKey, censusGeoidKey, incomeKey, snapKey, tigerGeoidKey, totalKey} from './import_data_keys.js';
+import {gdEePathPrefix} from '../ee_paths.js';
 
 /** @VisibleForTesting */
 export {countDamageAndBuildings};
@@ -229,7 +230,7 @@ function run(firebaseAuthPromise) {
   const assetName = 'data-ms-as-nod';
   // TODO: delete existing asset with same name if it exists.
   const task = ee.batch.Export.table.toAsset(
-      data, assetName, 'users/gd/' + getDisaster() + '/' + assetName);
+      data, assetName, gdEePathPrefix + getDisaster() + '/' + assetName);
   task.start();
   $('.upload-status')
       .text('Check Code Editor console for upload progress. Task: ' + task.id);

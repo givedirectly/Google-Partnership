@@ -1,4 +1,5 @@
 import {getFirestoreRoot} from '../firestore_document.js';
+import {gdEePathPrefix, eeLegacyPathPrefix} from '../ee_paths.js';
 
 export {
   enableWhenReady,
@@ -9,9 +10,7 @@ export {
   createOptionFrom,
   createStateAssetPickers,
   disasters,
-  eeLegacyPathPrefix,
   emptyCallback,
-  gdEePathPrefix,
   writeDisaster,
 };
 
@@ -126,10 +125,6 @@ function addDisaster() {
   const disasterId = year + '-' + name;
   return writeDisaster(disasterId, states);
 }
-
-const gdEePathPrefix = 'users/gd/';
-const eeLegacyPathPrefix =
-    'projects/earthengine-legacy/assets/' + gdEePathPrefix;
 
 // Needed for testing :/
 const emptyCallback = () => {};

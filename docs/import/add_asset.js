@@ -1,12 +1,13 @@
 import {Authenticator} from '../authenticate.js';
 import {getDisaster} from '../resources.js';
 import TaskAccumulator from './task_accumulator.js';
+import {gdEePathPrefix, eeLegacyPathPrefix} from '../ee_paths.js';
 
 export {taskAccumulator};
 
-const earthEngineAssetBase = 'users/gd/' + getDisaster();
+const earthEngineAssetBase = gdEePathPrefix + getDisaster();
 const earthEnginePrefix =
-    'projects/earthengine-legacy/assets/' + earthEngineAssetBase;
+    eeLegacyPathPrefix + earthEngineAssetBase;
 
 const BUCKET = 'givedirectly.appspot.com';
 const BASE_UPLOAD_URL =
