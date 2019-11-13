@@ -64,7 +64,6 @@ function setUpPopup(window) {
      */
     setCalculatedData(calculatedData) {
       this.calculatedData = calculatedData;
-      cy.task('logg', 'We have ' + this.calculatedDataDiv);
       this.calculatedDataDiv.style.color = 'black';
       this.updateCalculatedDataDiv();
     }
@@ -146,7 +145,6 @@ function setUpPopup(window) {
         const currentNotes = notesDiv.innerText;
 
         if (!isMarker(mapFeature)) {
-          cy.task('logg', 'In edit ' + this.calculatedDataDiv);
           // Grey out the damage stat until we save so it's clearly old.
           this.calculatedDataDiv.style.color = 'grey';
         }
@@ -256,27 +254,23 @@ function setUpPopup(window) {
         // Give the Marker room to be visible.
         divPosition.y -= 40;
       }
-      cy.task('logg', 'In draw ' + this.containerDiv);
       this.containerDiv.style.left = divPosition.x + 'px';
       this.containerDiv.style.top = divPosition.y + 'px';
     }
 
     /** Sets the visibility to 'hidden'. */
     hide() {
-      cy.task('logg', 'In hide ' + this.containerDiv);
       // The visibility property must be a string enclosed in quotes.
       this.containerDiv.style.visibility = 'hidden';
     }
 
     /** Sets the visibility to 'visible'. */
     show() {
-      cy.task('logg', 'In show ' + this.containerDiv);
       this.containerDiv.style.visibility = 'visible';
     };
 
     /** @return {boolean} true if the popup is currently visible. */
     isVisible() {
-      cy.task('logg', 'In is visible ' + this.containerDiv);
       return this.containerDiv.style.visibility === 'visible';
     };
 
