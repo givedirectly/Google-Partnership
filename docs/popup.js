@@ -64,6 +64,7 @@ function setUpPopup(window) {
      */
     setCalculatedData(calculatedData) {
       this.calculatedData = calculatedData;
+      checkPresent(this.calculatedDataDiv, 'calculatedDataDiv not present when setting');
       this.calculatedDataDiv.style.color = 'black';
       this.updateCalculatedDataDiv();
     }
@@ -145,6 +146,7 @@ function setUpPopup(window) {
         const currentNotes = notesDiv.innerText;
 
         if (!isMarker(mapFeature)) {
+          checkPresent(this.calculatedDataDiv, 'calculatedDataDiv not present when greying');
           // Grey out the damage stat until we save so it's clearly old.
           this.calculatedDataDiv.style.color = 'grey';
         }
@@ -254,23 +256,27 @@ function setUpPopup(window) {
         // Give the Marker room to be visible.
         divPosition.y -= 40;
       }
+      checkPresent(this.containerDiv, 'not present when drawing');
       this.containerDiv.style.left = divPosition.x + 'px';
       this.containerDiv.style.top = divPosition.y + 'px';
     }
 
     /** Sets the visibility to 'hidden'. */
     hide() {
+      checkPresent(this.containerDiv, 'not present when hiding');
       // The visibility property must be a string enclosed in quotes.
       this.containerDiv.style.visibility = 'hidden';
     }
 
     /** Sets the visibility to 'visible'. */
     show() {
+      checkPresent(this.containerDiv, 'not present when showing');
       this.containerDiv.style.visibility = 'visible';
     };
 
     /** @return {boolean} true if the popup is currently visible. */
     isVisible() {
+      checkPresent(this.containerDiv, 'not present when is visible');
       return this.containerDiv.style.visibility === 'visible';
     };
 
@@ -389,3 +395,9 @@ function createPopup(
 }
 
 const SENTINEL_CALCULATING = {};
+
+function checkPresent(obj, msg) {
+  if (!obj) {
+    throw new Error(msg);
+  }
+}
