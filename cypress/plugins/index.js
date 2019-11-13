@@ -26,6 +26,9 @@ module.exports = (on, config) => {
       newArgs.push('--start-maximized');
       newArgs.push('--auto-open-devtools-for-tabs');
       return newArgs;
+    } else if (browser.name === 'electron') {
+      args['auto-open-devtools-for-tabs'] = true;
+      return args;
     }
   });
   /**

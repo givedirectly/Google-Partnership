@@ -178,6 +178,7 @@ describe('Unit test for ShapeData', () => {
   });
 
   it('Shows calculating before update finishes', () => {
+    cy.visit('empty.html');
     const event = new Event('overlaycomplete');
     cy.document()
         .then((document) => {
