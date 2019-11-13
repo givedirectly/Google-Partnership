@@ -1,6 +1,6 @@
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
 import {disasters} from '../../../docs/import/add_disaster';
-import * as AddDisaster from '../../../docs/import/add_disaster.js';
+import {addDisaster, createOptionFrom, createStateAssetPickers, eeLegacyPathPrefix, emptyCallback, gdEePathPrefix, writeDisaster} from '../../../docs/import/add_disaster.js';
 import {addFirebaseHooks, loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
 const KNOWN_STATE = 'WF';
@@ -13,9 +13,9 @@ describe('Unit tests for add_disaster page', () => {
     cy.wrap(firebase.auth().signInWithCustomToken(firestoreCustomToken));
 
     const disasterPicker = createAndAppend('select', 'disaster');
-    disasterPicker.append(AddDisaster.createOptionFrom('...'));
-    disasterPicker.append(AddDisaster.createOptionFrom('2001-summer'));
-    disasterPicker.append(AddDisaster.createOptionFrom('2003-spring'));
+    disasterPicker.append(createOptionFrom('...'));
+    disasterPicker.append(createOptionFrom('2001-summer'));
+    disasterPicker.append(createOptionFrom('2003-spring'));
     disasterPicker.val('2003-spring');
 
     createAndAppend('div', 'status').hide();
@@ -37,59 +37,48 @@ describe('Unit tests for add_disaster page', () => {
     const assetPickers = createAndAppend('div', 'asset-pickers');
 
     const listAssetsStub = cy.stub(ee.data, 'listAssets');
-    listAssetsStub
-        .withArgs(
-            AddDisaster.eeLegacyPathPrefix + 'states', {},
-            AddDisaster.emptyCallback)
+    listAssetsStub.withArgs(eeLegacyPathPrefix + 'states', {}, emptyCallback)
         .returns(Promise.resolve({
           'assets': [{
-            id: AddDisaster.gdEePathPrefix + 'states/' + KNOWN_STATE,
+            id: gdEePathPrefix + 'states/' + KNOWN_STATE,
           }],
         }));
     listAssetsStub
         .withArgs(
-            AddDisaster.eeLegacyPathPrefix + 'states/' + KNOWN_STATE, {},
-            AddDisaster.emptyCallback)
+            eeLegacyPathPrefix + 'states/' + KNOWN_STATE, {}, emptyCallback)
         .returns(Promise.resolve({
           'assets': [{
-            id: AddDisaster.gdEePathPrefix + 'states/' + KNOWN_STATE + '/snap',
+            id: gdEePathPrefix + 'states/' + KNOWN_STATE + '/snap',
           }],
         }));
     cy.stub(ee.data, 'createFolder');
 
-    AddDisaster.createStateAssetPickers([KNOWN_STATE, UNKNOWN_STATE])
-        .then(() => {
-          expect(ee.data.listAssets)
-              .to.be.calledWith(
-                  AddDisaster.eeLegacyPathPrefix + 'states', {},
-                  AddDisaster.emptyCallback);
-          expect(ee.data.listAssets)
-              .to.be.calledWith(
-                  AddDisaster.eeLegacyPathPrefix + 'states/' + KNOWN_STATE, {},
-                  AddDisaster.emptyCallback);
-          expect(ee.data.createFolder)
-              .to.be.calledWith(
-                  AddDisaster.eeLegacyPathPrefix + 'states/' + UNKNOWN_STATE,
-                  false, AddDisaster.emptyCallback);
+    createStateAssetPickers([KNOWN_STATE, UNKNOWN_STATE]).then(() => {
+      expect(ee.data.listAssets)
+          .to.be.calledWith(eeLegacyPathPrefix + 'states', {}, emptyCallback);
+      expect(ee.data.listAssets)
+          .to.be.calledWith(
+              eeLegacyPathPrefix + 'states/' + KNOWN_STATE, {}, emptyCallback);
+      expect(ee.data.createFolder)
+          .to.be.calledWith(
+              eeLegacyPathPrefix + 'states/' + UNKNOWN_STATE, false,
+              emptyCallback);
 
-          // 2 x <label> <select> <br>
-          expect(assetPickers.children().length).to.equal(6);
-          // expect known state adder to contain an option for the known ee
-          // asset
-          const picker = $('#' + KNOWN_STATE + '-adder');
-          expect(picker).to.contain(
-              AddDisaster.gdEePathPrefix + 'states/' + KNOWN_STATE + '/snap');
-          expect(picker.children().length).to.equal(2);
-          expect($('#' + UNKNOWN_STATE + '-adder').children().length)
-              .to.equal(1);
-        });
+      // 2 x <label> <select> <br>
+      expect(assetPickers.children().length).to.equal(6);
+      const picker = $('#' + KNOWN_STATE + '-adder');
+      expect(picker).to.contain(
+          gdEePathPrefix + 'states/' + KNOWN_STATE + '/snap');
+      expect(picker.children().length).to.equal(2);
+      expect($('#' + UNKNOWN_STATE + '-adder').children().length).to.equal(1);
+    });
   });
 
   it('writes a new disaster to firestore', () => {
     const id = '2002-winter';
     const states = ['DN, WF'];
 
-    AddDisaster.writeDisaster(id, states)
+    writeDisaster(id, states)
         .then(() => {
           expect($('#status').is(':visible')).to.be.false;
           const options = $('#disaster').children();
@@ -112,15 +101,12 @@ describe('Unit tests for add_disaster page', () => {
     const id = '2001-summer';
     const states = ['DN, WF'];
 
-    AddDisaster.writeDisaster(id, states)
-        .then(() => AddDisaster.writeDisaster(id, states))
-        .then(() => {
-          const status = $('#status');
-          expect(status.is(':visible')).to.be.true;
-          expect(status.text())
-              .to.eql(
-                  'Error: disaster with that name and year already exists.');
-        });
+    writeDisaster(id, states).then(() => writeDisaster(id, states)).then(() => {
+      const status = $('#status');
+      expect(status.is(':visible')).to.be.true;
+      expect(status.text())
+          .to.eql('Error: disaster with that name and year already exists.');
+    });
   });
 
   it('tries to write a disaster with bad info, then fixes', () => {
@@ -129,7 +115,7 @@ describe('Unit tests for add_disaster page', () => {
     const states = createAndAppend('input', 'states');
     const status = $('#status');
 
-    AddDisaster.addDisaster();
+    addDisaster();
 
     expect(status.is(':visible')).to.be.true;
     expect(status.text())
@@ -139,7 +125,7 @@ describe('Unit tests for add_disaster page', () => {
     name.val('my name is');
     states.val(['IG', 'MY']);
 
-    AddDisaster.addDisaster();
+    addDisaster();
 
     expect(status.is(':visible')).to.be.true;
     expect(status.text()).to.eql('Error: Year must be a number.');
