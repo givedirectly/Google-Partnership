@@ -64,6 +64,7 @@ function setUpPopup(window) {
      */
     setCalculatedData(calculatedData) {
       this.calculatedData = calculatedData;
+      cy.task('logg', 'We have ' + this.calculatedDataDiv);
       this.calculatedDataDiv.style.color = 'black';
       this.updateCalculatedDataDiv();
     }
