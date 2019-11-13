@@ -41,7 +41,7 @@ function run(map, firebaseAuthPromise, disasterMetadataPromise) {
       map, initialPovertyThreshold, initialDamageThreshold,
       initialPovertyWeight);
   processUserRegions(map, firebaseAuthPromise);
-  disasterMetadataPromise.then((doc) => addLayers(map, doc.data().layerArray));
+  disasterMetadataPromise.then((doc) => addLayers(map, doc.data().layers));
 }
 
 let mapSelectListener = null;
@@ -98,17 +98,17 @@ function createAndDisplayJoinedData(
 /**
  * Creates a checkbox for showing/hiding layers.
  *
- * @param {String} name checkbox name, basis for id
+ * @param {number|string} index checkbox index, basis for id
  * @param {String} displayName checkbox display name
  * @param {div} parentDiv div to attach checkbox to
  * @return {HTMLInputElement} the checkbox
  */
-function createNewCheckbox(name, displayName, parentDiv) {
+function createNewCheckbox(index, displayName, parentDiv) {
   const newRow = document.createElement('div');
   newRow.className = 'checkbox-row';
   const newBox = document.createElement('input');
   newBox.type = 'checkbox';
-  newBox.id = getCheckBoxId(name);
+  newBox.id = getCheckBoxId(index);
   newBox.className = 'checkbox';
   newBox.checked = true;
   newRow.appendChild(newBox);
@@ -208,5 +208,5 @@ function maybeCheckScoreCheckbox() {
  * @return {string}
  */
 function getCheckBoxId(baseName) {
-  return baseName + '-checkbox';
+  return 'layer-' + baseName + '-checkbox';
 }

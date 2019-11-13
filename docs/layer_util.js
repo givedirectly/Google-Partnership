@@ -1,3 +1,4 @@
+import {CompositeImageMapType} from './composite_image_map_type.js';
 import {mapContainerId} from './dom_constants.js';
 import {terrainStyle} from './earth_engine_asset.js';
 import {createError} from './error.js';
@@ -55,6 +56,28 @@ let deckGlOverlay;
  * have a data attribute for deck layers, and an overlay attribute for
  * image/other layers. Will also have a "pendingPromise" field to detect if an
  * initial rendering operation is currently in flight.
+ *
+ * There are three kinds of layers, corresponding to different types of source
+ * data:
+ * 1. FeatureCollections are rendered using deck. They will have a "loading"
+ * status until their EarthEngine computation completes, and then render near-
+ * instantly. These have non-null deckParams, and a pendingPromise until the
+ * EarthEngine computation is finished.
+ * 2. ImageCollections are rendered using EarthEngine. They will have a
+ * "loading" status until their #getMap() call completes *and* their tiles have
+ * been rendered. These have null deckParams, and a pendingPromise until tiles
+ * are rendered. On map pan/zoom or layer toggling, the EarthEngine computation
+ * is cached, but the tile rendering triggers a "loading" status.
+ * 3. Map tiles are rendered using CompositeImageMapType. They start rendering
+ * immediately, and are "loading" until all the tiles have been fetched. These
+ * have null deckParams, and never have a pendingPromise. This is because the
+ * pendingPromise is only useful for {@link toggleLayerOn}, and if {@link
+ * toggleLayerOn} is called, the promise must have already completed.
+ *
+ * FeatureCollections have a computation phase but no rendering phase;
+ * ImageCollections have both computation and rendering phases, and
+ * CompositeImageMapTypes have no computation phase, but do have a rendering
+ * phase.
  */
 class LayerDisplayData {
   /**
@@ -128,14 +151,16 @@ function toggleLayerOn(layer, map) {
     return null;
   }
   if (layerDisplayData.overlay) {
-    // This promise does not need to be stored in the pendingPromise field
-    // because it will complete immediately if this layer is toggled off (see
-    // the resolveOnTilesFinished doc). That means that if toggleLayerOn is
-    // called again for this layer, the promise will already have completed.
+    // The promise returned in this branch does not need to be stored in the
+    // pendingPromise field because it will complete immediately if this layer
+    // is toggled off (see the createTileCallback doc). That means that if
+    // toggleLayerOn is called again for this layer, the promise will already
+    // have completed.
+    if (layerDisplayData.overlay instanceof CompositeImageMapType) {
+      return createCompositeTilePromise(layerDisplayData, index, map);
+    }
     return createLoadingAwarePromise((resolve) => {
-      // TODO(janakr): When we add non-EE assets, they will have to know how
-      //  to call the finish loading callback too.
-      resolveOnTilesFinished(layerDisplayData, resolve);
+      resolveOnEeTilesFinished(layerDisplayData, resolve);
       showOverlayLayer(layerDisplayData.overlay, index, map);
     });
   }
@@ -196,7 +221,7 @@ function addImageLayer(map, imageAsset, layer) {
               // Check in case the status has changed before this callback was
               // invoked by getMap.
               if (layerDisplayData.displayed) {
-                resolveOnTilesFinished(layerDisplayData, resolve);
+                resolveOnEeTilesFinished(layerDisplayData, resolve);
                 showOverlayLayer(overlay, index, map);
               } else {
                 resolve();
@@ -226,43 +251,94 @@ function showOverlayLayer(overlay, index, map) {
 }
 
 /**
- * Calls {@code resolve} callback the first time we finish loading tiles. This
- * will happen if the layer is removed from the map even if it has not finished
- * rendering (verified experimentally).
- *
- * On subsequent calls, adds loading element to map if not already loading, and
- * removes it when all tiles are loaded. These calls correspond to map redraws,
- * from pans or zooms.
- *
- * @param {LayerDisplayData} layerDisplayData
- * @param {Function} resolve
+ * Wrapper for adding {@link createTileCallback} to the given ee.OverlayMapData\
+ * layer.
+ * @param {LayerDisplayData} layerDisplayData containing an ee.OverlayMapData
+ * @param {Function} resolve Function to be called the first time this layer
+ *     finishes rendering
  */
-function resolveOnTilesFinished(layerDisplayData, resolve) {
+function resolveOnEeTilesFinished(layerDisplayData, resolve) {
   if (layerDisplayData.tileCallbackId) {
     layerDisplayData.overlay.removeTileCallback(
         layerDisplayData.tileCallbackId);
   }
-  layerDisplayData.tileCallbackId =
-      layerDisplayData.overlay.addTileCallback((tileEvent) => {
-        if (tileEvent.count === 0) {
-          if (resolve) {
-            // This is the first time we've finished loading, so inform caller.
-            resolve();
-            // Free up reference to resolve and make future redraws add a
-            // loading element.
-            resolve = null;
-          } else {
-            // Loading has finished for a pan/zoom-triggered load.
-            loadingElementFinished(mapContainerId);
-          }
-          layerDisplayData.loading = false;
-        } else if (!resolve && !layerDisplayData.loading) {
-          // We've started loading again after the first time completed (because
-          // of a pan/zoom of the map). Enable loading indicator.
-          layerDisplayData.loading = true;
-          addLoadingElement(mapContainerId);
-        }
-      });
+  layerDisplayData.tileCallbackId = layerDisplayData.overlay.addTileCallback(
+      createTileCallback(layerDisplayData, resolve));
+}
+
+/**
+ * Creates a callback to be registered with either an ee.MapLayerOverlay or
+ * CompositeImageMapType. The callback enables/disables the loading status
+ * indefinitely (on map pan/zoom), but will call the given resolve function the
+ * first time loading completes, so that the application can be notified that
+ * this layer has been rendered.
+ *
+ * Loading completion will be triggered if the layer is toggled off from the map
+ * (verified experimentally, and also through reading code: when the layer is
+ * toggled off, releaseTile() is called on all of its tiles, enabling the
+ * relevant TileEvent to be sent).
+ * @param {LayerDisplayData} layerDisplayData
+ * @param {Function} resolve Function to be called the first time this layer
+ *     finishes rendering
+ * @return {Function} A callback to be passed to
+ *     CompositeImageMapType.setTileCallback or
+ *     ee.MapLayerOverlay.addTileCallback
+ */
+function createTileCallback(layerDisplayData, resolve) {
+  return (tileEvent) => {
+    if (tileEvent.count === 0) {
+      if (resolve) {
+        resolve();
+        // Free up reference to resolve and make future redraws add a loading
+        // element.
+        resolve = null;
+      } else {
+        loadingElementFinished(mapContainerId);
+      }
+      layerDisplayData.loading = false;
+    } else if (!resolve && !layerDisplayData.loading) {
+      layerDisplayData.loading = true;
+      addLoadingElement(mapContainerId);
+    }
+  };
+}
+
+/**
+ * Displays a collection of tiles (given by the 'tile-urls' attribute of layer)
+ * on the map using a CompositeImageMapType to combine all tiles for a given
+ * map location into one tile.
+ * @param {google.maps.Map} map
+ * @param {Object} layer Data for layer coming from Firestore
+ * @return {Promise} Promise that resolves when images are all downloaded
+ */
+function addTileLayer(map, layer) {
+  const layerDisplayData = new LayerDisplayData(null, true);
+  layerArray[layer['index']] = layerDisplayData;
+  layerDisplayData.overlay = new CompositeImageMapType({
+    tileUrls: layer['tile-urls'],
+    tileSize: layer['tile-size'],
+    maxZoom: layer['maxZoom'],
+    opacity: layer['opacity'],
+  });
+  return createCompositeTilePromise(layerDisplayData, layer['index'], map);
+}
+
+/**
+ * Creates a Promise for a CompositeImageMapType that will complete when the
+ * layer has rendered (or, at least, when all of its images are downloaded).
+ * @param {LayerDisplayData} layerDisplayData
+ * @param {number} index Order in the overlay types
+ * @param {google.maps.Map} map
+ * @return {Promise} Promise that completes when layer is rendered. If the
+ *     layer is toggled off, this Promise will complete immediately, see {@link
+ *     createTileCallback}
+ */
+function createCompositeTilePromise(layerDisplayData, index, map) {
+  return createLoadingAwarePromise((resolve) => {
+    layerDisplayData.overlay.setTileCallback(
+        createTileCallback(layerDisplayData, resolve));
+    showOverlayLayer(layerDisplayData.overlay, index, map);
+  });
 }
 
 /**
@@ -335,6 +411,8 @@ function addLayer(layer, map) {
           convertEeObjectToPromise(
               ee.FeatureCollection(layerName).toList(maxNumFeaturesExpected)),
           DeckParams.fromLayer(layer), layer['index']);
+    case LayerType.MAP_TILES:
+      return addTileLayer(map, layer);
     default:
       createError('parsing layer type during add')(
           '[' + layer['index'] + ']: ' + layer['asset-name'] +
