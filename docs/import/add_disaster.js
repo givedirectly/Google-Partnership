@@ -73,7 +73,7 @@ function toggleState(disaster) {
       if (!stateAssets.has(state)) statesToFetch.push(state);
     }
 
-    // TODO: add functionality to repull all cached states from ee without
+    // TODO: add functionality to re-pull all cached states from ee without
     // reloading the page.
     const assetPickersDone = getAssetsFromEe(statesToFetch).then((assets) => {
       for (const asset of assets) {
@@ -82,10 +82,7 @@ function toggleState(disaster) {
       createAssetPickers(states);
     });
 
-    // TODO: display more disaster info including current layers etc. We
-    // might not want to create these asset pickers every time we toggle
-    // between disasters because it requires ee calls. For now it's quite fast,
-    // will handle in follow up PRs if it begins to be a problem.
+    // TODO: display more disaster info including current layers etc.
     $('#new-disaster').hide();
     $('#selected-disaster').show();
     const assetPickerDiv = $('#asset-pickers');

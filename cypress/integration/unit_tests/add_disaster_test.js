@@ -5,7 +5,6 @@ import {addFirebaseHooks, loadScriptsBeforeForUnitTests} from '../../support/scr
 
 const KNOWN_STATE = 'WF';
 const UNKNOWN_STATE = 'DN';
-
 const KNOWN_STATE_ASSET = gdEePathPrefix + 'states/' + KNOWN_STATE + '/snap';
 
 describe('Unit tests for add_disaster page', () => {
@@ -41,6 +40,7 @@ describe('Unit tests for add_disaster page', () => {
         }));
     cy.stub(ee.data, 'createFolder');
 
+    stateAssets.clear();
     // In prod this would happen in enableWhenReady which would read from
     // firestore.
     disasters.clear();
@@ -49,8 +49,8 @@ describe('Unit tests for add_disaster page', () => {
   });
 
   afterEach(() => {
-    disasters.clear();
     stateAssets.clear();
+    disasters.clear();
   });
 
   it('gets state asset info from ee', () => {
