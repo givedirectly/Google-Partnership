@@ -1,5 +1,5 @@
 import {initializeFirebaseLayers, LayerType} from '../../../docs/firebase_layers.js';
-import {deckGlArray, DisplayedLayerData, mapOverlayArray, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from '../../../docs/layer_util.js';
+import {deckGlArray, DisplayedLayerData, layerArray, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from '../../../docs/layer_util.js';
 import * as loading from '../../../docs/loading';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 
@@ -40,11 +40,11 @@ describe('Unit test for toggleLayerOn', () => {
     loading.loadingElementFinished = () => {};
   });
   beforeEach(() => {
-    mapOverlayArray[0] = new DisplayedLayerData('asset0', true);
-    mapOverlayArray[0].data = mockData;
-    mapOverlayArray[1] = new DisplayedLayerData('asset1', false);
-    mapOverlayArray[1].data = mockData;
-    mapOverlayArray[2] = new DisplayedLayerData('asset2', false);
+    layerArray[0] = new DisplayedLayerData('asset0', true);
+    layerArray[0].data = mockData;
+    layerArray[1] = new DisplayedLayerData('asset1', false);
+    layerArray[1].data = mockData;
+    layerArray[2] = new DisplayedLayerData('asset2', false);
     initializeFirebaseLayers(mockFirebaseLayers);
     // Initialize deck object in production.
     setMapToDrawLayersOn(null);
@@ -53,11 +53,11 @@ describe('Unit test for toggleLayerOn', () => {
   });
 
   it('displays a hidden but loaded layer', () => {
-    expect(mapOverlayArray[1].displayed).to.equals(false);
-    expect(mapOverlayArray[1].data).to.not.be.null;
+    expect(layerArray[1].displayed).to.equals(false);
+    expect(layerArray[1].data).to.not.be.null;
 
     toggleLayerOn(mockFirebaseLayers[1]);
-    expect(mapOverlayArray[1].displayed).to.equals(true);
+    expect(layerArray[1].displayed).to.equals(true);
     const layerProps = deckGlArray[1].props;
     expect(layerProps).to.have.property('id', 'asset1');
     expect(layerProps).to.have.property('visible', true);
@@ -65,8 +65,8 @@ describe('Unit test for toggleLayerOn', () => {
   });
 
   it('loads a hidden layer and displays', () => {
-    expect(mapOverlayArray[2].displayed).to.equals(false);
-    expect(mapOverlayArray[2].data).to.be.undefined;
+    expect(layerArray[2].displayed).to.equals(false);
+    expect(layerArray[2].data).to.be.undefined;
 
     const emptyList = [];
     let callback = null;
@@ -77,8 +77,8 @@ describe('Unit test for toggleLayerOn', () => {
     // TODO(janakr): Here and below, consider returning a Promise from
     //  toggleLayerOn that can be waited on instead of this event-loop push.
     cy.wait(0).then(() => {
-      expect(mapOverlayArray[2].displayed).to.equals(true);
-      expect(mapOverlayArray[2].data).to.not.be.null;
+      expect(layerArray[2].displayed).to.equals(true);
+      expect(layerArray[2].data).to.not.be.null;
       const layerProps = deckGlArray[2].props;
       expect(layerProps).to.have.property('id', 'asset2');
       expect(layerProps).to.have.property('visible', true);
@@ -87,8 +87,8 @@ describe('Unit test for toggleLayerOn', () => {
   });
 
   it('check hidden layer, then uncheck before list evaluation', () => {
-    expect(mapOverlayArray[2].displayed).to.equals(false);
-    expect(mapOverlayArray[2].data).to.be.undefined;
+    expect(layerArray[2].displayed).to.equals(false);
+    expect(layerArray[2].data).to.be.undefined;
 
     const emptyList = [];
     let callback = null;
@@ -99,8 +99,8 @@ describe('Unit test for toggleLayerOn', () => {
 
     // Evaluate after the promise finishes by using an instant wait.
     cy.wait(0).then(() => {
-      expect(mapOverlayArray[2].displayed).to.equals(false);
-      expect(mapOverlayArray[2].data).to.not.be.null;
+      expect(layerArray[2].displayed).to.equals(false);
+      expect(layerArray[2].data).to.not.be.null;
       const layerProps = deckGlArray[2].props;
       expect(layerProps).to.have.property('id', 'asset2');
       expect(layerProps).to.have.property('visible', false);
@@ -111,12 +111,12 @@ describe('Unit test for toggleLayerOn', () => {
 
 describe('Unit test for toggleLayerOff', () => {
   it('hides a displayed layer', () => {
-    expect(mapOverlayArray[0].displayed).to.equals(true);
-    expect(mapOverlayArray[0].data).to.not.be.null;
+    expect(layerArray[0].displayed).to.equals(true);
+    expect(layerArray[0].data).to.not.be.null;
 
     toggleLayerOff(0);
-    expect(mapOverlayArray[0].displayed).to.equals(false);
-    expect(mapOverlayArray[0].data).to.not.be.null;
+    expect(layerArray[0].displayed).to.equals(false);
+    expect(layerArray[0].data).to.not.be.null;
     const layerProps = deckGlArray[0].props;
     expect(layerProps).to.have.property('id', 'asset0');
     expect(layerProps).to.have.property('visible', false);

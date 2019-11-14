@@ -190,7 +190,7 @@ function addLayers(map) {
 }
 
 /**
- * Creates and displays overlay for score + adds mapOverlayArray entry. The
+ * Creates and displays overlay for score + adds layerArray entry. The
  * score layer sits at the end of all the layers. Having it last ensures it
  * displays on top.
  *

@@ -17,7 +17,7 @@ export {
   toggleLayerOn,
 };
 // @VisibleForTesting
-export {deckGlArray, DisplayedLayerData, mapOverlayArray};
+export {deckGlArray, DisplayedLayerData, layerArray};
 
 const scoreLayerName = 'score';
 
@@ -27,14 +27,14 @@ const scoreLayerName = 'score';
  * DisplayedLayerData will have a null data field until we fetch the data when
  * the user wants to display it. Score layer gets its own special 'score' index.
  */
-const mapOverlayArray = [];
+const layerArray = [];
 
 /**
  * deck.gl layers, in the order they should be rendered. Passed to deckGlOverlay
  * in redrawLayers() (after filtering out absent elements).
  *
  * Contains one GeoJsonLayer per DisplayedLayerData with non-null data attribute
- * (from mapOverlayArray), ordered by DisplayedLayerData.index.
+ * (from layerArray), ordered by DisplayedLayerData.index.
  *
  * @type {Array<deck.GeoJsonLayer>}
  */
@@ -47,7 +47,7 @@ const deckGlArray = [];
 let deckGlOverlay;
 
 /**
- * Values of mapOverlayArray. In addition to minimal data from constructor, will
+ * Values of layerArray. In addition to minimal data from constructor, will
  * have a data attribute for deck layers, and an overlay attribute for map
  * overlay layers.
  */
@@ -90,7 +90,7 @@ function setMapToDrawLayersOn(map) {
  */
 function toggleLayerOn(layer, map) {
   const index = layer['index'];
-  const layerMapValue = mapOverlayArray[index];
+  const layerMapValue = layerArray[index];
   layerMapValue.displayed = true;
   if (layerMapValue.data) {
     addLayerFromFeatures(layerMapValue, index);
@@ -107,7 +107,7 @@ function toggleLayerOn(layer, map) {
  * @param {google.maps.Map} map main map
  */
 function toggleLayerOff(index, map) {
-  const layerMapValue = mapOverlayArray[index];
+  const layerMapValue = layerArray[index];
   layerMapValue.displayed = false;
   if (layerMapValue.deckRendered()) {
     addLayerFromFeatures(layerMapValue, index);
@@ -128,10 +128,10 @@ function getColorOfFeature(feature) {
 
 /**
  * Asynchronous wrapper for addLayerFromId that calls getMap() with a callback
- * to avoid blocking on the result. This also populates mapOverlayArray.
+ * to avoid blocking on the result. This also populates layerArray.
  *
  * This should only be called once per asset when its overlay is initialized
- * for the first time. After the overlay is non-null in mapOverlayArray, any
+ * for the first time. After the overlay is non-null in layerArray, any
  * displaying should be able to call {@code map.overlayMapTypes.setAt(...)}.
  *
  * @param {google.maps.Map} map
@@ -144,17 +144,17 @@ function addImageLayer(map, imageAsset, layer) {
     imageAsset = terrainStyle(imageAsset);
   }
   const index = layer['index'];
-  mapOverlayArray[index] = new DisplayedLayerData(null, true);
+  layerArray[index] = new DisplayedLayerData(null, true);
   imageAsset.getMap({
     visParams: imgStyles,
     callback: (layerId, failure) => {
       if (layerId) {
-        mapOverlayArray[index].overlay = addLayerFromId(
+        layerArray[index].overlay = addLayerFromId(
             map, layer['ee-name'], layerId, index,
-            mapOverlayArray[index].displayed);
+            layerArray[index].displayed);
       } else {
         // TODO: if there's an error, disable checkbox, add tests for this.
-        mapOverlayArray[index].displayed = false;
+        layerArray[index].displayed = false;
         createError('getting id')(failure);
       }
     },
@@ -181,9 +181,9 @@ function addLayerFromId(map, layerName, layerId, index, displayed) {
   overlay.addTileCallback((tileEvent) => {
     if (tileEvent.count == 0) {
       loadingElementFinished(mapContainerId);
-      mapOverlayArray[index].loading = false;
-    } else if (!mapOverlayArray[index].loading) {
-      mapOverlayArray[index].loading = true;
+      layerArray[index].loading = false;
+    } else if (!layerArray[index].loading) {
+      layerArray[index].loading = true;
       addLoadingElement(mapContainerId);
     }
   });
@@ -281,10 +281,10 @@ function processImageCollection(layerName) {
 /**
  * Asynchronous wrapper for addLayerFromFeatures that takes in a Promise coming
  * from an ee.List of Features to avoid blocking on the result. This also
- populates mapOverlayArray.
+ populates layerArray.
  *
  * This should only be called once per asset when its data is initialized
- * for the first time. After the data is non-null in mapOverlayArray, any
+ * for the first time. After the data is non-null in layerArray, any
  displaying
  * should be able to set its visibility and redraw the layers.
  *
@@ -298,7 +298,7 @@ function addLayerFromGeoJsonPromise(featuresPromise, layerName, index) {
   addLoadingElement(mapContainerId);
   // Add entry to map.
   const layerMapValue = new DisplayedLayerData(layerName, true);
-  mapOverlayArray[index] = layerMapValue;
+  layerArray[index] = layerMapValue;
   featuresPromise
       .then((features) => {
         layerMapValue.data = features;
@@ -309,14 +309,14 @@ function addLayerFromGeoJsonPromise(featuresPromise, layerName, index) {
 }
 
 /**
- * Adds an entry to mapOverlayArray when we haven't actually gotten the data
+ * Adds an entry to layerArray when we haven't actually gotten the data
  * yet. Useful for layers that we don't want to display by default.
  *
  * @param {Object} layer
  */
 function addNullLayer(layer) {
   const assetType = layer['asset-type'];
-  mapOverlayArray[layer['index']] = new DisplayedLayerData(
+  layerArray[layer['index']] = new DisplayedLayerData(
       assetType === LayerType.FEATURE ||
               assetType === LayerType.FEATURE_COLLECTION ?
           layer['ee-name'] :
@@ -361,6 +361,6 @@ function valIsNotNull(val) {
  * any actual data changes, and therefore not update the map.
  */
 function removeScoreLayer() {
-  deckGlArray[mapOverlayArray[scoreLayerName]] = null;
+  deckGlArray[layerArray[scoreLayerName]] = null;
   redrawLayers();
 }
