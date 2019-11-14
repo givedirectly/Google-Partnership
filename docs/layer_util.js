@@ -150,8 +150,7 @@ function addImageLayer(map, imageAsset, layer) {
     callback: (layerId, failure) => {
       if (layerId) {
         layerArray[index].overlay = addLayerFromId(
-            map, layer['ee-name'], layerId, index,
-            layerArray[index].displayed);
+            map, layer['ee-name'], layerId, index, layerArray[index].displayed);
       } else {
         // TODO: if there's an error, disable checkbox, add tests for this.
         layerArray[index].displayed = false;
