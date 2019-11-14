@@ -5,7 +5,9 @@ import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 
 const mockData = {};
 
-const colorProperties = {'single-color': 'yellow'};
+const colorProperties = {
+  'single-color': 'yellow',
+};
 const mockFirebaseLayers = [
   {
     'ee-name': 'asset0',
