@@ -58,7 +58,7 @@ describe('Unit tests for add_disaster page', () => {
   });
 
   it('gets state asset info from ee', () => {
-    getAssetsFromEe([KNOWN_STATE, UNKNOWN_STATE]).then((assets) => {
+    cy.wrap(getAssetsFromEe([KNOWN_STATE, UNKNOWN_STATE])).then((assets) => {
       // tests folder type asset doesn't make it through
       expect(assets[0]).to.eql([KNOWN_STATE, [KNOWN_STATE_ASSET]]);
       expect(assets[1]).to.eql([UNKNOWN_STATE, []]);
@@ -79,17 +79,17 @@ describe('Unit tests for add_disaster page', () => {
 
     // 2 x <label> (w/ select nested inside) <br>
     expect(assetPickers.children().length).to.equal(4);
-    const picker = $('#' + KNOWN_STATE + '-adder');
-    expect(picker).to.contain(gdEeStatePrefix + KNOWN_STATE + '/snap');
-    expect(picker.children().length).to.equal(2);
-    expect($('#' + UNKNOWN_STATE + '-adder').children().length).to.equal(1);
+    const known = $('#' + KNOWN_STATE + '-adder');
+    expect(known).to.contain(gdEeStatePrefix + KNOWN_STATE + '/snap');
+    expect(known.children().length).to.equal(1);
+    expect($('#' + UNKNOWN_STATE + '-adder').children().length).to.equal(0);
   });
 
   it('writes a new disaster to firestore', () => {
     const id = '2002-winter';
     const states = ['DN, WF'];
 
-    writeNewDisaster(id, states)
+    cy.wrap(writeNewDisaster(id, states))
         .then((success) => {
           expect(success).to.be.true;
           expect($('#status').is(':visible')).to.be.false;
@@ -113,7 +113,7 @@ describe('Unit tests for add_disaster page', () => {
     const id = '2005-summer';
     const states = [KNOWN_STATE];
 
-    writeNewDisaster(id, states)
+    cy.wrap(writeNewDisaster(id, states))
         .then((success) => {
           expect(success).to.be.true;
           return writeNewDisaster(id, states);
@@ -134,7 +134,7 @@ describe('Unit tests for add_disaster page', () => {
     const states = createAndAppend('input', 'states');
     const status = $('#status');
 
-    addDisaster()
+    cy.wrap(addDisaster())
         .then((success) => {
           expect(success).to.be.false;
           expect(status.is(':visible')).to.be.true;

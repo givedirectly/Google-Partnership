@@ -117,13 +117,17 @@ function writeNewDisaster(disasterId, states) {
 
   clearStatus();
   const disasterOptions = $('#disaster > option');
+  let added = false;
+  // note: let's hope this tool isn't being used in the year 10000.
   // comment needed to quiet eslint on no-invalid-this rules
   disasterOptions.each(/* @this HTMLElement */ function() {
-    if ($(this).val() > disasterId) {
+    if ($(this).val() < disasterId) {
       $(createOptionFrom(disasterId)).insertBefore($(this));
+      added = true;
       return false;
     }
   });
+  if (!added) $('#disaster').append(createOptionFrom(disasterId));
   $('#disaster').val(disasterId);
   return getFirestoreRoot()
       .collection('disaster-metadata')
@@ -241,6 +245,7 @@ function checkSupportedAssetType(asset) {
  */
 function createAssetPickers(states) {
   const assetPickerDiv = $('#asset-pickers');
+  assetPickerDiv.empty();
   for (const state of states) {
     const assetPicker = $(document.createElement('select'))
                             .attr({
