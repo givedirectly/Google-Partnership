@@ -1,4 +1,4 @@
-import {eeLegacyPathPrefix, gdEePathPrefix} from '../ee_paths.js';
+import {legacyStateDir, eeStatePrefixLength} from '../ee_paths.js';
 import {getFirestoreRoot} from '../firestore_document.js';
 
 export {enableWhenReady, SENTINEL_NEW_DISASTER_VALUE, toggleState};
@@ -174,8 +174,6 @@ function notAllLowercase(val) {
 
 // Needed for testing :/
 const emptyCallback = () => {};
-const legacyStateDir = eeLegacyPathPrefix + 'states';
-const eeStatePrefixLength = (gdEePathPrefix + 'states/').length;
 
 // TODO: add functionality for adding assets to disaster records from these
 // pickers.

@@ -1,11 +1,11 @@
-import {eeLegacyPathPrefix, gdEePathPrefix} from '../../../docs/ee_paths.js';
+import {legacyStateDir, gdEeStatePrefix, legacyStatePrefix} from '../../../docs/ee_paths.js';
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
 import {addDisaster, createAssetPickers, createOptionFrom, disasters, emptyCallback, getAssetsFromEe, stateAssets, writeNewDisaster} from '../../../docs/import/add_disaster.js';
 import {addFirebaseHooks, loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
 const KNOWN_STATE = 'WF';
 const UNKNOWN_STATE = 'DN';
-const KNOWN_STATE_ASSET = gdEePathPrefix + 'states/' + KNOWN_STATE + '/snap';
+const KNOWN_STATE_ASSET = gdEeStatePrefix + KNOWN_STATE + '/snap';
 
 describe('Unit tests for add_disaster page', () => {
   loadScriptsBeforeForUnitTests('ee', 'firebase', 'jquery');
@@ -23,23 +23,23 @@ describe('Unit tests for add_disaster page', () => {
 
   beforeEach(() => {
     const listAssetsStub = cy.stub(ee.data, 'listAssets');
-    listAssetsStub.withArgs(eeLegacyPathPrefix + 'states', {}, emptyCallback)
+    listAssetsStub.withArgs(legacyStateDir, {}, emptyCallback)
         .returns(Promise.resolve({
           'assets': [{
-            id: gdEePathPrefix + 'states/' + KNOWN_STATE,
+            id: gdEeStatePrefix + KNOWN_STATE,
           }],
         }));
     listAssetsStub
         .withArgs(
-            eeLegacyPathPrefix + 'states/' + KNOWN_STATE, {}, emptyCallback)
+            legacyStatePrefix + KNOWN_STATE, {}, emptyCallback)
         .returns(Promise.resolve({
           'assets': [
             {
-              id: gdEePathPrefix + 'states/' + KNOWN_STATE + '/snap',
+              id: gdEeStatePrefix + KNOWN_STATE + '/snap',
               type: 'TABLE',
             },
             {
-              id: gdEePathPrefix + 'states/' + KNOWN_STATE + '/folder',
+              id: gdEeStatePrefix + KNOWN_STATE + '/folder',
               type: 'FOLDER',
             },
           ],
@@ -65,10 +65,10 @@ describe('Unit tests for add_disaster page', () => {
       expect(assets[0]).to.eql([KNOWN_STATE, [KNOWN_STATE_ASSET]]);
       expect(assets[1]).to.eql([UNKNOWN_STATE, []]);
       expect(ee.data.listAssets)
-          .to.be.calledWith(eeLegacyPathPrefix + 'states', {}, emptyCallback);
+          .to.be.calledWith(legacyStateDir, {}, emptyCallback);
       expect(ee.data.listAssets)
           .to.be.calledWith(
-              eeLegacyPathPrefix + 'states/' + KNOWN_STATE, {}, emptyCallback);
+              legacyStatePrefix + KNOWN_STATE, {}, emptyCallback);
       expect(ee.data.createFolder).to.be.calledOnce;
     });
   });
@@ -84,7 +84,7 @@ describe('Unit tests for add_disaster page', () => {
     expect(assetPickers.children().length).to.equal(4);
     const picker = $('#' + KNOWN_STATE + '-adder');
     expect(picker).to.contain(
-        gdEePathPrefix + 'states/' + KNOWN_STATE + '/snap');
+        gdEeStatePrefix + KNOWN_STATE + '/snap');
     expect(picker.children().length).to.equal(2);
     expect($('#' + UNKNOWN_STATE + '-adder').children().length).to.equal(1);
   });
