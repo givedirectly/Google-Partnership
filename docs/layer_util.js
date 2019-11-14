@@ -115,6 +115,8 @@ function setMapToDrawLayersOn(map) {
  *
  * @param {Object} layer Data for layer coming from Firestore
  * @param {google.maps.Map} map main map
+ * @return {Promise|null} Promise that resolves when layer is rendered, or null
+ *     if layer is rendered synchronously
  */
 function toggleLayerOn(layer, map) {
   const index = layer['index'];
@@ -124,9 +126,17 @@ function toggleLayerOn(layer, map) {
   // did computation for a non-deck layer. Add that caching in.
   if (layerDisplayData.data) {
     addLayerFromFeatures(layerDisplayData, index);
-  } else {
-    addLayer(layer, map);
+    return null;
   }
+  if (layerDisplayData.overlay) {
+    return createLoadingAwarePromise((resolve) => {
+      // TODO(janakr): When we add non-EE assets, they will have to know how
+      //  to call the finish loading callback too.
+      resolveOnTilesFinished(layerDisplayData, resolve);
+      showOverlayLayer(layerDisplayData.overlay, index, map);
+    });
+  }
+  return addLayer(layer, map);
 }
 
 /**
@@ -147,8 +157,8 @@ function toggleLayerOff(index, map) {
 }
 
 /**
- * Asynchronous wrapper for addLayerFromId that calls getMap() with a callback
- * to avoid blocking on the result. This also populates layerArray.
+ * Asynchronous wrapper for createLayerFromEeId that calls getMap() with a
+ * callback to avoid blocking on the result. This also populates layerArray.
  *
  * This should only be called once per asset when its overlay is initialized
  * for the first time. After the overlay is non-null in layerArray, any
@@ -157,6 +167,7 @@ function toggleLayerOff(index, map) {
  * @param {google.maps.Map} map
  * @param {ee.Element} imageAsset
  * @param {Object} layer Data for layer coming from Firestore
+ * @return {Promise} Promise that completes when layer is processed
  */
 function addImageLayer(map, imageAsset, layer) {
   const imgStyles = layer['vis-params'];
@@ -164,52 +175,80 @@ function addImageLayer(map, imageAsset, layer) {
     imageAsset = terrainStyle(imageAsset);
   }
   const index = layer['index'];
-  layerArray[index] = new LayerDisplayData(null, true);
-  imageAsset.getMap({
-    visParams: imgStyles,
-    callback: (layerId, failure) => {
-      if (layerId) {
-        layerArray[index].overlay =
-            addLayerFromId(map, layerId, index, layerArray[index].displayed);
-      } else {
-        // TODO: if there's an error, disable checkbox, add tests for this.
-        layerArray[index].displayed = false;
-        createError('getting id')(failure);
-      }
-    },
+  const layerDisplayData = new LayerDisplayData(null, true);
+  layerArray[index] = layerDisplayData;
+  return createLoadingAwarePromise((resolve, reject) => {
+    imageAsset.getMap({
+      visParams: imgStyles,
+      callback: (layerId, failure) => {
+        if (layerId) {
+          const overlay = new ee.MapLayerOverlay(
+              'https://earthengine.googleapis.com/map', layerId.mapid,
+              layerId.token, {});
+          layerDisplayData.overlay = overlay;
+          // Check in case the status has changed while the callback was
+          // running.
+          if (layerDisplayData.displayed) {
+            resolveOnTilesFinished(layerDisplayData, resolve);
+            showOverlayLayer(overlay, index, map);
+          } else {
+            resolve();
+          }
+        } else {
+          // TODO: if there's an error, disable checkbox, add tests for this.
+          layerDisplayData.displayed = false;
+          reject(failure);
+        }
+      },
+    });
   });
 }
 
 /**
- * Create an EarthEngine layer (from EEObject.getMap()), potentially add to the
- * given Google Map and returns the overlay, in case the caller wants to add
- * callbacks or similar to that overlay.
- *
+ * Draws the given overlay on the map.
+ * @param {google.maps.MapType} overlay
+ * @param {number} index Index of overlay (higher goes on top of lower). Each
+ *     layer has a unique index
  * @param {google.maps.Map} map
- * @param {Object} layerId
- * @param {number} index
- * @param {boolean} displayed
- * @return {ee.MapLayerOverlay}
  */
-function addLayerFromId(map, layerId, index, displayed) {
-  const overlay = new ee.MapLayerOverlay(
-      'https://earthengine.googleapis.com/map', layerId.mapid, layerId.token,
-      {});
-  // Update loading state according to layers.
-  overlay.addTileCallback((tileEvent) => {
-    if (tileEvent.count == 0) {
-      loadingElementFinished(mapContainerId);
-      layerArray[index].loading = false;
-    } else if (!layerArray[index].loading) {
-      layerArray[index].loading = true;
-      addLoadingElement(mapContainerId);
-    }
-  });
-  // Check in case the status has changed while the callback was running.
-  if (displayed) {
-    map.overlayMapTypes.setAt(index, overlay);
+function showOverlayLayer(overlay, index, map) {
+  map.overlayMapTypes.setAt(index, overlay);
+}
+
+/**
+ * Calls {@code resolve} callback the first time we finish loading tiles. This
+ * will happen if the layer is removed from the map even if it has not finished
+ * rendering (verified experimentally).
+ *
+ * On subsequent calls, adds loading element to map if not already loading, and
+ * removes it when all tiles are loaded. These calls correspond to map redraws,
+ * from pans or zooms.
+ *
+ * @param {LayerDisplayData} layerDisplayData
+ * @param {Function} resolve
+ */
+function resolveOnTilesFinished(layerDisplayData, resolve) {
+  if (layerDisplayData.tileCallbackId) {
+    layerDisplayData.overlay.removeTileCallback(
+        layerDisplayData.tileCallbackId);
   }
-  return overlay;
+  layerDisplayData.tileCallbackId =
+      layerDisplayData.overlay.addTileCallback((tileEvent) => {
+        if (tileEvent.count === 0) {
+          if (resolve) {
+            resolve();
+            // Free up reference to resolve and make future redraws add a
+            // loading element.
+            resolve = null;
+          } else {
+            loadingElementFinished(mapContainerId);
+          }
+          layerDisplayData.loading = false;
+        } else if (!resolve && !layerDisplayData.loading) {
+          layerDisplayData.loading = true;
+          addLoadingElement(mapContainerId);
+        }
+      });
 }
 
 /**
@@ -263,26 +302,25 @@ function showColor(color) {
 const maxNumFeaturesExpected = 250000000;
 
 /**
- * Convenience wrapper for addLayerFromGeoJsonPromise.
+ * Convenience wrapper for addLayerFromGeoJsonPromise/addImageLayer
  * @param {Object} layer Data for layer coming from Firestore
  * @param {google.maps.Map} map main map
+ * @return {Promise} Promise that completes when layer is processed
  */
 function addLayer(layer, map) {
   switch (layer['asset-type']) {
     case LayerType.IMAGE:
-      addImageLayer(map, ee.Image(layer['ee-name']), layer);
-      break;
+      return addImageLayer(map, ee.Image(layer['ee-name']), layer);
     case LayerType.IMAGE_COLLECTION:
-      addImageLayer(map, processImageCollection(layer['ee-name']), layer);
-      break;
+      return addImageLayer(
+          map, processImageCollection(layer['ee-name']), layer);
     case LayerType.FEATURE:
     case LayerType.FEATURE_COLLECTION:
       const layerName = layer['ee-name'];
-      addLayerFromGeoJsonPromise(
+      return addLayerFromGeoJsonPromise(
           convertEeObjectToPromise(
               ee.FeatureCollection(layerName).toList(maxNumFeaturesExpected)),
           DeckParams.fromLayer(layer), layer['index']);
-      break;
     default:
       createError('parsing layer type during add')(
           '[' + layer['index'] + ']: ' + layer['asset-name'] +
@@ -314,18 +352,15 @@ function processImageCollection(layerName) {
  * @param {DeckParams} deckParams
  * @param {number|string} index index of layer. A number unless this is the
  * score layer
+ * @return {Promise} Promise that completes when the feature is rendered
  */
 function addLayerFromGeoJsonPromise(featuresPromise, deckParams, index) {
-  addLoadingElement(mapContainerId);
   const layerDisplayData = new LayerDisplayData(deckParams, true);
   layerArray[index] = layerDisplayData;
-  featuresPromise
-      .then((features) => {
-        layerDisplayData.data = features;
-        addLayerFromFeatures(layerDisplayData, index);
-        loadingElementFinished(mapContainerId);
-      })
-      .catch(createError('Error rendering ' + deckParams.deckId));
+  return wrapPromiseLoadingAware(featuresPromise.then((features) => {
+    layerDisplayData.data = features;
+    addLayerFromFeatures(layerDisplayData, index);
+  }));
 }
 
 /**
@@ -375,28 +410,19 @@ function valIsNotNull(val) {
   return val !== null;
 }
 
+const deckParams = new DeckParams(scoreLayerName, null);
+deckParams.colorFunction = (feature) => showColor(feature.properties['color']);
+
 /**
  * Creates and displays overlay for score + adds layerArray entry. The
  * score layer sits at the end of all the layers. Having it last ensures it
  * displays on top.
  *
  * @param {Promise<Array<GeoJson>>} layer
+ * @return {Promise} Promise that completes when layer is displayed
  */
 function addScoreLayer(layer) {
-  const deckParams = new DeckParams(scoreLayerName, null);
-  deckParams.colorFunction = getColorOfFeature;
-
-  addLayerFromGeoJsonPromise(layer, deckParams, scoreLayerName);
-}
-
-/**
- * Function object to extract a color from a JSON Feature.
- *
- * @param {GeoJSON.Feature} feature
- * @return {Array} RGBA array
- */
-function getColorOfFeature(feature) {
-  return showColor(feature.properties['color']);
+  return addLayerFromGeoJsonPromise(layer, deckParams, scoreLayerName);
 }
 
 /**
@@ -407,4 +433,26 @@ function getColorOfFeature(feature) {
 function removeScoreLayer() {
   deckGlArray[scoreLayerName] = null;
   redrawLayers();
+}
+
+const mapLoadingFinished = () => loadingElementFinished(mapContainerId);
+
+/**
+ * Notes that an element has started loading, and add a handler to the Promise
+ * to note when it finishes.
+ * @param {Promise} promise
+ * @return {Promise} wrappedPromise
+ */
+function wrapPromiseLoadingAware(promise) {
+  addLoadingElement(mapContainerId);
+  return promise.then(mapLoadingFinished);
+}
+
+/**
+ * Creates a Promise that's already wrapped by {@code wrapPromiseLoadingAware}.
+ * @param {Function} lambda that is the argument to Promise constructor
+ * @return {Promise} wrapped Promise
+ */
+function createLoadingAwarePromise(lambda) {
+  return wrapPromiseLoadingAware(new Promise(lambda));
 }
