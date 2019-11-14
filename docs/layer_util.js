@@ -22,11 +22,12 @@ export {deckGlArray, DisplayedLayerData, layerArray};
 const scoreLayerName = 'score';
 
 /**
- * All map overlay layers. Data is lazily generated i.e. layers that
- * don't display by default will have an entry in this map, but the
- * DisplayedLayerData will have a null data/overlay field (depending on whether
- * or not we render it with deck) until we fetch the data when
- * the user wants to display it. Score layer gets its own special 'score' index.
+ * All map overlay layers. Data is lazily generated: layers that don't display
+ * by default will have an entry in this map, but the DisplayedLayerData will
+ * have a null data/overlay field (depending on whether or not we render it with
+ * deck) until we fetch the data when the user wants to display it. Score layer
+ * gets its own special 'score' index, exploiting Javascript's tolerance for
+ * non-numerical indices on arrays.
  */
 const layerArray = [];
 
