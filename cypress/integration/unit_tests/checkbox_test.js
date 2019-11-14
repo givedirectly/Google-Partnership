@@ -34,7 +34,7 @@ const mockFirebaseLayers = [
 
 const colorProperties = {
   'single-color': 'blue',
-  'opacity': 100
+  'opacity': 100,
 };
 
 describe('Unit test for toggleLayerOn', () => {
