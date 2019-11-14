@@ -5,6 +5,7 @@ import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 
 const mockData = {};
 
+const colorProperties = {'single-color': 'yellow'};
 const mockFirebaseLayers = [
   {
     'ee-name': 'asset0',
@@ -15,27 +16,22 @@ const mockFirebaseLayers = [
     'index': 0,
   },
   {
-    'asset-type': LayerType.FEATURE_COLLECTION,
     'ee-name': 'asset1',
+    'asset-type': LayerType.FEATURE_COLLECTION,
     'display-name': 'asset1',
     'display-on-load': false,
     'color-function': {'single-color': 'yellow'},
     'index': 1,
   },
   {
-    'asset-type': LayerType.FEATURE_COLLECTION,
     'ee-name': 'asset2',
+    'asset-type': LayerType.FEATURE_COLLECTION,
     'display-name': 'asset2',
     'display-on-load': false,
-    'color-function': {'single-color': 'yellow'},
+    'color-function': newVar,
     'index': 2,
   },
 ];
-
-const colorProperties = {
-  'single-color': 'blue',
-  'opacity': 100,
-};
 
 describe('Unit test for toggleLayerOn', () => {
   loadScriptsBeforeForUnitTests('ee', 'deck', 'maps');
