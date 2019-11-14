@@ -36,7 +36,8 @@ const layerArray = [];
  * in redrawLayers() (after filtering out absent elements).
  *
  * Contains one GeoJsonLayer per DisplayedLayerData with non-null data attribute
- * (from layerArray), ordered by DisplayedLayerData.index.
+ * (from layerArray), ordered by DisplayedLayerData.index. Same trick as with
+ * layerArray for score index.
  *
  * @type {Array<deck.GeoJsonLayer>}
  */
@@ -83,7 +84,7 @@ class DeckParams {
    * @constructor
    *
    * @param {!string} deckId
-   * @param {Object} colorFunctionProperties Parameters used to calculate style
+   * @param {Object} colorFunctionProperties Parameters used to calculate color
    *     function
    */
   constructor(deckId, colorFunctionProperties) {
@@ -111,7 +112,7 @@ function setMapToDrawLayersOn(map) {
 /**
  * Toggles on displaying an asset on the map.
  *
- * @param {Object} layer
+ * @param {Object} layer Data for layer coming from Firestore
  * @param {google.maps.Map} map main map
  */
 function toggleLayerOn(layer, map) {
@@ -152,7 +153,7 @@ function toggleLayerOff(index, map) {
  *
  * @param {google.maps.Map} map
  * @param {ee.Element} imageAsset
- * @param {Object} layer
+ * @param {Object} layer Data for layer coming from Firestore
  */
 function addImageLayer(map, imageAsset, layer) {
   const imgStyles = layer['vis-params'];
