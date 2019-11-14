@@ -22,7 +22,6 @@ const LayerType = {
   FEATURE_COLLECTION: 1,
   IMAGE: 2,
   IMAGE_COLLECTION: 3,
-  MAP_TILES: 4,
 };
 Object.freeze(LayerType);
 
