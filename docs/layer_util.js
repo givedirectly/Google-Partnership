@@ -22,9 +22,10 @@ export {deckGlArray, DisplayedLayerData, layerArray};
 const scoreLayerName = 'score';
 
 /**
- * All map overlay layers. Data is lazily generated i.e. pre-known layers that
+ * All map overlay layers. Data is lazily generated i.e. layers that
  * don't display by default will have an entry in this map, but the
- * DisplayedLayerData will have a null data field until we fetch the data when
+ * DisplayedLayerData will have a null data/overlay field (depending on whether
+ * or not we render it with deck) until we fetch the data when
  * the user wants to display it. Score layer gets its own special 'score' index.
  */
 const layerArray = [];
@@ -48,12 +49,12 @@ let deckGlOverlay;
 
 /**
  * Values of layerArray. In addition to basic data from constructor, will
- * have a data attribute for deck layers, and an overlay attribute for map
- * overlay layers.
+ * have a data attribute for deck layers, and an overlay attribute for image/other
+ *  layers.
  */
 class DisplayedLayerData {
   /**
-   * Constructor.
+   * @constructor
    *
    * @param {DeckParams} deckParams null if not rendered using deck
    * @param {boolean} displayed True if layer is currently displayed
@@ -73,7 +74,7 @@ class DisplayedLayerData {
 }
 
 /**
- * Utility class to group deck parameters together, and cache computed style
+ * Utility class to group deck parameters together, and cache computed color
  * function.
  */
 class DeckParams {
@@ -268,7 +269,7 @@ const maxNumFeaturesExpected = 250000000;
 
 /**
  * Convenience wrapper for addLayerFromGeoJsonPromise.
- * @param {Object} layer Asset
+ * @param {Object} layer Data for layer coming from Firestore
  * @param {google.maps.Map} map main map
  */
 function addLayer(layer, map) {
@@ -308,18 +309,15 @@ function processImageCollection(layerName) {
 /**
  * Asynchronous wrapper for addLayerFromFeatures that takes in a Promise coming
  * from an ee.List of Features to avoid blocking on the result. This also
- populates layerArray.
+ * populates layerArray.
  *
- * This should only be called once per asset when its data is initialized
- * for the first time. After the data is non-null in layerArray, any
- displaying
+ * This should only be called once per asset when its data is initialized for
+ * the first time. After the data is non-null in layerArray, any displaying
  * should be able to set its visibility and redraw the layers.
  *
  * @param {Promise<Array<GeoJson>>}featuresPromise
- * @param {Object} layer
- * @param {number|string} index Ordering of layer (higher is more visible). The
- *     special string 'score' keeps this always on top (only for the score
- layer)
+ * @param {Object|string} layer Data for layer coming from Firestore, or the
+ * special string 'score' to indicate that this is the score layer
  */
 function addLayerFromGeoJsonPromise(featuresPromise, layer) {
   addLoadingElement(mapContainerId);
@@ -327,6 +325,7 @@ function addLayerFromGeoJsonPromise(featuresPromise, layer) {
   let deckParams;
   if (layer === scoreLayerName) {
     deckParams = new DeckParams(scoreLayerName, null);
+    // Score function is already known
     deckParams.colorFunction = getColorOfFeature;
   } else {
     deckParams = new DeckParams(layer['ee-name'], layer['color-function']);
@@ -346,7 +345,7 @@ function addLayerFromGeoJsonPromise(featuresPromise, layer) {
  * Adds an entry to layerArray when we haven't actually gotten the data
  * yet. Useful for layers that we don't want to display by default.
  *
- * @param {Object} layer
+ * @param {Object} layer Data for layer coming from Firestore
  */
 function addNullLayer(layer) {
   const assetType = layer['asset-type'];
