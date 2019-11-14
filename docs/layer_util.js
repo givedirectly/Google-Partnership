@@ -8,7 +8,7 @@ import {convertEeObjectToPromise} from './map_util.js';
 export {
   addLayer,
   addNullLayer,
-    addScoreLayer,
+  addScoreLayer,
   redrawLayers,
   removeScoreLayer,
   scoreLayerName,
@@ -49,8 +49,8 @@ let deckGlOverlay;
 
 /**
  * Values of layerArray. In addition to basic data from constructor, will
- * have a data attribute for deck layers, and an overlay attribute for image/other
- *  layers.
+ * have a data attribute for deck layers, and an overlay attribute for
+ * image/other layers.
  */
 class DisplayedLayerData {
   /**
