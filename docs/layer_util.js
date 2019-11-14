@@ -169,8 +169,8 @@ function addImageLayer(map, imageAsset, layer) {
     visParams: imgStyles,
     callback: (layerId, failure) => {
       if (layerId) {
-        layerArray[index].overlay = addLayerFromId(map, layerId, index,
-            layerArray[index].displayed);
+        layerArray[index].overlay =
+            addLayerFromId(map, layerId, index, layerArray[index].displayed);
       } else {
         // TODO: if there's an error, disable checkbox, add tests for this.
         layerArray[index].displayed = false;
