@@ -169,8 +169,8 @@ function addImageLayer(map, imageAsset, layer) {
     visParams: imgStyles,
     callback: (layerId, failure) => {
       if (layerId) {
-        layerArray[index].overlay = addLayerFromId(
-            map, layer['ee-name'], layerId, index, layerArray[index].displayed);
+        layerArray[index].overlay = addLayerFromId(map, layerId, index,
+            layerArray[index].displayed);
       } else {
         // TODO: if there's an error, disable checkbox, add tests for this.
         layerArray[index].displayed = false;
@@ -186,13 +186,12 @@ function addImageLayer(map, imageAsset, layer) {
  * callbacks or similar to that overlay.
  *
  * @param {google.maps.Map} map
- * @param {string} layerName
  * @param {Object} layerId
  * @param {number} index
  * @param {boolean} displayed
  * @return {ee.MapLayerOverlay}
  */
-function addLayerFromId(map, layerName, layerId, index, displayed) {
+function addLayerFromId(map, layerId, index, displayed) {
   const overlay = new ee.MapLayerOverlay(
       'https://earthengine.googleapis.com/map', layerId.mapid, layerId.token,
       {});
