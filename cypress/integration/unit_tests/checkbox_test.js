@@ -14,7 +14,7 @@ const mockFirebaseLayers = [
     'asset-type': LayerType.FEATURE_COLLECTION,
     'display-name': 'asset0',
     'display-on-load': true,
-    'color-function': {'single-color': 'yellow'},
+    'color-function': colorProperties,
     'index': 0,
   },
   {
@@ -22,7 +22,7 @@ const mockFirebaseLayers = [
     'asset-type': LayerType.FEATURE_COLLECTION,
     'display-name': 'asset1',
     'display-on-load': false,
-    'color-function': {'single-color': 'yellow'},
+    'color-function': colorProperties,
     'index': 1,
   },
   {
@@ -30,7 +30,7 @@ const mockFirebaseLayers = [
     'asset-type': LayerType.FEATURE_COLLECTION,
     'display-name': 'asset2',
     'display-on-load': false,
-    'color-function': newVar,
+    'color-function': colorProperties,
     'index': 2,
   },
 ];
