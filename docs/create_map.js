@@ -1,7 +1,7 @@
 import mapStyles from './map_styles.js';
 import {geoPointToLatLng} from './map_util.js';
 import {setUpPolygonDrawing} from './polygon_draw.js';
-import {setUpTolerantImageMapType, TolerantImageMapType} from './fetch.js';
+import {TolerantImageMapType} from './fetch.js';
 
 export {createMap as default};
 
@@ -94,11 +94,7 @@ function createMap(firebasePromise) {
     map.fitBounds(bounds);
   });
 
-  setUpTolerantImageMapType();
-  const tileOverlay = new TolerantImageMapType({
-    tileUrls: TILE_URLS,
-    tileSize: new google.maps.Size(256, 256),
-  });
+  const tileOverlay = new TolerantImageMapType(TILE_URLS);
   map.overlayMapTypes.insertAt(0, tileOverlay);
 
 
@@ -116,19 +112,19 @@ function createMap(firebasePromise) {
 }
 
 const TILE_URLS = [
-// 'https://stormscdn.ngs.noaa.gov/20170827-rgb/{Z}/{X}/{Y}',
+'https://stormscdn.ngs.noaa.gov/20170827-rgb/{Z}/{X}/{Y}',
 'https://stormscdn.ngs.noaa.gov/20170828a-rgb/{Z}/{X}/{Y}',
-// 'https://stormscdn.ngs.noaa.gov/20170828b-rgb/{Z}/{X}/{Y}',
+'https://stormscdn.ngs.noaa.gov/20170828b-rgb/{Z}/{X}/{Y}',
 'https://stormscdn.ngs.noaa.gov/20170829a-rgb/{Z}/{X}/{Y}',
-// 'https://stormscdn.ngs.noaa.gov/20170829b-rgb/{Z}/{X}/{Y}',
+'https://stormscdn.ngs.noaa.gov/20170829b-rgb/{Z}/{X}/{Y}',
 'https://stormscdn.ngs.noaa.gov/20170830-rgb/{Z}/{X}/{Y}',
-//   'https://stormscdn.ngs.noaa.gov/20170831a-rgb/{Z}/{X}/{Y}',
+  'https://stormscdn.ngs.noaa.gov/20170831a-rgb/{Z}/{X}/{Y}',
   'https://stormscdn.ngs.noaa.gov/20170831b-rgb/{Z}/{X}/{Y}',
-//   'https://stormscdn.ngs.noaa.gov/20170901a-rgb/{Z}/{X}/{Y}',
+  'https://stormscdn.ngs.noaa.gov/20170901a-rgb/{Z}/{X}/{Y}',
   'https://stormscdn.ngs.noaa.gov/20170901b-rgb/{Z}/{X}/{Y}',
-//   'https://stormscdn.ngs.noaa.gov/20170901c-rgb/{Z}/{X}/{Y}',
+  'https://stormscdn.ngs.noaa.gov/20170901c-rgb/{Z}/{X}/{Y}',
   'https://stormscdn.ngs.noaa.gov/20170902a-rgb/{Z}/{X}/{Y}',
-//   'https://stormscdn.ngs.noaa.gov/20170902b-rgb/{Z}/{X}/{Y}',
+  'https://stormscdn.ngs.noaa.gov/20170902b-rgb/{Z}/{X}/{Y}',
   'https://stormscdn.ngs.noaa.gov/20170902c-rgb/{Z}/{X}/{Y}',
-//   'https://stormscdn.ngs.noaa.gov/20170903-rgb/{Z}/{X}/{Y}',
+  'https://stormscdn.ngs.noaa.gov/20170903-rgb/{Z}/{X}/{Y}',
 ];

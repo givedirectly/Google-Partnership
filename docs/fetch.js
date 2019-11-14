@@ -1,4 +1,4 @@
-export {TolerantImageMapType, setUpTolerantImageMapType};
+export {TolerantImageMapType};
 
 const TOO_MANY_REQUESTS_STATUS_CODE = 429;
 const NOT_FOUND_STATUS_CODE = 404;
@@ -6,6 +6,18 @@ const MAX_RETRIES = 10;
 
 function pause(duration) {
   return new Promise((resolve) => setTimeout(resolve, duration));
+}
+
+class ErrorObject {
+  constructor(statusCode, message, url) {
+    this.statusCode = statusCode;
+    this.message = message;
+    this.url = url;
+  }
+
+  getMessage() {
+    return 'Could not retrieve ' + this.url + (this.message ? ' (' + this.message + ')' : '');
+  }
 }
 
 async function fetchWithBackoff(url, options) {
@@ -20,57 +32,60 @@ async function fetchWithBackoff(url, options) {
     if (response.status === TOO_MANY_REQUESTS_STATUS_CODE) {
       await pause(1000 * Math.pow(2, retryCount));
     } else {
-      makeAndThrowError(response, url);
+      return makeError(response, url);
     }
   }
-  makeAndThrowError(response, url);
+  return makeError(response, url);
 }
 
-function makeAndThrowError(response, url) {
-  const error = new Error(response.status + ': ' + makeErrorMessage(response.statusText, url));
-  error.statusCode = response.status;
-  throw error;
+function makeError(response, url) {
+  return new ErrorObject(response.status, response.statusText, url);
 }
 
 function makeErrorMessage(text, url) {
   return 'Could not retrieve ' + url + (text ? ' (' + text + ')' : '');
 }
 
-let TolerantImageMapType;
-
-function setUpTolerantImageMapType() {
-  TolerantImageMapType = class extends google.maps.ImageMapType {
-    constructor(options) {
-      options.getTileUrl = () => {};
-      super(options);
-      this.tileUrls = options.tileUrls;
+class TolerantImageMapType {
+    constructor(tileUrls) {
+      this.tileUrls = tileUrls;
+      this.tileSize = new google.maps.Size(256, 256);
+      this.maxZoom = 15;
     }
 
     getTile(tileCoord, zoom, ownerDocument) {
       // Create the image in the document.
-      const tileDiv = ownerDocument.createElement('img');
+      const tileDiv = ownerDocument.createElement('div');
       // If validation fails, return an empty tile immediately.
       const maxCoord = 1 << zoom;
       if (zoom < 0 || tileCoord.y < 0 || tileCoord.y >= maxCoord) {
         return tileDiv;
       }
       const tileUrls = this.tileUrls.map((url) => url.replace('{Z}', zoom).replace('{X}', tileCoord.x).replace('{Y}', tileCoord.y));
-      anyPromise(tileUrls.map((url) => fetchWithBackoff(url)))
-          .then((url) => {
-            tileDiv.src = url;
-            tileDiv.style.opacity = this.getOpacity();
-            google.maps.event.trigger(tileDiv, 'load');
-          })
-          .catch((e) => {
-            if (e.statusCode !== NOT_FOUND_STATUS_CODE) {
-              console.warn(e.statusCode, e);
+      Promise.all(tileUrls.map((url) => fetchWithBackoff(url)))
+          .then((urls) => {
+            let success = false;
+            for (let i = 0; i < urls.length; i++) {
+              const url = urls[i];
+              if (url instanceof ErrorObject) {
+                if (url.statusCode !== NOT_FOUND_STATUS_CODE) {
+                  console.error(e.statusCode, e.getMessage())
+                }
+              } else {
+                const img = ownerDocument.createElement('img');
+                img.src = url;
+                img.opacity = 1;
+                img.style.position = 'absolute';
+                img.style['z-index'] = i;
+                tileDiv.appendChild(img);
+                success = true;
+              }
             }
-            return false;
+            google.maps.event.trigger(tileDiv, 'load');
           });
       // Return the image div
       return tileDiv;
     }
-  };
 }
 
 function anyPromise(promises) {
