@@ -37,7 +37,7 @@ const styleFunctions = new Map();
  */
 function getStyleFunction(index) {
   return styleFunctions.has(index) ? styleFunctions.get(index) :
-                                         createStyleFunction(index);
+                                     createStyleFunction(index);
 }
 
 /**

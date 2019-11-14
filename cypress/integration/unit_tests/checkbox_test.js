@@ -1,6 +1,6 @@
 import {initializeFirebaseLayers, LayerType} from '../../../docs/firebase_layers.js';
+import {deckGlArray, LayerMapValue, mapOverlayArray, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from '../../../docs/layer_util.js';
 import * as loading from '../../../docs/loading';
-import {deckGlArray, mapOverlayArray, LayerMapValue, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from '../../../docs/layer_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 
 const mockData = {};
@@ -16,7 +16,7 @@ const mockFirebaseLayers = [
   },
   {
     'asset-type': LayerType.FEATURE_COLLECTION,
-      'ee-name': 'asset1',
+    'ee-name': 'asset1',
     'display-name': 'asset1',
     'display-on-load': false,
     'color-function': {'single-color': 'yellow'},
@@ -24,8 +24,8 @@ const mockFirebaseLayers = [
   },
   {
     'asset-type': LayerType.FEATURE_COLLECTION,
-      'ee-name': 'asset2',
-      'display-name': 'asset2',
+    'ee-name': 'asset2',
+    'display-name': 'asset2',
     'display-on-load': false,
     'color-function': {'single-color': 'yellow'},
     'index': 2,

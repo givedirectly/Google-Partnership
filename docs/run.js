@@ -137,8 +137,7 @@ function createNewCheckbox(name, displayName, parentDiv) {
  */
 function createNewCheckboxForLayer(layer, parentDiv, map) {
   const index = layer['index'];
-  const newBox = createNewCheckbox(
-      index, layer['display-name'], parentDiv);
+  const newBox = createNewCheckbox(index, layer['display-name'], parentDiv);
   if (!layer['display-on-load']) {
     newBox.checked = false;
   }
@@ -181,13 +180,19 @@ function addLayers(map) {
     createNewCheckboxForLayer(properties, sidebarDiv, map);
   }
   createCheckboxForUserFeatures(sidebarDiv);
-  createNewCheckboxForLayer({'display-name': scoreLayerName, index: scoreLayerName, 'display-on-load': true}, sidebarDiv, map);
+  createNewCheckboxForLayer(
+      {
+        'display-name': scoreLayerName,
+        index: scoreLayerName,
+        'display-on-load': true
+      },
+      sidebarDiv, map);
 }
 
 /**
- * Creates and displays overlay for score + adds mapOverlayArray entry. The score
- * layer sits at the end of all the layers. Having it last ensures it displays
- * on top.
+ * Creates and displays overlay for score + adds mapOverlayArray entry. The
+ * score layer sits at the end of all the layers. Having it last ensures it
+ * displays on top.
  *
  * @param {Promise<Array<GeoJson>>} layer
  */

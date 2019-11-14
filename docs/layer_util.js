@@ -17,15 +17,15 @@ export {
   toggleLayerOn,
 };
 // @VisibleForTesting
-export {deckGlArray, mapOverlayArray, LayerMapValue};
+export {deckGlArray, LayerMapValue, mapOverlayArray};
 
 const scoreLayerName = 'score';
 
 /**
- * All map overlay layers. Data is lazily generated i.e. pre-known layers that don't display by default will have an
- * entry in this map, but the LayerMapValue will have a null data field until we
- * fetch the data when the user wants to display it. Score layer gets its own
- * special 'score' index.
+ * All map overlay layers. Data is lazily generated i.e. pre-known layers that
+ * don't display by default will have an entry in this map, but the
+ * LayerMapValue will have a null data field until we fetch the data when the
+ * user wants to display it. Score layer gets its own special 'score' index.
  */
 const mapOverlayArray = [];
 
@@ -128,8 +128,8 @@ function getColorOfFeature(feature) {
  * to avoid blocking on the result. This also populates mapOverlayArray.
  *
  * This should only be called once per asset when its overlay is initialized
- * for the first time. After the overlay is non-null in mapOverlayArray, any displaying
- * should be able to call {@code map.overlayMapTypes.setAt(...)}.
+ * for the first time. After the overlay is non-null in mapOverlayArray, any
+ * displaying should be able to call {@code map.overlayMapTypes.setAt(...)}.
  *
  * @param {google.maps.Map} map
  * @param {ee.Element} imageAsset
@@ -147,7 +147,8 @@ function addImageLayer(map, imageAsset, layer) {
     callback: (layerId, failure) => {
       if (layerId) {
         mapOverlayArray[index].overlay = addLayerFromId(
-            map, layer['ee-name'], layerId, index, mapOverlayArray[index].displayed);
+            map, layer['ee-name'], layerId, index,
+            mapOverlayArray[index].displayed);
       } else {
         // TODO: if there's an error, disable checkbox, add tests for this.
         mapOverlayArray[index].displayed = false;
@@ -216,7 +217,7 @@ function addLayerFromFeatures(layerMapValue, index) {
     // automatically color the features, but it doesn't appear to work:
     // https://deck.gl/#/documentation/deckgl-api-reference/layers/geojson-layer?section=getelevation-function-number-optional-transition-enabled
     getFillColor: index === scoreLayerName ? getColorOfFeature :
-                                                 getStyleFunction(index),
+                                             getStyleFunction(index),
     visible: layerMapValue.displayed,
   });
   redrawLayers();
@@ -258,7 +259,8 @@ function addLayer(layer, map) {
       break;
     default:
       createError('parsing layer type during add')(
-          '[' + layer['index'] + ']: ' + layer['asset-name'] + ' not recognized layer type');
+          '[' + layer['index'] + ']: ' + layer['asset-name'] +
+          ' not recognized layer type');
   }
 }
 
@@ -279,7 +281,8 @@ function processImageCollection(layerName) {
  populates mapOverlayArray.
  *
  * This should only be called once per asset when its data is initialized
- * for the first time. After the data is non-null in mapOverlayArray, any displaying
+ * for the first time. After the data is non-null in mapOverlayArray, any
+ displaying
  * should be able to set its visibility and redraw the layers.
  *
  * @param {Promise<Array<GeoJson>>}featuresPromise
@@ -303,14 +306,19 @@ function addLayerFromGeoJsonPromise(featuresPromise, layerName, index) {
 }
 
 /**
- * Adds an entry to mapOverlayArray when we haven't actually gotten the data yet.
- * Useful for layers that we don't want to display by default.
+ * Adds an entry to mapOverlayArray when we haven't actually gotten the data
+ * yet. Useful for layers that we don't want to display by default.
  *
  * @param {Object} layer
  */
 function addNullLayer(layer) {
   const assetType = layer['asset-type'];
-  mapOverlayArray[layer['index']] = new LayerMapValue(assetType === LayerType.FEATURE || assetType === LayerType.FEATURE_COLLECTION ? layer['ee-name'] : null, false);
+  mapOverlayArray[layer['index']] = new LayerMapValue(
+      assetType === LayerType.FEATURE ||
+              assetType === LayerType.FEATURE_COLLECTION ?
+          layer['ee-name'] :
+          null,
+      false);
 }
 
 /**
@@ -322,7 +330,8 @@ function redrawLayers() {
 }
 
 /**
- * Filters out null elements and appends element at 'score' to end of filtered array.
+ * Filters out null elements and appends element at 'score' to end of filtered
+ * array.
  * @return {deck.GeoJsonLayer[]}
  */
 function processLayerArray() {
@@ -350,8 +359,7 @@ function valIsNotNull(val) {
  * @param {number|string} index
  * @param {google.maps.Map} map main map
  */
-function removeLayer(index, map) {
-}
+function removeLayer(index, map) {}
 
 /**
  * Removes the score layer before a parameter update. Must actually be
