@@ -357,8 +357,8 @@ function redrawLayers() {
  */
 function processLayerArray() {
   const filteredArray = deckGlArray.filter(valIsNotNull);
-  if (deckGlArray['score']) {
-    filteredArray.push(deckGlArray['score']);
+  if (deckGlArray[scoreLayerName]) {
+    filteredArray.push(deckGlArray[scoreLayerName]);
   }
   return filteredArray;
 }
