@@ -24,8 +24,8 @@ const scoreLayerName = 'score';
 /**
  * All map overlay layers. Data is lazily generated i.e. pre-known layers that
  * don't display by default will have an entry in this map, but the
- * DisplayedLayerData will have a null data field until we fetch the data when the
- * user wants to display it. Score layer gets its own special 'score' index.
+ * DisplayedLayerData will have a null data field until we fetch the data when
+ * the user wants to display it. Score layer gets its own special 'score' index.
  */
 const mapOverlayArray = [];
 
