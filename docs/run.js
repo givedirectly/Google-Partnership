@@ -2,7 +2,7 @@ import {clickFeature, selectHighlightedFeatures} from './click_feature.js';
 import {sidebarDatasetsId, tableContainerId} from './dom_constants.js';
 import {drawTable} from './draw_table.js';
 import {highlightFeatures} from './highlight_features.js';
-import {addLayer, addLayerFromGeoJsonPromise, addNullLayer, scoreLayerName, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from './layer_util.js';
+import {addLayer, addNullLayer, addScoreLayer, scoreLayerName, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from './layer_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {convertEeObjectToPromise} from './map_util.js';
 import {processUserRegions} from './polygon_draw.js';
@@ -73,6 +73,7 @@ function createAndDisplayJoinedData(
       snapAndDamagePromise, scalingFactor, povertyThreshold, damageThreshold,
       povertyWeight);
   addScoreLayer(processedData);
+  maybeCheckScoreCheckbox();
   drawTable(
       processedData, (features) => highlightFeatures(features, map, true),
       (table, tableData) => {
@@ -191,18 +192,11 @@ function addLayers(map, firebaseLayers) {
 }
 
 /**
- * Creates and displays overlay for score + adds layerArray entry. The
- * score layer sits at the end of all the layers. Having it last ensures it
- * displays on top.
- *
- * @param {Promise<Array<GeoJson>>} layer
+ * Checkbox may not exist yet if layer metadata not retrieved yet. The checkbox
+ * creation will check the box by default. This manually checks it in case it
+ * was unchecked by the user, and this is coming from a weight/threshold update.
  */
-function addScoreLayer(layer) {
-  addLayerFromGeoJsonPromise(layer, scoreLayerName);
-  // Checkbox may not exist yet if layer metadata not retrieved yet. The
-  // checkbox creation will check the box by default. We check it here in case
-  // it was unchecked by the user, and this is coming from a weight/threshold
-  // update.
+function maybeCheckScoreCheckbox() {
   const checkbox = document.getElementById(getCheckBoxId(scoreLayerName));
   if (checkbox) {
     checkbox.checked = true;

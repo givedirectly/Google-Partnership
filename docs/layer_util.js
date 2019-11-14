@@ -7,8 +7,8 @@ import {convertEeObjectToPromise} from './map_util.js';
 
 export {
   addLayer,
-  addLayerFromGeoJsonPromise,
   addNullLayer,
+    addScoreLayer,
   redrawLayers,
   removeScoreLayer,
   scoreLayerName,
@@ -142,16 +142,6 @@ function toggleLayerOff(index, map) {
 }
 
 /**
- * Function object to extract a color from a JSON Feature.
- *
- * @param {GeoJSON.Feature} feature
- * @return {Array} RGBA array
- */
-function getColorOfFeature(feature) {
-  return showColor(feature.properties['color']);
-}
-
-/**
  * Asynchronous wrapper for addLayerFromId that calls getMap() with a callback
  * to avoid blocking on the result. This also populates layerArray.
  *
@@ -232,7 +222,8 @@ function addLayerFromId(map, layerName, layerId, index, displayed) {
  * special handling, so deck.gl is forced to re-render it on parameter changes.
  *
  * @param {DisplayedLayerData} layerMapValue
- * @param {number|string} index
+ * @param {number|string} index index of layer. A number unless this is the
+ * score layer
  */
 function addLayerFromFeatures(layerMapValue, index) {
   const deckParams = layerMapValue.deckParams;
@@ -286,7 +277,7 @@ function addLayer(layer, map) {
       addLayerFromGeoJsonPromise(
           convertEeObjectToPromise(
               ee.FeatureCollection(layerName).toList(maxNumFeaturesExpected)),
-          layer);
+          DeckParams.fromLayer(layer), layer['index']);
       break;
     default:
       createError('parsing layer type during add')(
@@ -316,20 +307,12 @@ function processImageCollection(layerName) {
  * should be able to set its visibility and redraw the layers.
  *
  * @param {Promise<Array<GeoJson>>}featuresPromise
- * @param {Object|string} layer Data for layer coming from Firestore, or the
- * special string 'score' to indicate that this is the score layer
+ * @param {DeckParams} deckParams
+ * @param {number|string} index index of layer. A number unless this is the
+ * score layer
  */
-function addLayerFromGeoJsonPromise(featuresPromise, layer) {
+function addLayerFromGeoJsonPromise(featuresPromise, deckParams, index) {
   addLoadingElement(mapContainerId);
-  // Add entry to map.
-  let deckParams;
-  if (layer === scoreLayerName) {
-    deckParams = new DeckParams(scoreLayerName, null);
-    // Score function is already known
-    deckParams.colorFunction = getColorOfFeature;
-  } else {
-    deckParams = new DeckParams(layer['ee-name'], layer['color-function']);
-  }
   const layerMapValue = new DisplayedLayerData(deckParams, true);
   layerArray[index] = layerMapValue;
   featuresPromise
@@ -338,7 +321,7 @@ function addLayerFromGeoJsonPromise(featuresPromise, layer) {
         addLayerFromFeatures(layerMapValue, index);
         loadingElementFinished(mapContainerId);
       })
-      .catch(createError('Error rendering ' + layerName));
+      .catch(createError('Error rendering layer #' + index));
 }
 
 /**
@@ -386,6 +369,30 @@ function processLayerArray() {
  */
 function valIsNotNull(val) {
   return val !== null;
+}
+
+/**
+ * Creates and displays overlay for score + adds layerArray entry. The
+ * score layer sits at the end of all the layers. Having it last ensures it
+ * displays on top.
+ *
+ * @param {Promise<Array<GeoJson>>} layer
+ */
+function addScoreLayer(layer) {
+  const deckParams = new DeckParams(scoreLayerName, null);
+  deckParams.colorFunction = getColorOfFeature;
+
+  addLayerFromGeoJsonPromise(layer, deckParams, scoreLayerName);
+}
+
+/**
+ * Function object to extract a color from a JSON Feature.
+ *
+ * @param {GeoJSON.Feature} feature
+ * @return {Array} RGBA array
+ */
+function getColorOfFeature(feature) {
+  return showColor(feature.properties['color']);
 }
 
 /**
