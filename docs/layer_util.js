@@ -323,7 +323,7 @@ function addLayerFromGeoJsonPromise(featuresPromise, deckParams, index) {
         addLayerFromFeatures(layerMapValue, index);
         loadingElementFinished(mapContainerId);
       })
-      .catch(createError('Error rendering layer #' + index));
+      .catch(createError('Error rendering ' + deckParams.deckId));
 }
 
 /**
