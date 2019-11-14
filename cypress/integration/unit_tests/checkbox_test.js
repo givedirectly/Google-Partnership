@@ -1,4 +1,4 @@
-import {initializeFirebaseLayers, LayerType} from '../../../docs/firebase_layers.js';
+import {LayerType} from '../../../docs/firebase_layers.js';
 import {deckGlArray, DisplayedLayerData, layerArray, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from '../../../docs/layer_util.js';
 import * as loading from '../../../docs/loading';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';

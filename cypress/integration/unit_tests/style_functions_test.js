@@ -5,12 +5,11 @@ describe('Unit test for generating style functions', () => {
     const fxn = createStyleFunction({
       'continuous': false,
       'field': 'flavor',
-
       'opacity': 100,
       'colors': {
         'cherry': 'red',
         'banana': 'yellow',
-      }
+      },
     });
     const cherry = fxn({'properties': {'flavor': 'cherry'}});
     const expectedCherry = colorMap.get('red');
