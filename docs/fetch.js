@@ -1,7 +1,7 @@
 export {TolerantImageMapType, setUpTolerantImageMapType};
 
 const TOO_MANY_REQUESTS_STATUS_CODE = 429;
-const NOT_FOUND_STATUS_CODE = 429;
+const NOT_FOUND_STATUS_CODE = 404;
 const MAX_RETRIES = 10;
 
 function pause(duration) {
@@ -13,7 +13,6 @@ async function fetchWithBackoff(url, options) {
   let response;
   while (retryCount++ < MAX_RETRIES) {
     response = await fetch(url, options);
-    console.log(response);
     if (response.ok === true) {
       const blob = await response.blob();
       return URL.createObjectURL(blob);
@@ -42,8 +41,9 @@ let TolerantImageMapType;
 function setUpTolerantImageMapType() {
   TolerantImageMapType = class extends google.maps.ImageMapType {
     constructor(options) {
+      options.getTileUrl = () => {};
       super(options);
-      this.getTileUrl = options.getTileUrl;
+      this.tileUrls = options.tileUrls;
     }
 
     getTile(tileCoord, zoom, ownerDocument) {
@@ -54,8 +54,8 @@ function setUpTolerantImageMapType() {
       if (zoom < 0 || tileCoord.y < 0 || tileCoord.y >= maxCoord) {
         return tileDiv;
       }
-      const tileUrl = this.getTileUrl(tileCoord, zoom);
-      fetchWithBackoff(tileUrl)
+      const tileUrls = this.tileUrls.map((url) => url.replace('{Z}', zoom).replace('{X}', tileCoord.x).replace('{Y}', tileCoord.y));
+      anyPromise(tileUrls.map((url) => fetchWithBackoff(url)))
           .then((url) => {
             tileDiv.src = url;
             tileDiv.style.opacity = this.getOpacity();
@@ -63,7 +63,7 @@ function setUpTolerantImageMapType() {
           })
           .catch((e) => {
             if (e.statusCode !== NOT_FOUND_STATUS_CODE) {
-              console.warn(e.statusCode);
+              console.warn(e.statusCode, e);
             }
             return false;
           });
@@ -71,4 +71,25 @@ function setUpTolerantImageMapType() {
       return tileDiv;
     }
   };
+}
+
+function anyPromise(promises) {
+  return new Promise((resolve, reject) => {
+    let hasResolved = false;
+    let rejectedCount = 0;
+    const promiseThen = (result) => {
+      if (!hasResolved) {
+        hasResolved = true;
+        resolve(result);
+      }
+    };
+    const promiseCatch = (error) => {
+      if (++rejectedCount === promises.length) {
+        reject(error);
+      }
+    };
+    for (const promise of promises) {
+      promise.then(promiseThen, promiseCatch);
+    }
+  });
 }
