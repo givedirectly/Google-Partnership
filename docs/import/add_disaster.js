@@ -24,7 +24,7 @@ const stateAssets = new Map();
 
 const SENTINEL_NEW_DISASTER_VALUE = 'NEW DISASTER';
 
-//TODO: general reminder to add loading indicators for things like creating
+// TODO: general reminder to add loading indicators for things like creating
 // new state asset folders, etc.
 
 /**
@@ -177,7 +177,8 @@ const emptyCallback = () => {};
 /**
  * Requests all assets in ee directories corresponding to given states.
  * @param {Array<string>} states e.g. ['WA']
- * @return {Promise<Array<Array<string | Array<string>>>>} 2-d array of all retrieved
+ * @return {Promise<Array<Array<string | Array<string>>>>} 2-d array of all
+ *     retrieved
  * assets in the form [['WA', ['asset/path']], ...]
  */
 function getAssetsFromEe(states) {
@@ -191,7 +192,10 @@ function getAssetsFromEe(states) {
         for (const state of states) {
           const dir = legacyStateDir + '/' + state;
           if (!folders.has(state)) {
-
+            // This will print a console error for anyone other than the gd
+            // account. Ee console seems to have the power to grant write access
+            // to non-owners but it doesn't seem to work. Sent an email to
+            // gestalt.
             ee.data.createFolder(dir, false, () => {
               // TODO: add status bar for when this is finished.
               ee.data.setAssetAcl(dir, {all_users_can_read: true});
@@ -236,10 +240,12 @@ function checkSupportedAssetType(asset) {
 function createAssetPickers(states) {
   const assetPickerDiv = $('#asset-pickers');
   for (const state of states) {
-    const assetPicker = $(document.createElement('select')).attr({
-      multiple: 'multiple',
-      id: state + '-adder',
-    }).width(200);
+    const assetPicker = $(document.createElement('select'))
+                            .attr({
+                              multiple: 'multiple',
+                              id: state + '-adder',
+                            })
+                            .width(200);
     if (stateAssets.get(state)) {
       for (const asset of stateAssets.get(state)) {
         assetPicker.append(createOptionFrom(asset));
