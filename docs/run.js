@@ -43,7 +43,7 @@ function run(map, firebaseAuthPromise, disasterMetadataPromise) {
       initialPovertyWeight);
   processUserRegions(map, firebaseAuthPromise);
   disasterMetadataPromise.then((doc) => {
-    initializeFirebaseLayers(doc.data().layers);
+    initializeFirebaseLayers(doc.data().layerArray);
     addLayers(map);
   });
 }
@@ -96,20 +96,6 @@ function createAndDisplayJoinedData(
               table, tableData);
         });
       });
-}
-
-/**
- * Creates checkboxes for all known layers (including user features and score).
- *
- * @param {google.maps.Map} map main map
- */
-function createLayerCheckboxes(map) {
-  const sidebarDiv = document.getElementById(sidebarDatasetsId);
-  Object.keys(firebaseLayers)
-      .forEach(
-          (layerName) => createNewCheckboxForLayer(layerName, sidebarDiv, map));
-  createCheckboxForUserFeatures(sidebarDiv);
-  createNewCheckboxForLayer({'display-name': scoreLayerName, index: scoreLayerName, 'display-on-load': true}, sidebarDiv, map);
 }
 
 /**
@@ -178,11 +164,12 @@ function createCheckboxForUserFeatures(parentDiv) {
 
 /**
  * Runs through layers map. For those that we auto-display on page load, creates
- * overlays and displays. Also populates the mapOverlayArray.
+ * overlays and displays. Also creates checkboxes.
  *
  * @param {google.maps.Map} map main map
  */
 function addLayers(map) {
+  const sidebarDiv = document.getElementById(sidebarDatasetsId);
   for (let i = 0; i < firebaseLayers.length; i++) {
     const properties = firebaseLayers[i];
     properties['index'] = i;
@@ -191,8 +178,10 @@ function addLayers(map) {
     } else {
       addNullLayer(properties);
     }
+    createNewCheckboxForLayer(properties, sidebarDiv, map);
   }
-  createLayerCheckboxes(map);
+  createCheckboxForUserFeatures(sidebarDiv);
+  createNewCheckboxForLayer({'display-name': scoreLayerName, index: scoreLayerName, 'display-on-load': true}, sidebarDiv, map);
 }
 
 /**
@@ -203,7 +192,7 @@ function addLayers(map) {
  * @param {Promise<Array<GeoJson>>} layer
  */
 function addScoreLayer(layer) {
-  addLayerFromGeoJsonPromise(layer, scoreLayerName, 'lastElement');
+  addLayerFromGeoJsonPromise(layer, scoreLayerName, scoreLayerName);
   // Checkbox may not exist yet if layer metadata not retrieved yet. The
   // checkbox creation will check the box by default. We check it here in case
   // it was unchecked by the user, and this is coming from a weight/threshold

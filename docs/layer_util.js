@@ -87,10 +87,10 @@ function setMapToDrawLayersOn(map) {
  */
 function toggleLayerOn(layer, map) {
   const index = layer['index'];
-  const currentLayerMapValue = mapOverlayArray[index];
-  currentLayerMapValue.displayed = true;
-  if (currentLayerMapValue.data) {
-    addLayerFromFeatures(currentLayerMapValue, index);
+  const layerMapValue = mapOverlayArray[index];
+  layerMapValue.displayed = true;
+  if (layerMapValue.data) {
+    addLayerFromFeatures(layer, index);
   } else {
     addLayer(layer, map);
   }
@@ -254,11 +254,11 @@ function addLayer(layer, map) {
       addLayerFromGeoJsonPromise(
           convertEeObjectToPromise(
               ee.FeatureCollection(layerName).toList(maxNumFeaturesExpected)),
-          layer['ee-name'], index);
+          layer['ee-name'], layer['index']);
       break;
     default:
       createError('parsing layer type during add')(
-          '[' + index + ']: ' + layer + ' not recognized layer type');
+          '[' + layer['index'] + ']: ' + layer['asset-name'] + ' not recognized layer type');
   }
 }
 
@@ -296,7 +296,7 @@ function addLayerFromGeoJsonPromise(featuresPromise, layerName, index) {
   featuresPromise
       .then((features) => {
         layerMapValue.data = features;
-        addLayerFromFeatures(layerMapValue, layerName);
+        addLayerFromFeatures(layerMapValue, index);
         loadingElementFinished(mapContainerId);
       })
       .catch(createError('Error rendering ' + layerName));

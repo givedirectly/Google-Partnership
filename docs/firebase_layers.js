@@ -32,21 +32,21 @@ const styleFunctions = new Map();
 
 /**
  * Returns style function for this FeatureCollection ee asset.
- * @param {String} assetName asset path
+ * @param {number} index asset index
  * @return {Function}
  */
-function getStyleFunction(assetName) {
-  return styleFunctions.has(assetName) ? styleFunctions.get(assetName) :
-                                         createStyleFunction(assetName);
+function getStyleFunction(index) {
+  return styleFunctions.has(index) ? styleFunctions.get(index) :
+                                         createStyleFunction(index);
 }
 
 /**
  * Creates and stores the style function for a FeatureCollection ee asset.
- * @param {String} assetName asset path
+ * @param {number} index asset path
  * @return {Function}
  */
-function createStyleFunction(assetName) {
-  const colorFunctionProperties = firebaseLayers[assetName]['color-function'];
+function createStyleFunction(index) {
+  const colorFunctionProperties = firebaseLayers[index]['color-function'];
   let styleFunction;
   if (colorFunctionProperties['single-color']) {
     const color = colorMap.get(colorFunctionProperties['single-color']);
@@ -63,7 +63,7 @@ function createStyleFunction(assetName) {
         createDiscreteFunction(
             field, opacity, colorFunctionProperties['colors']);
   }
-  styleFunctions.set(assetName, styleFunction);
+  styleFunctions.set(index, styleFunction);
   return styleFunction;
 }
 
