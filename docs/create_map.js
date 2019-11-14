@@ -92,6 +92,5 @@ function createMap(firebasePromise) {
     });
     map.fitBounds(bounds);
   });
-
   return map;
 }
