@@ -41,9 +41,7 @@ function run(map, firebaseAuthPromise, disasterMetadataPromise) {
       map, initialPovertyThreshold, initialDamageThreshold,
       initialPovertyWeight);
   processUserRegions(map, firebaseAuthPromise);
-  disasterMetadataPromise.then((doc) => {
-    addLayers(map, doc.data().layerArray);
-  });
+  disasterMetadataPromise.then((doc) => addLayers(map, doc.data().layerArray));
 }
 
 let mapSelectListener = null;
