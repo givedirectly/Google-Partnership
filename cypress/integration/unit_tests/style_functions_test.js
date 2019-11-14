@@ -10,7 +10,8 @@ describe('Unit test for generating style functions', () => {
       'colors': {
         'cherry': 'red',
         'banana': 'yellow',
-      }});
+      }
+    });
     const cherry = fxn({'properties': {'flavor': 'cherry'}});
     const expectedCherry = colorMap.get('red');
     expect(cherry).to.eql(expectedCherry);
@@ -21,12 +22,12 @@ describe('Unit test for generating style functions', () => {
 
   it('calculates a continuous function', () => {
     const fxn = createStyleFunction({
-        'continuous': true,
-        'field': 'oranges',
-        'base-color': 'orange',
-        'opacity': 83,
-        'min': 14,
-        'max': 10005,
+      'continuous': true,
+      'field': 'oranges',
+      'base-color': 'orange',
+      'opacity': 83,
+      'min': 14,
+      'max': 10005,
     });
     const orangeish = fxn({'properties': {'oranges': 734}});
     // orange = [255, 140, 0]
@@ -39,8 +40,8 @@ describe('Unit test for generating style functions', () => {
 
   it('calculates a single-color function', () => {
     const fxn = createStyleFunction({
-        'single-color': 'blue',
-        'opacity': 83,
+      'single-color': 'blue',
+      'opacity': 83,
     });
     const trueBlue = fxn({});
     const blue = colorMap.get('blue');

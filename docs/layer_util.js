@@ -81,7 +81,8 @@ class DeckParams {
    * @constructor
    *
    * @param {!string} deckId
-   * @param {Object} colorFunctionProperties Parameters used to calculate style function
+   * @param {Object} colorFunctionProperties Parameters used to calculate style
+   *     function
    */
   constructor(deckId, colorFunctionProperties) {
     /** @const */
@@ -235,7 +236,8 @@ function addLayerFromId(map, layerName, layerId, index, displayed) {
 function addLayerFromFeatures(layerMapValue, index) {
   const deckParams = layerMapValue.deckParams;
   if (!deckParams.colorFunction) {
-    deckParams.colorFunction = createStyleFunction(deckParams.colorFunctionProperties);
+    deckParams.colorFunction =
+        createStyleFunction(deckParams.colorFunctionProperties);
   }
   deckGlArray[index] = new deck.GeoJsonLayer({
     id: layerMapValue.deckParams.deckId,
@@ -348,8 +350,12 @@ function addLayerFromGeoJsonPromise(featuresPromise, layer) {
  */
 function addNullLayer(layer) {
   const assetType = layer['asset-type'];
-  layerArray[layer['index']] = new DisplayedLayerData(assetType === LayerType.FEATURE_COLLECTION || assetType === LayerType.FEATURE ?
-      DeckParams.fromLayer(layer) : null, false);
+  layerArray[layer['index']] = new DisplayedLayerData(
+      assetType === LayerType.FEATURE_COLLECTION ||
+              assetType === LayerType.FEATURE ?
+          DeckParams.fromLayer(layer) :
+          null,
+      false);
 }
 
 /**

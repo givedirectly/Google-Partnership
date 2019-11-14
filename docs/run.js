@@ -161,13 +161,13 @@ function createCheckboxForUserFeatures(parentDiv) {
 }
 
 /**
- * Runs through layers list. For those that we auto-display on page load, creates
- * overlays and displays. Also creates checkboxes.
+ * Runs through layers list. For those that we auto-display on page load,
+ * creates overlays and displays. Also creates checkboxes.
  *
  * @param {google.maps.Map} map main map
- * @param {Array<Object>} firebaseLayers layer metadata retrieved from Firestore,
- *     ordered by the order they should be drawn on the map (higher indices are
- *     displayed over lower ones)
+ * @param {Array<Object>} firebaseLayers layer metadata retrieved from
+ *     Firestore, ordered by the order they should be drawn on the map (higher
+ *     indices are displayed over lower ones)
  */
 function addLayers(map, firebaseLayers) {
   const sidebarDiv = document.getElementById(sidebarDatasetsId);
