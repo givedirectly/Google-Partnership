@@ -1,4 +1,12 @@
-export {gdEePathPrefix, eeLegacyPathPrefix, legacyStateDir, eeStatePrefixLength, gdEeStatePrefix, gdEeStateDir, legacyStatePrefix};
+export {
+  eeLegacyPathPrefix,
+  eeStatePrefixLength,
+  gdEePathPrefix,
+  gdEeStateDir,
+  gdEeStatePrefix,
+  legacyStateDir,
+  legacyStatePrefix
+};
 
 const gdEePathPrefix = 'users/gd/';
 const eeLegacyPathPrefix =

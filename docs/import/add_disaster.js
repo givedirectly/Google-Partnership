@@ -1,4 +1,4 @@
-import {legacyStateDir, eeStatePrefixLength} from '../ee_paths.js';
+import {eeStatePrefixLength, legacyStateDir} from '../ee_paths.js';
 import {getFirestoreRoot} from '../firestore_document.js';
 
 export {enableWhenReady, SENTINEL_NEW_DISASTER_VALUE, toggleState};
