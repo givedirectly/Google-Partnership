@@ -5,7 +5,7 @@ export {
   gdEeStateDir,
   gdEeStatePrefix,
   legacyStateDir,
-  legacyStatePrefix
+  legacyStatePrefix,
 };
 
 const gdEePathPrefix = 'users/gd/';
