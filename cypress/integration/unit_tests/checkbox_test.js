@@ -1,4 +1,5 @@
 import {initializeFirebaseLayers, LayerType} from '../../../docs/firebase_layers.js';
+import * as loading from '../../../docs/loading';
 import {deckGlArray, mapOverlayArray, LayerMapValue, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from '../../../docs/layer_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 
@@ -33,9 +34,16 @@ const mockFirebaseLayers = [
 
 describe('Unit test for toggleLayerOn', () => {
   loadScriptsBeforeForUnitTests('ee', 'deck', 'maps');
+  before(() => {
+    // Stub out loading update attempts: they pollute console with errors.
+    loading.addLoadingElement = () => {};
+    loading.loadingElementFinished = () => {};
+  });
   beforeEach(() => {
     mapOverlayArray[0] = new LayerMapValue('asset0', true);
+    mapOverlayArray[0].data = mockData;
     mapOverlayArray[1] = new LayerMapValue('asset1', false);
+    mapOverlayArray[1].data = mockData;
     mapOverlayArray[2] = new LayerMapValue('asset2', false);
     initializeFirebaseLayers(mockFirebaseLayers);
     // Initialize deck object in production.
@@ -44,7 +52,7 @@ describe('Unit test for toggleLayerOn', () => {
     deckGlArray[1] = new deck.GeoJsonLayer({});
   });
 
-  it.only('displays a hidden but loaded layer', () => {
+  it('displays a hidden but loaded layer', () => {
     expect(mapOverlayArray[1].displayed).to.equals(false);
     expect(mapOverlayArray[1].data).to.not.be.null;
 
@@ -58,12 +66,12 @@ describe('Unit test for toggleLayerOn', () => {
 
   it('loads a hidden layer and displays', () => {
     expect(mapOverlayArray[2].displayed).to.equals(false);
-    expect(mapOverlayArray[2].data).to.be.null;
+    expect(mapOverlayArray[2].data).to.be.undefined;
 
     const emptyList = [];
     let callback = null;
     stubForEmptyList((callb) => callback = callb);
-    toggleLayerOn(mapOverlayArray[2]);
+    toggleLayerOn(mockFirebaseLayers[2]);
     callback(emptyList);
     // Evaluate after the promise finishes by using an instant wait.
     // TODO(janakr): Here and below, consider returning a Promise from
@@ -80,13 +88,13 @@ describe('Unit test for toggleLayerOn', () => {
 
   it('check hidden layer, then uncheck before list evaluation', () => {
     expect(mapOverlayArray[2].displayed).to.equals(false);
-    expect(mapOverlayArray[2].data).to.be.null;
+    expect(mapOverlayArray[2].data).to.be.undefined;
 
     const emptyList = [];
     let callback = null;
     stubForEmptyList((callb) => callback = callb);
-    toggleLayerOn(mapOverlayArray[2]);
-    toggleLayerOff(mapOverlayArray[2]);
+    toggleLayerOn(mockFirebaseLayers[2]);
+    toggleLayerOff(2);
     callback(emptyList);
 
     // Evaluate after the promise finishes by using an instant wait.
@@ -106,7 +114,7 @@ describe('Unit test for toggleLayerOff', () => {
     expect(mapOverlayArray[0].displayed).to.equals(true);
     expect(mapOverlayArray[0].data).to.not.be.null;
 
-    toggleLayerOff(mapOverlayArray[0]);
+    toggleLayerOff(0);
     expect(mapOverlayArray[0].displayed).to.equals(false);
     expect(mapOverlayArray[0].data).to.not.be.null;
     const layerProps = deckGlArray[0].props;
@@ -125,7 +133,7 @@ describe('Unit test for toggleLayerOff', () => {
  */
 function stubForEmptyList(callbackReceiver) {
   const emptyCollection = ee.FeatureCollection([]);
-  cy.stub(ee, 'FeatureCollection').withArgs(mapOverlayArray[2]).returns(emptyCollection);
+  cy.stub(ee, 'FeatureCollection').withArgs('asset2').returns(emptyCollection);
   const emptyEeList = ee.List([]);
   cy.stub(emptyCollection, 'toList').returns(emptyEeList);
   cy.stub(emptyEeList, 'evaluate').callsFake(callbackReceiver);

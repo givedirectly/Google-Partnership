@@ -90,7 +90,7 @@ function toggleLayerOn(layer, map) {
   const layerMapValue = mapOverlayArray[index];
   layerMapValue.displayed = true;
   if (layerMapValue.data) {
-    addLayerFromFeatures(layer, index);
+    addLayerFromFeatures(layerMapValue, index);
   } else {
     addLayer(layer, map);
   }
