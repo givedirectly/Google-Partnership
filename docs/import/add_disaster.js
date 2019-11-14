@@ -61,41 +61,42 @@ function enableWhenReady() {
  * current disaster.
  * @param {String} disaster
  * @return {Promise<void>} completes when we've finished filling all state
- * pickers.
+ * pickers and pulled from firebase.
  */
 function toggleState(disaster) {
   if (disaster === SENTINEL_NEW_DISASTER_VALUE) {
     $('#new-disaster').show();
     $('#selected-disaster').hide();
-  } else {
-    const states = disasters.get(disaster);
-    const statesToFetch = [];
-    for (const state of states) {
-      if (!stateAssets.has(state)) statesToFetch.push(state);
-    }
-    // TODO: add functionality to re-pull all cached states from ee without
-    // reloading the page.
-    let assetPickersDone = Promise.resolve();
-    if (statesToFetch.length === 0) {
-      createAssetPickers(states);
-    } else {
-      // We are already doing this inside createAssetPickers but not until
-      // after the first promise completes so also do it here so lingering
-      // pickers from previous disasters don't hang around.
-      $('#asset-pickers').empty();
-      assetPickersDone = getAssetsFromEe(statesToFetch).then((assets) => {
-        for (const asset of assets) {
-          stateAssets.set(asset[0], asset[1]);
-        }
-        createAssetPickers(states);
-      });
-    }
-
-    // TODO: display more disaster info including current layers etc.
-    $('#new-disaster').hide();
-    $('#selected-disaster').show();
-    return assetPickersDone;
+    return Promise.resolve();
   }
+
+  const states = disasters.get(disaster);
+  const statesToFetch = [];
+  for (const state of states) {
+    if (!stateAssets.has(state)) statesToFetch.push(state);
+  }
+  // TODO: add functionality to re-pull all cached states from ee without
+  // reloading the page.
+  let assetPickersDone = Promise.resolve();
+  if (statesToFetch.length === 0) {
+    createAssetPickers(states);
+  } else {
+    // We are already doing this inside createAssetPickers but not until
+    // after the first promise completes so also do it here so lingering
+    // pickers from previous disasters don't hang around.
+    $('#asset-pickers').empty();
+    assetPickersDone = getAssetsFromEe(statesToFetch).then((assets) => {
+      for (const asset of assets) {
+        stateAssets.set(asset[0], asset[1]);
+      }
+      createAssetPickers(states);
+    });
+  }
+
+  // TODO: display more disaster info including current layers etc.
+  $('#new-disaster').hide();
+  $('#selected-disaster').show();
+  return assetPickersDone;
 }
 
 /**
@@ -196,6 +197,7 @@ function getAssetsFromEe(states) {
             // account. Ee console seems to have the power to grant write access
             // to non-owners but it doesn't seem to work. Sent an email to
             // gestalt.
+            // TODO: replace with setIamPolicy when that works.
             ee.data.createFolder(dir, false, () => {
               // TODO: add status bar for when this is finished.
               ee.data.setAssetAcl(dir, {all_users_can_read: true});
