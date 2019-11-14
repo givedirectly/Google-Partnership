@@ -50,8 +50,8 @@ function enableWhenReady() {
           disasters.set(name, doc.data().states);
         });
 
-        const mostRecent = querySnapshot.docs[querySnapshot.size - 1].id;
         disasterPicker.on('change', () => toggleState(disasterPicker.val()));
+        const mostRecent = querySnapshot.docs[querySnapshot.size - 1].id;
         disasterPicker.val(mostRecent).trigger('change');
       });
 }
