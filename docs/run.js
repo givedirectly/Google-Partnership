@@ -43,8 +43,7 @@ function run(map, firebaseAuthPromise, disasterMetadataPromise) {
       initialPovertyWeight);
   processUserRegions(map, firebaseAuthPromise);
   disasterMetadataPromise.then((doc) => {
-    initializeFirebaseLayers(doc.data().layerArray);
-    addLayers(map);
+    addLayers(map, doc.data().layerArray);
   });
 }
 
@@ -162,12 +161,15 @@ function createCheckboxForUserFeatures(parentDiv) {
 }
 
 /**
- * Runs through layers map. For those that we auto-display on page load, creates
+ * Runs through layers list. For those that we auto-display on page load, creates
  * overlays and displays. Also creates checkboxes.
  *
  * @param {google.maps.Map} map main map
+ * @param {Array<Object>} firebaseLayers layer metadata retrieved from Firestore,
+ *     ordered by the order they should be drawn on the map (higher indices are
+ *     displayed over lower ones)
  */
-function addLayers(map) {
+function addLayers(map, firebaseLayers) {
   const sidebarDiv = document.getElementById(sidebarDatasetsId);
   for (let i = 0; i < firebaseLayers.length; i++) {
     const properties = firebaseLayers[i];
@@ -197,7 +199,7 @@ function addLayers(map) {
  * @param {Promise<Array<GeoJson>>} layer
  */
 function addScoreLayer(layer) {
-  addLayerFromGeoJsonPromise(layer, scoreLayerName, scoreLayerName);
+  addLayerFromGeoJsonPromise(layer, scoreLayerName);
   // Checkbox may not exist yet if layer metadata not retrieved yet. The
   // checkbox creation will check the box by default. We check it here in case
   // it was unchecked by the user, and this is coming from a weight/threshold

@@ -1,21 +1,8 @@
 export {
   colorMap,
-  firebaseLayers,
-  getStyleFunction,
-  initializeFirebaseLayers,
+  createStyleFunction,
   LayerType,
 };
-
-// The collection of firebase layers.
-let firebaseLayers;
-
-/**
- * Initialize the var once we receive the layers from firebase.
- * @param {Object} layers
- */
-function initializeFirebaseLayers(layers) {
-  firebaseLayers = layers;
-}
 
 const LayerType = {
   FEATURE: 0,
@@ -25,27 +12,13 @@ const LayerType = {
 };
 Object.freeze(LayerType);
 
-// Map of FeatureCollection ee asset path to style function so we don't need to
-// recreate it every time.
-const styleFunctions = new Map();
-
 /**
- * Returns style function for this FeatureCollection ee asset.
- * @param {number} index asset index
+ * Creates the style function for the given properties. Caller should cache to
+ * avoid recomputing every time.
+ * @param {Object} colorFunctionProperties
  * @return {Function}
  */
-function getStyleFunction(index) {
-  return styleFunctions.has(index) ? styleFunctions.get(index) :
-                                     createStyleFunction(index);
-}
-
-/**
- * Creates and stores the style function for a FeatureCollection ee asset.
- * @param {number} index asset path
- * @return {Function}
- */
-function createStyleFunction(index) {
-  const colorFunctionProperties = firebaseLayers[index]['color-function'];
+function createStyleFunction(colorFunctionProperties) {
   let styleFunction;
   if (colorFunctionProperties['single-color']) {
     const color = colorMap.get(colorFunctionProperties['single-color']);
@@ -62,7 +35,6 @@ function createStyleFunction(index) {
         createDiscreteFunction(
             field, opacity, colorFunctionProperties['colors']);
   }
-  styleFunctions.set(index, styleFunction);
   return styleFunction;
 }
 

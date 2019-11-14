@@ -1,7 +1,7 @@
 import {mapContainerId} from './dom_constants.js';
 import {terrainStyle} from './earth_engine_asset.js';
 import {createError} from './error.js';
-import {colorMap, getStyleFunction, LayerType} from './firebase_layers.js';
+import {colorMap, createStyleFunction, LayerType} from './firebase_layers.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {convertEeObjectToPromise} from './map_util.js';
 
@@ -47,7 +47,7 @@ const deckGlArray = [];
 let deckGlOverlay;
 
 /**
- * Values of layerArray. In addition to minimal data from constructor, will
+ * Values of layerArray. In addition to basic data from constructor, will
  * have a data attribute for deck layers, and an overlay attribute for map
  * overlay layers.
  */
@@ -55,12 +55,12 @@ class DisplayedLayerData {
   /**
    * Constructor.
    *
-   * @param {!string} deckId id when rendered with deck. Null for other layers
+   * @param {DeckParams} deckParams null if not rendered using deck
    * @param {boolean} displayed True if layer is currently displayed
    */
-  constructor(deckId, displayed) {
+  constructor(deckParams, displayed) {
     /** @const */
-    this.deckId = deckId;
+    this.deckParams = deckParams;
     this.displayed = displayed;
   }
 
@@ -68,9 +68,32 @@ class DisplayedLayerData {
    * @return {boolean} True if this layer is rendered using deck
    */
   deckRendered() {
-    return this.deckId != null;
+    return this.deckParams != null;
   }
 }
+
+/**
+ * Utility class to group deck parameters together, and cache computed style
+ * function.
+ */
+class DeckParams {
+  /**
+   * @constructor
+   *
+   * @param {!string} deckId
+   * @param {Object} colorFunctionProperties Parameters used to calculate style function
+   */
+  constructor(deckId, colorFunctionProperties) {
+    /** @const */
+    this.deckId = deckId;
+    /** @const */
+    this.colorFunctionProperties = colorFunctionProperties;
+  }
+}
+
+DeckParams.fromLayer = (layer) => {
+  return new DeckParams(layer['ee-name'], layer['color-function']);
+};
 
 /**
  * Sets the map for deck.gl. Called only at startup.
@@ -210,16 +233,19 @@ function addLayerFromId(map, layerName, layerId, index, displayed) {
  * @param {number|string} index
  */
 function addLayerFromFeatures(layerMapValue, index) {
+  const deckParams = layerMapValue.deckParams;
+  if (!deckParams.colorFunction) {
+    deckParams.colorFunction = createStyleFunction(deckParams.colorFunctionProperties);
+  }
   deckGlArray[index] = new deck.GeoJsonLayer({
-    id: layerMapValue.deckId,
+    id: layerMapValue.deckParams.deckId,
     data: layerMapValue.data,
     pointRadiusMinPixels: 1,
     getRadius: 10,
     // TODO(janakr): deck.gl docs claim that the "color" property should
     // automatically color the features, but it doesn't appear to work:
     // https://deck.gl/#/documentation/deckgl-api-reference/layers/geojson-layer?section=getelevation-function-number-optional-transition-enabled
-    getFillColor: index === scoreLayerName ? getColorOfFeature :
-                                             getStyleFunction(index),
+    getFillColor: deckParams.colorFunction,
     visible: layerMapValue.displayed,
   });
   redrawLayers();
@@ -257,7 +283,7 @@ function addLayer(layer, map) {
       addLayerFromGeoJsonPromise(
           convertEeObjectToPromise(
               ee.FeatureCollection(layerName).toList(maxNumFeaturesExpected)),
-          layer['ee-name'], layer['index']);
+          layer);
       break;
     default:
       createError('parsing layer type during add')(
@@ -288,15 +314,22 @@ function processImageCollection(layerName) {
  * should be able to set its visibility and redraw the layers.
  *
  * @param {Promise<Array<GeoJson>>}featuresPromise
- * @param {string} layerName
+ * @param {Object} layer
  * @param {number|string} index Ordering of layer (higher is more visible). The
  *     special string 'score' keeps this always on top (only for the score
  layer)
  */
-function addLayerFromGeoJsonPromise(featuresPromise, layerName, index) {
+function addLayerFromGeoJsonPromise(featuresPromise, layer) {
   addLoadingElement(mapContainerId);
   // Add entry to map.
-  const layerMapValue = new DisplayedLayerData(layerName, true);
+  let deckParams;
+  if (layer === scoreLayerName) {
+    deckParams = new DeckParams(scoreLayerName, null);
+    deckParams.colorFunction = getColorOfFeature;
+  } else {
+    deckParams = new DeckParams(layer['ee-name'], layer['color-function']);
+  }
+  const layerMapValue = new DisplayedLayerData(deckParams, true);
   layerArray[index] = layerMapValue;
   featuresPromise
       .then((features) => {
@@ -315,12 +348,8 @@ function addLayerFromGeoJsonPromise(featuresPromise, layerName, index) {
  */
 function addNullLayer(layer) {
   const assetType = layer['asset-type'];
-  layerArray[layer['index']] = new DisplayedLayerData(
-      assetType === LayerType.FEATURE ||
-              assetType === LayerType.FEATURE_COLLECTION ?
-          layer['ee-name'] :
-          null,
-      false);
+  layerArray[layer['index']] = new DisplayedLayerData(assetType === LayerType.FEATURE_COLLECTION || assetType === LayerType.FEATURE ?
+      DeckParams.fromLayer(layer) : null, false);
 }
 
 /**

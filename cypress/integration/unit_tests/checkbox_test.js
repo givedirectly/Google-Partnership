@@ -40,12 +40,11 @@ describe('Unit test for toggleLayerOn', () => {
     loading.loadingElementFinished = () => {};
   });
   beforeEach(() => {
-    layerArray[0] = new DisplayedLayerData('asset0', true);
+    layerArray[0] = new DisplayedLayerData(null, true);
     layerArray[0].data = mockData;
-    layerArray[1] = new DisplayedLayerData('asset1', false);
+    layerArray[1] = new DisplayedLayerData(null, false);
     layerArray[1].data = mockData;
-    layerArray[2] = new DisplayedLayerData('asset2', false);
-    initializeFirebaseLayers(mockFirebaseLayers);
+    layerArray[2] = new DisplayedLayerData(null, false);
     // Initialize deck object in production.
     setMapToDrawLayersOn(null);
     deckGlArray[0] = new deck.GeoJsonLayer({});
