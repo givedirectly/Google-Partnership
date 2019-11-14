@@ -1,5 +1,5 @@
 import {LayerType} from '../../../docs/firebase_layers.js';
-import {deckGlArray, DisplayedLayerData, layerArray, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from '../../../docs/layer_util.js';
+import {DeckParams, deckGlArray, DisplayedLayerData, layerArray, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from '../../../docs/layer_util.js';
 import * as loading from '../../../docs/loading';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 
@@ -32,6 +32,8 @@ const mockFirebaseLayers = [
   },
 ];
 
+const colorProperties = {'single-color': 'blue', 'opacity': 100};
+
 describe('Unit test for toggleLayerOn', () => {
   loadScriptsBeforeForUnitTests('ee', 'deck', 'maps');
   before(() => {
@@ -40,11 +42,11 @@ describe('Unit test for toggleLayerOn', () => {
     loading.loadingElementFinished = () => {};
   });
   beforeEach(() => {
-    layerArray[0] = new DisplayedLayerData(null, true);
+    layerArray[0] = new DisplayedLayerData(new DeckParams('asset0', colorProperties), true);
     layerArray[0].data = mockData;
-    layerArray[1] = new DisplayedLayerData(null, false);
+    layerArray[1] = new DisplayedLayerData(new DeckParams('asset1', colorProperties), false);
     layerArray[1].data = mockData;
-    layerArray[2] = new DisplayedLayerData(null, false);
+    layerArray[2] = new DisplayedLayerData(new DeckParams('asset2', colorProperties), false);
     // Initialize deck object in production.
     setMapToDrawLayersOn(null);
     deckGlArray[0] = new deck.GeoJsonLayer({});

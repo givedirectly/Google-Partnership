@@ -6,6 +6,7 @@ import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {convertEeObjectToPromise} from './map_util.js';
 
 export {
+  DeckParams,
   addLayer,
   addNullLayer,
   addScoreLayer,

@@ -128,7 +128,7 @@ function createNewCheckbox(name, displayName, parentDiv) {
  * Creates a new checkbox for the given layer. The only layer not recorded in
  * firebase should be the score layer.
  *
- * @param {Object} layer
+ * @param {Object} layer Data for layer coming from Firestore
  * @param {Element} parentDiv
  * @param {google.maps.Map} map main map
  */
