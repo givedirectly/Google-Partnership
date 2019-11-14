@@ -22,8 +22,10 @@ const disasters = new Map();
 // Map of state to list of known assets
 const stateAssets = new Map();
 
-const SENTINEL_OPTION_VALUE = '...';
 const SENTINEL_NEW_DISASTER_VALUE = 'NEW DISASTER';
+
+//TODO: general reminder to add loading indicators for things like creating
+// new state asset folders, etc.
 
 /**
  * Populates the disaster picker with disasters from firestore, and enables
@@ -48,8 +50,8 @@ function enableWhenReady() {
           disasters.set(name, doc.data().states);
         });
 
-        disasterPicker.on('change', () => toggleState(disasterPicker.val()));
         const mostRecent = querySnapshot.docs[querySnapshot.size - 1].id;
+        disasterPicker.on('change', () => toggleState(disasterPicker.val()));
         disasterPicker.val(mostRecent).trigger('change');
       });
 }
@@ -65,22 +67,22 @@ function toggleState(disaster) {
   if (disaster === SENTINEL_NEW_DISASTER_VALUE) {
     $('#new-disaster').show();
     $('#selected-disaster').hide();
-  } else if (disaster === SENTINEL_OPTION_VALUE) {
-    $('#new-disaster').hide();
-    $('#selected-disaster').hide();
   } else {
     const states = disasters.get(disaster);
     const statesToFetch = [];
     for (const state of states) {
       if (!stateAssets.has(state)) statesToFetch.push(state);
     }
-
     // TODO: add functionality to re-pull all cached states from ee without
     // reloading the page.
     let assetPickersDone = Promise.resolve();
     if (statesToFetch.length === 0) {
       createAssetPickers(states);
     } else {
+      // We are already doing this inside createAssetPickers but not until
+      // after the first promise completes so also do it here so lingering
+      // pickers from previous disasters don't hang around.
+      $('#asset-pickers').empty();
       assetPickersDone = getAssetsFromEe(statesToFetch).then((assets) => {
         for (const asset of assets) {
           stateAssets.set(asset[0], asset[1]);
@@ -92,11 +94,6 @@ function toggleState(disaster) {
     // TODO: display more disaster info including current layers etc.
     $('#new-disaster').hide();
     $('#selected-disaster').show();
-    const assetPickerDiv = $('#asset-pickers');
-    // We are already doing this inside createAssetPickers but not until
-    // after the first promise completes so also do it here so lingering
-    // pickers from previous disasters don't hang around.
-    assetPickerDiv.empty();
     return assetPickersDone;
   }
 }
@@ -180,7 +177,7 @@ const emptyCallback = () => {};
 /**
  * Requests all assets in ee directories corresponding to given states.
  * @param {Array<string>} states e.g. ['WA']
- * @return {Promise<Array<string | Array<string>>>} 2-d array of all retrieved
+ * @return {Promise<Array<Array<string | Array<string>>>>} 2-d array of all retrieved
  * assets in the form [['WA', ['asset/path']], ...]
  */
 function getAssetsFromEe(states) {
@@ -194,7 +191,9 @@ function getAssetsFromEe(states) {
         for (const state of states) {
           const dir = legacyStateDir + '/' + state;
           if (!folders.has(state)) {
+
             ee.data.createFolder(dir, false, () => {
+              // TODO: add status bar for when this is finished.
               ee.data.setAssetAcl(dir, {all_users_can_read: true});
             });
             promises.push(Promise.resolve([state, []]));
@@ -240,9 +239,7 @@ function createAssetPickers(states) {
     const assetPicker = $(document.createElement('select')).attr({
       multiple: 'multiple',
       id: state + '-adder',
-    });
-    assetPicker.append(createOption(
-        'Upload additional assets via the code editor', SENTINEL_OPTION_VALUE));
+    }).width(200);
     if (stateAssets.get(state)) {
       for (const asset of stateAssets.get(state)) {
         assetPicker.append(createOptionFrom(asset));
