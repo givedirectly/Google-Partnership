@@ -183,8 +183,8 @@ function addLayers(map) {
   createNewCheckboxForLayer(
       {
         'display-name': scoreLayerName,
-        index: scoreLayerName,
-        'display-on-load': true
+        'index': scoreLayerName,
+        'display-on-load': true,
       },
       sidebarDiv, map);
 }

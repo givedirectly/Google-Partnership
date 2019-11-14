@@ -1,7 +1,7 @@
 import {mapContainerId} from './dom_constants.js';
 import {terrainStyle} from './earth_engine_asset.js';
 import {createError} from './error.js';
-import {colorMap, firebaseLayers, getStyleFunction, LayerType} from './firebase_layers.js';
+import {colorMap, getStyleFunction, LayerType} from './firebase_layers.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {convertEeObjectToPromise} from './map_util.js';
 
@@ -17,14 +17,14 @@ export {
   toggleLayerOn,
 };
 // @VisibleForTesting
-export {deckGlArray, LayerMapValue, mapOverlayArray};
+export {deckGlArray, DisplayedLayerData, mapOverlayArray};
 
 const scoreLayerName = 'score';
 
 /**
  * All map overlay layers. Data is lazily generated i.e. pre-known layers that
  * don't display by default will have an entry in this map, but the
- * LayerMapValue will have a null data field until we fetch the data when the
+ * DisplayedLayerData will have a null data field until we fetch the data when the
  * user wants to display it. Score layer gets its own special 'score' index.
  */
 const mapOverlayArray = [];
@@ -33,8 +33,8 @@ const mapOverlayArray = [];
  * deck.gl layers, in the order they should be rendered. Passed to deckGlOverlay
  * in redrawLayers() (after filtering out absent elements).
  *
- * Contains one GeoJsonLayer per LayerMapValue with non-null data attribute
- * (from mapOverlayArray), ordered by LayerMapValue.index.
+ * Contains one GeoJsonLayer per DisplayedLayerData with non-null data attribute
+ * (from mapOverlayArray), ordered by DisplayedLayerData.index.
  *
  * @type {Array<deck.GeoJsonLayer>}
  */
@@ -51,7 +51,7 @@ let deckGlOverlay;
  * have a data attribute for deck layers, and an overlay attribute for map
  * overlay layers.
  */
-class LayerMapValue {
+class DisplayedLayerData {
   /**
    * Constructor.
    *
@@ -64,6 +64,9 @@ class LayerMapValue {
     this.displayed = displayed;
   }
 
+  /**
+   * @return {boolean} True if this layer is rendered using deck
+   */
   deckRendered() {
     return this.deckId != null;
   }
@@ -141,7 +144,7 @@ function addImageLayer(map, imageAsset, layer) {
     imageAsset = terrainStyle(imageAsset);
   }
   const index = layer['index'];
-  mapOverlayArray[index] = new LayerMapValue(null, true);
+  mapOverlayArray[index] = new DisplayedLayerData(null, true);
   imageAsset.getMap({
     visParams: imgStyles,
     callback: (layerId, failure) => {
@@ -204,7 +207,7 @@ function addLayerFromId(map, layerName, layerId, index, displayed) {
  * explicitly does not check the actual data. That's why the score layer needs
  * special handling, so deck.gl is forced to re-render it on parameter changes.
  *
- * @param {LayerMapValue} layerMapValue
+ * @param {DisplayedLayerData} layerMapValue
  * @param {number|string} index
  */
 function addLayerFromFeatures(layerMapValue, index) {
@@ -294,7 +297,7 @@ function processImageCollection(layerName) {
 function addLayerFromGeoJsonPromise(featuresPromise, layerName, index) {
   addLoadingElement(mapContainerId);
   // Add entry to map.
-  const layerMapValue = new LayerMapValue(layerName, true);
+  const layerMapValue = new DisplayedLayerData(layerName, true);
   mapOverlayArray[index] = layerMapValue;
   featuresPromise
       .then((features) => {
@@ -313,7 +316,7 @@ function addLayerFromGeoJsonPromise(featuresPromise, layerName, index) {
  */
 function addNullLayer(layer) {
   const assetType = layer['asset-type'];
-  mapOverlayArray[layer['index']] = new LayerMapValue(
+  mapOverlayArray[layer['index']] = new DisplayedLayerData(
       assetType === LayerType.FEATURE ||
               assetType === LayerType.FEATURE_COLLECTION ?
           layer['ee-name'] :
@@ -351,15 +354,6 @@ function processLayerArray() {
 function valIsNotNull(val) {
   return val !== null;
 }
-
-/**
- * Removes an entry from the map by setting its displayed attribute to false and
- * recreating the layer.
- *
- * @param {number|string} index
- * @param {google.maps.Map} map main map
- */
-function removeLayer(index, map) {}
 
 /**
  * Removes the score layer before a parameter update. Must actually be

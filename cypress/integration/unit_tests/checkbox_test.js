@@ -1,5 +1,5 @@
 import {initializeFirebaseLayers, LayerType} from '../../../docs/firebase_layers.js';
-import {deckGlArray, LayerMapValue, mapOverlayArray, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from '../../../docs/layer_util.js';
+import {deckGlArray, DisplayedLayerData, mapOverlayArray, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from '../../../docs/layer_util.js';
 import * as loading from '../../../docs/loading';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 
@@ -40,11 +40,11 @@ describe('Unit test for toggleLayerOn', () => {
     loading.loadingElementFinished = () => {};
   });
   beforeEach(() => {
-    mapOverlayArray[0] = new LayerMapValue('asset0', true);
+    mapOverlayArray[0] = new DisplayedLayerData('asset0', true);
     mapOverlayArray[0].data = mockData;
-    mapOverlayArray[1] = new LayerMapValue('asset1', false);
+    mapOverlayArray[1] = new DisplayedLayerData('asset1', false);
     mapOverlayArray[1].data = mockData;
-    mapOverlayArray[2] = new LayerMapValue('asset2', false);
+    mapOverlayArray[2] = new DisplayedLayerData('asset2', false);
     initializeFirebaseLayers(mockFirebaseLayers);
     // Initialize deck object in production.
     setMapToDrawLayersOn(null);
