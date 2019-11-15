@@ -192,22 +192,20 @@ describe('Unit tests for add_disaster page', () => {
     const states = ['DN, WF'];
 
     cy.wrap(writeNewDisaster(id, states))
-        .then(() => {
-          return getFirestoreRoot()
-              .collection('disaster-metadata')
-              .doc(id)
-              .get();
-        })
+        .then(
+            () => getFirestoreRoot()
+                      .collection('disaster-metadata')
+                      .doc(id)
+                      .get())
         .then((doc) => {
           expect(doc.exists).to.be.true;
           return cy.window().then((win) => deleteDisaster(win));
         })
-        .then(() => {
-          return getFirestoreRoot()
-              .collection('disaster-metadata')
-              .doc(id)
-              .get();
-        })
+        .then(
+            () => getFirestoreRoot()
+                      .collection('disaster-metadata')
+                      .doc(id)
+                      .get())
         .then((doc) => expect(doc.exists).to.be.false);
   });
 });
