@@ -18,13 +18,13 @@ export {
   toggleLayerOn,
 };
 // @VisibleForTesting
-export {deckGlArray, DisplayedLayerData, layerArray};
+export {deckGlArray, LayerDisplayData, layerArray};
 
 const scoreLayerName = 'score';
 
 /**
  * All map overlay layers. Data is lazily generated: layers that don't display
- * by default will have an entry in this map, but the DisplayedLayerData will
+ * by default will have an entry in this map, but the LayerDisplayData will
  * have a null data/overlay field (depending on whether or not we render it with
  * deck) until we fetch the data when the user wants to display it. Score layer
  * gets its own special 'score' index, exploiting Javascript's tolerance for
@@ -36,8 +36,8 @@ const layerArray = [];
  * deck.gl layers, in the order they should be rendered. Passed to deckGlOverlay
  * in redrawLayers() (after filtering out absent elements).
  *
- * Contains one GeoJsonLayer per DisplayedLayerData with non-null data attribute
- * (from layerArray), ordered by DisplayedLayerData.index. Same trick as with
+ * Contains one GeoJsonLayer per LayerDisplayData with non-null data attribute
+ * (from layerArray), ordered by LayerDisplayData.index. Same trick as with
  * layerArray for score index.
  *
  * @type {Array<deck.GeoJsonLayer>}
@@ -55,7 +55,7 @@ let deckGlOverlay;
  * have a data attribute for deck layers, and an overlay attribute for
  * image/other layers.
  */
-class DisplayedLayerData {
+class LayerDisplayData {
   /**
    * @constructor
    *
@@ -118,12 +118,12 @@ function setMapToDrawLayersOn(map) {
  */
 function toggleLayerOn(layer, map) {
   const index = layer['index'];
-  const displayedLayerData = layerArray[index];
-  displayedLayerData.displayed = true;
+  const layerDisplayData = layerArray[index];
+  layerDisplayData.displayed = true;
   // TODO(janakr): this doesn't check the .overlay property to see if we already
   // did computation for a non-deck layer. Add that caching in.
-  if (displayedLayerData.data) {
-    addLayerFromFeatures(displayedLayerData, index);
+  if (layerDisplayData.data) {
+    addLayerFromFeatures(layerDisplayData, index);
   } else {
     addLayer(layer, map);
   }
@@ -137,10 +137,10 @@ function toggleLayerOn(layer, map) {
  * @param {google.maps.Map} map main map
  */
 function toggleLayerOff(index, map) {
-  const displayedLayerData = layerArray[index];
-  displayedLayerData.displayed = false;
-  if (displayedLayerData.deckRendered()) {
-    addLayerFromFeatures(displayedLayerData, index);
+  const layerDisplayData = layerArray[index];
+  layerDisplayData.displayed = false;
+  if (layerDisplayData.deckRendered()) {
+    addLayerFromFeatures(layerDisplayData, index);
   } else {
     map.overlayMapTypes.setAt(index, null);
   }
@@ -164,7 +164,7 @@ function addImageLayer(map, imageAsset, layer) {
     imageAsset = terrainStyle(imageAsset);
   }
   const index = layer['index'];
-  layerArray[index] = new DisplayedLayerData(null, true);
+  layerArray[index] = new LayerDisplayData(null, true);
   imageAsset.getMap({
     visParams: imgStyles,
     callback: (layerId, failure) => {
@@ -225,26 +225,26 @@ function addLayerFromId(map, layerId, index, displayed) {
  * explicitly does not check the actual data. That's why the score layer needs
  * special handling, so deck.gl is forced to re-render it on parameter changes.
  *
- * @param {DisplayedLayerData} displayedLayerData
+ * @param {LayerDisplayData} layerDisplayData
  * @param {number|string} index index of layer. A number unless this is the
  * score layer
  */
-function addLayerFromFeatures(displayedLayerData, index) {
-  const deckParams = displayedLayerData.deckParams;
+function addLayerFromFeatures(layerDisplayData, index) {
+  const deckParams = layerDisplayData.deckParams;
   if (!deckParams.colorFunction) {
     deckParams.colorFunction =
         createStyleFunction(deckParams.colorFunctionProperties);
   }
   deckGlArray[index] = new deck.GeoJsonLayer({
-    id: displayedLayerData.deckParams.deckId,
-    data: displayedLayerData.data,
+    id: layerDisplayData.deckParams.deckId,
+    data: layerDisplayData.data,
     pointRadiusMinPixels: 1,
     getRadius: 10,
     // TODO(janakr): deck.gl docs claim that the "color" property should
     // automatically color the features, but it doesn't appear to work:
     // https://deck.gl/#/documentation/deckgl-api-reference/layers/geojson-layer?section=getelevation-function-number-optional-transition-enabled
     getFillColor: deckParams.colorFunction,
-    visible: displayedLayerData.displayed,
+    visible: layerDisplayData.displayed,
   });
   redrawLayers();
 }
@@ -317,12 +317,12 @@ function processImageCollection(layerName) {
  */
 function addLayerFromGeoJsonPromise(featuresPromise, deckParams, index) {
   addLoadingElement(mapContainerId);
-  const displayedLayerData = new DisplayedLayerData(deckParams, true);
-  layerArray[index] = displayedLayerData;
+  const layerDisplayData = new LayerDisplayData(deckParams, true);
+  layerArray[index] = layerDisplayData;
   featuresPromise
       .then((features) => {
-        displayedLayerData.data = features;
-        addLayerFromFeatures(displayedLayerData, index);
+        layerDisplayData.data = features;
+        addLayerFromFeatures(layerDisplayData, index);
         loadingElementFinished(mapContainerId);
       })
       .catch(createError('Error rendering ' + deckParams.deckId));
@@ -336,7 +336,7 @@ function addLayerFromGeoJsonPromise(featuresPromise, deckParams, index) {
  */
 function addNullLayer(layer) {
   const assetType = layer['asset-type'];
-  layerArray[layer['index']] = new DisplayedLayerData(
+  layerArray[layer['index']] = new LayerDisplayData(
       assetType === LayerType.FEATURE_COLLECTION ||
               assetType === LayerType.FEATURE ?
           DeckParams.fromLayer(layer) :
