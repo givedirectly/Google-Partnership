@@ -405,6 +405,6 @@ function getColorOfFeature(feature) {
  * any actual data changes, and therefore not update the map.
  */
 function removeScoreLayer() {
-  deckGlArray[layerArray[scoreLayerName]] = null;
+  deckGlArray[scoreLayerName] = null;
   redrawLayers();
 }
