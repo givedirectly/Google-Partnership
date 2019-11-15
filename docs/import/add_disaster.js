@@ -1,7 +1,7 @@
 import {eeStatePrefixLength, legacyStateDir} from '../ee_paths.js';
 import {getFirestoreRoot} from '../firestore_document.js';
 
-export {enableWhenReady, toggleDisaster};
+export {enableWhenReady};
 // Visible for testing
 export {
   addDisaster,
@@ -55,7 +55,7 @@ function enableWhenReady() {
 }
 
 /**
- *
+ * Switch between disasters.
  * @param {String} disaster
  * @return {Promise<void>} completes when we've finished filling all state
  * pickers and pulled from firebase.
