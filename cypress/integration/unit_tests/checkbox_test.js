@@ -121,6 +121,32 @@ describe('Unit test for toggleLayerOn', () => {
     });
   });
 
+  it('checks hidden layer, unchecks, checks before list evaluation', () => {
+    expect(layerArray[2].displayed).to.be.false;
+    expect(layerArray[2].data).to.be.undefined;
+
+    const emptyList = [];
+    let callback = null;
+    stubForEmptyList((callb) => callback = callb);
+    const promise = toggleLayerOn(mockFirebaseLayers[2]);
+    expect(layerArray[2].displayed).to.be.true;
+    expect(layerArray[2].data).to.be.undefined;
+    toggleLayerOff(2);
+    const secondPromise = toggleLayerOn(mockFirebaseLayers[2]);
+    expect(layerArray[2].displayed).to.be.true;
+    expect(layerArray[2].data).to.be.undefined;
+    expect(secondPromise).equals(promise);
+    callback(emptyList);
+    cy.wrap(promise).then(() => {
+      expect(layerArray[2].displayed).to.be.true;
+      expect(layerArray[2].data).to.not.be.null;
+      const layerProps = deckGlArray[2].props;
+      expect(layerProps).to.have.property('id', 'asset2');
+      expect(layerProps).to.have.property('visible', true);
+      expect(layerProps).to.have.property('data', emptyList);
+    });
+  });
+
   it('caches computed image overlay and starts loading on EE request', () => {
     // Set test up:
     // 1. Use a real map, since we want to see that it has an entry in its
@@ -175,6 +201,119 @@ describe('Unit test for toggleLayerOn', () => {
           expect(nextOverlay).is.not.null;
           // We got the exact same object! Note that expect({}).not.equals({}).
           expect(nextOverlay).equals(overlay);
+        });
+  });
+
+  it('toggles off computed image overlay before EE finishes', () => {
+    // Set test up:
+    // 1. Use a real map, since we want to see that it has an entry in its
+    // overlayMapTypes.
+    // 2. Sub in trivial image, and control the #getMap method of that image so
+    // that we can delay the callback until we're ready.
+    // 3. Stub the loading elements, so we can check when loading starts/ends.
+    const div = document.createElement('div');
+    document.body.appendChild(div);
+    const map = new google.maps.Map(div, {center: {lat: 0, lng: 0}, zoom: 1});
+
+    const image = ee.Image.constant(0);
+    const oldImageFunction = ee.Image;
+    ee.Image = () => {
+      ee.Image = oldImageFunction;
+      return image;
+    };
+    const oldGetMap = image.getMap;
+    const latch = new CallbackLatch();
+    image.getMap = (props) => {
+      image.getMap = oldGetMap;
+      props.callback = latch.delayedCallback(props.callback);
+      return image.getMap(props);
+    };
+
+    const loadingStartedStub = cy.stub(loading, 'addLoadingElement');
+    const loadingFinishedStub = cy.stub(loading, 'loadingElementFinished');
+
+    // Start the test.
+    const promise = addLayer(mockFirebaseLayers[3], map);
+    // Loading has started, but map is unaffected.
+    expect(loadingStartedStub).to.be.calledOnce;
+    expect(map.overlayMapTypes).to.have.length(0);
+    expect(map.overlayMapTypes.getAt(3)).to.be.undefined;
+
+    // Before EE rendering finishes, toggle layer off.
+    toggleLayerOff(3, map);
+    // Overlay list now has null instead of undefined, but no biggie.
+    expect(map.overlayMapTypes.getAt(3)).to.be.null;
+
+    // Loading can't finish until EE evaluation finishes, which we've frozen.
+    expect(loadingFinishedStub).to.not.be.called;
+    // Release evaluation.
+    latch.release();
+    cy.wrap(promise)
+        .then(() => {
+          expect(loadingFinishedStub).to.be.calledOnce;
+          expect(map.overlayMapTypes.getAt(3)).to.be.null;
+
+          // Turn overlay back on.
+          return toggleLayerOn(mockFirebaseLayers[3], map);
+        })
+        .then(() => expect(map.overlayMapTypes.getAt(3)).is.not.null);
+  });
+
+  it('toggles off and on computed image overlay before EE finishes', () => {
+    // Set test up:
+    // 1. Use a real map, since we want to see that it has an entry in its
+    // overlayMapTypes.
+    // 2. Sub in trivial image, and control the #getMap method of that image so
+    // that we can delay the callback until we're ready.
+    // 3. Stub the loading elements, so we can check when loading starts/ends.
+    const div = document.createElement('div');
+    document.body.appendChild(div);
+    const map = new google.maps.Map(div, {center: {lat: 0, lng: 0}, zoom: 1});
+
+    const image = ee.Image.constant(0);
+    const oldImageFunction = ee.Image;
+    ee.Image = () => {
+      ee.Image = oldImageFunction;
+      return image;
+    };
+    const oldGetMap = image.getMap;
+    const latch = new CallbackLatch();
+    image.getMap = (props) => {
+      image.getMap = oldGetMap;
+      props.callback = latch.delayedCallback(props.callback);
+      return image.getMap(props);
+    };
+
+    const loadingStartedStub = cy.stub(loading, 'addLoadingElement');
+    const loadingFinishedStub = cy.stub(loading, 'loadingElementFinished');
+
+    // Start the test.
+    const promise = addLayer(mockFirebaseLayers[3], map);
+    // Loading has started, but map is unaffected.
+    expect(loadingStartedStub).to.be.calledOnce;
+    expect(map.overlayMapTypes).to.have.length(0);
+    expect(map.overlayMapTypes.getAt(3)).to.be.undefined;
+
+    // Before EE rendering finishes, toggle layer off.
+    toggleLayerOff(3, map);
+    // Overlay list now has null instead of undefined, but no biggie.
+    expect(map.overlayMapTypes.getAt(3)).to.be.null;
+
+    // Still before evaluation finishes, toggle back on.
+    const togglePromise = toggleLayerOn(mockFirebaseLayers[3], map);
+    expect(togglePromise).equals(promise);
+    // Overlay list now has null instead of undefined, but no biggie.
+    expect(map.overlayMapTypes.getAt(3)).to.be.null;
+
+    // Loading can't finish until EE evaluation finishes, which we've frozen.
+    expect(loadingFinishedStub).to.not.be.called;
+
+    // Release evaluation.
+    latch.release();
+    cy.wrap(promise)
+        .then(() => {
+          expect(loadingFinishedStub).to.be.calledOnce;
+          expect(map.overlayMapTypes.getAt(3)).to.not.be.null;
         });
   });
 

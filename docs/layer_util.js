@@ -53,7 +53,8 @@ let deckGlOverlay;
 /**
  * Values of layerArray. In addition to basic data from constructor, will
  * have a data attribute for deck layers, and an overlay attribute for
- * image/other layers.
+ * image/other layers. Will also have a "pendingPromise" field to detect if an
+ * EarthEngine operation is currently in flight.
  */
 class LayerDisplayData {
   /**
@@ -136,6 +137,9 @@ function toggleLayerOn(layer, map) {
       showOverlayLayer(layerDisplayData.overlay, index, map);
     });
   }
+  if (layerDisplayData.pendingPromise) {
+    return layerDisplayData.pendingPromise;
+  }
   return addLayer(layer, map);
 }
 
@@ -177,7 +181,7 @@ function addImageLayer(map, imageAsset, layer) {
   const index = layer['index'];
   const layerDisplayData = new LayerDisplayData(null, true);
   layerArray[index] = layerDisplayData;
-  return createLoadingAwarePromise((resolve, reject) => {
+  layerDisplayData.pendingPromise = createLoadingAwarePromise((resolve, reject) => {
     imageAsset.getMap({
       visParams: imgStyles,
       callback: (layerId, failure) => {
@@ -199,9 +203,11 @@ function addImageLayer(map, imageAsset, layer) {
           layerDisplayData.displayed = false;
           reject(failure);
         }
+        layerDisplayData.pendingPromise = null;
       },
     });
   });
+  return layerDisplayData.pendingPromise;
 }
 
 /**
@@ -357,10 +363,13 @@ function processImageCollection(layerName) {
 function addLayerFromGeoJsonPromise(featuresPromise, deckParams, index) {
   const layerDisplayData = new LayerDisplayData(deckParams, true);
   layerArray[index] = layerDisplayData;
-  return wrapPromiseLoadingAware(featuresPromise.then((features) => {
+  const result = wrapPromiseLoadingAware(featuresPromise.then((features) => {
     layerDisplayData.data = features;
     addLayerFromFeatures(layerDisplayData, index);
+    layerDisplayData.pendingPromise = null;
   }));
+  layerDisplayData.pendingPromise = result;
+  return result;
 }
 
 /**
