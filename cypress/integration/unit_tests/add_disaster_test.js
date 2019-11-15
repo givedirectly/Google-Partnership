@@ -88,12 +88,16 @@ describe('Unit tests for add_disaster page', () => {
   it('writes a new disaster to firestore', () => {
     let id = '2002-winter';
     const states = ['DN, WF'];
+    $('#disaster').hide();
 
     cy.wrap(writeNewDisaster(id, states))
         .then((success) => {
           expect(success).to.be.true;
           expect($('#status').is(':visible')).to.be.false;
-          const options = $('#disaster').children();
+          const disasterPicker = $('#disaster');
+          expect(disasterPicker.is(':visible')).to.be.true;
+          expect($('#pending-disaster').is(':visible')).to.be.false;
+          const options = disasterPicker.children();
           expect(options.length).to.eql(3);
           expect(options.eq(1).val()).to.eql('2002-winter');
           expect(options.eq(1).is(':selected')).to.be.true;

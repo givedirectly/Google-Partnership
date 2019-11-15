@@ -1,7 +1,7 @@
 import {eeStatePrefixLength, legacyStateDir} from '../ee_paths.js';
 import {getFirestoreRoot} from '../firestore_document.js';
 
-export {enableWhenReady};
+export {enableWhenReady, toggleState};
 // Visible for testing
 export {
   addDisaster,
@@ -56,11 +56,12 @@ function enableWhenReady() {
         disasterPicker.on('change', () => toggleDisaster(disasterPicker.val()));
         const mostRecent = querySnapshot.docs[querySnapshot.size - 1].id;
         disasterPicker.val(mostRecent).trigger('change');
+        toggleState(true);
       });
 }
 
 /**
- * Switch between disasters.
+ * On change method for disaster picker.
  * @param {String} disaster
  * @return {Promise<void>} completes when we've finished filling all state
  * pickers and pulled from firebase.
@@ -90,8 +91,6 @@ function toggleDisaster(disaster) {
   }
 
   // TODO: display more disaster info including current layers etc.
-  $('#new-disaster').hide();
-  $('#selected-disaster').show();
   return assetPickersDone;
 }
 
@@ -107,12 +106,11 @@ function writeNewDisaster(disasterId, states) {
     setStatus('Error: disaster with that name and year already exists.');
     return Promise.resolve(false);
   }
-
   disasters.set(disasterId, states);
-  toggleDisaster(disasterId);
-
   clearStatus();
-  const disasterOptions = $('#disaster > option');
+
+  const disasterPicker = $('#disaster');
+  const disasterOptions = disasterPicker.children();
   let added = false;
   // note: let's hope this tool isn't being used in the year 10000.
   // comment needed to quiet eslint on no-invalid-this rules
@@ -123,8 +121,11 @@ function writeNewDisaster(disasterId, states) {
       return false;
     }
   });
-  if (!added) $('#disaster').append(createOptionFrom(disasterId));
-  $('#disaster').val(disasterId);
+  if (!added) disasterPicker.append(createOptionFrom(disasterId));
+
+  disasterPicker.val(disasterId).trigger('change');
+  toggleState(true);
+
   return getFirestoreRoot()
       .collection('disaster-metadata')
       .doc(disasterId)
@@ -133,9 +134,27 @@ function writeNewDisaster(disasterId, states) {
 }
 
 /**
- * Onclick function for the new disaster form. Writes new disaster to firestore,
- * local disasters map and disaster picker. Doesn't allow name, year or states
- * to be empty fields.
+ * Changes page state between looking at a known disaster and adding a new one.
+ * @param {boolean} known
+ */
+function toggleState(known) {
+  if (known) {
+    $('#disaster').show();
+    $('#selected-disaster').show();
+    $('#pending-disaster').hide();
+    $('#new-disaster').hide();
+  } else {
+    $('#disaster').hide();
+    $('#selected-disaster').hide();
+    $('#pending-disaster').show();
+    $('#new-disaster').show();
+  }
+}
+
+/**
+ * Onclick function for submitting the new disaster form. Writes new disaster
+ * to firestore, local disasters map and disaster picker. Doesn't allow name,
+ * year or states to be empty fields.
  * @return {Promise<boolean>} resolves true if new disaster was successfully
  *     written.
  */
