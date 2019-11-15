@@ -22,12 +22,15 @@
 
 <form action="" id="disaster-picker">
   <label for="disaster">Disaster: </label>
-  <select id="disaster" style="width: 160px"></select>
+  <select id="disaster" style="width: 160px">
+    <option value="pending" id="pending" hidden="true">...</option>
+  </select>
   <span> </span>
   <button type="button" id="create-new-disaster">Create New Disaster</button>
 </form><p></p>
 <div id="status"></div>
 <div id="new-disaster" hidden="true">
+  <button type="button" id="cancel-new-disaster">Cancel</button>
   <form action="" id="new-disaster-form">
     <label for="name">Disaster Name: </label><input id="name"><label for="name"><i> ex: harvey</i></label><br>
     <label for="year">Disaster Year: </label><input id="year"><label for="year"><i> ex: 2017</i></label><br>

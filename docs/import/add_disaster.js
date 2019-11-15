@@ -1,7 +1,7 @@
 import {eeStatePrefixLength, legacyStateDir} from '../ee_paths.js';
 import {getFirestoreRoot} from '../firestore_document.js';
 
-export {enableWhenReady};
+export {enableWhenReady, toggleDisasterPicker};
 // Visible for testing
 export {
   addDisaster,
@@ -119,12 +119,25 @@ function writeNewDisaster(disasterId, states) {
     }
   });
   if (!added) $('#disaster').append(createOptionFrom(disasterId));
+  toggleDisasterPicker(false);
   $('#disaster').val(disasterId);
   return getFirestoreRoot()
       .collection('disaster-metadata')
       .doc(disasterId)
       .set({states: states})
       .then(() => true);
+}
+
+const SENTINEL_PENDING_DISASTER = 'pending';
+
+/**
+ * Disables or enables the disaster picker including setting to a '...' options
+ *  while disabled.
+ * @param {boolean} disabled
+ */
+function toggleDisasterPicker(disabled) {
+  $('#' + SENTINEL_PENDING_DISASTER).prop('hidden', !disabled);
+  $('#disaster').val(SENTINEL_PENDING_DISASTER).prop('disabled', disabled);
 }
 
 /**
