@@ -1,7 +1,7 @@
 import {eeStatePrefixLength, legacyStateDir} from '../ee_paths.js';
 import {getFirestoreRoot} from '../firestore_document.js';
 
-export {enableWhenReady, toggleDisasterPicker};
+export {enableWhenReady, disableDisasterPicker};
 // Visible for testing
 export {
   addDisaster,
@@ -55,7 +55,7 @@ function enableWhenReady() {
 }
 
 /**
- * Switch between disasters.
+ * Switch between disasters in the picker.
  * @param {String} disaster
  * @return {Promise<void>} completes when we've finished filling all state
  * pickers and pulled from firebase.
@@ -102,11 +102,13 @@ function writeNewDisaster(disasterId, states) {
     setStatus('Error: disaster with that name and year already exists.');
     return Promise.resolve(false);
   }
+  clearStatus();
 
   disasters.set(disasterId, states);
-  toggleDisaster(disasterId);
 
-  clearStatus();
+  $('#disaster').val(disasterId);
+  disableDisasterPicker(false);
+  toggleDisaster(disasterId);
   const disasterOptions = $('#disaster > option');
   let added = false;
   // note: let's hope this tool isn't being used in the year 10000.
@@ -119,8 +121,6 @@ function writeNewDisaster(disasterId, states) {
     }
   });
   if (!added) $('#disaster').append(createOptionFrom(disasterId));
-  toggleDisasterPicker(false);
-  $('#disaster').val(disasterId);
   return getFirestoreRoot()
       .collection('disaster-metadata')
       .doc(disasterId)
@@ -135,7 +135,7 @@ const SENTINEL_PENDING_DISASTER = 'pending';
  *  while disabled.
  * @param {boolean} disabled
  */
-function toggleDisasterPicker(disabled) {
+function disableDisasterPicker(disabled) {
   $('#' + SENTINEL_PENDING_DISASTER).prop('hidden', !disabled);
   $('#disaster').val(SENTINEL_PENDING_DISASTER).prop('disabled', disabled);
 }
