@@ -202,7 +202,8 @@ describe('Unit tests for add_disaster page', () => {
         .then((doc) => {
           expect(doc.exists).to.be.true;
           return cy.window().then((win) => deleteDisaster(win));
-        }).then(() => {
+        })
+        .then(() => {
           return getFirestoreRoot()
               .collection('disaster-metadata')
               .doc(id)
