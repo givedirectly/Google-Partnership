@@ -85,7 +85,7 @@ describe('Unit tests for add_disaster page', () => {
     expect($('#' + UNKNOWN_STATE + '-adder').children().length).to.equal(0);
   });
 
-  it.only('writes a new disaster to firestore', () => {
+  it('writes a new disaster to firestore', () => {
     let id = '2002-winter';
     const states = ['DN, WF'];
     $('#disaster').prop('disabled', true);
