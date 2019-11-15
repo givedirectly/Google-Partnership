@@ -1,9 +1,8 @@
 import {clickFeature, selectHighlightedFeatures} from './click_feature.js';
 import {sidebarDatasetsId, tableContainerId} from './dom_constants.js';
 import {drawTable} from './draw_table.js';
-import {firebaseLayers, initializeFirebaseLayers} from './firebase_layers.js';
 import {highlightFeatures} from './highlight_features.js';
-import {addLayer, addLayerFromGeoJsonPromise, addNullLayer, scoreLayerName, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from './layer_util.js';
+import {addLayer, addNullLayer, addScoreLayer, scoreLayerName, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from './layer_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {convertEeObjectToPromise} from './map_util.js';
 import {processUserRegions} from './polygon_draw.js';
@@ -42,10 +41,7 @@ function run(map, firebaseAuthPromise, disasterMetadataPromise) {
       map, initialPovertyThreshold, initialDamageThreshold,
       initialPovertyWeight);
   processUserRegions(map, firebaseAuthPromise);
-  disasterMetadataPromise.then((doc) => {
-    initializeFirebaseLayers(doc.data().layers);
-    addLayers(map);
-  });
+  disasterMetadataPromise.then((doc) => addLayers(map, doc.data().layerArray));
 }
 
 let mapSelectListener = null;
@@ -75,6 +71,7 @@ function createAndDisplayJoinedData(
       snapAndDamagePromise, scalingFactor, povertyThreshold, damageThreshold,
       povertyWeight);
   addScoreLayer(processedData);
+  maybeCheckScoreCheckbox();
   drawTable(
       processedData, (features) => highlightFeatures(features, map, true),
       (table, tableData) => {
@@ -96,20 +93,6 @@ function createAndDisplayJoinedData(
               table, tableData);
         });
       });
-}
-
-/**
- * Creates checkboxes for all known layers (including user features and score).
- *
- * @param {google.maps.Map} map main map
- */
-function createLayerCheckboxes(map) {
-  const sidebarDiv = document.getElementById(sidebarDatasetsId);
-  Object.keys(firebaseLayers)
-      .forEach(
-          (layerName) => createNewCheckboxForLayer(layerName, sidebarDiv, map));
-  createCheckboxForUserFeatures(sidebarDiv);
-  createNewCheckboxForLayer(scoreLayerName, sidebarDiv, map);
 }
 
 /**
@@ -145,23 +128,21 @@ function createNewCheckbox(name, displayName, parentDiv) {
  * Creates a new checkbox for the given layer. The only layer not recorded in
  * firebase should be the score layer.
  *
- * @param {String} layerName
+ * @param {Object} layer Data for layer coming from Firestore
  * @param {Element} parentDiv
  * @param {google.maps.Map} map main map
  */
-function createNewCheckboxForLayer(layerName, parentDiv, map) {
-  const properties = firebaseLayers[layerName];
-  const newBox = createNewCheckbox(
-      layerName, properties ? properties['display-name'] : layerName,
-      parentDiv);
-  if (properties && !properties['display-on-load']) {
+function createNewCheckboxForLayer(layer, parentDiv, map) {
+  const index = layer['index'];
+  const newBox = createNewCheckbox(index, layer['display-name'], parentDiv);
+  if (!layer['display-on-load']) {
     newBox.checked = false;
   }
   newBox.onclick = () => {
     if (newBox.checked) {
-      toggleLayerOn(layerName, map);
+      toggleLayerOn(layer, map);
     } else {
-      toggleLayerOff(layerName, map);
+      toggleLayerOff(index, map);
     }
   };
 }
@@ -178,36 +159,42 @@ function createCheckboxForUserFeatures(parentDiv) {
 }
 
 /**
- * Runs through layers map. For those that we auto-display on page load, creates
- * overlays and displays. Also populates the layerMap.
+ * Runs through layers list. For those that we auto-display on page load,
+ * creates overlays and displays. Also creates checkboxes.
  *
  * @param {google.maps.Map} map main map
+ * @param {Array<Object>} firebaseLayers layer metadata retrieved from
+ *     Firestore, ordered by the order they should be drawn on the map (higher
+ *     indices are displayed over lower ones)
  */
-function addLayers(map) {
-  Object.keys(firebaseLayers).forEach((layer) => {
-    const properties = firebaseLayers[layer];
+function addLayers(map, firebaseLayers) {
+  const sidebarDiv = document.getElementById(sidebarDatasetsId);
+  for (let i = 0; i < firebaseLayers.length; i++) {
+    const properties = firebaseLayers[i];
+    properties['index'] = i;
     if (properties['display-on-load']) {
-      addLayer(layer, properties['index'], map);
+      addLayer(properties, map);
     } else {
-      addNullLayer(layer, properties['index']);
+      addNullLayer(properties);
     }
-  });
-  createLayerCheckboxes(map);
+    createNewCheckboxForLayer(properties, sidebarDiv, map);
+  }
+  createCheckboxForUserFeatures(sidebarDiv);
+  createNewCheckboxForLayer(
+      {
+        'display-name': scoreLayerName,
+        'index': scoreLayerName,
+        'display-on-load': true,
+      },
+      sidebarDiv, map);
 }
 
 /**
- * Creates and displays overlay for score + adds layerMap entry. The score
- * layer sits at the end of all the layers. Having it last ensures it displays
- * on top.
- *
- * @param {Promise<Array<GeoJson>>} layer
+ * Checkbox may not exist yet if layer metadata not retrieved yet. The checkbox
+ * creation will check the box by default. This manually checks it in case it
+ * was unchecked by the user, and this is coming from a weight/threshold update.
  */
-function addScoreLayer(layer) {
-  addLayerFromGeoJsonPromise(layer, scoreLayerName, 'lastElement');
-  // Checkbox may not exist yet if layer metadata not retrieved yet. The
-  // checkbox creation will check the box by default. We check it here in case
-  // it was unchecked by the user, and this is coming from a weight/threshold
-  // update.
+function maybeCheckScoreCheckbox() {
   const checkbox = document.getElementById(getCheckBoxId(scoreLayerName));
   if (checkbox) {
     checkbox.checked = true;

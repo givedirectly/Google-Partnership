@@ -1,28 +1,16 @@
-import {firebaseLayers} from '../../../docs/firebase_layers';
-import {colorMap, getStyleFunction, initializeFirebaseLayers} from '../../../docs/firebase_layers.js';
+import {colorMap, createStyleFunction} from '../../../docs/firebase_layers.js';
 
 describe('Unit test for generating style functions', () => {
-  before(() => initializeFirebaseLayers({}));
-
-  afterEach(
-      () => Object.keys(firebaseLayers)
-                .forEach((asset) => firebaseLayers[asset] = undefined));
-
   it('calculates a discrete function', () => {
-    firebaseLayers['asset0'] = {
-      'color-function': {
-        'continuous': false,
-        'field': 'flavor',
-
-        'opacity': 100,
-        'colors': {
-          'cherry': 'red',
-          'banana': 'yellow',
-        },
+    const fxn = createStyleFunction({
+      'continuous': false,
+      'field': 'flavor',
+      'opacity': 100,
+      'colors': {
+        'cherry': 'red',
+        'banana': 'yellow',
       },
-    };
-
-    const fxn = getStyleFunction('asset0');
+    });
     const cherry = fxn({'properties': {'flavor': 'cherry'}});
     const expectedCherry = colorMap.get('red');
     expect(cherry).to.eql(expectedCherry);
@@ -32,18 +20,14 @@ describe('Unit test for generating style functions', () => {
   });
 
   it('calculates a continuous function', () => {
-    firebaseLayers['asset1'] = {
-      'color-function': {
-        'continuous': true,
-        'field': 'oranges',
-        'base-color': 'orange',
-        'opacity': 83,
-        'min': 14,
-        'max': 10005,
-      },
-    };
-
-    const fxn = getStyleFunction('asset1');
+    const fxn = createStyleFunction({
+      'continuous': true,
+      'field': 'oranges',
+      'base-color': 'orange',
+      'opacity': 83,
+      'min': 14,
+      'max': 10005,
+    });
     const orangeish = fxn({'properties': {'oranges': 734}});
     // orange = [255, 140, 0]
     // white = [255, 255, 255]
@@ -54,14 +38,10 @@ describe('Unit test for generating style functions', () => {
   });
 
   it('calculates a single-color function', () => {
-    firebaseLayers['asset2'] = {
-      'color-function': {
-        'single-color': 'blue',
-        'opacity': 83,
-      },
-    };
-
-    const fxn = getStyleFunction('asset2');
+    const fxn = createStyleFunction({
+      'single-color': 'blue',
+      'opacity': 83,
+    });
     const trueBlue = fxn({});
     const blue = colorMap.get('blue');
     expect(trueBlue).to.eql(blue);

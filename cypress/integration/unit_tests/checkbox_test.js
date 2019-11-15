@@ -1,71 +1,90 @@
-import {initializeFirebaseLayers, LayerType} from '../../../docs/firebase_layers.js';
-import {layerArray, layerMap, LayerMapValue, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from '../../../docs/layer_util.js';
+import {LayerType} from '../../../docs/firebase_layers.js';
+import {deckGlArray, DeckParams, layerArray, LayerDisplayData, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from '../../../docs/layer_util.js';
+import * as loading from '../../../docs/loading';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 
 const mockData = {};
 
-const mockFirebaseLayers = {
-  'asset0': {
+const colorProperties = {
+  'single-color': 'yellow',
+};
+const mockFirebaseLayers = [
+  {
+    'ee-name': 'asset0',
     'asset-type': LayerType.FEATURE_COLLECTION,
     'display-name': 'asset0',
     'display-on-load': true,
-    'color-function': {'single-color': 'yellow'},
+    'color-function': colorProperties,
+    'index': 0,
   },
-  'asset1': {
+  {
+    'ee-name': 'asset1',
     'asset-type': LayerType.FEATURE_COLLECTION,
     'display-name': 'asset1',
     'display-on-load': false,
-    'color-function': {'single-color': 'yellow'},
+    'color-function': colorProperties,
+    'index': 1,
   },
-  'asset2': {
+  {
+    'ee-name': 'asset2',
     'asset-type': LayerType.FEATURE_COLLECTION,
     'display-name': 'asset2',
     'display-on-load': false,
-    'color-function': {'single-color': 'yellow'},
+    'color-function': colorProperties,
+    'index': 2,
   },
-};
+];
 
 describe('Unit test for toggleLayerOn', () => {
   loadScriptsBeforeForUnitTests('ee', 'deck', 'maps');
+  before(() => {
+    // Stub out loading update attempts: they pollute console with errors.
+    loading.addLoadingElement = () => {};
+    loading.loadingElementFinished = () => {};
+  });
   beforeEach(() => {
-    layerMap.set('asset0', new LayerMapValue(mockData, 0, true));
-    layerMap.set('asset1', new LayerMapValue(mockData, 1, false));
-    layerMap.set('asset2', new LayerMapValue(null, 2, false));
-    initializeFirebaseLayers(mockFirebaseLayers);
+    layerArray[0] =
+        new LayerDisplayData(new DeckParams('asset0', colorProperties), true);
+    layerArray[0].data = mockData;
+    layerArray[1] =
+        new LayerDisplayData(new DeckParams('asset1', colorProperties), false);
+    layerArray[1].data = mockData;
+    layerArray[2] =
+        new LayerDisplayData(new DeckParams('asset2', colorProperties), false);
     // Initialize deck object in production.
     setMapToDrawLayersOn(null);
-    layerArray[0] = new deck.GeoJsonLayer({});
-    layerArray[1] = new deck.GeoJsonLayer({});
+    deckGlArray[0] = new deck.GeoJsonLayer({});
+    deckGlArray[1] = new deck.GeoJsonLayer({});
   });
 
   it('displays a hidden but loaded layer', () => {
-    expect(layerMap.get('asset1').displayed).to.equals(false);
-    expect(layerMap.get('asset1').data).to.not.be.null;
+    expect(layerArray[1].displayed).to.equals(false);
+    expect(layerArray[1].data).to.not.be.null;
 
-    toggleLayerOn('asset1');
-    expect(layerMap.get('asset1').displayed).to.equals(true);
-    const layerProps = layerArray[1].props;
+    toggleLayerOn(mockFirebaseLayers[1]);
+    expect(layerArray[1].displayed).to.equals(true);
+    const layerProps = deckGlArray[1].props;
     expect(layerProps).to.have.property('id', 'asset1');
     expect(layerProps).to.have.property('visible', true);
     expect(layerProps).to.have.property('data', mockData);
   });
 
   it('loads a hidden layer and displays', () => {
-    expect(layerMap.get('asset2').displayed).to.equals(false);
-    expect(layerMap.get('asset2').data).to.be.null;
+    expect(layerArray[2].displayed).to.equals(false);
+    expect(layerArray[2].data).to.be.undefined;
 
     const emptyList = [];
     let callback = null;
     stubForEmptyList((callb) => callback = callb);
-    toggleLayerOn('asset2');
+    toggleLayerOn(mockFirebaseLayers[2]);
     callback(emptyList);
     // Evaluate after the promise finishes by using an instant wait.
     // TODO(janakr): Here and below, consider returning a Promise from
     //  toggleLayerOn that can be waited on instead of this event-loop push.
     cy.wait(0).then(() => {
-      expect(layerMap.get('asset2').displayed).to.equals(true);
-      expect(layerMap.get('asset2').data).to.not.be.null;
-      const layerProps = layerArray[2].props;
+      expect(layerArray[2].displayed).to.equals(true);
+      expect(layerArray[2].data).to.not.be.null;
+      const layerProps = deckGlArray[2].props;
       expect(layerProps).to.have.property('id', 'asset2');
       expect(layerProps).to.have.property('visible', true);
       expect(layerProps).to.have.property('data', emptyList);
@@ -73,21 +92,21 @@ describe('Unit test for toggleLayerOn', () => {
   });
 
   it('check hidden layer, then uncheck before list evaluation', () => {
-    expect(layerMap.get('asset2').displayed).to.equals(false);
-    expect(layerMap.get('asset2').data).to.be.null;
+    expect(layerArray[2].displayed).to.equals(false);
+    expect(layerArray[2].data).to.be.undefined;
 
     const emptyList = [];
     let callback = null;
     stubForEmptyList((callb) => callback = callb);
-    toggleLayerOn('asset2');
-    toggleLayerOff('asset2');
+    toggleLayerOn(mockFirebaseLayers[2]);
+    toggleLayerOff(2);
     callback(emptyList);
 
     // Evaluate after the promise finishes by using an instant wait.
     cy.wait(0).then(() => {
-      expect(layerMap.get('asset2').displayed).to.equals(false);
-      expect(layerMap.get('asset2').data).to.not.be.null;
-      const layerProps = layerArray[2].props;
+      expect(layerArray[2].displayed).to.equals(false);
+      expect(layerArray[2].data).to.not.be.null;
+      const layerProps = deckGlArray[2].props;
       expect(layerProps).to.have.property('id', 'asset2');
       expect(layerProps).to.have.property('visible', false);
       expect(layerProps).to.have.property('data', emptyList);
@@ -97,13 +116,13 @@ describe('Unit test for toggleLayerOn', () => {
 
 describe('Unit test for toggleLayerOff', () => {
   it('hides a displayed layer', () => {
-    expect(layerMap.get('asset0').displayed).to.equals(true);
-    expect(layerMap.get('asset0').data).to.not.be.null;
+    expect(layerArray[0].displayed).to.equals(true);
+    expect(layerArray[0].data).to.not.be.null;
 
-    toggleLayerOff('asset0');
-    expect(layerMap.get('asset0').displayed).to.equals(false);
-    expect(layerMap.get('asset0').data).to.not.be.null;
-    const layerProps = layerArray[0].props;
+    toggleLayerOff(0);
+    expect(layerArray[0].displayed).to.equals(false);
+    expect(layerArray[0].data).to.not.be.null;
+    const layerProps = deckGlArray[0].props;
     expect(layerProps).to.have.property('id', 'asset0');
     expect(layerProps).to.have.property('visible', false);
     expect(layerProps).to.have.property('data', mockData);
