@@ -191,8 +191,7 @@ describe('Unit tests for add_disaster page', () => {
     const id = '2002-winter';
     const states = ['DN, WF'];
 
-    cy.document()
-        .then(() => writeNewDisaster(id, states))
+    cy.wrap(writeNewDisaster(id, states))
         .then(() => {
           return getFirestoreRoot()
               .collection('disaster-metadata')
@@ -209,9 +208,7 @@ describe('Unit tests for add_disaster page', () => {
               .doc(id)
               .get();
         })
-        .then((doc) => {
-          expect(doc.exists).to.be.false;
-        });
+        .then((doc) => expect(doc.exists).to.be.false);
   });
 });
 
