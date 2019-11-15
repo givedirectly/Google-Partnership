@@ -138,9 +138,7 @@ const SENTINEL_PENDING_DISASTER = 'pending';
 function disableDisasterPicker(disabled) {
   $('#' + SENTINEL_PENDING_DISASTER).prop('hidden', !disabled);
   const disasterPicker = $('#disaster');
-  if (disabled) {
-    disasterPicker.val(SENTINEL_PENDING_DISASTER)
-  }
+  if (disabled) disasterPicker.val(SENTINEL_PENDING_DISASTER);
   disasterPicker.prop('disabled', disabled);
 }
 
