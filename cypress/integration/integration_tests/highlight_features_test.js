@@ -1,6 +1,6 @@
 describe('Integration tests for highlighting chosen districts', () => {
   it('Clicks on list and highlights district', () => {
-    cy.visit(host);
+    cy.visit('');
     cy.awaitLoad();
 
     // Actually verifying that the element appears is difficult, because the

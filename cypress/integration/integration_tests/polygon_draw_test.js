@@ -5,7 +5,7 @@ const notes = 'Sphinx of black quartz, judge my vow';
 // necessary to draw polygons.
 describe('Integration tests for drawing polygons', () => {
   it('Draws a polygon and edits its notes', () => {
-    cy.visit(host);
+    cy.visit('');
     drawPolygonAndClickOnIt();
     pressPopupButton('edit');
     cy.get('[class="notes"]').type(notes);
@@ -14,7 +14,7 @@ describe('Integration tests for drawing polygons', () => {
   });
 
   it('Draws a polygon, calculates damage', () => {
-    cy.visit(host);
+    cy.visit('');
     // Sometimes the map load interacts strangely with the search. So wait.
     cy.awaitLoad();
     cy.get('[placeholder="Search"]').clear().type('Aldine Estates{enter}');
@@ -26,29 +26,10 @@ describe('Integration tests for drawing polygons', () => {
         .and('eq', 'rgb(0, 0, 0)');
   });
 
-  // This test relies on the earth engine damage count calculation happening
-  // slower than the cypress gets for the grey 'calculating'. Running a bunch
-  // of times manually this seems fairly safe, but there's a chance it flakes
-  // out if something changes. If this does start to flake, we can also consider
-  // lowering the wait at the end of drawPolygonAndClickOnIt.
-  it('Draws a polygon, checks for calculating status', () => {
-    cy.visit(host);
-    drawPolygonAndClickOnIt();
-    cy.get('.popup-calculated-data').contains('calculating');
-    // assert damage text is grey while editing
-    cy.get('.popup-calculated-data')
-        .should('have.css', 'color')
-        .and('eq', 'rgb(128, 128, 128)');
-    cy.awaitLoad(['writeWaiter']);
-    cy.get('.popup-calculated-data')
-        .should('have.css', 'color')
-        .and('eq', 'rgb(0, 0, 0)');
-  });
-
   it('Draws a polygon and deletes it', () => {
     // Accept confirmation when it happens.
     cy.on('window:confirm', () => true);
-    cy.visit(host);
+    cy.visit('');
     drawPolygonAndClickOnIt();
     pressPopupButton('edit');
     cy.get('[class="notes"]').type(notes);
@@ -64,7 +45,7 @@ describe('Integration tests for drawing polygons', () => {
     // Reject confirmation when first happens, then accept it later.
     let confirmValue = false;
     cy.on('window:confirm', () => confirmValue);
-    cy.visit(host);
+    cy.visit('');
     drawPolygonAndClickOnIt();
     pressPopupButton('edit');
     cy.get('[class="notes"]').type(notes);
@@ -76,7 +57,7 @@ describe('Integration tests for drawing polygons', () => {
     // TODO(#18): wait for a notification that all writes have completed instead
     // of a hardcoded wait.
     cy.wait(1000);
-    cy.visit(host);
+    cy.visit('');
     cy.awaitLoad();
     // Polygon is still there.
     clickOnDrawnPolygon();
@@ -91,7 +72,7 @@ describe('Integration tests for drawing polygons', () => {
     clickOnDrawnPolygon();
     assertExactlyPopUps(0, notes);
     cy.wait(1000);
-    cy.visit(host);
+    cy.visit('');
     cy.awaitLoad();
     // Polygon is gone.
     clickOnDrawnPolygon();
@@ -99,7 +80,7 @@ describe('Integration tests for drawing polygons', () => {
   });
 
   it('Draws a polygon, clicks it, closes its info box', () => {
-    cy.visit(host);
+    cy.visit('');
     drawPolygonAndClickOnIt();
     pressPopupButton('edit');
     cy.get('[class="notes"]').type(notes);
@@ -113,7 +94,7 @@ describe('Integration tests for drawing polygons', () => {
   it('Draws a polygon, almost closes while editing', () => {
     cy.on('window:confirm', () => false);
 
-    cy.visit(host);
+    cy.visit('');
     drawPolygonAndClickOnIt();
     pressPopupButton('edit');
     cy.get('[class="notes"]').type(notes);
@@ -125,7 +106,7 @@ describe('Integration tests for drawing polygons', () => {
   it('Draws a polygon, closes while editing', () => {
     cy.on('window:confirm', () => true);
 
-    cy.visit(host);
+    cy.visit('');
     drawPolygonAndClickOnIt();
     pressPopupButton('edit');
     cy.get('[class="notes"]').type(notes);
@@ -139,7 +120,7 @@ describe('Integration tests for drawing polygons', () => {
   });
 
   it('Hides polygon, re-shows, tries to hide during edit', () => {
-    cy.visit(host);
+    cy.visit('');
 
     drawPolygonAndClickOnIt();
     pressPopupButton('edit');
@@ -184,7 +165,7 @@ describe('Integration tests for drawing polygons', () => {
   });
 
   it('Hides, draws new one, tries to hide during edit, re-shows, hides', () => {
-    cy.visit(host);
+    cy.visit('');
 
     drawPolygonAndClickOnIt();
     pressPopupButton('edit');
@@ -228,7 +209,7 @@ describe('Integration tests for drawing polygons', () => {
   });
 
   it('Degenerate polygon with one vertex not allowed', () => {
-    cy.visit(host);
+    cy.visit('');
 
     startDrawing();
     drawPointAndPrepareForNext(400, 400);
@@ -240,28 +221,6 @@ describe('Integration tests for drawing polygons', () => {
     // Assert there is no edit button, even invisible, showing that polygon was
     // not drawn.
     cy.get(':button').each(($elt) => expect($elt.html()).to.not.eql('edit'));
-  });
-
-  it('Draws marker, edits notes, deletes', () => {
-    cy.visit(host);
-
-    // Give Firebase some time to retrieve data.
-    cy.get('[title="Add a marker"]', {timeout: 10000}).click();
-    drawPointAndPrepareForNext(400, 400);
-    cy.get('[title="Stop drawing"]').click();
-    cy.wait(500);
-    // Coordinates chosen to trigger click: trial and error.
-    drawPointAndPrepareForNext(400, 360);
-    pressPopupButton('edit');
-    cy.get('[class="notes"]').type(notes);
-    // Save happens quickly without damage calculation, so don't wait on it.
-    pressPopupButton('save');
-    // There are some test-only viewport scrolling issues when you close the
-    // popup and try to open it again that I'm too lazy to investigate.
-    // Accept confirmation when it happens.
-    cy.on('window:confirm', () => true);
-    pressPopupButton('delete');
-    assertExactlyPopUps(0, notes);
   });
 });
 
@@ -315,9 +274,7 @@ function clickOnDrawnPolygon(offset = 0) {
 }
 
 /**
- * Clicks a visible button inside the map with the given id. If we're clicking
- * save, automatically wait on the result of the save to be written before
- * continuing on.
+ * Clicks a visible button inside the map with the given id.
  * @param {string} button id of html button we want to click
  */
 function pressPopupButton(button) {

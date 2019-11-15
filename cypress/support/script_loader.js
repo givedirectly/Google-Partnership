@@ -1,11 +1,7 @@
 import {CLIENT_ID, getFirebaseConfig} from '../../docs/authenticate';
 import {cypressTestCookieName, earthEngineTestTokenCookieName, firebaseTestTokenCookieName} from '../../docs/in_test_util';
 
-export {loadScriptsBeforeForUnitTests};
-
-global.host = 'http://localhost:8080/';
-
-let testCookieValue = null;
+export {addFirebaseHooks, loadScriptsBeforeForUnitTests};
 
 const scriptMap = new Map([
   [
@@ -23,7 +19,13 @@ const scriptMap = new Map([
       () => typeof (deck) !== 'undefined',
     ],
   ],
-  ['ee', [host + 'lib/ee_api_js_debug.js', () => typeof (ee) !== 'undefined']],
+  [
+    'ee',
+    [
+      'https://rawcdn.githack.com/google/earthengine-api/3bb86bfc4f3d9eed98220f3d225b414982915b86/javascript/build/ee_api_js_debug.js',
+      () => typeof (ee) !== 'undefined',
+    ],
+  ],
   [
     'firebase',
     [
@@ -35,6 +37,13 @@ const scriptMap = new Map([
       () => typeof (firebase) != 'undefined' &&
           typeof (firebase.firestore) != 'undefined' &&
           typeof (firebase.auth) != 'undefined',
+    ],
+  ],
+  [
+    'jquery',
+    [
+      'https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js',
+      () => typeof ($) !== 'undefined',
     ],
   ],
 ]);
@@ -104,19 +113,22 @@ function loadScriptsBeforeForUnitTests(...scriptKeys) {
   }
 }
 
+const testPrefix = new Date().getTime() + '-';
 /**
  * Adds all necessary hooks to set up Firebase, for either unit or integration
  * tests. Populates test Firestore database. Integration tests need to also set
  * the appropriate cookie.
  */
 function addFirebaseHooks() {
+  let testCookieValue = null;
   before(() => cy.task('initializeTestFirebase', null, {
                    timeout: 10000,
                  }).then((token) => global.firestoreCustomToken = token));
   beforeEach(() => {
-    testCookieValue = 'id-' + Math.random();
+    testCookieValue = testPrefix + Math.random();
     cy.task(
         'clearAndPopulateTestFirestoreData', testCookieValue, {timeout: 15000});
+    cy.setCookie(cypressTestCookieName, testCookieValue);
   });
   afterEach(() => cy.task('deleteTestData', testCookieValue));
 }
@@ -132,14 +144,12 @@ function doServerEeSetup() {
 }
 
 if (Cypress.spec.relative.startsWith('cypress/integration/integration_tests')) {
-  // Firebase hooks populate/clear test Firebase data.
   addFirebaseHooks();
   // EE authentication.
   before(doServerEeSetup);
   beforeEach(() => {
     /** wide enough for sidebar */
     cy.viewport(1100, 1700);
-    cy.setCookie(cypressTestCookieName, testCookieValue);
     cy.setCookie(firebaseTestTokenCookieName, firestoreCustomToken);
     cy.setCookie(earthEngineTestTokenCookieName, earthEngineCustomToken);
   });
@@ -153,19 +163,12 @@ if (Cypress.spec.relative.startsWith('cypress/integration/integration_tests')) {
  * To get around this, keep all such statements within functions that are called
  * at runtime.
  * @param {string} scriptUrl
- *     invoked after the script is added to the document to see if the desired
- *     symbol has been loaded yet. It can take a few cycles for the document to
- *     be reprocessed. The callback should normally return
- * "typeof(desiredSymbol) !== 'undefined'".
- *
  */
 function addScriptToDocument(scriptUrl) {
   const script = document.createElement('script');
   script.setAttribute('src', scriptUrl);
   script.setAttribute('type', 'text/javascript');
-
-  const headElt = document.getElementsByTagName('head');
-  headElt[0].appendChild(script);
+  document.head.appendChild(script);
 }
 
 /**

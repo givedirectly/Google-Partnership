@@ -7,7 +7,7 @@ export {getDisaster, getResources};
  * @return {DisasterMapValue}
  */
 function getResources() {
-  return disasters.get(disaster);
+  return disasters.get(getDisaster());
 }
 
 /**

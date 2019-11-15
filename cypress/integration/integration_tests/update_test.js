@@ -12,7 +12,7 @@ describe('Integration test for update.js', () => {
   //    '.google-visualization-table-page-numbers', but never found it.
 
   it('Checks list size updates with higher threshold', () => {
-    cy.visit(host);
+    cy.visit('');
     cy.awaitLoad();
 
     cy.get('[id="sidebar-toggle-thresholds"]').click();

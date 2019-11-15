@@ -1,7 +1,8 @@
-import {getFirestoreRoot} from '../../../docs/authenticate';
+import {getFirestoreRoot} from '../../../docs/firestore_document';
 import * as loading from '../../../docs/loading';
-import {processUserRegions, StoredShapeData} from '../../../docs/polygon_draw';
+import {processUserRegions, setUpPolygonDrawing, StoredShapeData} from '../../../docs/polygon_draw';
 import * as resourceGetter from '../../../docs/resources';
+import SettablePromise from '../../../docs/settable_promise';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 
 const polyCoords = [
@@ -22,6 +23,7 @@ const calculatedData = {
 describe('Unit test for ShapeData', () => {
   loadScriptsBeforeForUnitTests('ee', 'maps', 'firebase');
   let polygonGeometry;
+  let damageCollection;
   before(() => {
     polyLatLng = polyCoords.map((pair) => new google.maps.LatLng(pair));
     polygonGeometry = polyLatLng.map(
@@ -45,7 +47,7 @@ describe('Unit test for ShapeData', () => {
     const featureCollection =
         ee.FeatureCollection([feature1, feature2, feature3]);
     // Polygon contains only first damage point.
-    const damageCollection = ee.FeatureCollection([
+    damageCollection = ee.FeatureCollection([
       ee.Feature(ee.Geometry.Point([1.5, 1.5])),
       ee.Feature(ee.Geometry.Point([200, 200])),
     ]);
@@ -176,6 +178,114 @@ describe('Unit test for ShapeData', () => {
     });
   });
 
+  it('Shows calculating before update finishes', () => {
+    // polygon_draw.update creates an ee.List to evaluate the numbers it needs.
+    // To make sure that update calculation does not finish until we're ready,
+    // lightly wrap ee.List.evaluate and wait on a Promise to finish.
+    // This function will be called below when we're ready for the calculation
+    // to be finished.
+    let callWhenCalculationCanComplete = null;
+    const promiseThatAllPreCalculationAssertionsAreDone =
+        new Promise((resolve) => callWhenCalculationCanComplete = resolve);
+    // Replace ee.List so that we can have access to the returned object and
+    // change its evaluate call.
+    const oldList = ee.List;
+    ee.List = (list) => {
+      ee.List = oldList;
+      const returnValue = ee.List(list);
+      // Replace returnValue.evaluate so that we can delay calling the callback
+      // until the calculation is supposed to have completed.
+      const oldEvaluate = returnValue.evaluate;
+      returnValue.evaluate = (callback) => {
+        returnValue.evaluate = oldEvaluate;
+        // Do the evaluate, but don't return back to polygon_draw.update's
+        // callback handler until our pre-calculation assertions are done.
+        returnValue.evaluate(
+            (result, err) => promiseThatAllPreCalculationAssertionsAreDone.then(
+                () => callback(result, err)));
+      };
+      return returnValue;
+    };
+    const event = new Event('overlaycomplete');
+    cy.document()
+        .then((document) => {
+          const div = document.createElement('div');
+          document.body.appendChild(div);
+          const map =
+              new google.maps.Map(div, {center: {lat: 0, lng: 0}, zoom: 1});
+          event.overlay = new google.maps.Polygon({
+            map: map,
+            paths: [{lat: 0, lng: 0}, {lat: 1, lng: 1}, {lat: 0, lng: 1}],
+          });
+          return cy.window().then(
+              (win) => setUpPolygonDrawing(map, Promise.resolve(), win));
+        })
+        .then((drawingManager) => {
+          google.maps.event.trigger(drawingManager, 'overlaycomplete', event);
+          updatePromise.setPromise(event.resultPromise);
+        });
+    firebaseCollection.add = () => Promise.resolve({id: 'id'});
+    const updatePromise = new SettablePromise();
+    cy.get('.popup-calculated-data').contains('calculating');
+    cy.get('.popup-calculated-data')
+        .should('have.css', 'color')
+        .and('eq', 'rgb(128, 128, 128)')
+        .then(() => callWhenCalculationCanComplete(null));
+    cy.wrap(updatePromise.getPromise());
+    cy.get('.popup-calculated-data')
+        .should('have.css', 'color')
+        .and('eq', 'rgb(0, 0, 0)');
+  });
+
+  it('Draws marker, edits notes, then deletes', () => {
+    // Accept confirmation when it happens.
+    cy.on('window:confirm', () => true);
+    firebaseCollection.add = () => {};
+    firebaseCollection.doc = () => {};
+    const addStub =
+        cy.stub(firebaseCollection, 'add').returns(Promise.resolve({id: 'id'}));
+    const docStubObject = {};
+    docStubObject.set = () => {};
+    docStubObject.delete = () => {};
+    const setStub = cy.stub(docStubObject, 'set').returns(Promise.resolve());
+    const deleteStub =
+        cy.stub(docStubObject, 'delete').returns(Promise.resolve());
+    const docStub = cy.stub(firebaseCollection, 'doc').returns(docStubObject);
+    const updatePromise = new SettablePromise();
+    const event = new Event('overlaycomplete');
+    let marker;
+    cy.document()
+        .then((document) => {
+          const div = document.createElement('div');
+          document.body.appendChild(div);
+          const map =
+              new google.maps.Map(div, {center: {lat: 0, lng: 0}, zoom: 1});
+          marker =
+              new google.maps.Marker({map: map, position: {lat: 0, lng: 0}});
+          event.overlay = marker;
+          return cy.window().then(
+              (win) => setUpPolygonDrawing(map, Promise.resolve(), win));
+        })
+        .then((drawingManager) => {
+          google.maps.event.trigger(drawingManager, 'overlaycomplete', event);
+          updatePromise.setPromise(event.resultPromise);
+        })
+        .then(() => google.maps.event.trigger(marker, 'click'))
+        .then(() => {
+          expect(addStub).to.be.calledOnce;
+          pressPopupButton('edit');
+          // Force-type because we don't have a real page, so may not be
+          // visible.
+          cy.get('[class="notes"]').type('my notes', {force: true});
+          pressPopupButton('save').then(() => {
+            expect(docStub).to.be.calledOnce;
+            expect(setStub).to.be.calledOnce;
+          });
+          pressPopupButton('delete').then(
+              () => expect(deleteStub).to.be.calledOnce);
+        });
+  });
+
   it('Skips update if nothing changed', () => {
     const popup = new StubPopup();
     popup.notes = 'my notes';
@@ -273,4 +383,15 @@ class StubPopup {
   setCalculatedData(calculatedData) {
     this.calculatedData = calculatedData;
   }
+}
+
+/**
+ * Clicks a button inside the map with the given id.
+ * @param {string} button id of html button we want to click
+ * @return {Cypress.Chainable} result of get
+ */
+function pressPopupButton(button) {
+  // Force-click because we don't have a real page, so who knows what elements
+  // are "visible".
+  return cy.get(':button').contains(button).click({force: true});
 }

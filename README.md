@@ -68,10 +68,9 @@ https://dashboard.cypress.io in the "Runs" tab under "Settings".
 * Run `clang-format` or `eslint` on all relevant files:
 
     ```shell
-    # Following two lines only need to be run once per shell.
-    shopt -s extglob
-    SOURCE_FILES='client-side/static/!(ee_api_js_debug).js 
-        cypress/integration/**/*.js cypress/support/!(commands).js'
+    # Following line only needs to be run once per shell.
+    SOURCE_FILES='client-side/static/*.js 
+        cypress/integration/**/*.js cypress/support/*.js cypress/plugins/*.js'
 
     clang-format -i --style=Google $SOURCE_FILES
     yarn run eslint $SOURCE_FILES

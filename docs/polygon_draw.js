@@ -1,17 +1,17 @@
-import {getFirestoreRoot} from './authenticate.js';
 import {mapContainerId, writeWaiterId} from './dom_constants.js';
 import {createError} from './error.js';
+import {getFirestoreRoot} from './firestore_document.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {geoPointToLatLng, latLngToGeoPoint} from './map_util.js';
 import {createPopup, isMarker, setUpPopup} from './popup.js';
 import {getResources} from './resources.js';
 import {userRegionData} from './user_region_data.js';
 
-// ShapeData is only for testing.
+// StoredShapeData is only for testing.
 export {
   displayCalculatedData,
   processUserRegions,
-  setUpPolygonDrawing as default,
+  setUpPolygonDrawing,
   StoredShapeData,
 };
 
@@ -310,11 +310,13 @@ const appearance = {
  * @param {google.maps.Map} map
  * @param {Promise<any>} firebasePromise Promise that will complete when
  *     Firebase authentication is finished
+ * @param {Window} globalWindow DOM Window (injected for tests)
+ * @return {Promise} Promise that contains DrawingManager when complete
  */
-function setUpPolygonDrawing(map, firebasePromise) {
-  setUpPopup();
+function setUpPolygonDrawing(map, firebasePromise, globalWindow = window) {
+  setUpPopup(globalWindow);
 
-  firebasePromise.then(() => {
+  return firebasePromise.then(() => {
     const drawingManager = new google.maps.drawing.DrawingManager({
       drawingControl: true,
       drawingControlOptions: {drawingModes: ['marker', 'polygon']},
@@ -334,10 +336,12 @@ function setUpPolygonDrawing(map, firebasePromise) {
       const popup = createPopup(feature, map, '');
       const data = new StoredShapeData(null, null, null, popup);
       userRegionData.set(feature, data);
-      data.update();
+      // Set the promise here for use in tests.
+      event.resultPromise = data.update();
     });
 
     drawingManager.setMap(map);
+    return drawingManager;
   });
 }
 
