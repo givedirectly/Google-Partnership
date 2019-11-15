@@ -1,5 +1,5 @@
 import {LayerType} from '../../../docs/firebase_layers.js';
-import {deckGlArray, DeckParams, LayerDisplayData, layerArray, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from '../../../docs/layer_util.js';
+import {deckGlArray, DeckParams, layerArray, LayerDisplayData, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from '../../../docs/layer_util.js';
 import * as loading from '../../../docs/loading';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 
@@ -46,11 +46,11 @@ describe('Unit test for toggleLayerOn', () => {
     layerArray[0] =
         new LayerDisplayData(new DeckParams('asset0', colorProperties), true);
     layerArray[0].data = mockData;
-    layerArray[1] = new LayerDisplayData(
-        new DeckParams('asset1', colorProperties), false);
+    layerArray[1] =
+        new LayerDisplayData(new DeckParams('asset1', colorProperties), false);
     layerArray[1].data = mockData;
-    layerArray[2] = new LayerDisplayData(
-        new DeckParams('asset2', colorProperties), false);
+    layerArray[2] =
+        new LayerDisplayData(new DeckParams('asset2', colorProperties), false);
     // Initialize deck object in production.
     setMapToDrawLayersOn(null);
     deckGlArray[0] = new deck.GeoJsonLayer({});

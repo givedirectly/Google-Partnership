@@ -18,7 +18,7 @@ export {
   toggleLayerOn,
 };
 // @VisibleForTesting
-export {deckGlArray, LayerDisplayData, layerArray};
+export {deckGlArray, layerArray, LayerDisplayData};
 
 const scoreLayerName = 'score';
 
