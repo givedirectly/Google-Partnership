@@ -128,7 +128,7 @@ function writeNewDisaster(disasterId, states) {
       .then(() => true);
 }
 
-const SENTINEL_PENDING_DISASTER = 'pending';
+// const SENTINEL_PENDING_DISASTER = 'pending';
 
 /**
  * Disables or enables the disaster picker including setting to a '...' options
