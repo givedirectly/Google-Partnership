@@ -250,11 +250,10 @@ describe('Unit test for toggleLayerOn', () => {
 
     // Release evaluation.
     latch.release();
-    cy.wrap(promise)
-        .then(() => {
-          expect(loadingFinishedStub).to.be.calledOnce;
-          expect(map.overlayMapTypes.getAt(3)).to.not.be.null;
-        });
+    cy.wrap(promise).then(() => {
+      expect(loadingFinishedStub).to.be.calledOnce;
+      expect(map.overlayMapTypes.getAt(3)).to.not.be.null;
+    });
   });
 
   it('tests score layer and deck management', () => {
@@ -356,8 +355,8 @@ function createGoogleMap() {
 }
 
 /**
- * Stubs out the ee.Image constructor to use a dummy image and returns a CallbackLatch
- * that will release the image's #getMap callback.
+ * Stubs out the ee.Image constructor to use a dummy image and returns a
+ * CallbackLatch that will release the image's #getMap callback.
  * @return {CallbackLatch}
  */
 function stubOutImageAndGetLatch() {

@@ -181,32 +181,34 @@ function addImageLayer(map, imageAsset, layer) {
   const index = layer['index'];
   const layerDisplayData = new LayerDisplayData(null, true);
   layerArray[index] = layerDisplayData;
-  layerDisplayData.pendingPromise = createLoadingAwarePromise((resolve, reject) => {
-    imageAsset.getMap({
-      visParams: imgStyles,
-      callback: (layerId, failure) => {
-        if (layerId) {
-          const overlay = new ee.MapLayerOverlay(
-              'https://earthengine.googleapis.com/map', layerId.mapid,
-              layerId.token, {});
-          layerDisplayData.overlay = overlay;
-          // Check in case the status has changed while the callback was
-          // running.
-          if (layerDisplayData.displayed) {
-            resolveOnTilesFinished(layerDisplayData, resolve);
-            showOverlayLayer(overlay, index, map);
-          } else {
-            resolve();
-          }
-        } else {
-          // TODO: if there's an error, disable checkbox, add tests for this.
-          layerDisplayData.displayed = false;
-          reject(failure);
-        }
-        layerDisplayData.pendingPromise = null;
-      },
-    });
-  });
+  layerDisplayData.pendingPromise =
+      createLoadingAwarePromise((resolve, reject) => {
+        imageAsset.getMap({
+          visParams: imgStyles,
+          callback: (layerId, failure) => {
+            if (layerId) {
+              const overlay = new ee.MapLayerOverlay(
+                  'https://earthengine.googleapis.com/map', layerId.mapid,
+                  layerId.token, {});
+              layerDisplayData.overlay = overlay;
+              // Check in case the status has changed while the callback was
+              // running.
+              if (layerDisplayData.displayed) {
+                resolveOnTilesFinished(layerDisplayData, resolve);
+                showOverlayLayer(overlay, index, map);
+              } else {
+                resolve();
+              }
+            } else {
+              // TODO: if there's an error, disable checkbox, add tests for
+              // this.
+              layerDisplayData.displayed = false;
+              reject(failure);
+            }
+            layerDisplayData.pendingPromise = null;
+          },
+        });
+      });
   return layerDisplayData.pendingPromise;
 }
 
