@@ -29,5 +29,5 @@ $('#create-new-disaster').on('click', () => {
 
 $('#cancel-new-disaster').on('click', () => {
   enableDisasterPicker(true);
-  toggleDisaster($('#disaster').val());
+  $('#disaster').trigger('change');
 });
