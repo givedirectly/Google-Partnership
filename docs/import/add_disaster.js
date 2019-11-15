@@ -137,7 +137,7 @@ function writeNewDisaster(disasterId, states) {
 function enableDisasterPicker(enabled) {
   if (enabled) {
     $('#disaster').show();
-    $('#pending-disaster').hide()
+    $('#pending-disaster').hide();
   } else {
     $('#disaster').hide();
     $('#pending-disaster').show();
