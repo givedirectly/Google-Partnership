@@ -265,6 +265,7 @@ function createAssetPickers(states) {
 /**
  * Deletes a disaster from firestore. Confirms first. Returns when deletion is
  * complete (or instantly if deletion doesn't actually happen).
+ * @param {Window} globalWindow DOM Window (for test injection)
  * @return {Promise<void>}
  */
 function deleteDisaster(globalWindow = window) {

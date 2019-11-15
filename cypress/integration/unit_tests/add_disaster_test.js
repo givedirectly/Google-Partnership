@@ -185,8 +185,8 @@ describe('Unit tests for add_disaster page', () => {
         .then((success) => expect(success).to.be.true);
   });
 
-  it.only('deletes a disaster', () => {
-    // cy.on('window:confirm', () => true);
+  it('deletes a disaster', () => {
+    cy.on('window:confirm', () => true);
 
     const id = '2002-winter';
     const states = ['DN, WF'];
@@ -212,7 +212,7 @@ describe('Unit tests for add_disaster page', () => {
         .then((doc) => {
           expect(doc.exists).to.be.false;
         });
-  })
+  });
 });
 
 /**
