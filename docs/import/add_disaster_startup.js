@@ -21,10 +21,9 @@ const authenticator = new Authenticator(
     });
 authenticator.start();
 
-$('#create-new-disaster')
-    .on('click', () => {
-      // TODO: disable disaster picker box while creating a new disaster and
-      // add an exit button.
-      $('#new-disaster').show();
-      $('#selected-disaster').hide();
-    });
+$('#create-new-disaster').on('click', () => {
+  // TODO: disable disaster picker box while creating a new disaster and
+  // add an exit button.
+  $('#new-disaster').show();
+  $('#selected-disaster').hide();
+});
