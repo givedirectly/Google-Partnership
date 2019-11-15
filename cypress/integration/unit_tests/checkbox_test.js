@@ -252,7 +252,7 @@ describe('Unit test for toggleLayerOn', () => {
     // Still before evaluation finishes, toggle back on.
     const togglePromise = toggleLayerOn(mockFirebaseLayers[3], map);
     expect(togglePromise).equals(promise);
-    // Overlay list now has null instead of undefined, but no biggie.
+    // Still null.
     expect(map.overlayMapTypes.getAt(3)).to.be.null;
 
     // Loading can't finish until EE evaluation finishes, which we've frozen.
@@ -272,9 +272,7 @@ describe('Unit test for toggleLayerOn', () => {
     setMapToDrawLayersOn(null);
     const overlaySpy = cy.spy(deckSpy.returnValues[0], 'setProps');
     let numCalls = 0;
-    /**
-     * @return {array<deck.GeoJsonLayer>}
-     */
+    /** @return {array<deck.GeoJsonLayer>} */
     function getLatestLayer() {
       return overlaySpy.args[numCalls++][0].layers;
     }
