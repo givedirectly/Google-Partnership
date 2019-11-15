@@ -369,13 +369,12 @@ function processImageCollection(layerName) {
 function addLayerFromGeoJsonPromise(featuresPromise, deckParams, index) {
   const layerDisplayData = new LayerDisplayData(deckParams, true);
   layerArray[index] = layerDisplayData;
-  const result = wrapPromiseLoadingAware(featuresPromise.then((features) => {
+  layerDisplayData.pendingPromise = wrapPromiseLoadingAware(featuresPromise.then((features) => {
     layerDisplayData.data = features;
     addLayerFromFeatures(layerDisplayData, index);
     layerDisplayData.pendingPromise = null;
   }));
-  layerDisplayData.pendingPromise = result;
-  return result;
+  return layerDisplayData.pendingPromise;
 }
 
 /**
