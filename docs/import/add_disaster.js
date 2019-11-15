@@ -141,7 +141,6 @@ function enableDisasterPicker(enabled) {
   // const disasterPicker = $('#disaster');
   // if (!enabled) disasterPicker.val(SENTINEL_PENDING_DISASTER);
   // disasterPicker.prop('disabled', !enabled);
-
 }
 
 /**
