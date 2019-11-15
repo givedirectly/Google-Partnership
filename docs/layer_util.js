@@ -54,7 +54,7 @@ let deckGlOverlay;
  * Values of layerArray. In addition to basic data from constructor, will
  * have a data attribute for deck layers, and an overlay attribute for
  * image/other layers. Will also have a "pendingPromise" field to detect if an
- * EarthEngine operation is currently in flight.
+ * initial rendering operation is currently in flight.
  */
 class LayerDisplayData {
   /**
@@ -130,6 +130,10 @@ function toggleLayerOn(layer, map) {
     return null;
   }
   if (layerDisplayData.overlay) {
+    // This promise does not need to be stored in the pendingPromise field
+    // because it will complete immediately if this layer is toggled off (see
+    // the resolveOnTilesFinished doc). That means that if toggleLayerOn is
+    // called again for this layer, the promise will already have completed.
     return createLoadingAwarePromise((resolve) => {
       // TODO(janakr): When we add non-EE assets, they will have to know how
       //  to call the finish loading callback too.
