@@ -7,6 +7,7 @@ export {
   addDisaster,
   createAssetPickers,
   createOptionFrom,
+  deleteDisaster,
   disasters,
   emptyCallback,
   getAssetsFromEe,
@@ -35,6 +36,10 @@ function enableWhenReady() {
   const addDisasterButton = $('#add-disaster-button');
   addDisasterButton.prop('disabled', false);
   addDisasterButton.on('click', addDisaster);
+
+  const deleteButton = $('#delete');
+  deleteButton.prop('disabled', false);
+  deleteButton.on('click', deleteDisaster);
 
   // populate disaster picker.
   return getFirestoreRoot()
@@ -258,6 +263,27 @@ function createAssetPickers(states) {
 }
 
 /**
+ * Deletes a disaster from firestore. Confirms first. Returns when deletion is
+ * complete (or instantly if deletion doesn't actually happen).
+ * @return {Promise<void>}
+ */
+function deleteDisaster(globalWindow = window) {
+  const disasterPicker = $('#disaster');
+  const disasterId = disasterPicker.val();
+  if (globalWindow.confirm(
+          'Delete ' + disasterId + '? This action cannot be undone')) {
+    disasters.delete(disasterId);
+    disasterPicker.val(disasterPicker.children().eq(0).val()).trigger('change');
+    $('#' + disasterId).remove();
+    return getFirestoreRoot()
+        .collection('disaster-metadata')
+        .doc(disasterId)
+        .delete();
+  }
+  return Promise.resolve();
+}
+
+/**
  * Utility function for setting the status div.
  * @param {String} text
  */
@@ -276,15 +302,8 @@ function clearStatus() {
  * @return {JQuery<HTMLOptionElement>}
  */
 function createOptionFrom(innerTextAndValue) {
-  return createOption(innerTextAndValue, innerTextAndValue);
-}
-
-/**
- * Utility function for creating an option.
- * @param {String} innerText
- * @param {String} value
- * @return {JQuery<HTMLOptionElement>}
- */
-function createOption(innerText, value) {
-  return $(document.createElement('option')).html(innerText).val(value);
+  return $(document.createElement('option'))
+      .html(innerTextAndValue)
+      .val(innerTextAndValue)
+      .prop('id', innerTextAndValue);
 }
