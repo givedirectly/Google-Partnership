@@ -22,10 +22,5 @@ const authenticator = new Authenticator(
     });
 authenticator.start();
 
-$('#create-new-disaster').on('click', () => {
-  toggleState(false);
-});
-
-$('#cancel-new-disaster').on('click', () => {
-  toggleState(true);
-});
+$('#create-new-disaster').on('click', () => toggleState(false));
+$('#cancel-new-disaster').on('click', () => toggleState(true));
