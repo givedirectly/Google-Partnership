@@ -51,6 +51,7 @@ function enableWhenReady() {
         disasterPicker.on('change', () => toggleDisaster(disasterPicker.val()));
         const mostRecent = querySnapshot.docs[querySnapshot.size - 1].id;
         disasterPicker.val(mostRecent).trigger('change');
+        toggleState(true);
       });
 }
 
@@ -117,8 +118,7 @@ function writeNewDisaster(disasterId, states) {
   });
   if (!added) disasterPicker.append(createOptionFrom(disasterId));
 
-  disasterPicker.val(disasterId);
-  disasterPicker.trigger('change');
+  disasterPicker.val(disasterId).trigger('change');
   toggleState(true);
 
   return getFirestoreRoot()
