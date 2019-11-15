@@ -135,14 +135,14 @@ function writeNewDisaster(disasterId, states) {
 function toggleState(known) {
   if (known) {
     $('#disaster').show();
+    $('#selected-disaster').show();
     $('#pending-disaster').hide();
     $('#new-disaster').hide();
-    $('#selected-disaster').show();
   } else {
     $('#disaster').hide();
+    $('#selected-disaster').hide();
     $('#pending-disaster').show();
     $('#new-disaster').show();
-    $('#selected-disaster').hide();
   }
 }
 
