@@ -39,7 +39,7 @@ function enableWhenReady() {
 
   const deleteButton = $('#delete');
   deleteButton.prop('disabled', false);
-  deleteButton.on('click', deleteDisaster);
+  deleteButton.on('click', () => deleteDisaster(window));
 
   // populate disaster picker.
   return getFirestoreRoot()
@@ -287,7 +287,7 @@ function createAssetPickers(states) {
  * @param {Window} globalWindow DOM Window (for test injection)
  * @return {Promise<void>}
  */
-function deleteDisaster(globalWindow = window) {
+function deleteDisaster(globalWindow) {
   const disasterPicker = $('#disaster');
   const disasterId = disasterPicker.val();
   if (globalWindow.confirm(
