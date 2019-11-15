@@ -1,6 +1,7 @@
 import {authenticateToFirebase, Authenticator} from '../authenticate.js';
 import SettablePromise from '../settable_promise.js';
-import {enableWhenReady, disableDisasterPicker} from './add_disaster.js';
+
+import {disableDisasterPicker, enableWhenReady} from './add_disaster.js';
 import TaskAccumulator from './task_accumulator.js';
 
 export {taskAccumulator};
