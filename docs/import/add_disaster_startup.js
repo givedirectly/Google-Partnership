@@ -1,6 +1,6 @@
 import {authenticateToFirebase, Authenticator} from '../authenticate.js';
 import SettablePromise from '../settable_promise.js';
-import {enableDisasterPicker, enableWhenReady, toggleDisaster} from './add_disaster.js';
+import {toggleState, enableWhenReady} from './add_disaster.js';
 import TaskAccumulator from './task_accumulator.js';
 
 export {taskAccumulator};
@@ -22,12 +22,10 @@ const authenticator = new Authenticator(
 authenticator.start();
 
 $('#create-new-disaster').on('click', () => {
-  enableDisasterPicker(false);
-  $('#new-disaster').show();
-  $('#selected-disaster').hide();
+  toggleState(false);
+
 });
 
 $('#cancel-new-disaster').on('click', () => {
-  enableDisasterPicker(true);
-  $('#disaster').trigger('change');
+  toggleState(true);
 });

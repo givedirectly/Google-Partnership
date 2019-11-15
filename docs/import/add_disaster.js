@@ -1,7 +1,7 @@
 import {eeStatePrefixLength, legacyStateDir} from '../ee_paths.js';
 import {getFirestoreRoot} from '../firestore_document.js';
 
-export {enableDisasterPicker, enableWhenReady, toggleDisaster};
+export {toggleState, enableWhenReady, toggleDisaster};
 // Visible for testing
 export {
   addDisaster,
@@ -55,7 +55,7 @@ function enableWhenReady() {
 }
 
 /**
- * Switch between disasters in the picker.
+ * On change method for disaster picker.
  * @param {String} disaster
  * @return {Promise<void>} completes when we've finished filling all state
  * pickers and pulled from firebase.
@@ -85,8 +85,6 @@ function toggleDisaster(disaster) {
   }
 
   // TODO: display more disaster info including current layers etc.
-  $('#new-disaster').hide();
-  $('#selected-disaster').show();
   return assetPickersDone;
 }
 
@@ -118,9 +116,10 @@ function writeNewDisaster(disasterId, states) {
     }
   });
   if (!added) disasterPicker.append(createOptionFrom(disasterId));
+
   disasterPicker.val(disasterId);
-  enableDisasterPicker(true);
-  toggleDisaster(disasterId);
+  disasterPicker.trigger('change');
+  toggleState(true);
 
   return getFirestoreRoot()
       .collection('disaster-metadata')
@@ -130,24 +129,27 @@ function writeNewDisaster(disasterId, states) {
 }
 
 /**
- * Disables or enables the disaster picker including setting to a '...' options
- * while disabled.
- * @param {boolean} enabled
+ * Changes page state between looking at a known disaster and adding a new one.
+ * @param {boolean} known
  */
-function enableDisasterPicker(enabled) {
-  if (enabled) {
+function toggleState(known) {
+  if (known) {
     $('#disaster').show();
     $('#pending-disaster').hide();
+    $('#new-disaster').hide();
+    $('#selected-disaster').show();
   } else {
     $('#disaster').hide();
     $('#pending-disaster').show();
+    $('#new-disaster').show();
+    $('#selected-disaster').hide();
   }
 }
 
 /**
- * Onclick function for the new disaster form. Writes new disaster to firestore,
- * local disasters map and disaster picker. Doesn't allow name, year or states
- * to be empty fields.
+ * Onclick function for submitting the new disaster form. Writes new disaster
+ * to firestore, local disasters map and disaster picker. Doesn't allow name,
+ * year or states to be empty fields.
  * @return {Promise<boolean>} resolves true if new disaster was successfully
  *     written.
  */
