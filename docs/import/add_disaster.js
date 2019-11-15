@@ -1,7 +1,7 @@
 import {eeStatePrefixLength, legacyStateDir} from '../ee_paths.js';
 import {getFirestoreRoot} from '../firestore_document.js';
 
-export {enableWhenReady, SENTINEL_NEW_DISASTER_VALUE, toggleState};
+export {enableWhenReady, toggleDisaster};
 // Visible for testing
 export {
   addDisaster,
@@ -21,8 +21,6 @@ const disasters = new Map();
 
 // Map of state to list of known assets
 const stateAssets = new Map();
-
-const SENTINEL_NEW_DISASTER_VALUE = 'NEW DISASTER';
 
 // TODO: general reminder to add loading indicators for things like creating
 // new state asset folders, etc.
@@ -50,26 +48,19 @@ function enableWhenReady() {
           disasters.set(name, doc.data().states);
         });
 
-        disasterPicker.on('change', () => toggleState(disasterPicker.val()));
+        disasterPicker.on('change', () => toggleDisaster(disasterPicker.val()));
         const mostRecent = querySnapshot.docs[querySnapshot.size - 1].id;
         disasterPicker.val(mostRecent).trigger('change');
       });
 }
 
 /**
- * Switch between the page creating a new disaster and the page editing a
- * current disaster.
+ *
  * @param {String} disaster
  * @return {Promise<void>} completes when we've finished filling all state
  * pickers and pulled from firebase.
  */
-function toggleState(disaster) {
-  if (disaster === SENTINEL_NEW_DISASTER_VALUE) {
-    $('#new-disaster').show();
-    $('#selected-disaster').hide();
-    return Promise.resolve();
-  }
-
+function toggleDisaster(disaster) {
   const states = disasters.get(disaster);
   const statesToFetch = [];
   for (const state of states) {
@@ -113,7 +104,7 @@ function writeNewDisaster(disasterId, states) {
   }
 
   disasters.set(disasterId, states);
-  toggleState(disasterId);
+  toggleDisaster(disasterId);
 
   clearStatus();
   const disasterOptions = $('#disaster > option');

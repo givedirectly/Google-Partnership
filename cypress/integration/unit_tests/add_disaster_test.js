@@ -14,8 +14,8 @@ describe('Unit tests for add_disaster page', () => {
     cy.wrap(firebase.auth().signInWithCustomToken(firestoreCustomToken));
 
     const disasterPicker = createAndAppend('select', 'disaster');
-    disasterPicker.append(createOptionFrom('2001-summer'));
     disasterPicker.append(createOptionFrom('2003-spring'));
+    disasterPicker.append(createOptionFrom('2001-summer'));
     disasterPicker.val('2003-spring');
 
     createAndAppend('div', 'status').hide();
@@ -86,7 +86,7 @@ describe('Unit tests for add_disaster page', () => {
   });
 
   it('writes a new disaster to firestore', () => {
-    const id = '2002-winter';
+    let id = '2002-winter';
     const states = ['DN, WF'];
 
     cy.wrap(writeNewDisaster(id, states))
@@ -97,6 +97,22 @@ describe('Unit tests for add_disaster page', () => {
           expect(options.length).to.eql(3);
           expect(options.eq(1).val()).to.eql('2002-winter');
           expect(options.eq(1).is(':selected')).to.be.true;
+
+          // boundary condition checking
+          let id = '1000-a';
+          return writeNewDisaster(id, states)
+        })
+        .then((success) => {
+          expect(success).to.be.true;
+          expect($('#disaster').children().eq(3).val()).to.eql('1000-a');
+
+          // boundary condition checking
+          let id = '9999-z';
+          return writeNewDisaster(id, states)
+        })
+        .then((success) => {
+          expect(success).to.be.true;
+          expect($('#disaster').children().eq(0).val()).to.eql('9999-z');
 
           return getFirestoreRoot()
               .collection('disaster-metadata')
