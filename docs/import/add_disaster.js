@@ -102,13 +102,9 @@ function writeNewDisaster(disasterId, states) {
     setStatus('Error: disaster with that name and year already exists.');
     return Promise.resolve(false);
   }
+  disasters.set(disasterId, states);
   clearStatus();
 
-  disasters.set(disasterId, states);
-
-  $('#disaster').val(disasterId);
-  disableDisasterPicker(false);
-  toggleDisaster(disasterId);
   const disasterOptions = $('#disaster > option');
   let added = false;
   // note: let's hope this tool isn't being used in the year 10000.
@@ -121,6 +117,10 @@ function writeNewDisaster(disasterId, states) {
     }
   });
   if (!added) $('#disaster').append(createOptionFrom(disasterId));
+  $('#disaster').val(disasterId);
+  disableDisasterPicker(false);
+  toggleDisaster(disasterId);
+
   return getFirestoreRoot()
       .collection('disaster-metadata')
       .doc(disasterId)
@@ -137,7 +137,11 @@ const SENTINEL_PENDING_DISASTER = 'pending';
  */
 function disableDisasterPicker(disabled) {
   $('#' + SENTINEL_PENDING_DISASTER).prop('hidden', !disabled);
-  $('#disaster').val(SENTINEL_PENDING_DISASTER).prop('disabled', disabled);
+  const disasterPicker = $('#disaster');
+  if (disabled) {
+    disasterPicker.val(SENTINEL_PENDING_DISASTER)
+  }
+  disasterPicker.prop('disabled', disabled);
 }
 
 /**
