@@ -99,16 +99,16 @@ describe('Unit tests for add_disaster page', () => {
           expect(options.eq(1).is(':selected')).to.be.true;
 
           // boundary condition checking
-          let id = '1000-a';
-          return writeNewDisaster(id, states)
+          id = '1000-a';
+          return writeNewDisaster(id, states);
         })
         .then((success) => {
           expect(success).to.be.true;
           expect($('#disaster').children().eq(3).val()).to.eql('1000-a');
 
           // boundary condition checking
-          let id = '9999-z';
-          return writeNewDisaster(id, states)
+          id = '9999-z';
+          return writeNewDisaster(id, states);
         })
         .then((success) => {
           expect(success).to.be.true;
