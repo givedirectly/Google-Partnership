@@ -147,31 +147,15 @@ describe('Unit test for toggleLayerOn', () => {
     });
   });
 
+  // For the next three tests, we do the following setup:
+  // 1. Use a real map, since we want to see that it has an entry in its
+  // overlayMapTypes.
+  // 2. Sub in trivial image, and control the #getMap method of that image so
+  // that we can delay the callback until we're ready.
+  // 3. Stub the loading elements, so we can check when loading starts/ends.
   it('caches computed image overlay and starts loading on EE request', () => {
-    // Set test up:
-    // 1. Use a real map, since we want to see that it has an entry in its
-    // overlayMapTypes.
-    // 2. Sub in trivial image, and control the #getMap method of that image so
-    // that we can delay the callback until we're ready.
-    // 3. Stub the loading elements, so we can check when loading starts/ends.
-    const div = document.createElement('div');
-    document.body.appendChild(div);
-    const map = new google.maps.Map(div, {center: {lat: 0, lng: 0}, zoom: 1});
-
-    const image = ee.Image.constant(0);
-    const oldImageFunction = ee.Image;
-    ee.Image = () => {
-      ee.Image = oldImageFunction;
-      return image;
-    };
-    const oldGetMap = image.getMap;
-    const latch = new CallbackLatch();
-    image.getMap = (props) => {
-      image.getMap = oldGetMap;
-      props.callback = latch.delayedCallback(props.callback);
-      return image.getMap(props);
-    };
-
+    const map = createGoogleMap();
+    const latch = stubOutImageAndGetLatch();
     const loadingStartedStub = cy.stub(loading, 'addLoadingElement');
     const loadingFinishedStub = cy.stub(loading, 'loadingElementFinished');
 
@@ -205,30 +189,8 @@ describe('Unit test for toggleLayerOn', () => {
   });
 
   it('toggles off computed image overlay before EE finishes', () => {
-    // Set test up:
-    // 1. Use a real map, since we want to see that it has an entry in its
-    // overlayMapTypes.
-    // 2. Sub in trivial image, and control the #getMap method of that image so
-    // that we can delay the callback until we're ready.
-    // 3. Stub the loading elements, so we can check when loading starts/ends.
-    const div = document.createElement('div');
-    document.body.appendChild(div);
-    const map = new google.maps.Map(div, {center: {lat: 0, lng: 0}, zoom: 1});
-
-    const image = ee.Image.constant(0);
-    const oldImageFunction = ee.Image;
-    ee.Image = () => {
-      ee.Image = oldImageFunction;
-      return image;
-    };
-    const oldGetMap = image.getMap;
-    const latch = new CallbackLatch();
-    image.getMap = (props) => {
-      image.getMap = oldGetMap;
-      props.callback = latch.delayedCallback(props.callback);
-      return image.getMap(props);
-    };
-
+    const map = createGoogleMap();
+    const latch = stubOutImageAndGetLatch();
     const loadingStartedStub = cy.stub(loading, 'addLoadingElement');
     const loadingFinishedStub = cy.stub(loading, 'loadingElementFinished');
 
@@ -260,30 +222,8 @@ describe('Unit test for toggleLayerOn', () => {
   });
 
   it('toggles off and on computed image overlay before EE finishes', () => {
-    // Set test up:
-    // 1. Use a real map, since we want to see that it has an entry in its
-    // overlayMapTypes.
-    // 2. Sub in trivial image, and control the #getMap method of that image so
-    // that we can delay the callback until we're ready.
-    // 3. Stub the loading elements, so we can check when loading starts/ends.
-    const div = document.createElement('div');
-    document.body.appendChild(div);
-    const map = new google.maps.Map(div, {center: {lat: 0, lng: 0}, zoom: 1});
-
-    const image = ee.Image.constant(0);
-    const oldImageFunction = ee.Image;
-    ee.Image = () => {
-      ee.Image = oldImageFunction;
-      return image;
-    };
-    const oldGetMap = image.getMap;
-    const latch = new CallbackLatch();
-    image.getMap = (props) => {
-      image.getMap = oldGetMap;
-      props.callback = latch.delayedCallback(props.callback);
-      return image.getMap(props);
-    };
-
+    const map = createGoogleMap();
+    const latch = stubOutImageAndGetLatch();
     const loadingStartedStub = cy.stub(loading, 'addLoadingElement');
     const loadingFinishedStub = cy.stub(loading, 'loadingElementFinished');
 
@@ -406,4 +346,33 @@ function stubForEmptyList(callbackReceiver) {
   const emptyEeList = ee.List([]);
   cy.stub(emptyCollection, 'toList').returns(emptyEeList);
   cy.stub(emptyEeList, 'evaluate').callsFake(callbackReceiver);
+}
+
+/** @return {google.maps.Map} for use in a test */
+function createGoogleMap() {
+  const div = document.createElement('div');
+  document.body.appendChild(div);
+  return new google.maps.Map(div, {center: {lat: 0, lng: 0}, zoom: 1});
+}
+
+/**
+ * Stubs out the ee.Image constructor to use a dummy image and returns a CallbackLatch
+ * that will release the image's #getMap callback.
+ * @return {CallbackLatch}
+ */
+function stubOutImageAndGetLatch() {
+  const image = ee.Image.constant(0);
+  const oldImageFunction = ee.Image;
+  ee.Image = () => {
+    ee.Image = oldImageFunction;
+    return image;
+  };
+  const oldGetMap = image.getMap;
+  const latch = new CallbackLatch();
+  image.getMap = (props) => {
+    image.getMap = oldGetMap;
+    props.callback = latch.delayedCallback(props.callback);
+    return image.getMap(props);
+  };
+  return latch;
 }
