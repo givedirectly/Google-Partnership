@@ -20,14 +20,15 @@
 </head>
 <body>
 
-<form action="" id="disaster-picker">
+<div id="disaster-picker">
   <label for="disaster">Disaster: </label>
-  <select id="disaster" style="width: 160px">
-    <option value="pending" id="pending" hidden="true">...</option>
+  <select id="disaster" style="width: 160px"></select>
+  <select id="pending-disaster" style="width: 160px" hidden="true" disabled="true">
+    <option value="pending" id="pending">...</option>
   </select>
   <span> </span>
   <button type="button" id="create-new-disaster">Create New Disaster</button>
-</form><br>
+</div>
 <div id="status"></div>
 <div id="new-disaster" hidden="true">
   <button type="button" id="cancel-new-disaster">Cancel</button>

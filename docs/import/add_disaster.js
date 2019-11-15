@@ -1,7 +1,7 @@
 import {eeStatePrefixLength, legacyStateDir} from '../ee_paths.js';
 import {getFirestoreRoot} from '../firestore_document.js';
 
-export {enableDisasterPicker, enableWhenReady};
+export {enableDisasterPicker, enableWhenReady, toggleDisaster};
 // Visible for testing
 export {
   addDisaster,
@@ -105,7 +105,8 @@ function writeNewDisaster(disasterId, states) {
   disasters.set(disasterId, states);
   clearStatus();
 
-  const disasterOptions = $('#disaster > option');
+  const disasterPicker = $('#disaster');
+  const disasterOptions = disasterPicker.children();
   let added = false;
   // note: let's hope this tool isn't being used in the year 10000.
   // comment needed to quiet eslint on no-invalid-this rules
@@ -116,9 +117,9 @@ function writeNewDisaster(disasterId, states) {
       return false;
     }
   });
-  if (!added) $('#disaster').append(createOptionFrom(disasterId));
-  $('#disaster').val(disasterId);
-  enableDisasterPicker(false);
+  if (!added) disasterPicker.append(createOptionFrom(disasterId));
+  disasterPicker.val(disasterId);
+  enableDisasterPicker(true);
   toggleDisaster(disasterId);
 
   return getFirestoreRoot()
@@ -128,19 +129,19 @@ function writeNewDisaster(disasterId, states) {
       .then(() => true);
 }
 
-// const SENTINEL_PENDING_DISASTER = 'pending';
-
 /**
  * Disables or enables the disaster picker including setting to a '...' options
- *  while disabled.
+ * while disabled.
  * @param {boolean} enabled
  */
 function enableDisasterPicker(enabled) {
-  enabled ? $('#disaster-picker').show() : $('#disaster-picker').hide();
-  // $('#' + SENTINEL_PENDING_DISASTER).prop('hidden', enabled);
-  // const disasterPicker = $('#disaster');
-  // if (!enabled) disasterPicker.val(SENTINEL_PENDING_DISASTER);
-  // disasterPicker.prop('disabled', !enabled);
+  if (enabled) {
+    $('#disaster').show();
+    $('#pending-disaster').hide()
+  } else {
+    $('#disaster').hide();
+    $('#pending-disaster').show();
+  }
 }
 
 /**

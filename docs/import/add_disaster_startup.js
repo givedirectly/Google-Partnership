@@ -1,6 +1,6 @@
 import {authenticateToFirebase, Authenticator} from '../authenticate.js';
 import SettablePromise from '../settable_promise.js';
-import {enableDisasterPicker, enableWhenReady} from './add_disaster.js';
+import {enableDisasterPicker, enableWhenReady, toggleDisaster} from './add_disaster.js';
 import TaskAccumulator from './task_accumulator.js';
 
 export {taskAccumulator};
@@ -23,14 +23,11 @@ authenticator.start();
 
 $('#create-new-disaster').on('click', () => {
   enableDisasterPicker(false);
-  // TODO: disable disaster picker box while creating a new disaster and
-  // add an exit button.
   $('#new-disaster').show();
   $('#selected-disaster').hide();
 });
 
 $('#cancel-new-disaster').on('click', () => {
   enableDisasterPicker(true);
-  const disasterPicker = $('#disaster');
-  disasterPicker.val(disasterPicker.children().eq(0).val()).trigger('change');
+  toggleDisaster($('#disaster').val());
 });
