@@ -86,6 +86,7 @@ describe('Unit test for toggleLayerOn', () => {
     let callback = null;
     stubForEmptyList((callb) => callback = callb);
     const promise = toggleLayerOn(mockFirebaseLayers[2]);
+    expect(promise).to.not.be.null;
     expect(layerArray[2].displayed).to.be.true;
     expect(layerArray[2].data).to.be.undefined;
     callback(emptyList);
@@ -107,6 +108,7 @@ describe('Unit test for toggleLayerOn', () => {
     let callback = null;
     stubForEmptyList((callb) => callback = callb);
     const promise = toggleLayerOn(mockFirebaseLayers[2]);
+    expect(promise).to.not.be.null;
     expect(layerArray[2].displayed).to.be.true;
     expect(layerArray[2].data).to.be.undefined;
     toggleLayerOff(2);
@@ -129,6 +131,7 @@ describe('Unit test for toggleLayerOn', () => {
     let callback = null;
     stubForEmptyList((callb) => callback = callb);
     const promise = toggleLayerOn(mockFirebaseLayers[2]);
+    expect(promise).to.not.be.null;
     expect(layerArray[2].displayed).to.be.true;
     expect(layerArray[2].data).to.be.undefined;
     toggleLayerOff(2);
@@ -161,6 +164,7 @@ describe('Unit test for toggleLayerOn', () => {
 
     // Start the test.
     const promise = addLayer(mockFirebaseLayers[3], map);
+    expect(promise).to.not.be.null;
     expect(loadingStartedStub).to.be.calledOnce;
     // Loading can't finish until EE evaluation finishes, which we've frozen.
     expect(loadingFinishedStub).to.not.be.called;
@@ -178,7 +182,9 @@ describe('Unit test for toggleLayerOn', () => {
           expect(map.overlayMapTypes.getAt(3)).is.null;
 
           // Turn overlay back on.
-          return toggleLayerOn(mockFirebaseLayers[3], map);
+          const togglePromise = toggleLayerOn(mockFirebaseLayers[3], map);
+          expect(togglePromise).to.not.be.null;
+          return togglePromise;
         })
         .then(() => {
           const nextOverlay = map.overlayMapTypes.getAt(3);
@@ -196,6 +202,7 @@ describe('Unit test for toggleLayerOn', () => {
 
     // Start the test.
     const promise = addLayer(mockFirebaseLayers[3], map);
+    expect(promise).to.not.be.null;
     // Loading has started, but map is unaffected.
     expect(loadingStartedStub).to.be.calledOnce;
     expect(map.overlayMapTypes).to.have.length(0);
@@ -216,7 +223,9 @@ describe('Unit test for toggleLayerOn', () => {
           expect(map.overlayMapTypes.getAt(3)).to.be.null;
 
           // Turn overlay back on.
-          return toggleLayerOn(mockFirebaseLayers[3], map);
+          const togglePromise = toggleLayerOn(mockFirebaseLayers[3], map);
+          expect(togglePromise).to.not.be.null;
+          return togglePromise;
         })
         .then(() => expect(map.overlayMapTypes.getAt(3)).is.not.null);
   });
@@ -229,6 +238,7 @@ describe('Unit test for toggleLayerOn', () => {
 
     // Start the test.
     const promise = addLayer(mockFirebaseLayers[3], map);
+    expect(promise).to.not.be.null;
     // Loading has started, but map is unaffected.
     expect(loadingStartedStub).to.be.calledOnce;
     expect(map.overlayMapTypes).to.have.length(0);
@@ -273,6 +283,7 @@ describe('Unit test for toggleLayerOn', () => {
     const promise = new Promise((resolve) => resolveFunction = resolve);
 
     const scorePromise = addScoreLayer(promise);
+    expect(scorePromise).to.not.be.null;
     // Nothing happens until promise we passed in is resolved.
     expect(overlaySpy).to.not.be.called;
     const promiseResult = ['a'];
