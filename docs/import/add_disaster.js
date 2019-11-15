@@ -1,7 +1,7 @@
 import {eeStatePrefixLength, legacyStateDir} from '../ee_paths.js';
 import {getFirestoreRoot} from '../firestore_document.js';
 
-export {toggleState, enableWhenReady, toggleDisaster};
+export {enableWhenReady, toggleDisaster, toggleState};
 // Visible for testing
 export {
   addDisaster,
