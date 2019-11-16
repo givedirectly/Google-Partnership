@@ -272,7 +272,8 @@ function resolveOnTilesFinished(layerDisplayData, resolve) {
  * map location into one tile.
  * @param {google.maps.Map} map
  * @param {Object} layer Data for layer coming from Firestore
- * @return {Promise<void>} Resolved Promise. See TODO in CompositeImageMapType for work needed to know when layer is rendered
+ * @return {Promise<void>} Resolved Promise. See TODO in CompositeImageMapType
+ *     for work needed to know when layer is rendered
  */
 function addTileLayer(map, layer) {
   const layerDisplayData = new LayerDisplayData(null, true);
