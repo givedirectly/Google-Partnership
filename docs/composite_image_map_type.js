@@ -23,10 +23,12 @@ class CompositeImageMapType {
    */
   constructor(options) {
     this.tileUrls = options.tileUrls;
+    this.opacity = options.opacity ? options.opacity : 1;
+
+    // this.tileSize and this.maxZoom are read directly by Google Maps.
     const size = options.tileSize ? options.tileSize : 256;
     this.tileSize = new google.maps.Size(size, size);
     this.maxZoom = options.maxZoom ? options.maxZoom : 19;
-    this.opacity = options.opacity ? options.opacity : 1;
   }
 
   /**
@@ -69,6 +71,12 @@ class CompositeImageMapType {
       google.maps.event.trigger(tileDiv, 'load');
     });
     return tileDiv;
+  }
+
+  releaseTile(div) {
+    for (const child of div.children) {
+      URL.revokeObjectURL(child.src);
+    }
   }
 }
 
