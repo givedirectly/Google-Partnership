@@ -132,6 +132,8 @@ function toggleLayerOn(layer, map) {
   }
   if (layerDisplayData.overlay) {
     if (layerDisplayData.overlay instanceof CompositeImageMapType) {
+      // TODO(janakr): when CompositeImageMapType knows when it is done
+      //  rendering, use that for the loading/finished logic here.
       showOverlayLayer(layerDisplayData.overlay, index, map);
       return null;
     }
