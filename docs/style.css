@@ -131,12 +131,15 @@ h1 {
   z-index: 30;
 }
 
-.nav-header {
-  display: inline-block;
+.nav-left {
+  display: inline-block;;
   float: left;
-  line-height: calc(var(--navbar-height) - 8px);
   margin: 0;
   padding: 4px 8px;
+}
+
+.nav-header {
+  line-height: calc(var(--navbar-height) - 8px);
 }
 
 #nav-toggle {

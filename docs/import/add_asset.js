@@ -428,6 +428,10 @@ function addFileToDelete(file) {
 
 $(() => {
   $('#navbar').load('/navbar.html', () => {
-    document.getElementById('nav-header').innerHTML = 'Add Asset';
+    const navLeft = document.getElementById('nav-left');
+    const navHeader = document.createElement('h1');
+    navHeader.className = 'nav-header';
+    navHeader.innerHTML = 'Add Asset';
+    navLeft.appendChild(navHeader);
   });
 });

@@ -143,7 +143,7 @@ function initializeFirebase() {
  */
 function initializeEE(runCallback, errorCallback = console.error) {
   ee.initialize(
-      /* opt_baseurl=*/ null, /* opt_tileurl=*/ null, runCallback,
+      /* opt_baseurl=*/null, /* opt_tileurl=*/null, runCallback,
       (err) => errorCallback('Error initializing EarthEngine: ' + err));
 }
 

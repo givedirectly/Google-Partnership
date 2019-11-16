@@ -1,6 +1,6 @@
 import {inProduction} from './in_test_util.js';
 
-export {getDisaster, getResources};
+export {getDisaster, getDisasters, getResources};
 
 /**
  * Gets all the ee assets relevant to the current disaster.
@@ -16,11 +16,20 @@ function getResources() {
  * @return {string} current disaster
  */
 function getDisaster() {
+  const params = new URLSearchParams(window.location.search);
+  const disaster = params.has('disaster') ? params.get('disaster') : 'harvey';
   return inProduction() ? disaster : 'harvey';
 }
 
-/** The current disaster. */
-const disaster = 'harvey';
+/**
+ * Gets all available disasters.
+ * @return {string[]} list of available disasters
+ */
+function getDisasters() {
+  const disasterNames = [];
+  for (let disasterName of disasters.keys()) disasterNames.push(disasterName);
+  return disasterNames;
+}
 
 /** Disaster asset names and other constants. */
 const disasters = new Map();

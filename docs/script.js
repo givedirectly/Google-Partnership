@@ -1,5 +1,6 @@
 import {authenticateToFirebase, Authenticator, CLIENT_ID, initializeEE, initializeFirebase} from './authenticate.js';
 import createMap from './create_map.js';
+import {initializeDisasterPicker} from './disaster_picker.js';
 import {readDisasterDocument} from './firestore_document.js';
 import {earthEngineTestTokenCookieName, firebaseTestTokenCookieName, getCookieValue, inProduction} from './in_test_util.js';
 import run from './run.js';
@@ -19,6 +20,7 @@ function setup() {
 
   $(document).ready(function() {
     initializeSidebar();
+
     const firebaseAuthPromiseWrapper = new SettablePromise();
 
     // TODO: Have this return a map promise so that we can kick off other
@@ -67,8 +69,8 @@ setup();
 
 $(() => {
   $('#navbar').load('/navbar.html', () => {
-    // TODO(ramvellanki): switch to disaster picker
-    document.getElementById('nav-header').innerHTML =
-        'Houston Damage/Poverty Map';
+    $('#nav-left').load('/disaster_picker.html', () => {
+      initializeDisasterPicker();
+    });
   });
 });
