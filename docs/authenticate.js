@@ -1,3 +1,4 @@
+import {showError} from './error.js';
 import {inProduction} from './in_test_util.js';
 
 export {
@@ -8,7 +9,6 @@ export {
   initializeEE,
   initializeFirebase,
 };
-
 export {getFirebaseConfig as default};
 
 // The client ID from
@@ -45,6 +45,15 @@ const firebaseConfigTest = {
 };
 
 /**
+ * Logs an error message to the console and shows a snackbar notification.
+ *
+ * @param {string} msg the message to be logged
+ */
+function defaultErrorCallback(msg) {
+  showError(msg, 'Authentication Error');
+}
+
+/**
  * Performs EarthEngine authentication and returns an auth object usable for
  * other things like GCS or Firebase.
  */
@@ -56,11 +65,11 @@ class Authenticator {
    * @param {Function} eeInitializeCallback Called after EarthEngine
    *     initialization is complete
    * @param {Function} errorCallback Called on any errors (defaults to
-   *     console.error)
+   *     defaultErrorCallback)
    * @param {Array<string>} additionalScopes OAuth2 scopes to request, if any
    */
   constructor(
-      authCallback, eeInitializeCallback, errorCallback = console.error,
+      authCallback, eeInitializeCallback, errorCallback = defaultErrorCallback,
       additionalScopes = []) {
     this.authCallback = authCallback;
     this.eeInitializeCallback = eeInitializeCallback;
@@ -139,11 +148,12 @@ function initializeFirebase() {
 /**
  * Initializes EarthEngine. Exposed only for use in test codepaths.
  * @param {Function} runCallback Called if initialization succeeds
- * @param {Function} errorCallback Called on failure, defaults to console.error
+ * @param {Function} errorCallback Called on failure, defaults to
+ *     defaultErrorCallback
  */
-function initializeEE(runCallback, errorCallback = console.error) {
+function initializeEE(runCallback, errorCallback = defaultErrorCallback) {
   ee.initialize(
-      /* opt_baseurl=*/ null, /* opt_tileurl=*/ null, runCallback,
+      /* opt_baseurl=*/null, /* opt_tileurl=*/null, runCallback,
       (err) => errorCallback('Error initializing EarthEngine: ' + err));
 }
 
