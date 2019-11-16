@@ -45,7 +45,8 @@ const firebaseConfigTest = {
 };
 
 /**
- * Logs an error message to the console and shows a snackbar notification.
+ * Logs an error message to the console and shows a snackbar notification
+ * indicating an issue with authentication.
  *
  * @param {string} msg the message to be logged
  */
