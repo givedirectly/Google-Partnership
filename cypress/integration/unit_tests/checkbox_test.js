@@ -41,6 +41,14 @@ const mockFirebaseLayers = [
     'display-on-load': true,
     'index': 3,
   },
+  {
+    'ee-name': 'tile_asset',
+    'asset-type': LayerType.MAP_TILES,
+    'tile-urls': ['tile-url1', 'tile-url2'],
+    'display-name': 'tiles',
+    'display-on-load': true,
+    'index': 4,
+  },
 ];
 
 describe('Unit test for toggleLayerOn', () => {
@@ -324,6 +332,18 @@ describe('Unit test for toggleLayerOn', () => {
           expect(props.id).to.eql(scoreLayerName);
         });
   });
+
+  it('smoke tests tiles', () => {
+    const map = createGoogleMap();
+    addLayer(mockFirebaseLayers[4], map);
+    const overlay = map.overlayMapTypes.getAt(4);
+    expect(overlay).to.not.be.null;
+    expect(overlay.tileUrls).to.eql(['tile-url1', 'tile-url2']);
+    toggleLayerOff(4, map);
+    expect(map.overlayMapTypes.getAt(4)).to.be.null;
+    toggleLayerOn(mockFirebaseLayers[4], map);
+    expect(map.overlayMapTypes.getAt(4)).equals(overlay);
+  })
 });
 
 describe('Unit test for toggleLayerOff', () => {

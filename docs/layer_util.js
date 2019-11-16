@@ -4,6 +4,7 @@ import {createError} from './error.js';
 import {colorMap, createStyleFunction, LayerType} from './firebase_layers.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {convertEeObjectToPromise} from './map_util.js';
+import {CompositeImageMapType} from "./composite_image_map_type.js";
 
 export {
   addLayer,
@@ -130,13 +131,15 @@ function toggleLayerOn(layer, map) {
     return null;
   }
   if (layerDisplayData.overlay) {
+    if (layerDisplayData.overlay instanceof CompositeImageMapType) {
+      showOverlayLayer(layerDisplayData.overlay, index, map);
+      return null;
+    }
     // This promise does not need to be stored in the pendingPromise field
     // because it will complete immediately if this layer is toggled off (see
     // the resolveOnTilesFinished doc). That means that if toggleLayerOn is
     // called again for this layer, the promise will already have completed.
     return createLoadingAwarePromise((resolve) => {
-      // TODO(janakr): When we add non-EE assets, they will have to know how
-      //  to call the finish loading callback too.
       resolveOnTilesFinished(layerDisplayData, resolve);
       showOverlayLayer(layerDisplayData.overlay, index, map);
     });
@@ -263,6 +266,16 @@ function resolveOnTilesFinished(layerDisplayData, resolve) {
       });
 }
 
+function addTileLayer(map, layer) {
+  const layerDisplayData = new LayerDisplayData(null, true);
+  layerArray[layer['index']] = layerDisplayData;
+  layerDisplayData.overlay = new CompositeImageMapType({tileUrls: layer['tile-urls'], tileSize: layer['tile-size'],
+    maxZoom: layer['maxZoom'], opacity: layer['opacity']
+  });
+  showOverlayLayer(layerDisplayData.overlay, layer['index'], map);
+  return Promise.resolve();
+}
+
 /**
  * Creates a deck.gl layer from the given value's GeoJSON data. deck.gl is very
  * proud of its "reactive" nature. What that means here is that when deckGlArray
@@ -333,6 +346,8 @@ function addLayer(layer, map) {
           convertEeObjectToPromise(
               ee.FeatureCollection(layerName).toList(maxNumFeaturesExpected)),
           DeckParams.fromLayer(layer), layer['index']);
+    case LayerType.MAP_TILES:
+      return addTileLayer(map, layer);
     default:
       createError('parsing layer type during add')(
           '[' + layer['index'] + ']: ' + layer['asset-name'] +

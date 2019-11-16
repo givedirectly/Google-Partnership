@@ -41,7 +41,29 @@ function run(map, firebaseAuthPromise, disasterMetadataPromise) {
       map, initialPovertyThreshold, initialDamageThreshold,
       initialPovertyWeight);
   processUserRegions(map, firebaseAuthPromise);
-  disasterMetadataPromise.then((doc) => addLayers(map, doc.data().layerArray));
+//   disasterMetadataPromise //.then((doc) => doc.data().layerArray)
+//       .then(() => firebase.firestore().doc('disaster-metadata/2017-harvey').update({
+//         layers: firebase.firestore.FieldValue.arrayUnion({'asset-type': 4,
+//           'display-on-load': false,
+//           'display-name': 'NOAA tiles',
+//           'tile-urls':
+// ['https://stormscdn.ngs.noaa.gov/20170827-rgb/{Z}/{X}/{Y}',
+// 'https://stormscdn.ngs.noaa.gov/20170828a-rgb/{Z}/{X}/{Y}',
+// 'https://stormscdn.ngs.noaa.gov/20170828b-rgb/{Z}/{X}/{Y}',
+// 'https://stormscdn.ngs.noaa.gov/20170829a-rgb/{Z}/{X}/{Y}',
+// 'https://stormscdn.ngs.noaa.gov/20170829b-rgb/{Z}/{X}/{Y}',
+// 'https://stormscdn.ngs.noaa.gov/20170830-rgb/{Z}/{X}/{Y}',
+// 'https://stormscdn.ngs.noaa.gov/20170831a-rgb/{Z}/{X}/{Y}',
+// 'https://stormscdn.ngs.noaa.gov/20170831b-rgb/{Z}/{X}/{Y}',
+// 'https://stormscdn.ngs.noaa.gov/20170901a-rgb/{Z}/{X}/{Y}',
+// 'https://stormscdn.ngs.noaa.gov/20170901b-rgb/{Z}/{X}/{Y}',
+// 'https://stormscdn.ngs.noaa.gov/20170901c-rgb/{Z}/{X}/{Y}',
+// 'https://stormscdn.ngs.noaa.gov/20170902a-rgb/{Z}/{X}/{Y}',
+// 'https://stormscdn.ngs.noaa.gov/20170902b-rgb/{Z}/{X}/{Y}',
+// 'https://stormscdn.ngs.noaa.gov/20170902c-rgb/{Z}/{X}/{Y}',
+// 'https://stormscdn.ngs.noaa.gov/20170903a-rgb/{Z}/{X}/{Y}',],
+//       })}));
+  disasterMetadataPromise.then((doc) => addLayers(map, doc.data().layers));
 }
 
 let mapSelectListener = null;
