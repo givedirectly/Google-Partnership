@@ -65,4 +65,10 @@ function setup() {
 
 setup();
 
-$(() => $('#navbar').load('/navbar.html'));
+$(() => {
+  $('#navbar').load('/navbar.html', () => {
+    // TODO(ramvellanki): switch to disaster picker
+    document.getElementById('nav-header').innerHTML =
+        'Houston Damage/Poverty Map';
+  });
+});
