@@ -429,5 +429,5 @@ function addFileToDelete(file) {
 $(() => {
   $('#navbar').load('/navbar.html', () => {
     document.getElementById('nav-header').innerHTML = 'Add Asset';
-  });  
+  });
 });
