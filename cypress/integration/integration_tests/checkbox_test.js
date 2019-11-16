@@ -22,16 +22,12 @@ describe('Integration test', () => {
   it('loads tiles on check, unloads on uncheck', () => {
     cy.visit('');
     cy.awaitLoad();
-    noBlobs();
+    cy.get('img[src*="blob:"]').should('not.exist');
     cy.get('#sidebar-toggle-datasets').click();
 
     cy.get('#layer-8-checkbox').check();
     cy.get('img[src*="blob:"]', {timeout: 20000});
     cy.get('#layer-8-checkbox').uncheck();
-    noBlobs();
-  })
+    cy.get('img[src*="blob:"]').should('not.exist');
+  });
 });
-
-function noBlobs() {
-  cy.get('img[src*="blob:"]').should('not.exist');
-}

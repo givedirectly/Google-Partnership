@@ -73,6 +73,11 @@ class CompositeImageMapType {
     return tileDiv;
   }
 
+  /**
+   * Implements MapType#releaseTile. Revokes local object URL for all images in
+   * the given div, freeing up memory.
+   * @param {HTMLDivElement} div
+   */
   releaseTile(div) {
     for (const child of div.children) {
       URL.revokeObjectURL(child.src);
