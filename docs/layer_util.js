@@ -266,6 +266,14 @@ function resolveOnTilesFinished(layerDisplayData, resolve) {
       });
 }
 
+/**
+ * Displays a collection of tiles (given by the 'tile-urls' attribute of layer)
+ * on the map using a CompositeImageMapType to combine all tiles for a given
+ * map location into one tile.
+ * @param {google.maps.Map} map
+ * @param {Object} layer Data for layer coming from Firestore
+ * @return {Promise<void>} Resolved Promise. See TODO in CompositeImageMapType for work needed to know when layer is rendered
+ */
 function addTileLayer(map, layer) {
   const layerDisplayData = new LayerDisplayData(null, true);
   layerArray[layer['index']] = layerDisplayData;
@@ -273,7 +281,7 @@ function addTileLayer(map, layer) {
     tileUrls: layer['tile-urls'],
     tileSize: layer['tile-size'],
     maxZoom: layer['maxZoom'],
-    opacity: layer['opacity']
+    opacity: layer['opacity'],
   });
   showOverlayLayer(layerDisplayData.overlay, layer['index'], map);
   return Promise.resolve();

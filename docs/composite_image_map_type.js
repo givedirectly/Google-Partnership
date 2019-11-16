@@ -54,7 +54,7 @@ class CompositeImageMapType {
         const url = urls[i];
         if (url instanceof ErrorObject) {
           if (url.statusCode !== NOT_FOUND_STATUS_CODE) {
-            console.error(e.statusCode, e.getMessage())
+            console.error(e.statusCode, e.getMessage());
           }
           continue;
         }

@@ -343,7 +343,7 @@ describe('Unit test for toggleLayerOn', () => {
     expect(map.overlayMapTypes.getAt(4)).to.be.null;
     toggleLayerOn(mockFirebaseLayers[4], map);
     expect(map.overlayMapTypes.getAt(4)).equals(overlay);
-  })
+  });
 });
 
 describe('Unit test for toggleLayerOff', () => {
