@@ -351,7 +351,7 @@ describe('Unit test for toggleLayerOn', () => {
           overlay = map.overlayMapTypes.getAt(4);
           expect(overlay).to.not.be.null;
           expect(overlay.tileUrls).to.eql([
-            'tile-url1/{X}/{Y}/{Z}', 'tile-url2/{X}/{Y}/{Z}'
+            'tile-url1/{X}/{Y}/{Z}', 'tile-url2/{X}/{Y}/{Z}',
           ]);
           return cy.get('img[src*="blob:"]');
         })
