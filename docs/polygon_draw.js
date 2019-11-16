@@ -310,11 +310,10 @@ const appearance = {
  * @param {google.maps.Map} map
  * @param {Promise<any>} firebasePromise Promise that will complete when
  *     Firebase authentication is finished
- * @param {Window} globalWindow DOM Window (injected for tests)
  * @return {Promise} Promise that contains DrawingManager when complete
  */
-function setUpPolygonDrawing(map, firebasePromise, globalWindow = window) {
-  setUpPopup(globalWindow);
+function setUpPolygonDrawing(map, firebasePromise) {
+  setUpPopup();
 
   return firebasePromise.then(() => {
     const drawingManager = new google.maps.drawing.DrawingManager({
