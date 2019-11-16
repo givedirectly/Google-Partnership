@@ -123,16 +123,13 @@ async function fetchWithBackoff(url) {
   let response;
   const exponentialBackoff = new ExponentialBackoff();
   while (retryCount++ < MAX_RETRIES) {
-    console.log('about to fetch', url, retryCount);
     response = await fetch(url);
     if (response.ok === true) {
       const blob = await response.blob();
       return URL.createObjectURL(blob);
     }
     if (response.status === TOO_MANY_REQUESTS_STATUS_CODE) {
-      console.log('waiting', url);
       await exponentialBackoff.wait();
-      console.log('waited', url);
     } else {
       return ErrorObject.create(response, url);
     }
