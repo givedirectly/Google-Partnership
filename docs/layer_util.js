@@ -1,10 +1,10 @@
+import {CompositeImageMapType} from './composite_image_map_type.js';
 import {mapContainerId} from './dom_constants.js';
 import {terrainStyle} from './earth_engine_asset.js';
 import {createError} from './error.js';
 import {colorMap, createStyleFunction, LayerType} from './firebase_layers.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {convertEeObjectToPromise} from './map_util.js';
-import {CompositeImageMapType} from "./composite_image_map_type.js";
 
 export {
   addLayer,
@@ -269,8 +269,11 @@ function resolveOnTilesFinished(layerDisplayData, resolve) {
 function addTileLayer(map, layer) {
   const layerDisplayData = new LayerDisplayData(null, true);
   layerArray[layer['index']] = layerDisplayData;
-  layerDisplayData.overlay = new CompositeImageMapType({tileUrls: layer['tile-urls'], tileSize: layer['tile-size'],
-    maxZoom: layer['maxZoom'], opacity: layer['opacity']
+  layerDisplayData.overlay = new CompositeImageMapType({
+    tileUrls: layer['tile-urls'],
+    tileSize: layer['tile-size'],
+    maxZoom: layer['maxZoom'],
+    opacity: layer['opacity']
   });
   showOverlayLayer(layerDisplayData.overlay, layer['index'], map);
   return Promise.resolve();
