@@ -11,7 +11,11 @@ const MAX_RETRIES = 10;
 class CompositingImageMapType {
   /**
    * @constructor
-   * @param {Object} options Options: should have tileUrls attribute (list of urls with {X}, {Y}, and {Z} placeholders for coordinates and zoom). May also have tileSize (width of each tile in pixels, defaults to 256), maxZoom (maximum zoom level to try to fetch tiles for, defaults to 19), and opacity (opacity of rendered tiles, defaults to 1, totally opaque)
+   * @param {Object} options Options: should have tileUrls attribute (list of
+   *     urls with {X}, {Y}, and {Z} placeholders for coordinates and zoom). May
+   *     also have tileSize (width of each tile in pixels, defaults to 256),
+   *     maxZoom (maximum zoom level to try to fetch tiles for, defaults to 19),
+   *     and opacity (opacity of rendered tiles, defaults to 1, totally opaque)
    */
   constructor(options) {
     this.tileUrls = options.tileUrls;
@@ -26,7 +30,8 @@ class CompositingImageMapType {
    * div with stacked images, one for each successfully loaded from tileUrls.
    * @param {google.maps.Point} tileCoord coordinates for tile
    * @param {number} zoom integer zoom level
-   * @param {Document} ownerDocument document that HTML elements will be created in
+   * @param {Document} ownerDocument document that HTML elements will be created
+   *     in
    * @return {HTMLDivElement} div element with tile images attached
    */
   getTile(tileCoord, zoom, ownerDocument) {
@@ -36,33 +41,36 @@ class CompositingImageMapType {
       return tileDiv;
     }
     // Replace tile url template arguments with actual coordinates.
-    const tileUrls = this.tileUrls.map((url) => url.replace('{Z}', zoom).replace('{X}', tileCoord.x).replace('{Y}', tileCoord.y));
-    Promise.all(tileUrls.map(fetchWithBackoff))
-        .then((urls) => {
-          for (let i = 0; i < urls.length; i++) {
-            const url = urls[i];
-            if (url instanceof ErrorObject) {
-              if (url.statusCode !== NOT_FOUND_STATUS_CODE) {
-                console.error(e.statusCode, e.getMessage())
-              }
-              continue;
-            }
-            const img = ownerDocument.createElement('img');
-            img.src = url;
-            img.opacity = this.opacity;
-            // Stack images over each other, later ones on top.
-            img.style.position = 'absolute';
-            img.style['z-index'] = i;
-            tileDiv.appendChild(img);
+    const tileUrls = this.tileUrls.map(
+        (url) => url.replace('{Z}', zoom)
+                     .replace('{X}', tileCoord.x)
+                     .replace('{Y}', tileCoord.y));
+    Promise.all(tileUrls.map(fetchWithBackoff)).then((urls) => {
+      for (let i = 0; i < urls.length; i++) {
+        const url = urls[i];
+        if (url instanceof ErrorObject) {
+          if (url.statusCode !== NOT_FOUND_STATUS_CODE) {
+            console.error(e.statusCode, e.getMessage())
           }
-          google.maps.event.trigger(tileDiv, 'load');
-        });
+          continue;
+        }
+        const img = ownerDocument.createElement('img');
+        img.src = url;
+        img.opacity = this.opacity;
+        // Stack images over each other, later ones on top.
+        img.style.position = 'absolute';
+        img.style['z-index'] = i;
+        tileDiv.appendChild(img);
+      }
+      google.maps.event.trigger(tileDiv, 'load');
+    });
     return tileDiv;
   }
 }
 
 /**
- * Wrapper object for HTML errors encountered during a single tile fetch, to avoid throwing errors that would shut down other tile fetches.
+ * Wrapper object for HTML errors encountered during a single tile fetch, to
+ * avoid throwing errors that would shut down other tile fetches.
  */
 class ErrorObject {
   /**
@@ -78,10 +86,12 @@ class ErrorObject {
   }
 
   /**
-   * @return {string} Formatted error message from this error, for console display
+   * @return {string} Formatted error message from this error, for console
+   *     display
    */
   getMessage() {
-    return 'Could not retrieve ' + this.url + (this.message ? ' (' + this.message + ')' : '');
+    return 'Could not retrieve ' + this.url +
+        (this.message ? ' (' + this.message + ')' : '');
   }
 }
 
@@ -92,9 +102,11 @@ ErrorObject.create = (response, url) => {
 /**
  * Performs an HTTP fetch, but with exponential backoff if the server responds
  * with a "too many requests" error. Return errors as an ErrorObject to avoid
- * aborting sibling fetchWithBackoff requests that are part of the same Promise.all() task.
+ * aborting sibling fetchWithBackoff requests that are part of the same
+ * Promise.all() task.
  * @param {string} url URL to fetch
- * @return {Promise<string>|ErrorObject} Promise with local object URL for fetched data, or ErrorObject if an error was encountered
+ * @return {Promise<string>|ErrorObject} Promise with local object URL for
+ *     fetched data, or ErrorObject if an error was encountered
  */
 async function fetchWithBackoff(url) {
   let retryCount = 0;
@@ -123,7 +135,8 @@ class ExponentialBackoff {
   }
 
   /**
-   * @return {Promise<void>} Promise that is fulfilled after a random sleep of at most 2^(this.retryCount) seconds
+   * @return {Promise<void>} Promise that is fulfilled after a random sleep of
+   *     at most 2^(this.retryCount) seconds
    */
   async wait() {
     const maxSleep = 1000 * Math.pow(2, ++this.retryCount);
@@ -135,7 +148,8 @@ class ExponentialBackoff {
 
 /**
  * @param {number} duration milliseconds to pause
- * @return {Promise<void>} Promise that resolves after {@code duration} milliseconds
+ * @return {Promise<void>} Promise that resolves after {@code duration}
+ *     milliseconds
  */
 function pause(duration) {
   return new Promise((resolve) => setTimeout(resolve, duration));
