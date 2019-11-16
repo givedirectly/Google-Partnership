@@ -42,6 +42,7 @@ class CompositeImageMapType {
    * @return {HTMLDivElement} div element with tile images attached
    */
   getTile(tileCoord, zoom, ownerDocument) {
+    console.log('calling with ', tileCoord.x, tileCoord.y, zoom);
     // Create a div to hold all the images.
     const tileDiv = ownerDocument.createElement('div');
     if (zoom > this.maxZoom) {
@@ -67,25 +68,13 @@ class CompositeImageMapType {
         // Stack images over each other, later ones on top.
         img.style.position = 'absolute';
         img.style['z-index'] = i;
+        // Clear blob from memory as soon as it is loaded.
+        img.onload = () => URL.revokeObjectURL(url);
         tileDiv.appendChild(img);
       }
       google.maps.event.trigger(tileDiv, 'load');
     });
     return tileDiv;
-  }
-
-  /**
-   * Implements MapType#releaseTile. Revokes local object URL for all images in
-   * the given div, freeing up memory.
-   * @param {HTMLDivElement} div
-   */
-  releaseTile(div) {
-    for (const child of div.children) {
-      URL.revokeObjectURL(child.src);
-    }
-    // TODO(janakr): track loading tiles (like the above TODO), but also pass an
-    //  AbortController.signal into fetch and track that as well so that we can
-    //  abort in-flight fetches here as well.
   }
 }
 
@@ -134,13 +123,16 @@ async function fetchWithBackoff(url) {
   let response;
   const exponentialBackoff = new ExponentialBackoff();
   while (retryCount++ < MAX_RETRIES) {
+    console.log('about to fetch', url, retryCount);
     response = await fetch(url);
     if (response.ok === true) {
       const blob = await response.blob();
       return URL.createObjectURL(blob);
     }
     if (response.status === TOO_MANY_REQUESTS_STATUS_CODE) {
+      console.log('waiting', url);
       await exponentialBackoff.wait();
+      console.log('waited', url);
     } else {
       return ErrorObject.create(response, url);
     }
