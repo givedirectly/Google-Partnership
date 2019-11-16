@@ -27,7 +27,7 @@ function getDisaster() {
  */
 function getDisasters() {
   const disasterNames = [];
-  for (let disasterName of disasters.keys()) disasterNames.push(disasterName);
+  for (const disasterName of disasters.keys()) disasterNames.push(disasterName);
   return disasterNames;
 }
 

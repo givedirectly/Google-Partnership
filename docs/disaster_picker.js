@@ -7,7 +7,7 @@ export {initializeDisasterPicker};
  */
 function initializeDisasterPicker() {
   const disasterDropdown = document.getElementById('disaster-dropdown');
-  getDisasters().forEach(disaster => {
+  getDisasters().forEach((disaster) => {
     const disasterItem = document.createElement('option');
     disasterItem.innerHTML = disaster;
     if (disaster === getDisaster()) {
