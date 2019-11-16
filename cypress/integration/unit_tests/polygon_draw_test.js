@@ -5,7 +5,7 @@ import * as resourceGetter from '../../../docs/resources';
 import SettablePromise from '../../../docs/settable_promise';
 import {CallbackLatch} from '../../support/callback_latch';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
-import {createGoogleMap} from "../../support/test_map";
+import {createGoogleMap} from '../../support/test_map';
 
 const polyCoords = [
   {lng: 1, lat: 1},
@@ -205,7 +205,8 @@ describe('Unit test for ShapeData', () => {
       return returnValue;
     };
     const event = new Event('overlaycomplete');
-    createGoogleMap().then((map) => {
+    createGoogleMap()
+        .then((map) => {
           event.overlay = new google.maps.Polygon({
             map: map,
             paths: [{lat: 0, lng: 0}, {lat: 1, lng: 1}, {lat: 0, lng: 1}],
@@ -247,7 +248,8 @@ describe('Unit test for ShapeData', () => {
     const updatePromise = new SettablePromise();
     const event = new Event('overlaycomplete');
     let marker;
-    createGoogleMap().then((map) => {
+    createGoogleMap()
+        .then((map) => {
           marker =
               new google.maps.Marker({map: map, position: {lat: 0, lng: 0}});
           event.overlay = marker;

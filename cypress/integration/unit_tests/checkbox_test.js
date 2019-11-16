@@ -3,7 +3,7 @@ import {addLayer, addScoreLayer, deckGlArray, DeckParams, layerArray, LayerDispl
 import * as loading from '../../../docs/loading';
 import {CallbackLatch} from '../../support/callback_latch';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
-import {createGoogleMap} from "../../support/test_map";
+import {createGoogleMap} from '../../support/test_map';
 
 const mockData = {};
 
@@ -172,36 +172,39 @@ describe('Unit test for toggleLayerOn', () => {
 
     let overlay = null;
     let map = null;
-    createGoogleMap().then((returnedMap) => {
-      map = returnedMap;
-      const promise = addLayer(mockFirebaseLayers[3], map);
-      expect(promise).to.not.be.null;
-      expect(loadingStartedStub).to.be.calledOnce;
-      // Loading can't finish until EE evaluation finishes, which we've frozen.
-      expect(loadingFinishedStub).to.not.be.called;
-      expect(map.overlayMapTypes).to.have.length(0);
-      // Release evaluation.
-      latch.release();
-      return promise;
-    }).then(() => {
-            expect(loadingFinishedStub).to.be.calledOnce;
-            overlay = map.overlayMapTypes.getAt(3);
-            expect(overlay).is.not.null;
-            // Turn layer off: disappears from map.
-            toggleLayerOff(3, map);
-            expect(map.overlayMapTypes.getAt(3)).is.null;
+    createGoogleMap()
+        .then((returnedMap) => {
+          map = returnedMap;
+          const promise = addLayer(mockFirebaseLayers[3], map);
+          expect(promise).to.not.be.null;
+          expect(loadingStartedStub).to.be.calledOnce;
+          // Loading can't finish until EE evaluation finishes, which we've
+          // frozen.
+          expect(loadingFinishedStub).to.not.be.called;
+          expect(map.overlayMapTypes).to.have.length(0);
+          // Release evaluation.
+          latch.release();
+          return promise;
+        })
+        .then(() => {
+          expect(loadingFinishedStub).to.be.calledOnce;
+          overlay = map.overlayMapTypes.getAt(3);
+          expect(overlay).is.not.null;
+          // Turn layer off: disappears from map.
+          toggleLayerOff(3, map);
+          expect(map.overlayMapTypes.getAt(3)).is.null;
 
-            // Turn overlay back on.
-            const togglePromise = toggleLayerOn(mockFirebaseLayers[3], map);
-            expect(togglePromise).to.not.be.null;
-            return togglePromise;
-          })
-          .then(() => {
-            const nextOverlay = map.overlayMapTypes.getAt(3);
-            expect(nextOverlay).is.not.null;
-            // We got the exact same object! Note that expect({}).not.equals({}).
-            expect(nextOverlay).equals(overlay);
-          });
+          // Turn overlay back on.
+          const togglePromise = toggleLayerOn(mockFirebaseLayers[3], map);
+          expect(togglePromise).to.not.be.null;
+          return togglePromise;
+        })
+        .then(() => {
+          const nextOverlay = map.overlayMapTypes.getAt(3);
+          expect(nextOverlay).is.not.null;
+          // We got the exact same object! Note that expect({}).not.equals({}).
+          expect(nextOverlay).equals(overlay);
+        });
   });
 
   it('toggles off computed image overlay before EE finishes', () => {
@@ -340,23 +343,28 @@ describe('Unit test for toggleLayerOn', () => {
     let overlay;
     // TODO(janakr): assert much more, about fetches and retries. Not easy now
     //  because we don't know when loading completes.
-    createGoogleMap().then((returnedMap) => {
-      map = returnedMap;
-      cy.get('img[src*="blob:"]').should('not.exist');
-      addLayer(mockFirebaseLayers[4], map);
-      overlay = map.overlayMapTypes.getAt(4);
-      expect(overlay).to.not.be.null;
-      expect(overlay.tileUrls).to.eql(['tile-url1/{X}/{Y}/{Z}', 'tile-url2/{X}/{Y}/{Z}']);
-      return cy.get('img[src*="blob:"]');
-    }).then(() => {
-      toggleLayerOff(4, map);
-      expect(map.overlayMapTypes.getAt(4)).to.be.null;
-      // TODO(janakr): something about unit test framework makes document still
-      //  have reference to images, so can't assert they're gone. If fixed,
-      //  delete redundant test in integration_tests/checkbox_test.js.
-      toggleLayerOn(mockFirebaseLayers[4], map);
-      expect(map.overlayMapTypes.getAt(4)).equals(overlay);
-    });
+    createGoogleMap()
+        .then((returnedMap) => {
+          map = returnedMap;
+          cy.get('img[src*="blob:"]').should('not.exist');
+          addLayer(mockFirebaseLayers[4], map);
+          overlay = map.overlayMapTypes.getAt(4);
+          expect(overlay).to.not.be.null;
+          expect(overlay.tileUrls).to.eql([
+            'tile-url1/{X}/{Y}/{Z}', 'tile-url2/{X}/{Y}/{Z}'
+          ]);
+          return cy.get('img[src*="blob:"]');
+        })
+        .then(() => {
+          toggleLayerOff(4, map);
+          expect(map.overlayMapTypes.getAt(4)).to.be.null;
+          // TODO(janakr): something about unit test framework makes document
+          // still
+          //  have reference to images, so can't assert they're gone. If fixed,
+          //  delete redundant test in integration_tests/checkbox_test.js.
+          toggleLayerOn(mockFirebaseLayers[4], map);
+          expect(map.overlayMapTypes.getAt(4)).equals(overlay);
+        });
   });
 });
 
