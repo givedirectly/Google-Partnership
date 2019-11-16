@@ -279,11 +279,10 @@ describe('Unit test for ShapeData', () => {
             expect(docStub).to.be.calledOnce;
             expect(setStub).to.be.calledOnce;
           });
-          pressPopupButton('delete').then(
-              () => {
-                expect(deleteStub).to.be.calledOnce;
-                expect(confirmStub).to.be.calledOnce;
-              });
+          pressPopupButton('delete').then(() => {
+            expect(deleteStub).to.be.calledOnce;
+            expect(confirmStub).to.be.calledOnce;
+          });
         });
   });
 

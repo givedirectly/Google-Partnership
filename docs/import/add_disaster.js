@@ -289,8 +289,7 @@ function createAssetPickers(states) {
 function deleteDisaster() {
   const disasterPicker = $('#disaster');
   const disasterId = disasterPicker.val();
-  if (confirm(
-          'Delete ' + disasterId + '? This action cannot be undone')) {
+  if (confirm('Delete ' + disasterId + '? This action cannot be undone')) {
     disasters.delete(disasterId);
     disasterPicker.val(disasterPicker.children().eq(0).val()).trigger('change');
     $('#' + disasterId).remove();
