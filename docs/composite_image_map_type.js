@@ -5,9 +5,10 @@ const NOT_FOUND_STATUS_CODE = 404;
 const MAX_RETRIES = 10;
 
 // TODO(janakr): figure out how to set loading progress indicators for this
-//  class. Easiest way might just be to add a loading indicator for every tile
-//  requested and remove for every tile produced. Not sure how that interacts
-//  with zooming in the middle of rendering, though.
+//  class. Can just copy EarthEngine mechanism: keep track of currently loading
+//  tiles, if we ever have 0, send a tileEvent with tileCount = 0. If we had 0
+//  and start loading, send a tileEvent with tileCount = 1. Then the caller can
+//  listen for those events.
 /**
  * Custom google.maps.MapType implementation that overlays multiple tiles from
  * different sources, so that they can all be treated as a single overlay.
@@ -82,6 +83,9 @@ class CompositeImageMapType {
     for (const child of div.children) {
       URL.revokeObjectURL(child.src);
     }
+    // TODO(janakr): track loading tiles (like the above TODO), but also pass an
+    //  AbortController.signal into fetch and track that as well so that we can
+    //  abort in-flight fetches here as well.
   }
 }
 
