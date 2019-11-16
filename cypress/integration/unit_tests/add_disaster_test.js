@@ -1,6 +1,6 @@
 import {gdEeStatePrefix, legacyStateDir, legacyStatePrefix} from '../../../docs/ee_paths.js';
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
-import {addDisaster, createAssetPickers, createOptionFrom, disasters, emptyCallback, getAssetsFromEe, stateAssets, writeNewDisaster} from '../../../docs/import/add_disaster.js';
+import {addDisaster, createAssetPickers, createOptionFrom, deleteDisaster, disasters, emptyCallback, getAssetsFromEe, stateAssets, writeNewDisaster} from '../../../docs/import/add_disaster.js';
 import {addFirebaseHooks, loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
 const KNOWN_STATE = 'WF';
@@ -88,12 +88,16 @@ describe('Unit tests for add_disaster page', () => {
   it('writes a new disaster to firestore', () => {
     let id = '2002-winter';
     const states = ['DN, WF'];
+    $('#disaster').hide();
 
     cy.wrap(writeNewDisaster(id, states))
         .then((success) => {
           expect(success).to.be.true;
           expect($('#status').is(':visible')).to.be.false;
-          const options = $('#disaster').children();
+          const disasterPicker = $('#disaster');
+          expect(disasterPicker.is(':visible')).to.be.true;
+          expect($('#pending-disaster').is(':visible')).to.be.false;
+          const options = disasterPicker.children();
           expect(options.length).to.eql(3);
           expect(options.eq(1).val()).to.eql('2002-winter');
           expect(options.eq(1).is(':selected')).to.be.true;
@@ -183,6 +187,30 @@ describe('Unit tests for add_disaster page', () => {
           return addDisaster();
         })
         .then((success) => expect(success).to.be.true);
+  });
+
+  it('deletes a disaster', () => {
+    cy.on('window:confirm', () => true);
+
+    const id = '2002-winter';
+    const states = ['DN, WF'];
+
+    cy.wrap(writeNewDisaster(id, states))
+        .then(
+            () => getFirestoreRoot()
+                      .collection('disaster-metadata')
+                      .doc(id)
+                      .get())
+        .then((doc) => {
+          expect(doc.exists).to.be.true;
+          return cy.window().then((win) => deleteDisaster(win));
+        })
+        .then(
+            () => getFirestoreRoot()
+                      .collection('disaster-metadata')
+                      .doc(id)
+                      .get())
+        .then((doc) => expect(doc.exists).to.be.false);
   });
 });
 

@@ -20,14 +20,18 @@
 </head>
 <body>
 
-<form action="" id="disaster-picker">
+<div id="disaster-picker">
   <label for="disaster">Disaster: </label>
   <select id="disaster" style="width: 160px"></select>
+  <select id="pending-disaster" style="width: 160px" hidden="true" disabled="true">
+    <option value="pending" id="pending">...</option>
+  </select>
   <span> </span>
   <button type="button" id="create-new-disaster">Create New Disaster</button>
-</form><p></p>
+</div>
 <div id="status"></div>
 <div id="new-disaster" hidden="true">
+  <button type="button" id="cancel-new-disaster">Cancel</button>
   <form action="" id="new-disaster-form">
     <label for="name">Disaster Name: </label><input id="name"><label for="name"><i> ex: harvey</i></label><br>
     <label for="year">Disaster Year: </label><input id="year"><label for="year"><i> ex: 2017</i></label><br>
@@ -91,6 +95,7 @@
 <div id="selected-disaster" hidden="true">
   <p>Upload additional assets via the code editor</p>
   <div id="asset-pickers"></div>
+  <button type="button" id="delete", disabled="true">Delete</button>
 </div>
 <script type="module">
   import {taskAccumulator} from './add_disaster_startup.js';

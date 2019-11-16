@@ -1,14 +1,15 @@
 import {mapContainerId} from './dom_constants.js';
 import {terrainStyle} from './earth_engine_asset.js';
 import {createError} from './error.js';
-import {colorMap, firebaseLayers, getStyleFunction, LayerType} from './firebase_layers.js';
+import {colorMap, createStyleFunction, LayerType} from './firebase_layers.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {convertEeObjectToPromise} from './map_util.js';
 
 export {
   addLayer,
-  addLayerFromGeoJsonPromise,
   addNullLayer,
+  addScoreLayer,
+  DeckParams,
   redrawLayers,
   removeScoreLayer,
   scoreLayerName,
@@ -17,28 +18,31 @@ export {
   toggleLayerOn,
 };
 // @VisibleForTesting
-export {layerArray, layerMap, LayerMapValue};
+export {deckGlArray, layerArray, LayerDisplayData};
 
 const scoreLayerName = 'score';
 
 /**
- * Keep a map of layer name -> data, index, display status. Data is lazily
- * generated i.e. pre-known layers that don't display by default will have an
- * entry in this map, but the LayerMapValue will have a null data field until we
- * fetch the data when the user wants to display it.
+ * All map overlay layers. Data is lazily generated: layers that don't display
+ * by default will have an entry in this map, but the LayerDisplayData will
+ * have a null data/overlay field (depending on whether or not we render it with
+ * deck) until we fetch the data when the user wants to display it. Score layer
+ * gets its own special 'score' index, exploiting Javascript's tolerance for
+ * non-numerical indices on arrays.
  */
-const layerMap = new Map();
+const layerArray = [];
 
 /**
  * deck.gl layers, in the order they should be rendered. Passed to deckGlOverlay
  * in redrawLayers() (after filtering out absent elements).
  *
- * Contains one GeoJsonLayer per LayerMapValue with non-null data attribute
- * (from layerMap), ordered by LayerMapValue.index.
+ * Contains one GeoJsonLayer per LayerDisplayData with non-null data attribute
+ * (from layerArray), ordered by LayerDisplayData.index. Same trick as with
+ * layerArray for score index.
  *
  * @type {Array<deck.GeoJsonLayer>}
  */
-const layerArray = [];
+const deckGlArray = [];
 
 /**
  * Container for all deck.gl layers. Initialized lazily so tests can load file
@@ -46,26 +50,55 @@ const layerArray = [];
  */
 let deckGlOverlay;
 
-/** Values of layerMap. */
-class LayerMapValue {
+/**
+ * Values of layerArray. In addition to basic data from constructor, will
+ * have a data attribute for deck layers, and an overlay attribute for
+ * image/other layers.
+ */
+class LayerDisplayData {
   /**
-   * Constructor.
+   * @constructor
    *
-   * @param {GeoJSON} data Data to be rendered, null if not yet available.
-   * @param {number|string} index Z-index of layer when displayed. Does not
-   *     change.
-   *   Number except for the magic string 'lastElement', which always keeps this
-   *   layer on top (used for the score layer)
+   * @param {DeckParams} deckParams null if not rendered using deck
    * @param {boolean} displayed True if layer is currently displayed
    */
-  constructor(data, index, displayed) {
-    this.data = data;
+  constructor(deckParams, displayed) {
     /** @const */
-    this.index = index;
+    this.deckParams = deckParams;
     this.displayed = displayed;
-    this.loading = false;
+  }
+
+  /**
+   * @return {boolean} True if this layer is rendered using deck
+   */
+  deckRendered() {
+    return this.deckParams != null;
   }
 }
+
+/**
+ * Utility class to group deck parameters together, and cache computed color
+ * function.
+ */
+class DeckParams {
+  /**
+   * @constructor
+   *
+   * @param {!string} deckId deck id: must be unique
+   * @param {Object} colorFunctionProperties Parameters used to calculate color
+   *     function
+   */
+  constructor(deckId, colorFunctionProperties) {
+    /** @const */
+    this.deckId = deckId;
+    /** @const */
+    this.colorFunctionProperties = colorFunctionProperties;
+  }
+}
+
+DeckParams.fromLayer = (layer) => {
+  return new DeckParams(layer['ee-name'], layer['color-function']);
+};
 
 /**
  * Sets the map for deck.gl. Called only at startup.
@@ -80,69 +113,67 @@ function setMapToDrawLayersOn(map) {
 /**
  * Toggles on displaying an asset on the map.
  *
- * @param {string} layerName
+ * @param {Object} layer Data for layer coming from Firestore
  * @param {google.maps.Map} map main map
  */
-function toggleLayerOn(layerName, map) {
-  const currentLayerMapValue = layerMap.get(layerName);
-  currentLayerMapValue.displayed = true;
-  if (currentLayerMapValue.data) {
-    addLayerFromFeatures(currentLayerMapValue, layerName);
+function toggleLayerOn(layer, map) {
+  const index = layer['index'];
+  const layerDisplayData = layerArray[index];
+  layerDisplayData.displayed = true;
+  // TODO(janakr): this doesn't check the .overlay property to see if we already
+  // did computation for a non-deck layer. Add that caching in.
+  if (layerDisplayData.data) {
+    addLayerFromFeatures(layerDisplayData, index);
   } else {
-    addLayer(layerName, currentLayerMapValue.index, map);
+    addLayer(layer, map);
   }
 }
 
 /**
- * Toggles off displaying an asset on the map.
- *
- * @param {string} layerName
+ * Toggles off displaying an asset on the map. Sets its displayed attribute
+ * to false, and recreates the layer (for deck) or removes it from overlay array
+ * (for others).
+ * @param {number} index
  * @param {google.maps.Map} map main map
  */
-function toggleLayerOff(layerName, map) {
-  removeLayer(layerName, map);
-}
-
-/**
- * Function object to extract a color from a JSON Feature.
- *
- * @param {GeoJSON.Feature} feature
- * @return {Array} RGBA array
- */
-function getColorOfFeature(feature) {
-  return showColor(feature.properties['color']);
+function toggleLayerOff(index, map) {
+  const layerDisplayData = layerArray[index];
+  layerDisplayData.displayed = false;
+  if (layerDisplayData.deckRendered()) {
+    addLayerFromFeatures(layerDisplayData, index);
+  } else {
+    map.overlayMapTypes.setAt(index, null);
+  }
 }
 
 /**
  * Asynchronous wrapper for addLayerFromId that calls getMap() with a callback
- * to avoid blocking on the result. This also populates layerMap.
+ * to avoid blocking on the result. This also populates layerArray.
  *
  * This should only be called once per asset when its overlay is initialized
- * for the first time. After the overlay is non-null in layerMap, any displaying
- * should be able to call {@code map.overlayMapTypes.setAt(...)}.
+ * for the first time. After the overlay is non-null in layerArray, any
+ * displaying should be able to call {@code map.overlayMapTypes.setAt(...)}.
  *
  * @param {google.maps.Map} map
- * @param {ee.Element} layer
- * @param {string} layerName
- * @param {number} index
+ * @param {ee.Element} imageAsset
+ * @param {Object} layer Data for layer coming from Firestore
  */
-function addImageLayer(map, layer, layerName, index) {
-  const imgStyles = firebaseLayers[layerName]['vis-params'];
-  if (firebaseLayers[layerName]['use-terrain-style']) {
-    layer = terrainStyle(layer);
+function addImageLayer(map, imageAsset, layer) {
+  const imgStyles = layer['vis-params'];
+  if (layer['use-terrain-style']) {
+    imageAsset = terrainStyle(imageAsset);
   }
-  // Add a null-overlay entry to layerMap while waiting for the callback to
-  // finish.
-  layerMap[layerName] = new LayerMapValue(null, index, true);
-  layer.getMap({
+  const index = layer['index'];
+  layerArray[index] = new LayerDisplayData(null, true);
+  imageAsset.getMap({
     visParams: imgStyles,
     callback: (layerId, failure) => {
       if (layerId) {
-        layerMap[layerName].overlay = addLayerFromId(
-            map, layerName, layerId, index, layerMap[layerName].displayed);
+        layerArray[index].overlay =
+            addLayerFromId(map, layerId, index, layerArray[index].displayed);
       } else {
         // TODO: if there's an error, disable checkbox, add tests for this.
-        layerMap[layerName].displayed = false;
+        layerArray[index].displayed = false;
         createError('getting id')(failure);
       }
     },
@@ -155,13 +186,12 @@ function addImageLayer(map, layer, layerName, index) {
  * callbacks or similar to that overlay.
  *
  * @param {google.maps.Map} map
- * @param {string} layerName
  * @param {Object} layerId
  * @param {number} index
  * @param {boolean} displayed
  * @return {ee.MapLayerOverlay}
  */
-function addLayerFromId(map, layerName, layerId, index, displayed) {
+function addLayerFromId(map, layerId, index, displayed) {
   const overlay = new ee.MapLayerOverlay(
       'https://earthengine.googleapis.com/map', layerId.mapid, layerId.token,
       {});
@@ -169,9 +199,9 @@ function addLayerFromId(map, layerName, layerId, index, displayed) {
   overlay.addTileCallback((tileEvent) => {
     if (tileEvent.count == 0) {
       loadingElementFinished(mapContainerId);
-      layerMap[layerName].loading = false;
-    } else if (!layerMap[layerName].loading) {
-      layerMap[layerName].loading = true;
+      layerArray[index].loading = false;
+    } else if (!layerArray[index].loading) {
+      layerArray[index].loading = true;
       addLoadingElement(mapContainerId);
     }
   });
@@ -184,7 +214,7 @@ function addLayerFromId(map, layerName, layerId, index, displayed) {
 
 /**
  * Creates a deck.gl layer from the given value's GeoJSON data. deck.gl is very
- * proud of its "reactive" nature. What that means here is that when layerArray
+ * proud of its "reactive" nature. What that means here is that when deckGlArray
  * is given to deckGlOverlay inside redrawLayers(), deck.gl will examine each of
  * the GeoJsonLayers here and compare it to the layer *with the same id* that it
  * already had, if any. If it thinks that all the attributes are the same, it
@@ -195,21 +225,26 @@ function addLayerFromId(map, layerName, layerId, index, displayed) {
  * explicitly does not check the actual data. That's why the score layer needs
  * special handling, so deck.gl is forced to re-render it on parameter changes.
  *
- * @param {LayerMapValue} layerMapValue
- * @param {string} layerName
+ * @param {LayerDisplayData} layerDisplayData
+ * @param {number|string} index index of layer. A number unless this is the
+ * score layer
  */
-function addLayerFromFeatures(layerMapValue, layerName) {
-  layerArray[layerMapValue.index] = new deck.GeoJsonLayer({
-    id: layerName,
-    data: layerMapValue.data,
+function addLayerFromFeatures(layerDisplayData, index) {
+  const deckParams = layerDisplayData.deckParams;
+  if (!deckParams.colorFunction) {
+    deckParams.colorFunction =
+        createStyleFunction(deckParams.colorFunctionProperties);
+  }
+  deckGlArray[index] = new deck.GeoJsonLayer({
+    id: layerDisplayData.deckParams.deckId,
+    data: layerDisplayData.data,
     pointRadiusMinPixels: 1,
     getRadius: 10,
     // TODO(janakr): deck.gl docs claim that the "color" property should
     // automatically color the features, but it doesn't appear to work:
     // https://deck.gl/#/documentation/deckgl-api-reference/layers/geojson-layer?section=getelevation-function-number-optional-transition-enabled
-    getFillColor: layerName === scoreLayerName ? getColorOfFeature :
-                                                 getStyleFunction(layerName),
-    visible: layerMapValue.displayed,
+    getFillColor: deckParams.colorFunction,
+    visible: layerDisplayData.displayed,
   });
   redrawLayers();
 }
@@ -229,29 +264,29 @@ const maxNumFeaturesExpected = 250000000;
 
 /**
  * Convenience wrapper for addLayerFromGeoJsonPromise.
- *
- * @param {string} layerName Name of EarthEngine FeatureCollection.
- * @param {number} index Ordering of layer (higher is more visible).
+ * @param {Object} layer Data for layer coming from Firestore
  * @param {google.maps.Map} map main map
  */
-function addLayer(layerName, index, map) {
-  switch (firebaseLayers[layerName]['asset-type']) {
+function addLayer(layer, map) {
+  switch (layer['asset-type']) {
     case LayerType.IMAGE:
-      addImageLayer(map, ee.Image(layerName), layerName, index);
+      addImageLayer(map, ee.Image(layer['ee-name']), layer);
       break;
     case LayerType.IMAGE_COLLECTION:
-      addImageLayer(map, processImageCollection(layerName), layerName, index);
+      addImageLayer(map, processImageCollection(layer['ee-name']), layer);
       break;
     case LayerType.FEATURE:
     case LayerType.FEATURE_COLLECTION:
+      const layerName = layer['ee-name'];
       addLayerFromGeoJsonPromise(
           convertEeObjectToPromise(
               ee.FeatureCollection(layerName).toList(maxNumFeaturesExpected)),
-          layerName, index);
+          DeckParams.fromLayer(layer), layer['index']);
       break;
     default:
       createError('parsing layer type during add')(
-          '[' + index + ']: ' + layerName + ' not recognized layer type');
+          '[' + layer['index'] + ']: ' + layer['asset-name'] +
+          ' not recognized layer type');
   }
 }
 
@@ -269,60 +304,63 @@ function processImageCollection(layerName) {
 /**
  * Asynchronous wrapper for addLayerFromFeatures that takes in a Promise coming
  * from an ee.List of Features to avoid blocking on the result. This also
- populates layerMap.
+ * populates layerArray.
  *
- * This should only be called once per asset when its data is initialized
- * for the first time. After the data is non-null in layerMap, any displaying
+ * This should only be called once per asset when its data is initialized for
+ * the first time. After the data is non-null in layerArray, any displaying
  * should be able to set its visibility and redraw the layers.
  *
  * @param {Promise<Array<GeoJson>>}featuresPromise
- * @param {string} layerName
- * @param {number|string} index Ordering of layer (higher is more visible). The
- *     special string 'lastElement' keeps this always on top (only for the score
- layer)
+ * @param {DeckParams} deckParams
+ * @param {number|string} index index of layer. A number unless this is the
+ * score layer
  */
-function addLayerFromGeoJsonPromise(featuresPromise, layerName, index) {
+function addLayerFromGeoJsonPromise(featuresPromise, deckParams, index) {
   addLoadingElement(mapContainerId);
-  // Add entry to map.
-  const layerMapValue = new LayerMapValue(null, index, true);
-  layerMap.set(layerName, layerMapValue);
+  const layerDisplayData = new LayerDisplayData(deckParams, true);
+  layerArray[index] = layerDisplayData;
   featuresPromise
       .then((features) => {
-        layerMapValue.data = features;
-        addLayerFromFeatures(layerMapValue, layerName);
+        layerDisplayData.data = features;
+        addLayerFromFeatures(layerDisplayData, index);
         loadingElementFinished(mapContainerId);
       })
-      .catch(createError('Error rendering ' + layerName));
+      .catch(createError('Error rendering ' + deckParams.deckId));
 }
 
 /**
- * Adds an entry to layerMap when we haven't actually gotten the data yet.
- * Useful for layers that we don't want to display by default.
+ * Adds an entry to layerArray when we haven't actually gotten the data
+ * yet. Useful for layers that we don't want to display by default.
  *
- * @param {string} layerName
- * @param {number} index
+ * @param {Object} layer Data for layer coming from Firestore
  */
-function addNullLayer(layerName, index) {
-  layerMap.set(layerName, new LayerMapValue(null, index, false));
+function addNullLayer(layer) {
+  const assetType = layer['asset-type'];
+  layerArray[layer['index']] = new LayerDisplayData(
+      assetType === LayerType.FEATURE_COLLECTION ||
+              assetType === LayerType.FEATURE ?
+          DeckParams.fromLayer(layer) :
+          null,
+      false);
 }
 
 /**
  * Sets the "layers" attribute of deckGlOverlay to the non-null elements of
- * layerArray, which has the effect of redrawing it on the map.
+ * deckGlArray, which has the effect of redrawing it on the map.
  */
 function redrawLayers() {
   deckGlOverlay.setProps({layers: processLayerArray()});
 }
 
 /**
- * Filters out null elements and appends element at 'lastElement' to end of
- * filtered array.
+ * Filters out null elements and appends element at 'score' to end of filtered
+ * array.
  * @return {deck.GeoJsonLayer[]}
  */
 function processLayerArray() {
-  const filteredArray = layerArray.filter(valIsNotNull);
-  if (layerArray['lastElement']) {
-    filteredArray.push(layerArray['lastElement']);
+  const filteredArray = deckGlArray.filter(valIsNotNull);
+  if (deckGlArray[scoreLayerName]) {
+    filteredArray.push(deckGlArray[scoreLayerName]);
   }
   return filteredArray;
 }
@@ -338,41 +376,27 @@ function valIsNotNull(val) {
 }
 
 /**
- * Removes an entry from the map by setting its displayed attribute to false and
- * recreating the layer.
+ * Creates and displays overlay for score + adds layerArray entry. The
+ * score layer sits at the end of all the layers. Having it last ensures it
+ * displays on top.
  *
- * @param {string} layerName
- * @param {google.maps.Map} map main map
+ * @param {Promise<Array<GeoJson>>} layer
  */
-function removeLayer(layerName, map) {
-  if (layerName === scoreLayerName) {
-    removeFeatureCollection(layerName);
-    return;
-  }
-  switch (firebaseLayers[layerName]['asset-type']) {
-    case LayerType.IMAGE:
-    case LayerType.IMAGE_COLLECTION:
-      map.overlayMapTypes.setAt(layerMap[layerName].index, null);
-      layerMap[layerName].displayed = false;
-      break;
-    case LayerType.FEATURE:
-    case LayerType.FEATURE_COLLECTION:
-      removeFeatureCollection(layerName);
-      break;
-    default:
-      createError('parsing layer type during remove')(
-          '[' + index + ']: ' + layerName + ' not recognized layer type');
-  }
+function addScoreLayer(layer) {
+  const deckParams = new DeckParams(scoreLayerName, null);
+  deckParams.colorFunction = getColorOfFeature;
+
+  addLayerFromGeoJsonPromise(layer, deckParams, scoreLayerName);
 }
 
 /**
- * convenience function for removeLayer on feature collections.
- * @param {string} layerName
+ * Function object to extract a color from a JSON Feature.
+ *
+ * @param {GeoJSON.Feature} feature
+ * @return {Array} RGBA array
  */
-function removeFeatureCollection(layerName) {
-  const layerMapValue = layerMap.get(layerName);
-  layerMapValue.displayed = false;
-  addLayerFromFeatures(layerMapValue, layerName);
+function getColorOfFeature(feature) {
+  return showColor(feature.properties['color']);
 }
 
 /**
@@ -381,6 +405,6 @@ function removeFeatureCollection(layerName) {
  * any actual data changes, and therefore not update the map.
  */
 function removeScoreLayer() {
-  layerArray[layerMap.get(scoreLayerName).index] = null;
+  deckGlArray[scoreLayerName] = null;
   redrawLayers();
 }
