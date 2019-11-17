@@ -3,48 +3,55 @@ import {cypressTestCookieName, earthEngineTestTokenCookieName, firebaseTestToken
 
 export {addFirebaseHooks, loadScriptsBeforeForUnitTests};
 
+/**
+ * Scripts that unit tests may want to load. Values have script and callback
+ * attributes, and optionally an extraScripts and extraCallback attributes, when
+ * they must load additional scripts that depend on the first one. More
+ * complicated graphs are not currently supported!
+ * @type {Map<string, Object>}
+ */
 const scriptMap = new Map([
   [
     'maps',
-    [
-      'https://maps.google.com/maps/api/js?libraries=drawing,places&key=AIzaSyBAQkh-kRrYitkPafxVLoZx3E5aYM-auXM',
-      () => typeof (google) !== 'undefined' &&
+    {
+      script: 'https://maps.google.com/maps/api/js?libraries=drawing,places&key=AIzaSyBAQkh-kRrYitkPafxVLoZx3E5aYM-auXM',
+      callback: () => typeof (google) !== 'undefined' &&
           typeof (google.maps) !== 'undefined',
-    ],
+    }
   ],
   [
     'deck',
-    [
-      'https://unpkg.com/deck.gl@latest/dist.min.js',
-      () => typeof (deck) !== 'undefined',
-    ],
-  ],
+    {
+      script: 'https://unpkg.com/deck.gl@latest/dist.min.js',
+      callback: () => typeof (deck) !== 'undefined',
+    },
+      ],
   [
     'ee',
-    [
-      'https://rawcdn.githack.com/google/earthengine-api/3bb86bfc4f3d9eed98220f3d225b414982915b86/javascript/build/ee_api_js_debug.js',
-      () => typeof (ee) !== 'undefined',
-    ],
+    {
+      script: 'https://rawcdn.githack.com/google/earthengine-api/3bb86bfc4f3d9eed98220f3d225b414982915b86/javascript/build/ee_api_js_debug.js',
+      callback: () => typeof (ee) !== 'undefined',
+    },
   ],
   [
     'firebase',
-    [
-      [
-        'https://www.gstatic.com/firebasejs/6.3.3/firebase-app.js',
-        'https://www.gstatic.com/firebasejs/6.3.3/firebase-firestore.js',
-        'https://www.gstatic.com/firebasejs/7.2.1/firebase-auth.js',
-      ],
-      () => typeof (firebase) != 'undefined' &&
-          typeof (firebase.firestore) != 'undefined' &&
+    {
+      script: 'https://www.gstatic.com/firebasejs/6.3.3/firebase-app.js',
+      callback: () => typeof (firebase) != 'undefined',
+      extraScripts:
+          ['https://www.gstatic.com/firebasejs/6.3.3/firebase-firestore.js',
+            'https://www.gstatic.com/firebasejs/7.2.1/firebase-auth.js',
+          ],
+      extraCallback: () => typeof (firebase.firestore) != 'undefined' &&
           typeof (firebase.auth) != 'undefined',
-    ],
+    },
   ],
   [
     'jquery',
-    [
-      'https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js',
-      () => typeof ($) !== 'undefined',
-    ],
+    {
+      script: 'https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js',
+      callback: () => typeof ($) !== 'undefined',
+    },
   ],
 ]);
 
@@ -68,17 +75,14 @@ function loadScriptsBeforeForUnitTests(...scriptKeys) {
   const usesFirebase = scriptsSet.has('firebase');
   before(() => {
     const callbacks = [];
+    const extraScripts = new Map();
     for (const scriptKey of scriptKeys) {
-      const scriptPair = scriptMap.get(scriptKey);
-      const scripts = scriptPair[0];
-      if (Array.isArray(scripts)) {
-        for (const script of scripts) {
-          addScriptToDocument(script);
-        }
-      } else {
-        addScriptToDocument(scripts);
+      const scriptData = scriptMap.get(scriptKey);
+      addScriptToDocument(scriptData.script);
+      callbacks.push(scriptData.callback);
+      if (scriptData.extraScripts) {
+        extraScripts.set(scriptData.callback, {scripts: scriptData.extraScripts, callback: scriptData.extraCallback});
       }
-      callbacks.push(scriptPair[1]);
     }
     // waitForCallback may return before the callback is actually ready, just
     // enqueuing itself to run again on a different thread, so this loop
@@ -87,7 +91,18 @@ function loadScriptsBeforeForUnitTests(...scriptKeys) {
     // are true, which will keep Cypress from proceeding until all that work is
     // done.
     for (const callback of callbacks) {
-      waitForCallback(callback);
+      const cypressPromise = waitForCallback(callback);
+      // If this script had dependent scripts, load them when this script has
+      // been loaded, and add the callback for those scripts in.
+      const scriptsAndCallbacks = extraScripts.get(callback);
+      if (scriptsAndCallbacks) {
+        cypressPromise.then(() => {
+          for (const script of scriptsAndCallbacks.scripts) {
+            addScriptToDocument(script);
+          }
+          return waitForCallback(scriptsAndCallbacks.callback);
+        });
+      }
     }
   });
   if (usesEe) {
