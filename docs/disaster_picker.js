@@ -2,9 +2,7 @@ import {getDisaster, getDisasters} from './resources.js';
 
 export {initializeDisasterPicker};
 
-/**
- * Initializes the disaster picker.
- */
+/** Initializes the disaster picker. */
 function initializeDisasterPicker() {
   const disasterDropdown = document.getElementById('disaster-dropdown');
   getDisasters().forEach((disaster) => {
