@@ -17,7 +17,7 @@ const scriptMap = new Map([
           'https://maps.google.com/maps/api/js?libraries=drawing,places&key=AIzaSyBAQkh-kRrYitkPafxVLoZx3E5aYM-auXM',
       callback: () => typeof (google) !== 'undefined' &&
           typeof (google.maps) !== 'undefined',
-    }
+    },
   ],
   [
     'deck',
@@ -85,7 +85,7 @@ function loadScriptsBeforeForUnitTests(...scriptKeys) {
       if (scriptData.extraScripts) {
         extraScripts.set(scriptData.callback, {
           scripts: scriptData.extraScripts,
-          callback: scriptData.extraCallback
+          callback: scriptData.extraCallback,
         });
       }
     }
