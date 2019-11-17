@@ -9,7 +9,7 @@ describe('Integration test for the navbar', () => {
     // believes the element is not visible.
     cy.get('.nav-menu a:first').next().click({force: true});
 
-    // The page should now be navigated to add_asset.html.
-    cy.url().should('include', '/add_asset.html');
+    // The page should now be navigated to add_disaster.html.
+    cy.url().should('include', '/add_disaster.html');
   });
 });
