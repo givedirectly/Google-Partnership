@@ -123,8 +123,6 @@ function toggleLayerOn(layer, map) {
   const index = layer['index'];
   const layerDisplayData = layerArray[index];
   layerDisplayData.displayed = true;
-  // TODO(janakr): this doesn't check the .overlay property to see if we already
-  // did computation for a non-deck layer. Add that caching in.
   if (layerDisplayData.data) {
     addLayerFromFeatures(layerDisplayData, index);
     return null;
