@@ -327,3 +327,9 @@ function createOptionFrom(innerTextAndValue) {
       .val(innerTextAndValue)
       .prop('id', innerTextAndValue);
 }
+
+$(() => {
+  $('#navbar').load('/navbar.html', () => {
+    document.getElementById('nav-header').innerHTML = 'Add Disaster';
+  });
+});
