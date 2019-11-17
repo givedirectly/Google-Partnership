@@ -43,4 +43,8 @@ script:
 # Use cypress-run package to auto-retry failed tests 3 times
 # Pass group argument so that retries will appear under same Cypress dashboard,
 # just different group
+# TODO(janakr): If https://github.com/cypress-io/cypress/issues/1313 is
+#  resolved, we might be able to go back to `cypress run`. However, our
+#  flakiness is around the "before all" test hooks for unit tests, we don't need
+#  to retry individual test cases, so any fix there may not work for us.
 - yarn run cypress-run --env ON_TRAVIS=1 --record --parallel --group 'All tests' --browser=chromium --config video=false
