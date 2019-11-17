@@ -12,9 +12,9 @@ export {addFirebaseHooks, loadScriptsBeforeForUnitTests};
  */
 const scriptMap = new Map([
   [
-    'maps',
-    {
-      script: 'https://maps.google.com/maps/api/js?libraries=drawing,places&key=AIzaSyBAQkh-kRrYitkPafxVLoZx3E5aYM-auXM',
+    'maps', {
+      script:
+          'https://maps.google.com/maps/api/js?libraries=drawing,places&key=AIzaSyBAQkh-kRrYitkPafxVLoZx3E5aYM-auXM',
       callback: () => typeof (google) !== 'undefined' &&
           typeof (google.maps) !== 'undefined',
     }
@@ -25,11 +25,12 @@ const scriptMap = new Map([
       script: 'https://unpkg.com/deck.gl@latest/dist.min.js',
       callback: () => typeof (deck) !== 'undefined',
     },
-      ],
+  ],
   [
     'ee',
     {
-      script: 'https://rawcdn.githack.com/google/earthengine-api/3bb86bfc4f3d9eed98220f3d225b414982915b86/javascript/build/ee_api_js_debug.js',
+      script:
+          'https://rawcdn.githack.com/google/earthengine-api/3bb86bfc4f3d9eed98220f3d225b414982915b86/javascript/build/ee_api_js_debug.js',
       callback: () => typeof (ee) !== 'undefined',
     },
   ],
@@ -38,10 +39,10 @@ const scriptMap = new Map([
     {
       script: 'https://www.gstatic.com/firebasejs/6.3.3/firebase-app.js',
       callback: () => typeof (firebase) != 'undefined',
-      extraScripts:
-          ['https://www.gstatic.com/firebasejs/6.3.3/firebase-firestore.js',
-            'https://www.gstatic.com/firebasejs/7.2.1/firebase-auth.js',
-          ],
+      extraScripts: [
+        'https://www.gstatic.com/firebasejs/6.3.3/firebase-firestore.js',
+        'https://www.gstatic.com/firebasejs/7.2.1/firebase-auth.js',
+      ],
       extraCallback: () => typeof (firebase.firestore) != 'undefined' &&
           typeof (firebase.auth) != 'undefined',
     },
@@ -49,7 +50,8 @@ const scriptMap = new Map([
   [
     'jquery',
     {
-      script: 'https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js',
+      script:
+          'https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js',
       callback: () => typeof ($) !== 'undefined',
     },
   ],
@@ -81,7 +83,10 @@ function loadScriptsBeforeForUnitTests(...scriptKeys) {
       addScriptToDocument(scriptData.script);
       callbacks.push(scriptData.callback);
       if (scriptData.extraScripts) {
-        extraScripts.set(scriptData.callback, {scripts: scriptData.extraScripts, callback: scriptData.extraCallback});
+        extraScripts.set(scriptData.callback, {
+          scripts: scriptData.extraScripts,
+          callback: scriptData.extraCallback
+        });
       }
     }
     // waitForCallback may return before the callback is actually ready, just
