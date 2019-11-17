@@ -41,4 +41,5 @@ before_script:
   - yarn run ws --directory docs --port 8080 &
 script:
 # Use cypress-run package to auto-retry failed tests 3 times
-- yarn run cypress-run --env ON_TRAVIS=1 --record --parallel --browser=chromium --config video=false --spec 'cypress/integration/unit_tests/*.js'
+- ./run.sh
+# - yarn run cypress-run --env ON_TRAVIS=1 --record --parallel --browser=chromium --config video=false --spec 'cypress/integration/unit_tests/*.js'
