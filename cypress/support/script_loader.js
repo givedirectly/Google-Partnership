@@ -12,7 +12,8 @@ export {addFirebaseHooks, loadScriptsBeforeForUnitTests};
  */
 const scriptMap = new Map([
   [
-    'maps', {
+    'maps',
+    {
       script:
           'https://maps.google.com/maps/api/js?libraries=drawing,places&key=AIzaSyBAQkh-kRrYitkPafxVLoZx3E5aYM-auXM',
       callback: () => typeof (google) !== 'undefined' &&
