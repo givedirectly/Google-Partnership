@@ -139,7 +139,12 @@ function toggleLayerOn(layer, map) {
 function toggleLayerOff(index, map) {
   const layerDisplayData = layerArray[index];
   layerDisplayData.displayed = false;
-  if (layerDisplayData.deckRendered()) {
+  if (Array.isArray(layerDisplayData.overlay)) {
+    for (let i = 0; i < layerDisplayData.overlay.length; i++) {
+      layerDisplayData.overlay[i].setMap(null);
+    }
+  }
+  else if (layerDisplayData.deckRendered()) {
     addLayerFromFeatures(layerDisplayData, index);
   } else {
     map.overlayMapTypes.setAt(index, null);
@@ -284,7 +289,8 @@ function addLayer(layer, map) {
           DeckParams.fromLayer(layer), layer['index']);
       break;
     case LayerType.KML:
-      addKmlLayers(layer['kml-urls'], map);
+      addKmlLayers(layer, map);
+      break;
     default:
       createError('parsing layer type during add')(
           '[' + layer['index'] + ']: ' + layer['asset-name'] +
@@ -293,14 +299,18 @@ function addLayer(layer, map) {
 }
 
 
-function addKmlLayers(layers, map) {
-  for (let i = 0; i < layers.length; i++) {
-    const kmlLayer = new google.maps.KmlLayer(layers[i], {
+function addKmlLayers(layer, map) {
+  const layerDisplayData = new LayerDisplayData(null, true);
+  layerArray[layer['index']] = layerDisplayData;
+  const overlays = [];
+  for (let i = 0; i < layer['kml-urls'].length; i++) {
+    overlays.push(new google.maps.KmlLayer(layer['kml-urls'][i], {
             suppressInfoWindows: false,
             preserveViewport: true,
-            map: map
-          });
+            map: map,
+          }));
   }
+  layerDisplayData.overlay = overlays;
 }
 
 /**
