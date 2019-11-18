@@ -251,7 +251,7 @@ function showOverlayLayer(overlay, index, map) {
 }
 
 /**
- * Wrapper for adding {@link createTileCallback} to the given ee.OverlayMapData\
+ * Wrapper for adding {@link createTileCallback} to the given ee.OverlayMapData
  * layer.
  * @param {LayerDisplayData} layerDisplayData containing an ee.OverlayMapData
  * @param {Function} resolve Function to be called the first time this layer
