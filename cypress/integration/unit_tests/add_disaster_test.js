@@ -190,7 +190,7 @@ describe('Unit tests for add_disaster page', () => {
   });
 
   it('deletes a disaster', () => {
-    cy.on('window:confirm', () => true);
+    const confirmStub = cy.stub(window, 'confirm').returns(true);
 
     const id = '2002-winter';
     const states = ['DN, WF'];
@@ -203,7 +203,9 @@ describe('Unit tests for add_disaster page', () => {
                       .get())
         .then((doc) => {
           expect(doc.exists).to.be.true;
-          return cy.window().then((win) => deleteDisaster(win));
+          const deletePromise = deleteDisaster();
+          expect(confirmStub).to.be.calledOnce;
+          return deletePromise;
         })
         .then(
             () => getFirestoreRoot()
