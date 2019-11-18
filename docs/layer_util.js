@@ -273,6 +273,10 @@ function resolveOnEeTilesFinished(layerDisplayData, resolve) {
  * first time loading completes, so that the application can be notified that
  * this layer has been rendered.
  *
+ * On subsequent calls, adds loading element to map if not already loading, and
+ * removes it when all tiles are loaded. These calls correspond to map redraws,
+ * from pans or zooms.
+ *
  * Loading completion will be triggered if the layer is toggled off from the map
  * (verified experimentally, and also through reading code: when the layer is
  * toggled off, releaseTile() is called on all of its tiles, enabling the
@@ -288,19 +292,22 @@ function createTileCallback(layerDisplayData, resolve) {
   return (tileEvent) => {
     if (tileEvent.count === 0) {
       if (resolve) {
+        // This is the first time we've finished loading, so inform caller.
         resolve();
-        // Free up reference to resolve and make future redraws add a loading
-        // element.
+        // Free up reference to resolve and make future redraws add a
+        // loading element.
         resolve = null;
       } else {
+        // Loading has finished for a pan/zoom-triggered load.
         loadingElementFinished(mapContainerId);
       }
       layerDisplayData.loading = false;
     } else if (!resolve && !layerDisplayData.loading) {
+      // We've started loading again after the first time completed (because
+      // of a pan/zoom of the map). Enable loading indicator.
       layerDisplayData.loading = true;
       addLoadingElement(mapContainerId);
-    }
-  };
+    }  };
 }
 
 /**
