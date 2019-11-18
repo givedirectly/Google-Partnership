@@ -307,7 +307,8 @@ function createTileCallback(layerDisplayData, resolve) {
       // of a pan/zoom of the map). Enable loading indicator.
       layerDisplayData.loading = true;
       addLoadingElement(mapContainerId);
-    }  };
+    }
+  };
 }
 
 /**
