@@ -329,4 +329,4 @@ function createOptionFrom(innerTextAndValue) {
       .prop('id', innerTextAndValue);
 }
 
-loadNavbar(() => $('#nav-header').html('Add Disaster'));
+loadNavbar('Add Disaster');

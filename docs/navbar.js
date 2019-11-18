@@ -1,10 +1,12 @@
 export {loadNavbar};
 
 /**
- * Loads the navbar and calls the callback upon load.
+ * Loads the navbar and sets the title.
  *
- * @param {Function} callback the function called upon load
+ * @param {string} title the title of the navbar
  */
-function loadNavbar(callback) {
-  $(() => $('#navbar').load('/navbar.html', callback));
+function loadNavbar(title) {
+  $(() => {
+    $('#navbar').load('/navbar.html', () => $('#nav-header').html(title)));
+  });
 }

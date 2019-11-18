@@ -427,4 +427,4 @@ function addFileToDelete(file) {
   }
 }
 
-loadNavbar(() => $('#nav-header').html('Add Asset'));
+loadNavbar('Add Asset');

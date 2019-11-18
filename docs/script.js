@@ -67,4 +67,4 @@ function setup() {
 setup();
 
 // TODO(ramvellanki): switch to disaster picker
-loadNavbar(() => $('#nav-header').html('Houston Damage/Poverty Map'));
+loadNavbar('Houston Damage/Poverty Map');
