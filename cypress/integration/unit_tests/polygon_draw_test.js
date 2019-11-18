@@ -3,6 +3,7 @@ import * as loading from '../../../docs/loading';
 import {processUserRegions, setUpPolygonDrawing, StoredShapeData} from '../../../docs/polygon_draw';
 import * as resourceGetter from '../../../docs/resources';
 import SettablePromise from '../../../docs/settable_promise';
+import {CallbackLatch} from '../../support/callback_latch';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 
 const polyCoords = [
@@ -181,12 +182,10 @@ describe('Unit test for ShapeData', () => {
   it('Shows calculating before update finishes', () => {
     // polygon_draw.update creates an ee.List to evaluate the numbers it needs.
     // To make sure that update calculation does not finish until we're ready,
-    // lightly wrap ee.List.evaluate and wait on a Promise to finish.
-    // This function will be called below when we're ready for the calculation
+    // lightly wrap ee.List.evaluate and wait on a CallbackLatch. The
+    // CallbackLatch will be released below when we're ready for the calculation
     // to be finished.
-    let callWhenCalculationCanComplete = null;
-    const promiseThatAllPreCalculationAssertionsAreDone =
-        new Promise((resolve) => callWhenCalculationCanComplete = resolve);
+    const latch = new CallbackLatch();
     // Replace ee.List so that we can have access to the returned object and
     // change its evaluate call.
     const oldList = ee.List;
@@ -200,9 +199,7 @@ describe('Unit test for ShapeData', () => {
         returnValue.evaluate = oldEvaluate;
         // Do the evaluate, but don't return back to polygon_draw.update's
         // callback handler until our pre-calculation assertions are done.
-        returnValue.evaluate(
-            (result, err) => promiseThatAllPreCalculationAssertionsAreDone.then(
-                () => callback(result, err)));
+        returnValue.evaluate(latch.delayedCallback(callback));
       };
       return returnValue;
     };
@@ -229,7 +226,7 @@ describe('Unit test for ShapeData', () => {
     cy.get('.popup-calculated-data')
         .should('have.css', 'color')
         .and('eq', 'rgb(128, 128, 128)')
-        .then(() => callWhenCalculationCanComplete(null));
+        .then(() => latch.release());
     cy.wrap(updatePromise.getPromise());
     cy.get('.popup-calculated-data')
         .should('have.css', 'color')
