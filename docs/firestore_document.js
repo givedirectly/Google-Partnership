@@ -21,7 +21,7 @@ function getFirestoreRoot() {
 function disasterDocumentReference() {
   return getFirestoreRoot()
       .collection('disaster-metadata')
-      .doc(getResources().year + '-' + getDisaster());
+      .doc('2019' + '-' + 'raymond');
 }
 
 /**

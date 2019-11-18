@@ -283,10 +283,23 @@ function addLayer(layer, map) {
               ee.FeatureCollection(layerName).toList(maxNumFeaturesExpected)),
           DeckParams.fromLayer(layer), layer['index']);
       break;
+    case LayerType.KML:
+      addKmlLayers(layer['kml-urls'], map);
     default:
       createError('parsing layer type during add')(
           '[' + layer['index'] + ']: ' + layer['asset-name'] +
           ' not recognized layer type');
+  }
+}
+
+
+function addKmlLayers(layers, map) {
+  for (let i = 0; i < layers.length; i++) {
+    const kmlLayer = new google.maps.KmlLayer(layers[i], {
+            suppressInfoWindows: false,
+            preserveViewport: true,
+            map: map
+          });
   }
 }
 
