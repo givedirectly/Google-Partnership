@@ -54,15 +54,14 @@ class DisasterMapValue {
   }
 }
 
+// TODO(janakr): get all the data below here from Firestore instead of hard-
+//  coding here. That will also need to support multiple states per disaster.
 const michaelName = '2018-michael';
 const michaelPathPrefix = gdEePathPrefix + michaelName + '/';
 
 const harveyName = '2018-harvey';
 const harveyPathPrefix = gdEePathPrefix + harveyName + '/';
 
-// TODO: Don't store census/svi data in relation to a disaster so we can handle
-// scenarios that are not 1:1 state:disaster e.g. michael which hit both
-// florida and georgia.
 disasters.set(
     michaelName,
     new DisasterMapValue(
