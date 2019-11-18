@@ -19,9 +19,7 @@ function getFirestoreRoot() {
  * @return {firebase.firestore.DocumentReference}
  */
 function disasterDocumentReference() {
-  return getFirestoreRoot()
-      .collection('disaster-metadata')
-      .doc(getDisaster());
+  return getFirestoreRoot().collection('disaster-metadata').doc(getDisaster());
 }
 
 /**

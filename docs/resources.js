@@ -1,5 +1,5 @@
-import {inProduction} from './in_test_util.js';
 import {gdEePathPrefix} from './ee_paths.js';
+import {inProduction} from './in_test_util.js';
 
 export {getDisaster, getResources};
 
@@ -65,14 +65,16 @@ const harveyPathPrefix = gdEePathPrefix + harveyName + '/';
 // florida and georgia.
 disasters.set(
     michaelName,
-    new DisasterMapValue(michaelName, michaelPathPrefix + 'FEMA_Damage_Assessments',
+    new DisasterMapValue(
+        michaelName, michaelPathPrefix + 'FEMA_Damage_Assessments',
         michaelPathPrefix + 'snap', michaelPathPrefix + 'tiger',
         michaelPathPrefix + 'income', michaelPathPrefix + 'svi',
         michaelPathPrefix + 'relevant_buildings'));
 
 disasters.set(
     harveyName,
-    new DisasterMapValue(harveyName, harveyPathPrefix + 'FEMA_Damage_Assessments',
+    new DisasterMapValue(
+        harveyName, harveyPathPrefix + 'FEMA_Damage_Assessments',
         harveyPathPrefix + 'snap', harveyPathPrefix + 'tiger',
         harveyPathPrefix + 'income', harveyPathPrefix + 'svi',
         harveyPathPrefix + 'buildings'));
