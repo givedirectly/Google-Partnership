@@ -59,7 +59,7 @@ class DisasterMapValue {
 const michaelName = '2018-michael';
 const michaelPathPrefix = gdEePathPrefix + michaelName + '/';
 
-const harveyName = '2018-harvey';
+const harveyName = '2017-harvey';
 const harveyPathPrefix = gdEePathPrefix + harveyName + '/';
 
 disasters.set(
