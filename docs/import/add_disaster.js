@@ -39,7 +39,7 @@ function enableWhenReady() {
 
   const deleteButton = $('#delete');
   deleteButton.prop('disabled', false);
-  deleteButton.on('click', () => deleteDisaster(window));
+  deleteButton.on('click', deleteDisaster);
 
   // populate disaster picker.
   return getFirestoreRoot()
