@@ -428,7 +428,8 @@ function valIsNotNull(val) {
 }
 
 const scoreDeckParams = new DeckParams(scoreLayerName, null);
-scoreDeckParams.colorFunction = (feature) => showColor(feature.properties['color']);
+scoreDeckParams.colorFunction = (feature) =>
+    showColor(feature.properties['color']);
 
 /**
  * Creates and displays overlay for score + adds layerArray entry. The
