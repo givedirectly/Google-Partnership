@@ -1,5 +1,5 @@
 import {getTestCookie, inProduction} from './in_test_util.js';
-import {getDisaster, getResources} from './resources.js';
+import {getDisaster} from './resources.js';
 
 export {disasterDocumentReference, getFirestoreRoot, readDisasterDocument};
 
