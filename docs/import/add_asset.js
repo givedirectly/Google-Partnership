@@ -1,5 +1,6 @@
 import {Authenticator} from '../authenticate.js';
 import {eeLegacyPathPrefix, gdEePathPrefix} from '../ee_paths.js';
+import {loadNavbar} from '../navbar.js';
 import {getDisaster} from '../resources.js';
 import TaskAccumulator from './task_accumulator.js';
 
@@ -426,12 +427,11 @@ function addFileToDelete(file) {
   }
 }
 
-$(() => {
-  $('#navbar').load('/navbar.html', () => {
-    const navLeft = document.getElementById('nav-left');
-    const navHeader = document.createElement('h1');
-    navHeader.className = 'nav-header';
-    navHeader.innerHTML = 'Add Asset';
-    navLeft.appendChild(navHeader);
-  });
+
+loadNavbar(() => {
+  const navLeft = document.getElementById('nav-left');
+  const navHeader = document.createElement('h1');
+  navHeader.className = 'nav-header';
+  navHeader.innerHTML = 'Add Asset';
+  navLeft.appendChild(navHeader);
 });

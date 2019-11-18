@@ -1,5 +1,6 @@
 import {eeStatePrefixLength, legacyStateDir} from '../ee_paths.js';
 import {getFirestoreRoot} from '../firestore_document.js';
+import {loadNavbar} from '../navbar.js';
 
 export {enableWhenReady, toggleState};
 // Visible for testing
@@ -327,3 +328,11 @@ function createOptionFrom(innerTextAndValue) {
       .val(innerTextAndValue)
       .prop('id', innerTextAndValue);
 }
+
+loadNavbar(() => {
+  const navLeft = document.getElementById('nav-left');
+  const navHeader = document.createElement('h1');
+  navHeader.className = 'nav-header';
+  navHeader.innerHTML = 'Add Disaster';
+  navLeft.appendChild(navHeader);
+});

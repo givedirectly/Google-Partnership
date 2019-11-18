@@ -3,6 +3,7 @@ import createMap from './create_map.js';
 import {initializeDisasterPicker} from './disaster_picker.js';
 import {readDisasterDocument} from './firestore_document.js';
 import {earthEngineTestTokenCookieName, firebaseTestTokenCookieName, getCookieValue, inProduction} from './in_test_util.js';
+import {loadNavbar} from './navbar.js';
 import run from './run.js';
 import SettablePromise from './settable_promise.js';
 import {initializeSidebar} from './sidebar.js';
@@ -67,10 +68,6 @@ function setup() {
 
 setup();
 
-$(() => {
-  $('#navbar').load('/navbar.html', () => {
-    $('#nav-left').load('/disaster_picker.html', () => {
-      initializeDisasterPicker();
-    });
-  });
+loadNavbar(() => {
+  $('#nav-left').load('/disaster_picker.html', initializeDisasterPicker);
 });
