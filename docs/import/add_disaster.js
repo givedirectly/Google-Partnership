@@ -39,7 +39,7 @@ function enableWhenReady() {
 
   const deleteButton = $('#delete');
   deleteButton.prop('disabled', false);
-  deleteButton.on('click', () => deleteDisaster(window));
+  deleteButton.on('click', deleteDisaster);
 
   // populate disaster picker.
   return getFirestoreRoot()
@@ -284,14 +284,12 @@ function createAssetPickers(states) {
 /**
  * Deletes a disaster from firestore. Confirms first. Returns when deletion is
  * complete (or instantly if deletion doesn't actually happen).
- * @param {Window} globalWindow DOM Window (for test injection)
  * @return {Promise<void>}
  */
-function deleteDisaster(globalWindow) {
+function deleteDisaster() {
   const disasterPicker = $('#disaster');
   const disasterId = disasterPicker.val();
-  if (globalWindow.confirm(
-          'Delete ' + disasterId + '? This action cannot be undone')) {
+  if (confirm('Delete ' + disasterId + '? This action cannot be undone')) {
     disasters.delete(disasterId);
     disasterPicker.val(disasterPicker.children().eq(0).val()).trigger('change');
     $('#' + disasterId).remove();

@@ -12,11 +12,8 @@ let Popup = null;
 
 // Mostly copied from example at
 // https://developers-dot-devsite-v2-prod.appspot.com/maps/documentation/javascript/examples/overlay-popup
-/**
- * Sets up the Popup class. See link above for more context.
- * @param {Window} window DOM Window (for test injection)
- */
-function setUpPopup(window) {
+/** Sets up the Popup class. See link above for more context. */
+function setUpPopup() {
   Popup = class extends google.maps.OverlayView {
     /**
      * A customized popup on the map.

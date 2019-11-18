@@ -217,8 +217,7 @@ describe('Unit test for ShapeData', () => {
             map: map,
             paths: [{lat: 0, lng: 0}, {lat: 1, lng: 1}, {lat: 0, lng: 1}],
           });
-          return cy.window().then(
-              (win) => setUpPolygonDrawing(map, Promise.resolve(), win));
+          return setUpPolygonDrawing(map, Promise.resolve());
         })
         .then((drawingManager) => {
           google.maps.event.trigger(drawingManager, 'overlaycomplete', event);
@@ -239,7 +238,7 @@ describe('Unit test for ShapeData', () => {
 
   it('Draws marker, edits notes, then deletes', () => {
     // Accept confirmation when it happens.
-    cy.on('window:confirm', () => true);
+    const confirmStub = cy.stub(window, 'confirm').returns(true);
     firebaseCollection.add = () => {};
     firebaseCollection.doc = () => {};
     const addStub =
@@ -263,8 +262,7 @@ describe('Unit test for ShapeData', () => {
           marker =
               new google.maps.Marker({map: map, position: {lat: 0, lng: 0}});
           event.overlay = marker;
-          return cy.window().then(
-              (win) => setUpPolygonDrawing(map, Promise.resolve(), win));
+          return setUpPolygonDrawing(map, Promise.resolve());
         })
         .then((drawingManager) => {
           google.maps.event.trigger(drawingManager, 'overlaycomplete', event);
@@ -281,8 +279,10 @@ describe('Unit test for ShapeData', () => {
             expect(docStub).to.be.calledOnce;
             expect(setStub).to.be.calledOnce;
           });
-          pressPopupButton('delete').then(
-              () => expect(deleteStub).to.be.calledOnce);
+          pressPopupButton('delete').then(() => {
+            expect(deleteStub).to.be.calledOnce;
+            expect(confirmStub).to.be.calledOnce;
+          });
         });
   });
 
