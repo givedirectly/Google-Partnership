@@ -5,8 +5,8 @@ describe('Integration test for the navbar', () => {
     // Click the burger.
     cy.get('#nav-input').click();
 
-    // Click the add asset page link. This is forced because Cypress mistakenly
-    // believes the element is not visible.
+    // Click the add disaster page link. This is forced because Cypress
+    // mistakenly believes the element is not visible.
     cy.get('.nav-menu a:first').next().click({force: true});
 
     // The page should now be navigated to add_disaster.html.

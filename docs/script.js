@@ -2,6 +2,7 @@ import {authenticateToFirebase, Authenticator, CLIENT_ID, initializeEE, initiali
 import createMap from './create_map.js';
 import {readDisasterDocument} from './firestore_document.js';
 import {earthEngineTestTokenCookieName, firebaseTestTokenCookieName, getCookieValue, inProduction} from './in_test_util.js';
+import {loadNavbar} from './navbar.js';
 import run from './run.js';
 import SettablePromise from './settable_promise.js';
 import {initializeSidebar} from './sidebar.js';
@@ -65,10 +66,8 @@ function setup() {
 
 setup();
 
-$(() => {
-  $('#navbar').load('/navbar.html', () => {
-    // TODO(ramvellanki): switch to disaster picker
-    document.getElementById('nav-header').innerHTML =
-        'Houston Damage/Poverty Map';
-  });
+loadNavbar(() => {
+  // TODO(ramvellanki): switch to disaster picker
+  document.getElementById('nav-header').innerHTML =
+      'Houston Damage/Poverty Map';
 });
