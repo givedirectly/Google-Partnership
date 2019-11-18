@@ -1,6 +1,6 @@
 import {gdEeStatePrefix, legacyStateDir, legacyStatePrefix} from '../../../docs/ee_paths.js';
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
-import {addDisaster, createAssetPickers, createOptionFrom, deleteDisaster, disasters, emptyCallback, getAssetsFromEe, stateAssets, writeNewDisaster} from '../../../docs/import/add_disaster.js';
+import {addDisaster, createAssetPickers, createOptionFrom, deleteDisaster, disasterData, emptyCallback, getAssetsFromEe, stateAssets, writeNewDisaster} from '../../../docs/import/add_disaster.js';
 import {addFirebaseHooks, loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
 const KNOWN_STATE = 'WF';
@@ -47,14 +47,14 @@ describe('Unit tests for add_disaster page', () => {
     stateAssets.clear();
     // In prod this would happen in enableWhenReady which would read from
     // firestore.
-    disasters.clear();
-    disasters.set('2001-summer', []);
-    disasters.set('2003-spring', []);
+    disasterData.clear();
+    disasterData.set('2001-summer', []);
+    disasterData.set('2003-spring', []);
   });
 
   afterEach(() => {
     stateAssets.clear();
-    disasters.clear();
+    disasterData.clear();
   });
 
   it('gets state asset info from ee', () => {

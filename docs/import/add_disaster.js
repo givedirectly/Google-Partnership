@@ -1,5 +1,6 @@
 import {eeStatePrefixLength, legacyStateDir} from '../ee_paths.js';
 import {getFirestoreRoot} from '../firestore_document.js';
+import {LayerType} from '../firebase_layers.js';
 
 export {enableWhenReady, toggleState};
 // Visible for testing
@@ -8,7 +9,7 @@ export {
   createAssetPickers,
   createOptionFrom,
   deleteDisaster,
-  disasters,
+  disasterData,
   emptyCallback,
   getAssetsFromEe,
   stateAssets,
@@ -18,7 +19,7 @@ export {
 // Currently a map of disaster name to states. This pulls once on firebase
 // authentication and then makes local updates afterwards so we don't need to
 // wait on firebase writes to read new info.
-const disasters = new Map();
+const disasterData = new Map();
 
 // Map of state to list of known assets
 const stateAssets = new Map();
@@ -50,7 +51,7 @@ function enableWhenReady() {
         querySnapshot.forEach((doc) => {
           const name = doc.id;
           disasterPicker.prepend(createOptionFrom(name));
-          disasters.set(name, doc.data().states);
+          disasterData.set(name, doc.data());
         });
 
         disasterPicker.on('change', () => toggleDisaster(disasterPicker.val()));
@@ -60,6 +61,15 @@ function enableWhenReady() {
       });
 }
 
+function createTableCell() {
+  return $(document.createElement('td'));
+}
+
+const layerTypeStrings = new Map();
+for (let t in LayerType) {
+  layerTypeStrings.set(LayerType[t], t);
+}
+
 /**
  * On change method for disaster picker.
  * @param {String} disaster
@@ -67,7 +77,20 @@ function enableWhenReady() {
  * pickers and pulled from firebase.
  */
 function toggleDisaster(disaster) {
-  const states = disasters.get(disaster);
+  const data = disasterData.get(disaster);
+
+  const layers = data['layerArray'];
+  for (let i = 0; i < layers.length; i++) {
+    const row = $(document.createElement('tr'));
+    const layer = layers[i];
+    row.append(createTableCell.html(i));
+    row.append(createTableCell.html(layer['display-name']));
+    row.append(createTableCell.html(layerTypeStrings(layer['asset-type'])));
+    row.append()
+  }
+
+
+  const states = data['states'];
   const statesToFetch = [];
   for (const state of states) {
     if (!stateAssets.has(state)) statesToFetch.push(state);
@@ -102,11 +125,11 @@ function toggleDisaster(disaster) {
  * @return {Promise<boolean>} returns true after successful write to firestore.
  */
 function writeNewDisaster(disasterId, states) {
-  if (disasters.has(disasterId)) {
+  if (disasterData.has(disasterId)) {
     setStatus('Error: disaster with that name and year already exists.');
     return Promise.resolve(false);
   }
-  disasters.set(disasterId, states);
+  disasterData.set(disasterId, {states: states});
   clearStatus();
 
   const disasterPicker = $('#disaster');
@@ -292,7 +315,7 @@ function deleteDisaster(globalWindow) {
   const disasterId = disasterPicker.val();
   if (globalWindow.confirm(
           'Delete ' + disasterId + '? This action cannot be undone')) {
-    disasters.delete(disasterId);
+    disasterData.delete(disasterId);
     disasterPicker.val(disasterPicker.children().eq(0).val()).trigger('change');
     $('#' + disasterId).remove();
     return getFirestoreRoot()
