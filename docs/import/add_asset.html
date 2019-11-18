@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <title>Add asset</title>
+  <!-- Load jQuery, a 3rd-party library. -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
   <!-- TODO(janakr): Switch back to compiled version in production. -->
   <!-- TODO(janakr): This is pinned to a particular version, but we should be targeting the live
        version, whatever it is. -->
@@ -14,6 +16,10 @@
   <link rel="stylesheet" href="../style.css">
 </head>
 <body>
+
+<div id="navbar"></div>
+
+<br><br><br>  <!-- TODO(ramvellanki): switch to using a margin above the main content of this page -->
 
 <form action="" id="form">
   <label for="collectionName">Name of ImageCollection (e.g. noaa-harvey): </label><input id="collectionName"> 
@@ -29,7 +35,7 @@
 <hr/>
 <div id="results"></div>
 <script type="module">
-  import taskAccumulator from './add_asset.js';
+  import {taskAccumulator} from './add_asset.js';
   taskAccumulator.taskCompleted();
 </script>
 </body>

@@ -8,5 +8,5 @@
     "firebase-admin": "^8.6.1",
     "local-web-server": "^3.0.7"
   },
-  "license": "UNLICENSED"
+  "license": "MIT"
 }

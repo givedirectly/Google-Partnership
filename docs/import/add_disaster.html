@@ -17,17 +17,28 @@
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
   <script src="https://apis.google.com/js/api.js"></script>
   <script type="module" src="./add_disaster_startup.js"></script>
+
+  <!-- Load our styles. -->
+  <link rel="stylesheet" href="../style.css">
 </head>
 <body>
 
-<form action="" id="disaster-picker">
+<div id="navbar"></div>
+
+<br><br><br>  <!-- TODO(ramvellanki): switch to using a margin above the main content of this page -->
+
+<div id="disaster-picker">
   <label for="disaster">Disaster: </label>
   <select id="disaster" style="width: 160px"></select>
+  <select id="pending-disaster" style="width: 160px" hidden="true" disabled="true">
+    <option value="pending" id="pending">...</option>
+  </select>
   <span> </span>
   <button type="button" id="create-new-disaster">Create New Disaster</button>
-</form><p></p>
+</div>
 <div id="status"></div>
 <div id="new-disaster" hidden="true">
+  <button type="button" id="cancel-new-disaster">Cancel</button>
   <form action="" id="new-disaster-form">
     <label for="name">Disaster Name: </label><input id="name"><label for="name"><i> ex: harvey</i></label><br>
     <label for="year">Disaster Year: </label><input id="year"><label for="year"><i> ex: 2017</i></label><br>
@@ -89,8 +100,9 @@
   </form>
 </div>
 <div id="selected-disaster" hidden="true">
-  <p>Upload additional assets via the code editor</p>
+  <p>Upload additional assets via the <a href="https://code.earthengine.google.com/" target="_blank"> code editor </a></p>
   <div id="asset-pickers"></div>
+  <button type="button" id="delete", disabled="true">Delete</button>
 </div>
 <script type="module">
   import {taskAccumulator} from './add_disaster_startup.js';

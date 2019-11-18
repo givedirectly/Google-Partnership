@@ -76,3 +76,8 @@ https://dashboard.cypress.io in the "Runs" tab under "Settings".
     yarn run eslint $SOURCE_FILES
     ```
 
+## License
+
+[![license](https://img.shields.io/badge/license-MIT-green.svg)](/LICENSE)
+
+This project is licensed under the  terms of the [MIT license](/LICENSE).
