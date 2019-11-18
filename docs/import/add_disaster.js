@@ -329,5 +329,4 @@ function createOptionFrom(innerTextAndValue) {
       .prop('id', innerTextAndValue);
 }
 
-loadNavbar(
-    () => document.getElementById('nav-header').innerHTML = 'Add Disaster');
+loadNavbar(() => $('#nav-header').html('Add Disaster'));

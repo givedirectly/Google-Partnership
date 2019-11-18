@@ -66,8 +66,5 @@ function setup() {
 
 setup();
 
-loadNavbar(() => {
-  // TODO(ramvellanki): switch to disaster picker
-  document.getElementById('nav-header').innerHTML =
-      'Houston Damage/Poverty Map';
-});
+// TODO(ramvellanki): switch to disaster picker
+loadNavbar(() => $('#nav-header').html('Houston Damage/Poverty Map'));
