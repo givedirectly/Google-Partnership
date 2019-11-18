@@ -341,8 +341,8 @@ describe('Unit test for toggleLayerOff', () => {
 function toggleHiddenLayerOnAndAssert() {
   const promise = toggleLayerOn(mockFirebaseLayers[2], null);
   expect(promise).to.not.be.null;
-  expect(layerArray[i].displayed).to.be.true;
-  expect(layerArray[i].data).to.be.undefined;
+  expect(layerArray[2].displayed).to.be.true;
+  expect(layerArray[2].data).to.be.undefined;
   return promise;
 }
 
