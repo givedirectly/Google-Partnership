@@ -163,7 +163,7 @@ function toggleLayerOff(index, map) {
 }
 
 /**
- * Asynchronous wrapper for createLayerFromEeId that calls getMap() with a
+ * Asynchronous wrapper for ee.MapLayerOverlay that calls getMap() with a
  * callback to avoid blocking on the result. This also populates layerArray.
  *
  * This should only be called once per asset when its overlay is initialized
@@ -193,8 +193,8 @@ function addImageLayer(map, imageAsset, layer) {
                   'https://earthengine.googleapis.com/map', layerId.mapid,
                   layerId.token, {});
               layerDisplayData.overlay = overlay;
-              // Check in case the status has changed while the callback was
-              // running.
+              // Check in case the status has changed before this callback was
+              // invoked by getMap.
               if (layerDisplayData.displayed) {
                 resolveOnTilesFinished(layerDisplayData, resolve);
                 showOverlayLayer(overlay, index, map);
@@ -246,15 +246,19 @@ function resolveOnTilesFinished(layerDisplayData, resolve) {
       layerDisplayData.overlay.addTileCallback((tileEvent) => {
         if (tileEvent.count === 0) {
           if (resolve) {
+            // This is the first time we've finished loading, so inform caller.
             resolve();
             // Free up reference to resolve and make future redraws add a
             // loading element.
             resolve = null;
           } else {
+            // Loading has finished for a pan/zoom-triggered load.
             loadingElementFinished(mapContainerId);
           }
           layerDisplayData.loading = false;
         } else if (!resolve && !layerDisplayData.loading) {
+          // We've started loading again after the first time completed (because
+          // of a pan/zoom of the map). Enable loading indicator.
           layerDisplayData.loading = true;
           addLoadingElement(mapContainerId);
         }
@@ -423,8 +427,8 @@ function valIsNotNull(val) {
   return val !== null;
 }
 
-const deckParams = new DeckParams(scoreLayerName, null);
-deckParams.colorFunction = (feature) => showColor(feature.properties['color']);
+const scoreDeckParams = new DeckParams(scoreLayerName, null);
+scoreDeckParams.colorFunction = (feature) => showColor(feature.properties['color']);
 
 /**
  * Creates and displays overlay for score + adds layerArray entry. The
@@ -435,7 +439,7 @@ deckParams.colorFunction = (feature) => showColor(feature.properties['color']);
  * @return {Promise} Promise that completes when layer is displayed
  */
 function addScoreLayer(layer) {
-  return addLayerFromGeoJsonPromise(layer, deckParams, scoreLayerName);
+  return addLayerFromGeoJsonPromise(layer, scoreDeckParams, scoreLayerName);
 }
 
 /**

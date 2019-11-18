@@ -85,10 +85,8 @@ describe('Unit test for toggleLayerOn', () => {
     const emptyList = [];
     let callback = null;
     stubForEmptyList((callb) => callback = callb);
-    const promise = toggleLayerOn(mockFirebaseLayers[2]);
-    expect(promise).to.not.be.null;
-    expect(layerArray[2].displayed).to.be.true;
-    expect(layerArray[2].data).to.be.undefined;
+
+    const promise = toggleHiddenLayerOnAndAssert();
     callback(emptyList);
     cy.wrap(promise).then(() => {
       expect(layerArray[2].displayed).to.be.true;
@@ -100,17 +98,14 @@ describe('Unit test for toggleLayerOn', () => {
     });
   });
 
-  it('check hidden layer, then uncheck before list evaluation', () => {
+  it('check hidden layer, then uncheck before EE evaluation', () => {
     expect(layerArray[2].displayed).to.be.false;
     expect(layerArray[2].data).to.be.undefined;
 
     const emptyList = [];
     let callback = null;
     stubForEmptyList((callb) => callback = callb);
-    const promise = toggleLayerOn(mockFirebaseLayers[2]);
-    expect(promise).to.not.be.null;
-    expect(layerArray[2].displayed).to.be.true;
-    expect(layerArray[2].data).to.be.undefined;
+    const promise = toggleHiddenLayerOnAndAssert();
     toggleLayerOff(2);
     callback(emptyList);
     cy.wrap(promise).then(() => {
@@ -130,14 +125,9 @@ describe('Unit test for toggleLayerOn', () => {
     const emptyList = [];
     let callback = null;
     stubForEmptyList((callb) => callback = callb);
-    const promise = toggleLayerOn(mockFirebaseLayers[2]);
-    expect(promise).to.not.be.null;
-    expect(layerArray[2].displayed).to.be.true;
-    expect(layerArray[2].data).to.be.undefined;
+    const promise = toggleHiddenLayerOnAndAssert();
     toggleLayerOff(2);
-    const secondPromise = toggleLayerOn(mockFirebaseLayers[2]);
-    expect(layerArray[2].displayed).to.be.true;
-    expect(layerArray[2].data).to.be.undefined;
+    const secondPromise = toggleHiddenLayerOnAndAssert();
     expect(secondPromise).equals(promise);
     callback(emptyList);
     cy.wrap(promise).then(() => {
@@ -292,6 +282,7 @@ describe('Unit test for toggleLayerOn', () => {
         .then(() => {
           expect(overlaySpy).to.be.calledOnce;
           const firstLayers = getLatestLayer();
+          // 3=2 "mock" deck layers initialized in beforeEach, plus score layer.
           expect(firstLayers).to.have.length(3);
           const props = firstLayers[2].props;
           expect(props.data).to.eql(promiseResult);
@@ -340,6 +331,20 @@ describe('Unit test for toggleLayerOff', () => {
     expect(layerProps).to.have.property('data', mockData);
   });
 });
+
+/**
+ * Utility function to toggle hidden second layer on, when that toggle will have
+ * to do some work, return the non-null Promise that results, and make some
+ * basic assertions about the layer.
+ * @return {Promise}
+ */
+function toggleHiddenLayerOnAndAssert() {
+  const promise = toggleLayerOn(mockFirebaseLayers[2], null);
+  expect(promise).to.not.be.null;
+  expect(layerArray[i].displayed).to.be.true;
+  expect(layerArray[i].data).to.be.undefined;
+  return promise;
+}
 
 /**
  * Mocks out a FeatureCollection created for 'asset2'. Assumes that production
