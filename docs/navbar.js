@@ -7,6 +7,6 @@ export {loadNavbar};
  */
 function loadNavbar(title) {
   $(() => {
-    $('#navbar').load('/navbar.html', () => $('#nav-header').html(title)));
+    $('#navbar').load('/navbar.html', () => $('#nav-header').html(title));
   });
 }
