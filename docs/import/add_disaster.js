@@ -1,5 +1,6 @@
 import {eeStatePrefixLength, legacyStateDir} from '../ee_paths.js';
 import {getFirestoreRoot} from '../firestore_document.js';
+import {loadNavbar} from '../navbar.js';
 
 export {enableWhenReady, toggleState};
 // Visible for testing
@@ -325,3 +326,5 @@ function createOptionFrom(innerTextAndValue) {
       .val(innerTextAndValue)
       .prop('id', innerTextAndValue);
 }
+
+loadNavbar('Add Disaster');

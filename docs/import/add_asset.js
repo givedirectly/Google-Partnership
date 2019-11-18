@@ -1,5 +1,6 @@
 import {Authenticator} from '../authenticate.js';
 import {eeLegacyPathPrefix, gdEePathPrefix} from '../ee_paths.js';
+import {loadNavbar} from '../navbar.js';
 import {getDisaster} from '../resources.js';
 import TaskAccumulator from './task_accumulator.js';
 
@@ -425,3 +426,5 @@ function addFileToDelete(file) {
     filesToDelete.length = 0;
   }
 }
+
+loadNavbar('Add Asset');
