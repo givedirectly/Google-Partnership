@@ -68,6 +68,5 @@ function setup() {
 
 setup();
 
-loadNavbar(() => {
-  $('#nav-left').load('/disaster_picker.html', initializeDisasterPicker);
-});
+loadNavbar(() =>
+    $('#nav-left').load('/disaster_picker.html', initializeDisasterPicker));
