@@ -1,5 +1,5 @@
 import {eeStatePrefixLength, legacyStateDir} from '../ee_paths.js';
-import {LayerType} from '../firebase_layers.js';
+import {colorMap, LayerType} from '../firebase_layers.js';
 import {getFirestoreRoot} from '../firestore_document.js';
 
 export {enableWhenReady, toggleState};
@@ -61,13 +61,26 @@ function enableWhenReady() {
       });
 }
 
-function createTableCell() {
-  return $(document.createElement('td'));
-}
-
 const layerTypeStrings = new Map();
 for (let t in LayerType) {
   layerTypeStrings.set(LayerType[t], t);
+}
+
+/**
+ *
+ * @param {JQuery<HTMLTableRowElement>} row
+ */
+function addEditButtons(row) {
+  row.append(getFontAwesomeIconButton('far fa-edit'));
+  row.append(getFontAwesomeIconButton('far fa-save'));
+  row.append(getFontAwesomeIconButton('fas fa-arrow-up'));
+  row.append(getFontAwesomeIconButton('fas fa-arrow-down'));
+}
+
+function getFontAwesomeIconButton(icon) {
+  return $(document.createElement('td'))
+      .append($(document.createElement('button'))
+                  .append($(document.createElement('i')).addClass(icon)));
 }
 
 /**
@@ -80,13 +93,49 @@ function toggleDisaster(disaster) {
   const data = disasterData.get(disaster);
 
   const layers = data['layerArray'];
+  const tableBody = $('#tbody');
+  tableBody.empty();
   for (let i = 0; i < layers.length; i++) {
     const row = $(document.createElement('tr'));
     const layer = layers[i];
-    row.append(createTableCell.html(i));
-    row.append(createTableCell.html(layer['display-name']));
-    row.append(createTableCell.html(layerTypeStrings(layer['asset-type'])));
-    row.append()
+
+    row.append($(document.createElement('td')).html(i));
+    row.append($(document.createElement('td')).html(layer['display-name']));
+    row.append($(document.createElement('td')).html(layer['ee-name']));
+
+    row.append($(document.createElement('td'))
+                   .html(layerTypeStrings.get((layer['asset-type']))));
+
+    const colorTd = $(document.createElement('td'));
+    const colorFunction = layer['color-function'];
+    if (!colorFunction) {
+      colorTd.html('N/A').addClass('na');
+    } else if (colorFunction['single-color']) {
+      const color = colorFunction['single-color'];
+      colorTd.append($(document.createElement('div'))
+                         .addClass('box')
+                         .css('background-color', color));
+    } else if (colorFunction['base-color']) {
+      const color = colorFunction['base-color'];
+      colorTd.append($(document.createElement('div'))
+                         .addClass('box')
+                         .css('background-color', color));
+    } else if (colorFunction['colors']) {
+      const colorObject = colorFunction['colors'];
+      const colorSet = new Set();
+      Object.keys(colorObject).forEach((propertyValue) => {
+        const color = colorObject[propertyValue];
+        if (!colorSet.has(color)) {
+          colorSet.add(color);
+          colorTd.append($(document.createElement('div'))
+              .addClass('box')
+              .css('background-color', colorObject[propertyValue]));
+        }
+      });
+    }
+    row.append(colorTd);
+    addEditButtons(row);
+    tableBody.append(row);
   }
 
 
