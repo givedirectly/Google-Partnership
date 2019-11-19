@@ -59,6 +59,7 @@ function enableWhenReady() {
         disasterPicker.on('change', () => toggleDisaster(disasterPicker.val()));
         const mostRecent = querySnapshot.docs[querySnapshot.size - 1].id;
         disasterPicker.val(mostRecent).trigger('change');
+        console.log('eh?');
         toggleState(true);
       });
 }
@@ -79,7 +80,7 @@ function writeDataToFirestore() {
       .collection('disaster-metadata')
       .doc(currentDisaster)
       .set(
-          {layers: disasterData.get(currentDisaster)['layers']}, {merge: true});
+          {layerArray: disasterData.get(currentDisaster)['layerArray']}, {merge: true});
 }
 
 /**
@@ -93,7 +94,7 @@ function updateAfterSort(ui) {
   const oldRealIndex = $(ui.item).children('.index-td').html();
   const newRealIndex = numLayers - 1 - $(ui.item).index();
 
-  const layerArray = disasterData.get(currentDisaster)['layers'];
+  const layerArray = disasterData.get(currentDisaster)['layerArray'];
   // pull out moved row and shuffle everything else down
   const row = layerArray.splice(oldRealIndex, 1)[0];
   // insert at new index
@@ -125,15 +126,17 @@ function createTd(html) {
  */
 function toggleDisaster(disaster) {
   currentDisaster = disaster;
+  const data = disasterData.get(currentDisaster);
 
-  const data = disasterData.get(disaster);
-  const layers = data['layers'];
+  // display layer table
+  const layers = data['layerArray'];
   const tableBody = $('#tbody');
   tableBody.empty();
   for (let i = layers.length - 1; i >= 0; i--) {
     const row = $(document.createElement('tr'));
     const layer = layers[i];
     row.append(createTd(i).addClass('index-td'));
+    // TODO: make this editable.
     row.append(createTd(layer['display-name']));
     row.append(createTd(layer['ee-name']));
     row.append(createTd(layerTypeStrings.get((layer['asset-type']))));
@@ -145,7 +148,7 @@ function toggleDisaster(disaster) {
             .on('change', () => {
               const index = $('#tbody > tr').length - $('tr').index(row);
               layers[index]['display-on-load'] =
-                  displayOnLoadCheckbox.is(':checked');
+                  displayCheckbox.is(':checked');
               return writeDataToFirestore();
             });
     row.append(createTd().append(displayCheckbox));
@@ -178,10 +181,12 @@ function toggleDisaster(disaster) {
         }
       });
     }
+    // TODO: make this editable.
     row.append(colorTd);
     tableBody.append(row);
   }
 
+  // display state asset pickers
   const states = data['states'];
   const statesToFetch = [];
   for (const state of states) {
