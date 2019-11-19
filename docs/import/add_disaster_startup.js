@@ -31,6 +31,7 @@ $('#tbody').sortable({
   helper: function(e, tr) {
     const originals = tr.children();
     const helper = tr.clone();
+    // eslint-disable-next-line no-invalid-this
     helper.children().each(function(index) {
       // Set helper cell sizes to match the original sizes
       $(this).width(originals.eq(index).width());
