@@ -1,5 +1,5 @@
 import {getTestCookie, inProduction} from './in_test_util.js';
-import {getDisaster, getResources} from './resources.js';
+import {getDisaster} from './resources.js';
 
 export {disasterDocumentReference, getFirestoreRoot, readDisasterDocument};
 
@@ -19,9 +19,7 @@ function getFirestoreRoot() {
  * @return {firebase.firestore.DocumentReference}
  */
 function disasterDocumentReference() {
-  return getFirestoreRoot()
-      .collection('disaster-metadata')
-      .doc(getResources().year + '-' + getDisaster());
+  return getFirestoreRoot().collection('disaster-metadata').doc(getDisaster());
 }
 
 /**
