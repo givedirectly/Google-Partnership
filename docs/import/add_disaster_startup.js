@@ -28,6 +28,7 @@ $('#cancel-new-disaster').on('click', () => toggleState(true));
 $('#tbody').sortable({
   revert: true,
   update: (event, ui) => updateAfterSort(ui),
+  // TODO: Table is still doing some jumping around on resort.
   helper: function(e, tr) {
     const originals = tr.children();
     const helper = tr.clone();

@@ -59,7 +59,6 @@ function enableWhenReady() {
         disasterPicker.on('change', () => toggleDisaster(disasterPicker.val()));
         const mostRecent = querySnapshot.docs[querySnapshot.size - 1].id;
         disasterPicker.val(mostRecent).trigger('change');
-        console.log('eh?');
         toggleState(true);
       });
 }
@@ -119,6 +118,11 @@ function createTd(html) {
   return $(document.createElement('td')).html(html);
 }
 
+/**
+ * Create an instance of the color boxes for the color col.
+ * @param {string} color what color to make the box.
+ * @return {JQuery<HTMLDivElement>}
+ */
 function createColorBox(color) {
   return $(document.createElement('div'))
       .addClass('box')
@@ -142,12 +146,31 @@ function toggleDisaster(disaster) {
   for (let i = layers.length - 1; i >= 0; i--) {
     const row = $(document.createElement('tr'));
     const layer = layers[i];
+
+    // index
     row.append(createTd(i).addClass('index-td'));
+
+    // display name
     // TODO: make this editable.
     row.append(createTd(layer['display-name']));
-    row.append(createTd(layer['ee-name']));
+
+    // asset path/url sample
+    // TODO: consolidate kml-urls and urls when we have a consistent naming
+    // convention.
+    if (layer['ee-name']) {
+      row.append(createTd(layer['ee-name']));
+    } else if (layer['urls']) {
+      row.append(createTd(layer['urls'][0]));
+    } else if (layer['kml-urls']) {
+      row.append(createTd(layer['kml-urls'][0]));
+    } else if (layer['tile-urls']) {
+      row.append(createTd(layer['tile-urls'][0]));
+    }
+
+    // type
     row.append(createTd(layerTypeStrings.get((layer['asset-type']))));
 
+    // display on load
     const displayCheckbox =
         $(document.createElement('input'))
             .prop('type', 'checkbox')
@@ -159,6 +182,7 @@ function toggleDisaster(disaster) {
             });
     row.append(createTd().append(displayCheckbox));
 
+    // color
     const colorTd = createTd();
     const colorFunction = layer['color-function'];
     if (!colorFunction) {
