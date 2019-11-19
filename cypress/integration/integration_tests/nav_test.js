@@ -6,6 +6,11 @@ describe('Integration test for the navbar', () => {
 
     // The page should now be switched to the Michael disaster.
     cy.url().should('include', 'disaster=2018-michael');
+
+    cy.visit('');
+
+    // On reload, the most recently selected disaster should be persisted.
+    cy.get('#disaster-dropdown').should('have.value', '2018-michael');
   });
 
   it('Open the nav menu and change pages', () => {

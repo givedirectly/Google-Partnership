@@ -16,21 +16,20 @@ function getResources() {
  * @return {string} current disaster
  */
 function getDisaster() {
-  // Always use Harvey for test cases since our tests assert against specific
-  // block groups and damage points.
-  if (!inProduction()) {
-    return default_disaster;
-  }
-
   let final_disaster;
 
-  // The order of precedence for determining the current disaster goes query
-  // parameter, local storage, and finally the default.
+  // The order of precedence for determining the current disaster is query
+  // parameter, local storage, a test specific default and finally the base
+  // default.
   const params = new URLSearchParams(window.location.search);
   if (params.has('disaster')) {
     final_disaster = params.get('disaster');
   } else if (localStorage.getItem('disaster')) {
     final_disaster = localStorage.getItem('disaster');
+  } else if (!inProduction()) {
+    // Start off with Harvey for test cases since our tests assert against
+    // specific block groups and damage points.
+    final_disaster = test_disaster;
   } else {
     final_disaster = default_disaster;
   }
@@ -52,6 +51,9 @@ function getDisasters() {
 
 /** The default disaster. */
 const default_disaster = '2017-harvey';
+
+/** The test disaster. */
+const test_disaster = '2017-harvey';
 
 /** Disaster asset names and other constants. */
 const disasters = new Map();
