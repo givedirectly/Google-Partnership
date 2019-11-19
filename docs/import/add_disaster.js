@@ -410,8 +410,9 @@ function deleteDisaster() {
   const disasterPicker = $('#disaster');
   const disasterId = disasterPicker.val();
   if (confirm('Delete ' + disasterId + '? This action cannot be undone')) {
-    disasters.delete(disasterId);
-    disasterPicker.val(disasterPicker.children().eq(0).val()).trigger('change');
+    disasterData.delete(disasterId);
+    currentDisaster = disasterPicker.children().eq(0).val();
+    disasterPicker.val(currentDisaster).trigger('change');
     $('#' + disasterId).remove();
     return getFirestoreRoot()
         .collection('disaster-metadata')
