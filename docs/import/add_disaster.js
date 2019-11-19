@@ -58,16 +58,19 @@ function enableWhenReady() {
 
         disasterPicker.on('change', () => toggleDisaster(disasterPicker.val()));
         const mostRecent = querySnapshot.docs[querySnapshot.size - 1].id;
-        disasterPicker.val('2017-harvey').trigger('change');
+        disasterPicker.val(mostRecent).trigger('change');
         toggleState(true);
       });
 }
 
 const layerTypeStrings = new Map();
-for (let t in LayerType) {
-  layerTypeStrings.set(LayerType[t], t);
+for (const t in LayerType) {
+  if (LayerType.hasOwnProperty(t)) {
+    layerTypeStrings.set(LayerType[t], t);
+  }
 }
 
+/** Write the current state of {@code disasterData} to firestore. */
 function writeDataToFirestore() {
   return getFirestoreRoot()
       .collection('disaster-metadata')
@@ -77,9 +80,10 @@ function writeDataToFirestore() {
 }
 
 /**
- *
- * @param ui
- * @return {Promise<void>}
+ * Update the table and disasterData with new indices after a layer has been
+ * reordered. Then write to firestore.
+ * @param {Object} ui
+ * @return {Promise<void>} Returns when the write to firestore finishes.
  */
 function updateAfterSort(ui) {
   const numLayers = $('#tbody > tr').length;
@@ -98,7 +102,7 @@ function updateAfterSort(ui) {
     $('#tbody tr:nth-child(' + i + ') .index-td').html(numLayers - i);
   }
 
-  writeDataToFirestore();
+  return writeDataToFirestore();
 }
 
 /**
@@ -139,7 +143,7 @@ function toggleDisaster(disaster) {
               const index = $('#tbody > tr').length - $('tr').index(row);
               layers[index]['display-on-load'] =
                   displayOnLoadCheckbox.is(':checked');
-              writeDataToFirestore();
+              return writeDataToFirestore();
             });
     row.append(createTd().append(displayCheckbox));
 
