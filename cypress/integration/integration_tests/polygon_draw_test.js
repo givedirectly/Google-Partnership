@@ -328,8 +328,9 @@ function saveAndAwait() {
 
 /**
  * Clicks on the "Draw a shape" button on map. Waits longer than usual for it to
- * be found because it requires Firebase authentication to finish.
+ * be found because it requires Firebase authentication to finish. Forces the
+ * click because page may still be loading, causing "animation".
  */
 function startDrawing() {
-  cy.get('[title="Draw a shape"]', {timeout: 10000}).click();
+  cy.get('[title="Draw a shape"]', {timeout: 10000}).click({force: true});
 }

@@ -25,8 +25,13 @@
 
   <!-- Load our styles. -->
   <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="../style.css">
 </head>
 <body>
+
+<div id="navbar"></div>
+
+<br><br><br>  <!-- TODO(ramvellanki): switch to using a margin above the main content of this page -->
 
 <div id="disaster-picker">
   <label for="disaster">Disaster: </label>
@@ -52,7 +57,7 @@
     </thead>
     <tbody id="tbody"></tbody>
   </table>
-  <p>Upload additional assets via the code editor</p>
+  <p>Upload additional assets via the <a href="https://code.earthengine.google.com/" target="_blank"> code editor </a></p>
   <div id="asset-pickers"></div>
   <button type="button" id="delete", disabled="true">Delete</button>
 </div>

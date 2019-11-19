@@ -1,3 +1,4 @@
+import {gdEePathPrefix} from './ee_paths.js';
 import {inProduction} from './in_test_util.js';
 
 export {getDisaster, getResources};
@@ -29,8 +30,7 @@ const disasters = new Map();
 class DisasterMapValue {
   /**
    * @constructor
-   * @param {string} name
-   * @param {number} year
+   * @param {string} name (includes year)
    * @param {string} damage ee asset path
    * @param {string} snap ee asset path to snap info
    * @param {string} bg ee asset path to block group info
@@ -38,8 +38,7 @@ class DisasterMapValue {
    * @param {string} svi ee asset path to svi info
    * @param {string} buildings ee asset path to building footprint info
    */
-  constructor(name, year, damage, snap, bg, income, svi, buildings) {
-    this.year = year;
+  constructor(name, damage, snap, bg, income, svi, buildings) {
     this.name = name;
     this.damage = damage;
     this.rawSnap = snap;
@@ -51,25 +50,30 @@ class DisasterMapValue {
 
   /** @return {string} The combined SNAP/damage asset name */
   getCombinedAsset() {
-    return 'users/gd/' + this.name + '/data-ms-as-nod';
+    return gdEePathPrefix + this.name + '/data-ms-as-nod';
   }
 }
 
-// TODO: Don't store census/svi data in relation to a disaster so we can handle
-// scenarios that are not 1:1 state:disaster e.g. michael which hit both
-// florida and georgia.
-disasters.set(
-    'michael',
-    new DisasterMapValue(
-        'michael', 2018, 'users/gd/michael/FEMA_Damage_Assessments',
-        'users/gd/michael/snap', 'users/gd/michael/tiger',
-        'users/gd/michael/income', 'users/gd/michael/svi',
-        'users/gd/michael/relevant_buildings'));
+// TODO(janakr): get all the data below here from Firestore instead of hard-
+//  coding here. That will also need to support multiple states per disaster.
+const michaelName = '2018-michael';
+const michaelPathPrefix = gdEePathPrefix + michaelName + '/';
+
+const harveyName = '2017-harvey';
+const harveyPathPrefix = gdEePathPrefix + harveyName + '/';
 
 disasters.set(
-    '2017-harvey',
+    michaelName,
     new DisasterMapValue(
-        '2017-harvey', 2017, 'users/gd/2017-harvey/FEMA_Damage_Assessments',
-        'users/gd/2017-harvey/snap', 'users/gd/2017-harvey/tiger',
-        'users/gd/2017-harvey/income', 'users/gd/2017-harvey/svi',
-        'users/gd/2017-harvey/buildings'));
+        michaelName, michaelPathPrefix + 'FEMA_Damage_Assessments',
+        michaelPathPrefix + 'snap', michaelPathPrefix + 'tiger',
+        michaelPathPrefix + 'income', michaelPathPrefix + 'svi',
+        michaelPathPrefix + 'relevant_buildings'));
+
+disasters.set(
+    harveyName,
+    new DisasterMapValue(
+        harveyName, harveyPathPrefix + 'FEMA_Damage_Assessments',
+        harveyPathPrefix + 'snap', harveyPathPrefix + 'tiger',
+        harveyPathPrefix + 'income', harveyPathPrefix + 'svi',
+        harveyPathPrefix + 'buildings'));
