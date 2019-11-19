@@ -80,7 +80,8 @@ function writeDataToFirestore() {
       .collection('disaster-metadata')
       .doc(currentDisaster)
       .set(
-          {layerArray: disasterData.get(currentDisaster)['layerArray']}, {merge: true});
+          {layerArray: disasterData.get(currentDisaster)['layerArray']},
+          {merge: true});
 }
 
 /**
@@ -147,8 +148,7 @@ function toggleDisaster(disaster) {
             .prop('checked', layer['display-on-load'])
             .on('change', () => {
               const index = $('#tbody > tr').length - $('tr').index(row);
-              layers[index]['display-on-load'] =
-                  displayCheckbox.is(':checked');
+              layers[index]['display-on-load'] = displayCheckbox.is(':checked');
               return writeDataToFirestore();
             });
     row.append(createTd().append(displayCheckbox));
