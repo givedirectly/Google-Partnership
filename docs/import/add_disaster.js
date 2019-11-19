@@ -24,6 +24,8 @@ const disasterData = new Map();
 // Map of state to list of known assets
 const stateAssets = new Map();
 
+let currentDisaster;
+
 // TODO: general reminder to add loading indicators for things like creating
 // new state asset folders, etc.
 
@@ -56,7 +58,7 @@ function enableWhenReady() {
 
         disasterPicker.on('change', () => toggleDisaster(disasterPicker.val()));
         const mostRecent = querySnapshot.docs[querySnapshot.size - 1].id;
-        disasterPicker.val(mostRecent).trigger('change');
+        disasterPicker.val('2017-harvey').trigger('change');
         toggleState(true);
       });
 }
@@ -68,13 +70,62 @@ for (let t in LayerType) {
 
 /**
  *
+ * @param a
+ * @param b
+ * @return {Promise<void>}
+ */
+function writeSwap(a, b) {
+  const layers = disasterData.get(currentDisaster)['layerArray'];
+  const layerBelow = layers[a];
+  layers[a] = layers[b];
+  layers[b] = layerBelow;
+
+  return getFirestoreRoot()
+      .collection('disaster-metadata')
+      .doc(currentDisaster)
+      .set(
+          {layerArray: disasterData.get(currentDisaster)['layerArray']},
+          {merge: true});
+}
+
+/**
+ *
+ * @param dist
+ * @param row
+ * @return {Promise<void>}
+ */
+function move(up, row) {
+  const dist = up ? 1 : -1;
+  const tableIndex = $('tr').index(row);
+  const newTableIndex = tableIndex - dist;
+  const realIndex = $('#tbody > tr').length - tableIndex;
+  const newRealIndex = realIndex + dist;
+  $('#tbody tr:nth-child(' + tableIndex + ') td:nth-child(1)')
+      .html(newRealIndex);
+  $('#tbody tr:nth-child(' + newTableIndex + ') td:nth-child(1)')
+      .html(realIndex);
+  if (dist > 0) {
+    $('#tbody tr:nth-child(' + newTableIndex + ')')
+        .insertAfter('#tbody tr:nth-child(' + tableIndex + ')');
+  } else {
+    $('#tbody tr:nth-child(' + tableIndex + ')')
+        .insertAfter('#tbody tr:nth-child(' + newTableIndex + ')');
+  }
+
+  return writeSwap(realIndex, newRealIndex);
+}
+
+/**
+ *
  * @param {JQuery<HTMLTableRowElement>} row
  */
 function addEditButtons(row) {
-  row.append(getFontAwesomeIconButton('far fa-edit'));
-  row.append(getFontAwesomeIconButton('far fa-save'));
-  row.append(getFontAwesomeIconButton('fas fa-arrow-up'));
-  row.append(getFontAwesomeIconButton('fas fa-arrow-down'));
+  // row.append(getFontAwesomeIconButton('far fa-edit'));
+  // row.append(getFontAwesomeIconButton('far fa-save'));
+  row.append(getFontAwesomeIconButton('fas fa-arrow-up')
+                 .on('click', () => move(true, row)));
+  row.append(getFontAwesomeIconButton('fas fa-arrow-down')
+                 .on('click', () => move(false, row)));
 }
 
 function getFontAwesomeIconButton(icon) {
@@ -90,12 +141,13 @@ function getFontAwesomeIconButton(icon) {
  * pickers and pulled from firebase.
  */
 function toggleDisaster(disaster) {
-  const data = disasterData.get(disaster);
+  currentDisaster = disaster;
 
+  const data = disasterData.get(disaster);
   const layers = data['layerArray'];
   const tableBody = $('#tbody');
   tableBody.empty();
-  for (let i = 0; i < layers.length; i++) {
+  for (let i = layers.length - 1; i >= 0; i--) {
     const row = $(document.createElement('tr'));
     const layer = layers[i];
 
@@ -105,6 +157,28 @@ function toggleDisaster(disaster) {
 
     row.append($(document.createElement('td'))
                    .html(layerTypeStrings.get((layer['asset-type']))));
+    // working here in this mess. Go home.
+    const displayOnLoadCheckbox =
+        $(document.createElement('input'))
+            .prop('type', 'checkbox')
+            .prop('checked', layer['display-on-load'])
+            .change(() => {
+              disasterData.get(
+                      currentDisaster)['layerArray']
+                  [$('#tbody > tr').length -
+                  $('tr').index(row)]['display-on-load'] =
+                      $(this).is(':checked');
+              getFirestoreRoot()
+                  .collection('disaster-metadata')
+                  .doc(currentDisaster)
+                  .set(
+                      {
+                        blahblahblah:
+                            disasterData.get(currentDisaster)['layerArray']
+                      },
+                      {merge: true});
+            });
+    row.append($(document.createElement('td')).append(displayOnLoadCheckbox));
 
     const colorTd = $(document.createElement('td'));
     const colorFunction = layer['color-function'];
@@ -127,9 +201,10 @@ function toggleDisaster(disaster) {
         const color = colorObject[propertyValue];
         if (!colorSet.has(color)) {
           colorSet.add(color);
-          colorTd.append($(document.createElement('div'))
-              .addClass('box')
-              .css('background-color', colorObject[propertyValue]));
+          colorTd.append(
+              $(document.createElement('div'))
+                  .addClass('box')
+                  .css('background-color', colorObject[propertyValue]));
         }
       });
     }

@@ -16,11 +16,11 @@ function getResources() {
  * @return {string} current disaster
  */
 function getDisaster() {
-  return inProduction() ? disaster : 'harvey';
+  return inProduction() ? disaster : '2017-harvey';
 }
 
 /** The current disaster. */
-const disaster = 'harvey';
+const disaster = '2017-harvey';
 
 /** Disaster asset names and other constants. */
 const disasters = new Map();
@@ -67,9 +67,9 @@ disasters.set(
         'users/gd/michael/relevant_buildings'));
 
 disasters.set(
-    'harvey',
+    '2017-harvey',
     new DisasterMapValue(
-        'harvey', 2017, 'users/gd/harvey/FEMA_Damage_Assessments',
-        'users/gd/harvey/snap', 'users/gd/harvey/tiger',
-        'users/gd/harvey/income', 'users/gd/harvey/svi',
-        'users/gd/harvey/buildings'));
+        '2017-harvey', 2017, 'users/gd/2017-harvey/FEMA_Damage_Assessments',
+        'users/gd/2017-harvey/snap', 'users/gd/2017-harvey/tiger',
+        'users/gd/2017-harvey/income', 'users/gd/2017-harvey/svi',
+        'users/gd/2017-harvey/buildings'));
