@@ -91,11 +91,11 @@ function writeDataToFirestore() {
  * @return {Promise<void>} Returns when the write to firestore finishes.
  */
 function updateAfterSort(ui) {
-  const numLayers = $('#tbody > tr').length;
+  const layerArray = disasterData.get(currentDisaster)['layerArray'];
+  const numLayers = layerArray.length;
   const oldRealIndex = $(ui.item).children('.index-td').html();
   const newRealIndex = numLayers - 1 - $(ui.item).index();
 
-  const layerArray = disasterData.get(currentDisaster)['layerArray'];
   // pull out moved row and shuffle everything else down
   const row = layerArray.splice(oldRealIndex, 1)[0];
   // insert at new index
@@ -117,6 +117,12 @@ function updateAfterSort(ui) {
  */
 function createTd(html) {
   return $(document.createElement('td')).html(html);
+}
+
+function createColorBox(color) {
+  return $(document.createElement('div'))
+      .addClass('box')
+      .css('background-color', color);
 }
 
 /**
@@ -158,15 +164,9 @@ function toggleDisaster(disaster) {
     if (!colorFunction) {
       colorTd.html('N/A').addClass('na');
     } else if (colorFunction['single-color']) {
-      const color = colorFunction['single-color'];
-      colorTd.append($(document.createElement('div'))
-                         .addClass('box')
-                         .css('background-color', color));
+      colorTd.append(createColorBox(colorFunction['single-color']));
     } else if (colorFunction['base-color']) {
-      const color = colorFunction['base-color'];
-      colorTd.append($(document.createElement('div'))
-                         .addClass('box')
-                         .css('background-color', color));
+      colorTd.append(createColorBox(colorFunction['base-color']));
     } else if (colorFunction['colors']) {
       const colorObject = colorFunction['colors'];
       const colorSet = new Set();
@@ -174,10 +174,7 @@ function toggleDisaster(disaster) {
         const color = colorObject[propertyValue];
         if (!colorSet.has(color)) {
           colorSet.add(color);
-          colorTd.append(
-              $(document.createElement('div'))
-                  .addClass('box')
-                  .css('background-color', colorObject[propertyValue]));
+          colorTd.append(createColorBox(colorObject[propertyValue]));
         }
       });
     }
