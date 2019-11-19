@@ -128,8 +128,8 @@ describe('Integration tests for drawing polygons', () => {
     saveAndAwait();
     cy.get('#mapContainer').contains(notes).should('be.visible');
     cy.get('#sidebar-toggle-datasets').click();
-    cy.get('#user-features-checkbox').should('be.checked');
-    cy.get('#user-features-checkbox').click();
+    cy.get('#layer-user-features-checkbox').should('be.checked');
+    cy.get('#layer-user-features-checkbox').click();
     cy.get('#mapContainer').contains(notes).should('not.be.visible');
     // Notes is invisible even if we click on the polygon, so it's really gone.
     // Use an offset because there's some weirdness around selecting block
@@ -138,8 +138,8 @@ describe('Integration tests for drawing polygons', () => {
     cy.get('#mapContainer').contains(notes).should('not.be.visible');
 
     // Check box again and verify that notes box can now be brought up.
-    cy.get('#user-features-checkbox').click();
-    cy.get('#user-features-checkbox').should('be.checked');
+    cy.get('#layer-user-features-checkbox').click();
+    cy.get('#layer-user-features-checkbox').should('be.checked');
     // Wait a little bit for the layer to re-render (only needed on Electron).
     cy.wait(100);
     // Notes not visible yet.
@@ -151,17 +151,17 @@ describe('Integration tests for drawing polygons', () => {
     pressPopupButton('edit');
     let alertCameUp = false;
     cy.on('window:alert', () => alertCameUp = true);
-    cy.get('#user-features-checkbox').click().then(() => {
+    cy.get('#layer-user-features-checkbox').click().then(() => {
       expect(alertCameUp).to.be.true;
     });
-    cy.get('#user-features-checkbox').should('be.checked');
+    cy.get('#layer-user-features-checkbox').should('be.checked');
     // Confirm that save is still around to be pressed.
     cy.get('[class="notes"]').type('new notes to force save');
     saveAndAwait();
 
     // After a save, the hide is successful.
-    cy.get('#user-features-checkbox').click();
-    cy.get('#user-features-checkbox').should('not.be.checked');
+    cy.get('#layer-user-features-checkbox').click();
+    cy.get('#layer-user-features-checkbox').should('not.be.checked');
   });
 
   it('Hides, draws new one, tries to hide during edit, re-shows, hides', () => {
@@ -172,8 +172,8 @@ describe('Integration tests for drawing polygons', () => {
     cy.get('[class="notes"]').type(notes);
     saveAndAwait();
     cy.get('#sidebar-toggle-datasets').click();
-    cy.get('#user-features-checkbox').click();
-    cy.get('#user-features-checkbox').should('not.be.checked');
+    cy.get('#layer-user-features-checkbox').click();
+    cy.get('#layer-user-features-checkbox').should('not.be.checked');
     // With the box unchecked, draw a new polygon, below the first one, and set
     // its notes, but don't finish editing.
     drawPolygonAndClickOnIt(100);
@@ -182,15 +182,15 @@ describe('Integration tests for drawing polygons', () => {
     // Try to re-check the box. It will fail because we're editing.
     let alertCameUp = false;
     cy.on('window:alert', () => alertCameUp = true);
-    cy.get('#user-features-checkbox').click().then(() => {
+    cy.get('#layer-user-features-checkbox').click().then(() => {
       expect(alertCameUp).to.be.true;
     });
-    cy.get('#user-features-checkbox').should('not.be.checked');
+    cy.get('#layer-user-features-checkbox').should('not.be.checked');
 
     // Save the new notes and check the box, this time it succeeds.
     saveAndAwait();
-    cy.get('#user-features-checkbox').click();
-    cy.get('#user-features-checkbox').should('be.checked');
+    cy.get('#layer-user-features-checkbox').click();
+    cy.get('#layer-user-features-checkbox').should('be.checked');
 
     // We can click on the old polygon and view its notes,
     clickOnDrawnPolygon();
@@ -200,8 +200,8 @@ describe('Integration tests for drawing polygons', () => {
     cy.get('#mapContainer').contains('new notes').should('be.visible');
 
     // Now hide both polygons, and verify that they're really gone.
-    cy.get('#user-features-checkbox').click();
-    cy.get('#user-features-checkbox').should('not.be.checked');
+    cy.get('#layer-user-features-checkbox').click();
+    cy.get('#layer-user-features-checkbox').should('not.be.checked');
     cy.get('#mapContainer').contains(notes).should('not.be.visible');
     cy.get('#mapContainer').contains('new notes').should('not.be.visible');
     clickOnDrawnPolygon(100);
