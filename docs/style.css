@@ -135,11 +135,11 @@ h1 {
   display: inline-block;;
   float: left;
   margin: 0;
-  padding: 4px 8px;
 }
 
 .nav-header {
   line-height: calc(var(--navbar-height) - 8px);
+  padding: 4px 8px;
 }
 
 #nav-toggle {
@@ -242,6 +242,43 @@ h1 {
 .nav-menu a {
   text-decoration: none;
   color: var(--green-1);
+}
+
+/* Disaster Picker css */
+
+.dropdown {
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  height: var(--navbar-height);
+  padding: 0 8px;
+  -webkit-transition: var(--background-color-transition);
+  transition: var(--background-color-transition);
+}
+
+.dropdown:hover {
+  background-color: var(--green-7);
+  border: none;
+  cursor: pointer;
+}
+
+.dropdown:after {
+  position: absolute;
+  content: "";
+  top: 14px;
+  right: 10px;
+  width: 0;
+  height: 0;
+  border: 6px solid transparent;
+  border-color: #fff transparent transparent transparent;
+}
+
+.dropdown:focus {
+  outline: none;
+}
+
+.dropdown option {
+  background-color: #fff;
 }
 
 /* Form css */

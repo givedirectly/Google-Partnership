@@ -9,13 +9,13 @@ describe('Integration test', () => {
 
     cy.get('#sidebar-toggle-datasets').click();
 
-    cy.get('#score-checkbox').uncheck();
+    cy.get('#layer-score-checkbox').uncheck();
 
     cy.get('#sidebar-toggle-thresholds').click();
 
     cy.get('[id="poverty threshold"]').clear().type('1.0');
     cy.get('#update').click();
 
-    cy.get('#score-checkbox').should('be.checked');
+    cy.get('#layer-score-checkbox').should('be.checked');
   });
 });
