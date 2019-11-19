@@ -70,7 +70,10 @@ for (const t in LayerType) {
   }
 }
 
-/** Write the current state of {@code disasterData} to firestore. */
+/**
+ * Write the current state of {@code disasterData} to firestore.
+ * @return {Promise<void>} Returns when finished writing.
+ */
 function writeDataToFirestore() {
   return getFirestoreRoot()
       .collection('disaster-metadata')
