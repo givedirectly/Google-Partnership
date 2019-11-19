@@ -68,17 +68,34 @@ for (let t in LayerType) {
   layerTypeStrings.set(LayerType[t], t);
 }
 
+function getFontAwesomeIconButton(icon) {
+  return $(document.createElement('td'))
+      .append($(document.createElement('button'))
+                  .append($(document.createElement('i')).addClass(icon)));
+}
+
 /**
  *
- * @param a
- * @param b
+ * @param event
+ * @param ui
  * @return {Promise<void>}
  */
-function writeSwap(a, b) {
-  const layers = disasterData.get(currentDisaster)['layerArray'];
-  const layerBelow = layers[a];
-  layers[a] = layers[b];
-  layers[b] = layerBelow;
+function updateAfterSort(ui) {
+  const numLayers = $('#tbody > tr').length;
+  const oldRealIndex = $(ui.item).children('.index-td').html();
+  const newRealIndex = numLayers - 1 - $(ui.item).index();
+
+  const layerArray = disasterData.get(currentDisaster)['layerArray'];
+  // pull out moved row and shuffle everything else down
+  const row = layerArray.splice(oldRealIndex, 1)[0];
+  // insert at new index
+  layerArray.splice(newRealIndex, 0, row);
+
+  // dumbly renumber all the layers. note: nth-child starts at 1, .index()
+  // starts at 0
+  for (let i = 1; i <= numLayers; i++) {
+    $('#tbody tr:nth-child(' + i + ') .index-td').html(numLayers - i);
+  }
 
   return getFirestoreRoot()
       .collection('disaster-metadata')
@@ -86,52 +103,6 @@ function writeSwap(a, b) {
       .set(
           {layerArray: disasterData.get(currentDisaster)['layerArray']},
           {merge: true});
-}
-
-/**
- *
- * @param dist
- * @param row
- * @return {Promise<void>}
- */
-function move(up, row) {
-  const dist = up ? 1 : -1;
-  const tableIndex = $('tr').index(row);
-  const newTableIndex = tableIndex - dist;
-  const realIndex = $('#tbody > tr').length - tableIndex;
-  const newRealIndex = realIndex + dist;
-  $('#tbody tr:nth-child(' + tableIndex + ') td:nth-child(1)')
-      .html(newRealIndex);
-  $('#tbody tr:nth-child(' + newTableIndex + ') td:nth-child(1)')
-      .html(realIndex);
-  if (dist > 0) {
-    $('#tbody tr:nth-child(' + newTableIndex + ')')
-        .insertAfter('#tbody tr:nth-child(' + tableIndex + ')');
-  } else {
-    $('#tbody tr:nth-child(' + tableIndex + ')')
-        .insertAfter('#tbody tr:nth-child(' + newTableIndex + ')');
-  }
-
-  return writeSwap(realIndex, newRealIndex);
-}
-
-/**
- *
- * @param {JQuery<HTMLTableRowElement>} row
- */
-function addEditButtons(row) {
-  // row.append(getFontAwesomeIconButton('far fa-edit'));
-  // row.append(getFontAwesomeIconButton('far fa-save'));
-  row.append(getFontAwesomeIconButton('fas fa-arrow-up')
-                 .on('click', () => move(true, row)));
-  row.append(getFontAwesomeIconButton('fas fa-arrow-down')
-                 .on('click', () => move(false, row)));
-}
-
-function getFontAwesomeIconButton(icon) {
-  return $(document.createElement('td'))
-      .append($(document.createElement('button'))
-                  .append($(document.createElement('i')).addClass(icon)));
 }
 
 /**
@@ -146,12 +117,16 @@ function toggleDisaster(disaster) {
   const data = disasterData.get(disaster);
   const layers = data['layerArray'];
   const tableBody = $('#tbody');
+  tableBody.sortable({
+    revert: true,
+    update: (event, ui) => updateAfterSort(ui),
+  });
   tableBody.empty();
   for (let i = layers.length - 1; i >= 0; i--) {
     const row = $(document.createElement('tr'));
     const layer = layers[i];
 
-    row.append($(document.createElement('td')).html(i));
+    row.append($(document.createElement('td')).html(i).addClass('index-td'));
     row.append($(document.createElement('td')).html(layer['display-name']));
     row.append($(document.createElement('td')).html(layer['ee-name']));
 
@@ -209,7 +184,6 @@ function toggleDisaster(disaster) {
       });
     }
     row.append(colorTd);
-    addEditButtons(row);
     tableBody.append(row);
   }
 
