@@ -19,13 +19,7 @@ function getFirestoreRoot() {
  * @return {firebase.firestore.DocumentReference}
  */
 function disasterDocumentReference() {
-<<<<<<< HEAD
-  return getFirestoreRoot()
-      .collection('disaster-metadata')
-      .doc('2019' + '-' + 'raymond');
-=======
   return getFirestoreRoot().collection('disaster-metadata').doc(getDisaster());
->>>>>>> master
 }
 
 /**

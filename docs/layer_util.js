@@ -159,8 +159,7 @@ function toggleLayerOff(index, map) {
     for (let i = 0; i < layerDisplayData.overlay.length; i++) {
       layerDisplayData.overlay[i].setMap(null);
     }
-  }
-  else if (layerDisplayData.deckRendered()) {
+  } else if (layerDisplayData.deckRendered()) {
     addLayerFromFeatures(layerDisplayData, index);
   } else {
     map.overlayMapTypes.setAt(index, null);
@@ -356,12 +355,12 @@ function addKmlLayers(layer, map) {
   const layerDisplayData = new LayerDisplayData(null, true);
   layerArray[layer['index']] = layerDisplayData;
   const overlays = [];
-  for (let i = 0; i < layer['kml-urls'].length; i++) {
-    overlays.push(new google.maps.KmlLayer(layer['kml-urls'][i], {
-            suppressInfoWindows: false,
-            preserveViewport: true,
-            map: map,
-          }));
+  for (let i = 0; i < layer['urls'].length; i++) {
+    overlays.push(new google.maps.KmlLayer(layer['urls'][i], {
+      suppressInfoWindows: false,
+      preserveViewport: true,
+      map: map,
+    }));
   }
   layerDisplayData.overlay = overlays;
 }
