@@ -59,11 +59,11 @@ let deckGlOverlay;
  *
  * There are three kinds of layers, corresponding to different types of source
  * data:
- * 1. FeatureCollections are rendered using deck. They will have a "loading"
- * status until their EarthEngine computation completes, and then render near-
- * instantly. These have non-null deckParams, and a pendingPromise until the
- * EarthEngine computation is finished.
- * 2. ImageCollections are rendered using EarthEngine. They will have a
+ * 1. Features/FeatureCollections are rendered using deck. They will have a
+ * "loading" status until their EarthEngine computation completes, and then
+ * render near-instantly. These have non-null deckParams, and a pendingPromise
+ * until the EarthEngine computation is finished.
+ * 2. Images/ImageCollections are rendered using EarthEngine. They will have a
  * "loading" status until their #getMap() call completes *and* their tiles have
  * been rendered. These have null deckParams, and a pendingPromise until tiles
  * are rendered. On map pan/zoom or layer toggling, the EarthEngine computation

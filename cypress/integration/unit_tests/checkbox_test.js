@@ -335,11 +335,10 @@ describe('Unit test for toggleLayerOn', () => {
   //  weird about the requests Google Maps makes in tests.
   it('tests composite tiles', () => {
     // Stub out HTTP fetch, so we can return a promise that waits a while.
-    const fetchStub = cy.stub(window, 'fetch');
     // Only release the promise when we've made all our assertions.
     let releaseResponse = null;
     const waitPromise = new Promise((resolve) => releaseResponse = resolve);
-    fetchStub.callsFake((url) => {
+    cy.stub(window, 'fetch').callsFake((url) => {
       if (url.startsWith('tile-url1')) {
         return okHttpResponse;
       }
@@ -355,7 +354,10 @@ describe('Unit test for toggleLayerOn', () => {
       overlay = assertCompositeOverlayPresent(map);
     });
     expectBlobImageCount(4).then(() => {
-      // Remaining images can now render.
+      // The tile-url2 requests got back waitPromise, so they haven't really
+      // completed. Complete them now with an "ok" response. This will allow the
+      // overall layer promise to complete, since all images from all tiles are
+      // now loaded.
       releaseResponse(okHttpResponse);
       return addLayerPromise;
     });
@@ -402,12 +404,12 @@ describe('Unit test for toggleLayerOn', () => {
     let promiseResolver = null;
     // This promise will not complete until the abort signal has been sent.
     const fetchPromise = new Promise((resolve) => promiseResolver = resolve);
-    window.fetch = (url, signal) => {
+    cy.stub(window, 'fetch').callsFake((url, signal) => {
       if (url.startsWith('tile-url1')) {
         return okHttpResponse;
       }
       return fetchPromise.then(() => oldFetch(url, signal));
-    };
+    });
     let map = null;
     let overlay;
     let addLayerPromise = null;

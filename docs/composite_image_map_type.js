@@ -33,12 +33,26 @@ class CompositeImageMapType {
   constructor(options) {
     this.tileUrls = options.tileUrls;
     this.opacity = options.opacity ? options.opacity : 1;
+    /**
+     * Holds the AbortController for the image downloads of each div tile. Once
+     * all fetches complete for a given div, it is removed from this map. Hence
+     * the size of this map is the number of tiles currently in flight. We fire
+     * an event when this map goes from empty to non-empty (indicating that this
+     * layer has started loading) and when this map goes from non-empty to empty
+     * (indicating that loading is complete). Depending on the vagaries of when
+     * Google Maps requests tiles, it is possible that only some tiles might be
+     * requested, they would complete, and then more tiles would be requested,
+     * leading to a stuttering loading indicator, but in practice this does not
+     * happen, because Google Maps requests all of the relevant tiles at once.
+     * @type {Map<HTMLDivElement, AbortController>}
+     */
     this.tileMap = new Map();
     this.eventTarget = new EventTarget();
 
     // this.tileSize and this.maxZoom are read directly by Google Maps.
     const size = options.tileSize ? options.tileSize : 256;
     this.tileSize = new google.maps.Size(size, size);
+    // NOAA tile imagery seems to go up to zoom level 19.
     this.maxZoom = options.maxZoom ? options.maxZoom : 19;
   }
 
