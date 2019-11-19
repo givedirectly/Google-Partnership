@@ -85,7 +85,7 @@ function updateAfterSort(ui) {
   const oldRealIndex = $(ui.item).children('.index-td').html();
   const newRealIndex = numLayers - 1 - $(ui.item).index();
 
-  const layerArray = disasterData.get(currentDisaster)['layerArray'];
+  const layerArray = disasterData.get(currentDisaster)['layers'];
   // pull out moved row and shuffle everything else down
   const row = layerArray.splice(oldRealIndex, 1)[0];
   // insert at new index
@@ -101,7 +101,7 @@ function updateAfterSort(ui) {
       .collection('disaster-metadata')
       .doc(currentDisaster)
       .set(
-          {layerArray: disasterData.get(currentDisaster)['layerArray']},
+          {layerArray: disasterData.get(currentDisaster)['layers']},
           {merge: true});
 }
 
@@ -115,7 +115,7 @@ function toggleDisaster(disaster) {
   currentDisaster = disaster;
 
   const data = disasterData.get(disaster);
-  const layers = data['layerArray'];
+  const layers = data['layers'];
   const tableBody = $('#tbody');
   tableBody.sortable({
     revert: true,
@@ -125,34 +125,27 @@ function toggleDisaster(disaster) {
   for (let i = layers.length - 1; i >= 0; i--) {
     const row = $(document.createElement('tr'));
     const layer = layers[i];
-
     row.append($(document.createElement('td')).html(i).addClass('index-td'));
     row.append($(document.createElement('td')).html(layer['display-name']));
     row.append($(document.createElement('td')).html(layer['ee-name']));
-
     row.append($(document.createElement('td'))
                    .html(layerTypeStrings.get((layer['asset-type']))));
     // working here in this mess. Go home.
     const displayOnLoadCheckbox =
         $(document.createElement('input'))
             .prop('type', 'checkbox')
-            .prop('checked', layer['display-on-load'])
-            .change(() => {
-              disasterData.get(
-                      currentDisaster)['layerArray']
-                  [$('#tbody > tr').length -
-                  $('tr').index(row)]['display-on-load'] =
-                      $(this).is(':checked');
-              getFirestoreRoot()
-                  .collection('disaster-metadata')
-                  .doc(currentDisaster)
-                  .set(
-                      {
-                        blahblahblah:
-                            disasterData.get(currentDisaster)['layerArray']
-                      },
-                      {merge: true});
-            });
+            .prop('checked', layer['display-on-load']);
+    $(displayOnLoadCheckbox).on('change', () => {
+      disasterData.get(
+          currentDisaster)['layers'][$('#tbody > tr').length - $('tr').index(row)]['display-on-load'] =
+          $(this).is(':checked');
+      getFirestoreRoot()
+          .collection('disaster-metadata')
+          .doc(currentDisaster)
+          .set(
+              {blahblahblah: disasterData.get(currentDisaster)['layers']},
+              {merge: true});
+    });
     row.append($(document.createElement('td')).append(displayOnLoadCheckbox));
 
     const colorTd = $(document.createElement('td'));
