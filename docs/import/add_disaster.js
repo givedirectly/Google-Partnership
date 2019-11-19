@@ -1,6 +1,6 @@
 import {eeStatePrefixLength, legacyStateDir} from '../ee_paths.js';
-import {getFirestoreRoot} from '../firestore_document.js';
 import {LayerType} from '../firebase_layers.js';
+import {getFirestoreRoot} from '../firestore_document.js';
 
 export {enableWhenReady, toggleState};
 // Visible for testing
