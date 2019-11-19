@@ -1,8 +1,8 @@
 import {eeStatePrefixLength, legacyStateDir} from '../ee_paths.js';
-import {colorMap, LayerType} from '../firebase_layers.js';
+import {LayerType} from '../firebase_layers.js';
 import {getFirestoreRoot} from '../firestore_document.js';
 
-export {enableWhenReady, toggleState};
+export {enableWhenReady, toggleState, updateAfterSort};
 // Visible for testing
 export {
   addDisaster,
@@ -16,7 +16,7 @@ export {
   writeNewDisaster,
 };
 
-// Currently a map of disaster name to states. This pulls once on firebase
+// A map of disaster names to data. This pulls once on firebase
 // authentication and then makes local updates afterwards so we don't need to
 // wait on firebase writes to read new info.
 const disasterData = new Map();
@@ -68,15 +68,16 @@ for (let t in LayerType) {
   layerTypeStrings.set(LayerType[t], t);
 }
 
-function getFontAwesomeIconButton(icon) {
-  return $(document.createElement('td'))
-      .append($(document.createElement('button'))
-                  .append($(document.createElement('i')).addClass(icon)));
+function writeDataToFirestore() {
+  return getFirestoreRoot()
+      .collection('disaster-metadata')
+      .doc(currentDisaster)
+      .set(
+          {layers: disasterData.get(currentDisaster)['layers']}, {merge: true});
 }
 
 /**
  *
- * @param event
  * @param ui
  * @return {Promise<void>}
  */
@@ -97,12 +98,16 @@ function updateAfterSort(ui) {
     $('#tbody tr:nth-child(' + i + ') .index-td').html(numLayers - i);
   }
 
-  return getFirestoreRoot()
-      .collection('disaster-metadata')
-      .doc(currentDisaster)
-      .set(
-          {layerArray: disasterData.get(currentDisaster)['layers']},
-          {merge: true});
+  writeDataToFirestore();
+}
+
+/**
+ * Utility method for creating table divs with a given inner text
+ * @param {string} html inner text
+ * @return {JQuery<HTMLTableDataCellElement>}
+ */
+function createTd(html) {
+  return $(document.createElement('td')).html(html);
 }
 
 /**
@@ -117,38 +122,28 @@ function toggleDisaster(disaster) {
   const data = disasterData.get(disaster);
   const layers = data['layers'];
   const tableBody = $('#tbody');
-  tableBody.sortable({
-    revert: true,
-    update: (event, ui) => updateAfterSort(ui),
-  });
   tableBody.empty();
   for (let i = layers.length - 1; i >= 0; i--) {
     const row = $(document.createElement('tr'));
     const layer = layers[i];
-    row.append($(document.createElement('td')).html(i).addClass('index-td'));
-    row.append($(document.createElement('td')).html(layer['display-name']));
-    row.append($(document.createElement('td')).html(layer['ee-name']));
-    row.append($(document.createElement('td'))
-                   .html(layerTypeStrings.get((layer['asset-type']))));
-    // working here in this mess. Go home.
-    const displayOnLoadCheckbox =
+    row.append(createTd(i).addClass('index-td'));
+    row.append(createTd(layer['display-name']));
+    row.append(createTd(layer['ee-name']));
+    row.append(createTd(layerTypeStrings.get((layer['asset-type']))));
+
+    const displayCheckbox =
         $(document.createElement('input'))
             .prop('type', 'checkbox')
-            .prop('checked', layer['display-on-load']);
-    $(displayOnLoadCheckbox).on('change', () => {
-      disasterData.get(
-          currentDisaster)['layers'][$('#tbody > tr').length - $('tr').index(row)]['display-on-load'] =
-          $(this).is(':checked');
-      getFirestoreRoot()
-          .collection('disaster-metadata')
-          .doc(currentDisaster)
-          .set(
-              {blahblahblah: disasterData.get(currentDisaster)['layers']},
-              {merge: true});
-    });
-    row.append($(document.createElement('td')).append(displayOnLoadCheckbox));
+            .prop('checked', layer['display-on-load'])
+            .on('change', () => {
+              const index = $('#tbody > tr').length - $('tr').index(row);
+              layers[index]['display-on-load'] =
+                  displayOnLoadCheckbox.is(':checked');
+              writeDataToFirestore();
+            });
+    row.append(createTd().append(displayCheckbox));
 
-    const colorTd = $(document.createElement('td'));
+    const colorTd = createTd();
     const colorFunction = layer['color-function'];
     if (!colorFunction) {
       colorTd.html('N/A').addClass('na');
@@ -179,7 +174,6 @@ function toggleDisaster(disaster) {
     row.append(colorTd);
     tableBody.append(row);
   }
-
 
   const states = data['states'];
   const statesToFetch = [];

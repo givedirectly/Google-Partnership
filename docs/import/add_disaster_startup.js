@@ -1,8 +1,7 @@
 import {authenticateToFirebase, Authenticator} from '../authenticate.js';
 import {loadNavbar} from '../navbar.js';
 import SettablePromise from '../settable_promise.js';
-
-import {enableWhenReady, toggleState} from './add_disaster.js';
+import {enableWhenReady, toggleState, updateAfterSort} from './add_disaster.js';
 import TaskAccumulator from './task_accumulator.js';
 
 export {taskAccumulator};
@@ -25,5 +24,10 @@ authenticator.start();
 
 $('#create-new-disaster').on('click', () => toggleState(false));
 $('#cancel-new-disaster').on('click', () => toggleState(true));
+
+$('#tbody').sortable({
+  revert: true,
+  update: (event, ui) => updateAfterSort(ui),
+});
 
 loadNavbar('Add disaster');
