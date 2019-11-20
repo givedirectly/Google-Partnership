@@ -9,7 +9,8 @@ const LayerType = {
   FEATURE_COLLECTION: 1,
   IMAGE: 2,
   IMAGE_COLLECTION: 3,
-  KML: 4,
+  MAP_TILES: 4,
+  KML: 5,
 };
 Object.freeze(LayerType);
 
