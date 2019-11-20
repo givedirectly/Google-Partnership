@@ -77,8 +77,7 @@ Object.freeze(STATE);
 let state = STATE.SAVED;
 let pendingWriteCount = 0;
 
-window.onbeforeunload = () =>
-    StoredShapeData.pendingWriteCount > 0 ? true : null;
+window.onbeforeunload = () => pendingWriteCount > 0 ? true : null;
 
 /**
  * Write the current state of {@code disasterData} to firestore.
