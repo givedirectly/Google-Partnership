@@ -48,8 +48,8 @@ describe('Unit tests for add_disaster page', () => {
     // In prod this would happen in enableWhenReady which would read from
     // firestore.
     disasterData.clear();
-    disasterData.set('2001-summer', []);
-    disasterData.set('2003-spring', []);
+    disasterData.set('2001-summer', {});
+    disasterData.set('2003-spring', {});
   });
 
   afterEach(() => {

@@ -118,7 +118,7 @@ function updateLayersInFirestore() {
  * Update the table and disasterData with new indices after a layer has been
  * reordered. Then write to firestore.
  * @param {Object} ui jquery object that contains details about this sort
- * @return {Promise<void>} Returns when the write to firestore finishes.
+ * @return {?Promise<void>} See updateLayersInFirestore doc
  */
 function updateAfterSort(ui) {
   const layers = getCurrentLayers();
@@ -179,13 +179,13 @@ for (const t in LayerType) {
 
 /**
  *
- * @param {HTMLElement} td cell
+ * @param {JQuery<HTMLTableDataCellElement>} td cell
  * @param {Object} layer
  * @param {string} property
  * @return {HTMLElement}
  */
 function withType(td, layer, property) {
-  return $(td).html(layerTypeStrings.get((layer[property])));
+  return td.html(layerTypeStrings.get((layer[property])));
 }
 
 /**
