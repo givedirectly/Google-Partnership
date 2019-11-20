@@ -10,15 +10,15 @@ export {
   addDisaster,
   createAssetPickers,
   createOptionFrom,
+  createTd,
   deleteDisaster,
   disasterData,
   emptyCallback,
   getAssetsFromEe,
   stateAssets,
-  writeNewDisaster,
-  withColor,
-    createTd,
   withCheckbox,
+  withColor,
+  writeNewDisaster,
 };
 
 // A map of disaster names to data. This pulls once on firebase
