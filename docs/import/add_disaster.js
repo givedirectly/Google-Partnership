@@ -79,7 +79,7 @@ function updateLayersInFirestore() {
 /**
  * Update the table and disasterData with new indices after a layer has been
  * reordered. Then write to firestore.
- * @param {Object} ui
+ * @param {Object} ui jquery object that contains details about this sort
  * @return {Promise<void>} Returns when the write to firestore finishes.
  */
 function updateAfterSort(ui) {
@@ -99,7 +99,8 @@ function updateAfterSort(ui) {
     $('#tbody tr:nth-child(' + i + ') .index-td').html(numLayers - i);
   }
 
-  return updateLayersInFirestore();
+  // return updateLayersInFirestore();
+  return ui;
 }
 
 /**

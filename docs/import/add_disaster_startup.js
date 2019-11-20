@@ -28,16 +28,15 @@ $('#cancel-new-disaster').on('click', () => toggleState(true));
 $('#tbody').sortable({
   revert: true,
   update: (event, ui) => updateAfterSort(ui),
-  // TODO: Table is still doing some jumping around on resort.
-  helper: function(e, tr) {
+  helper: (e, tr) => {
     const originals = tr.children();
     const helper = tr.clone();
+    // Set helper cell sizes to match the original sizes so when being dragged
+    // entire row maintains original width.
     helper.children().each(/* @this HTMLElement */ function(index) {
-      // Set helper cell sizes to match the original sizes
       $(this).width(originals.eq(index).width());
     });
     return helper;
   },
 });
-
 loadNavbarWithTitle('Add disaster');
