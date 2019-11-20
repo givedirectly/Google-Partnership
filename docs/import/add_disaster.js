@@ -24,7 +24,8 @@ const disasterData = new Map();
 // Map of state to list of known assets
 const stateAssets = new Map();
 
-// Initially set to the most recent disaster as soon as firebase returns the list of disasters.
+// Initially set to the most recent disaster as soon as firebase returns the
+// list of disasters.
 let currentDisaster;
 
 // TODO: general reminder to add loading indicators for things like creating
