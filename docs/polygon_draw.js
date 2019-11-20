@@ -4,16 +4,18 @@ import {getFirestoreRoot} from './firestore_document.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {geoPointToLatLng, latLngToGeoPoint} from './map_util.js';
 import {createPopup, isMarker, setUpPopup} from './popup.js';
-import {getResources} from './resources.js';
+import {getScoreAsset} from './resources.js';
 import {userRegionData} from './user_region_data.js';
 
 // StoredShapeData is only for testing.
 export {
   displayCalculatedData,
-  processUserRegions,
+  initializeAndProcessUserRegions,
   setUpPolygonDrawing,
   StoredShapeData,
 };
+
+let damageAsset = null;
 
 /**
  * Class holding data for a user-drawn feature (marker or polygon), including
@@ -246,13 +248,13 @@ StoredShapeData.compareGeoPointArrays = (array1, array2) => {
 };
 
 StoredShapeData.prepareDamageCalculation = (polygon) => {
-  return ee.FeatureCollection(getResources().damage)
-      .filterBounds(polygon)
-      .size();
+  return damageAsset ?
+      ee.FeatureCollection(damageAsset).filterBounds(polygon).size() :
+      ee.String('unknown');
 };
 
 StoredShapeData.getIntersectingBlockGroups = (polygon) => {
-  return ee.FeatureCollection(getResources().getCombinedAsset())
+  return ee.FeatureCollection(getScoreAsset())
       .filterBounds(polygon)
       .map((feature) => {
         const geometry = feature.geometry();
@@ -346,18 +348,23 @@ function setUpPolygonDrawing(map, firebasePromise) {
 
 /**
  * Retrieves user-defined regions from Firestore and displays them on given map.
- * Adds a listener to display notes on pop-up.
+ * Adds a listener to display notes on pop-up. Stores EE path for damage asset.
  *
  * @param {google.maps.Map} map Map to display regions on
- * @param {Promise<any>} firebasePromise Promise that will complete when
- *     Firebase authentication is finished
+ * @param {Promise<any>} firebasePromise Promise with Firebase damage data (also
+ *     implies that authentication is complete)
  * @return {Promise} promise that is resolved when all initialization is done
- *     (only used by tests).
+ *     (only used by tests) 
  */
-function processUserRegions(map, firebasePromise) {
+function initializeAndProcessUserRegions(map, firebasePromise) {
   addLoadingElement(mapContainerId);
   return firebasePromise
-      .then(() => userShapes = getFirestoreRoot().collection(collectionName))
+      .then((doc) => {
+        // Damage asset may not exist yet, so this is undefined. We tolerate
+        // gracefully.
+        damageAsset = doc.data()['damage-asset-path'];
+        userShapes = getFirestoreRoot().collection(collectionName);
+      })
       .then(() => userShapes.get())
       .then(
           (querySnapshot) => drawRegionsFromFirestoreQuery(querySnapshot, map))
