@@ -437,7 +437,12 @@ function addLayer(layer, map) {
   }
 }
 
-
+/**
+ * Displays a collection of kmls (given by the 'urls' attribute of layer)
+ * on the map using google.maps.KmlLayer
+ * @param {Object} layer Data for layer coming from Firestore
+ * @param {google.maps.Map} map
+ */
 function addKmlLayers(layer, map) {
   const layerDisplayData = new LayerDisplayData(null, true);
   layerArray[layer['index']] = layerDisplayData;
