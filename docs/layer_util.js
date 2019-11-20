@@ -312,7 +312,7 @@ function createTileCallback(layerDisplayData, resolve) {
 }
 
 /**
- * Displays a collection of tiles (given by the 'tile-urls' attribute of layer)
+ * Displays a collection of tiles (given by the 'urls' attribute of layer)
  * on the map using a CompositeImageMapType to combine all tiles for a given
  * map location into one tile.
  * @param {google.maps.Map} map
@@ -323,7 +323,7 @@ function addTileLayer(map, layer) {
   const layerDisplayData = new LayerDisplayData(null, true);
   layerArray[layer['index']] = layerDisplayData;
   layerDisplayData.overlay = new CompositeImageMapType({
-    tileUrls: layer['tile-urls'],
+    tileUrls: layer['urls'],
     tileSize: layer['tile-size'],
     maxZoom: layer['maxZoom'],
     opacity: layer['opacity'],
