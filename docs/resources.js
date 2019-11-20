@@ -1,5 +1,4 @@
 import {gdEePathPrefix} from './ee_paths.js';
-import {inProduction} from './in_test_util.js';
 
 export {getDisaster, getDisasters, getResources};
 
@@ -26,10 +25,6 @@ function getDisaster() {
     final_disaster = params.get('disaster');
   } else if (localStorage.getItem('disaster')) {
     final_disaster = localStorage.getItem('disaster');
-  } else if (!inProduction()) {
-    // Start off with Harvey for test cases since our tests assert against
-    // specific block groups and damage points.
-    final_disaster = test_disaster;
   } else {
     final_disaster = default_disaster;
   }
@@ -51,9 +46,6 @@ function getDisasters() {
 
 /** The default disaster. */
 const default_disaster = '2017-harvey';
-
-/** The test disaster. */
-const test_disaster = '2017-harvey';
 
 /** Disaster asset names and other constants. */
 const disasters = new Map();
