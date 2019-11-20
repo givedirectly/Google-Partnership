@@ -85,7 +85,7 @@ describe('Unit tests for add_disaster page', () => {
     expect($('#' + UNKNOWN_STATE + '-adder').children().length).to.equal(0);
   });
 
-  it('writes a new disaster to firestore', () => {
+  it.only('writes a new disaster to firestore', () => {
     let id = '2002-winter';
     const states = ['DN, WF'];
     $('#disaster').hide();
@@ -125,7 +125,9 @@ describe('Unit tests for add_disaster page', () => {
         })
         .then((doc) => {
           expect(doc.exists).to.be.true;
-          expect(doc.data()['states']).to.eql(states);
+          const data = doc.data();
+          expect(data['states']).to.eql(states);
+          expect(data['layers']).to.eql([]);
         });
   });
 
