@@ -1,6 +1,8 @@
+import {writeWaiterId} from '../dom_constants.js';
 import {eeStatePrefixLength, legacyStateDir} from '../ee_paths.js';
 import {LayerType} from '../firebase_layers.js';
 import {getFirestoreRoot} from '../firestore_document.js';
+import {addLoadingElement, loadingElementFinished} from '../loading.js';
 
 export {enableWhenReady, toggleState, updateAfterSort};
 // Visible for testing
@@ -65,15 +67,52 @@ function enableWhenReady() {
       });
 }
 
+const STATE = {
+  SAVED: 0,
+  WRITING: 1,
+  QUEUED_WRITE: 2,
+};
+Object.freeze(STATE);
+
+let state = STATE.SAVED;
+let pendingWriteCount = 0;
+
+window.onbeforeunload = () =>
+    StoredShapeData.pendingWriteCount > 0 ? true : null;
+
 /**
  * Write the current state of {@code disasterData} to firestore.
- * @return {Promise<void>} Returns when finished writing.
+ * @return {!Promise<void>} Returns when finished writing or null if it just
+ * queued a write and doesn't know when that will finish.
  */
 function updateLayersInFirestore() {
+  if (state !== STATE.SAVED) {
+    state = STATE.QUEUED_WRITE;
+    return null;
+  }
+  addLoadingElement(writeWaiterId);
+  state = STATE.WRITING;
+  pendingWriteCount++;
   return getFirestoreRoot()
       .collection('disaster-metadata')
       .doc(currentDisaster)
-      .set({layers: getCurrentLayers()}, {merge: true});
+      .set({layers: getCurrentLayers()}, {merge: true})
+      .then(() => {
+        pendingWriteCount--;
+        const oldState = state;
+        state = STATE.SAVED;
+        switch (oldState) {
+          case STATE.WRITING:
+            loadingElementFinished(writeWaiterId);
+            return Promise.resolve();
+          case STATE.QUEUED_WRITE:
+            loadingElementFinished(writeWaiterId);
+            return updateLayersInFirestore();
+          case STATE.SAVED:
+            console.error('Unexpected layer write state');
+            return null;
+        }
+      });
 }
 
 /**

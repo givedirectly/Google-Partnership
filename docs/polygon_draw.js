@@ -213,6 +213,7 @@ StoredShapeData.State = {
    */
   QUEUED_WRITE: 2,
 };
+Object.freeze(StoredShapeData.State);
 
 // Tracks global pending writes so that we can warn if user leaves page early.
 StoredShapeData.pendingWriteCount = 0;
