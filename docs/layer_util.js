@@ -150,7 +150,7 @@ function toggleLayerOn(layer, map) {
     addLayerFromFeatures(layerDisplayData, index);
     return null;
   }
-  if (layerDisplayData.overlay) {
+  if (layerDisplayData.overlay && !(Array.isArray(layerDisplayData.overlay))) {
     // The promise returned in this branch does not need to be stored in the
     // pendingPromise field because it will complete immediately if this layer
     // is toggled off (see the createTileCallback doc). That means that if
@@ -423,15 +423,13 @@ function addLayer(layer, map) {
           convertEeObjectToPromise(
               ee.FeatureCollection(layerName).toList(maxNumFeaturesExpected)),
           DeckParams.fromLayer(layer), layer['index']);
-<<<<<<< HEAD
       break;
     case LayerType.KML:
       addKmlLayers(layer, map);
       break;
-=======
     case LayerType.MAP_TILES:
       return addTileLayer(map, layer);
->>>>>>> master
+      break;
     default:
       createError('parsing layer type during add')(
           '[' + layer['index'] + ']: ' + layer['asset-name'] +
