@@ -114,8 +114,8 @@ function updateAfterSort(ui) {
  * @param {string} html inner text
  * @return {JQuery<HTMLTableDataCellElement>}
  */
-function createTd(html) {
-  return $(document.createElement('td')).html(html);
+function createTd() {
+  return $(document.createElement('td'));
 }
 
 /**
@@ -127,6 +127,35 @@ function createColorBox(color) {
   return $(document.createElement('div'))
       .addClass('box')
       .css('background-color', color);
+}
+
+function addFirebaseAttr(element, property) {
+  return element.data('firebase-attr', property);
+}
+
+function withText(td, layer, property) {
+  return addFirebaseAttr(td, property).html(layer[property]);
+}
+
+function withList(td, layer, property) {
+  return addFirebaseAttr(td, property).html(layer[property][0]);
+}
+
+function withType(td, layer) {
+  return addFirebaseAttr(td, 'asset-type').html(layerTypeStrings.get((layer['asset-type'])));
+}
+
+function withCheckbox(td, layer, property) {
+  const checkbox =
+      $(document.createElement('input'))
+          .prop('type', 'checkbox')
+          .prop('checked', layer[property])
+          .on('change', () => {
+            const index = $('#tbody > tr').length - $('tr').index(row);
+            layers[index][property] = checkbox.is(':checked');
+            return writeDataToFirestore();
+          });
+  return addFirebaseAttr(td, property).append(checkbox);
 }
 
 /**
@@ -144,43 +173,37 @@ function toggleDisaster(disaster) {
   const tableBody = $('#tbody');
   tableBody.empty();
   for (let i = layers.length - 1; i >= 0; i--) {
-    const row = $(document.createElement('tr'));
     const layer = layers[i];
+    const row = $(document.createElement('tr'));
 
     // index
-    row.append(createTd(i).addClass('index-td'));
+    row.append(createTd().html(i).addClass('index-td'));
 
     // display name
     // TODO: make this editable.
-    row.append(createTd(layer['display-name']));
+    row.append(fromText(createTd(), layer, 'display-name'));
 
     // asset path/url sample
     // TODO: consolidate kml-urls and urls when we have a consistent naming
     // convention.
+    const assetOrUrl = createTd();
     if (layer['ee-name']) {
-      row.append(createTd(layer['ee-name']));
+      withText(assetOrUrl, layer, 'ee-name');
     } else if (layer['urls']) {
-      row.append(createTd(layer['urls'][0]));
+      withList(assetOrUrl, layer, 'urls');
     } else if (layer['kml-urls']) {
-      row.append(createTd(layer['kml-urls'][0]));
+      withList(assetOrUrl, layer, 'kml-urls');
     } else if (layer['tile-urls']) {
-      row.append(createTd(layer['tile-urls'][0]));
+      withList(assetOrUrl, layer, 'tile-urls');
+    } else {
     }
+    row.append(assetOrUrl);
 
     // type
-    row.append(createTd(layerTypeStrings.get((layer['asset-type']))));
+    row.append(withType(createTd(), layer));
 
     // display on load
-    const displayCheckbox =
-        $(document.createElement('input'))
-            .prop('type', 'checkbox')
-            .prop('checked', layer['display-on-load'])
-            .on('change', () => {
-              const index = $('#tbody > tr').length - $('tr').index(row);
-              layers[index]['display-on-load'] = displayCheckbox.is(':checked');
-              return writeDataToFirestore();
-            });
-    row.append(createTd().append(displayCheckbox));
+    row.append(withCheckbox(createTd()));
 
     // color
     const colorTd = createTd();
@@ -204,6 +227,7 @@ function toggleDisaster(disaster) {
     }
     // TODO: make this editable.
     row.append(colorTd);
+
     tableBody.append(row);
   }
 
