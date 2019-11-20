@@ -1,7 +1,6 @@
 import {gdEePathPrefix} from './ee_paths.js';
-import {inProduction} from './in_test_util.js';
 
-export {getDisaster, getResources};
+export {getDisaster, getDisasters, getResources};
 
 /**
  * Gets all the ee assets relevant to the current disaster.
@@ -12,16 +11,29 @@ function getResources() {
 }
 
 /**
- * Always use Harvey for test cases since our tests assert against specific
- * block groups and damage points.
+ * Determines and returns the current disaster.
  * @return {string} current disaster
  */
 function getDisaster() {
-  return inProduction() ? disaster : '2017-harvey';
+  if (localStorage.getItem('disaster')) {
+    return localStorage.getItem('disaster');
+  }
+  localStorage.setItem('disaster', default_disaster);
+  return default_disaster;
 }
 
-/** The current disaster. */
-const disaster = '2017-harvey';
+/**
+ * Gets all available disasters.
+ * @return {string[]} list of available disasters
+ */
+function getDisasters() {
+  const disasterNames = [];
+  for (const disasterName of disasters.keys()) disasterNames.push(disasterName);
+  return disasterNames;
+}
+
+/** The default disaster. */
+const default_disaster = '2017-harvey';
 
 /** Disaster asset names and other constants. */
 const disasters = new Map();
