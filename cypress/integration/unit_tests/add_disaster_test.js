@@ -214,44 +214,6 @@ describe('Unit tests for add_disaster page', () => {
                       .get())
         .then((doc) => expect(doc.exists).to.be.false);
   });
-
-  it.only('tests color cell', () => {
-    const property = 'color';
-
-    const noColor = withColor(createTd(), {}, property, 0);
-    expect(noColor.html()).to.equals('N/A');
-    expect(noColor.hasClass('na')).to.be.true;
-
-    const yellow = 'yellow';
-    const singleColor =
-        withColor(createTd(), {color: {'single-color': yellow}}, property, 0);
-    console.log(singleColor.children());
-    expect(singleColor.children('.box').length).to.equal(1);
-    expect(singleColor.children().eq(0).css('background-color'))
-        .to.equal(yellow);
-
-    const baseColor =
-        withColor(createTd(), {color: {'base-color': yellow}}, property, 0);
-    expect(baseColor.children('.box').length).to.equal(1);
-    expect(baseColor.children().eq(0).css('background-color')).to.equal(yellow);
-
-    const red = 'red';
-    const discrete = withColor(
-        createTd(), {color: {colors: {'squash': yellow, 'tomato': red}}},
-        property, 0);
-    expect(discrete.children('.box').length).to.equal(2);
-    expect(discrete.children().eq(1).css('background-color')).to.equal(red);
-
-    const broken =
-        withColor(createTd(), {color: {'broken': 'colors'}}, property, 3);
-    expect(broken.children().length).to.equal(0);
-    expect(broken.html()).to.be.empty;
-  });
-
-  it.only('tests checkbox cell', () => {
-    const property = 'sparkling';
-    const checkbox = withCheckbox(createTd(), {sparkling: false}, property)
-  });
 });
 
 /**
