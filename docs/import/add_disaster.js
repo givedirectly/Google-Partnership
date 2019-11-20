@@ -142,19 +142,20 @@ function withList(td, layer, property) {
 }
 
 function withType(td, layer) {
-  return addFirebaseAttr(td, 'asset-type').html(layerTypeStrings.get((layer['asset-type'])));
+  return addFirebaseAttr(td, 'asset-type')
+      .html(layerTypeStrings.get((layer['asset-type'])));
 }
 
 function withCheckbox(td, layer, property) {
-  const checkbox =
-      $(document.createElement('input'))
-          .prop('type', 'checkbox')
-          .prop('checked', layer[property])
-          .on('change', () => {
-            const index = $('#tbody > tr').length - $('tr').index(row);
-            layers[index][property] = checkbox.is(':checked');
-            return writeDataToFirestore();
-          });
+  const checkbox = $(document.createElement('input'))
+                       .prop('type', 'checkbox')
+                       .prop('checked', layer[property])
+                       .on('change', () => {
+                         const index =
+                             $('#tbody > tr').length - $('tr').index(row);
+                         layers[index][property] = checkbox.is(':checked');
+                         return writeDataToFirestore();
+                       });
   return addFirebaseAttr(td, property).append(checkbox);
 }
 
