@@ -1,4 +1,19 @@
 describe('Integration test for the navbar', () => {
+  it('Switch disasters', () => {
+    cy.visit('');
+
+    cy.get('#disaster-dropdown').select('2018-michael');
+
+    // The page should now be switched to the Michael disaster.
+    cy.get('.google-visualization-table-td').contains('Florida');
+
+    cy.visit('');
+
+    // On reload, the most recently selected disaster should be persisted.
+    cy.get('#disaster-dropdown').should('have.value', '2018-michael');
+    cy.get('.google-visualization-table-td').contains('Florida');
+  });
+
   it('Open the nav menu and change pages', () => {
     cy.visit('');
 

@@ -1,5 +1,5 @@
 import {authenticateToFirebase, Authenticator} from '../authenticate.js';
-import {loadNavbar} from '../navbar.js';
+import {loadNavbarWithTitle} from '../navbar.js';
 import SettablePromise from '../settable_promise.js';
 
 import {enableWhenReady, toggleState} from './add_disaster.js';
@@ -26,4 +26,4 @@ authenticator.start();
 $('#create-new-disaster').on('click', () => toggleState(false));
 $('#cancel-new-disaster').on('click', () => toggleState(true));
 
-loadNavbar('Add disaster');
+loadNavbarWithTitle('Add disaster');
