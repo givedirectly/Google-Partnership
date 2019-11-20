@@ -16,6 +16,9 @@ export {
   getAssetsFromEe,
   stateAssets,
   writeNewDisaster,
+  withColor,
+    createTd,
+  withCheckbox,
 };
 
 // A map of disaster names to data. This pulls once on firebase
@@ -149,7 +152,7 @@ function createTd() {
 }
 
 /**
- *
+ * Add text to the given td.
  * @param {JQuery<HTMLTableDataCellElement>} td cell
  * @param {Object} layer
  * @param {string} property
@@ -160,7 +163,7 @@ function withText(td, layer, property) {
 }
 
 /**
- *
+ * Add a sample of info from a list to the given td.
  * @param {JQuery<HTMLTableDataCellElement>} td cell
  * @param {Object} layer
  * @param {string} property
@@ -178,7 +181,7 @@ for (const t in LayerType) {
 }
 
 /**
- *
+ * Add layer type info to the given td.
  * @param {JQuery<HTMLTableDataCellElement>} td cell
  * @param {Object} layer
  * @param {string} property
@@ -189,8 +192,8 @@ function withType(td, layer, property) {
 }
 
 /**
- *
- * @param {HTMLElement} td cell
+ * Add checkbox capabilities to the given td.
+ * @param {JQuery<HTMLTableDataCellElement>} td cell
  * @param {Object} layer
  * @param {string} property
  * @return {JQuery<HTMLElement> }
@@ -221,7 +224,7 @@ function createColorBox(color) {
 }
 
 /**
- *
+ * Add color function info to the given td.
  * @param {JQuery<HTMLElement>} td
  * @param {Object} layer
  * @param {string} property
