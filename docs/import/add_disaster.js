@@ -73,8 +73,7 @@ function writeDataToFirestore() {
       .collection('disaster-metadata')
       .doc(currentDisaster)
       .set(
-          {layers: disasterData.get(currentDisaster)['layers']},
-          {merge: true});
+          {layers: disasterData.get(currentDisaster)['layers']}, {merge: true});
 }
 
 /**
@@ -105,23 +104,18 @@ function updateAfterSort(ui) {
 
 /**
  * Utility method for creating table divs with a given inner text
- * @param {string} html inner text
  * @return {JQuery<HTMLTableDataCellElement>}
  */
 function createTd() {
   return $(document.createElement('td'));
 }
 
-function addFirebaseAttr(element, property) {
-  return element.data('firebase-attr', property);
-}
-
 function withText(td, layer, property) {
-  return addFirebaseAttr(td, property).html(layer[property]);
+  return td.html(layer[property]);
 }
 
 function withList(td, layer, property) {
-  return addFirebaseAttr(td, property).html(layer[property][0]);
+  return td.html(layer[property][0]);
 }
 
 const layerTypeStrings = new Map();
@@ -131,10 +125,8 @@ for (const t in LayerType) {
   }
 }
 
-function withType(td, layer) {
-  const typeProperty = 'asset-type';
-  return addFirebaseAttr(td, typeProperty)
-      .html(layerTypeStrings.get((layer[typeProperty])));
+function withType(td, layer, property) {
+  return td.html(layerTypeStrings.get((layer[property])));
 }
 
 function withCheckbox(td, layer, property) {
@@ -147,7 +139,7 @@ function withCheckbox(td, layer, property) {
                          layers[index][property] = checkbox.is(':checked');
                          return writeDataToFirestore();
                        });
-  return addFirebaseAttr(td, property).append(checkbox);
+  return td.append(checkbox);
 }
 
 /**
@@ -161,9 +153,8 @@ function createColorBox(color) {
       .css('background-color', color);
 }
 
-function withColor(td, layer) {
-  const colorProperty = 'color-function';
-  const colorFunction = layer[colorProperty];
+function withColor(td, layer, property, index) {
+  const colorFunction = layer[property];
   if (!colorFunction) {
     td.html('N/A').addClass('na');
   } else if (colorFunction['single-color']) {
@@ -180,8 +171,10 @@ function withColor(td, layer) {
         td.append(createColorBox(colorObject[propertyValue]));
       }
     });
+  } else {
+    console.log('layer ' + index + ': unrecognized color function');
   }
-  return addFirebaseAttr(td, colorProperty);
+  return td;
 }
 
 /**
@@ -195,47 +188,38 @@ function toggleDisaster(disaster) {
   const data = disasterData.get(currentDisaster);
 
   // display layer table
-  console.log(data);
   const layers = data['layers'];
   const tableBody = $('#tbody');
   tableBody.empty();
   for (let i = layers.length - 1; i >= 0; i--) {
     const layer = layers[i];
     const row = $(document.createElement('tr'));
-
     // index
     row.append(createTd().html(i).addClass('index-td'));
-
     // display name
     // TODO: make this editable.
     row.append(withText(createTd(), layer, 'display-name'));
-
     // asset path/url sample
-    // TODO: consolidate kml-urls and urls when we have a consistent naming
+    // TODO: consolidate tile-urls and urls when we have a consistent naming
     // convention.
     const assetOrUrl = createTd();
     if (layer['ee-name']) {
       withText(assetOrUrl, layer, 'ee-name');
     } else if (layer['urls']) {
       withList(assetOrUrl, layer, 'urls');
-    } else if (layer['kml-urls']) {
-      withList(assetOrUrl, layer, 'kml-urls');
     } else if (layer['tile-urls']) {
       withList(assetOrUrl, layer, 'tile-urls');
     } else {
+      console.log('layer ' + i + ': unrecognized type');
     }
     row.append(assetOrUrl);
-
     // type
-    row.append(withType(createTd(), layer));
-
+    row.append(withType(createTd(), layer, 'asset-type'));
     // display on load
     row.append(withCheckbox(createTd(), layer, 'display-on-load'));
-
     // color
     // TODO: make this editable.
-    row.append(withColor(createTd(), layer));
-
+    row.append(withColor(createTd(), layer, 'color-function', i));
     tableBody.append(row);
   }
 
