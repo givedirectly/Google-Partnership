@@ -524,12 +524,16 @@ function createOptionFrom(innerTextAndValue) {
  * Utility function for getting current data. May return undefined if
  * currentDisaster hasn't been set yet but currentDisaster gets set as soon
  * as we get all the disasters from firestore.
+ * @return {Object}
  */
 function getCurrentData() {
-  return disasterData.get(currentDisaster)();
+  return disasterData.get(currentDisaster);
 }
 
-/** Utility function for getting current layers */
+/**
+ * Utility function for getting current layers.
+ * @return {Array<Object>}
+ */
 function getCurrentLayers() {
   return getCurrentData()['layers'];
 }
