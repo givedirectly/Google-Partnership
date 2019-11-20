@@ -81,7 +81,7 @@ window.onbeforeunload = () => pendingWriteCount > 0 ? true : null;
 
 /**
  * Write the current state of {@code disasterData} to firestore.
- * @return {!Promise<void>} Returns when finished writing or null if it just
+ * @return {?!Promise<void>} Returns when finished writing or null if it just
  * queued a write and doesn't know when that will finish.
  */
 function updateLayersInFirestore() {
