@@ -5,9 +5,15 @@ import {getDisaster, getResources} from '../resources.js';
 import SettablePromise from '../settable_promise.js';
 import storeCenter from './center.js';
 import {cdcGeoidKey, cdcSviKey, censusBlockGroupKey, censusGeoidKey, incomeKey, snapKey, tigerGeoidKey, totalKey} from './import_data_keys.js';
+import TaskAccumulator from './task_accumulator';
+import {enableWhenReady} from './add_disaster';
 
 /** @VisibleForTesting */
-export {countDamageAndBuildings};
+export {countDamageAndBuildings, taskAccumulator};
+
+
+// 3 tasks: EE authentication, page load, firebase is ready.
+const taskAccumulator = new TaskAccumulator(3, enableWhenReady);
 
 /**
  * Joins a state's census block-group-level SNAP/population data with building
@@ -162,18 +168,15 @@ function attachBlockGroups(building, blockGroups) {
   return building.set(geoidTag, geoid);
 }
 
-/**
- * Performs operation of processing inputs and creating output asset.
- * @param {Promise} firebaseAuthPromise
- */
-function run(firebaseAuthPromise) {
+/** Performs operation of processing inputs and creating output asset. */
+function run() {
   const resources = getResources();
   const damage = ee.FeatureCollection(resources.damage);
   const centerStatusLabel = document.createElement('span');
   centerStatusLabel.innerText = 'Computing and storing bounds of map: ';
   const centerStatusSpan = document.createElement('span');
   centerStatusSpan.innerText = 'in progress';
-  storeCenter(damage, firebaseAuthPromise)
+  storeCenter(damage)
       .then(trimGeoNumbers)
       .then(
           (bounds) => centerStatusSpan.innerText = 'Found bounds (' +
@@ -243,20 +246,19 @@ function run(firebaseAuthPromise) {
   });
 }
 
-/**
- * Runs immediately (before document may have fully loaded). Adds a hook so that
- * when the document is loaded, we do the work.
- */
-function setup() {
-  $(document).ready(function() {
-    const firebaseAuthPromise = new SettablePromise();
-    const runOnInitialize = () => run(firebaseAuthPromise.getPromise());
-    const authenticator = new Authenticator(
-        (token) =>
-            firebaseAuthPromise.setPromise(authenticateToFirebase(token)),
-        runOnInitialize);
-    authenticator.start();
-  });
+const authenticator = new Authenticator(
+    () => taskAccumulator.taskCompleted(),
+    () => {
+      // Use the new hotness.
+      ee.data.setCloudApiEnabled(true);
+      taskAccumulator.taskCompleted();
+    });
+authenticator.start();
+
+function enableWhenReady() {
+  const processButton = $('#process-button');
+  processButton.prop('disabled', false);
+  processButton.on('click', run);
 }
 
 /**
@@ -267,5 +269,3 @@ function setup() {
 function trimGeoNumbers(latOrLngs) {
   return latOrLngs.map((num) => num.toFixed(4));
 }
-
-setup();

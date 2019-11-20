@@ -32,6 +32,8 @@
 <body>
 <h1>Import data</h1>
 
+Current disaster (select above to change): <span id="disaster-name">...</span>
+<button disabled id="process-button">Process data</button>
 <div class="g-sign-in hidden">
   <span class="label">Sign in with:</span>
   <div class="button">
@@ -42,5 +44,10 @@
 
 <div class="compute-status"></div>
 <div class="upload-status"></div>
+<script type="module">
+  import {taskAccumulator} from './import_data.js';
+  taskAccumulator.taskCompleted();
+</script>
+
 </body>
 </html>
