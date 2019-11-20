@@ -54,6 +54,7 @@ function enableWhenReady() {
           const name = doc.id;
           disasterPicker.prepend(createOptionFrom(name));
           disasterData.set(name, doc.data());
+          console.log(doc.data());
         });
 
         disasterPicker.on('change', () => toggleDisaster(disasterPicker.val()));
@@ -61,13 +62,6 @@ function enableWhenReady() {
         disasterPicker.val(mostRecent).trigger('change');
         toggleState(true);
       });
-}
-
-const layerTypeStrings = new Map();
-for (const t in LayerType) {
-  if (LayerType.hasOwnProperty(t)) {
-    layerTypeStrings.set(LayerType[t], t);
-  }
 }
 
 /**
@@ -79,7 +73,7 @@ function writeDataToFirestore() {
       .collection('disaster-metadata')
       .doc(currentDisaster)
       .set(
-          {layerArray: disasterData.get(currentDisaster)['layerArray']},
+          {layers: disasterData.get(currentDisaster)['layers']},
           {merge: true});
 }
 
@@ -90,15 +84,15 @@ function writeDataToFirestore() {
  * @return {Promise<void>} Returns when the write to firestore finishes.
  */
 function updateAfterSort(ui) {
-  const layerArray = disasterData.get(currentDisaster)['layerArray'];
-  const numLayers = layerArray.length;
+  const layers = disasterData.get(currentDisaster)['layers'];
+  const numLayers = layers.length;
   const oldRealIndex = $(ui.item).children('.index-td').html();
   const newRealIndex = numLayers - 1 - $(ui.item).index();
 
   // pull out moved row and shuffle everything else down
-  const row = layerArray.splice(oldRealIndex, 1)[0];
+  const row = layers.splice(oldRealIndex, 1)[0];
   // insert at new index
-  layerArray.splice(newRealIndex, 0, row);
+  layers.splice(newRealIndex, 0, row);
 
   // dumbly renumber all the layers. note: nth-child starts at 1, .index()
   // starts at 0
@@ -118,17 +112,6 @@ function createTd() {
   return $(document.createElement('td'));
 }
 
-/**
- * Create an instance of the color boxes for the color col.
- * @param {string} color what color to make the box.
- * @return {JQuery<HTMLDivElement>}
- */
-function createColorBox(color) {
-  return $(document.createElement('div'))
-      .addClass('box')
-      .css('background-color', color);
-}
-
 function addFirebaseAttr(element, property) {
   return element.data('firebase-attr', property);
 }
@@ -141,9 +124,17 @@ function withList(td, layer, property) {
   return addFirebaseAttr(td, property).html(layer[property][0]);
 }
 
+const layerTypeStrings = new Map();
+for (const t in LayerType) {
+  if (LayerType.hasOwnProperty(t)) {
+    layerTypeStrings.set(LayerType[t], t);
+  }
+}
+
 function withType(td, layer) {
-  return addFirebaseAttr(td, 'asset-type')
-      .html(layerTypeStrings.get((layer['asset-type'])));
+  const typeProperty = 'asset-type';
+  return addFirebaseAttr(td, typeProperty)
+      .html(layerTypeStrings.get((layer[typeProperty])));
 }
 
 function withCheckbox(td, layer, property) {
@@ -160,6 +151,40 @@ function withCheckbox(td, layer, property) {
 }
 
 /**
+ * Create an instance of the color boxes for the color col.
+ * @param {string} color what color to make the box.
+ * @return {JQuery<HTMLDivElement>}
+ */
+function createColorBox(color) {
+  return $(document.createElement('div'))
+      .addClass('box')
+      .css('background-color', color);
+}
+
+function withColor(td, layer) {
+  const colorProperty = 'color-function';
+  const colorFunction = layer[colorProperty];
+  if (!colorFunction) {
+    td.html('N/A').addClass('na');
+  } else if (colorFunction['single-color']) {
+    td.append(createColorBox(colorFunction['single-color']));
+  } else if (colorFunction['base-color']) {
+    td.append(createColorBox(colorFunction['base-color']));
+  } else if (colorFunction['colors']) {
+    const colorObject = colorFunction['colors'];
+    const colorSet = new Set();
+    Object.keys(colorObject).forEach((propertyValue) => {
+      const color = colorObject[propertyValue];
+      if (!colorSet.has(color)) {
+        colorSet.add(color);
+        td.append(createColorBox(colorObject[propertyValue]));
+      }
+    });
+  }
+  return addFirebaseAttr(td, colorProperty);
+}
+
+/**
  * On change method for disaster picker.
  * @param {String} disaster
  * @return {Promise<void>} completes when we've finished filling all state
@@ -170,7 +195,8 @@ function toggleDisaster(disaster) {
   const data = disasterData.get(currentDisaster);
 
   // display layer table
-  const layers = data['layerArray'];
+  console.log(data);
+  const layers = data['layers'];
   const tableBody = $('#tbody');
   tableBody.empty();
   for (let i = layers.length - 1; i >= 0; i--) {
@@ -182,7 +208,7 @@ function toggleDisaster(disaster) {
 
     // display name
     // TODO: make this editable.
-    row.append(fromText(createTd(), layer, 'display-name'));
+    row.append(withText(createTd(), layer, 'display-name'));
 
     // asset path/url sample
     // TODO: consolidate kml-urls and urls when we have a consistent naming
@@ -204,30 +230,11 @@ function toggleDisaster(disaster) {
     row.append(withType(createTd(), layer));
 
     // display on load
-    row.append(withCheckbox(createTd()));
+    row.append(withCheckbox(createTd(), layer, 'display-on-load'));
 
     // color
-    const colorTd = createTd();
-    const colorFunction = layer['color-function'];
-    if (!colorFunction) {
-      colorTd.html('N/A').addClass('na');
-    } else if (colorFunction['single-color']) {
-      colorTd.append(createColorBox(colorFunction['single-color']));
-    } else if (colorFunction['base-color']) {
-      colorTd.append(createColorBox(colorFunction['base-color']));
-    } else if (colorFunction['colors']) {
-      const colorObject = colorFunction['colors'];
-      const colorSet = new Set();
-      Object.keys(colorObject).forEach((propertyValue) => {
-        const color = colorObject[propertyValue];
-        if (!colorSet.has(color)) {
-          colorSet.add(color);
-          colorTd.append(createColorBox(colorObject[propertyValue]));
-        }
-      });
-    }
     // TODO: make this editable.
-    row.append(colorTd);
+    row.append(withColor(createTd(), layer));
 
     tableBody.append(row);
   }
