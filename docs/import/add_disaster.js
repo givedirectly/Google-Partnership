@@ -99,8 +99,7 @@ function updateAfterSort(ui) {
     $('#tbody tr:nth-child(' + i + ') .index-td').html(numLayers - i);
   }
 
-  // return updateLayersInFirestore();
-  return ui;
+  return updateLayersInFirestore();
 }
 
 /**
@@ -237,15 +236,11 @@ function toggleDisaster(disaster) {
     // TODO: make this editable.
     row.append(withText(createTd(), layer, 'display-name'));
     // asset path/url sample
-    // TODO: consolidate tile-urls and urls when we have a consistent naming
-    // convention.
     const assetOrUrl = createTd();
     if (layer['ee-name']) {
       withText(assetOrUrl, layer, 'ee-name');
     } else if (layer['urls']) {
       withList(assetOrUrl, layer, 'urls');
-    } else if (layer['tile-urls']) {
-      withList(assetOrUrl, layer, 'tile-urls');
     } else {
       console.log('layer ' + i + ': unrecognized type');
     }
