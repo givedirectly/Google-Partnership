@@ -15,8 +15,7 @@ function initializeDisasterPicker() {
   });
 
   disasterDropdown.onchange = () => {
-    const params = new URLSearchParams(window.location.search);
-    params.set('disaster', disasterDropdown.value);
-    window.location.search = params.toString();
+    localStorage.setItem('disaster', disasterDropdown.value);
+    location.reload();
   };
 }

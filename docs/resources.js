@@ -15,23 +15,11 @@ function getResources() {
  * @return {string} current disaster
  */
 function getDisaster() {
-  let final_disaster;
-
-  // The order of precedence for determining the current disaster is query
-  // parameter, local storage, a test specific default and finally the base
-  // default.
-  const params = new URLSearchParams(window.location.search);
-  if (params.has('disaster')) {
-    final_disaster = params.get('disaster');
-  } else if (localStorage.getItem('disaster')) {
-    final_disaster = localStorage.getItem('disaster');
-  } else {
-    final_disaster = default_disaster;
+  if (localStorage.getItem('disaster')) {
+    return localStorage.getItem('disaster');
   }
-
-  localStorage.setItem('disaster', final_disaster);
-
-  return final_disaster;
+  localStorage.setItem('disaster', default_disaster);
+  return default_disaster;
 }
 
 /**
