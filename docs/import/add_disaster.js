@@ -274,6 +274,7 @@ function withColor(td, layer, property, index) {
     Object.keys(colorObject).forEach((propertyValue) => {
       const color = colorObject[propertyValue];
       if (!colorSet.has(color)) {
+        colorSet.add(color);
         td.append(createColorBox(colorObject[propertyValue]));
       }
     });
