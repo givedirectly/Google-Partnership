@@ -165,10 +165,47 @@ function attachBlockGroups(building, blockGroups) {
   return building.set(geoidTag, geoid);
 }
 
+function missingAssetError(str) {
+  $('.compute-status').html('Error! Please specify ' + str + ' at <a href="./add_disaster.html">add_disaster.html</a>')
+}
+
 /** Performs operation of processing inputs and creating output asset. */
 function run(disasterData) {
+  if (!disasterData['states']) {
+    return missingAssetError('affected states');
+  }
+  const assetData = disasterData['asset-data'];
+  const snapData = disasterData['snap-data'];
+  if (!snapData) {
+    return missingAssetError('SNAP info');
+  }
+  const snapPaths = snapData['paths'];
+  if (!snapPaths) {
+    return missingAssetError('SNAP table asset paths');
+  }
+  const numStates = disasterData['states'].length;
+  if (snapPaths.length !== numStates) {
+    return missingAssetError('the same number of states and SNAP table asset paths');
+  }
+  const snapKey = snapData['paths']['snap-key'];
+  if (!snapKey) {
+    return missingAssetError('column name for SNAP recipients in SNAP table');
+  }
+  const totalKey = snapData['paths']['total-key'];
+  if (!totalKey) {
+    return missingAssetError('column name for total population in SNAP table');
+  }
+  const sviPaths = disasterData['svi-asset-path'];
+  if (!sviPaths) {
+    return missingAssetError('SVI table asset paths');
+  }
+  if (sviPaths.length !== numStates) {
+    return missingAssetError('the same number of states and SVI table asset paths');
+  }
+  const sviKey = disasterData['svi-']
+  const damagePath = disasterData['damage-asset-path'];
   const resources = getResources();
-  const damage = ee.FeatureCollection(disasterData['damage-asset-path']);
+  const damage = ee.FeatureCollection(damagePath);
   const centerStatusLabel = document.createElement('span');
   centerStatusLabel.innerText = 'Computing and storing bounds of map: ';
   const centerStatusSpan = document.createElement('span');
@@ -183,7 +220,7 @@ function run(disasterData) {
   $('.compute-status').append(centerStatusLabel);
   $('.compute-status').append(centerStatusSpan);
 
-  const snap = ee.FeatureCollection(resources.rawSnap)
+  const snap = ee.FeatureCollection(disasterData['snap-data'])
                    .map((feature) => stringifyGeoid(feature, censusGeoidKey));
   // filter block groups to those with damage.
   const blockGroups = ee.Join.simple().apply(
@@ -254,8 +291,8 @@ function enableWhenReady() {
   const processButton = $('#process-button');
   processButton.prop('disabled', false);
   // firebaseDataPromise is guaranteed to be done already by the time this code
-  // runs.
-  processButton.on('click', () => firebaseDataPromise.then((data) => run(data)));
+  // runs, so we do this await just so that run can avoid the Promise.
+  processButton.on('click', async () => run(await firebaseDataPromise));
 }
 
 function domLoaded() {
