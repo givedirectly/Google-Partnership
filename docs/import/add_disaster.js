@@ -285,7 +285,7 @@ function withColor(td, layer, property, index) {
   return td;
 }
 
-/** Populates the layers table with layers of curernt disaster. */
+/** Populates the layers table with layers of current disaster. */
 function populateLayersTable() {
   const layers = getCurrentLayers();
   const tableBody = $('#tbody');
@@ -323,7 +323,7 @@ function populateLayersTable() {
  * Populates the state asset pickers with all known earth engine assets for
  * those states.
  * @return {Promise<void>} returns when all asset pickers have been populated
- * after potentially retreiving states assets from ee.
+ * after potentially retrieving states' assets from ee.
  */
 function populateStateAssetPickers() {
   const states = getCurrentData()['states'];
