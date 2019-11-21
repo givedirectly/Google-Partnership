@@ -247,7 +247,9 @@ describe('Unit tests for add_disaster page', () => {
         withColor(createTd(), {color: {'broken': 'colors'}}, property, 3);
     expect(broken.children().length).to.equal(0);
     expect(broken.text()).to.be.empty;
-    expect(log).to.be.calledOnce;
+    const status = $('#status');
+    expect(status.is(':visible')).to.be.true;
+    expect(status.text()).to.contain('unrecognized color function');
   });
 
   it('tests type cell', () => {
