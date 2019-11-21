@@ -9,24 +9,20 @@ export {initializeDisasterPicker};
  *     Firebase
  */
 function initializeDisasterPicker(firebaseAuthPromise) {
+  const disasterDropdown = $('#disaster-dropdown');
   firebaseAuthPromise.then(() => {
     getDisasters().then((querySnapshot) => {
-      const disasterDropdown = $('#disaster-dropdown');
+      const currentDisaster = getDisaster();
       querySnapshot.forEach((disasterDoc) => {
-        const currentDisaster = getDisaster();
-        const disasterItem = document.createElement('option');
         const disaster = disasterDoc.id;
-        disasterItem.innerHTML = disaster;
-        if (disaster === currentDisaster) {
-          disasterItem.selected = 'selected';
-        }
+        const disasterItem = $(document.createElement('option')).text(disaster);
         disasterDropdown.prepend(disasterItem);
       });
-
-      disasterDropdown.onchange = () => {
-        localStorage.setItem('disaster', disasterDropdown.value);
-        location.reload();
-      };
+      disasterDropdown.val(currentDisaster);
+    });
+    disasterDropdown.on('change', () => {
+      localStorage.setItem('disaster', disasterDropdown.val());
+      location.reload();
     });
   });
 }
