@@ -119,15 +119,20 @@ module.exports = (on, config) => {
               .createCustomToken('cypress-firestore-test-user')
               .then((token) => testApp.auth().signInWithCustomToken(token));
       const deletePromise = deleteTestData(currentTestRoot, testAdminApp);
-      const documentPath = 'disaster-metadata/2017-harvey';
-      const harveyDoc = prodApp.firestore().doc(documentPath);
-      const documentReference = testApp.firestore().doc(
-          'test/' + currentTestRoot + '/' + documentPath);
-      return Promise.all([harveyDoc.get(), signinPromise, deletePromise])
-          .then((result) => Promise.all([
-            documentReference.set(result[0].data(), {merge: true}),
-            documentReference.set({dummy: true}, {merge: true}),
-          ]))
+      const writePromises = [];
+      for (const disaster of ['2017-harvey', '2018-michael']) {
+        const documentPath = 'disaster-metadata/' + disaster;
+        const prodDisasterDoc = prodApp.firestore().doc(documentPath);
+        const testDisasterDocReference = testApp.firestore().doc(
+            'test/' + currentTestRoot + '/' + documentPath);
+        writePromises.push(
+            Promise.all([prodDisasterDoc.get(), signinPromise, deletePromise])
+                .then((result) => Promise.all([
+                  testDisasterDocReference.set(result[0].data(), {merge: true}),
+                  testDisasterDocReference.set({dummy: true}, {merge: true}),
+                ])));
+      }
+      return Promise.all(writePromises)
           .then(
               () => Promise.all(
                   [testAdminApp.delete(), prodApp.delete(), testApp.delete()]))

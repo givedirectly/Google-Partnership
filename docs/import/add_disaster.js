@@ -3,6 +3,7 @@ import {eeStatePrefixLength, legacyStateDir} from '../ee_paths.js';
 import {LayerType} from '../firebase_layers.js';
 import {getFirestoreRoot} from '../firestore_document.js';
 import {addLoadingElement, loadingElementFinished} from '../loading.js';
+import {disasterCollectionReference, getDisasters} from '../firestore_document.js';
 
 export {enableWhenReady, toggleState, updateAfterSort};
 // Visible for testing
@@ -60,22 +61,19 @@ function enableWhenReady() {
   deleteButton.on('click', deleteDisaster);
 
   // populate disaster picker.
-  return getFirestoreRoot()
-      .collection('disaster-metadata')
-      .get()
-      .then((querySnapshot) => {
-        const disasterPicker = $('#disaster');
-        querySnapshot.forEach((doc) => {
-          const name = doc.id;
-          disasterPicker.prepend(createOptionFrom(name));
-          disasterData.set(name, doc.data());
-        });
+  return getDisasters().then((querySnapshot) => {
+    const disasterPicker = $('#disaster');
+    querySnapshot.forEach((doc) => {
+      const name = doc.id;
+      disasterPicker.prepend(createOptionFrom(name));
+      disasterData.set(name, doc.data());
+    });
 
-        disasterPicker.on('change', () => toggleDisaster(disasterPicker.val()));
-        const mostRecent = querySnapshot.docs[querySnapshot.size - 1].id;
-        disasterPicker.val(mostRecent).trigger('change');
-        toggleState(true);
-      });
+    disasterPicker.on('change', () => toggleDisaster(disasterPicker.val()));
+    const mostRecent = querySnapshot.docs[querySnapshot.size - 1].id;
+    disasterPicker.val(mostRecent).trigger('change');
+    toggleState(true);
+  });
 }
 
 /**
@@ -385,8 +383,7 @@ function writeNewDisaster(disasterId, states) {
   disasterPicker.val(disasterId).trigger('change');
   toggleState(true);
 
-  return getFirestoreRoot()
-      .collection('disaster-metadata')
+  return disasterCollectionReference()
       .doc(disasterId)
       .set({states: states})
       .then(() => true);
@@ -553,10 +550,7 @@ function deleteDisaster() {
     currentDisaster = disasterPicker.children().eq(0).val();
     disasterPicker.val(currentDisaster).trigger('change');
     $('#' + disasterId).remove();
-    return getFirestoreRoot()
-        .collection('disaster-metadata')
-        .doc(disasterId)
-        .delete();
+    return disasterCollectionReference().doc(disasterId).delete();
   }
   return Promise.resolve();
 }
