@@ -1,5 +1,5 @@
 import {eeStatePrefixLength, legacyStateDir} from '../ee_paths.js';
-import {getFirestoreRoot} from '../firestore_document.js';
+import {getDisasters} from '../firestore_document.js';
 
 export {enableWhenReady, toggleState};
 // Visible for testing
@@ -42,22 +42,19 @@ function enableWhenReady() {
   deleteButton.on('click', deleteDisaster);
 
   // populate disaster picker.
-  return getFirestoreRoot()
-      .collection('disaster-metadata')
-      .get()
-      .then((querySnapshot) => {
-        const disasterPicker = $('#disaster');
-        querySnapshot.forEach((doc) => {
-          const name = doc.id;
-          disasterPicker.prepend(createOptionFrom(name));
-          disasters.set(name, doc.data().states);
-        });
+  return getDisasters().then((querySnapshot) => {
+    const disasterPicker = $('#disaster');
+    querySnapshot.forEach((doc) => {
+      const name = doc.id;
+      disasterPicker.prepend(createOptionFrom(name));
+      disasters.set(name, doc.data().states);
+    });
 
-        disasterPicker.on('change', () => toggleDisaster(disasterPicker.val()));
-        const mostRecent = querySnapshot.docs[querySnapshot.size - 1].id;
-        disasterPicker.val(mostRecent).trigger('change');
-        toggleState(true);
-      });
+    disasterPicker.on('change', () => toggleDisaster(disasterPicker.val()));
+    const mostRecent = querySnapshot.docs[querySnapshot.size - 1].id;
+    disasterPicker.val(mostRecent).trigger('change');
+    toggleState(true);
+  });
 }
 
 /**

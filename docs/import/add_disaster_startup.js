@@ -1,9 +1,9 @@
 import {authenticateToFirebase, Authenticator} from '../authenticate.js';
 import {loadNavbarWithTitle} from '../navbar.js';
 import SettablePromise from '../settable_promise.js';
+import TaskAccumulator from '../task_accumulator.js';
 
 import {enableWhenReady, toggleState} from './add_disaster.js';
-import TaskAccumulator from './task_accumulator.js';
 
 export {taskAccumulator};
 

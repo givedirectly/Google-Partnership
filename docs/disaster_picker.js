@@ -1,21 +1,32 @@
-import {getDisaster, getDisasters} from './resources.js';
+import {getDisasters} from './firestore_document.js';
+import {getDisaster} from './resources.js';
 
 export {initializeDisasterPicker};
 
-/** Initializes the disaster picker. */
-function initializeDisasterPicker() {
-  const disasterDropdown = document.getElementById('disaster-dropdown');
-  getDisasters().forEach((disaster) => {
-    const disasterItem = document.createElement('option');
-    disasterItem.innerHTML = disaster;
-    if (disaster === getDisaster()) {
-      disasterItem.selected = 'selected';
-    }
-    disasterDropdown.appendChild(disasterItem);
-  });
+/**
+ * Initializes the disaster picker.
+ * @param {Promise} firebaseAuthPromise Promise that completes when logged in to
+ *     Firebase
+ */
+function initializeDisasterPicker(firebaseAuthPromise) {
+  firebaseAuthPromise.then(() => {
+    getDisasters().then((querySnapshot) => {
+      querySnapshot.forEach((disasterDoc) => {
+        const currentDisaster = getDisaster();
+        const disasterDropdown = $('#disaster-dropdown');
+        const disasterItem = document.createElement('option');
+        const disaster = disasterDoc.id;
+        disasterItem.innerHTML = disaster;
+        if (disaster === currentDisaster) {
+          disasterItem.selected = 'selected';
+        }
+        disasterDropdown.prepend(disasterItem);
+      });
 
-  disasterDropdown.onchange = () => {
-    localStorage.setItem('disaster', disasterDropdown.value);
-    location.reload();
-  };
+      disasterDropdown.onchange = () => {
+        localStorage.setItem('disaster', disasterDropdown.value);
+        location.reload();
+      };
+    });
+  });
 }
