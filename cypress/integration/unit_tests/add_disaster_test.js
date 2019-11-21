@@ -1,6 +1,8 @@
 import {gdEeStatePrefix, legacyStateDir, legacyStatePrefix} from '../../../docs/ee_paths.js';
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
-import {addDisaster, createAssetPickers, createOptionFrom, deleteDisaster, disasterData, emptyCallback, getAssetsFromEe, stateAssets, writeNewDisaster} from '../../../docs/import/add_disaster.js';
+import {withCheckbox} from '../../../docs/import/add_disaster';
+import {addDisaster, createAssetPickers, createOptionFrom, deleteDisaster, disasterData, emptyCallback, getAssetsFromEe, getCurrentLayers, stateAssets, updateAfterSort, writeNewDisaster, createTd, setCurrentDisasterForTesting, withColor, withList, withType,} from '../../../docs/import/add_disaster.js';
+import * as loading from '../../../docs/loading.js';
 import {addFirebaseHooks, loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
 const KNOWN_STATE = 'WF';
@@ -214,7 +216,133 @@ describe('Unit tests for add_disaster page', () => {
                       .get())
         .then((doc) => expect(doc.exists).to.be.false);
   });
+
+  it('tests color cell', () => {
+    const property = 'color';
+
+    const noColor = withColor(createTd(), {}, property, 0);
+    expect(noColor.html()).to.equals('N/A');
+    expect(noColor.hasClass('na')).to.be.true;
+
+    const yellow = 'yellow';
+    const singleColor =
+        withColor(createTd(), {color: {'single-color': yellow}}, property, 0);
+    expect(singleColor.children('.box').length).to.equal(1);
+    expect(singleColor.children().eq(0).css('background-color'))
+        .to.equal(yellow);
+
+    const baseColor =
+        withColor(createTd(), {color: {'base-color': yellow}}, property, 0);
+    expect(baseColor.children('.box').length).to.equal(1);
+    expect(baseColor.children().eq(0).css('background-color')).to.equal(yellow);
+
+    const red = 'red';
+    const discrete = withColor(
+        createTd(), {color: {colors: {'squash': yellow, 'tomato': red}}},
+        property, 0);
+    expect(discrete.children('.box').length).to.equal(2);
+    expect(discrete.children().eq(1).css('background-color')).to.equal(red);
+
+    const broken =
+        withColor(createTd(), {color: {'broken': 'colors'}}, property, 3);
+    expect(broken.children().length).to.equal(0);
+    expect(broken.html()).to.be.empty;
+  });
+
+  it('tests type cell', () => {
+    const two = withType(createTd(), {type: 2}, 'type');
+    expect(two.html()).to.equal('IMAGE');
+  });
+
+  it('tests list cell', () => {
+    const chocolate = 'chocolate';
+    const flavors =
+        withList(createTd(), {flavor: [chocolate, 'chai']}, 'flavor');
+    expect(flavors.children().length).to.equal(0);
+    expect(flavors.html()).to.equal('chocolate');
+  });
+
+  it('tests checkbox cell triggers', () => {
+    cy.visit('test_utils/empty.html');
+    cy.document()
+        .then((document) => {
+          disasterData.set('2005-fall', {layers: [{displayOnLoad: false}]});
+          setCurrentDisasterForTesting('2005-fall');
+
+          const unchecked =
+              withCheckbox(createTd(), {displayOnLoad: false}, 'displayOnLoad')
+                  .prop('id', 'checkbox');
+          expect(unchecked.children().first().prop('checked')).to.be.false;
+
+          const tbody = createAndAppend('tbody', 'tbody');
+          tbody.append($(document.createElement('tr')).append(unchecked));
+          return unchecked
+        })
+        .then((unchecked) => {
+          unchecked.prop('checked', true).trigger('change');
+          // this doesn't seem to be triggering
+        });
+  });
+
+  it.only('checks data updates after a sort', () => {
+    const loadingStartedStub = cy.stub(loading, 'addLoadingElement');
+    const loadingFinishedStub = cy.stub(loading, 'loadingElementFinished');
+    cy.visit('test_utils/empty.html');
+    cy.document().then((document) => {
+      const currentDisaster = '2005-fall';
+      disasterData.set(
+          currentDisaster,
+          {layers: [{initialIndex: 0}, {initialIndex: 1}, {initialIndex: 2}]});
+      setCurrentDisasterForTesting('2005-fall');
+
+      const tbody = createAndAppend('tbody', 'tbody');
+      // $(document.createElement('tbody')).prop('id', 'tbody');
+      const rows = createTrs(3);
+      tbody.append(rows);
+
+      // as if we had just dragged 0 index to 2 spot.
+      rows[0].children('td').first().html(0);  // => 2
+      rows[1].children('td').first().html(2);  // => 1
+      rows[2].children('td').first().html(1);  // => 0
+
+      cy.wrap(updateAfterSort({item: rows[0]}))
+          .then(() => {
+            const postSortLayers = getCurrentLayers();
+            expect(postSortLayers[0]['initialIndex']).equals(1);
+            expect(postSortLayers[1]['initialIndex']).equals(2);
+            expect(postSortLayers[2]['initialIndex']).equals(0);
+
+            expect(rows[0].text()).equals('2');
+            expect(rows[1].text()).equals('1');
+            expect(rows[2].text()).equals('0');
+
+            expect(loadingStartedStub).to.be.calledOnce;
+            expect(loadingFinishedStub).to.be.calledOnce;
+
+            return getFirestoreRoot()
+                .collection('disaster-metadata')
+                .doc(currentDisaster)
+                .get();
+          })
+          .then((doc) => {
+            const layers = doc.data()['layers'];
+            expect(layers[0]['initialIndex']).to.equal(1);
+            expect(layers[1]['initialIndex']).to.equal(2);
+            expect(layers[2]['initialIndex']).to.equal(0);
+          });
+    })
+  });
 });
+
+function createTrs(num) {
+  const rows = [];
+  for (let i = 0; i < num; i++) {
+    rows.push(
+        $(document.createElement('tr'))
+            .append($(document.createElement('td')).addClass('index-td')));
+  }
+  return rows
+}
 
 /**
  * Utility function for creating an element and returning it wrapped as a

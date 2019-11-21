@@ -15,9 +15,15 @@ export {
   disasterData,
   emptyCallback,
   getAssetsFromEe,
+  getCurrentData,
+  getCurrentLayers,
+  setCurrentDisasterForTesting,
   stateAssets,
+  updateLayersInFirestore,
   withCheckbox,
   withColor,
+  withList,
+  withType,
   writeNewDisaster,
 };
 
@@ -185,7 +191,8 @@ for (const t in LayerType) {
  * @param {JQuery<HTMLTableDataCellElement>} td cell
  * @param {Object} layer
  * @param {string} property
- * @return {HTMLElement}
+ * @return {JQuery<HTMLTableDataCellElement>}
+}
  */
 function withType(td, layer, property) {
   return td.html(layerTypeStrings.get((layer[property])));
@@ -573,4 +580,8 @@ function getCurrentData() {
  */
 function getCurrentLayers() {
   return getCurrentData()['layers'];
+}
+
+function setCurrentDisasterForTesting(disasterId) {
+  currentDisaster = disasterId;
 }
