@@ -199,6 +199,12 @@ function withType(td, layer, property) {
   return td.html(layerTypeStrings.get((layer[property])));
 }
 
+/**
+ * Checkbox change function.
+ * @param {Object} event
+ * @param {string} property
+ * @return {?Promise<void>} See updateLayersInFirestore doc
+ */
 function onCheck(event, property) {
   const checkbox = $(event.target);
   const index =
