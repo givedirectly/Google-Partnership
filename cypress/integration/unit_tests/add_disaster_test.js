@@ -1,7 +1,7 @@
 import {gdEeStatePrefix, legacyStateDir, legacyStatePrefix} from '../../../docs/ee_paths.js';
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
 import {withCheckbox} from '../../../docs/import/add_disaster';
-import {addDisaster, createAssetPickers, createOptionFrom, createTd, deleteDisaster, disasterData, emptyCallback, getAssetsFromEe, getCurrentLayers, setCurrentDisasterForTesting, stateAssets, updateAfterSort, withColor, withList, withType, writeNewDisaster,} from '../../../docs/import/add_disaster.js';
+import {addDisaster, createAssetPickers, createOptionFrom, createTd, deleteDisaster, disasterData, emptyCallback, getAssetsFromEe, getCurrentLayers, setCurrentDisasterForTesting, stateAssets, updateAfterSort, withColor, withList, withType, writeNewDisaster} from '../../../docs/import/add_disaster.js';
 import * as loading from '../../../docs/loading.js';
 import {addFirebaseHooks, loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
@@ -276,11 +276,9 @@ describe('Unit tests for add_disaster page', () => {
 
           const tbody = createAndAppend('tbody', 'tbody');
           tbody.append($(document.createElement('tr')).append(unchecked));
-          return unchecked
-        })
-        .then((unchecked) => {
-          unchecked.prop('checked', true).trigger('change');
+
           // this doesn't seem to be triggering
+          unchecked.prop('checked', true).trigger('change');
         });
   });
 
@@ -301,9 +299,9 @@ describe('Unit tests for add_disaster page', () => {
       tbody.append(rows);
 
       // as if we had just dragged 0 index to 2 spot.
-      rows[0].children('td').first().html(0);  // => 2
-      rows[1].children('td').first().html(2);  // => 1
-      rows[2].children('td').first().html(1);  // => 0
+      rows[0].children('td').first().html(0);
+      rows[1].children('td').first().html(2);
+      rows[2].children('td').first().html(1);
 
       cy.wrap(updateAfterSort({item: rows[0]}))
           .then(() => {
@@ -330,10 +328,15 @@ describe('Unit tests for add_disaster page', () => {
             expect(layers[1]['initialIndex']).to.equal(2);
             expect(layers[2]['initialIndex']).to.equal(0);
           });
-    })
+    });
   });
 });
 
+/**
+ * Creates some amount of table rows with a .index-td td.
+ * @param {number} num
+ * @return {Array<JQuery<HTMLElement>>}
+ */
 function createTrs(num) {
   const rows = [];
   for (let i = 0; i < num; i++) {
@@ -341,7 +344,7 @@ function createTrs(num) {
         $(document.createElement('tr'))
             .append($(document.createElement('td')).addClass('index-td')));
   }
-  return rows
+  return rows;
 }
 
 /**

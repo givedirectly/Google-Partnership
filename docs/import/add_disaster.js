@@ -582,6 +582,10 @@ function getCurrentLayers() {
   return getCurrentData()['layers'];
 }
 
+/**
+ * Sets the current disaster so getCurrentData works for testing.
+ * @param disasterId
+ */
 function setCurrentDisasterForTesting(disasterId) {
   currentDisaster = disasterId;
 }
