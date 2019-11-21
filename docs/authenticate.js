@@ -141,6 +141,10 @@ class Authenticator {
   }
 }
 
+Authenticator.withFirebasePromiseCloudApiAndTaskAccumulator =
+    (taskAccumulator) => {
+  
+    }
 /** Initializes Firebase. Exposed only for use in test codepaths. */
 function initializeFirebase() {
   firebase.initializeApp(getFirebaseConfig(inProduction()));
