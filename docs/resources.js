@@ -1,6 +1,6 @@
 import {gdEePathPrefix} from './ee_paths.js';
 
-export {getDisaster, getResources, getScoreAsset};
+export {getDisaster, getDisasters, getResources, getScoreAsset};
 
 /**
  * Gets all the ee assets relevant to the current disaster.
@@ -25,6 +25,16 @@ function getDisaster() {
 /** @return {string} EE asset path for score asset for the current disaster */
 function getScoreAsset() {
   return gdEePathPrefix + getDisaster() + '/data-ms-as-nod';
+}
+
+/**
+ * Gets all available disasters.
+ * @return {string[]} list of available disasters
+ */
+function getDisasters() {
+  const disasterNames = [];
+  for (const disasterName of disasters.keys()) disasterNames.push(disasterName);
+  return disasterNames;
 }
 
 /** The default disaster. */

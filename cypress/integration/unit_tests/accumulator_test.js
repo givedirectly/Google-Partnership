@@ -1,4 +1,4 @@
-import TaskAccumulator from '../../../docs/task_accumulator.js';
+import TaskAccumulator from '../../../docs/import/task_accumulator.js';
 
 describe('Unit test for TaskAccumulator', () => {
   it('successfully accumulates all tasks', () => {

@@ -1,5 +1,5 @@
 import {eeStatePrefixLength, legacyStateDir} from '../ee_paths.js';
-import {disasterCollectionReference, getDisasters} from '../firestore_document.js';
+import {getFirestoreRoot} from '../firestore_document.js';
 
 export {enableWhenReady, toggleState};
 // Visible for testing
@@ -42,19 +42,22 @@ function enableWhenReady() {
   deleteButton.on('click', deleteDisaster);
 
   // populate disaster picker.
-  return getDisasters().then((querySnapshot) => {
-    const disasterPicker = $('#disaster');
-    querySnapshot.forEach((doc) => {
-      const name = doc.id;
-      disasterPicker.prepend(createOptionFrom(name));
-      disasters.set(name, doc.data().states);
-    });
+  return getFirestoreRoot()
+      .collection('disaster-metadata')
+      .get()
+      .then((querySnapshot) => {
+        const disasterPicker = $('#disaster');
+        querySnapshot.forEach((doc) => {
+          const name = doc.id;
+          disasterPicker.prepend(createOptionFrom(name));
+          disasters.set(name, doc.data().states);
+        });
 
-    disasterPicker.on('change', () => toggleDisaster(disasterPicker.val()));
-    const mostRecent = querySnapshot.docs[querySnapshot.size - 1].id;
-    disasterPicker.val(mostRecent).trigger('change');
-    toggleState(true);
-  });
+        disasterPicker.on('change', () => toggleDisaster(disasterPicker.val()));
+        const mostRecent = querySnapshot.docs[querySnapshot.size - 1].id;
+        disasterPicker.val(mostRecent).trigger('change');
+        toggleState(true);
+      });
 }
 
 /**
@@ -123,7 +126,8 @@ function writeNewDisaster(disasterId, states) {
   disasterPicker.val(disasterId).trigger('change');
   toggleState(true);
 
-  return disasterCollectionReference()
+  return getFirestoreRoot()
+      .collection('disaster-metadata')
       .doc(disasterId)
       .set({states: states})
       .then(() => true);
@@ -289,7 +293,10 @@ function deleteDisaster() {
     disasters.delete(disasterId);
     disasterPicker.val(disasterPicker.children().eq(0).val()).trigger('change');
     $('#' + disasterId).remove();
-    return disasterCollectionReference().doc(disasterId).delete();
+    return getFirestoreRoot()
+        .collection('disaster-metadata')
+        .doc(disasterId)
+        .delete();
   }
   return Promise.resolve();
 }

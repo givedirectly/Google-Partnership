@@ -2,16 +2,6 @@ describe('Integration test for the navbar', () => {
   it('Switch disasters', () => {
     cy.visit('');
 
-    // Michael on top of Harvey.
-    // Give Firestore time to return by extending the timeout.
-    cy.get('#disaster-dropdown', {timeout: 10000})
-        .children('option')
-        .eq(1)
-        .contains('2017-harvey');
-    cy.get('#disaster-dropdown')
-        .children('option')
-        .eq(0)
-        .contains('2018-michael');
     cy.get('#disaster-dropdown').select('2018-michael');
 
     // The page should now be switched to the Michael disaster.
