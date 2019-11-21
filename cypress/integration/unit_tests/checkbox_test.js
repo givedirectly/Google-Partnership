@@ -50,6 +50,14 @@ const mockFirebaseLayers = [
     'display-on-load': true,
     'index': 4,
   },
+  {
+    'ee-name': 'kml_urls',
+    'asset-type': LayerType.KML,
+    'tile-urls': ['kml-url1/{X}/{Y}/{Z}', 'kml-url2/{X}/{Y}/{Z}'],
+    'display-name': 'tiles',
+    'display-on-load': false,
+    'index': 5,
+  },
 ];
 
 describe('Unit test for toggleLayerOn', () => {

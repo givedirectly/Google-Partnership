@@ -102,6 +102,28 @@
 <div id="selected-disaster" hidden="true">
   <p>Upload additional assets via the <a href="https://code.earthengine.google.com/" target="_blank"> code editor </a></p>
   <div id="asset-pickers"></div>
+  <div id="snap-damage-picker">
+    <table>
+      <thead>
+        <tr>
+          <th>Resource</th>
+          <th>Assets</th>
+          <th>Column</th>
+        </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <th>SNAP</th>
+        <th id="snap-assets"></th>
+        <th> <div contenteditable="true"id="snap-column"></div></th>
+      </tr>
+      <tr><th>Damage</th>
+        <th id="damage-assets"></th>
+        <th><div contenteditable="true" id="damage-column"></div></th>
+      </tr>
+    </tbody>
+    </table>
+  </div>
   <button type="button" id="delete", disabled="true">Delete</button>
 </div>
 <script type="module">

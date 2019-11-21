@@ -85,11 +85,13 @@ class LayerDisplayData {
    *
    * @param {DeckParams} deckParams null if not rendered using deck
    * @param {boolean} displayed True if layer is currently displayed
+   * @param {?boolean} isKmlLayer, true if this layer is a KML layer
    */
-  constructor(deckParams, displayed) {
+  constructor(deckParams, displayed, isKmlLayer) {
     /** @const */
     this.deckParams = deckParams;
     this.displayed = displayed;
+    this.isKmlLayer = isKmlLayer;
   }
 
   /**
@@ -97,6 +99,13 @@ class LayerDisplayData {
    */
   deckRendered() {
     return this.deckParams != null;
+  }
+
+  /**
+   * @return {boolean} True if this layer is a KML layer
+   */
+  isKmlLayer() {
+    return this.isKmlLayer;
   }
 }
 
@@ -150,7 +159,7 @@ function toggleLayerOn(layer, map) {
     addLayerFromFeatures(layerDisplayData, index);
     return null;
   }
-  if (layerDisplayData.overlay && !(Array.isArray(layerDisplayData.overlay))) {
+  if (layerDisplayData.overlay && !layerDisplayData.isKmlLayer()) {
     // The promise returned in this branch does not need to be stored in the
     // pendingPromise field because it will complete immediately if this layer
     // is toggled off (see the createTileCallback doc). That means that if
@@ -180,7 +189,7 @@ function toggleLayerOn(layer, map) {
 function toggleLayerOff(index, map) {
   const layerDisplayData = layerArray[index];
   layerDisplayData.displayed = false;
-  if (Array.isArray(layerDisplayData.overlay)) {
+  if (layerDisplayData.isKmlLayer()) {
     for (let i = 0; i < layerDisplayData.overlay.length; i++) {
       layerDisplayData.overlay[i].setMap(null);
     }
@@ -429,7 +438,6 @@ function addLayer(layer, map) {
       break;
     case LayerType.MAP_TILES:
       return addTileLayer(map, layer);
-      break;
     default:
       createError('parsing layer type during add')(
           '[' + layer['index'] + ']: ' + layer['asset-name'] +
@@ -444,7 +452,7 @@ function addLayer(layer, map) {
  * @param {google.maps.Map} map
  */
 function addKmlLayers(layer, map) {
-  const layerDisplayData = new LayerDisplayData(null, true);
+  const layerDisplayData = new LayerDisplayData(null, true, true);
   layerArray[layer['index']] = layerDisplayData;
   const overlays = [];
   for (let i = 0; i < layer['urls'].length; i++) {
