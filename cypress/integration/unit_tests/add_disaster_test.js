@@ -1,7 +1,6 @@
 import {gdEeStatePrefix, legacyStateDir, legacyStatePrefix} from '../../../docs/ee_paths.js';
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
-import {withCheckbox} from '../../../docs/import/add_disaster';
-import {addDisaster, createAssetPickers, createOptionFrom, createTd, deleteDisaster, disasterData, emptyCallback, getAssetsFromEe, getCurrentLayers, setCurrentDisasterForTesting, stateAssets, updateAfterSort, withColor, withList, withType, writeNewDisaster} from '../../../docs/import/add_disaster.js';
+import {addDisaster, createAssetPickers, createTd, deleteDisaster, disasterData, emptyCallback, getAssetsFromEe, getCurrentLayers, onCheck, setCurrentDisasterForTesting, stateAssets, updateAfterSort, withCheckbox, withColor, withList, withType, writeNewDisaster} from '../../../docs/import/add_disaster.js';
 import * as loading from '../../../docs/loading.js';
 import {addFirebaseHooks, loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
@@ -15,12 +14,12 @@ describe('Unit tests for add_disaster page', () => {
   before(() => {
     cy.wrap(firebase.auth().signInWithCustomToken(firestoreCustomToken));
 
-    const disasterPicker = createAndAppend('select', 'disaster');
-    disasterPicker.append(createOptionFrom('2003-spring'));
-    disasterPicker.append(createOptionFrom('2001-summer'));
-    disasterPicker.val('2003-spring');
-
-    createAndAppend('div', 'status').hide();
+    // const disasterPicker = createAndAppend('select', 'disaster');
+    // disasterPicker.append(createOptionFrom('2003-spring'));
+    // disasterPicker.append(createOptionFrom('2001-summer'));
+    // disasterPicker.val('2003-spring');
+    //
+    // createAndAppend('div', 'status').hide();
   });
 
   beforeEach(() => {
@@ -262,72 +261,85 @@ describe('Unit tests for add_disaster page', () => {
     expect(flavors.html()).to.equal('chocolate');
   });
 
-  it('tests checkbox cell triggers', () => {
-    cy.visit('test_utils/empty.html');
-    cy.document().then((document) => {
-      disasterData.set('2005-fall', {layers: [{displayOnLoad: false}]});
-      setCurrentDisasterForTesting('2005-fall');
-
-      const unchecked =
-          withCheckbox(createTd(), {displayOnLoad: false}, 'displayOnLoad')
-              .prop('id', 'checkbox');
-      expect(unchecked.children().first().prop('checked')).to.be.false;
-
-      const tbody = createAndAppend('tbody', 'tbody');
-      tbody.append($(document.createElement('tr')).append(unchecked));
-
-      // this doesn't seem to be triggering
-      unchecked.prop('checked', true).trigger('change');
-    });
-  });
-
-  it.only('checks data updates after a sort', () => {
+  it.only('tests checkbox cell', () => {
     const loadingStartedStub = cy.stub(loading, 'addLoadingElement');
     const loadingFinishedStub = cy.stub(loading, 'loadingElementFinished');
-    cy.visit('test_utils/empty.html');
-    cy.document().then((document) => {
-      const currentDisaster = '2005-fall';
-      disasterData.set(
-          currentDisaster,
-          {layers: [{initialIndex: 0}, {initialIndex: 1}, {initialIndex: 2}]});
-      setCurrentDisasterForTesting('2005-fall');
 
-      const tbody = createAndAppend('tbody', 'tbody');
-      // $(document.createElement('tbody')).prop('id', 'tbody');
-      const rows = createTrs(3);
-      tbody.append(rows);
+    const currentDisaster = '2005-fall';
+    disasterData.set(currentDisaster, {layers: [{displayOnLoad: false}]});
+    setCurrentDisasterForTesting(currentDisaster);
 
-      // as if we had just dragged 0 index to 2 spot.
-      rows[0].children('td').first().html(0);
-      rows[1].children('td').first().html(2);
-      rows[2].children('td').first().html(1);
+    const property = 'displayOnLoad';
+    const unchecked =
+        withCheckbox(createTd(), {displayOnLoad: false}, property);
+    const checkbox = unchecked.children().first();
+    expect(checkbox.prop('checked')).to.be.false;
 
-      cy.wrap(updateAfterSort({item: rows[0]}))
-          .then(() => {
-            const postSortLayers = getCurrentLayers();
-            expect(postSortLayers[0]['initialIndex']).equals(1);
-            expect(postSortLayers[1]['initialIndex']).equals(2);
-            expect(postSortLayers[2]['initialIndex']).equals(0);
+    createAndAppend('tbody', 'tbody')
+        .append($(document.createElement('tr'))
+                    .append($(document.createElement('td')).append(unchecked)));
+    checkbox.prop('checked', true);
 
-            expect(rows[0].text()).equals('2');
-            expect(rows[1].text()).equals('1');
-            expect(rows[2].text()).equals('0');
+    cy.wrap(onCheck({target: checkbox}, property))
+        .then(() => {
+          expect(getCurrentLayers()[0][property]).to.be.true;
+          expect(loadingStartedStub).to.be.calledOnce;
+          expect(loadingFinishedStub).to.be.calledOnce;
+          return getFirestoreRoot()
+              .collection('disaster-metadata')
+              .doc(currentDisaster)
+              .get();
+        })
+        .then((doc) => {
+          expect(doc.data()['layers'][0][property]).to.be.true;
+        });
+  });
 
-            expect(loadingStartedStub).to.be.calledOnce;
-            expect(loadingFinishedStub).to.be.calledOnce;
+  it('checks data updates after a sort', () => {
+    const loadingStartedStub = cy.stub(loading, 'addLoadingElement');
+    const loadingFinishedStub = cy.stub(loading, 'loadingElementFinished');
 
-            return getFirestoreRoot()
-                .collection('disaster-metadata')
-                .doc(currentDisaster)
-                .get();
-          })
-          .then((doc) => {
-            const layers = doc.data()['layers'];
-            expect(layers[0]['initialIndex']).to.equal(1);
-            expect(layers[1]['initialIndex']).to.equal(2);
-            expect(layers[2]['initialIndex']).to.equal(0);
-          });
-    });
+    const currentDisaster = '2005-fall';
+    disasterData.set(
+        currentDisaster,
+        {layers: [{initialIndex: 0}, {initialIndex: 1}, {initialIndex: 2}]});
+    setCurrentDisasterForTesting('2005-fall');
+
+    const tbody = createAndAppend('tbody', 'tbody');
+    // $(document.createElement('tbody')).prop('id', 'tbody');
+    const rows = createTrs(3);
+    tbody.append(rows);
+
+    // as if we had just dragged 0 index to 2 spot.
+    rows[0].children('td').first().html(0);
+    rows[1].children('td').first().html(2);
+    rows[2].children('td').first().html(1);
+
+    cy.wrap(updateAfterSort({item: rows[0]}))
+        .then(() => {
+          const postSortLayers = getCurrentLayers();
+          expect(postSortLayers[0]['initialIndex']).equals(1);
+          expect(postSortLayers[1]['initialIndex']).equals(2);
+          expect(postSortLayers[2]['initialIndex']).equals(0);
+
+          expect(rows[0].text()).equals('2');
+          expect(rows[1].text()).equals('1');
+          expect(rows[2].text()).equals('0');
+
+          expect(loadingStartedStub).to.be.calledOnce;
+          expect(loadingFinishedStub).to.be.calledOnce;
+
+          return getFirestoreRoot()
+              .collection('disaster-metadata')
+              .doc(currentDisaster)
+              .get();
+        })
+        .then((doc) => {
+          const layers = doc.data()['layers'];
+          expect(layers[0]['initialIndex']).to.equal(1);
+          expect(layers[1]['initialIndex']).to.equal(2);
+          expect(layers[2]['initialIndex']).to.equal(0);
+        });
   });
 });
 

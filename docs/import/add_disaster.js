@@ -25,6 +25,7 @@ export {
   withList,
   withType,
   writeNewDisaster,
+    onCheck,
 };
 
 // A map of disaster names to data. This pulls once on firebase
@@ -198,6 +199,16 @@ function withType(td, layer, property) {
   return td.html(layerTypeStrings.get((layer[property])));
 }
 
+function onCheck(event, property) {
+  const checkbox = $(event.target);
+  const index = $('#tbody > tr').length - 1 -
+      $('tr').index(checkbox.parents('tr'));
+  console.log(checkbox);
+  getCurrentLayers()[index][property] =
+      checkbox.is(':checked');
+  return updateLayersInFirestore();
+}
+
 /**
  * Add checkbox capabilities to the given td.
  * @param {JQuery<HTMLTableDataCellElement>} td cell
@@ -209,13 +220,7 @@ function withCheckbox(td, layer, property) {
   const checkbox = $(document.createElement('input'))
                        .prop('type', 'checkbox')
                        .prop('checked', layer[property])
-                       .on('change', (event) => {
-                         const index = $('#tbody > tr').length -
-                             $('tr').index($(event.target).parents('tr'));
-                         getCurrentLayers()[index][property] =
-                             checkbox.is(':checked');
-                         return updateLayersInFirestore();
-                       });
+                       .on('change', (event) => onCheck(event, property));
   return $(td).append(checkbox);
 }
 
