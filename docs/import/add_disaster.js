@@ -88,7 +88,7 @@ function toggleDisaster(disaster) {
   // display layer table
   populateLayersTable();
   // display state asset pickers
-  return populateStateAssetPickers()
+  return populateStateAssetPickers();
 }
 
 const STATE = {
