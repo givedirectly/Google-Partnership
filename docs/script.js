@@ -15,13 +15,8 @@ const firebaseAuthPromiseWrapper = new SettablePromise();
 const firebaseAuthPromise = firebaseAuthPromiseWrapper.getPromise();
 const disasterMetadataPromise = firebaseAuthPromise.then(readDisasterDocument);
 
-/** Does main work. */
-function runOnInitialize() {
-  run(map, firebaseAuthPromise, disasterMetadataPromise);
-}
-
 // Two tasks: EE authentication and page load.
-const taskAccumulator = new TaskAccumulator(2, runOnInitialize);
+const taskAccumulator = new TaskAccumulator(2, () => run(map, firebaseAuthPromise, disasterMetadataPromise));
 
 if (inProduction()) {
   const authenticator = new Authenticator(
@@ -48,7 +43,7 @@ if (inProduction()) {
       CLIENT_ID, 'Bearer', eeToken,
       // Expires in 3600 is a lie, but no need to tell the truth.
       /* expiresIn */ 3600, /* extraScopes */[],
-      /* callback */ () => initializeEE(runOnInitialize),
+      /* callback */ () => initializeEE(() => taskAccumulator.taskCompleted()),
       /* updateAuthLibrary */ false);
   taskAccumulator.taskCompleted();
 }
