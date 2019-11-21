@@ -4,6 +4,7 @@ import {LayerType} from '../firebase_layers.js';
 import {getFirestoreRoot} from '../firestore_document.js';
 import {disasterCollectionReference, getDisasters} from '../firestore_document.js';
 import {addLoadingElement, loadingElementFinished} from '../loading.js';
+import {getDisaster} from '../resources.js';
 
 export {enableWhenReady, toggleState, updateAfterSort};
 // Visible for testing
@@ -37,11 +38,6 @@ const disasterData = new Map();
 // Map of state to list of known assets
 const stateAssets = new Map();
 
-// Initially set to the most recent disaster as soon as firebase returns the
-// list of disasters.
-// TODO: sync this file with local storage disaster and stop using this.
-let currentDisaster;
-
 // TODO: general reminder to add loading indicators for things like creating
 // new state asset folders, etc.
 
@@ -70,8 +66,7 @@ function enableWhenReady() {
     });
 
     disasterPicker.on('change', () => toggleDisaster(disasterPicker.val()));
-    const mostRecent = querySnapshot.docs[querySnapshot.size - 1].id;
-    disasterPicker.val(mostRecent).trigger('change');
+    disasterPicker.val(getDisaster()).trigger('change');
     toggleState(true);
   });
 }
@@ -117,7 +112,7 @@ function updateLayersInFirestore() {
   pendingWriteCount++;
   return getFirestoreRoot()
       .collection('disaster-metadata')
-      .doc(currentDisaster)
+      .doc(getDisaster())
       .set({layers: getCurrentLayers()}, {merge: true})
       .then(() => {
         pendingWriteCount--;
@@ -547,8 +542,7 @@ function deleteDisaster() {
   const disasterId = disasterPicker.val();
   if (confirm('Delete ' + disasterId + '? This action cannot be undone')) {
     disasterData.delete(disasterId);
-    currentDisaster = disasterPicker.children().eq(0).val();
-    disasterPicker.val(currentDisaster).trigger('change');
+    disasterPicker.val(disasterPicker.children().eq(0).val()).trigger('change');
     $('#' + disasterId).remove();
     return disasterCollectionReference().doc(disasterId).delete();
   }
@@ -581,13 +575,11 @@ function createOptionFrom(innerTextAndValue) {
 }
 
 /**
- * Utility function for getting current data. Not useful until after
- * enableWhenReady finishes (during which currentDisaster is set for the first
- * time).
+ * Utility function for getting current data.
  * @return {Object}
  */
 function getCurrentData() {
-  return disasterData.get(currentDisaster);
+  return disasterData.get(getDisaster());
 }
 
 /**
@@ -603,7 +595,7 @@ function getCurrentLayers() {
  * @param {string} disasterId
  */
 function setCurrentDisaster(disasterId) {
-  currentDisaster = disasterId;
+  localStorage.setItem('disaster', disasterId);
 }
 
 const ILLEGAL_STATE_ERR =
