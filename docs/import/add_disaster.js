@@ -612,4 +612,5 @@ function setCurrentDisaster(disasterId) {
   currentDisaster = disasterId;
 }
 
-const ILLEGAL_STATE_ERR = 'Internal Error: contact developer with the following information: ';
+const ILLEGAL_STATE_ERR =
+    'Internal Error: contact developer with the following information: ';
