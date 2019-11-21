@@ -1,6 +1,6 @@
 import {gdEeStatePrefix, legacyStateDir, legacyStatePrefix} from '../../../docs/ee_paths.js';
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
-import {addDisaster, createAssetPickers, createTd, deleteDisaster, disasterData, emptyCallback, getAssetsFromEe, getCurrentLayers, onCheck, setCurrentDisasterForTesting, stateAssets, updateAfterSort, withCheckbox, withColor, withList, withType, writeNewDisaster} from '../../../docs/import/add_disaster.js';
+import {addDisaster, createAssetPickers, createOptionFrom, createTd, deleteDisaster, disasterData, emptyCallback, getAssetsFromEe, getCurrentLayers, onCheck, setCurrentDisasterForTesting, stateAssets, updateAfterSort, withCheckbox, withColor, withList, withType, writeNewDisaster} from '../../../docs/import/add_disaster.js';
 import * as loading from '../../../docs/loading.js';
 import {addFirebaseHooks, loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
@@ -14,12 +14,12 @@ describe('Unit tests for add_disaster page', () => {
   before(() => {
     cy.wrap(firebase.auth().signInWithCustomToken(firestoreCustomToken));
 
-    // const disasterPicker = createAndAppend('select', 'disaster');
-    // disasterPicker.append(createOptionFrom('2003-spring'));
-    // disasterPicker.append(createOptionFrom('2001-summer'));
-    // disasterPicker.val('2003-spring');
-    //
-    // createAndAppend('div', 'status').hide();
+    const disasterPicker = createAndAppend('select', 'disaster');
+    disasterPicker.append(createOptionFrom('2003-spring'));
+    disasterPicker.append(createOptionFrom('2001-summer'));
+    disasterPicker.val('2003-spring');
+
+    createAndAppend('div', 'status').hide();
   });
 
   beforeEach(() => {
@@ -216,7 +216,7 @@ describe('Unit tests for add_disaster page', () => {
         .then((doc) => expect(doc.exists).to.be.false);
   });
 
-  it('tests color cell', () => {
+  it.only('tests color cell', () => {
     const property = 'color';
 
     const noColor = withColor(createTd(), {}, property, 0);
@@ -242,10 +242,13 @@ describe('Unit tests for add_disaster page', () => {
     expect(discrete.children('.box').length).to.equal(2);
     expect(discrete.children().eq(1).css('background-color')).to.equal(red);
 
+    const log = cy.stub(console, 'log')
+                    .withArgs('layer 3: unrecognized color function');
     const broken =
         withColor(createTd(), {color: {'broken': 'colors'}}, property, 3);
     expect(broken.children().length).to.equal(0);
     expect(broken.html()).to.be.empty;
+    expect(log).to.be.calledOnce;
   });
 
   it('tests type cell', () => {
@@ -261,7 +264,7 @@ describe('Unit tests for add_disaster page', () => {
     expect(flavors.html()).to.equal('chocolate');
   });
 
-  it.only('tests checkbox cell', () => {
+  it('tests checkbox cell', () => {
     const loadingStartedStub = cy.stub(loading, 'addLoadingElement');
     const loadingFinishedStub = cy.stub(loading, 'loadingElementFinished');
 
