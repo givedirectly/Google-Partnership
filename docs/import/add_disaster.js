@@ -38,6 +38,7 @@ const stateAssets = new Map();
 
 // Initially set to the most recent disaster as soon as firebase returns the
 // list of disasters.
+// TODO: sync this file with local storage disaster and stop using this.
 let currentDisaster;
 
 // TODO: general reminder to add loading indicators for things like creating
@@ -155,8 +156,7 @@ function updateAfterSort(ui) {
   // insert at new index
   layers.splice(newRealIndex, 0, row);
 
-  // dumbly renumber all the layers. note: nth-child starts at 1, .index()
-  // starts at 0
+  // Reindex all the layers.
   for (let i = Math.min(oldRealIndex, newRealIndex);
        i <= Math.max(oldRealIndex, newRealIndex); i++) {
     const tableIndex = numLayers - i;
