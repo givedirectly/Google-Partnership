@@ -306,7 +306,7 @@ describe('Unit tests for add_disaster page', () => {
     disasterData.set(
         currentDisaster,
         {layers: [{initialIndex: 0}, {initialIndex: 1}, {initialIndex: 2}]});
-    window.localStorage.setItem('disaster',currentDisaster);
+    window.localStorage.setItem('disaster', currentDisaster);
 
     const tbody = createAndAppend('tbody', 'tbody');
     const rows = createTrs(3);
