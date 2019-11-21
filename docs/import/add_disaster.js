@@ -17,6 +17,7 @@ export {
   getAssetsFromEe,
   getCurrentData,
   getCurrentLayers,
+  onCheck,
   setCurrentDisasterForTesting,
   stateAssets,
   updateLayersInFirestore,
@@ -25,7 +26,6 @@ export {
   withList,
   withType,
   writeNewDisaster,
-    onCheck,
 };
 
 // A map of disaster names to data. This pulls once on firebase
@@ -201,11 +201,10 @@ function withType(td, layer, property) {
 
 function onCheck(event, property) {
   const checkbox = $(event.target);
-  const index = $('#tbody > tr').length - 1 -
-      $('tr').index(checkbox.parents('tr'));
+  const index =
+      $('#tbody > tr').length - 1 - $('tr').index(checkbox.parents('tr'));
   console.log(checkbox);
-  getCurrentLayers()[index][property] =
-      checkbox.is(':checked');
+  getCurrentLayers()[index][property] = checkbox.is(':checked');
   return updateLayersInFirestore();
 }
 
