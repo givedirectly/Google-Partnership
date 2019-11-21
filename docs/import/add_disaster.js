@@ -128,7 +128,7 @@ function updateLayersInFirestore() {
         switch (oldState) {
           case STATE.WRITING:
             loadingElementFinished(writeWaiterId);
-            return Promise.resolve();
+            return null;
           case STATE.QUEUED_WRITE:
             loadingElementFinished(writeWaiterId);
             return updateLayersInFirestore();
@@ -280,7 +280,7 @@ function withColor(td, layer, property, index) {
       }
     });
   } else {
-    console.log('layer ' + index + ': unrecognized color function');
+    setStatus(ILLEGAL_STATE_ERR + 'unrecognized color function: ' + layer);
   }
   return td;
 }
@@ -305,7 +305,7 @@ function populateLayersTable() {
     } else if (layer['urls']) {
       withList(assetOrUrl, layer, 'urls');
     } else {
-      console.log('layer ' + i + ': unrecognized type');
+      setStatus(ILLEGAL_STATE_ERR + 'unrecognized type: ' + layer);
     }
     row.append(assetOrUrl);
     // type
@@ -611,3 +611,5 @@ function getCurrentLayers() {
 function setCurrentDisaster(disasterId) {
   currentDisaster = disasterId;
 }
+
+const ILLEGAL_STATE_ERR = 'Internal Error: contact developer with the following information: ';

@@ -243,7 +243,7 @@ describe('Unit tests for add_disaster page', () => {
     expect(discrete.children().eq(1).css('background-color')).to.equal(red);
 
     const log = cy.stub(console, 'log')
-                    .withArgs('layer 3: unrecognized color function');
+                    .withArgs('unrecognized color function');
     const broken =
         withColor(createTd(), {color: {'broken': 'colors'}}, property, 3);
     expect(broken.children().length).to.equal(0);
