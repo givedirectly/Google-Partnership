@@ -35,6 +35,7 @@
   </select>
   <span> </span>
   <button type="button" id="create-new-disaster">Create New Disaster</button>
+  <button type="button" id="delete", disabled="true">Delete Disaster</button>
 </div>
 <div id="status"></div>
 <div id="new-disaster" hidden="true">
@@ -102,7 +103,15 @@
 <div id="selected-disaster" hidden="true">
   <p>Upload additional assets via the <a href="https://code.earthengine.google.com/" target="_blank"> code editor </a></p>
   <div id="asset-pickers"></div>
-  <button type="button" id="delete", disabled="true">Delete</button>
+</div>
+<div style="padding-top: 40px"> 
+  <div class="formTitle">Select Poverty and Damage Data</div>
+  <div>
+    <label>Poverty Assets: </label>
+    <div id="poverty-asset-picker"></div>
+    <div id="poverty-asset-columns" style="padding: 10px 5px;"></div>
+  </div>
+  <button type="button" id="add-poverty-assets">Select</button>
 </div>
 <script type="module">
   import {taskAccumulator} from './add_disaster_startup.js';

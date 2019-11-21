@@ -76,7 +76,7 @@ function toggleDisaster(disaster) {
   // reloading the page.
   let assetPickersDone = Promise.resolve();
   if (statesToFetch.length === 0) {
-    createAssetPickers(states);
+    createAssetPickers(states, 'asset-pickers');
   } else {
     // We are already doing this inside createAssetPickers but not until
     // after the first promise completes so also do it here so lingering
@@ -86,12 +86,54 @@ function toggleDisaster(disaster) {
       for (const asset of assets) {
         stateAssets.set(asset[0], asset[1]);
       }
-      createAssetPickers(states);
+      createAssetPickers(states, 'asset-pickers');
+      initializePovertySelectors(states);
     });
   }
 
   // TODO: display more disaster info including current layers etc.
   return assetPickersDone;
+}
+
+/**
+ * Initializes the select logic for poverty assets.
+ * @param {Array<string>} states array of state (abbreviations)
+ * @return {Promise<boolean>} returns true after successful write to firestore.
+ */
+function initializePovertySelectors(states) {
+  let assets = [];
+  for (const state of states) {
+    if (stateAssets.get(state)) {
+      assets = assets.concat(stateAssets.get(state));
+    }
+  }
+  const assetPickerDiv = $('#poverty-asset-picker');
+  assetPickerDiv.empty();
+  createAssetPicker(assets, assetPickerDiv, 'poverty-asset-adder');
+  $('#poverty-asset-adder').on('change', onSelectPovertyAssets);
+  // TODO: Handle clicking the select button here.
+}
+
+/**
+ * Handles the user selecting one or more of the poverty assets by displaying
+ * column name selectors to the user.
+ */
+function onSelectPovertyAssets() {
+  const values = $('#poverty-asset-adder').val();
+  $('#poverty-asset-columns').empty();
+  // TODO: Replace these with dropdowns of column names from the asset.
+  for (let i = 0; i < values.length; i++) {
+    const name = values[i].replace(/^.*(\\|\/|\:)/, '');
+    const colLabel = $(document.createElement('label'))
+                         .attr({
+                           id: name + '-col-label',
+                         })
+                         .text(name + ' column ');
+    const colInput = $(document.createElement('input')).attr({
+      id: name + '-col',
+    });
+    $('#poverty-asset-columns').append([colLabel, colInput]);
+  }
 }
 
 /**
@@ -259,26 +301,41 @@ function checkSupportedAssetType(asset) {
  * @param {Array<string>} states e.g. ['WA']
  */
 function createAssetPickers(states) {
-  const assetPickerDiv = $('#asset-pickers');
+  const assetPickerDiv =
+      $('#' +
+        'asset-pickers');
   assetPickerDiv.empty();
   for (const state of states) {
-    const assetPicker = $(document.createElement('select'))
-                            .attr({
-                              multiple: 'multiple',
-                              id: state + '-adder',
-                            })
-                            .width(200);
     if (stateAssets.get(state)) {
-      for (const asset of stateAssets.get(state)) {
-        assetPicker.append(createOptionFrom(asset));
-      }
+      const assetPicker = createAssetPicker(
+          stateAssets.get(state), assetPickerDiv, state + '-adder',
+          'Add EE asset(s) for ' + state + ': ');
     }
-    const assetPickerLabel = $(document.createElement('label'))
-                                 .html('Add EE asset(s) for ' + state + ': ');
-    assetPickerLabel.append(assetPicker);
-    assetPickerDiv.append(assetPickerLabel);
-    assetPickerDiv.append(document.createElement('br'));
   }
+}
+
+
+/**
+ * Given states, displays their assets in pickers.
+ * @param {Array<string>} states e.g. ['WA']
+ */
+function createAssetPicker(assets, parentDiv, selectName, label) {
+  const assetPicker = $(document.createElement('select'))
+                          .attr({
+                            multiple: 'multiple',
+                            id: selectName,
+                          })
+                          .width(200);
+  for (const asset of assets) {
+    assetPicker.append(createOptionFrom(asset));
+  }
+
+  if (label) {
+    const assetPickerLabel = $(document.createElement('label')).html(label);
+    parentDiv.append(assetPickerLabel);
+  }
+  parentDiv.append(assetPicker);
+  parentDiv.append(document.createElement('br'));
 }
 
 /**
