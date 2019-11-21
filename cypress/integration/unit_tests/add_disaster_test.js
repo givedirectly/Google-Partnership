@@ -1,6 +1,7 @@
 import {gdEeStatePrefix, legacyStateDir, legacyStatePrefix} from '../../../docs/ee_paths.js';
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
-import {addDisaster, createAssetPickers, createOptionFrom, deleteDisaster, disasters, emptyCallback, getAssetsFromEe, stateAssets, writeNewDisaster} from '../../../docs/import/add_disaster.js';
+import {addDisaster, createAssetPickers, createOptionFrom, createTd, deleteDisaster, disasterData, emptyCallback, getAssetsFromEe, getCurrentLayers, onCheck, setCurrentDisaster, stateAssets, updateAfterSort, withCheckbox, withColor, withList, withType, writeNewDisaster} from '../../../docs/import/add_disaster.js';
+import * as loading from '../../../docs/loading.js';
 import {addFirebaseHooks, loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
 const KNOWN_STATE = 'WF';
@@ -47,14 +48,14 @@ describe('Unit tests for add_disaster page', () => {
     stateAssets.clear();
     // In prod this would happen in enableWhenReady which would read from
     // firestore.
-    disasters.clear();
-    disasters.set('2001-summer', []);
-    disasters.set('2003-spring', []);
+    disasterData.clear();
+    disasterData.set('2001-summer', {});
+    disasterData.set('2003-spring', {});
   });
 
   afterEach(() => {
     stateAssets.clear();
-    disasters.clear();
+    disasterData.clear();
   });
 
   it('gets state asset info from ee', () => {
@@ -214,7 +215,151 @@ describe('Unit tests for add_disaster page', () => {
                       .get())
         .then((doc) => expect(doc.exists).to.be.false);
   });
+
+  it('tests color cell', () => {
+    const property = 'color';
+
+    const noColor = withColor(createTd(), {}, property, 0);
+    expect(noColor.text()).to.equal('N/A');
+    expect(noColor.hasClass('na')).to.be.true;
+
+    const yellow = 'yellow';
+    const singleColor =
+        withColor(createTd(), {color: {'single-color': yellow}}, property, 0);
+    expect(singleColor.children('.box').length).to.equal(1);
+    expect(singleColor.children().eq(0).css('background-color'))
+        .to.equal(yellow);
+
+    const baseColor =
+        withColor(createTd(), {color: {'base-color': yellow}}, property, 0);
+    expect(baseColor.children('.box').length).to.equal(1);
+    expect(baseColor.children().eq(0).css('background-color')).to.equal(yellow);
+
+    const red = 'red';
+    const discrete = withColor(
+        createTd(), {color: {colors: {'squash': yellow, 'tomato': red}}},
+        property, 0);
+    expect(discrete.children('.box').length).to.equal(2);
+    expect(discrete.children().eq(1).css('background-color')).to.equal(red);
+
+    const broken =
+        withColor(createTd(), {color: {'broken': 'colors'}}, property, 3);
+    expect(broken.children().length).to.equal(0);
+    expect(broken.text()).to.be.empty;
+    const status = $('#status');
+    expect(status.is(':visible')).to.be.true;
+    expect(status.text()).to.contain('unrecognized color function');
+  });
+
+  it('tests type cell', () => {
+    const two = withType(createTd(), {type: 2}, 'type');
+    expect(two.text()).to.equal('IMAGE');
+  });
+
+  it('tests list cell', () => {
+    const chocolate = 'chocolate';
+    const flavors =
+        withList(createTd(), {flavor: [chocolate, 'chai']}, 'flavor');
+    expect(flavors.children().length).to.equal(0);
+    expect(flavors.text()).to.equal('chocolate');
+  });
+
+  it('tests checkbox cell', () => {
+    const loadingStartedStub = cy.stub(loading, 'addLoadingElement');
+    const loadingFinishedStub = cy.stub(loading, 'loadingElementFinished');
+
+    const currentDisaster = '2005-fall';
+    disasterData.set(currentDisaster, {layers: [{displayOnLoad: false}]});
+    setCurrentDisaster(currentDisaster);
+
+    const property = 'displayOnLoad';
+    const unchecked =
+        withCheckbox(createTd(), {displayOnLoad: false}, property);
+    const checkbox = unchecked.children().first();
+    expect(checkbox.prop('checked')).to.be.false;
+
+    const row = createTrs(1);
+    createAndAppend('tbody', 'tbody').append(row);
+    row[0].append(checkbox);
+    checkbox.prop('checked', true);
+
+    cy.wrap(onCheck({target: checkbox}, property))
+        .then(() => {
+          expect(getCurrentLayers()[0][property]).to.be.true;
+          expect(loadingStartedStub).to.be.calledOnce;
+          expect(loadingFinishedStub).to.be.calledOnce;
+          return getFirestoreRoot()
+              .collection('disaster-metadata')
+              .doc(currentDisaster)
+              .get();
+        })
+        .then((doc) => {
+          expect(doc.data()['layers'][0][property]).to.be.true;
+        });
+  });
+
+  it('checks data updates after a sort', () => {
+    const loadingStartedStub = cy.stub(loading, 'addLoadingElement');
+    const loadingFinishedStub = cy.stub(loading, 'loadingElementFinished');
+
+    const currentDisaster = '2005-fall';
+    disasterData.set(
+        currentDisaster,
+        {layers: [{initialIndex: 0}, {initialIndex: 1}, {initialIndex: 2}]});
+    setCurrentDisaster(currentDisaster);
+
+    const tbody = createAndAppend('tbody', 'tbody');
+    const rows = createTrs(3);
+    tbody.append(rows);
+
+    // as if we had just dragged 0 index to 2 spot.
+    rows[0].children('td').first().text(0);
+    rows[1].children('td').first().text(2);
+    rows[2].children('td').first().text(1);
+
+    cy.wrap(updateAfterSort({item: rows[0]}))
+        .then(() => {
+          const postSortLayers = getCurrentLayers();
+          expect(postSortLayers[0]['initialIndex']).equals(1);
+          expect(postSortLayers[1]['initialIndex']).equals(2);
+          expect(postSortLayers[2]['initialIndex']).equals(0);
+
+          expect(rows[0].text()).equals('2');
+          expect(rows[1].text()).equals('1');
+          expect(rows[2].text()).equals('0');
+
+          expect(loadingStartedStub).to.be.calledOnce;
+          expect(loadingFinishedStub).to.be.calledOnce;
+
+          return getFirestoreRoot()
+              .collection('disaster-metadata')
+              .doc(currentDisaster)
+              .get();
+        })
+        .then((doc) => {
+          const layers = doc.data()['layers'];
+          expect(layers[0]['initialIndex']).to.equal(1);
+          expect(layers[1]['initialIndex']).to.equal(2);
+          expect(layers[2]['initialIndex']).to.equal(0);
+        });
+  });
 });
+
+/**
+ * Creates some amount of table rows with a .index-td td.
+ * @param {number} num
+ * @return {Array<JQuery<HTMLElement>>}
+ */
+function createTrs(num) {
+  const rows = [];
+  for (let i = 0; i < num; i++) {
+    rows.push(
+        $(document.createElement('tr'))
+            .append(
+                $(document.createElement('td')).addClass('index-td').text(i)));
+  }
+  return rows;
+}
 
 /**
  * Utility function for creating an element and returning it wrapped as a

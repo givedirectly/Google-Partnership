@@ -15,11 +15,14 @@
   <script src="https://www.gstatic.com/firebasejs/7.2.1/firebase-auth.js"></script>
   <!-- Load jQuery, a 3rd-party library. -->
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.4/jquery-ui.js"></script>
+
   <script src="https://apis.google.com/js/api.js"></script>
   <script type="module" src="./add_disaster_startup.js"></script>
 
   <!-- Load our styles. -->
   <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="add_disaster.css">
 </head>
 <body>
 
@@ -33,10 +36,33 @@
   <select id="pending-disaster" style="width: 160px" hidden="true" disabled="true">
     <option value="pending" id="pending">...</option>
   </select>
-  <span> </span>
+  <span>  OR  </span>
   <button type="button" id="create-new-disaster">Create New Disaster</button>
-</div>
+</div><br>
 <div id="status"></div>
+<div id="selected-disaster" hidden="true">
+  <table id="layer-manager" class="table table-bordered pagin-table">
+    <thead>
+      <tr>
+        <th style="width:20px"></th>
+        <th style="width:200px">Layer Name</th>
+        <th style="width:400px">EE Path/URL</th>
+        <th>Type</th>
+        <th>Display on Load</th>
+        <th>Color</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+    <div id="writeWaiter">
+      <div id="writeWaiter-loader"></div>
+    </div>
+  </table>
+  <br>
+  <div id="asset-pickers"></div>
+  <p>Upload additional assets via the <a href="https://code.earthengine.google.com/" target="_blank"> code editor </a></p>
+  <br>
+  <button type="button" id="delete", disabled="true">Delete</button>
+</div>
 <div id="new-disaster" hidden="true">
   <button type="button" id="cancel-new-disaster">Cancel</button>
   <form action="" id="new-disaster-form">
@@ -98,11 +124,6 @@
     </select><br>
     <button type="button" id="add-disaster-button" disabled="true">Add Disaster</button>
   </form>
-</div>
-<div id="selected-disaster" hidden="true">
-  <p>Upload additional assets via the <a href="https://code.earthengine.google.com/" target="_blank"> code editor </a></p>
-  <div id="asset-pickers"></div>
-  <button type="button" id="delete", disabled="true">Delete</button>
 </div>
 <script type="module">
   import {taskAccumulator} from './add_disaster_startup.js';
