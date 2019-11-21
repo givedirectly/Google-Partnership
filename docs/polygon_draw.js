@@ -354,7 +354,7 @@ function setUpPolygonDrawing(map, firebasePromise) {
  * @param {Promise<any>} firebasePromise Promise with Firebase damage data (also
  *     implies that authentication is complete)
  * @return {Promise} promise that is resolved when all initialization is done
- *     (only used by tests) 
+ *     (only used by tests)
  */
 function initializeAndProcessUserRegions(map, firebasePromise) {
   addLoadingElement(mapContainerId);
