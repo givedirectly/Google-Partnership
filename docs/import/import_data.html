@@ -30,10 +30,10 @@
   <link rel="stylesheet" href="../style.css">
 </head>
 <body>
-<h1>Import data</h1>
-
-Current disaster (select above to change): <span id="disaster-name">...</span>
+<div id="navbar"></div>
+<div>
 <button disabled id="process-button">Process data</button>
+</div>
 <div class="g-sign-in hidden">
   <span class="label">Sign in with:</span>
   <div class="button">
@@ -44,5 +44,9 @@ Current disaster (select above to change): <span id="disaster-name">...</span>
 
 <div class="compute-status"></div>
 <div class="upload-status"></div>
+<script type="module">
+  import {domLoaded} from './import_data.js';
+  domLoaded();
+</script>
 </body>
 </html>

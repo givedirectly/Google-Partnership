@@ -4,13 +4,13 @@ import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, snapPer
 import {getDisaster, getResources} from '../resources.js';
 import storeCenter from './center.js';
 import {cdcGeoidKey, cdcSviKey, censusBlockGroupKey, censusGeoidKey, incomeKey, snapKey, tigerGeoidKey, totalKey} from './import_data_keys.js';
-import TaskAccumulator from './task_accumulator.js';
+import TaskAccumulator from '../task_accumulator.js';
+import {readDisasterDocument} from '../firestore_document.js';
+import {loadNavbarWithPicker} from '../navbar.js';
 
 /** @VisibleForTesting */
-export {countDamageAndBuildings};
-
-// 3 tasks: EE authentication, page load, firebase is ready.
-const taskAccumulator = new TaskAccumulator(3, enableWhenReady);
+// Don't use $(callback) to see if document is ready so we can unit-test this.
+export {countDamageAndBuildings, domLoaded};
 
 /**
  * Joins a state's census block-group-level SNAP/population data with building
@@ -166,9 +166,9 @@ function attachBlockGroups(building, blockGroups) {
 }
 
 /** Performs operation of processing inputs and creating output asset. */
-function run() {
+function run(disasterData) {
   const resources = getResources();
-  const damage = ee.FeatureCollection(resources.damage);
+  const damage = ee.FeatureCollection(disasterData['damage-asset-path']);
   const centerStatusLabel = document.createElement('span');
   centerStatusLabel.innerText = 'Computing and storing bounds of map: ';
   const centerStatusSpan = document.createElement('span');
@@ -243,22 +243,25 @@ function run() {
   });
 }
 
-const authenticator = new Authenticator(
-    () => taskAccumulator.taskCompleted(),
-    () => {
-      // Use the new hotness.
-      ee.data.setCloudApiEnabled(true);
-      taskAccumulator.taskCompleted();
-    });
-authenticator.start();
+// 3 tasks: EE authentication, page load, firebase data retrieved..
+const taskAccumulator = new TaskAccumulator(3, enableWhenReady);
+
+const firebaseAuthPromise = Authenticator.withFirebasePromiseCloudApiAndTaskAccumulator(taskAccumulator);
+let firebaseDataPromise = firebaseAuthPromise.then(readDisasterDocument);
+firebaseDataPromise.then(() => taskAccumulator.taskCompleted());
 
 function enableWhenReady() {
   const processButton = $('#process-button');
   processButton.prop('disabled', false);
-  processButton.on('click', run);
+  // firebaseDataPromise is guaranteed to be done already by the time this code
+  // runs.
+  processButton.on('click', () => firebaseDataPromise.then((data) => run(data)));
 }
 
-$(() => taskAccumulator.taskCompleted());
+function domLoaded() {
+  loadNavbarWithPicker(firebaseAuthPromise);
+  taskAccumulator.taskCompleted();
+}
 
 /**
  * Displays latitude/longitude in a reasonable way. https://xkcd.com/2170/.

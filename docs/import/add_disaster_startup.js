@@ -1,27 +1,21 @@
 import {authenticateToFirebase, Authenticator} from '../authenticate.js';
 import {loadNavbarWithTitle} from '../navbar.js';
-import SettablePromise from '../settable_promise.js';
 import TaskAccumulator from '../task_accumulator.js';
 
 import {enableWhenReady, toggleState} from './add_disaster.js';
 
-export {taskAccumulator};
-
-// 2 tasks: EE authentication, page load, firebase is ready.
+// 2 tasks: EE authentication, page load, firebase is logged in.
 const taskAccumulator = new TaskAccumulator(3, enableWhenReady);
 
-// TODO: do something with this promise, pass it somewhere - probably once
-// tagging happens.
-const firebaseAuthPromise = new SettablePromise();
-firebaseAuthPromise.getPromise().then(() => taskAccumulator.taskCompleted());
-const authenticator = new Authenticator(
-    (token) => firebaseAuthPromise.setPromise(authenticateToFirebase(token)),
-    () => {
-      // Necessary for listAssets.
-      ee.data.setCloudApiEnabled(true);
-      taskAccumulator.taskCompleted();
-    });
-authenticator.start();
+// TODO: EarthEngine processing can start even before Firebase authentication
+//  happens, based on the locally stored current disaster. The only processing
+//  we could do would be to list all assets in the disaster folder, but that
+//  seems useful. When we start doing that, we can kick that off in
+//  enableWhenReady and condition remaining work on the Firebase promise
+//  completing.
+Authenticator.withFirebasePromiseCloudApiAndTaskAccumulator(taskAccumulator).then(() => taskAccumulator.taskCompleted());
+
+$(() => taskAccumulator.taskCompleted());
 
 $('#create-new-disaster').on('click', () => toggleState(false));
 $('#cancel-new-disaster').on('click', () => toggleState(true));

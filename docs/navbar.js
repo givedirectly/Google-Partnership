@@ -1,4 +1,6 @@
-export {loadNavbar, loadNavbarWithTitle};
+import {initializeDisasterPicker} from './disaster_picker.js';
+
+export {loadNavbarWithTitle, loadNavbarWithPicker};
 
 /**
  * Loads the navbar and invokes the callback upon load.
@@ -21,4 +23,12 @@ function loadNavbarWithTitle(title) {
       navHeader.html(title);
       $('#nav-left').append(navHeader);
     }));
+}
+
+function loadNavbarWithPicker(firebaseAuthPromise) {
+  loadNavbar(
+      () => $('#nav-left')
+          .load(
+              '/disaster_picker.html',
+              () => initializeDisasterPicker(firebaseAuthPromise)));
 }

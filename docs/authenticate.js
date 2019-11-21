@@ -1,5 +1,6 @@
 import {showError} from './error.js';
 import {inProduction} from './in_test_util.js';
+import SettablePromise from './settable_promise.js';
 
 export {
   authenticateToFirebase,
@@ -143,8 +144,17 @@ class Authenticator {
 
 Authenticator.withFirebasePromiseCloudApiAndTaskAccumulator =
     (taskAccumulator) => {
-  
-    }
+      const firebaseAuthPromise = new SettablePromise();
+      const authenticator = new Authenticator(
+          (token) => firebaseAuthPromise.setPromise(authenticateToFirebase(token)),
+          () => {
+            ee.data.setCloudApiEnabled(true);
+            taskAccumulator.taskCompleted();
+          });
+      authenticator.start();
+      return firebaseAuthPromise.getPromise();
+    };
+
 /** Initializes Firebase. Exposed only for use in test codepaths. */
 function initializeFirebase() {
   firebase.initializeApp(getFirebaseConfig(inProduction()));

@@ -1,9 +1,8 @@
 import {authenticateToFirebase, Authenticator, CLIENT_ID, initializeEE, initializeFirebase} from './authenticate.js';
 import createMap from './create_map.js';
-import {initializeDisasterPicker} from './disaster_picker.js';
 import {readDisasterDocument} from './firestore_document.js';
 import {earthEngineTestTokenCookieName, firebaseTestTokenCookieName, getCookieValue, inProduction} from './in_test_util.js';
-import {loadNavbar} from './navbar.js';
+import {loadNavbarWithPicker} from './navbar.js';
 import run from './run.js';
 import SettablePromise from './settable_promise.js';
 import {initializeSidebar} from './sidebar.js';
@@ -20,6 +19,9 @@ const taskAccumulator = new TaskAccumulator(
     2, () => run(map, firebaseAuthPromise, disasterMetadataPromise));
 
 if (inProduction()) {
+  // We could just initialize firebaseAuthPromise and disasterMetadataPromise
+  // here, but that's awkward, and gets annoying with the test branch below.
+  firebaseAuthPromiseWrapper.setPromise(Authenticator.withFirebasePromiseCloudApiAndTaskAccumulator(taskAccumulator));
   const authenticator = new Authenticator(
       (token) =>
           firebaseAuthPromiseWrapper.setPromise(authenticateToFirebase(token)),
@@ -54,10 +56,6 @@ google.charts.load('current', {packages: ['table', 'controls']});
 $(() => {
   initializeSidebar();
   map = createMap(disasterMetadataPromise);
-  loadNavbar(
-      () => $('#nav-left')
-                .load(
-                    '/disaster_picker.html',
-                    () => initializeDisasterPicker(firebaseAuthPromise)));
+  loadNavbarWithPicker(firebaseAuthPromise);
   taskAccumulator.taskCompleted();
 });

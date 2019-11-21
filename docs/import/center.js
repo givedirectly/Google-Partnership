@@ -31,7 +31,7 @@ function storeCenter(features) {
     damageWithCoords.aggregate_max('lng'),
   ]);
   return convertEeObjectToPromise(outerBounds)
-      .then((results) => saveBounds(results);
+      .then((results) => saveBounds(results));
 }
 
 /**
