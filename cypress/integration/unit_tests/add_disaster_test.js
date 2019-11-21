@@ -1,6 +1,6 @@
 import {gdEeStatePrefix, legacyStateDir, legacyStatePrefix} from '../../../docs/ee_paths.js';
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
-import {addDisaster, createAssetPickers, createOptionFrom, createTd, deleteDisaster, disasterData, emptyCallback, getAssetsFromEe, getCurrentLayers, onCheck, setCurrentDisasterForTesting, stateAssets, updateAfterSort, withCheckbox, withColor, withList, withType, writeNewDisaster} from '../../../docs/import/add_disaster.js';
+import {addDisaster, createAssetPickers, createOptionFrom, createTd, deleteDisaster, disasterData, emptyCallback, getAssetsFromEe, getCurrentLayers, onCheck, setCurrentDisaster, stateAssets, updateAfterSort, withCheckbox, withColor, withList, withType, writeNewDisaster} from '../../../docs/import/add_disaster.js';
 import * as loading from '../../../docs/loading.js';
 import {addFirebaseHooks, loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
@@ -216,11 +216,11 @@ describe('Unit tests for add_disaster page', () => {
         .then((doc) => expect(doc.exists).to.be.false);
   });
 
-  it.only('tests color cell', () => {
+  it('tests color cell', () => {
     const property = 'color';
 
     const noColor = withColor(createTd(), {}, property, 0);
-    expect(noColor.html()).to.equals('N/A');
+    expect(noColor.text()).to.equal('N/A');
     expect(noColor.hasClass('na')).to.be.true;
 
     const yellow = 'yellow';
@@ -247,13 +247,13 @@ describe('Unit tests for add_disaster page', () => {
     const broken =
         withColor(createTd(), {color: {'broken': 'colors'}}, property, 3);
     expect(broken.children().length).to.equal(0);
-    expect(broken.html()).to.be.empty;
+    expect(broken.text()).to.be.empty;
     expect(log).to.be.calledOnce;
   });
 
   it('tests type cell', () => {
     const two = withType(createTd(), {type: 2}, 'type');
-    expect(two.html()).to.equal('IMAGE');
+    expect(two.text()).to.equal('IMAGE');
   });
 
   it('tests list cell', () => {
@@ -261,7 +261,7 @@ describe('Unit tests for add_disaster page', () => {
     const flavors =
         withList(createTd(), {flavor: [chocolate, 'chai']}, 'flavor');
     expect(flavors.children().length).to.equal(0);
-    expect(flavors.html()).to.equal('chocolate');
+    expect(flavors.text()).to.equal('chocolate');
   });
 
   it('tests checkbox cell', () => {
@@ -270,7 +270,7 @@ describe('Unit tests for add_disaster page', () => {
 
     const currentDisaster = '2005-fall';
     disasterData.set(currentDisaster, {layers: [{displayOnLoad: false}]});
-    setCurrentDisasterForTesting(currentDisaster);
+    setCurrentDisaster(currentDisaster);
 
     const property = 'displayOnLoad';
     const unchecked =
@@ -278,9 +278,9 @@ describe('Unit tests for add_disaster page', () => {
     const checkbox = unchecked.children().first();
     expect(checkbox.prop('checked')).to.be.false;
 
-    createAndAppend('tbody', 'tbody')
-        .append($(document.createElement('tr'))
-                    .append($(document.createElement('td')).append(unchecked)));
+    const row = createTrs(1);
+    createAndAppend('tbody', 'tbody').append(row);
+    row[0].append(checkbox);
     checkbox.prop('checked', true);
 
     cy.wrap(onCheck({target: checkbox}, property))
@@ -306,17 +306,16 @@ describe('Unit tests for add_disaster page', () => {
     disasterData.set(
         currentDisaster,
         {layers: [{initialIndex: 0}, {initialIndex: 1}, {initialIndex: 2}]});
-    setCurrentDisasterForTesting('2005-fall');
+    setCurrentDisaster(currentDisaster);
 
     const tbody = createAndAppend('tbody', 'tbody');
-    // $(document.createElement('tbody')).prop('id', 'tbody');
     const rows = createTrs(3);
     tbody.append(rows);
 
     // as if we had just dragged 0 index to 2 spot.
-    rows[0].children('td').first().html(0);
-    rows[1].children('td').first().html(2);
-    rows[2].children('td').first().html(1);
+    rows[0].children('td').first().text(0);
+    rows[1].children('td').first().text(2);
+    rows[2].children('td').first().text(1);
 
     cy.wrap(updateAfterSort({item: rows[0]}))
         .then(() => {
@@ -356,7 +355,7 @@ function createTrs(num) {
   for (let i = 0; i < num; i++) {
     rows.push(
         $(document.createElement('tr'))
-            .append($(document.createElement('td')).addClass('index-td')));
+            .append($(document.createElement('td')).addClass('index-td').text(i)));
   }
   return rows;
 }

@@ -18,7 +18,7 @@ export {
   getCurrentData,
   getCurrentLayers,
   onCheck,
-  setCurrentDisasterForTesting,
+  setCurrentDisaster,
   stateAssets,
   updateLayersInFirestore,
   withCheckbox,
@@ -77,6 +77,20 @@ function enableWhenReady() {
       });
 }
 
+/**
+ * On change method for disaster picker.
+ * @param {String} disaster
+ * @return {Promise<void>} completes when we've finished filling all state
+ * pickers and pulled from firebase.
+ */
+function toggleDisaster(disaster) {
+  setCurrentDisaster(disaster);
+  // display layer table
+  populateLayersTable();
+  // display state asset pickers
+  return populateStateAssetPickers()
+}
+
 const STATE = {
   SAVED: 0,
   WRITING: 1,
@@ -133,7 +147,7 @@ function updateLayersInFirestore() {
 function updateAfterSort(ui) {
   const layers = getCurrentLayers();
   const numLayers = layers.length;
-  const oldRealIndex = $(ui.item).children('.index-td').html();
+  const oldRealIndex = $(ui.item).children('.index-td').text();
   const newRealIndex = numLayers - 1 - $(ui.item).index();
 
   // pull out moved row and shuffle everything else down
@@ -143,15 +157,17 @@ function updateAfterSort(ui) {
 
   // dumbly renumber all the layers. note: nth-child starts at 1, .index()
   // starts at 0
-  for (let i = 1; i <= numLayers; i++) {
-    $('#tbody tr:nth-child(' + i + ') .index-td').html(numLayers - i);
+  for (let i = Math.min(oldRealIndex, newRealIndex);
+       i <= Math.max(oldRealIndex, newRealIndex); i++) {
+    const tableIndex = numLayers - i;
+    $('#tbody tr:nth-child(' + tableIndex + ') .index-td').text(i);
   }
 
   return updateLayersInFirestore();
 }
 
 /**
- * Utility method for creating table divs with a given inner text
+ * Wrapper for creating table divs.
  * @return {JQuery<HTMLTableDataCellElement>}
  */
 function createTd() {
@@ -159,25 +175,25 @@ function createTd() {
 }
 
 /**
- * Add text to the given td.
+ * Adds text to the given td.
  * @param {JQuery<HTMLTableDataCellElement>} td cell
  * @param {Object} layer
  * @param {string} property
  * @return {JQuery<HTMLTableDataCellElement>}
  */
 function withText(td, layer, property) {
-  return td.html(layer[property]);
+  return td.text(layer[property]);
 }
 
 /**
- * Add a sample of info from a list to the given td.
+ * Adds a sample of info from a list to the given td.
  * @param {JQuery<HTMLTableDataCellElement>} td cell
  * @param {Object} layer
  * @param {string} property
  * @return {JQuery<HTMLTableDataCellElement>}
  */
 function withList(td, layer, property) {
-  return td.html(layer[property][0]);
+  return td.text(layer[property][0]);
 }
 
 const layerTypeStrings = new Map();
@@ -188,7 +204,7 @@ for (const t in LayerType) {
 }
 
 /**
- * Add layer type info to the given td.
+ * Adds layer type info to the given td.
  * @param {JQuery<HTMLTableDataCellElement>} td cell
  * @param {Object} layer
  * @param {string} property
@@ -196,26 +212,24 @@ for (const t in LayerType) {
 }
  */
 function withType(td, layer, property) {
-  return td.html(layerTypeStrings.get((layer[property])));
+  return td.text(layerTypeStrings.get((layer[property])));
 }
 
 /**
- * Checkbox change function.
+ * Registers a checkbox change and propagates to disasterData and firestore.
  * @param {Object} event
  * @param {string} property
  * @return {?Promise<void>} See updateLayersInFirestore doc
  */
 function onCheck(event, property) {
   const checkbox = $(event.target);
-  const index =
-      $('#tbody > tr').length - 1 - $('tr').index(checkbox.parents('tr'));
-  console.log(checkbox);
+  const index = checkbox.parents('tr').children('.index-td').text();
   getCurrentLayers()[index][property] = checkbox.is(':checked');
   return updateLayersInFirestore();
 }
 
 /**
- * Add checkbox capabilities to the given td.
+ * Adds checkbox capabilities to the given td.
  * @param {JQuery<HTMLTableDataCellElement>} td cell
  * @param {Object} layer
  * @param {string} property
@@ -226,11 +240,11 @@ function withCheckbox(td, layer, property) {
                        .prop('type', 'checkbox')
                        .prop('checked', layer[property])
                        .on('change', (event) => onCheck(event, property));
-  return $(td).append(checkbox);
+  return td.append(checkbox);
 }
 
 /**
- * Create an instance of the color boxes for the color col.
+ * Creates an instance of the color boxes for the color col.
  * @param {string} color what color to make the box.
  * @return {JQuery<HTMLDivElement>}
  */
@@ -241,7 +255,7 @@ function createColorBox(color) {
 }
 
 /**
- * Add color function info to the given td.
+ * Adds color function info to the given td.
  * @param {JQuery<HTMLElement>} td
  * @param {Object} layer
  * @param {string} property
@@ -251,7 +265,7 @@ function createColorBox(color) {
 function withColor(td, layer, property, index) {
   const colorFunction = layer[property];
   if (!colorFunction) {
-    td.html('N/A').addClass('na');
+    td.text('N/A').addClass('na');
   } else if (colorFunction['single-color']) {
     td.append(createColorBox(colorFunction['single-color']));
   } else if (colorFunction['base-color']) {
@@ -262,7 +276,6 @@ function withColor(td, layer, property, index) {
     Object.keys(colorObject).forEach((propertyValue) => {
       const color = colorObject[propertyValue];
       if (!colorSet.has(color)) {
-        colorSet.add(color);
         td.append(createColorBox(colorObject[propertyValue]));
       }
     });
@@ -272,16 +285,8 @@ function withColor(td, layer, property, index) {
   return td;
 }
 
-/**
- * On change method for disaster picker.
- * @param {String} disaster
- * @return {Promise<void>} completes when we've finished filling all state
- * pickers and pulled from firebase.
- */
-function toggleDisaster(disaster) {
-  currentDisaster = disaster;
-
-  // display layer table
+/** Populates the layers table with layers of curernt disaster. */
+function populateLayersTable() {
   const layers = getCurrentLayers();
   const tableBody = $('#tbody');
   tableBody.empty();
@@ -289,7 +294,7 @@ function toggleDisaster(disaster) {
     const layer = layers[i];
     const row = $(document.createElement('tr'));
     // index
-    row.append(createTd().html(i).addClass('index-td'));
+    row.append(createTd().text(i).addClass('index-td'));
     // display name
     // TODO: make this editable.
     row.append(withText(createTd(), layer, 'display-name'));
@@ -312,8 +317,15 @@ function toggleDisaster(disaster) {
     row.append(withColor(createTd(), layer, 'color-function', i));
     tableBody.append(row);
   }
+}
 
-  // display state asset pickers
+/**
+ * Populates the state asset pickers with all known earth engine assets for
+ * those states.
+ * @return {Promise<void>} returns when all asset pickers have been populated
+ * after potentially retreiving states assets from ee.
+ */
+function populateStateAssetPickers() {
   const states = getCurrentData()['states'];
   const statesToFetch = [];
   for (const state of states) {
@@ -521,7 +533,7 @@ function createAssetPickers(states) {
       }
     }
     const assetPickerLabel = $(document.createElement('label'))
-                                 .html('Add EE asset(s) for ' + state + ': ');
+                                 .text('Add EE asset(s) for ' + state + ': ');
     assetPickerLabel.append(assetPicker);
     assetPickerDiv.append(assetPickerLabel);
     assetPickerDiv.append(document.createElement('br'));
@@ -554,7 +566,7 @@ function deleteDisaster() {
  * @param {String} text
  */
 function setStatus(text) {
-  $('#status').html(text).show();
+  $('#status').text(text).show();
 }
 
 /** Utility function for clearing status div. */
@@ -569,15 +581,14 @@ function clearStatus() {
  */
 function createOptionFrom(innerTextAndValue) {
   return $(document.createElement('option'))
-      .html(innerTextAndValue)
+      .text(innerTextAndValue)
       .val(innerTextAndValue)
       .prop('id', innerTextAndValue);
 }
 
 /**
- * Utility function for getting current data. May return undefined if
- * currentDisaster hasn't been set yet but currentDisaster gets set as soon
- * as we get all the disasters from firestore.
+ * Utility function for getting current data. Not useful until after
+ * enableWhenReady finishes (during which currentDisaster is set for the first time).
  * @return {Object}
  */
 function getCurrentData() {
@@ -596,6 +607,6 @@ function getCurrentLayers() {
  * Sets the current disaster so getCurrentData works for testing.
  * @param {string} disasterId
  */
-function setCurrentDisasterForTesting(disasterId) {
+function setCurrentDisaster(disasterId) {
   currentDisaster = disasterId;
 }
