@@ -264,22 +264,21 @@ describe('Unit tests for add_disaster page', () => {
 
   it('tests checkbox cell triggers', () => {
     cy.visit('test_utils/empty.html');
-    cy.document()
-        .then((document) => {
-          disasterData.set('2005-fall', {layers: [{displayOnLoad: false}]});
-          setCurrentDisasterForTesting('2005-fall');
+    cy.document().then((document) => {
+      disasterData.set('2005-fall', {layers: [{displayOnLoad: false}]});
+      setCurrentDisasterForTesting('2005-fall');
 
-          const unchecked =
-              withCheckbox(createTd(), {displayOnLoad: false}, 'displayOnLoad')
-                  .prop('id', 'checkbox');
-          expect(unchecked.children().first().prop('checked')).to.be.false;
+      const unchecked =
+          withCheckbox(createTd(), {displayOnLoad: false}, 'displayOnLoad')
+              .prop('id', 'checkbox');
+      expect(unchecked.children().first().prop('checked')).to.be.false;
 
-          const tbody = createAndAppend('tbody', 'tbody');
-          tbody.append($(document.createElement('tr')).append(unchecked));
+      const tbody = createAndAppend('tbody', 'tbody');
+      tbody.append($(document.createElement('tr')).append(unchecked));
 
-          // this doesn't seem to be triggering
-          unchecked.prop('checked', true).trigger('change');
-        });
+      // this doesn't seem to be triggering
+      unchecked.prop('checked', true).trigger('change');
+    });
   });
 
   it.only('checks data updates after a sort', () => {
