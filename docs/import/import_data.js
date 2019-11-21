@@ -7,6 +7,7 @@ import {cdcGeoidKey, cdcSviKey, censusBlockGroupKey, censusGeoidKey, incomeKey, 
 import TaskAccumulator from '../task_accumulator.js';
 import {readDisasterDocument} from '../firestore_document.js';
 import {loadNavbarWithPicker} from '../navbar.js';
+import {gdEeStatePrefix} from '../ee_paths';
 
 /** @VisibleForTesting */
 // Don't use $(callback) to see if document is ready so we can unit-test this.
@@ -76,12 +77,14 @@ function countDamageAndBuildings(feature, buildings) {
 }
 
 /**
- * Post-process the join of snap data and tiger geometries to form a single
+ * Post-processes the join of snap data and tiger geometries to form a single
  * feature.
  * @param {ee.Feature} feature
+ * @param {string} snapKey
+ * @param {string} totalKey
  * @return {ee.Feature}
  */
-function combineWithSnap(feature) {
+function combineWithSnap(feature, snapKey, totalKey) {
   const snapFeature = ee.Feature(feature.get('primary'));
   return ee.Feature(
       ee.Feature(feature.get('secondary')).geometry(), ee.Dictionary([
@@ -97,30 +100,19 @@ function combineWithSnap(feature) {
 }
 
 /**
- * Post-process the join to income data to form a single feature.
+ * Post-process the join to another asset to form a single feature.
  * @param {ee.Feature} feature
+ * @param {string} tag column where value will be stored
+ * @param {string} key original column name
  * @return {ee.Feature}
  */
-function combineWithIncome(feature) {
+function combineWithAsset(feature, tag, key) {
   const incomeFeature = ee.Feature(feature.get('secondary'));
   // TODO: make income formatting prettier so it looks like a currency value.
   // Not trivial because it has some non-valid values like '-'.
   return ee.Feature(feature.get('primary')).set(ee.Dictionary([
-    incomeTag,
-    incomeFeature.get(incomeKey),
-  ]));
-}
-
-/**
- * Post-process the join to SVI data to form a single feature.
- * @param {ee.Feature} feature
- * @return {ee.Feature}
- */
-function combineWithSvi(feature) {
-  const sviFeature = ee.Feature(feature.get('secondary'));
-  return ee.Feature(feature.get('primary')).set(ee.Dictionary([
-    sviTag,
-    sviFeature.get(cdcSviKey),
+    tag,
+    incomeFeature.get(key),
   ]));
 }
 
@@ -165,109 +157,132 @@ function attachBlockGroups(building, blockGroups) {
   return building.set(geoidTag, geoid);
 }
 
+function addGeoIdToBlock(feature, idKey, blockOnlyKey) {
+  const blockCode = ee.String(feature.get(idKey));
+  return feature.set(tigerGeoidKey, blockCode.substring(0, blockCode.length() -
+      ee.String(feature.get(blockOnlyKey)).length() + 1));
+}
+
 function missingAssetError(str) {
-  $('.compute-status').html('Error! Please specify ' + str + ' at <a href="./add_disaster.html">add_disaster.html</a>')
+  $('.compute-status').html('Error! Please specify ' + str + ' at <a href="./add_disaster.html">add_disaster.html</a>');
+  return false;
 }
 
 /** Performs operation of processing inputs and creating output asset. */
 function run(disasterData) {
-  if (!disasterData['states']) {
+  const states = disasterData['states'];
+  if (!states) {
     return missingAssetError('affected states');
   }
   const assetData = disasterData['asset-data'];
-  const snapData = disasterData['snap-data'];
-  if (!snapData) {
-    return missingAssetError('SNAP info');
-  }
+  if (!assetData) return missingAssetError('SNAP/damage asset paths');
+  const censusShapefileAsset = assetData['tiger-asset-path'];
+  if (!censusShapefileAsset) return missingAssetError('TIGER Census Blocks');
+  const censusStateKey = assetData['tiger-state-key'];
+  if (censusStateKey) return missingAssetError('TIGER state key');
+  const snapData = assetData['snap-data'];
+  if (!snapData) return missingAssetError('SNAP info');
   const snapPaths = snapData['paths'];
-  if (!snapPaths) {
-    return missingAssetError('SNAP table asset paths');
-  }
-  const numStates = disasterData['states'].length;
-  if (snapPaths.length !== numStates) {
-    return missingAssetError('the same number of states and SNAP table asset paths');
-  }
+  if (!snapPaths) return missingAssetError('SNAP table asset paths');
+  const numStates = states.length;
+  if (snapPaths.length !== numStates)
+    return missingAssetError(
+        'the same number of states and SNAP table asset paths');
   const snapKey = snapData['paths']['snap-key'];
-  if (!snapKey) {
+  if (!snapKey)
     return missingAssetError('column name for SNAP recipients in SNAP table');
-  }
   const totalKey = snapData['paths']['total-key'];
-  if (!totalKey) {
+  if (!totalKey)
     return missingAssetError('column name for total population in SNAP table');
-  }
-  const sviPaths = disasterData['svi-asset-path'];
-  if (!sviPaths) {
-    return missingAssetError('SVI table asset paths');
-  }
-  if (sviPaths.length !== numStates) {
-    return missingAssetError('the same number of states and SVI table asset paths');
-  }
-  const sviKey = disasterData['svi-']
-  const damagePath = disasterData['damage-asset-path'];
-  const resources = getResources();
-  const damage = ee.FeatureCollection(damagePath);
-  const centerStatusLabel = document.createElement('span');
-  centerStatusLabel.innerText = 'Computing and storing bounds of map: ';
-  const centerStatusSpan = document.createElement('span');
-  centerStatusSpan.innerText = 'in progress';
-  storeCenter(damage)
-      .then(trimGeoNumbers)
-      .then(
-          (bounds) => centerStatusSpan.innerText = 'Found bounds (' +
-              bounds[0] + ', ' + bounds[1] + '), (' + bounds[2] + ', ' +
-              bounds[3] + ')')
-      .catch((err) => centerStatusSpan.innerText = err);
-  $('.compute-status').append(centerStatusLabel);
-  $('.compute-status').append(centerStatusSpan);
+  const sviPaths = assetData['svi-asset-path'];
+  if (!sviPaths) return missingAssetError('SVI table asset paths');
+  if (sviPaths.length !== numStates)
+    return missingAssetError(
+        'the same number of states and SVI table asset paths');
+  const sviKey = assetData['svi-key'];
+  if (!sviKey) return missingAssetError('column name for SVI table');
+  const incomePaths = assetData['income-asset-path'];
+  if (!incomePaths) return missingAssetError('Income table asset paths');
+  if (incomePaths.length !== numStates)
+    return missingAssetError(
+        'the same number of states and income table asset paths');
+  const incomeKey = assetData['income-key'];
+  if (!incomeKey) return missingAssetError('column name for income table');
 
-  const snap = ee.FeatureCollection(disasterData['snap-data'])
-                   .map((feature) => stringifyGeoid(feature, censusGeoidKey));
-  // filter block groups to those with damage.
-  const blockGroups = ee.Join.simple().apply(
-      ee.FeatureCollection(resources.bg), damage,
-      ee.Filter.intersects({leftField: '.geo', rightField: '.geo'}));
+  const damagePath = disasterData['damage-asset-path'];
+  let damage;
+  if (damagePath) {
+    damage = ee.FeatureCollection(damagePath);
+    const centerStatusLabel = document.createElement('span');
+    centerStatusLabel.innerText = 'Computing and storing bounds of map: ';
+    const centerStatusSpan = document.createElement('span');
+    centerStatusSpan.innerText = 'in progress';
+    storeCenter(damage)
+        .then(trimGeoNumbers)
+        .then(
+            (bounds) => centerStatusSpan.innerText = 'Found bounds (' +
+                bounds[0] + ', ' + bounds[1] + '), (' + bounds[2] + ', ' +
+                bounds[3] + ')')
+        .catch((err) => centerStatusSpan.innerText = err);
+    $('.compute-status').append(centerStatusLabel);
+    $('.compute-status').append(centerStatusSpan);
+  }
+
+  const snapCollection = createMergedFeatureCollection(snapPaths);
+
+  let processing =
+      snapCollection.map((feature) => stringifyGeoid(feature, censusGeoidKey));
+  let blockGroups = ee.FeatureCollection(censusShapefileAsset);
+  if (damage) {
+    // Filter block groups to those with damage.
+    blockGroups = intersectIfDefined(blockGroups, damage);
+  } else {
+    // Filter to those in the relevant states.
+    blockGroups = blockGroups.filter(ee.Filter.listContains({leftValue: states.map((state) => fipsMap.get(state)), rightField: censusStateKey}));
+  }
+  blockGroups = blockGroups.map(addGeoIdToBlock);
 
   // join snap stats to block group geometries
-  const joinedSnap =
+  processing =
       ee.Join.inner()
           .apply(
-              snap, blockGroups,
+              processing, blockGroups,
               ee.Filter.equals(
                   {leftField: censusGeoidKey, rightField: tigerGeoidKey}))
-          .map(combineWithSnap);
+          .map((f) => combineWithSnap(f, snapKey, totalKey));
   // join with income
-  const joinedSnapIncome =
+  processing =
       ee.Join.inner()
           .apply(
-              joinedSnap, ee.FeatureCollection(resources.income),
+              processing, createMergedFeatureCollection(incomePaths),
               ee.Filter.equals(
                   {leftField: geoidTag, rightField: censusGeoidKey}))
-          .map(combineWithIncome);
-  // filter SVI to those with damage and join
-  const svi = ee.Join.simple().apply(
-      ee.FeatureCollection(resources.svi), damage,
-      ee.Filter.intersects({leftField: '.geo', rightField: '.geo'}));
-  const joinedSnapIncomeSVI =
+          .map((f) => combineWithAsset(f, incomeTag, incomeKey));
+  const svi = intersectIfDefined(createMergedFeatureCollection(sviPaths), damage);
+  processing =
       ee.Join.inner()
           .apply(
-              joinedSnapIncome.map(addTractInfo), svi,
+              processing.map(addTractInfo), svi,
               ee.Filter.equals({leftField: tractTag, rightField: cdcGeoidKey}))
-          .map(combineWithSvi);
-  // attach block groups to buildings and aggregate to get block group building
-  // counts
-  const buildings = ee.FeatureCollection(resources.buildings);
-  const withBlockGroup =
-      buildings.map((building) => attachBlockGroups(building, blockGroups));
-  const buildingsHisto =
-      ee.Dictionary(withBlockGroup.aggregate_histogram(geoidTag));
-  // process final feature collection
-  const data = joinedSnapIncomeSVI.map(
-      (feature) => countDamageAndBuildings(feature, buildingsHisto));
+          .map((f) => combineWithAsset(f, sviTag, sviKey));
+  if (damage) {
+    // attach block groups to buildings and aggregate to get block group building
+    // counts
+    const buildings = createMergedFeatureCollection(states.map((state) => ee.FeatureCollection(gdEeStatePrefix + state + '/ms-buildings')));
+    const withBlockGroup =
+        buildings.map((building) => attachBlockGroups(building, blockGroups));
+    const buildingsHisto =
+        ee.Dictionary(withBlockGroup.aggregate_histogram(geoidTag));
+    // process final feature collection
+    processing = processing.map(
+        (feature) => countDamageAndBuildings(feature, buildingsHisto));
+  }
 
-  const assetName = 'data-ms-as-nod';
-  // TODO: delete existing asset with same name if it exists.
+  const assetName = 'data-ms-as-tot';
+  const scoreAssetPath = gdEePathPrefix + getDisaster() + '/' + assetName;
+  ee.data.deleteAsset(scoreAssetPath);
   const task = ee.batch.Export.table.toAsset(
-      data, assetName, gdEePathPrefix + getDisaster() + '/' + assetName);
+      processing, assetName, scoreAssetPath);
   task.start();
   $('.upload-status')
       .text('Check Code Editor console for upload progress. Task: ' + task.id);
@@ -308,3 +323,78 @@ function domLoaded() {
 function trimGeoNumbers(latOrLngs) {
   return latOrLngs.map((num) => num.toFixed(4));
 }
+
+function createMergedFeatureCollection(assetPaths) {
+  let result = ee.FeatureCollection([]);
+  assetPaths.foreach((p) => result = result.merge(ee.FeatureCollection(p)));
+  return result;
+}
+
+function intersectIfDefined(features, maybeFeatures) {
+  if (!maybeFeatures) {
+    return features;
+  }
+  return ee.Join.simple().apply(
+      ee.FeatureCollection(features), maybeFeatures,
+      ee.Filter.intersects({leftField: '.geo', rightField: '.geo'}));
+}
+
+// https://www.nrcs.usda.gov/wps/portal/nrcs/detail/?cid=nrcs143_013696
+// Use strings because that's what EE thinks FIPS code column is.
+const fipsMap = new Map([
+['AL', '1'],
+['AK', '2'],
+['AZ', '4'],
+['AR', '5'],
+['CA', '6'],
+['CO', '8'],
+['CT', '9'],
+['DE', '10'],
+['FL', '12'],
+['GA', '13'],
+['HI', '15'],
+['ID', '16'],
+['IL', '17'],
+['IN', '18'],
+['IA', '19'],
+['KS', '20'],
+['KY', '21'],
+['LA', '22'],
+['ME', '23'],
+['MD', '24'],
+['MA', '25'],
+['MI', '26'],
+['MN', '27'],
+['MS', '28'],
+['MO', '29'],
+['MT', '30'],
+['NE', '31'],
+['NV', '32'],
+['NH', '33'],
+['NJ', '34'],
+['NM', '35'],
+['NY', '36'],
+['NC', '37'],
+['ND', '38'],
+['OH', '39'],
+['OK', '40'],
+['OR', '41'],
+['PA', '42'],
+['RI', '44'],
+['SC', '45'],
+['SD', '46'],
+['TN', '47'],
+['TX', '48'],
+['UT', '49'],
+['VT', '50'],
+['VA', '51'],
+['WA', '53'],
+['WV', '54'],
+['WI', '55'],
+['WY', '56'],
+['AS', '60'],
+['GU', '66'],
+['MP', '69'],
+['PR', '72'],
+['VI', '78'],
+]);

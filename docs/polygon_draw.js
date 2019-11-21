@@ -6,6 +6,7 @@ import {geoPointToLatLng, latLngToGeoPoint} from './map_util.js';
 import {createPopup, isMarker, setUpPopup} from './popup.js';
 import {getScoreAsset} from './resources.js';
 import {userRegionData} from './user_region_data.js';
+import {snapPopTag, totalPopTag} from './property_names.js';
 
 // StoredShapeData is only for testing.
 export {
@@ -98,9 +99,9 @@ class StoredShapeData {
     const intersectingBlockGroups =
         StoredShapeData.getIntersectingBlockGroups(polygon);
     const weightedSnapHouseholds = StoredShapeData.calculateWeightedTotal(
-        intersectingBlockGroups, 'SNAP HOUSEHOLDS');
+        intersectingBlockGroups, snapPopTag);
     const weightedTotalHouseholds = StoredShapeData.calculateWeightedTotal(
-        intersectingBlockGroups, 'TOTAL HOUSEHOLDS');
+        intersectingBlockGroups, totalPopTag);
     return new Promise(((resolve, reject) => {
       ee.List([
           numDamagePoints,
