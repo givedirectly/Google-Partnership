@@ -46,7 +46,6 @@ if (inProduction()) {
       /* expiresIn */ 3600, /* extraScopes */[],
       /* callback */ () => initializeEE(() => taskAccumulator.taskCompleted()),
       /* updateAuthLibrary */ false);
-  taskAccumulator.taskCompleted();
 }
 
 google.charts.load('current', {packages: ['table', 'controls']});
