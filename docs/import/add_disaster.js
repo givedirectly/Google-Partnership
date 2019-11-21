@@ -2,8 +2,8 @@ import {writeWaiterId} from '../dom_constants.js';
 import {eeStatePrefixLength, legacyStateDir} from '../ee_paths.js';
 import {LayerType} from '../firebase_layers.js';
 import {getFirestoreRoot} from '../firestore_document.js';
-import {addLoadingElement, loadingElementFinished} from '../loading.js';
 import {disasterCollectionReference, getDisasters} from '../firestore_document.js';
+import {addLoadingElement, loadingElementFinished} from '../loading.js';
 
 export {enableWhenReady, toggleState, updateAfterSort};
 // Visible for testing
