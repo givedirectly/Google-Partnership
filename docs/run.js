@@ -5,10 +5,10 @@ import {highlightFeatures} from './highlight_features.js';
 import {addLayer, addNullLayer, addScoreLayer, scoreLayerName, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from './layer_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {convertEeObjectToPromise} from './map_util.js';
-import {processUserRegions} from './polygon_draw.js';
+import {initializeAndProcessUserRegions} from './polygon_draw.js';
 import {setUserFeatureVisibility} from './popup.js';
 import processJoinedData from './process_joined_data.js';
-import {getResources} from './resources.js';
+import {getScoreAsset} from './resources.js';
 import {createToggles, initialDamageThreshold, initialPovertyThreshold, initialPovertyWeight} from './update.js';
 
 export {
@@ -16,7 +16,7 @@ export {
   run as default,
 };
 
-const snapAndDamageAsset = getResources().getCombinedAsset();
+const snapAndDamageAsset = getScoreAsset();
 // Promise for snapAndDamageAsset. After it's first resolved, we never need to
 // download it from EarthEngine again.
 let snapAndDamagePromise;
@@ -40,7 +40,7 @@ function run(map, firebaseAuthPromise, disasterMetadataPromise) {
   createAndDisplayJoinedData(
       map, initialPovertyThreshold, initialDamageThreshold,
       initialPovertyWeight);
-  processUserRegions(map, firebaseAuthPromise);
+  initializeAndProcessUserRegions(map, disasterMetadataPromise);
   disasterMetadataPromise.then((doc) => addLayers(map, doc.data().layers));
 }
 

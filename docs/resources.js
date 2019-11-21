@@ -1,6 +1,6 @@
 import {gdEePathPrefix} from './ee_paths.js';
 
-export {getDisaster, getDisasters, getResources};
+export {getDisaster, getDisasters, getResources, getScoreAsset};
 
 /**
  * Gets all the ee assets relevant to the current disaster.
@@ -18,8 +18,13 @@ function getDisaster() {
   if (localStorage.getItem('disaster')) {
     return localStorage.getItem('disaster');
   }
-  localStorage.setItem('disaster', default_disaster);
-  return default_disaster;
+  localStorage.setItem('disaster', defaultDisaster);
+  return defaultDisaster;
+}
+
+/** @return {string} EE asset path for score asset for the current disaster */
+function getScoreAsset() {
+  return gdEePathPrefix + getDisaster() + '/data-ms-as-nod';
 }
 
 /**
@@ -33,7 +38,7 @@ function getDisasters() {
 }
 
 /** The default disaster. */
-const default_disaster = '2017-harvey';
+const defaultDisaster = '2017-harvey';
 
 /** Disaster asset names and other constants. */
 const disasters = new Map();
@@ -58,11 +63,6 @@ class DisasterMapValue {
     this.income = income;
     this.svi = svi;
     this.buildings = buildings;
-  }
-
-  /** @return {string} The combined SNAP/damage asset name */
-  getCombinedAsset() {
-    return gdEePathPrefix + this.name + '/data-ms-as-nod';
   }
 }
 
