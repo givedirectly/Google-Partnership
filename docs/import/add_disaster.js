@@ -588,7 +588,8 @@ function createOptionFrom(innerTextAndValue) {
 
 /**
  * Utility function for getting current data. Not useful until after
- * enableWhenReady finishes (during which currentDisaster is set for the first time).
+ * enableWhenReady finishes (during which currentDisaster is set for the first
+ * time).
  * @return {Object}
  */
 function getCurrentData() {

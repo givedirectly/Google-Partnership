@@ -355,7 +355,8 @@ function createTrs(num) {
   for (let i = 0; i < num; i++) {
     rows.push(
         $(document.createElement('tr'))
-            .append($(document.createElement('td')).addClass('index-td').text(i)));
+            .append(
+                $(document.createElement('td')).addClass('index-td').text(i)));
   }
   return rows;
 }
