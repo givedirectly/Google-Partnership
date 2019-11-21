@@ -11,9 +11,9 @@ export {initializeDisasterPicker};
 function initializeDisasterPicker(firebaseAuthPromise) {
   firebaseAuthPromise.then(() => {
     getDisasters().then((querySnapshot) => {
+      const disasterDropdown = $('#disaster-dropdown');
       querySnapshot.forEach((disasterDoc) => {
         const currentDisaster = getDisaster();
-        const disasterDropdown = $('#disaster-dropdown');
         const disasterItem = document.createElement('option');
         const disaster = disasterDoc.id;
         disasterItem.innerHTML = disaster;

@@ -2,6 +2,7 @@ import {getTestCookie, inProduction} from './in_test_util.js';
 import {getDisaster} from './resources.js';
 
 export {
+  disasterCollectionReference,
   disasterDocumentReference,
   getDisasters,
   getFirestoreRoot,
@@ -24,7 +25,7 @@ function getFirestoreRoot() {
  * @return {firebase.firestore.DocumentReference}
  */
 function disasterDocumentReference() {
-  return disasterCollection().doc(getDisaster());
+  return disasterCollectionReference().doc(getDisaster());
 }
 
 /**
@@ -37,11 +38,11 @@ function readDisasterDocument() {
 }
 
 /** @return {firebase.firestore.CollectionReference} all disasters collection */
-function disasterCollection() {
+function disasterCollectionReference() {
   return getFirestoreRoot().collection('disaster-metadata');
 }
 
 /** @return {Promise<firebase.firestore.QuerySnapshot>} listing of disasters */
 function getDisasters() {
-  return disasterCollection().get();
+  return disasterCollectionReference().get();
 }

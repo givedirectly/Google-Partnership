@@ -1,5 +1,5 @@
 import {eeStatePrefixLength, legacyStateDir} from '../ee_paths.js';
-import {getDisasters} from '../firestore_document.js';
+import {getDisasters, disasterCollectionReference} from '../firestore_document.js';
 
 export {enableWhenReady, toggleState};
 // Visible for testing
@@ -123,8 +123,7 @@ function writeNewDisaster(disasterId, states) {
   disasterPicker.val(disasterId).trigger('change');
   toggleState(true);
 
-  return getFirestoreRoot()
-      .collection('disaster-metadata')
+  return disasterCollectionReference()
       .doc(disasterId)
       .set({states: states})
       .then(() => true);
@@ -290,8 +289,7 @@ function deleteDisaster() {
     disasters.delete(disasterId);
     disasterPicker.val(disasterPicker.children().eq(0).val()).trigger('change');
     $('#' + disasterId).remove();
-    return getFirestoreRoot()
-        .collection('disaster-metadata')
+    return disasterCollectionReference()
         .doc(disasterId)
         .delete();
   }
