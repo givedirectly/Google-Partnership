@@ -20,7 +20,6 @@ export {
   getCurrentData,
   getCurrentLayers,
   onCheck,
-  setCurrentDisaster,
   stateAssets,
   updateLayersInFirestore,
   withCheckbox,

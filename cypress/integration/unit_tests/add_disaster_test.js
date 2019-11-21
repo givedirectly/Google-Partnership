@@ -1,6 +1,6 @@
 import {gdEeStatePrefix, legacyStateDir, legacyStatePrefix} from '../../../docs/ee_paths.js';
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
-import {addDisaster, createAssetPickers, createOptionFrom, createTd, deleteDisaster, disasterData, emptyCallback, getAssetsFromEe, getCurrentLayers, onCheck, setCurrentDisaster, stateAssets, updateAfterSort, withCheckbox, withColor, withList, withType, writeNewDisaster} from '../../../docs/import/add_disaster.js';
+import {addDisaster, createAssetPickers, createOptionFrom, createTd, deleteDisaster, disasterData, emptyCallback, getAssetsFromEe, getCurrentLayers, onCheck, stateAssets, updateAfterSort, withCheckbox, withColor, withList, withType, writeNewDisaster} from '../../../docs/import/add_disaster.js';
 import * as loading from '../../../docs/loading.js';
 import {addFirebaseHooks, loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
@@ -270,7 +270,7 @@ describe('Unit tests for add_disaster page', () => {
 
     const currentDisaster = '2005-fall';
     disasterData.set(currentDisaster, {layers: [{displayOnLoad: false}]});
-    setCurrentDisaster(currentDisaster);
+    window.localStorage.setItem('disaster', currentDisaster);
 
     const property = 'displayOnLoad';
     const unchecked =
@@ -306,7 +306,7 @@ describe('Unit tests for add_disaster page', () => {
     disasterData.set(
         currentDisaster,
         {layers: [{initialIndex: 0}, {initialIndex: 1}, {initialIndex: 2}]});
-    setCurrentDisaster(currentDisaster);
+    window.localStorage.setItem('disaster',currentDisaster);
 
     const tbody = createAndAppend('tbody', 'tbody');
     const rows = createTrs(3);
