@@ -41,7 +41,7 @@ describe('Integration tests for drawing polygons', () => {
     assertExactlyPopUps(0, notes);
   });
 
-  it('Draws a polygon and almost deletes it, then deletes', () => {
+  it.only('Draws a polygon and almost deletes it, then deletes', () => {
     // Reject confirmation when first happens, then accept it later.
     let confirmValue = false;
     cy.on('window:confirm', () => confirmValue);
@@ -59,6 +59,8 @@ describe('Integration tests for drawing polygons', () => {
     cy.wait(1000);
     cy.visit('');
     cy.awaitLoad();
+    cy.log('after load');
+    cy.wait(5000);
     // Polygon is still there.
     clickOnDrawnPolygon();
     assertExactlyPopUps(1, notes);
@@ -67,7 +69,11 @@ describe('Integration tests for drawing polygons', () => {
     // Polygon is still there.
     // Accept confirmation when it happens.
     clickOnDrawnPolygon().then(() => confirmValue = true);
+    cy.log('here we are first');
+    cy.wait(5000);
     pressPopupButton('delete');
+    cy.log('here we are second');
+    cy.wait(5000);
     // Polygon should be gone.
     clickOnDrawnPolygon();
     assertExactlyPopUps(0, notes);
@@ -296,7 +302,7 @@ function assertExactlyPopUps(expectedFound, notes) {
   cy.get('div')
       .each(($elt) => {
         if ($elt.html() === notes) {
-          expect(foundElements++).to.equal(0);
+          foundElements++;
         }
       })
       .then(() => expect(foundElements).to.equal(expectedFound));

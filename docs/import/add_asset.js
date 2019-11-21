@@ -2,7 +2,7 @@ import {Authenticator} from '../authenticate.js';
 import {eeLegacyPathPrefix, gdEePathPrefix} from '../ee_paths.js';
 import {loadNavbarWithTitle} from '../navbar.js';
 import {getDisaster} from '../resources.js';
-import TaskAccumulator from './task_accumulator.js';
+import TaskAccumulator from '../task_accumulator.js';
 
 export {taskAccumulator};
 

@@ -6,7 +6,7 @@ export {loadNavbar, loadNavbarWithTitle};
  * @param {Function} callback the callback invoked upon load
  */
 function loadNavbar(callback) {
-  $(() => $('#navbar').load('/navbar.html', callback));
+  $('#navbar').load('/navbar.html', callback);
 }
 
 /**
@@ -15,12 +15,10 @@ function loadNavbar(callback) {
  * @param {string} title the title of the navbar
  */
 function loadNavbarWithTitle(title) {
-  $(() => {
-    $('#navbar').load('/navbar.html', () => {
+  $(() => loadNavbar(() => {
       const navHeader = $('<h1></h1>');
       navHeader.addClass('nav-header');
       navHeader.html(title);
       $('#nav-left').append(navHeader);
-    });
-  });
+    }));
 }
