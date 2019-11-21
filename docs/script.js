@@ -16,7 +16,8 @@ const firebaseAuthPromise = firebaseAuthPromiseWrapper.getPromise();
 const disasterMetadataPromise = firebaseAuthPromise.then(readDisasterDocument);
 
 // Two tasks: EE authentication and page load.
-const taskAccumulator = new TaskAccumulator(2, () => run(map, firebaseAuthPromise, disasterMetadataPromise));
+const taskAccumulator = new TaskAccumulator(
+    2, () => run(map, firebaseAuthPromise, disasterMetadataPromise));
 
 if (inProduction()) {
   const authenticator = new Authenticator(
