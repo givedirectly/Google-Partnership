@@ -185,7 +185,7 @@ function onUpdate(event, property, fxn) {
 }
 
 /**
- * Auto save on focus out from input cell.
+ * Auto-saves on focus out from input cell.
  * @param {Object} event
  * @param {string} property
  * @return {?Promise<void>} See updateLayersInFirestore doc
@@ -220,7 +220,7 @@ function withText(td, layer, property) {
 }
 
 /**
- * Auto save on focus out from textarea cell.
+ * Auto-saves on focus out from textarea cell.
  * @param {Object} event
  * @param {string} property
  * @return {?Promise<void>} See updateLayersInFirestore doc
@@ -237,10 +237,14 @@ function onListBlur(event, property) {
  * @return {JQuery<HTMLTableDataCellElement>}
  */
 function withList(td, layer, property) {
+  const list = layer[property];
+  let withNewLines = list[0];
+  for (let i = 1; i < list.length; i++) {
+    withNewLines = withNewLines.concat('\n', list[i]);
+  }
   // use a regex to replace all instances of ',' with a new line
-  const textarea = $(document.createElement('textarea'))
-                       .val(layer[property].toString().replace(/,/g, '\n'))
-                       .prop('rows', 3);
+  const textarea =
+      $(document.createElement('textarea')).val(withNewLines).prop('rows', 3);
   td.append(textarea);
   td.on('blur', 'textarea', (event) => onListBlur(event, property));
   return td;

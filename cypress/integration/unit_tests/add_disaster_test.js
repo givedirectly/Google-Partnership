@@ -269,12 +269,13 @@ describe('Unit tests for add_disaster page', () => {
     const chocolate = 'chocolate';
     const chai = 'chai';
     const nutmeg = 'nutmeg';
+    const layer = {flavors: [chocolate, chai]};
 
-    setDisasterAndLayers([{flavors: [chocolate, chai]}]);
+    setDisasterAndLayers([layer]);
 
     const property = 'flavors';
     const flavors =
-        withList(createTd(), {flavors: [chocolate, chai]}, 'flavors');
+        withList(createTd(), layer, 'flavors');
     const list = flavors.children('textarea');
     expect(list.val()).to.equal(chocolate + '\n' + chai);
 
@@ -285,11 +286,12 @@ describe('Unit tests for add_disaster page', () => {
   it('tests input cell', () => {
     const chocolate = 'chocolate';
     const chai = 'chai';
+    const layer = {flavor: chocolate};
 
-    setDisasterAndLayers([{flavor: chocolate}]);
+    setDisasterAndLayers([layer]);
 
     const property = 'flavor';
-    const td = withInput(createTd(), {flavor: chocolate}, property);
+    const td = withInput(createTd(), layer, property);
     const input = td.children('input');
     expect(input.val()).to.equal(chocolate);
 
@@ -298,11 +300,12 @@ describe('Unit tests for add_disaster page', () => {
   });
 
   it('tests checkbox cell', () => {
-    setDisasterAndLayers([{displayOnLoad: false}]);
+    const layer = {displayOnLoad: false};
+    setDisasterAndLayers([layer]);
 
     const property = 'displayOnLoad';
     const unchecked =
-        withCheckbox(createTd(), {displayOnLoad: false}, property);
+        withCheckbox(createTd(), layer, property);
     const checkbox = unchecked.children().first();
     expect(checkbox.prop('checked')).to.be.false;
 
@@ -352,7 +355,7 @@ describe('Unit tests for add_disaster page', () => {
 });
 
 /**
- * Set's local cookie to point to disaster with the given layers.
+ * Sets local storage to point to disaster with the given layers.
  * @param {Array<Object>} layers
  */
 function setDisasterAndLayers(layers) {
@@ -365,7 +368,7 @@ function setDisasterAndLayers(layers) {
  * Function that tests the save method works.
  * @param {Function} fxn save function
  * @param {string} property
- * @param {Object} input DOM object save from which is pulling value
+ * @param {Object} input DOM object from which to pull new value
  * @param {*} afterVal
  */
 function testSave(fxn, property, input, afterVal) {
@@ -383,9 +386,7 @@ function testSave(fxn, property, input, afterVal) {
             .doc(getDisaster())
             .get();
       })
-      .then((doc) => {
-        expect(doc.data()['layers'][0][property]).to.eql(afterVal);
-      });
+      .then((doc) => expect(doc.data()['layers'][0][property]).to.eql(afterVal));
 }
 
 /**
