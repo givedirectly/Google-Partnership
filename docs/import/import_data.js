@@ -1,13 +1,17 @@
 import {Authenticator} from '../authenticate.js';
 import {gdEePathPrefix} from '../ee_paths.js';
 import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, snapPercentageTag, snapPopTag, sviTag, totalPopTag, tractTag} from '../property_names.js';
-import {getDisaster, getResources} from '../resources.js';
-import storeCenter from './center.js';
+import {getDisaster,} from '../resources.js';
 import {cdcGeoidKey, cdcSviKey, censusBlockGroupKey, censusGeoidKey, incomeKey, snapKey, tigerGeoidKey, totalKey} from './import_data_keys.js';
 import TaskAccumulator from '../task_accumulator.js';
 import {readDisasterDocument} from '../firestore_document.js';
 import {loadNavbarWithPicker} from '../navbar.js';
-import {gdEeStatePrefix} from '../ee_paths';
+import {gdEeStatePrefix} from '../ee_paths.js';
+import {
+  getDamageBounds,
+  getLatLngPromiseFromEeRectangle,
+  saveBounds
+} from './center.js';
 
 /** @VisibleForTesting */
 // Don't use $(callback) to see if document is ready so we can unit-test this.
@@ -68,9 +72,8 @@ function countDamageAndBuildings(feature, damage, buildings) {
       .set(sviTag, feature.get(sviTag))
       .set(buildingCountTag, totalBuildings);
   if (damage) {
-    const damagedBuildings =
-        damage.filterBounds(geometry).size();
-    properties.set(damageTag, ee.Number(damagedBuildings).divide(totalBuildings))
+    const damagedBuildings = ee.FeatureCollection(damage).filterBounds(geometry).size();
+    properties.set(damageTag, ee.Number(damagedBuildings).divide(totalBuildings));
   } else {
     properties.set(damageTag, 0);
   }
@@ -112,8 +115,6 @@ function combineWithSnap(feature, snapKey, totalKey) {
  */
 function combineWithAsset(feature, tag, key) {
   const incomeFeature = ee.Feature(feature.get('secondary'));
-  // TODO: make income formatting prettier so it looks like a currency value.
-  // Not trivial because it has some non-valid values like '-'.
   return ee.Feature(feature.get('primary')).set(ee.Dictionary([
     tag,
     incomeFeature.get(key),
@@ -161,10 +162,13 @@ function attachBlockGroups(building, blockGroups) {
   return building.set(geoidTag, geoid);
 }
 
+function computeGeoIdFromFeature(feature, idKey, blockOnlyKey) {
+  // Last index is negative, indicating count back from end of string.
+  return ee.String(feature.get(idKey)).slice(ee.Number(0), ee.Number(1).subtract(ee.String(feature.get(blockOnlyKey)).length()));
+}
+
 function addGeoIdToBlock(feature, idKey, blockOnlyKey) {
-  const blockCode = ee.String(feature.get(idKey));
-  return feature.set(tigerGeoidKey, blockCode.substring(0, blockCode.length() -
-      ee.String(feature.get(blockOnlyKey)).length() + 1));
+  return feature.set(tigerGeoidKey, computeGeoIdFromFeature(feature, idKey, blockOnlyKey));
 }
 
 function missingAssetError(str) {
@@ -174,125 +178,130 @@ function missingAssetError(str) {
 
 /** Performs operation of processing inputs and creating output asset. */
 function run(disasterData) {
+  $('.compute-status').html('');
   const states = disasterData['states'];
   if (!states) {
     return missingAssetError('affected states');
   }
   const assetData = disasterData['asset-data'];
   if (!assetData) return missingAssetError('SNAP/damage asset paths');
-  const censusShapefileAsset = assetData['tiger-asset-path'];
+  const blockData = assetData['block-data'];
+  if (!blockData) return missingAssetError('Census block geometries');
+  const censusShapefileAsset = blockData['path'];
   if (!censusShapefileAsset) return missingAssetError('TIGER Census Blocks');
-  const censusStateKey = assetData['tiger-state-key'];
-  if (censusStateKey) return missingAssetError('TIGER state key');
+  const censusStateKey = blockData['state-key'];
+  if (!censusStateKey) return missingAssetError('TIGER Census state key');
+  const censusBlockIdKey = blockData['blockid-key'];
+  if (!censusBlockIdKey) return missingAssetError('TIGER Census block id key');
+  const censusBlockOnlyKey = blockData['blockonly-key'];
+  if (!censusBlockOnlyKey) return missingAssetError('TIGER Census block-only key');
   const snapData = assetData['snap-data'];
   if (!snapData) return missingAssetError('SNAP info');
   const snapPaths = snapData['paths'];
   if (!snapPaths) return missingAssetError('SNAP table asset paths');
-  const numStates = states.length;
-  if (snapPaths.length !== numStates)
-    return missingAssetError(
-        'the same number of states and SNAP table asset paths');
-  const snapKey = snapData['paths']['snap-key'];
+  const snapKey = snapData['snap-key'];
   if (!snapKey)
     return missingAssetError('column name for SNAP recipients in SNAP table');
-  const totalKey = snapData['paths']['total-key'];
+  const totalKey = snapData['total-key'];
   if (!totalKey)
     return missingAssetError('column name for total population in SNAP table');
-  const sviPaths = assetData['svi-asset-path'];
-  if (!sviPaths) return missingAssetError('SVI table asset paths');
-  if (sviPaths.length !== numStates)
-    return missingAssetError(
-        'the same number of states and SVI table asset paths');
-  const sviKey = assetData['svi-key'];
-  if (!sviKey) return missingAssetError('column name for SVI table');
-  const incomePaths = assetData['income-asset-path'];
-  if (!incomePaths) return missingAssetError('Income table asset paths');
-  if (incomePaths.length !== numStates)
-    return missingAssetError(
-        'the same number of states and income table asset paths');
-  const incomeKey = assetData['income-key'];
-  if (!incomeKey) return missingAssetError('column name for income table');
+  // const sviPaths = assetData['svi-asset-path'];
+  // if (!sviPaths) return missingAssetError('SVI table asset paths');
+  // const sviKey = assetData['svi-key'];
+  // if (!sviKey) return missingAssetError('column name for SVI table');
+  // const incomePaths = assetData['income-asset-path'];
+  // if (!incomePaths) return missingAssetError('Income table asset paths');
+  // const incomeKey = assetData['income-key'];
+  // if (!incomeKey) return missingAssetError('column name for income table');
 
   const damagePath = disasterData['damage-asset-path'];
   let damage;
+  let damageBounds = null;
   if (damagePath) {
     damage = ee.FeatureCollection(damagePath);
     const centerStatusLabel = document.createElement('span');
     centerStatusLabel.innerText = 'Computing and storing bounds of map: ';
     const centerStatusSpan = document.createElement('span');
     centerStatusSpan.innerText = 'in progress';
-    storeCenter(damage)
+    damageBounds = getDamageBounds(damage);
+    const damageBoundsPromise = getLatLngPromiseFromEeRectangle(damageBounds)
+        .catch((err) => centerStatusSpan.innerText = err);
+    damageBoundsPromise
         .then(trimGeoNumbers)
         .then(
-            (bounds) => centerStatusSpan.innerText = 'Found bounds (' +
-                bounds[0] + ', ' + bounds[1] + '), (' + bounds[2] + ', ' +
-                bounds[3] + ')')
-        .catch((err) => centerStatusSpan.innerText = err);
+            (bounds) => centerStatusSpan.innerText = 'Found bounds ' + bounds);
+    damageBoundsPromise.then(saveBounds)
+        .catch((err) => centerStatusSpan.innerText += 'Error writing bounds to Firestore: ' + err);
     $('.compute-status').append(centerStatusLabel);
     $('.compute-status').append(centerStatusSpan);
   }
 
-  const snapCollection = createMergedFeatureCollection(snapPaths);
-
-  let processing =
-      snapCollection.map((feature) => stringifyGeoid(feature, censusGeoidKey));
-  let blockGroups = ee.FeatureCollection(censusShapefileAsset);
-  if (damage) {
-    // Filter block groups to those with damage.
-    blockGroups = intersectIfDefined(blockGroups, damage);
-  } else {
-    // Filter to those in the relevant states.
-    blockGroups = blockGroups.filter(ee.Filter.listContains({leftValue: states.map((state) => fipsMap.get(state)), rightField: censusStateKey}));
+  let censusBlocks = ee.FeatureCollection(censusShapefileAsset);
+  if (damageBounds) {
+    // Filter block groups to those in damage rectangle.
+    censusBlocks = intersectIfDefined(censusBlocks, damageBounds);
   }
-  blockGroups = blockGroups.map(addGeoIdToBlock);
+  let allStatesProcessing = ee.FeatureCollection([]);
+  for (const state of states) {
+    const snapPath = snapPaths[state];
+    if (!snapPath) return missingAssetError('SNAP asset path for ' + state);
+    // const sviPath = sviPaths[state];
+    // if (!sviPath) return missingAssetError('SVI asset path for ' + state);
+    // const incomePath = incomePaths[state];
+    // if (!incomePath) return missingAssetError('Income asset path for ' + state);
 
-  // join snap stats to block group geometries
-  processing =
-      ee.Join.inner()
-          .apply(
-              processing, blockGroups,
-              ee.Filter.equals(
-                  {leftField: censusGeoidKey, rightField: tigerGeoidKey}))
-          .map((f) => combineWithSnap(f, snapKey, totalKey));
-  // join with income
-  processing =
-      ee.Join.inner()
-          .apply(
-              processing, createMergedFeatureCollection(incomePaths),
-              ee.Filter.equals(
-                  {leftField: geoidTag, rightField: censusGeoidKey}))
-          .map((f) => combineWithAsset(f, incomeTag, incomeKey));
-  const svi = intersectIfDefined(createMergedFeatureCollection(sviPaths), damage);
-  processing =
-      ee.Join.inner()
-          .apply(
-              processing.map(addTractInfo), svi,
-              ee.Filter.equals({leftField: tractTag, rightField: cdcGeoidKey}))
-          .map((f) => combineWithAsset(f, sviTag, sviKey));
-  // attach block groups to buildings and aggregate to get block group building
-  // counts
-  const buildings = createMergedFeatureCollection(states.map((state) => ee.FeatureCollection(gdEeStatePrefix + state + '/ms-buildings')));
-  const withBlockGroup =
-      buildings.map((building) => attachBlockGroups(building, blockGroups));
-  const buildingsHisto =
-      ee.Dictionary(withBlockGroup.aggregate_histogram(geoidTag));
-  // process final feature collection
-  processing = processing.map(
-      (feature) => countDamageAndBuildings(feature, buildingsHisto, damage));
+    const stateGroups = getStateBlockGroupsFromNationalBlocks(censusBlocks, state, censusStateKey, censusBlockIdKey, censusBlockOnlyKey);
 
+    const snapCollection = intersectIfDefined(snapPath, damageBounds);
+
+    let processing =
+        snapCollection.map(
+            (f) => stringifyGeoid(f, censusGeoidKey));
+    // Join snap stats to block group geometries.
+    processing = innerJoin(processing, stateGroups, censusGeoidKey, tigerGeoidKey)
+            .map((f) => combineWithSnap(f, snapKey, totalKey));
+    // // Join with income.
+    // const incomeCollection = intersectIfDefined(incomePath, damageBounds);
+    // // TODO: make income formatting prettier so it looks like a currency value.
+    // //  Not trivial because it has some non-valid values like '-'.
+    // processing = innerJoin(processing, incomeCollection, geoidTag, censusGeoidKey)
+    //         .map((f) => combineWithAsset(f, incomeTag, incomeKey));
+    // const sviCollection = intersectIfDefined(sviPath, damageBounds);
+    // processing = innerJoin(processing.map(addTractInfo), sviCollection, tractTag, cdcGeoidKey)
+    //         .map((f) => combineWithAsset(f, sviTag, sviKey));
+
+    // attach block groups to buildings and aggregate to get block group building
+    // counts
+    const buildings = intersectIfDefined(gdEeStatePrefix + state + '/buildings', damageBounds);
+    const withBlockGroup =
+        buildings.map((building) => attachBlockGroups(building, stateGroups));
+    const buildingsHisto =
+        ee.Dictionary(withBlockGroup.aggregate_histogram(geoidTag));
+    // process final feature collection
+    processing = processing.map(
+        (feature) => countDamageAndBuildings(feature, buildingsHisto, damage));
+    allStatesProcessing.merge(processing);
+  }
   const assetName = 'data-ms-as-tot';
   const scoreAssetPath = gdEePathPrefix + getDisaster() + '/' + assetName;
-  ee.data.deleteAsset(scoreAssetPath);
+  try {
+    ee.data.deleteAsset(scoreAssetPath);
+  } catch(err) {
+    if (err.message !== 'Asset not found.') {
+      throw err;
+    }
+    console.log(scoreAssetPath + ' not found to delete');
+  }
   const task = ee.batch.Export.table.toAsset(
-      processing, assetName, scoreAssetPath);
+      allStatesProcessing, assetName, scoreAssetPath);
   task.start();
   $('.upload-status')
       .text('Check Code Editor console for upload progress. Task: ' + task.id);
-  processing.size().evaluate((val, failure) => {
-    if (val) {
-      $('.upload-status').append('\n<p>Found ' + val + ' elements');
-    } else {
+  allStatesProcessing.size().evaluate((val, failure) => {
+    if (failure) {
       $('.upload-status').append('\n<p>Error getting size: ' + failure);
+    } else {
+      $('.upload-status').append('\n<p>Found ' + val + ' elements');
     }
   });
 }
@@ -309,7 +318,7 @@ function enableWhenReady() {
   processButton.prop('disabled', false);
   // firebaseDataPromise is guaranteed to be done already by the time this code
   // runs, so we do this await just so that run can avoid the Promise.
-  processButton.on('click', async () => run(await firebaseDataPromise));
+  processButton.on('click', async () => run((await firebaseDataPromise).data()));
 }
 
 function domLoaded() {
@@ -319,26 +328,43 @@ function domLoaded() {
 
 /**
  * Displays latitude/longitude in a reasonable way. https://xkcd.com/2170/.
- * @param {Array<number>} latOrLngs
- * @return {Array<string>} numbers truncated to 4 digits.
+ * @param {Array<LatLng>} latLngArray
+ * @return {Array<Array<string>>} numbers truncated to 4 digits.
  */
-function trimGeoNumbers(latOrLngs) {
-  return latOrLngs.map((num) => num.toFixed(4));
+function trimGeoNumbers(latLngArray) {
+  return latLngArray.map((latLng) => [latLng.lat.toFixed(4), latLng.lng.toFixed(4)]);
 }
 
-function createMergedFeatureCollection(assetPaths) {
-  let result = ee.FeatureCollection([]);
-  assetPaths.foreach((p) => result = result.merge(ee.FeatureCollection(p)));
-  return result;
-}
-
-function intersectIfDefined(features, maybeFeatures) {
-  if (!maybeFeatures) {
+function intersectIfDefined(features, maybeGeometry) {
+  features = ee.FeatureCollection(features);
+  if (!maybeGeometry) {
     return features;
   }
-  return ee.Join.simple().apply(
-      ee.FeatureCollection(features), maybeFeatures,
-      ee.Filter.intersects({leftField: '.geo', rightField: '.geo'}));
+  return features.filterBounds(maybeGeometry);
+}
+
+function innerJoin(collection1, collection2, key1, key2) {
+  return ee.Join.inner()
+      .apply(
+          collection1, collection2,
+          ee.Filter.equals(
+              {leftField: key1, rightField: key2}));
+}
+
+function getStateBlockGroupsFromNationalBlocks(censusBlocks, state, censusStateKey, censusBlockIdKey, censusBlockOnlyKey) {
+  const stateBlocksWithGeoId = censusBlocks.filter(ee.Filter.eq(censusStateKey, fipsMap.get(state))).map((f) => addGeoIdToBlock(f, censusBlockIdKey, censusBlockOnlyKey));
+  const perBlockGroup = stateBlocksWithGeoId.distinct(tigerGeoidKey);
+  const groupedByBlockGroup = ee.Join.saveAll('features')
+      .apply(perBlockGroup, stateBlocksWithGeoId, ee.Filter.equals({leftField: tigerGeoidKey, rightField: tigerGeoidKey}));
+  return groupedByBlockGroup.map((feature) => {
+    const mergedGeometry= ee.List(feature.get('features')).iterate(mergeGeometries, ee.Number(0));
+    return ee.Feature(ee.Geometry(mergedGeometry), ee.Dictionary().set(tigerGeoidKey, feature.get(tigerGeoidKey)));
+  })
+}
+
+function mergeGeometries(feature, runningGeo) {
+  const currentGeo = ee.Feature(feature).get('.geo');
+  return ee.Algorithms.If(runningGeo, ee.Geometry(runningGeo).union(currentGeo), currentGeo);
 }
 
 // https://www.nrcs.usda.gov/wps/portal/nrcs/detail/?cid=nrcs143_013696
