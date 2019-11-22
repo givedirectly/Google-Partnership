@@ -237,7 +237,8 @@ describe('Unit tests for add_disaster page', () => {
 
     const red = 'red';
     const discrete = withColor(
-        createTd(), {color: {colors: {'squash': yellow, 'tomato': red}}},
+        createTd(),
+        {color: {colors: {'squash': yellow, 'tomato': red, 'pepper': red}}},
         property, 0);
     expect(discrete.children('.box').length).to.equal(2);
     expect(discrete.children().eq(1).css('background-color')).to.equal(red);
