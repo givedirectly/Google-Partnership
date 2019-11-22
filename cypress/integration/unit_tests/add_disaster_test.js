@@ -132,7 +132,9 @@ describe('Unit tests for add_disaster page', () => {
         })
         .then((doc) => {
           expect(doc.exists).to.be.true;
-          expect(doc.data()['states']).to.eql(states);
+          const data = doc.data();
+          expect(data['states']).to.eql(states);
+          expect(data['layers']).to.eql([]);
         });
   });
 

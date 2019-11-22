@@ -435,7 +435,7 @@ function writeNewDisaster(disasterId, states) {
 
   return disasterCollectionReference()
       .doc(disasterId)
-      .set({states: states})
+      .set({states: states, layers: []})
       .then(() => true);
 }
 
