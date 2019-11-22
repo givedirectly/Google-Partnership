@@ -1,7 +1,7 @@
 import {gdEeStatePrefix, legacyStateDir, legacyStatePrefix} from '../../../docs/ee_paths.js';
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
 import {addDisaster, createAssetPickers, createOptionFrom, createTd, deleteDisaster, disasterData, emptyCallback, getAssetsFromEe, getCurrentLayers, onCheck, onInputBlur, onListBlur, stateAssets, updateAfterSort, withCheckbox, withInput, withList, withType, writeNewDisaster} from '../../../docs/import/add_disaster.js';
-import {withColor} from '../../../docs/import/color_function_util.js'
+import {withColor} from '../../../docs/import/color_function_util.js';
 import * as loading from '../../../docs/loading.js';
 import {getDisaster} from '../../../docs/resources';
 import {addFirebaseHooks, loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
@@ -251,8 +251,8 @@ describe('Unit tests for add_disaster page', () => {
         createTd(), {
           color: {
             'current-style': 1,
-            colors: {'squash': yellow, 'tomato': red, 'pepper': red}
-          }
+            'colors': {'squash': yellow, 'tomato': red, 'pepper': red},
+          },
         },
         property, 0);
     expect(discrete.children('.box').length).to.equal(2);
