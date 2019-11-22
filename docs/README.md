@@ -25,7 +25,7 @@ We have three types of coloring schemes: continuous, discrete, and single color.
 * Single Color: 2
 
 **continuous:**
-* style `{enum}`: set to 0
+* current-style `{enum}`: set to 0
 * base-color `{string}`: from known colors
 * field `{string}`: name of property we're using to calculate color
 * max `{number}`: max value of field
@@ -33,13 +33,13 @@ We have three types of coloring schemes: continuous, discrete, and single color.
 * opacity `{number}`: opacity level
 
 **discrete:**
-* style `{enum}`: set to 1
+* current-style `{enum}`: set to 1
 * field `{string}`: name of property we're using to calculate color
 * colors `{Map}`: map of field value `{string}` to color `{string}` (from known colors)
 * opacity `{number}`
 
 **single-color:**
-* style `{enum}`: set to 2
+* current-style `{enum}`: set to 2
 * single-color `{string}`: from set of known colors
 * opacity `{number}`
 

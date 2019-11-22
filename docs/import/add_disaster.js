@@ -5,7 +5,6 @@ import {getFirestoreRoot} from '../firestore_document.js';
 import {disasterCollectionReference, getDisasters} from '../firestore_document.js';
 import {addLoadingElement, loadingElementFinished} from '../loading.js';
 import {getDisaster} from '../resources.js';
-
 import {clearStatus, ILLEGAL_STATE_ERR, setStatus} from './add_disaster_util.js';
 import {withColor} from './color_function_util.js';
 
