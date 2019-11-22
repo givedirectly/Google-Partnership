@@ -143,7 +143,7 @@ function updateLayersInFirestore() {
 function updateAfterSort(ui) {
   const layers = getCurrentLayers();
   const numLayers = layers.length;
-  const oldRealIndex = $(ui.item).children('.index-td').text();
+  const oldRealIndex = getRowIndex($(ui.item));
   const newRealIndex = numLayers - 1 - $(ui.item).index();
 
   // pull out moved row and shuffle everything else down
@@ -159,6 +159,15 @@ function updateAfterSort(ui) {
   }
 
   return updateLayersInFirestore();
+}
+
+/**
+ * Look up the real (not table) index of the given row.
+ * @param row
+ * @return {string}
+ */
+function getRowIndex(row) {
+  return row.children('.index-td').text();
 }
 
 /**
@@ -179,7 +188,7 @@ function createTd() {
  */
 function onUpdate(event, property, fxn) {
   const input = $(event.target);
-  const index = input.parents('tr').children('.index-td').text();
+  const index = getRowIndex(input.parents('tr'));
   getCurrentLayers()[index][property] = fxn(input);
   return updateLayersInFirestore();
 }
@@ -204,7 +213,7 @@ function onInputBlur(event, property) {
 function withInput(td, layer, property) {
   const input = $(document.createElement('input')).val(layer[property]);
   td.append(input);
-  td.on('blur', 'input', (event) => onInputBlur(event, property));
+  input.on('blur', (event) => onInputBlur(event, property));
   return td;
 }
 
@@ -237,16 +246,10 @@ function onListBlur(event, property) {
  * @return {JQuery<HTMLTableDataCellElement>}
  */
 function withList(td, layer, property) {
-  const list = layer[property];
-  let withNewLines = list[0];
-  for (let i = 1; i < list.length; i++) {
-    withNewLines = withNewLines.concat('\n', list[i]);
-  }
-  // use a regex to replace all instances of ',' with a new line
   const textarea =
-      $(document.createElement('textarea')).val(withNewLines).prop('rows', 3);
+      $(document.createElement('textarea')).val(layer[property].join('\n')).prop('rows', 3);
   td.append(textarea);
-  td.on('blur', 'textarea', (event) => onListBlur(event, property));
+  textarea.on('blur', (event) => onListBlur(event, property));
   return td;
 }
 

@@ -298,17 +298,29 @@ describe('Unit tests for add_disaster page', () => {
     testSave(onInputBlur, property, input, chai);
   });
 
-  it('tests checkbox cell', () => {
-    const layer = {displayOnLoad: false};
+  /**
+   * Checks if a checkbox has been checked or unchecked based on param.
+   * @param {boolean} checks
+   */
+  function checkboxTest(checks) {
+    const layer = {displayOnLoad: !checks};
     setDisasterAndLayers([layer]);
 
     const property = 'displayOnLoad';
     const unchecked = withCheckbox(createTd(), layer, property);
     const checkbox = unchecked.children().first();
-    expect(checkbox.prop('checked')).to.be.false;
+    expect(checkbox.prop('checked')).to.eq(!checks);
 
-    checkbox.prop('checked', true);
-    testSave(onCheck, property, checkbox, true);
+    checkbox.prop('checked', checks);
+    testSave(onCheck, property, checkbox, checks);
+  }
+
+  it('tests checkbox cell check', () => {
+    checkboxTest(true);
+  });
+
+  it('tests checkbox cell uncheck', () => {
+    checkboxTest(false);
   });
 
   it('checks data updates after a sort', () => {
