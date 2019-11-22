@@ -5,7 +5,6 @@ export {populateColorFunctions, withColor};
 
 let globalTd;
 
-
 /**
  * Creates an instance of the color boxes for the color col.
  * @param {string} color what color to make the box.
@@ -23,27 +22,36 @@ function populateColorFunctions() {
   colorFunctionDiv.prepend(createRadioFor('discrete'));
   colorFunctionDiv.prepend(createRadioFor('continuous'));
 
-  const label = $(document.createElement('label'))
-      .prop('for', 'single-color-picker')
-      .text('color: ');
-  const singleColorPicker = createColorPicker().prop('id', 'single-color-picker');
-  singleColorPicker.on('change', () => {
-    const index = getRowIndex(globalTd.parents('tr'));
-    getCurrentLayers()[index]['color-function']['single-color'] = singleColorPicker.val();
-    updateLayersInFirestore();
-    globalTd.empty();
-    globalTd.append(createColorBox(singleColorPicker.val()));
-  });
-  $('#single').append(label, singleColorPicker);
+  const singleColorPicker = createColorPicker('single-color-picker');
+  singleColorPicker.on('change', (event) => singleColorOnChange($(event.item)));
+  $('#single').append(createLabelFor(singleColorPicker, 'color: '), singleColorPicker);
+
+  const continuousPicker = createColorPicker('continuous-picker');
+  continuousPicker.on('change', (event) => continousOnChange($(event.item)));
+
 }
 
-function createColorPicker() {
+function singleColorOnChange(picker) {
+  const index = getRowIndex(globalTd.parents('tr'));
+  getCurrentLayers()[index]['color-function']['single-color'] = picker.val();
+  updateLayersInFirestore();
+  globalTd.empty();
+  globalTd.append(createColorBox(picker.val()));
+}
+
+function createLabelFor(element, text) {
+  return $(document.createElement('label'))
+      .prop('for', element.prop('id'))
+      .text(text);
+}
+
+function createColorPicker(id) {
   const colorPicker = $(document.createElement('select'));
   colorMap.forEach((value, key) => {
     const option = $(document.createElement('option')).val(key).text(key);
     colorPicker.append(option);
   });
-  return colorPicker;
+  return colorPicker.prop('id', id);
 }
 
 /**
