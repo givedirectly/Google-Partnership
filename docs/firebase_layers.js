@@ -2,6 +2,7 @@ export {
   colorMap,
   createStyleFunction,
   LayerType,
+    ColorStyle,
 };
 
 const LayerType = {
@@ -13,6 +14,13 @@ const LayerType = {
 };
 Object.freeze(LayerType);
 
+const ColorStyle = {
+  CONTINUOUS: 0,
+  DISCRETE: 1,
+  SINGLE: 2,
+};
+Object.freeze(ColorStyle);
+
 /**
  * Creates the style function for the given properties. Caller should cache to
  * avoid recomputing every time.
@@ -20,23 +28,21 @@ Object.freeze(LayerType);
  * @return {Function}
  */
 function createStyleFunction(colorFunctionProperties) {
-  let styleFunction;
-  if (colorFunctionProperties['single-color']) {
-    const color = colorMap.get(colorFunctionProperties['single-color']);
-    styleFunction = () => color;
-  } else {
-    const continuous = colorFunctionProperties['continuous'];
-    const field = colorFunctionProperties['field'];
-    const opacity = colorFunctionProperties['opacity'];
-    styleFunction = continuous ?
-        createContinuousFunction(
-            field, opacity, colorFunctionProperties['min'],
-            colorFunctionProperties['max'],
-            colorFunctionProperties['base-color']) :
-        createDiscreteFunction(
-            field, opacity, colorFunctionProperties['colors']);
+  const field = colorFunctionProperties['field'];
+  const opacity = colorFunctionProperties['opacity'];
+  switch (colorFunctionProperties['style']) {
+    case ColorStyle.SINGLE:
+      const color = colorMap.get(colorFunctionProperties['single-color']);
+      return () => color;
+    case ColorStyle.CONTINUOUS:
+      return createContinuousFunction(
+          field, opacity, colorFunctionProperties['min'],
+          colorFunctionProperties['max'],
+          colorFunctionProperties['base-color']);
+    case ColorStyle.DISCRETE:
+      return createDiscreteFunction(
+          field, opacity, colorFunctionProperties['colors']);
   }
-  return styleFunction;
 }
 
 /**

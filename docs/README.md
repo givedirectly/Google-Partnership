@@ -18,8 +18,14 @@ all `<data>` instances contain the following fields:
 ### Color Functions
 We have three types of coloring schemes: continuous, discrete, and single color. Each has a different schema for the <code>color-function</code> object:
 
+#### ColorStyle Enum:
+
+* Continuous: 0
+* Discrete: 1
+* Single Color: 2
+
 **continuous:**
-* continuous `{boolean}`: set to true
+* style `{enum}`: set to 0
 * base-color `{string}`: from known colors
 * field `{string}`: name of property we're using to calculate color
 * max `{number}`: max value of field
@@ -27,12 +33,13 @@ We have three types of coloring schemes: continuous, discrete, and single color.
 * opacity `{number}`: opacity level
 
 **discrete:**
-* continuous `{boolean}`: set to false
+* style `{enum}`: set to 1
 * field `{string}`: name of property we're using to calculate color
 * colors `{Map}`: map of field value `{string}` to color `{string}` (from known colors)
 * opacity `{number}`
 
 **single-color:**
+* style `{enum}`: set to 2
 * single-color `{string}`: from set of known colors
 * opacity `{number}`
 
