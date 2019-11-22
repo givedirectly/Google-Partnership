@@ -1,12 +1,16 @@
 import {gdEeStatePrefix, legacyStateDir, legacyStatePrefix} from '../../../docs/ee_paths.js';
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
-import {addDisaster, createAssetPickers, createOptionFrom, createTd, deleteDisaster, disasterData, emptyCallback, getAssetsFromEe, getCurrentLayers, onCheck, setCurrentDisaster, stateAssets, updateAfterSort, withCheckbox, withColor, withList, withType, writeNewDisaster} from '../../../docs/import/add_disaster.js';
+import {addDisaster, createAssetPickers, createOptionFrom, createTd, deleteDisaster, disasterData, emptyCallback, getAssetsFromEe, getCurrentLayers, onCheck, onInputBlur, onListBlur, stateAssets, updateAfterSort, withCheckbox, withColor, withInput, withList, withType, writeNewDisaster} from '../../../docs/import/add_disaster.js';
 import * as loading from '../../../docs/loading.js';
+import {getDisaster} from '../../../docs/resources';
 import {addFirebaseHooks, loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
 const KNOWN_STATE = 'WF';
 const UNKNOWN_STATE = 'DN';
 const KNOWN_STATE_ASSET = gdEeStatePrefix + KNOWN_STATE + '/snap';
+
+let loadingStartedStub;
+let loadingFinishedStub;
 
 describe('Unit tests for add_disaster page', () => {
   loadScriptsBeforeForUnitTests('ee', 'firebase', 'jquery');
@@ -44,6 +48,8 @@ describe('Unit tests for add_disaster page', () => {
           ],
         }));
     cy.stub(ee.data, 'createFolder');
+    loadingStartedStub = cy.stub(loading, 'addLoadingElement');
+    loadingFinishedStub = cy.stub(loading, 'loadingElementFinished');
 
     stateAssets.clear();
     // In prod this would happen in enableWhenReady which would read from
@@ -261,55 +267,60 @@ describe('Unit tests for add_disaster page', () => {
 
   it('tests list cell', () => {
     const chocolate = 'chocolate';
-    const flavors =
-        withList(createTd(), {flavor: [chocolate, 'chai']}, 'flavor');
-    expect(flavors.children().length).to.equal(0);
-    expect(flavors.text()).to.equal('chocolate');
+    const chai = 'chai';
+    const nutmeg = 'nutmeg';
+    const layer = {flavors: [chocolate, chai]};
+
+    setDisasterAndLayers([layer]);
+
+    const property = 'flavors';
+    const flavors = withList(createTd(), layer, 'flavors');
+    const list = flavors.children('textarea');
+    expect(list.val()).to.equal(chocolate + '\n' + chai);
+
+    list.val(chai + '\n' + nutmeg);
+    testSave(onListBlur, property, list, [chai, nutmeg]);
   });
 
-  it('tests checkbox cell', () => {
-    const loadingStartedStub = cy.stub(loading, 'addLoadingElement');
-    const loadingFinishedStub = cy.stub(loading, 'loadingElementFinished');
+  it('tests input cell', () => {
+    const chocolate = 'chocolate';
+    const chai = 'chai';
+    const layer = {flavor: chocolate};
 
-    const currentDisaster = '2005-fall';
-    disasterData.set(currentDisaster, {layers: [{displayOnLoad: false}]});
-    setCurrentDisaster(currentDisaster);
+    setDisasterAndLayers([layer]);
+
+    const property = 'flavor';
+    const td = withInput(createTd(), layer, property);
+    const input = td.children('input');
+    expect(input.val()).to.equal(chocolate);
+
+    input.val(chai);
+    testSave(onInputBlur, property, input, chai);
+  });
+
+  /**
+   * Checks if a checkbox has been checked or unchecked based on param.
+   * @param {boolean} checks
+   */
+  function checkboxTest(checks) {
+    const layer = {displayOnLoad: !checks};
+    setDisasterAndLayers([layer]);
 
     const property = 'displayOnLoad';
-    const unchecked =
-        withCheckbox(createTd(), {displayOnLoad: false}, property);
+    const unchecked = withCheckbox(createTd(), layer, property);
     const checkbox = unchecked.children().first();
-    expect(checkbox.prop('checked')).to.be.false;
+    expect(checkbox.prop('checked')).to.eq(!checks);
 
-    const row = createTrs(1);
-    createAndAppend('tbody', 'tbody').append(row);
-    row[0].append(checkbox);
-    checkbox.prop('checked', true);
+    checkbox.prop('checked', checks);
+    testSave(onCheck, property, checkbox, checks);
+  }
 
-    cy.wrap(onCheck({target: checkbox}, property))
-        .then(() => {
-          expect(getCurrentLayers()[0][property]).to.be.true;
-          expect(loadingStartedStub).to.be.calledOnce;
-          expect(loadingFinishedStub).to.be.calledOnce;
-          return getFirestoreRoot()
-              .collection('disaster-metadata')
-              .doc(currentDisaster)
-              .get();
-        })
-        .then((doc) => {
-          expect(doc.data()['layers'][0][property]).to.be.true;
-        });
-  });
+  it('tests checkbox cell check', () => checkboxTest(true));
+  it('tests checkbox cell uncheck', () => checkboxTest(false));
 
   it('checks data updates after a sort', () => {
-    const loadingStartedStub = cy.stub(loading, 'addLoadingElement');
-    const loadingFinishedStub = cy.stub(loading, 'loadingElementFinished');
-
-    const currentDisaster = '2005-fall';
-    disasterData.set(
-        currentDisaster,
-        {layers: [{initialIndex: 0}, {initialIndex: 1}, {initialIndex: 2}]});
-    setCurrentDisaster(currentDisaster);
+    setDisasterAndLayers(
+        [{initialIndex: 0}, {initialIndex: 1}, {initialIndex: 2}]);
 
     const tbody = createAndAppend('tbody', 'tbody');
     const rows = createTrs(3);
@@ -336,7 +347,7 @@ describe('Unit tests for add_disaster page', () => {
 
           return getFirestoreRoot()
               .collection('disaster-metadata')
-              .doc(currentDisaster)
+              .doc(getDisaster())
               .get();
         })
         .then((doc) => {
@@ -347,6 +358,42 @@ describe('Unit tests for add_disaster page', () => {
         });
   });
 });
+
+/**
+ * Sets local storage to point to disaster with the given layers.
+ * @param {Array<Object>} layers
+ */
+function setDisasterAndLayers(layers) {
+  const currentDisaster = '2005-fall';
+  disasterData.set(currentDisaster, {layers: layers});
+  window.localStorage.setItem('disaster', currentDisaster);
+}
+
+/**
+ * Function that tests the save method works.
+ * @param {Function} fxn save function
+ * @param {string} property
+ * @param {Object} input DOM object from which to pull new value
+ * @param {*} afterVal
+ */
+function testSave(fxn, property, input, afterVal) {
+  const row = createTrs(1);
+  createAndAppend('tbody', 'tbody').append(row);
+  row[0].append(input);
+
+  cy.wrap(fxn({target: input}, property))
+      .then(() => {
+        expect(getCurrentLayers()[0][property]).to.eql(afterVal);
+        expect(loadingStartedStub).to.be.calledOnce;
+        expect(loadingFinishedStub).to.be.calledOnce;
+        return getFirestoreRoot()
+            .collection('disaster-metadata')
+            .doc(getDisaster())
+            .get();
+      })
+      .then(
+          (doc) => expect(doc.data()['layers'][0][property]).to.eql(afterVal));
+}
 
 /**
  * Creates some amount of table rows with a .index-td td.

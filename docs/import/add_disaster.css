@@ -4,9 +4,15 @@
   border: 1px solid black;
 }
 
+textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+
 table {
   border-collapse: collapse;
   table-layout: fixed;
+  cursor: grab;
 }
 
 th {
