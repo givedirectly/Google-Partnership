@@ -20,10 +20,13 @@ export {
   getCurrentData,
   getCurrentLayers,
   onCheck,
+  onInputBlur,
+  onListBlur,
   stateAssets,
   updateLayersInFirestore,
   withCheckbox,
   withColor,
+  withInput,
   withList,
   withType,
   writeNewDisaster,
@@ -167,6 +170,45 @@ function createTd() {
 }
 
 /**
+ * A common update method that writes to local data and firestore based on
+ * a customizable version of the value of the input.
+ * @param {Object} event
+ * @param {string} property
+ * @param {Function} fxn how to read/transform the raw value from the DOM.
+ * @return {?Promise<void>} See updateLayersInFirestore doc
+ */
+function onUpdate(event, property, fxn) {
+  const input = $(event.target);
+  const index = input.parents('tr').children('.index-td').text();
+  getCurrentLayers()[index][property] = fxn(input);
+  return updateLayersInFirestore();
+}
+
+/**
+ * Auto save on focus out from input cell.
+ * @param {Object} event
+ * @param {string} property
+ * @return {?Promise<void>} See updateLayersInFirestore doc
+ */
+function onInputBlur(event, property) {
+  return onUpdate(event, property, (input) => input.val());
+}
+
+/**
+ * Adds an input box to the given td.
+ * @param {JQuery<HTMLTableDataCellElement>} td cell
+ * @param {Object} layer
+ * @param {string} property
+ * @return {JQuery<HTMLTableDataCellElement>}
+ */
+function withInput(td, layer, property) {
+  const input = $(document.createElement('input')).val(layer[property]);
+  td.append(input);
+  td.on('blur', 'input', (event) => onInputBlur(event, property));
+  return td;
+}
+
+/**
  * Adds text to the given td.
  * @param {JQuery<HTMLTableDataCellElement>} td cell
  * @param {Object} layer
@@ -178,6 +220,16 @@ function withText(td, layer, property) {
 }
 
 /**
+ * Auto save on focus out from textarea cell.
+ * @param {Object} event
+ * @param {string} property
+ * @return {?Promise<void>} See updateLayersInFirestore doc
+ */
+function onListBlur(event, property) {
+  return onUpdate(event, property, (textarea) => textarea.val().split('\n'));
+}
+
+/**
  * Adds a sample of info from a list to the given td.
  * @param {JQuery<HTMLTableDataCellElement>} td cell
  * @param {Object} layer
@@ -185,7 +237,13 @@ function withText(td, layer, property) {
  * @return {JQuery<HTMLTableDataCellElement>}
  */
 function withList(td, layer, property) {
-  return td.text(layer[property][0]);
+  // use a regex to replace all instances of ',' with a new line
+  const textarea = $(document.createElement('textarea'))
+                       .val(layer[property].toString().replace(/,/g, '\n'))
+                       .prop('rows', 3);
+  td.append(textarea);
+  td.on('blur', 'textarea', (event) => onListBlur(event, property));
+  return td;
 }
 
 const layerTypeStrings = new Map();
@@ -214,10 +272,7 @@ function withType(td, layer, property) {
  * @return {?Promise<void>} See updateLayersInFirestore doc
  */
 function onCheck(event, property) {
-  const checkbox = $(event.target);
-  const index = checkbox.parents('tr').children('.index-td').text();
-  getCurrentLayers()[index][property] = checkbox.is(':checked');
-  return updateLayersInFirestore();
+  return onUpdate(event, property, (checkbox) => checkbox.is(':checked'));
 }
 
 /**
@@ -289,7 +344,7 @@ function populateLayersTable() {
     row.append(createTd().text(i).addClass('index-td'));
     // display name
     // TODO: make this editable.
-    row.append(withText(createTd(), layer, 'display-name'));
+    row.append(withInput(createTd(), layer, 'display-name'));
     // asset path/url sample
     const assetOrUrl = createTd();
     if (layer['ee-name']) {

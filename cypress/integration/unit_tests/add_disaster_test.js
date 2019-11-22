@@ -1,12 +1,16 @@
 import {gdEeStatePrefix, legacyStateDir, legacyStatePrefix} from '../../../docs/ee_paths.js';
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
-import {addDisaster, createAssetPickers, createOptionFrom, createTd, deleteDisaster, disasterData, emptyCallback, getAssetsFromEe, getCurrentLayers, onCheck, stateAssets, updateAfterSort, withCheckbox, withColor, withList, withType, writeNewDisaster} from '../../../docs/import/add_disaster.js';
+import {addDisaster, createAssetPickers, onInputBlur, onListBlur, createOptionFrom, createTd, withInput, deleteDisaster, disasterData, emptyCallback, getAssetsFromEe, getCurrentLayers, onCheck, stateAssets, updateAfterSort, withCheckbox, withColor, withList, withType, writeNewDisaster} from '../../../docs/import/add_disaster.js';
 import * as loading from '../../../docs/loading.js';
 import {addFirebaseHooks, loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
+import {getDisaster} from '../../../docs/resources';
 
 const KNOWN_STATE = 'WF';
 const UNKNOWN_STATE = 'DN';
 const KNOWN_STATE_ASSET = gdEeStatePrefix + KNOWN_STATE + '/snap';
+
+let loadingStartedStub;
+let loadingFinishedStub;
 
 describe('Unit tests for add_disaster page', () => {
   loadScriptsBeforeForUnitTests('ee', 'firebase', 'jquery');
@@ -44,6 +48,8 @@ describe('Unit tests for add_disaster page', () => {
           ],
         }));
     cy.stub(ee.data, 'createFolder');
+    loadingStartedStub = cy.stub(loading, 'addLoadingElement');
+    loadingFinishedStub = cy.stub(loading, 'loadingElementFinished');
 
     stateAssets.clear();
     // In prod this would happen in enableWhenReady which would read from
@@ -258,19 +264,46 @@ describe('Unit tests for add_disaster page', () => {
 
   it('tests list cell', () => {
     const chocolate = 'chocolate';
+    const chai = 'chai';
+    const nutmeg = 'nutmeg';
+
+   setDisasterAndLayers([{flavors: [chocolate, chai]}]);
+
+    const property = 'flavors';
     const flavors =
-        withList(createTd(), {flavor: [chocolate, 'chai']}, 'flavor');
-    expect(flavors.children().length).to.equal(0);
-    expect(flavors.text()).to.equal('chocolate');
+        withList(createTd(), {flavors: [chocolate, chai]}, 'flavors');
+    const list = flavors.children('textarea');
+    expect(list.val()).to.equal(chocolate + '\n' + chai);
+
+    const row = createTrs(1);
+    createAndAppend('tbody', 'tbody').append(row);
+    row[0].append(list);
+    list.val(chai + '\n' + nutmeg);
+
+    testSave(() => onListBlur({target: list}, property), property, [chai, nutmeg]);
+  });
+
+  it('tests input cell', () => {
+    const chocolate = 'chocolate';
+    const chai = 'chai';
+
+   setDisasterAndLayers([{flavor: chocolate}]);
+
+    const property = 'flavor';
+    const td = withInput(createTd(), {flavor: chocolate}, property);
+    const input = td.children('input');
+    expect(input.val()).to.equal(chocolate);
+
+    const row = createTrs(1);
+    createAndAppend('tbody', 'tbody').append(row);
+    row[0].append(input);
+    input.val(chai);
+
+    testSave(() => onInputBlur({target: input}, property), property, chai);
   });
 
   it('tests checkbox cell', () => {
-    const loadingStartedStub = cy.stub(loading, 'addLoadingElement');
-    const loadingFinishedStub = cy.stub(loading, 'loadingElementFinished');
-
-    const currentDisaster = '2005-fall';
-    disasterData.set(currentDisaster, {layers: [{displayOnLoad: false}]});
-    window.localStorage.setItem('disaster', currentDisaster);
+    setDisasterAndLayers([{displayOnLoad: false}]);
 
     const property = 'displayOnLoad';
     const unchecked =
@@ -283,30 +316,11 @@ describe('Unit tests for add_disaster page', () => {
     row[0].append(checkbox);
     checkbox.prop('checked', true);
 
-    cy.wrap(onCheck({target: checkbox}, property))
-        .then(() => {
-          expect(getCurrentLayers()[0][property]).to.be.true;
-          expect(loadingStartedStub).to.be.calledOnce;
-          expect(loadingFinishedStub).to.be.calledOnce;
-          return getFirestoreRoot()
-              .collection('disaster-metadata')
-              .doc(currentDisaster)
-              .get();
-        })
-        .then((doc) => {
-          expect(doc.data()['layers'][0][property]).to.be.true;
-        });
+    testSave(() => onCheck({target: checkbox}, property), property, true);
   });
 
-  it('checks data updates after a sort', () => {
-    const loadingStartedStub = cy.stub(loading, 'addLoadingElement');
-    const loadingFinishedStub = cy.stub(loading, 'loadingElementFinished');
-
-    const currentDisaster = '2005-fall';
-    disasterData.set(
-        currentDisaster,
-        {layers: [{initialIndex: 0}, {initialIndex: 1}, {initialIndex: 2}]});
-    window.localStorage.setItem('disaster', currentDisaster);
+  it.only('checks data updates after a sort', () => {
+    setDisasterAndLayers([{initialIndex: 0}, {initialIndex: 1}, {initialIndex: 2}]);
 
     const tbody = createAndAppend('tbody', 'tbody');
     const rows = createTrs(3);
@@ -333,7 +347,7 @@ describe('Unit tests for add_disaster page', () => {
 
           return getFirestoreRoot()
               .collection('disaster-metadata')
-              .doc(currentDisaster)
+              .doc(getDisaster())
               .get();
         })
         .then((doc) => {
@@ -344,6 +358,36 @@ describe('Unit tests for add_disaster page', () => {
         });
   });
 });
+
+/**
+ * Set's local cookie to point to disaster with the given layers.
+ * @param {Array<Object>} layers
+ */
+function setDisasterAndLayers(layers) {
+  const currentDisaster = '2005-fall';
+  disasterData.set(currentDisaster, {layers: layers});
+  window.localStorage.setItem('disaster', currentDisaster);
+}
+
+/**
+ * Function that tests the save method works.
+ * @param {Function} fxn
+ * @param {string} property
+ * @param {*} afterVal
+ */
+function testSave(fxn, property, afterVal) {
+  cy.wrap(fxn()).then(() => {
+    expect(getCurrentLayers()[0][property]).to.eql(afterVal);
+    expect(loadingStartedStub).to.be.calledOnce;
+    expect(loadingFinishedStub).to.be.calledOnce;
+    return getFirestoreRoot()
+        .collection('disaster-metadata')
+        .doc(getDisaster())
+        .get();
+  }).then((doc) => {
+    expect(doc.data()['layers'][0][property]).to.eql(afterVal);
+  });
+}
 
 /**
  * Creates some amount of table rows with a .index-td td.
