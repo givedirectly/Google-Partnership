@@ -307,7 +307,7 @@ describe('Unit tests for add_disaster page', () => {
     expect(checkbox.prop('checked')).to.be.false;
 
     checkbox.prop('checked', true);
-    testSave(onCheck, property, checkbox,true);
+    testSave(onCheck, property, checkbox, true);
   });
 
   it('checks data updates after a sort', () => {
