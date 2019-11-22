@@ -1,6 +1,6 @@
 import {getFirestoreRoot} from '../../../docs/firestore_document';
 import * as loading from '../../../docs/loading';
-import {processUserRegions, setUpPolygonDrawing, StoredShapeData} from '../../../docs/polygon_draw';
+import {initializeAndProcessUserRegions, setUpPolygonDrawing, StoredShapeData} from '../../../docs/polygon_draw';
 import * as resourceGetter from '../../../docs/resources';
 import SettablePromise from '../../../docs/settable_promise';
 import {CallbackLatch} from '../../support/callback_latch';
@@ -46,7 +46,7 @@ describe('Unit test for ShapeData', () => {
     const feature3 = ee.Feature(
         ee.Geometry.Polygon(20, 0, 20, 10, 30, 10, 30, 0),
         {'SNAP HOUSEHOLDS': 1000, 'TOTAL HOUSEHOLDS': 1000});
-    const featureCollection =
+    const scoreCollection =
         ee.FeatureCollection([feature1, feature2, feature3]);
     // Polygon contains only first damage point.
     damageCollection = ee.FeatureCollection([
@@ -54,10 +54,7 @@ describe('Unit test for ShapeData', () => {
       ee.Feature(ee.Geometry.Point([200, 200])),
     ]);
     // Use our custom EarthEngine FeatureCollections.
-    cy.stub(resourceGetter, 'getResources').returns({
-      damage: damageCollection,
-      getCombinedAsset: () => featureCollection,
-    });
+    cy.stub(resourceGetter, 'getScoreAsset').returns(scoreCollection);
 
     // Set up appropriate Firestore mocks.
     cy.stub(getFirestoreRoot(), 'collection')
@@ -70,8 +67,11 @@ describe('Unit test for ShapeData', () => {
     }
     // Make sure .get() succeeds.
     firebaseCollection.get = () => [];
-    // Make sure userShapes is set in the code.
-    return cy.wrap(processUserRegions(null, Promise.resolve(null)));
+    // Make sure userShapes is set in the code, and use our custom EarthEngine
+    // FeatureCollections.
+    return cy.wrap(initializeAndProcessUserRegions(null, Promise.resolve({
+      data: () => ({'damage-asset-path': damageCollection}),
+    })));
   });
 
   it('Add shape', () => {
@@ -323,6 +323,28 @@ describe('Unit test for ShapeData', () => {
       expect(underTest.id).to.eql('my_id');
       expect(StoredShapeData.pendingWriteCount).to.eql(0);
     });
+  });
+
+  it('Absence of damage asset tolerated', () => {
+    const records = [];
+    const popup = new StubPopup();
+    const underTest = new StoredShapeData(null, null, null, popup);
+    cy.wrap(initializeAndProcessUserRegions(
+                null, Promise.resolve({data: () => ({})})))
+        .then(() => {
+          firebaseCollection.add = recordRecord(records, {id: 'new_id'});
+          popup.notes = 'my notes';
+          return underTest.update();
+        })
+        .then(() => {
+          expect(records).to.eql([{
+            calculatedData: {damage: 'unknown', snapFraction: 0.6},
+            geometry: polygonGeometry,
+            notes: 'my notes',
+          }]);
+          expect(underTest.id).to.eql('new_id');
+          expect(StoredShapeData.pendingWriteCount).to.eql(0);
+        });
   });
 });
 
