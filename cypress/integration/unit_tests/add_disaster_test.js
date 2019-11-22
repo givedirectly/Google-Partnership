@@ -1,9 +1,10 @@
 import {gdEeStatePrefix, legacyStateDir, legacyStatePrefix} from '../../../docs/ee_paths.js';
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
-import {addDisaster, createAssetPickers, createOptionFrom, createTd, deleteDisaster, disasterData, emptyCallback, getAssetsFromEe, getCurrentLayers, onCheck, onInputBlur, onListBlur, stateAssets, updateAfterSort, withCheckbox, withColor, withInput, withList, withType, writeNewDisaster} from '../../../docs/import/add_disaster.js';
+import {addDisaster, createAssetPickers, createOptionFrom, createTd, deleteDisaster, disasterData, emptyCallback, getAssetsFromEe, getCurrentLayers, onCheck, onInputBlur, onListBlur, stateAssets, updateAfterSort, withCheckbox, withInput, withList, withType, writeNewDisaster} from '../../../docs/import/add_disaster.js';
 import * as loading from '../../../docs/loading.js';
 import {getDisaster} from '../../../docs/resources';
 import {addFirebaseHooks, loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
+import {withColor} from '../../../docs/import/color_function_util.js'
 
 const KNOWN_STATE = 'WF';
 const UNKNOWN_STATE = 'DN';
@@ -224,7 +225,7 @@ describe('Unit tests for add_disaster page', () => {
         .then((doc) => expect(doc.exists).to.be.false);
   });
 
-  it('tests color cell', () => {
+  it.only('tests color cell', () => {
     const property = 'color';
 
     const noColor = withColor(createTd(), {}, property, 0);
@@ -233,20 +234,20 @@ describe('Unit tests for add_disaster page', () => {
 
     const yellow = 'yellow';
     const singleColor =
-        withColor(createTd(), {color: {'single-color': yellow}}, property, 0);
+        withColor(createTd(), {color: {'current-style': 2, 'single-color': yellow}}, property, 0);
     expect(singleColor.children('.box').length).to.equal(1);
     expect(singleColor.children().eq(0).css('background-color'))
         .to.equal(yellow);
 
     const baseColor =
-        withColor(createTd(), {color: {'base-color': yellow}}, property, 0);
+        withColor(createTd(), {color: {'current-style': 0, 'base-color': yellow}}, property, 0);
     expect(baseColor.children('.box').length).to.equal(1);
     expect(baseColor.children().eq(0).css('background-color')).to.equal(yellow);
 
     const red = 'red';
     const discrete = withColor(
         createTd(),
-        {color: {colors: {'squash': yellow, 'tomato': red, 'pepper': red}}},
+        {color: {'current-style': 1, colors: {'squash': yellow, 'tomato': red, 'pepper': red}}},
         property, 0);
     expect(discrete.children('.box').length).to.equal(2);
     expect(discrete.children().eq(1).css('background-color')).to.equal(red);
