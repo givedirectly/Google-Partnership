@@ -246,8 +246,9 @@ function onListBlur(event, property) {
  * @return {JQuery<HTMLTableDataCellElement>}
  */
 function withList(td, layer, property) {
-  const textarea =
-      $(document.createElement('textarea')).val(layer[property].join('\n')).prop('rows', 3);
+  const textarea = $(document.createElement('textarea'))
+                       .val(layer[property].join('\n'))
+                       .prop('rows', 3);
   td.append(textarea);
   textarea.on('blur', (event) => onListBlur(event, property));
   return td;
