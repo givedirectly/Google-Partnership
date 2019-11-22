@@ -47,33 +47,37 @@ export {countDamageAndBuildings, domLoaded};
  * counts for all damage categories, and SNAP percentage and damage percentage.
  *
  * @param {ee.Feature} feature
+ * @param damage
  * @param {ee.Dictionary} buildings geoid -> # buildings
  * @return {Feature}
  */
-function countDamageAndBuildings(feature, buildings) {
-  const resources = getResources();
+function countDamageAndBuildings(feature, damage, buildings) {
   const geometry = feature.geometry();
-  const damagedBuildings =
-      ee.FeatureCollection(resources.damage).filterBounds(geometry).size();
-  const totalBuildings = buildings.get(feature.get(geoidTag));
-  const ratioBuildingsDamaged =
-      ee.Number(damagedBuildings).divide(totalBuildings);
   const snapPop = ee.Number.parse(feature.get(snapPopTag)).long();
   const totalPop = ee.Number.parse(feature.get(totalPopTag)).long();
+  const totalBuildings = buildings.get(feature.get(geoidTag));
+  const properties = ee.Dictionary()
+      .set(geoidTag, feature.get(geoidTag))
+      .set(blockGroupTag, feature.get(blockGroupTag))
+      .set(snapPopTag, ee.Number(snapPop))
+      .set(totalPopTag, ee.Number(totalPop))
+      .set(snapPercentageTag, ee.Number(snapPop).divide(totalPop))
+      // These entries can't be parsed to numbers easily because have some
+      // non-number values like "-" :(
+      .set(incomeTag, feature.get(incomeTag))
+      .set(sviTag, feature.get(sviTag))
+      .set(buildingCountTag, totalBuildings);
+  if (damage) {
+    const damagedBuildings =
+        damage.filterBounds(geometry).size();
+    properties.set(damageTag, ee.Number(damagedBuildings).divide(totalBuildings))
+  } else {
+    properties.set(damageTag, 0);
+  }
   return ee.Feature(
       geometry,
-      ee.Dictionary()
-          .set(geoidTag, feature.get(geoidTag))
-          .set(blockGroupTag, feature.get(blockGroupTag))
-          .set(snapPopTag, ee.Number(snapPop))
-          .set(totalPopTag, ee.Number(totalPop))
-          .set(snapPercentageTag, ee.Number(snapPop).divide(totalPop))
-          // These entries can't be parsed to numbers easily because have some
-          // non-number values like "-" :(
-          .set(incomeTag, feature.get(incomeTag))
-          .set(sviTag, feature.get(sviTag))
-          .set(buildingCountTag, totalBuildings)
-          .set(damageTag, ratioBuildingsDamaged));
+      properties
+          );
 }
 
 /**
@@ -265,18 +269,16 @@ function run(disasterData) {
               processing.map(addTractInfo), svi,
               ee.Filter.equals({leftField: tractTag, rightField: cdcGeoidKey}))
           .map((f) => combineWithAsset(f, sviTag, sviKey));
-  if (damage) {
-    // attach block groups to buildings and aggregate to get block group building
-    // counts
-    const buildings = createMergedFeatureCollection(states.map((state) => ee.FeatureCollection(gdEeStatePrefix + state + '/ms-buildings')));
-    const withBlockGroup =
-        buildings.map((building) => attachBlockGroups(building, blockGroups));
-    const buildingsHisto =
-        ee.Dictionary(withBlockGroup.aggregate_histogram(geoidTag));
-    // process final feature collection
-    processing = processing.map(
-        (feature) => countDamageAndBuildings(feature, buildingsHisto));
-  }
+  // attach block groups to buildings and aggregate to get block group building
+  // counts
+  const buildings = createMergedFeatureCollection(states.map((state) => ee.FeatureCollection(gdEeStatePrefix + state + '/ms-buildings')));
+  const withBlockGroup =
+      buildings.map((building) => attachBlockGroups(building, blockGroups));
+  const buildingsHisto =
+      ee.Dictionary(withBlockGroup.aggregate_histogram(geoidTag));
+  // process final feature collection
+  processing = processing.map(
+      (feature) => countDamageAndBuildings(feature, buildingsHisto, damage));
 
   const assetName = 'data-ms-as-tot';
   const scoreAssetPath = gdEePathPrefix + getDisaster() + '/' + assetName;
@@ -286,7 +288,7 @@ function run(disasterData) {
   task.start();
   $('.upload-status')
       .text('Check Code Editor console for upload progress. Task: ' + task.id);
-  joinedSnap.size().evaluate((val, failure) => {
+  processing.size().evaluate((val, failure) => {
     if (val) {
       $('.upload-status').append('\n<p>Found ' + val + ' elements');
     } else {
