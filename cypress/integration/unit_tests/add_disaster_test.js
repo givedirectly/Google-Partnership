@@ -315,13 +315,8 @@ describe('Unit tests for add_disaster page', () => {
     testSave(onCheck, property, checkbox, checks);
   }
 
-  it('tests checkbox cell check', () => {
-    checkboxTest(true);
-  });
-
-  it('tests checkbox cell uncheck', () => {
-    checkboxTest(false);
-  });
+  it('tests checkbox cell check', () => checkboxTest(true));
+  it('tests checkbox cell uncheck', () => checkboxTest(false));
 
   it('checks data updates after a sort', () => {
     setDisasterAndLayers(
