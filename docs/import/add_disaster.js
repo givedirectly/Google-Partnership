@@ -23,6 +23,8 @@ const disasters = new Map();
 // Map of state to list of known assets
 const stateAssets = new Map();
 
+const scoreAssetTypes = ['Poverty', 'Income', 'SVI', 'Damage'];
+
 // TODO: general reminder to add loading indicators for things like creating
 // new state asset folders, etc.
 
@@ -102,42 +104,69 @@ function toggleDisaster(disaster) {
  * @return {Promise<boolean>} returns true after successful write to firestore.
  */
 function initializePovertySelectors(states) {
-  let assets = [];
-  for (const state of states) {
-    if (stateAssets.get(state)) {
-      assets = assets.concat(stateAssets.get(state));
-    }
-  }
-
-  if (assets.length) {
+  $('#asset-selection-table-body').empty();
+  $('#score-asset-header-row').empty();
+  if (states.length) {
     $('#score-asset-selection').show();
   } else {
     $('#score-asset-selection').hide();
+    return;
   }
 
-  for (let i = 0; i < assets.length; i++) {
-    const asset = assets[i];
-    const name = asset.replace(/^.*(\\|\/|\:)/, '');
+  $('#score-asset-header-row')
+      .append($(document.createElement('td')).html('Score Assets'));
+  for (const state of states) {
+    $('#score-asset-header-row')
+        .append($(document.createElement('td')).html(state + ' Assets'));
+  }
+  $('#score-asset-header-row')
+      .append($(document.createElement('td')).html('Column Names'));
+
+  for (let i = 0; i < scoreAssetTypes.length; i++) {
     const row = $(document.createElement('tr')).attr({
-      id: name + '-row',
+      id: scoreAssetTypes[i] + '-row',
     });
-    row.change(() => handleScoreAssetSelection(asset, name, row));
     row.append($(document.createElement('td'))
                    .append($(document.createElement('div'))
                                .attr({
-                                 id: name + '-title',
+                                 id: scoreAssetTypes[i] + '-title',
                                })
-                               .html(asset)));
-    row.append(createRadioButtonCell(name, 'poverty'));
-    row.append(createRadioButtonCell(name, 'svi'));
-    row.append(createRadioButtonCell(name, 'income'));
-    row.append(createRadioButtonCell(name, 'none', true));
-    row.append($(document.createElement('td'))
-                   .append($(document.createElement('div')).attr({
-                     id: name + '-columns',
-                   })));
+                               .html(scoreAssetTypes[i])));
+    for (const state of states) {
+      if (stateAssets.get(state)) {
+        const assets = stateAssets.get(state);
+        row.append($(document.createElement('td'))
+                       .append(createAssetDropdown(
+                           assets, scoreAssetTypes[i], state)));
+      }
+    }
+    // TODO: Make column names selects instead.
+    const columnCell = $(document.createElement('td'));
+    columnCell.append($(document.createElement('input')).attr({
+      id: scoreAssetTypes[i] + '-column',
+      type: 'text',
+    }));
+    if (scoreAssetTypes[i] == 'Poverty') {
+      columnCell.append($(document.createElement('input')).attr({
+        id: scoreAssetTypes[i] + '-column-2',
+        type: 'text',
+      }));
+    }
+    row.append(columnCell);
     $('#asset-selection-table-body').append(row);
+    row.change(() => handleScoreAssetSelection(scoreAssetTypes[i]));
   }
+}
+
+function createAssetDropdown(assets, row, state) {
+  const select = $(document.createElement('select')).attr({
+    id: row + '-' + state,
+  });
+  select.append(createOptionFrom('None'));
+  for (let i = 0; i < assets.length; i++) {
+    select.append(createOptionFrom(assets[i]));
+  }
+  return select;
 }
 
 /**
@@ -145,25 +174,9 @@ function initializePovertySelectors(states) {
  * @param {String} asset The asset path
  * @param {String} name The name of the row
  */
-function handleScoreAssetSelection(asset, name) {
-  const selectedType = $('input[name=\'' + name + '-select\']:checked').val();
-  const columnCell = $('#' + name + '-columns');
-  columnCell.empty();
-  if (selectedType != 'none') {
-    columnCell.append($(document.createElement('input')).attr({
-      id: name + '-column',
-      type: 'text',
-    }));
-    if (selectedType == 'poverty') {
-      columnCell.append($(document.createElement('input')).attr({
-        id: name + '-column-2',
-        type: 'text',
-      }));
-    }
-  }
+function handleScoreAssetSelection(assetType) {
   // TODO: Write the asset name and type to firebase here?
-  // TODO: Add ability to write column names to firebse and make column names
-  // selects instead.
+  return;
 }
 
 /**
