@@ -1,8 +1,8 @@
 export {
   colorMap,
+  ColorStyle,
   createStyleFunction,
   LayerType,
-    ColorStyle,
 };
 
 const LayerType = {
@@ -30,7 +30,7 @@ Object.freeze(ColorStyle);
 function createStyleFunction(colorFunctionProperties) {
   const field = colorFunctionProperties['field'];
   const opacity = colorFunctionProperties['opacity'];
-  switch (colorFunctionProperties['style']) {
+  switch (colorFunctionProperties['current-style']) {
     case ColorStyle.SINGLE:
       const color = colorMap.get(colorFunctionProperties['single-color']);
       return () => color;

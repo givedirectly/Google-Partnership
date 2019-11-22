@@ -1,4 +1,4 @@
-export {setStatus, clearStatus, ILLEGAL_STATE_ERR};
+export {clearStatus, ILLEGAL_STATE_ERR, setStatus};
 
 /**
  * Utility function for setting the status div.

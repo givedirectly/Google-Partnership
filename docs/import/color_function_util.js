@@ -1,5 +1,6 @@
-import {setStatus, ILLEGAL_STATE_ERR} from './add_disaster_util.js';
 import {ColorStyle} from '../firebase_layers.js';
+
+import {ILLEGAL_STATE_ERR, setStatus} from './add_disaster_util.js';
 
 export {withColor};
 
@@ -16,7 +17,7 @@ function withColor(td, layer, property, index) {
   if (!colorFunction) {
     return td.text('N/A').addClass('na');
   }
-  switch (colorFunction['style']) {
+  switch (colorFunction['current-style']) {
     case ColorStyle.SINGLE:
       td.append(createColorBox(colorFunction['single-color']));
       break;
