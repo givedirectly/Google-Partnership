@@ -140,6 +140,11 @@ function initializePovertySelectors(states) {
   }
 }
 
+/**
+ * Handles the user selecting a type for one of the possible score assets.
+ * @param {String} asset The asset path
+ * @param {String} name The name of the row
+ */
 function handleScoreAssetSelection(asset, name) {
   const selectedType = $('input[name=\'' + name + '-select\']:checked').val();
   const columnCell = $('#' + name + '-columns');
@@ -161,6 +166,12 @@ function handleScoreAssetSelection(asset, name) {
   // selects instead.
 }
 
+/**
+ * Creates a radio button for the select score data table.
+ * @param {String} name The name of the row/base value for radio button id, etc.
+ * @param {String} value The value of the radio button
+ * @param {?boolean} opt_checked Whether to check the radio button
+ */
 function createRadioButtonCell(name, value, opt_checked) {
   return $(document.createElement('td'))
       .append($(document.createElement('input')).attr({
