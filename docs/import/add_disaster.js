@@ -77,6 +77,7 @@ function toggleDisaster(disaster) {
   let assetPickersDone = Promise.resolve();
   if (statesToFetch.length === 0) {
     createAssetPickers(states, 'asset-pickers');
+    initializePovertySelectors(states);
   } else {
     // We are already doing this inside createAssetPickers but not until
     // after the first promise completes so also do it here so lingering
@@ -107,11 +108,68 @@ function initializePovertySelectors(states) {
       assets = assets.concat(stateAssets.get(state));
     }
   }
-  const assetPickerDiv = $('#poverty-asset-picker');
-  assetPickerDiv.empty();
-  createAssetPicker(assets, assetPickerDiv, 'poverty-asset-adder');
-  $('#poverty-asset-adder').on('change', onSelectPovertyAssets);
-  // TODO: Handle clicking the select button here.
+
+  if (assets.length) {
+    $('#score-asset-selection').show();
+  } else {
+    $('#score-asset-selection').hide();
+  }
+
+  for (let i = 0; i < assets.length; i++) {
+    const asset = assets[i];
+    const name = asset.replace(/^.*(\\|\/|\:)/, '');
+    const row = $(document.createElement('tr')).attr({
+      id: name + '-row',
+    });
+    row.change(() => handleScoreAssetSelection(asset, name, row));
+    row.append($(document.createElement('td'))
+                   .append($(document.createElement('div'))
+                               .attr({
+                                 id: name + '-title',
+                               })
+                               .html(asset)));
+    row.append(createRadioButtonCell(name, 'poverty'));
+    row.append(createRadioButtonCell(name, 'svi'));
+    row.append(createRadioButtonCell(name, 'income'));
+    row.append(createRadioButtonCell(name, 'none', true));
+    row.append($(document.createElement('td'))
+                   .append($(document.createElement('div')).attr({
+                     id: name + '-columns',
+                   })));
+    $('#asset-selection-table-body').append(row);
+  }
+}
+
+function handleScoreAssetSelection(asset, name) {
+  const selectedType = $('input[name=\'' + name + '-select\']:checked').val();
+  const columnCell = $('#' + name + '-columns');
+  columnCell.empty();
+  if (selectedType != 'none') {
+    columnCell.append($(document.createElement('input')).attr({
+      id: name + '-column',
+      type: 'text',
+    }));
+    if (selectedType == 'poverty') {
+      columnCell.append($(document.createElement('input')).attr({
+        id: name + '-column-2',
+        type: 'text',
+      }));
+    }
+  }
+  // TODO: Write the asset name and type to firebase here?
+  // TODO: Add ability to write column names to firebse and make column names
+  // selects instead.
+}
+
+function createRadioButtonCell(name, value, opt_checked) {
+  return $(document.createElement('td'))
+      .append($(document.createElement('input')).attr({
+        id: name + '-' + value,
+        type: 'radio',
+        name: name + '-select',
+        value: value,
+        checked: opt_checked
+      }));
 }
 
 /**
