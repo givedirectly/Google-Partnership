@@ -1,9 +1,10 @@
 import {gdEeStatePrefix, legacyStateDir, legacyStatePrefix} from '../../../docs/ee_paths.js';
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
-import {addDisaster, createAssetPickers, createOptionFrom, createTd, deleteDisaster, disasterData, emptyCallback, getAssetsFromEe, getCurrentLayers, onCheck, onInputBlur, onListBlur, stateAssets, updateAfterSort, withCheckbox, withColor, withInput, withList, withType, writeNewDisaster} from '../../../docs/import/add_disaster.js';
+import {addDisaster, createAssetPickers, createOptionFrom, createTd, deleteDisaster, emptyCallback, getAssetsFromEe, onCheck, onInputBlur, onListBlur, stateAssets, updateAfterSort, withCheckbox, withInput, withList, withType, writeNewDisaster} from '../../../docs/import/add_disaster.js';
 import * as loading from '../../../docs/loading.js';
 import {getDisaster} from '../../../docs/resources';
 import {addFirebaseHooks, loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
+import {withColor} from '../../../import/color_function_utils.js';
 
 const KNOWN_STATE = 'WF';
 const UNKNOWN_STATE = 'DN';
