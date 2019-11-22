@@ -274,8 +274,7 @@ describe('Unit tests for add_disaster page', () => {
     setDisasterAndLayers([layer]);
 
     const property = 'flavors';
-    const flavors =
-        withList(createTd(), layer, 'flavors');
+    const flavors = withList(createTd(), layer, 'flavors');
     const list = flavors.children('textarea');
     expect(list.val()).to.equal(chocolate + '\n' + chai);
 
@@ -304,8 +303,7 @@ describe('Unit tests for add_disaster page', () => {
     setDisasterAndLayers([layer]);
 
     const property = 'displayOnLoad';
-    const unchecked =
-        withCheckbox(createTd(), layer, property);
+    const unchecked = withCheckbox(createTd(), layer, property);
     const checkbox = unchecked.children().first();
     expect(checkbox.prop('checked')).to.be.false;
 
@@ -386,7 +384,8 @@ function testSave(fxn, property, input, afterVal) {
             .doc(getDisaster())
             .get();
       })
-      .then((doc) => expect(doc.data()['layers'][0][property]).to.eql(afterVal));
+      .then(
+          (doc) => expect(doc.data()['layers'][0][property]).to.eql(afterVal));
 }
 
 /**
