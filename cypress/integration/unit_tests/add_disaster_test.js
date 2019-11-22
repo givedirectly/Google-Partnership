@@ -278,13 +278,8 @@ describe('Unit tests for add_disaster page', () => {
     const list = flavors.children('textarea');
     expect(list.val()).to.equal(chocolate + '\n' + chai);
 
-    const row = createTrs(1);
-    createAndAppend('tbody', 'tbody').append(row);
-    row[0].append(list);
     list.val(chai + '\n' + nutmeg);
-
-    testSave(
-        () => onListBlur({target: list}, property), property, [chai, nutmeg]);
+    testSave(onListBlur, property, list, [chai, nutmeg]);
   });
 
   it('tests input cell', () => {
@@ -298,12 +293,8 @@ describe('Unit tests for add_disaster page', () => {
     const input = td.children('input');
     expect(input.val()).to.equal(chocolate);
 
-    const row = createTrs(1);
-    createAndAppend('tbody', 'tbody').append(row);
-    row[0].append(input);
     input.val(chai);
-
-    testSave(() => onInputBlur({target: input}, property), property, chai);
+    testSave(onInputBlur, property, input, chai);
   });
 
   it('tests checkbox cell', () => {
@@ -315,15 +306,11 @@ describe('Unit tests for add_disaster page', () => {
     const checkbox = unchecked.children().first();
     expect(checkbox.prop('checked')).to.be.false;
 
-    const row = createTrs(1);
-    createAndAppend('tbody', 'tbody').append(row);
-    row[0].append(checkbox);
     checkbox.prop('checked', true);
-
-    testSave(() => onCheck({target: checkbox}, property), property, true);
+    testSave(onCheck, property, checkbox,true);
   });
 
-  it.only('checks data updates after a sort', () => {
+  it('checks data updates after a sort', () => {
     setDisasterAndLayers(
         [{initialIndex: 0}, {initialIndex: 1}, {initialIndex: 2}]);
 
@@ -376,12 +363,17 @@ function setDisasterAndLayers(layers) {
 
 /**
  * Function that tests the save method works.
- * @param {Function} fxn
+ * @param {Function} fxn save function
  * @param {string} property
+ * @param {Object} input DOM object save from which is pulling value
  * @param {*} afterVal
  */
-function testSave(fxn, property, afterVal) {
-  cy.wrap(fxn())
+function testSave(fxn, property, input, afterVal) {
+  const row = createTrs(1);
+  createAndAppend('tbody', 'tbody').append(row);
+  row[0].append(input);
+
+  cy.wrap(fxn({target: input}, property))
       .then(() => {
         expect(getCurrentLayers()[0][property]).to.eql(afterVal);
         expect(loadingStartedStub).to.be.calledOnce;
