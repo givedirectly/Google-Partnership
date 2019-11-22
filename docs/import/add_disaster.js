@@ -162,7 +162,7 @@ function updateAfterSort(ui) {
 }
 
 /**
- * Look up the real (not table) index of the given row.
+ * Looks up the real (not table) index of the given row.
  * @param {JQuery<HTMLTableDataCellElement>} row
  * @return {string}
  */
