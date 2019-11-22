@@ -51,6 +51,8 @@ let currentDisaster;
  * @return {Promise<firebase.firestore.QuerySnapshot>}
  */
 function enableWhenReady() {
+  populateColorFunctions();
+
   // enable (currently hidden) add disaster button now that firestore is ready.
   const addDisasterButton = $('#add-disaster-button');
   addDisasterButton.prop('disabled', false);
@@ -71,7 +73,7 @@ function enableWhenReady() {
 
     disasterPicker.on('change', () => toggleDisaster(disasterPicker.val()));
     const mostRecent = querySnapshot.docs[querySnapshot.size - 1].id;
-    disasterPicker.val(mostRecent).trigger('change');
+    disasterPicker.val('2017-harvey').trigger('change');
     toggleState(true);
   });
 }
@@ -88,6 +90,10 @@ function toggleDisaster(disaster) {
   populateLayersTable();
   // display state asset pickers
   return populateStateAssetPickers();
+}
+
+function populateColorFunctions() {
+
 }
 
 const STATE = {
@@ -252,6 +258,8 @@ function createColorBox(color) {
       .css('background-color', color);
 }
 
+import {ColorFunctionType} from '../firebase_layers.js';
+
 /**
  * Adds color function info to the given td.
  * @param {JQuery<HTMLElement>} td
@@ -262,13 +270,17 @@ function createColorBox(color) {
  */
 function withColor(td, layer, property, index) {
   const colorFunction = layer[property];
+  let type = ColorFunctionType.NONE;
   if (!colorFunction) {
     td.text('N/A').addClass('na');
   } else if (colorFunction['single-color']) {
     td.append(createColorBox(colorFunction['single-color']));
+    type = ColorFunctionType.SINGLE;
   } else if (colorFunction['base-color']) {
     td.append(createColorBox(colorFunction['base-color']));
+    type = ColorFunctionType.CONTINUOUS;
   } else if (colorFunction['colors']) {
+    type = ColorFunctionType.DISCRETE;
     const colorObject = colorFunction['colors'];
     const colorSet = new Set();
     Object.keys(colorObject).forEach((propertyValue) => {
@@ -281,6 +293,28 @@ function withColor(td, layer, property, index) {
   } else {
     setStatus(ILLEGAL_STATE_ERR + 'unrecognized color function: ' + layer);
   }
+  td.on('click', () => {
+    if (type === ColorFunctionType.NONE) {
+      return;
+    }
+    const colorFunctionDiv = $('#color-fxn-editor');
+    colorFunctionDiv.show();
+    $('.color-type-div').hide();
+    switch (type) {
+      case ColorFunctionType.SINGLE:
+        $('#single-color-radio').prop('checked', true);
+        $('#single').show();
+        break;
+      case ColorFunctionType.CONTINUOUS:
+        $('#continuous-radio').prop('checked', true);
+        $('#continuous').show();
+        break;
+      case ColorFunctionType.DISCRETE:
+        $('#discrete-radio').prop('checked', true);
+        $('#discrete').show();
+        break;
+    }
+  });
   return td;
 }
 

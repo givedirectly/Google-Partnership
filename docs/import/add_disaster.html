@@ -44,12 +44,12 @@
   <table id="layer-manager" class="table table-bordered pagin-table">
     <thead>
       <tr>
-        <th style="width:20px"></th>
-        <th style="width:200px">Layer Name</th>
-        <th style="width:400px">EE Path/URL</th>
-        <th>Type</th>
-        <th>Display on Load</th>
-        <th>Color</th>
+        <th style="max-width:20px"></th>
+        <th style="max-width:200px">Layer Name</th>
+        <th style="max-width:400px">EE Path/URL</th>
+        <th style="max-width:600px">Type</th>
+        <th style="max-width:200px">Display on Load</th>
+        <th style="max-width:60px">Color</th>
       </tr>
     </thead>
     <tbody id="tbody"></tbody>
@@ -57,6 +57,13 @@
       <div id="writeWaiter-loader"></div>
     </div>
   </table>
+  <br>
+  <div id="color-fxn-editor" class="editor" hidden="true">
+    <div id="color-radios"></div><br>
+    <div id="single" hidden="true" class="color-type-div"></div>
+    <div id="continuous" hidden="true" class="color-type-div"></div>
+    <div id="discrete" hidden="true" class="color-type-div"></div>
+  </div>
   <br>
   <div id="asset-pickers"></div>
   <p>Upload additional assets via the <a href="https://code.earthengine.google.com/" target="_blank"> code editor </a></p>

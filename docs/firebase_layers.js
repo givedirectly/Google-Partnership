@@ -2,6 +2,7 @@ export {
   colorMap,
   createStyleFunction,
   LayerType,
+  ColorFunctionType,
 };
 
 const LayerType = {
@@ -12,6 +13,14 @@ const LayerType = {
   MAP_TILES: 4,
 };
 Object.freeze(LayerType);
+
+const ColorFunctionType = {
+  SINGLE: 0,
+  CONTINUOUS: 1,
+  DISCRETE: 2,
+  NONE: 3
+};
+Object.freeze(ColorFunctionType);
 
 /**
  * Creates the style function for the given properties. Caller should cache to

@@ -4,6 +4,10 @@
   border: 1px solid black;
 }
 
+.editor {
+  border: 1px solid black;
+}
+
 table {
   border-collapse: collapse;
   table-layout: fixed;
