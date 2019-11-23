@@ -2,8 +2,8 @@ import {getCurrentLayers, updateLayersInFirestore} from './add_disaster_util.js'
 
 export {processNewFeatureLayer}
 
-const assetPath = 'users/gd/2017-harvey/path-radii';
-const layerIndex = 2;
+const assetPath = 'users/gd/2017-harvey/gd-visits';
+const layerIndex = 4;
 
 function processNewFeatureLayer() {
   const featureCollection = ee.FeatureCollection(assetPath);

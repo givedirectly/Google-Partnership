@@ -60,7 +60,7 @@ function setDiscreteColor(picker) {
 
 function setBaseColor(picker) {
   const index = getRowIndex(globalTd.parents('tr'));
-  getCurrentLayers()[index]['color-function']['base-color'] = picker.val();
+  getCurrentLayers()[index]['color-function']['color'] = picker.val();
   updateLayersInFirestore();
   globalTd.empty();
   globalTd.append(createColorBox(picker.val()));
@@ -68,7 +68,7 @@ function setBaseColor(picker) {
 
 function setSingleColor(picker) {
   const index = getRowIndex(globalTd.parents('tr'));
-  getCurrentLayers()[index]['color-function']['single-color'] = picker.val();
+  getCurrentLayers()[index]['color-function']['color'] = picker.val();
   updateLayersInFirestore();
   globalTd.empty();
   globalTd.append(createColorBox(picker.val()));
@@ -134,10 +134,10 @@ function withColor(td, layer, property, index) {
   }
   switch (colorFunction['current-style']) {
     case ColorStyle.SINGLE:
-      td.append(createColorBox(colorFunction['single-color']));
+      td.append(createColorBox(colorFunction['color']));
       break;
     case ColorStyle.CONTINUOUS:
-      td.append(createColorBox(colorFunction['base-color']));
+      td.append(createColorBox(colorFunction['color']));
       break;
     case ColorStyle.DISCRETE:
       createColorBoxesForDiscrete(colorFunction, td);
@@ -147,12 +147,17 @@ function withColor(td, layer, property, index) {
   }
   td.on(
       'click',
-      () => onClick(td, colorFunction['current-style'], colorFunction));
+      () => onClick(td, colorFunction['current-style']));
   return td;
 }
 
 function createColorBoxesForDiscrete(colorFunction, td) {
   const colorObject = colorFunction['colors'];
+  // coming from a place that has never had discrete before
+  if (!colorObject) {
+    td.append(createColorBox(colorFunction['color']));
+    return;
+  }
   const colorSet = new Set();
   Object.keys(colorObject).forEach((propertyValue) => {
     const color = colorObject[propertyValue];
@@ -163,7 +168,7 @@ function createColorBoxesForDiscrete(colorFunction, td) {
   });
 }
 
-function onClick(td, type, colorFunction) {
+function onClick(td, type) {
   if ($(td).hasClass('na')) {
     return;
   }
@@ -177,7 +182,8 @@ function onClick(td, type, colorFunction) {
     return;
   }
   globalTd = td;
-  switchSchema(type);
+  $('#' + colorStyleTypeStrings.get(type) + '-radio').prop('checked', true).trigger('change');
+  // switchSchema(type);
 }
 
 function switchSchema(type) {
@@ -187,14 +193,14 @@ function switchSchema(type) {
   switch (type) {
     case ColorStyle.SINGLE:
       $('#single-color-radio').prop('checked', true);
-      $('#single-color-picker').val(colorFunction['single-color']);
+      $('#single-color-picker').val(colorFunction['color']);
       globalTd.empty();
       globalTd.append(createColorBox( $('#single-color-picker').val()));
       $('#single').show();
       break;
     case ColorStyle.CONTINUOUS:
       $('#continuous-radio').prop('checked', true);
-      $('#continuous-picker').val(colorFunction['base-color']);
+      $('#continuous-picker').val(colorFunction['color']);
       setPropertyPicker($('#continuous-property-picker'), globalTd);
       globalTd.empty();
       globalTd.append(createColorBox( $('#continuous-picker').val()));
@@ -233,10 +239,12 @@ function setDiscreteColorPickers(td) {
   for (const value of values) {
     const li = $(document.createElement('li'));
     li.append($(document.createElement('label')).text(value + ': '));
+    // maybe always initialize color array?
+    const color = getCurrentLayers()[index]['color-function']['colors'] ? getCurrentLayers()[index]['color-function']['colors'][value] : getCurrentLayers()[index]['color-function']['color'];
     const colorPicker =
         createColorPicker()
-            .val(getCurrentLayers()[index]['color-function']['colors'][value])
             .on('change', (event) => setDiscreteColor($(event.target)))
+            .val(color)
             .data('value', value);
     li.append(colorPicker);
     asColorPickers.push(li);
