@@ -13,8 +13,8 @@ export {
   onUpdate,
   setCurrentDisaster,
   setStatus,
-  updateLayersInFirestore
-}
+  updateLayersInFirestore,
+};
 
 // A map of disaster names to data. This pulls once on firebase
 // authentication and then makes local updates afterwards so we don't need to
