@@ -19,10 +19,10 @@ function withColor(td, layer, property, index) {
   }
   switch (colorFunction['current-style']) {
     case ColorStyle.SINGLE:
-      td.append(createColorBox(colorFunction['single-color']));
+      td.append(createColorBox(colorFunction['color']));
       break;
     case ColorStyle.CONTINUOUS:
-      td.append(createColorBox(colorFunction['base-color']));
+      td.append(createColorBox(colorFunction['color']));
       break;
     case ColorStyle.DISCRETE:
       const colorObject = colorFunction['colors'];
