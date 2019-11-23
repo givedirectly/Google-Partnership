@@ -234,14 +234,14 @@ describe('Unit tests for add_disaster page', () => {
 
     const yellow = 'yellow';
     const singleColor = withColor(
-        createTd(), {color: {'current-style': 2, 'single-color': yellow}},
+        createTd(), {color: {'current-style': 2, 'color': yellow}},
         property, 0);
     expect(singleColor.children('.box').length).to.equal(1);
     expect(singleColor.children().eq(0).css('background-color'))
         .to.equal(yellow);
 
     const baseColor = withColor(
-        createTd(), {color: {'current-style': 0, 'base-color': yellow}},
+        createTd(), {color: {'current-style': 0, 'color': yellow}},
         property, 0);
     expect(baseColor.children('.box').length).to.equal(1);
     expect(baseColor.children().eq(0).css('background-color')).to.equal(yellow);

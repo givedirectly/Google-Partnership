@@ -32,13 +32,13 @@ function createStyleFunction(colorFunctionProperties) {
   const opacity = colorFunctionProperties['opacity'];
   switch (colorFunctionProperties['current-style']) {
     case ColorStyle.SINGLE:
-      const color = colorMap.get(colorFunctionProperties['single-color']);
+      const color = colorMap.get(colorFunctionProperties['color']);
       return () => color;
     case ColorStyle.CONTINUOUS:
       return createContinuousFunction(
           field, opacity, colorFunctionProperties['min'],
           colorFunctionProperties['max'],
-          colorFunctionProperties['base-color']);
+          colorFunctionProperties['color']);
     case ColorStyle.DISCRETE:
       return createDiscreteFunction(
           field, opacity, colorFunctionProperties['colors']);

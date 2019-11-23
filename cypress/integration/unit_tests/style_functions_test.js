@@ -23,7 +23,7 @@ describe('Unit test for generating style functions', () => {
     const fxn = createStyleFunction({
       'current-style': 0,
       'field': 'oranges',
-      'base-color': 'orange',
+      'color': 'orange',
       'opacity': 83,
       'min': 14,
       'max': 10005,
@@ -40,7 +40,7 @@ describe('Unit test for generating style functions', () => {
   it('calculates a single-color function', () => {
     const fxn = createStyleFunction({
       'current-style': 2,
-      'single-color': 'blue',
+      'color': 'blue',
       'opacity': 83,
     });
     const trueBlue = fxn({});
