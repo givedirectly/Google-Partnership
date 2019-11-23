@@ -26,7 +26,7 @@ We have three types of coloring schemes: continuous, discrete, and single color.
 
 **continuous:**
 * current-style `{enum}`: set to 0
-* base-color `{string}`: from known colors
+* color `{string}`: from set of known colors
 * field `{string}`: name of property we're using to calculate color
 * max `{number}`: max value of field
 * min `{number}`: min value of field
@@ -40,7 +40,7 @@ We have three types of coloring schemes: continuous, discrete, and single color.
 
 **single-color:**
 * current-style `{enum}`: set to 2
-* single-color `{string}`: from set of known colors
+* color `{string}`: from set of known colors
 * opacity `{number}`
 
 Note - all `color-fxn` objects have the opacity field. 
