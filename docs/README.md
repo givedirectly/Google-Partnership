@@ -26,7 +26,7 @@ We have three types of coloring schemes: continuous, discrete, and single color.
 
 **continuous:**
 * current-style `{enum}`: set to 0
-* color `{string}`: from known colors
+* color `{string}`: from set of known colors
 * field `{string}`: name of property we're using to calculate color
 * max `{number}`: max value of field
 * min `{number}`: min value of field
