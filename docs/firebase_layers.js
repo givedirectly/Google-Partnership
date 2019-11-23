@@ -1,8 +1,8 @@
 export {
+  ColorFunctionType,
   colorMap,
   createStyleFunction,
   LayerType,
-  ColorFunctionType,
 };
 
 const LayerType = {

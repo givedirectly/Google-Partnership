@@ -1,5 +1,6 @@
 import {ColorFunctionType, colorMap} from '../firebase_layers.js';
-import {onUpdate, getRowIndex, getCurrentLayers, updateLayersInFirestore} from './add_disaster_util.js';
+
+import {getCurrentLayers, getRowIndex, ILLEGAL_STATE_ERR, setStatus, updateLayersInFirestore} from './add_disaster_util.js';
 
 export {populateColorFunctions, withColor};
 
@@ -23,15 +24,41 @@ function populateColorFunctions() {
   colorFunctionDiv.prepend(createRadioFor('continuous'));
 
   const singleColorPicker = createColorPicker('single-color-picker');
-  singleColorPicker.on('change', (event) => singleColorOnChange($(event.item)));
-  $('#single').append(createLabelFor(singleColorPicker, 'color: '), singleColorPicker);
+  singleColorPicker.on('change', () => setSingleColor(singleColorPicker));
+  $('#single').append(
+      createLabelFor(singleColorPicker, 'color: '), singleColorPicker);
 
   const continuousPicker = createColorPicker('continuous-picker');
-  continuousPicker.on('change', (event) => continousOnChange($(event.item)));
-
+  continuousPicker.on('change', () => setBaseColor(continuousPicker));
+  const propertyPicker = $(document.createElement('select'))
+                             .prop('id', 'continuous-property-picker');
+  propertyPicker.on('change', () => setProperty(propertyPicker));
+  $('#continuous')
+      .append(
+          createLabelFor(continuousPicker, 'base color: '), continuousPicker,
+          getBreak(), createLabelFor(propertyPicker, 'property: '),
+          propertyPicker);
 }
 
-function singleColorOnChange(picker) {
+function getBreak() {
+  return $(document.createElement('br'));
+}
+
+function setProperty(picker) {
+  const index = getRowIndex(globalTd.parents('tr'));
+  getCurrentLayers()[index]['color-function']['field'] = picker.val();
+  updateLayersInFirestore();
+}
+
+function setBaseColor(picker) {
+  const index = getRowIndex(globalTd.parents('tr'));
+  getCurrentLayers()[index]['color-function']['base-color'] = picker.val();
+  updateLayersInFirestore();
+  globalTd.empty();
+  globalTd.append(createColorBox(picker.val()));
+}
+
+function setSingleColor(picker) {
   const index = getRowIndex(globalTd.parents('tr'));
   getCurrentLayers()[index]['color-function']['single-color'] = picker.val();
   updateLayersInFirestore();
@@ -100,8 +127,8 @@ function createRadioFor(colorType) {
     value: colorType,
   }));
   buttonAndLabel.push($(document.createElement('label'))
-      .prop('for', colorType + 'radio')
-      .text(colorType));
+                          .prop('for', colorType + 'radio')
+                          .text(colorType));
   buttonAndLabel.push($(document.createElement('span')).text('  '));
   return buttonAndLabel;
 }
@@ -111,20 +138,26 @@ function onClick(td, type, colorFunction) {
     return;
   }
   const colorFunctionDiv = $('#color-fxn-editor');
+  if (colorFunctionDiv.is(':visible') && td === globalTd) {
+    colorFunctionDiv.hide();
+    return;
+  }
   colorFunctionDiv.show();
   if (td === globalTd) {
     return;
   }
+  globalTd = td;
   $('.color-type-div').hide();
   switch (type) {
     case ColorFunctionType.SINGLE:
       $('#single-color-radio').prop('checked', true);
-      $('#single').show();
-      globalTd = td;
       $('#single-color-picker').val(colorFunction['single-color']);
+      $('#single').show();
       break;
     case ColorFunctionType.CONTINUOUS:
       $('#continuous-radio').prop('checked', true);
+      $('#continuous-picker').val(colorFunction['base-color']);
+      $('#continuous-property-picker').empty().append(getProperties(td));
       $('#continuous').show();
       break;
     case ColorFunctionType.DISCRETE:
@@ -133,3 +166,16 @@ function onClick(td, type, colorFunction) {
       break;
   }
 }
+
+// TODO: figure out if we can have the map of property -> range
+function getProperties(td) {
+  const index = getRowIndex(td.parents('tr'));
+  const properties = getCurrentLayers()[index]['color-function']['fields'];
+  const asOptions = [];
+  for (const property of properties) {
+    asOptions.push(
+        $(document.createElement('option')).val(property).text(property));
+  }
+  return asOptions;
+}
+

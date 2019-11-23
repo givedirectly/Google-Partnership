@@ -1,9 +1,20 @@
-import {getDisaster} from '../resources.js';
-import {addLoadingElement, loadingElementFinished} from '../loading.js';
 import {writeWaiterId} from '../dom_constants.js';
 import {getFirestoreRoot} from '../firestore_document.js';
+import {addLoadingElement, loadingElementFinished} from '../loading.js';
+import {getDisaster} from '../resources.js';
 
-export {onUpdate, setStatus, clearStatus, getRowIndex, getCurrentLayers, getCurrentData, updateLayersInFirestore, disasterData, setCurrentDisaster}
+export {
+  clearStatus,
+  disasterData,
+  getCurrentData,
+  getCurrentLayers,
+  getRowIndex,
+  ILLEGAL_STATE_ERR,
+  onUpdate,
+  setCurrentDisaster,
+  setStatus,
+  updateLayersInFirestore
+}
 
 // A map of disaster names to data. This pulls once on firebase
 // authentication and then makes local updates afterwards so we don't need to
@@ -117,3 +128,6 @@ function setStatus(text) {
 function clearStatus() {
   $('#status').hide();
 }
+
+const ILLEGAL_STATE_ERR =
+    'Internal Error: contact developer with the following information: ';

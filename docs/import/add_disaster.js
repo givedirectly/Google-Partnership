@@ -1,8 +1,9 @@
 import {eeStatePrefixLength, legacyStateDir} from '../ee_paths.js';
-import {LayerType, ColorFunctionType} from '../firebase_layers.js';
+import {ColorFunctionType, LayerType} from '../firebase_layers.js';
 import {disasterCollectionReference, getDisasters} from '../firestore_document.js';
-import {withColor, populateColorFunctions} from './color_function_util.js'
-import {onUpdate, setStatus, clearStatus, getRowIndex, disasterData, getCurrentData, getCurrentLayers, updateLayersInFirestore, setCurrentDisaster} from './add_disaster_util.js';
+
+import {clearStatus, disasterData, getCurrentData, getCurrentLayers, getRowIndex, ILLEGAL_STATE_ERR, onUpdate, setCurrentDisaster, setStatus, updateLayersInFirestore} from './add_disaster_util.js';
+import {populateColorFunctions, withColor} from './color_function_util.js'
 
 export {enableWhenReady, toggleState, updateAfterSort};
 // Visible for testing
@@ -499,7 +500,3 @@ function createOptionFrom(innerTextAndValue) {
       .val(innerTextAndValue)
       .prop('id', innerTextAndValue);
 }
-
-
-const ILLEGAL_STATE_ERR =
-    'Internal Error: contact developer with the following information: ';
