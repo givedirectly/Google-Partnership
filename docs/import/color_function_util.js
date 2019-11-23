@@ -1,5 +1,4 @@
-import {ColorFunctionType, colorMap} from '../firebase_layers.js';
-
+import {colorMap, ColorStyle} from '../firebase_layers.js';
 import {getCurrentLayers, getRowIndex, ILLEGAL_STATE_ERR, setStatus, updateLayersInFirestore} from './add_disaster_util.js';
 
 export {populateColorFunctions, withColor};
@@ -91,30 +90,31 @@ function createColorPicker(id) {
  */
 function withColor(td, layer, property, index) {
   const colorFunction = layer[property];
-  let type = ColorFunctionType.NONE;
   if (!colorFunction) {
-    td.text('N/A').addClass('na');
-  } else if (colorFunction['single-color']) {
-    td.append(createColorBox(colorFunction['single-color']));
-    type = ColorFunctionType.SINGLE;
-  } else if (colorFunction['base-color']) {
-    td.append(createColorBox(colorFunction['base-color']));
-    type = ColorFunctionType.CONTINUOUS;
-  } else if (colorFunction['colors']) {
-    type = ColorFunctionType.DISCRETE;
-    const colorObject = colorFunction['colors'];
-    const colorSet = new Set();
-    Object.keys(colorObject).forEach((propertyValue) => {
-      const color = colorObject[propertyValue];
-      if (!colorSet.has(color)) {
-        colorSet.add(color);
-        td.append(createColorBox(colorObject[propertyValue]));
-      }
-    });
-  } else {
-    setStatus(ILLEGAL_STATE_ERR + 'unrecognized color function: ' + layer);
+    return td.text('N/A').addClass('na');
   }
-  td.on('click', () => onClick(td, type, colorFunction));
+  switch (colorFunction['current-style']) {
+    case ColorStyle.SINGLE:
+      td.append(createColorBox(colorFunction['single-color']));
+      break;
+    case ColorStyle.CONTINUOUS:
+      td.append(createColorBox(colorFunction['base-color']));
+      break;
+    case ColorStyle.DISCRETE:
+      const colorObject = colorFunction['colors'];
+      const colorSet = new Set();
+      Object.keys(colorObject).forEach((propertyValue) => {
+        const color = colorObject[propertyValue];
+        if (!colorSet.has(color)) {
+          colorSet.add(color);
+          td.append(createColorBox(colorObject[propertyValue]));
+        }
+      });
+      break;
+    default:
+      setStatus(ILLEGAL_STATE_ERR + 'unrecognized color function: ' + layer);
+  }
+  td.on('click', () => onClick(td, colorFunction['current-style'], colorFunction));
   return td;
 }
 
@@ -134,7 +134,7 @@ function createRadioFor(colorType) {
 }
 
 function onClick(td, type, colorFunction) {
-  if (type === ColorFunctionType.NONE) {
+  if ($(td).hasClass('na')) {
     return;
   }
   const colorFunctionDiv = $('#color-fxn-editor');
@@ -149,18 +149,18 @@ function onClick(td, type, colorFunction) {
   globalTd = td;
   $('.color-type-div').hide();
   switch (type) {
-    case ColorFunctionType.SINGLE:
+    case ColorStyle.SINGLE:
       $('#single-color-radio').prop('checked', true);
       $('#single-color-picker').val(colorFunction['single-color']);
       $('#single').show();
       break;
-    case ColorFunctionType.CONTINUOUS:
+    case ColorStyle.CONTINUOUS:
       $('#continuous-radio').prop('checked', true);
       $('#continuous-picker').val(colorFunction['base-color']);
       $('#continuous-property-picker').empty().append(getProperties(td));
       $('#continuous').show();
       break;
-    case ColorFunctionType.DISCRETE:
+    case ColorStyle.DISCRETE:
       $('#discrete-radio').prop('checked', true);
       $('#discrete').show();
       break;
@@ -178,4 +178,3 @@ function getProperties(td) {
   }
   return asOptions;
 }
-
