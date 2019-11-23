@@ -114,7 +114,9 @@ function withColor(td, layer, property, index) {
     default:
       setStatus(ILLEGAL_STATE_ERR + 'unrecognized color function: ' + layer);
   }
-  td.on('click', () => onClick(td, colorFunction['current-style'], colorFunction));
+  td.on(
+      'click',
+      () => onClick(td, colorFunction['current-style'], colorFunction));
   return td;
 }
 
