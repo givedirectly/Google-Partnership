@@ -51,8 +51,7 @@ function setProperty(picker) {
 function setDiscreteColor(picker) {
   const colorFunction = getColorFunction();
   const propertyValue = picker.data('value');
-  colorFunction['colors'][propertyValue] =
-      picker.val();
+  colorFunction['colors'][propertyValue] = picker.val();
   updateLayersInFirestore();
   populateColorTd(true);
 }
