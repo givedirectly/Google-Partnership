@@ -12,12 +12,12 @@ function populateColorFunctions() {
   colorFunctionDiv.prepend(createRadioFor(ColorStyle.CONTINUOUS));
 
   const singleColorPicker = createColorPicker('single-color-picker');
-  singleColorPicker.on('change', () => setSingleColor(singleColorPicker));
+  singleColorPicker.on('change', () => setColor(singleColorPicker));
   $('#single').append(
       createLabelFor(singleColorPicker, 'color: '), singleColorPicker);
 
   const continuousPicker = createColorPicker('continuous-picker');
-  continuousPicker.on('change', () => setBaseColor(continuousPicker));
+  continuousPicker.on('change', () => setColor(continuousPicker));
   const continuousPropertyPicker =
       $(document.createElement('select'))
           .prop('id', 'continuous-property-picker');
@@ -33,7 +33,7 @@ function populateColorFunctions() {
                                      .prop('id', 'discrete-property-picker');
   discretePropertyPicker.on('change', () => {
     setProperty(discretePropertyPicker);
-    setDiscreteColorPickers(globalTd);
+    setDiscreteColorPickers();
   });
   const discreteColorPickers =
       $(document.createElement('ul')).prop('id', 'discrete-color-pickers');
@@ -44,36 +44,33 @@ function populateColorFunctions() {
 }
 
 function setProperty(picker) {
-  const index = getRowIndex(globalTd.parents('tr'));
-  getCurrentLayers()[index]['color-function']['field'] = picker.val();
+  getColorFunction()['field'] = picker.val();
   updateLayersInFirestore();
 }
 
 function setDiscreteColor(picker) {
-  const index = getRowIndex(globalTd.parents('tr'));
+  const colorFunction = getColorFunction();
   const propertyValue = picker.data('value');
-  getCurrentLayers()[index]['color-function']['colors'][propertyValue] =
+  colorFunction['colors'][propertyValue] =
       picker.val();
   updateLayersInFirestore();
-  globalTd.empty();
-  createColorBoxesForDiscrete(
-      getCurrentLayers()[index]['color-function'], globalTd);
+  populateColorTd(true);
 }
 
-function setBaseColor(picker) {
-  const index = getRowIndex(globalTd.parents('tr'));
-  getCurrentLayers()[index]['color-function']['color'] = picker.val();
+function setColor(picker) {
+  getColorFunction()['color'] = picker.val();
   updateLayersInFirestore();
-  globalTd.empty();
-  globalTd.append(createColorBox(picker.val()));
+  populateColorTd(false);
 }
 
-function setSingleColor(picker) {
-  const index = getRowIndex(globalTd.parents('tr'));
-  getCurrentLayers()[index]['color-function']['color'] = picker.val();
-  updateLayersInFirestore();
+function populateColorTd(discrete) {
+  const colorFunction = getColorFunction();
   globalTd.empty();
-  globalTd.append(createColorBox(picker.val()));
+  if (discrete) {
+    createColorBoxesForDiscrete(colorFunction, globalTd);
+  } else {
+    globalTd.append(createColorBox(colorFunction['color']));
+  }
 }
 
 function createColorPicker(id) {
@@ -120,8 +117,6 @@ function createLabelFor(element, text) {
 function getBreak() {
   return $(document.createElement('br'));
 }
-
-///////////////////////////////////////////////////////////
 
 /**
  * Adds color function info to the given td.
@@ -187,44 +182,36 @@ function onClick(td, type) {
   $('#' + colorStyleTypeStrings.get(type) + '-radio')
       .prop('checked', true)
       .trigger('change');
-  // switchSchema(type);
 }
 
 function switchSchema(type) {
-  const index = getRowIndex(globalTd.parents('tr'));
-  const colorFunction = getCurrentLayers()[index]['color-function'];
+  const colorFunction = getColorFunction();
   $('.color-type-div').hide();
   switch (type) {
     case ColorStyle.SINGLE:
       $('#single-color-radio').prop('checked', true);
       $('#single-color-picker').val(colorFunction['color']);
-      globalTd.empty();
-      globalTd.append(createColorBox($('#single-color-picker').val()));
       $('#single').show();
       break;
     case ColorStyle.CONTINUOUS:
       $('#continuous-radio').prop('checked', true);
       $('#continuous-picker').val(colorFunction['color']);
-      setPropertyPicker($('#continuous-property-picker'), globalTd);
-      globalTd.empty();
-      globalTd.append(createColorBox($('#continuous-picker').val()));
+      setPropertyPicker($('#continuous-property-picker'));
       $('#continuous').show();
       break;
     case ColorStyle.DISCRETE:
       $('#discrete-radio').prop('checked', true);
-      setPropertyPicker($('#discrete-property-picker'), globalTd);
-      setDiscreteColorPickers(globalTd);
-      globalTd.empty();
-      createColorBoxesForDiscrete(colorFunction, globalTd);
+      setPropertyPicker($('#discrete-property-picker'));
+      setDiscreteColorPickers();
       $('#discrete').show();
       break;
   }
+  populateColorTd(type === ColorStyle.DISCRETE);
 }
 
-function setPropertyPicker(picker, td) {
+function setPropertyPicker(picker) {
   picker.empty();
-  const index = getRowIndex(td.parents('tr'));
-  const colorFunction = getCurrentLayers()[index]['color-function'];
+  const colorFunction = getColorFunction();
   const properties = colorFunction['columns'];
   const asOptions = [];
   Object.keys(properties).forEach((key) => {
@@ -233,20 +220,19 @@ function setPropertyPicker(picker, td) {
   picker.append(asOptions).val(colorFunction['field']);
 }
 
-function setDiscreteColorPickers(td) {
+function setDiscreteColorPickers() {
   const pickerList = $('#discrete-color-pickers').empty();
-  const index = getRowIndex(td.parents('tr'));
+  const colorFunction = getColorFunction();
   const values =
-      getCurrentLayers()[index]['color-function']['columns'][$('#discrete-property-picker')
-                                                                 .val()]['values'];
+      colorFunction['columns'][$('#discrete-property-picker').val()]['values'];
   const asColorPickers = [];
   for (const value of values) {
     const li = $(document.createElement('li'));
     li.append($(document.createElement('label')).text(value + ': '));
     // maybe always initialize color array?
-    const color = getCurrentLayers()[index]['color-function']['colors'] ?
-        getCurrentLayers()[index]['color-function']['colors'][value] :
-        getCurrentLayers()[index]['color-function']['color'];
+    const color = getColorFunction()['colors'] ?
+        colorFunction['colors'][value] :
+        colorFunction['color'];
     const colorPicker =
         createColorPicker()
             .on('change', (event) => setDiscreteColor($(event.target)))
@@ -267,4 +253,9 @@ function createColorBox(color) {
   return $(document.createElement('div'))
       .addClass('box')
       .css('background-color', color);
+}
+
+function getColorFunction() {
+  const index = getRowIndex(globalTd.parents('tr'));
+  return getCurrentLayers()[index]['color-function'];
 }
