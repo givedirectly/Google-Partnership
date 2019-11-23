@@ -52,10 +52,12 @@ function setProperty(picker) {
 function setDiscreteColor(picker) {
   const index = getRowIndex(globalTd.parents('tr'));
   const propertyValue = picker.data('value');
-  getCurrentLayers()[index]['color-function']['colors'][propertyValue] = picker.val();
+  getCurrentLayers()[index]['color-function']['colors'][propertyValue] =
+      picker.val();
   updateLayersInFirestore();
   globalTd.empty();
-  createColorBoxesForDiscrete(getCurrentLayers()[index]['color-function'], globalTd);
+  createColorBoxesForDiscrete(
+      getCurrentLayers()[index]['color-function'], globalTd);
 }
 
 function setBaseColor(picker) {
@@ -92,17 +94,19 @@ for (const t in ColorStyle) {
 
 function createRadioFor(colorType) {
   const buttonAndLabel = [];
-  buttonAndLabel.push($(document.createElement('input')).attr({
-    name: 'color-type',
-    type: 'radio',
-    id: colorStyleTypeStrings.get(colorType) + '-radio',
-    value: colorType,
-  }).on('change', () => {
-    switchSchema(colorType);
-  }));
+  buttonAndLabel.push($(document.createElement('input'))
+                          .attr({
+                            name: 'color-type',
+                            type: 'radio',
+                            id: colorStyleTypeStrings.get(colorType) + '-radio',
+                            value: colorType,
+                          })
+                          .on('change', () => {
+                            switchSchema(colorType);
+                          }));
   buttonAndLabel.push($(document.createElement('label'))
-      .prop('for', colorType + 'radio')
-      .text(colorStyleTypeStrings.get(colorType)));
+                          .prop('for', colorType + 'radio')
+                          .text(colorStyleTypeStrings.get(colorType)));
   buttonAndLabel.push($(document.createElement('span')).text('  '));
   return buttonAndLabel;
 }
@@ -145,9 +149,7 @@ function withColor(td, layer, property, index) {
     default:
       setStatus(ILLEGAL_STATE_ERR + 'unrecognized color function: ' + layer);
   }
-  td.on(
-      'click',
-      () => onClick(td, colorFunction['current-style']));
+  td.on('click', () => onClick(td, colorFunction['current-style']));
   return td;
 }
 
@@ -182,7 +184,9 @@ function onClick(td, type) {
     return;
   }
   globalTd = td;
-  $('#' + colorStyleTypeStrings.get(type) + '-radio').prop('checked', true).trigger('change');
+  $('#' + colorStyleTypeStrings.get(type) + '-radio')
+      .prop('checked', true)
+      .trigger('change');
   // switchSchema(type);
 }
 
@@ -195,7 +199,7 @@ function switchSchema(type) {
       $('#single-color-radio').prop('checked', true);
       $('#single-color-picker').val(colorFunction['color']);
       globalTd.empty();
-      globalTd.append(createColorBox( $('#single-color-picker').val()));
+      globalTd.append(createColorBox($('#single-color-picker').val()));
       $('#single').show();
       break;
     case ColorStyle.CONTINUOUS:
@@ -203,7 +207,7 @@ function switchSchema(type) {
       $('#continuous-picker').val(colorFunction['color']);
       setPropertyPicker($('#continuous-property-picker'), globalTd);
       globalTd.empty();
-      globalTd.append(createColorBox( $('#continuous-picker').val()));
+      globalTd.append(createColorBox($('#continuous-picker').val()));
       $('#continuous').show();
       break;
     case ColorStyle.DISCRETE:
@@ -240,7 +244,9 @@ function setDiscreteColorPickers(td) {
     const li = $(document.createElement('li'));
     li.append($(document.createElement('label')).text(value + ': '));
     // maybe always initialize color array?
-    const color = getCurrentLayers()[index]['color-function']['colors'] ? getCurrentLayers()[index]['color-function']['colors'][value] : getCurrentLayers()[index]['color-function']['color'];
+    const color = getCurrentLayers()[index]['color-function']['colors'] ?
+        getCurrentLayers()[index]['color-function']['colors'][value] :
+        getCurrentLayers()[index]['color-function']['color'];
     const colorPicker =
         createColorPicker()
             .on('change', (event) => setDiscreteColor($(event.target)))
