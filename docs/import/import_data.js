@@ -266,8 +266,8 @@ function run(disasterData) {
     processing = processing.map((f) => combineWithAsset(f, sviTag, sviKey));
 
     // Get building count by block group.
-    const buildingsHisto =
-        computeBuildingsHisto(mapBoundsRectangle, buildingPath, state, stateGroups);
+    const buildingsHisto = computeBuildingsHisto(
+        mapBoundsRectangle, buildingPath, state, stateGroups);
 
     // Create final feature collection.
     processing = processing.map(
@@ -372,9 +372,10 @@ function calculateDamage(assetData) {
  * @param {ee.FeatureCollection} stateGroups Collection with block groups
  * @return {ee.Dictionary} Number of buildings per block group
  */
-function computeBuildingsHisto(mapBoundsRectangle, buildingPath, state, stateGroups) {
-  const buildings = ee.FeatureCollection(buildingPath)
-      .filterBounds(mapBoundsRectangle);
+function computeBuildingsHisto(
+    mapBoundsRectangle, buildingPath, state, stateGroups) {
+  const buildings =
+      ee.FeatureCollection(buildingPath).filterBounds(mapBoundsRectangle);
   const withBlockGroup =
       ee.Join.saveFirst('bg')
           .apply(
