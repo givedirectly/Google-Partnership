@@ -257,7 +257,7 @@ const damageError = {
  * Calculates damage if there is a damage asset, or simply writes the
  * user-provided bounds to Firestore if not.
  * @param {Object} assetData
- * @returns {{damage: ?ee.FeatureCollection, mapBoundsRectangle:
+ * @return {{damage: ?ee.FeatureCollection, mapBoundsRectangle:
  *     ee.Geometry.Rectangle}|{damage: null, mapBoundsRectangle: null}} Returns
  *     the damage asset (if present) and the rectangle bounding the damage, or
  *     both null if an error occurs
@@ -320,7 +320,7 @@ function calculateDamage(assetData) {
  * @param {ee.Geometry.Rectangle} mapBoundsRectangle Area we are concerned with
  * @param {string} state
  * @param {ee.FeatureCollection} stateGroups Collection with block groups
- * @returns {ee.Dictionary} Number of buildings per block group
+ * @return {ee.Dictionary} Number of buildings per block group
  */
 function computeBuildingsHisto(mapBoundsRectangle, state, stateGroups) {
   const buildings = ee.FeatureCollection( gdEePathPrefix + 'buildings-' + state)
@@ -337,7 +337,7 @@ function computeBuildingsHisto(mapBoundsRectangle, state, stateGroups) {
 /**
  * Displays error to the user coming from incomplete asset entry.
  * @param {string} str Fragment of error message
- * @returns {boolean} Return value can be ignored, but is present so that
+ * @return {boolean} Return value can be ignored, but is present so that
  *     callers can write "return missingAssetError" and save a line
  */
 function missingAssetError(str) {
@@ -362,7 +362,7 @@ function formatGeoNumbers(latLngBounds) {
 /**
  * Formats a LatLng for display.
  * @param {{lat: number, lng: number}} latLng
- * @returns {string} numbers rounded to 2 digits. https://xkcd.com/2170/.
+ * @return {string} numbers rounded to 2 digits. https://xkcd.com/2170/.
  */
 function formatLatLng(latLng) {
   return '(' + latLng.lat.toFixed(2) + ', ' + latLng.lng.toFixed(2) + ')';
@@ -372,7 +372,7 @@ function formatLatLng(latLng) {
  * Makes a LatLng-style object from the given string.
  * @param {string} str Comma-separated string of the form "lat, lng", which is
  *     what Google Maps provides pretty easily
- * @returns {{lng: *, lat: *}}
+ * @return {{lng: *, lat: *}}
  */
 function makeLatLngFromString(str) {
   const elts = str.split(/ *, */).map(Number);
@@ -386,7 +386,7 @@ function makeLatLngFromString(str) {
  * @param {ee.FeatureCollection|string} collection2
  * @param {string} key1
  * @param {string} key2
- * @returns {ee.FeatureCollection}
+ * @return {ee.FeatureCollection}
  */
 function innerJoin(collection1, collection2, key1, key2) {
   return ee.Join.inner().apply(
