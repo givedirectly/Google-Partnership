@@ -148,36 +148,61 @@ function run(disasterData) {
     return missingAssetError('affected states');
   }
   const assetData = disasterData['asset_data'];
-  if (!assetData) return missingAssetError('SNAP/damage asset paths');
+  if (!assetData) {
+    return missingAssetError('SNAP/damage asset paths');
+  }
   const blockData = assetData['block_data'];
-  if (!blockData) return missingAssetError('Census block geometries');
+  if (!blockData) {
+    return missingAssetError('Census block geometries');
+  }
   const censusShapefileAsset = blockData['path'];
-  if (!censusShapefileAsset) return missingAssetError('TIGER Census Blocks');
+  if (!censusShapefileAsset) {
+    return missingAssetError('TIGER Census Blocks');
+  }
   const censusStateKey = blockData['state_key'];
-  if (!censusStateKey) return missingAssetError('TIGER Census state key');
+  if (!censusStateKey) {
+    return missingAssetError('TIGER Census state key');
+  }
   const censusBlockIdKey = blockData['blockid_key'];
-  if (!censusBlockIdKey) return missingAssetError('TIGER Census block id key');
+  if (!censusBlockIdKey) {
+    return missingAssetError('TIGER Census block id key');
+  }
   const censusBlockOnlyKey = blockData['blockonly_key'];
-  if (!censusBlockOnlyKey)
+  if (!censusBlockOnlyKey) {
     return missingAssetError('TIGER Census block-only key');
+  }
   const snapData = assetData['snap_data'];
-  if (!snapData) return missingAssetError('SNAP info');
+  if (!snapData) {
+    return missingAssetError('SNAP info');
+  }
   const snapPaths = snapData['paths'];
-  if (!snapPaths) return missingAssetError('SNAP table asset paths');
+  if (!snapPaths) {
+    return missingAssetError('SNAP table asset paths');
+  }
   const snapKey = snapData['snap_key'];
-  if (!snapKey)
+  if (!snapKey) {
     return missingAssetError('column name for SNAP recipients in SNAP table');
+  }
   const totalKey = snapData['total_key'];
-  if (!totalKey)
+  if (!totalKey) {
     return missingAssetError('column name for total population in SNAP table');
+  }
   const sviPaths = assetData['svi_asset_paths'];
-  if (!sviPaths) return missingAssetError('SVI table asset paths');
+  if (!sviPaths) {
+    return missingAssetError('SVI table asset paths');
+  }
   const sviKey = assetData['svi_key'];
-  if (!sviKey) return missingAssetError('column name for SVI table');
+  if (!sviKey) {
+    return missingAssetError('column name for SVI table');
+  }
   const incomePaths = assetData['income_asset_paths'];
-  if (!incomePaths) return missingAssetError('income table asset paths');
+  if (!incomePaths) {
+    return missingAssetError('income table asset paths');
+  }
   const incomeKey = assetData['income_key'];
-  if (!incomeKey) return missingAssetError('column name for income table');
+  if (!incomeKey) {
+    return missingAssetError('column name for income table');
+  }
 
   const {damage, mapBoundsRectangle} = calculateDamage(assetData);
   if (!mapBoundsRectangle) {
@@ -186,17 +211,23 @@ function run(disasterData) {
   }
 
   // Filter block groups to those in damage rectangle.
-  let censusBlocks = ee.FeatureCollection(censusShapefileAsset)
+  const censusBlocks = ee.FeatureCollection(censusShapefileAsset)
                          .filterBounds(mapBoundsRectangle);
 
   let allStatesProcessing = ee.FeatureCollection([]);
   for (const state of states) {
     const snapPath = snapPaths[state];
-    if (!snapPath) return missingAssetError('SNAP asset path for ' + state);
+    if (!snapPath) {
+    return missingAssetError('SNAP asset path for ' + state);
+  }
     const sviPath = sviPaths[state];
-    if (!sviPath) return missingAssetError('SVI asset path for ' + state);
+    if (!sviPath) {
+    return missingAssetError('SVI asset path for ' + state);
+  }
     const incomePath = incomePaths[state];
-    if (!incomePath) return missingAssetError('Income asset path for ' + state);
+    if (!incomePath) {
+    return missingAssetError('Income asset path for ' + state);
+  }
 
     const stateGroups = getStateBlockGroupsFromNationalBlocks(
         censusBlocks, state, censusStateKey, censusBlockIdKey,
@@ -250,7 +281,7 @@ function run(disasterData) {
 
 const damageError = {
   damage: null,
-  mapBoundsRectangle: null
+  mapBoundsRectangle: null,
 };
 
 /**
