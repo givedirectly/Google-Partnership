@@ -148,7 +148,7 @@ class Authenticator {
  * counting down a {@link TaskAccumulator} when EarthEngine is logged in.
  * @param {TaskAccumulator} taskAccumulator that will be counted down when
  *     EarthEngine is logged in
- * @returns {Promise} Promise that completes when Firebase is logged in
+ * @return {Promise} Promise that completes when Firebase is logged in
  */
 Authenticator.trackEeAndFirebase = (taskAccumulator) => {
   const firebaseAuthPromise = new SettablePromise();

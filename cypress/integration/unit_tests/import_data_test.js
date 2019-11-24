@@ -46,9 +46,9 @@ describe('Unit tests for import_data.js', () => {
         damage_asset_path: damageData,
         block_data: {
           path: tigerBlocks,
-          state_key: 'test_state_key',
-          blockid_key: 'test_blockid_key',
-          blockonly_key: 'test_block_tab_number_key',
+          state_key: 'testStateKey',
+          blockid_key: 'testBlockidKey',
+          blockonly_key: 'testBlockTabNumberKey',
         },
         snap_data: {
           paths: {
@@ -64,7 +64,7 @@ describe('Unit tests for import_data.js', () => {
         income_asset_paths: {
           NY: incomeData,
         },
-        income_key: 'test_income_key',
+        income_key: 'testIncomeKey',
         building_asset_paths: {
           NY: buildingsCollection,
         },
@@ -132,9 +132,9 @@ describe('Unit tests for import_data.js', () => {
  * @return {ee.Feature}
  */
 function makeCensusBlock(swLng, swLat) {
-  const test_block_tab_number_key = swLng + '' + swLat;
-  const test_state_key = '36';
-  const test_blockid_key = test_state_key + test_block_tab_number_key;
+  const testBlockTabNumberKey = swLng + '' + swLat;
+  const testStateKey = '36';
+  const testBlockidKey = testStateKey + testBlockTabNumberKey;
   return ee.Feature(
       ee.Geometry.Polygon([
         swLng,
@@ -148,7 +148,7 @@ function makeCensusBlock(swLng, swLat) {
         swLng,
         swLat,
       ]),
-      {test_state_key, test_block_tab_number_key, test_blockid_key});
+      {testStateKey, testBlockTabNumberKey, testBlockidKey});
 }
 
 /**
@@ -194,5 +194,5 @@ function makeSviTract(svi) {
  * @return {ee.Feature}
  */
 function makeIncomeGroup(id, income) {
-  return ee.Feature(null, {test_income_key: income, GEOid2: id});
+  return ee.Feature(null, {testIncomeKey: income, GEOid2: id});
 }
