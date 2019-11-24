@@ -60,7 +60,7 @@ function expectWithin(actualNumber, expectedNumber) {
 /**
  * Converts a {@link firebase.firestore.GeoPoint} into a LatLng.
  * @param {firebase.firestore.GeoPoint} geopoint
- * @returns {{lng: number, lat: number}}
+ * @return {{lng: number, lat: number}}
  */
 function makeLatLngFromGeoPoint(geopoint) {
   return {lat: geopoint.latitude, lng: geopoint.longitude};
