@@ -8,21 +8,38 @@ describe('Unit tests for import_data.js', () => {
   let testData;
   let exportStub;
   beforeEach(() => {
+    // Create a pretty trivial world: 4 blocks, each 1x1.
     const tigerBlocks = ee.FeatureCollection([
       makeCensusBlock(0, 0),
       makeCensusBlock(0, 1),
       makeCensusBlock(1, 0),
       makeCensusBlock(1, 1),
     ]);
+    // Three damage points, one of them outside the blocks, just for fun.
+    // Relevant damage points are in SW and SE blocks.
     const damageData = ee.FeatureCollection(
         [makePoint(0.4, 0.5), makePoint(1.5, .5), makePoint(10, 12)]);
+    // Only one SNAP block group, corresponding to western blocks.
     const snapData = ee.FeatureCollection([makeSnapGroup('361', 10, 15)]);
+    // One SVI tract, encompassing the whole state.
     const sviData = ee.FeatureCollection([makeSviTract(0.5)]);
+    // One income block group, also western blocks.
     const incomeData = ee.FeatureCollection([makeIncomeGroup('361', 37)]);
+    // Four buildings, three of which are in our block group.
+    const buildingsCollection = ee.FeatureCollection([
+      makePoint(0.1, 0.9),
+      makePoint(1.2, 0.5),
+      makePoint(1.4, 0.7),
+      makePoint(1.5, 0.5),
+    ]);
+    // Stub out delete and export. We'll assert on what was exported, below.
     cy.stub(ee.data, 'deleteAsset');
     exportStub = cy.stub(ee.batch.Export.table, 'toAsset')
                      .returns({start: () => {}, id: 'FAKE_ID'});
 
+    // Test data is reasonably real. All of the keys should be able to vary,
+    // with corresponding changes to test data (but no production changes). The
+    // state must be real.
     testData = {
       states: ['NY'],
       asset_data: {
@@ -48,26 +65,11 @@ describe('Unit tests for import_data.js', () => {
           NY: incomeData,
         },
         income_key: 'HD01_VD01',
+        building_asset_paths: {
+          NY: buildingsCollection,
+        }
       },
     };
-    const buildingsCollection = ee.FeatureCollection([
-      makePoint(0.1, 0.9),
-      makePoint(1.2, 0.5),
-      makePoint(1.4, 0.7),
-      makePoint(1.5, 0.5),
-    ]);
-    const oldFeatureCollectionMethod = ee.FeatureCollection;
-    const stubFunction = (...params) => {
-      if (params[0] === 'users/gd/buildings-NY') {
-        ee.FeatureCollection = oldFeatureCollectionMethod;
-        return buildingsCollection;
-      }
-      ee.FeatureCollection = oldFeatureCollectionMethod;
-      const result = ee.FeatureCollection(...params);
-      ee.FeatureCollection = stubFunction;
-      return result;
-    };
-    ee.FeatureCollection = stubFunction;
   });
   it('Basic test', () => {
     expect(run(testData)).to.be.true;

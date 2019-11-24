@@ -207,7 +207,11 @@ function run(disasterData) {
   if (!incomeKey) {
     return missingAssetError('column name for income table');
   }
-
+  // If we switch to CrowdAI data, this will change.
+  const buildingPaths = assetData['building_asset_paths'];
+  if (!buildingPaths) {
+    return missingAssetError('building data asset paths');
+  }
   const {damage, mapBoundsRectangle} = calculateDamage(assetData);
   if (!mapBoundsRectangle) {
     // Must have been an error.
@@ -230,7 +234,11 @@ function run(disasterData) {
     }
     const incomePath = incomePaths[state];
     if (!incomePath) {
-      return missingAssetError('Income asset path for ' + state);
+      return missingAssetError('income asset path for ' + state);
+    }
+    const buildingPath = buildingPaths[state];
+    if (!buildingPath) {
+      return missingAssetError('building asset path for ' + state);
     }
 
     const stateGroups = getStateBlockGroupsFromNationalBlocks(
@@ -259,7 +267,7 @@ function run(disasterData) {
 
     // Get building count by block group.
     const buildingsHisto =
-        computeBuildingsHisto(mapBoundsRectangle, state, stateGroups);
+        computeBuildingsHisto(mapBoundsRectangle, buildingPath, state, stateGroups);
 
     // Create final feature collection.
     processing = processing.map(
@@ -267,7 +275,7 @@ function run(disasterData) {
     allStatesProcessing = allStatesProcessing.merge(processing);
   }
 
-  const assetName = 'data-ms-as-tot-refactor-53';
+  const assetName = 'data-ms-as-tot-refactor-few';
   const scoreAssetPath = gdEePathPrefix + getDisaster() + '/' + assetName;
   try {
     ee.data.deleteAsset(scoreAssetPath);
@@ -350,20 +358,23 @@ function calculateDamage(assetData) {
 
 /**
  * Attaches block groups to buildings and aggregates to get per-block group
- * building counts. Name of buildings resource is hard-coded, because we hope to
- * not need it in the future, so not providing a user option.
+ * building counts.
  *
  * Joins the buildings to block groups using a "saveFirst" join, since each
  * building should be in only one block group, then constructs a histogram based
  * on the appended block group features.
+ *
+ * This method will go away or be greatly changed if we're using CrowdAI data
+ * instead of previously computed building data.
  * @param {ee.Geometry.Rectangle} mapBoundsRectangle Area we are concerned with
+ * @param {string} buildingPath location of buildings asset in EE
  * @param {string} state
  * @param {ee.FeatureCollection} stateGroups Collection with block groups
  * @return {ee.Dictionary} Number of buildings per block group
  */
-function computeBuildingsHisto(mapBoundsRectangle, state, stateGroups) {
-  const buildings = ee.FeatureCollection(gdEePathPrefix + 'buildings-' + state)
-                        .filterBounds(mapBoundsRectangle);
+function computeBuildingsHisto(mapBoundsRectangle, buildingPath, state, stateGroups) {
+  const buildings = ee.FeatureCollection(buildingPath)
+      .filterBounds(mapBoundsRectangle);
   const withBlockGroup =
       ee.Join.saveFirst('bg')
           .apply(

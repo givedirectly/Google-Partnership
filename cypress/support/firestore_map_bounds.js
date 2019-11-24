@@ -23,7 +23,8 @@ function assertFirestoreMapBounds(expectedLatLngBounds) {
 
 
 /**
- * Asserts that actualBounds is equal to expectedBounds, up to tolerance.
+ * Asserts that actualBounds is equal to expectedBounds, up to tolerance because
+ * of floating-point errors.
  * @param {{sw: {lng: number, lat: number}, ne: {lng: number, lat: number}}}
  *     actualBounds
  * @param {{sw: {lng: number, lat: number}, ne: {lng: number, lat: number}}}

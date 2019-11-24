@@ -22,7 +22,6 @@ describe('Unit test for center.js', () => {
     };
     cy.wrap(getLatLngBoundsPromiseFromEeRectangle(
                 getDamageBounds(damageCollection)))
-        // Because of floating-point errors, can't assert exactly.
         .then((bounds) => {
           // Expect that result returned from function is correct.
           expectLatLngBoundsWithin(bounds, expectedLatLngBounds);
