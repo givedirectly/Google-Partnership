@@ -19,7 +19,8 @@ describe('Unit tests for import_data.js', () => {
     //   makeCensusBlock(1, 0),
     //   makeCensusBlock(1, 1),
     // ]);
-    const tigerBlockGroups = ee.FeatureCollection([makeCensusBlockGroup(0), makeCensusBlockGroup(1)]);
+    const tigerBlockGroups = ee.FeatureCollection(
+        [makeCensusBlockGroup(0), makeCensusBlockGroup(1)]);
     // Three damage points, one of them outside the blocks, just for fun.
     // Relevant damage points are in SW and SE blocks.
     const damageData = ee.FeatureCollection(
@@ -106,9 +107,12 @@ describe('Unit tests for import_data.js', () => {
 
   it('Test with no damage asset', () => {
     testData.asset_data.damage_asset_path = null;
-    const expectedLatLngBounds = scaleObject({sw: {lng: 0.39, lat: 0.49}, ne: {lng: 13, lat: 11}});
-    testData.asset_data.map_bounds_sw = expectedLatLngBounds.sw.lat + ', ' + expectedLatLngBounds.sw.lng;
-    testData.asset_data.map_bounds_ne = expectedLatLngBounds.ne.lat + ', ' + expectedLatLngBounds.ne.lng;
+    const expectedLatLngBounds =
+        scaleObject({sw: {lng: 0.39, lat: 0.49}, ne: {lng: 13, lat: 11}});
+    testData.asset_data.map_bounds_sw =
+        expectedLatLngBounds.sw.lat + ', ' + expectedLatLngBounds.sw.lng;
+    testData.asset_data.map_bounds_ne =
+        expectedLatLngBounds.ne.lat + ', ' + expectedLatLngBounds.ne.lng;
 
     expect(run(testData)).to.be.true;
     expect(exportStub).to.be.calledOnce;
@@ -129,8 +133,7 @@ describe('Unit tests for import_data.js', () => {
             'TOTAL HOUSEHOLDS': 15,
           });
         });
-    assertFirestoreMapBounds(
-        expectedLatLngBounds);
+    assertFirestoreMapBounds(expectedLatLngBounds);
   });
 });
 
@@ -168,7 +171,9 @@ function makeCensusBlock(swLng, swLat) {
 }
 
 function makeCensusBlockGroup(swLng) {
-  return ee.Feature(ee.Geometry.Rectangle(scaleArray([swLng, 0, swLng + 1, 2])), {GEOID: '36' + swLng})
+  return ee.Feature(
+      ee.Geometry.Rectangle(scaleArray([swLng, 0, swLng + 1, 2])),
+      {GEOID: '36' + swLng})
 }
 
 /**
@@ -232,7 +237,7 @@ function scaleArray(array) {
  * @returns {Object} The scaled object
  */
 function scaleObject(object) {
-  if (typeof(object) === 'number') {
+  if (typeof (object) === 'number') {
     return object * distanceScalingFactor;
   }
   if (Array.isArray(object)) {

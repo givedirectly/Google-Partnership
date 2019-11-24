@@ -22,7 +22,8 @@ function withGeo(feature) {
  * after Firestore write is complete.
  */
 function storeCenter(features) {
-  return convertEeObjectToPromise(features.geometry().bounds()).then(saveBounds);
+  return convertEeObjectToPromise(features.geometry().bounds())
+      .then(saveBounds);
 }
 
 /**

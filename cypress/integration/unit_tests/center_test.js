@@ -1,6 +1,6 @@
+import {storeCenter} from '../../../docs/import/center';
 import {assertFirestoreMapBounds, expectLatLngBoundsWithin} from '../../support/firestore_map_bounds';
 import {addFirebaseHooks, loadScriptsBeforeForUnitTests} from '../../support/script_loader';
-import {storeCenter} from "../../../docs/import/center";
 
 describe('Unit test for center.js', () => {
   loadScriptsBeforeForUnitTests('ee', 'firebase');
@@ -22,13 +22,17 @@ describe('Unit test for center.js', () => {
     };
     cy.wrap(storeCenter(damageCollection))
         .then(makeLatLngBoundsFromGeoJsonPoints)
-        .then((bounds) => expectLatLngBoundsWithin(bounds, expectedLatLngBounds));
+        .then(
+            (bounds) => expectLatLngBoundsWithin(bounds, expectedLatLngBounds));
     assertFirestoreMapBounds(expectedLatLngBounds);
   });
 });
 
 function makeLatLngBoundsFromGeoJsonPoints(bounds) {
-  return {sw: makeLatLngFromGeoJsonPoint(bounds[0]), ne: makeLatLngFromGeoJsonPoint(bounds[1])};
+  return {
+    sw: makeLatLngFromGeoJsonPoint(bounds[0]),
+    ne: makeLatLngFromGeoJsonPoint(bounds[1])
+  };
 }
 
 function makeLatLngFromGeoJsonPoint(point) {

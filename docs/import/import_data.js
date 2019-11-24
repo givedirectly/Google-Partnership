@@ -1,11 +1,11 @@
 import {gdEePathPrefix} from '../ee_paths.js';
+import {gdEeStatePrefix} from '../ee_paths.js';
 import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, snapPercentageTag, snapPopTag, sviTag, totalPopTag, tractTag} from '../property_names.js';
 import {getDisaster} from '../resources.js';
 
 import {saveBounds, storeCenter} from './center.js';
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
 import {getStateBlockGroupsFromNationalBlocks} from './import_data_state_computations.js';
-import {gdEeStatePrefix} from "../ee_paths.js";
 
 export {enableWhenReady};
 /** @VisibleForTesting */
@@ -248,7 +248,8 @@ function run(disasterData) {
     }
     const blockGroupPath = blockGroupPaths[state];
     if (!blockGroupPath) {
-      return missingAssetError('Census TIGER block group shapefile for ' + state);
+      return missingAssetError(
+          'Census TIGER block group shapefile for ' + state);
     }
 
     const stateGroups =
@@ -277,8 +278,8 @@ function run(disasterData) {
     processing = processing.map((f) => combineWithAsset(f, sviTag, sviKey));
 
     // Get building count by block group.
-    const buildingsHisto = computeBuildingsHisto(
-        damageEnvelope, buildingPath, state, stateGroups);
+    const buildingsHisto =
+        computeBuildingsHisto(damageEnvelope, buildingPath, state, stateGroups);
 
     // Create final feature collection.
     processing = processing.map(
@@ -339,8 +340,7 @@ function calculateDamage(assetData) {
     centerStatusLabel.innerText = 'Computing and storing bounds of map: ';
     storeCenter(damage)
         .then(displayGeoNumbers)
-        .then(
-            (bounds) => centerStatusSpan.innerText = 'Found bounds ' + bounds)
+        .then((bounds) => centerStatusSpan.innerText = 'Found bounds ' + bounds)
         .catch((err) => centerStatusSpan.innerText = err);
     return {damage, damageEnvelope: damage.geometry().buffer(damageBuffer)};
   }
@@ -365,7 +365,8 @@ function calculateDamage(assetData) {
   }
   const sw = makeLatLngFromString(damageSw);
   const ne = makeLatLngFromString(damageNe);
-  const damageEnvelope = ee.Geometry.Rectangle([sw.lng, sw.lat, ne.lng, ne.lat]);
+  const damageEnvelope =
+      ee.Geometry.Rectangle([sw.lng, sw.lat, ne.lng, ne.lat]);
   saveBounds(makeGeoJsonRectangle(sw, ne)).catch(firestoreError);
   return {
     damage: null,
@@ -374,8 +375,13 @@ function calculateDamage(assetData) {
 }
 
 function makeGeoJsonRectangle(sw, ne) {
-  return {type: 'Polygon', coordinates: [[[sw.lng, sw.lat], [ne.lng, sw.lat],
-        [ne.lng, ne.lat], [sw.lng, ne.lat], [sw.lng, sw.lat]]]};
+  return {
+    type: 'Polygon',
+    coordinates: [[
+      [sw.lng, sw.lat], [ne.lng, sw.lat], [ne.lng, ne.lat], [sw.lng, ne.lat],
+      [sw.lng, sw.lat]
+    ]]
+  };
 }
 
 /**
@@ -470,5 +476,9 @@ function enableWhenReady(firebaseDataDoc) {
  * @return {string} numbers truncated to 2 digits, latitude first, joined.
  */
 function displayGeoNumbers(latLngs) {
-  return latLngs.map((coords) => '(' + coords[1].toFixed(2) + ', ' + coords[0].toFixed(2) + ')').join(', ');
+  return latLngs
+      .map(
+          (coords) =>
+              '(' + coords[1].toFixed(2) + ', ' + coords[0].toFixed(2) + ')')
+      .join(', ');
 }
