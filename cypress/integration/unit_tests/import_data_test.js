@@ -127,8 +127,8 @@ function makeSnapGroup(id, snap, total) {
   return ee.Feature(null, {
     HD01_VD02: snap,
     HD01_VD01: total,
-    'GEOdisplay-label': 'Some state, group ' + id,
-    GEOid2: id
+    GEOdisplay-label: 'Some state, group ' + id,
+    GEOid2: id,
   });
 }
 
