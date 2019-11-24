@@ -376,7 +376,7 @@ function calculateDamage(assetData) {
  * Creates a GeoJson-style rectangle from the southwest and northeast corners.
  * @param {{lat: number, lng: number}} sw
  * @param {{lat: number, lng: number}} ne
- * @returns {Object} GeoJson Polygon
+ * @return {Object} GeoJson Polygon
  */
 function makeGeoJsonRectangle(sw, ne) {
   return {
