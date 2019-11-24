@@ -364,7 +364,7 @@ function initializeAndProcessUserRegions(map, firebasePromise) {
       .then((doc) => {
         // Damage asset may not exist yet, so this is undefined. We tolerate
         // gracefully.
-        damageAsset = doc.data()['asset-data']['damage-asset-path'];
+        damageAsset = doc.data()['asset_data']['damage_asset_path'];
         userShapes = getFirestoreRoot().collection(collectionName);
       })
       .then(() => userShapes.get())
