@@ -302,7 +302,7 @@ function calculateDamage(assetData) {
     }
     saveBounds({
       sw: makeLatLngFromString(damageSw),
-      ne: makeLatLngFromString(damageNe)
+      ne: makeLatLngFromString(damageNe),
     }).catch(firestoreError);
   }
 
