@@ -29,7 +29,7 @@ export {getStateBlockGroupsFromNationalBlocks};
  *     found in {@code censusBlocks}. Currently 'statefp10'
  * @param {string} censusBlockIdKey See {@link computeGeoIdFromFeature}
  * @param {string} censusBlockOnlyKey See {@link computeGeoIdFromFeature}
- * @returns {ee.FeatureCollection}
+ * @return {ee.FeatureCollection}
  */
 function getStateBlockGroupsFromNationalBlocks(
     censusBlocks, state, censusStateKey, censusBlockIdKey, censusBlockOnlyKey) {
@@ -54,7 +54,7 @@ function getStateBlockGroupsFromNationalBlocks(
         ee.Geometry.Polygon(mergedGeometry.coordinates().get(0)),
         // mergedGeometry,
         ee.Dictionary().set(tigerGeoidKey, feature.get(tigerGeoidKey)));
-  })
+  });
 }
 
 /**
@@ -65,7 +65,7 @@ function getStateBlockGroupsFromNationalBlocks(
  * @param {string} idKey property of Census block id ('blockid10')
  * @param {string} blockOnlyKey property of Census block tabulation number
  *     ('blockce')
- * @returns {string} Block group geoid
+ * @return {string} Block group geoid
  */
 function computeGeoIdFromFeature(feature, idKey, blockOnlyKey) {
   return ee.String(feature.get(idKey))
@@ -82,7 +82,7 @@ function computeGeoIdFromFeature(feature, idKey, blockOnlyKey) {
  * @param {string} idKey property of Census block id ('blockid10')
  * @param {string} blockOnlyKey property of Census block tabulation number
  *     ('blockce')
- * @returns {ee.Feature} Modified feature
+ * @return {ee.Feature} Modified feature
  */
 function addGeoIdToBlock(feature, idKey, blockOnlyKey) {
   return feature.set(
@@ -93,7 +93,7 @@ function addGeoIdToBlock(feature, idKey, blockOnlyKey) {
  * Merges the ee.Geometry of the given feature with runningGeo.
  * @param {ee.Feature} feature
  * @param {ee.Geometry} runningGeo ee.Geometry to merge with, or a false value
- * @returns {ee.Geometry} the merged geometry
+ * @return {ee.Geometry} the merged geometry
  */
 function mergeGeometries(feature, runningGeo) {
   const currentGeo = ee.Feature(feature).get('.geo');
