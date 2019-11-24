@@ -1,8 +1,7 @@
 import {Authenticator} from '../authenticate.js';
 import {loadNavbarWithTitle} from '../navbar.js';
 import TaskAccumulator from '../task_accumulator.js';
-
-import {enableWhenReady, toggleState} from './add_disaster.js';
+import {enableWhenReady, toggleState, updateAfterSort} from './add_disaster.js';
 
 // 2 tasks: EE authentication, page load, firebase is logged in.
 const taskAccumulator = new TaskAccumulator(3, enableWhenReady);
@@ -21,4 +20,18 @@ $(() => taskAccumulator.taskCompleted());
 $('#create-new-disaster').on('click', () => toggleState(false));
 $('#cancel-new-disaster').on('click', () => toggleState(true));
 
+$('#tbody').sortable({
+  revert: true,
+  update: (event, ui) => updateAfterSort(ui),
+  helper: (e, tr) => {
+    const originals = tr.children();
+    const helper = tr.clone();
+    // Set helper cell sizes to match the original sizes so when being dragged
+    // entire row maintains original width.
+    helper.children().each(/* @this HTMLElement */ function(index) {
+      $(this).width(originals.eq(index).width());
+    });
+    return helper;
+  },
+});
 loadNavbarWithTitle('Add disaster');

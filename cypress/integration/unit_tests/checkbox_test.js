@@ -8,7 +8,7 @@ import {createGoogleMap} from '../../support/test_map';
 const mockData = {};
 
 const colorProperties = {
-  'single-color': 'yellow',
+  'color': 'yellow',
 };
 const mockFirebaseLayers = [
   {
