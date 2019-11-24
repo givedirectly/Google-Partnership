@@ -17,5 +17,5 @@ const firebaseDataPromise = firebaseAuthPromise.then(readDisasterDocument);
 
 $(() => {
   loadNavbarWithPicker(firebaseAuthPromise);
-  taskAccumulator.taskCompleted()
+  taskAccumulator.taskCompleted();
 });

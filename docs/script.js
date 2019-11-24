@@ -1,4 +1,4 @@
-import {authenticateToFirebase, Authenticator, CLIENT_ID, initializeEE, initializeFirebase} from './authenticate.js';
+import {Authenticator, CLIENT_ID, initializeEE, initializeFirebase} from './authenticate.js';
 import createMap from './create_map.js';
 import {readDisasterDocument} from './firestore_document.js';
 import {earthEngineTestTokenCookieName, firebaseTestTokenCookieName, getCookieValue, inProduction} from './in_test_util.js';
