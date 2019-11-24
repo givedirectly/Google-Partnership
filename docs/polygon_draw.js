@@ -4,9 +4,9 @@ import {getFirestoreRoot} from './firestore_document.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {geoPointToLatLng, latLngToGeoPoint} from './map_util.js';
 import {createPopup, isMarker, setUpPopup} from './popup.js';
+import {snapPopTag, totalPopTag} from './property_names.js';
 import {getScoreAsset} from './resources.js';
 import {userRegionData} from './user_region_data.js';
-import {snapPopTag, totalPopTag} from './property_names.js';
 
 // StoredShapeData is only for testing.
 export {
@@ -363,7 +363,7 @@ function initializeAndProcessUserRegions(map, firebasePromise) {
       .then((doc) => {
         // Damage asset may not exist yet, so this is undefined. We tolerate
         // gracefully.
-        damageAsset = doc.data()['asset-data'] ['damage-asset-path'];
+        damageAsset = doc.data()['asset-data']['damage-asset-path'];
         userShapes = getFirestoreRoot().collection(collectionName);
       })
       .then(() => userShapes.get())

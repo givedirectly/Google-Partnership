@@ -1,22 +1,24 @@
-import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 import {run} from '../../../docs/import/import_data';
-import {convertEeObjectToPromise} from "../../../docs/map_util";
+import {convertEeObjectToPromise} from '../../../docs/map_util';
+import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 
 describe('Unit tests for import_data.js', () => {
   loadScriptsBeforeForUnitTests('ee', 'firebase', 'jquery');
   let testData;
   let exportStub;
   before(() => {
-    const tigerBlocks = ee.FeatureCollection([makeCensusBlock(0, 0),
-    makeCensusBlock(0, 1), makeCensusBlock(1, 0),
-    makeCensusBlock(1, 1)]);
-    const damageData = ee.FeatureCollection([makePoint(0.5, 0.5),
-    makePoint(1.5, .5), makePoint(10, 10)]);
+    const tigerBlocks = ee.FeatureCollection([
+      makeCensusBlock(0, 0), makeCensusBlock(0, 1), makeCensusBlock(1, 0),
+      makeCensusBlock(1, 1)
+    ]);
+    const damageData = ee.FeatureCollection(
+        [makePoint(0.5, 0.5), makePoint(1.5, .5), makePoint(10, 10)]);
     const snapData = ee.FeatureCollection([makeSnapGroup(1, 10, 15)]);
     const sviData = ee.FeatureCollection([makeSviTract(1, 0.5)]);
     const incomeData = ee.FeatureCollection([makeIncomeGroup(1, 37)]);
     cy.stub(ee.data, 'deleteAsset');
-    exportStub = cy.stub(ee.batch.Export.table, 'toAsset').returns({start: () => {}, id: 'FAKE_ID'});
+    exportStub = cy.stub(ee.batch.Export.table, 'toAsset')
+                     .returns({start: () => {}, id: 'FAKE_ID'});
 
     testData = {
       states: ['NY'],
@@ -45,9 +47,9 @@ describe('Unit tests for import_data.js', () => {
         income_key: 'HD01_VD01',
       },
     };
-    const buildingsCollection = ee.FeatureCollection([makePoint(0.1, 0.9),
-      makePoint(1.2, 0.5), makePoint(1.4, 0.7),
-        makePoint(1.5, 0.5)
+    const buildingsCollection = ee.FeatureCollection([
+      makePoint(0.1, 0.9), makePoint(1.2, 0.5), makePoint(1.4, 0.7),
+      makePoint(1.5, 0.5)
     ]);
     const oldFeatureCollectionMethod = ee.FeatureCollection;
     const stubFunction = (...params) => {
@@ -74,7 +76,7 @@ describe('Unit tests for import_data.js', () => {
             'BLOCK GROUP': 'NY, group 1',
             'BUILDING COUNT': 3,
             'DAMAGE PERCENTAGE': 0.3333333333333333,
-            'GEOID': "361",
+            'GEOID': '361',
             'MEDIAN INCOME': 37,
             'SNAP HOUSEHOLDS': 10,
             'SNAP PERCENTAGE': 0.6666666666666666,
@@ -89,8 +91,12 @@ function makeCensusBlock(swLng, swLat) {
   const blockce = swLng + '' + swLat;
   const statefp10 = '36';
   const blockid10 = statefp10 + blockce;
-  return ee.Feature(ee.Geometry.Polygon([swLng, swLat, swLng + 1, swLat, swLng + 1, swLat + 1,
-  swLng, swLat + 1, swLng, swLat]), {statefp10, blockce, blockid10});
+  return ee.Feature(
+      ee.Geometry.Polygon([
+        swLng, swLat, swLng + 1, swLat, swLng + 1, swLat + 1, swLng, swLat + 1,
+        swLng, swLat
+      ]),
+      {statefp10, blockce, blockid10});
 }
 
 function makePoint(lng, lat) {
@@ -98,9 +104,12 @@ function makePoint(lng, lat) {
 }
 
 function makeSnapGroup(id, snap, total) {
-  return ee.Feature(null, {HD01_VD02: snap, HD01_VD01: total,
+  return ee.Feature(null, {
+    HD01_VD02: snap,
+    HD01_VD01: total,
     'GEOdisplay-label': 'NY, group ' + id,
-    GEOid2: '36' + id});
+    GEOid2: '36' + id
+  });
 }
 
 function makeSviTract(swLng, svi) {
@@ -109,6 +118,5 @@ function makeSviTract(swLng, svi) {
 }
 
 function makeIncomeGroup(id, income) {
-  return ee.Feature(null, {HD01_VD01: income,
-    GEOid2: '36' + id});
+  return ee.Feature(null, {HD01_VD01: income, GEOid2: '36' + id});
 }

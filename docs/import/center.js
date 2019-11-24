@@ -24,14 +24,15 @@ function getDamageBounds(features) {
   return ee.Geometry.Rectangle([
     fudgeBound(damageWithCoords.aggregate_min('lng'), false),
     fudgeBound(damageWithCoords.aggregate_min('lat'), false),
-        fudgeBound(damageWithCoords.aggregate_max('lng'), true),
-            fudgeBound(damageWithCoords.aggregate_max('lat'), true),
+    fudgeBound(damageWithCoords.aggregate_max('lng'), true),
+    fudgeBound(damageWithCoords.aggregate_max('lat'), true),
   ]);
 }
 
 /**
  * Writes the given bounds to firestore.
- * @param {{sw: {lng: number, lat: number}, ne: {lng: number, lat: number}}} latLngBounds
+ * @param {{sw: {lng: number, lat: number}, ne: {lng: number, lat: number}}}
+ *     latLngBounds
  * @return {Promise} Promise that completes when Firestore write is complete.
  */
 function saveBounds(latLngBounds) {
@@ -46,7 +47,8 @@ function saveBounds(latLngBounds) {
 
 /**
  * @param {ee.Geometry.Rectangle} eeRectangle
- * @returns {Promise<{sw: {lng: number, lat: number}, ne: {lng: number, lat: number}}>}
+ * @returns {Promise<{sw: {lng: number, lat: number}, ne: {lng: number, lat:
+ *     number}}>}
  */
 function getLatLngBoundsPromiseFromEeRectangle(eeRectangle) {
   return convertEeObjectToPromise(eeRectangle).then((rectangle) => {

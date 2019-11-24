@@ -13,7 +13,8 @@ const taskAccumulator = new TaskAccumulator(3, enableWhenReady);
 //  seems useful. When we start doing that, we can kick that off in
 //  enableWhenReady and condition remaining work on the Firebase promise
 //  completing.
-Authenticator.withFirebasePromiseCloudApiAndTaskAccumulator(taskAccumulator).then(() => taskAccumulator.taskCompleted());
+Authenticator.withFirebasePromiseCloudApiAndTaskAccumulator(taskAccumulator)
+    .then(() => taskAccumulator.taskCompleted());
 
 $(() => taskAccumulator.taskCompleted());
 

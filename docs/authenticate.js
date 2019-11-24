@@ -146,7 +146,8 @@ Authenticator.withFirebasePromiseCloudApiAndTaskAccumulator =
     (taskAccumulator) => {
       const firebaseAuthPromise = new SettablePromise();
       const authenticator = new Authenticator(
-          (token) => firebaseAuthPromise.setPromise(authenticateToFirebase(token)),
+          (token) =>
+              firebaseAuthPromise.setPromise(authenticateToFirebase(token)),
           () => {
             ee.data.setCloudApiEnabled(true);
             taskAccumulator.taskCompleted();
@@ -168,7 +169,7 @@ function initializeFirebase() {
  */
 function initializeEE(runCallback, errorCallback = defaultErrorCallback) {
   ee.initialize(
-      /* opt_baseurl=*/null, /* opt_tileurl=*/null, runCallback,
+      /* opt_baseurl=*/ null, /* opt_tileurl=*/ null, runCallback,
       (err) => errorCallback('Error initializing EarthEngine: ' + err));
 }
 
