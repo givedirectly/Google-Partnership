@@ -150,8 +150,8 @@ const distanceScalingFactor = 0.0001;
  * @param {number} swLat
  * @return {ee.Feature}
  */
-/* eslint-disable-next-line no-unused-vars */
-function makeCensusBlock(swLng, swLat) {
+function makeCensusBlock(swLng, swLat) { // eslint-disable-line no-unused-vars
+
   const testBlockTabNumberKey = swLng + '' + swLat;
   const testStateKey = '36';
   const testBlockidKey = testStateKey + testBlockTabNumberKey;
@@ -176,7 +176,7 @@ function makeCensusBlock(swLng, swLat) {
  * (swLng, 0), and block group id given by swLng. Note that the group's geometry
  * is scaled.
  * @param {number} swLng
- * @returns {ee.Feature}
+ * @return {ee.Feature}
  */
 function makeCensusBlockGroup(swLng) {
   return ee.Feature(
@@ -233,7 +233,7 @@ function makeIncomeGroup(id, income) {
 /**
  * Scales the given coordinate array by {@link distanceScalingFactor}.
  * @param {Array<number>} array
- * @returns {Array<number>} The scaled array
+ * @return {Array<number>} The scaled array
  */
 function scaleArray(array) {
   return array.map((num) => num * distanceScalingFactor);
@@ -242,7 +242,7 @@ function scaleArray(array) {
 /**
  * Scales the given object's numerical entries by {@link distanceScalingFactor}.
  * @param {Object} object LatLngBounds or a sub-object of that. Nothing complex!
- * @returns {Object} The scaled object
+ * @return {Object} The scaled object
  */
 function scaleObject(object) {
   if (typeof (object) === 'number') {
