@@ -1,12 +1,17 @@
 import {run} from '../../../docs/import/import_data';
 import {convertEeObjectToPromise} from '../../../docs/map_util';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
+import {
+  getFirestoreRoot,
+  readDisasterDocument
+} from "../../../docs/firestore_document";
+import {assertFirestoreMapBounds} from "../../support/firestore_map_bounds";
 
 describe('Unit tests for import_data.js', () => {
   loadScriptsBeforeForUnitTests('ee', 'firebase', 'jquery');
   let testData;
   let exportStub;
-  before(() => {
+  beforeEach(() => {
     const tigerBlocks = ee.FeatureCollection([
       makeCensusBlock(0, 0),
       makeCensusBlock(0, 1),
@@ -14,10 +19,10 @@ describe('Unit tests for import_data.js', () => {
       makeCensusBlock(1, 1),
     ]);
     const damageData = ee.FeatureCollection(
-        [makePoint(0.5, 0.5), makePoint(1.5, .5), makePoint(10, 10)]);
-    const snapData = ee.FeatureCollection([makeSnapGroup(1, 10, 15)]);
-    const sviData = ee.FeatureCollection([makeSviTract(1, 0.5)]);
-    const incomeData = ee.FeatureCollection([makeIncomeGroup(1, 37)]);
+        [makePoint(0.4, 0.5), makePoint(1.5, .5), makePoint(10, 12)]);
+    const snapData = ee.FeatureCollection([makeSnapGroup('361', 10, 15)]);
+    const sviData = ee.FeatureCollection([makeSviTract(0.5)]);
+    const incomeData = ee.FeatureCollection([makeIncomeGroup('361', 37)]);
     cy.stub(ee.data, 'deleteAsset');
     exportStub = cy.stub(ee.batch.Export.table, 'toAsset')
                      .returns({start: () => {}, id: 'FAKE_ID'});
@@ -57,7 +62,7 @@ describe('Unit tests for import_data.js', () => {
     ]);
     const oldFeatureCollectionMethod = ee.FeatureCollection;
     const stubFunction = (...params) => {
-      if (params[0] === 'users/gd/states/NY/buildings') {
+      if (params[0] === 'users/gd/buildings-NY') {
         ee.FeatureCollection = oldFeatureCollectionMethod;
         return buildingsCollection;
       }
@@ -69,7 +74,7 @@ describe('Unit tests for import_data.js', () => {
     ee.FeatureCollection = stubFunction;
   });
   it('Basic test', () => {
-    run(testData);
+    expect(run(testData)).to.be.true;
     expect(exportStub).to.be.calledOnce;
     cy.wrap(convertEeObjectToPromise(exportStub.firstCall.args[0]))
         .then((result) => {
@@ -77,7 +82,7 @@ describe('Unit tests for import_data.js', () => {
           expect(features).to.have.length(1);
           const feature = features[0];
           expect(feature.properties).to.eql({
-            'BLOCK GROUP': 'NY, group 1',
+            'BLOCK GROUP': 'Some state, group 361',
             'BUILDING COUNT': 3,
             'DAMAGE PERCENTAGE': 0.3333333333333333,
             'GEOID': '361',
@@ -88,6 +93,34 @@ describe('Unit tests for import_data.js', () => {
             'TOTAL HOUSEHOLDS': 15,
           });
         });
+    assertFirestoreMapBounds({sw: {lng: 0.39, lat: 0.49}, ne: {lng: 10.01, lat: 12.01}});
+  });
+
+  it('Test with no damage asset', () => {
+    testData.asset_data.damage_asset_path = null;
+    testData.asset_data.map_bounds_sw = '0.49, 0.39';
+    testData.asset_data.map_bounds_ne = '11, 13';
+
+    expect(run(testData)).to.be.true;
+    expect(exportStub).to.be.calledOnce;
+    cy.wrap(convertEeObjectToPromise(exportStub.firstCall.args[0]))
+        .then((result) => {
+          const features = result.features;
+          expect(features).to.have.length(1);
+          const feature = features[0];
+          expect(feature.properties).to.eql({
+            'BLOCK GROUP': 'Some state, group 361',
+            'BUILDING COUNT': 3,
+            'DAMAGE PERCENTAGE': 0,
+            'GEOID': '361',
+            'MEDIAN INCOME': 37,
+            'SNAP HOUSEHOLDS': 10,
+            'SNAP PERCENTAGE': 0.6666666666666666,
+            'SVI': 0.5,
+            'TOTAL HOUSEHOLDS': 15,
+          });
+        });
+    assertFirestoreMapBounds({sw: {lng: 0.39, lat: 0.49}, ne: {lng: 13, lat: 11}});
   });
 });
 

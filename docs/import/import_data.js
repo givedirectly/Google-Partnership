@@ -238,11 +238,12 @@ function run(disasterData) {
         censusBlockOnlyKey);
 
     let processing = ee.FeatureCollection(snapPath).map(stringifyGeoid);
-    // // Join snap stats to block group geometries.
+
+    // Join snap stats to block group geometries.
     processing =
         innerJoin(processing, stateGroups, censusGeoidKey, tigerGeoidKey);
     processing = processing.map((f) => combineWithSnap(f, snapKey, totalKey));
-    // Join with income.
+// Join with income.
     // TODO: make income formatting prettier so it looks like a currency value.
     //  Not trivial because it has some non-valid values like '-'.
     processing = innerJoin(processing, incomePath, geoidTag, censusGeoidKey);
@@ -299,8 +300,6 @@ const damageError = {
  *     both null if an error occurs
  */
 function calculateDamage(assetData) {
-  let damage;
-  let mapBoundsRectangle;
   const damagePath = assetData['damage_asset_path'];
   const centerStatusSpan = document.createElement('span');
   const centerStatusLabel = document.createElement('span');
@@ -309,42 +308,44 @@ function calculateDamage(assetData) {
   const firestoreError = (err) => centerStatusSpan.innerText +=
       'Error writing bounds to Firestore: ' + err;
   if (damagePath) {
-    damage = ee.FeatureCollection(damagePath);
-    // Uncomment to test with a restricted damage set (53 block groups' worth).
-    damage = damage.filterBounds(
-        ee.FeatureCollection('users/gd/2017-harvey/data-ms-as-nod')
-            .filterMetadata('GEOID', 'starts_with', '482015417002'));
+    const damage = ee.FeatureCollection(damagePath);
+    // Uncomment to test with a restricted damage set (only a few block groups'
+    // worth).
+    // damage = damage.filterBounds(
+    //     ee.FeatureCollection('users/gd/2017-harvey/data-ms-as-nod')
+    //         .filterMetadata('GEOID', 'starts_with', '482015417002'));
     centerStatusLabel.innerText = 'Computing and storing bounds of map: ';
-    mapBoundsRectangle = getDamageBounds(damage);
+    const mapBoundsRectangle = getDamageBounds(damage);
     const damageBoundsPromise =
         getLatLngBoundsPromiseFromEeRectangle(mapBoundsRectangle);
     damageBoundsPromise.then(
         (bounds) => centerStatusSpan.innerText =
             'Found bounds ' + formatGeoNumbers(bounds));
     damageBoundsPromise.then(saveBounds).catch(firestoreError);
-  } else {
-    centerStatusLabel.innerText = 'Storing bounds of map: ';
-    const damageSw = assetData['map_bounds_sw'];
-    if (!damageSw) {
-      missingAssetError(
-          'damage asset or map bounds must be specified (southwest corner ' +
-          'missing');
-      return damageError;
-    }
-    const damageNe = assetData['map_bounds_ne'];
-    if (!damageNe) {
-      missingAssetError(
-          'damage asset or map bounds must be specified (northeast corner ' +
-          'missing)');
-      return damageError;
-    }
-    saveBounds({
-      sw: makeLatLngFromString(damageSw),
-      ne: makeLatLngFromString(damageNe),
-    }).catch(firestoreError);
+    return {damage, mapBoundsRectangle};
   }
-
-  return {damage, mapBoundsRectangle};
+  centerStatusLabel.innerText = 'Storing bounds of map: ';
+  const damageSw = assetData['map_bounds_sw'];
+  if (!damageSw) {
+    missingAssetError(
+        'damage asset or map bounds must be specified (southwest corner ' +
+        'missing');
+    return damageError;
+  }
+  const damageNe = assetData['map_bounds_ne'];
+  if (!damageNe) {
+    missingAssetError(
+        'damage asset or map bounds must be specified (northeast corner ' +
+        'missing)');
+    return damageError;
+  }
+  const sw = makeLatLngFromString(damageSw);
+  const ne = makeLatLngFromString(damageNe);
+  saveBounds({sw, ne}).catch(firestoreError);
+  return {
+    damage: null,
+    mapBoundsRectangle: ee.Geometry.Rectangle([sw.lng, sw.lat, ne.lng, ne.lat]),
+  }
 }
 
 /**
@@ -379,7 +380,6 @@ function computeBuildingsHisto(mapBoundsRectangle, state, stateGroups) {
  *     callers can write "return missingAssetError" and save a line
  */
 function missingAssetError(str) {
-  console.error(str);
   $('.compute-status')
       .html(
           'Error! Please specify ' + str +
