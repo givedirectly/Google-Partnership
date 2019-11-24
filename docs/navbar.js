@@ -27,7 +27,8 @@ function loadNavbarWithTitle(title) {
 
 /**
  * Loads the navbar with a disaster picker.
- * @param {Promise} firebaseAuthPromise Promise that completes when Firebase login is done
+ * @param {Promise} firebaseAuthPromise Promise that completes when Firebase
+ *     login is done
  */
 function loadNavbarWithPicker(firebaseAuthPromise) {
   loadNavbar(
