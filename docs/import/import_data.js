@@ -11,6 +11,7 @@ export {enableWhenReady};
 export {countDamageAndBuildings, run};
 
 /**
+ * TODO: This should be moved to a user-readable doc and expanded.
  * Processes all user-entered data to construct the "score" asset in EarthEngine
  * and write map bounds for the disaster to Firestore. Mandatory data
  * (state-level data needs to be present for every affected state):

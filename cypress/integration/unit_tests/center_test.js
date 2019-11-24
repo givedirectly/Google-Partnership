@@ -1,5 +1,5 @@
 import {getDamageBounds, getLatLngBoundsPromiseFromEeRectangle, saveBounds} from '../../../docs/import/center.js';
-import {assertFirestoreMapBounds} from '../../support/firestore_map_bounds';
+import {assertFirestoreMapBounds, expectLatLngBoundsWithin} from '../../support/firestore_map_bounds';
 import {addFirebaseHooks, loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 
 describe('Unit test for center.js', () => {
@@ -23,7 +23,6 @@ describe('Unit test for center.js', () => {
     cy.wrap(getLatLngBoundsPromiseFromEeRectangle(
                 getDamageBounds(damageCollection)))
         .then((bounds) => {
-          // Expect that result returned from function is correct.
           expectLatLngBoundsWithin(bounds, expectedLatLngBounds);
           return saveBounds(bounds);
         });

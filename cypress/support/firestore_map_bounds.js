@@ -1,6 +1,6 @@
 import {readDisasterDocument} from '../../docs/firestore_document';
 
-export {assertFirestoreMapBounds, expectWithin};
+export {assertFirestoreMapBounds, expectLatLngBoundsWithin};
 
 /**
  * Utility for center_test and import_data_test to assert on Firestore map
