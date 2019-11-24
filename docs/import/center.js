@@ -1,7 +1,7 @@
 import {disasterDocumentReference} from '../firestore_document.js';
 import {convertEeObjectToPromise} from '../map_util.js';
 
-export {getDamageBounds, getLatLngBoundsPromiseFromEeRectangle, saveBounds};
+export {saveBounds, storeCenter};
 
 /**
  * Adds the lat and lng of a feature's centroid as properties.
@@ -14,68 +14,43 @@ function withGeo(feature) {
 }
 
 /**
- * Calculates approximate bounds around a given {@link ee.FeatureCollection}.
- * @param {ee.FeatureCollection} features
- * @return {ee.Geometry.Rectangle} Rectangle around the given bounds.
+ * Stores an approximate bounds around a given feature collection.
+ *
+ * @param {ee.FeatureCollection} features the featureCollection around which you
+ * want to orient the map
+ * @return {Promise<Array<number>>} Promise that completes with array of bounds
+ * after Firestore write is complete.
  */
-function getDamageBounds(features) {
-  const damageWithCoords = ee.FeatureCollection(features.map(withGeo));
-  // This is assuming we're not crossing the international date line...
-  return ee.Geometry.Rectangle([
-    fudgeBound(damageWithCoords.aggregate_min('lng'), false),
-    fudgeBound(damageWithCoords.aggregate_min('lat'), false),
-    fudgeBound(damageWithCoords.aggregate_max('lng'), true),
-    fudgeBound(damageWithCoords.aggregate_max('lat'), true),
-  ]);
+function storeCenter(features) {
+  return convertEeObjectToPromise(features.geometry().bounds()).then(saveBounds);
 }
 
 /**
- * Writes the given bounds to firestore.
- * @param {{sw: {lng: number, lat: number}, ne: {lng: number, lat: number}}}
- *     latLngBounds
- * @return {Promise} Promise that completes when Firestore write is complete.
+ * Writes the calculated bounds to firestore.
+ * @param {GeoJson.Rectangle} bounds
+ * @return {Promise<Array<number>>} Promise that completes with array of bounds
+ * after Firestore write is complete.
  */
-function saveBounds(latLngBounds) {
+function saveBounds(bounds) {
+  const coordinates = bounds.coordinates[0];
+  const sw = coordinates[0];
+  const ne = coordinates[2];
   const docData = {
     'map-bounds': {
-      sw: makeGeoPointFromLatLng(latLngBounds.sw),
-      ne: makeGeoPointFromLatLng(latLngBounds.ne),
+      sw: makeGeoPointFromGeoJsonPoint(sw),
+      ne: makeGeoPointFromGeoJsonPoint(ne),
     },
   };
-  return disasterDocumentReference().set(docData, {merge: true});
-}
-
-/**
- * @param {ee.Geometry.Rectangle} eeRectangle
- * @return {Promise<{sw: {lng: number, lat: number}, ne: {lng: number, lat:
- *     number}}>}
- */
-function getLatLngBoundsPromiseFromEeRectangle(eeRectangle) {
-  return convertEeObjectToPromise(eeRectangle).then((rectangle) => {
-    const coordinates = rectangle.coordinates[0];
-    const sw = coordinates[0];
-    const ne = coordinates[2];
-    return {sw: {lat: sw[1], lng: sw[0]}, ne: {lat: ne[1], lng: ne[0]}};
-  });
+  return disasterDocumentReference()
+      .set(docData, {merge: true})
+      .then(() => [sw, ne]);
 }
 
 /**
  * Converts LatLng into Firestore GeoPoint.
- * @param {{lng: number, lat: number}} latLng
+ * @param {Array<number>} point GeoJson point.
  * @return {firebase.firestore.GeoPoint}
  */
-function makeGeoPointFromLatLng(latLng) {
-  return new firebase.firestore.GeoPoint(latLng.lat, latLng.lng);
-}
-
-/**
- * Fudges number that's part of a bound so our bounds aren't too tight, since
- * bounds are at the neighborhood level: https://xkcd.com/2170/. This helps to
- * avoid clipping off a census block group that contains damage.
- * @param {ee.Number} number
- * @param {boolean} fudgeUp Whether to fudge up (NE corner) or down (SW corner)
- * @return {ee.Number} fudged number
- */
-function fudgeBound(number, fudgeUp) {
-  return ee.Number(number).add(fudgeUp ? 0.01 : -0.01);
+function makeGeoPointFromGeoJsonPoint(point) {
+  return new firebase.firestore.GeoPoint(point[1], point[0]);
 }

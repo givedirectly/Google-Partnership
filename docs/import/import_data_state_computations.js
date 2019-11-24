@@ -1,6 +1,10 @@
 import {tigerGeoidKey} from './import_data_keys.js';
 export {getStateBlockGroupsFromNationalBlocks};
 
+// TODO(janakr): this step is unacceptably slow for Texas, at least. Without it,
+//  full processing takes ~30 minutes, but with it, it times out. Figure out if
+//  it can be optimized enough to be used, or if GD will just have to upload
+//  TIGER Shapefiles indefinitely.
 /**
  * Merges Census blocks into Census block groups, localized to the current state
  * (in a multi-state disaster, the given {@code censusblocks} may span multiple
@@ -45,8 +49,7 @@ function getStateBlockGroupsFromNationalBlocks(
                   {leftField: tigerGeoidKey, rightField: tigerGeoidKey}));
   return groupedByBlockGroup.map((feature) => {
     const mergedGeometry =
-        ee.Geometry(ee.List(feature.get('features'))
-                        .iterate(mergeGeometries, ee.Number(0)));
+        ee.FeatureCollection(ee.List(feature.get('features'))).geometry();
     // Create a new geometry with just the first list of coordinates (the outer
     // ring). Holes come from EarthEngine fuzziness and (maybe?) gaps between
     // Census blocks that are filled in groups.

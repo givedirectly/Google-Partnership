@@ -2,9 +2,10 @@ import {gdEePathPrefix} from '../ee_paths.js';
 import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, snapPercentageTag, snapPopTag, sviTag, totalPopTag, tractTag} from '../property_names.js';
 import {getDisaster} from '../resources.js';
 
-import {getDamageBounds, getLatLngBoundsPromiseFromEeRectangle, saveBounds} from './center.js';
+import {saveBounds, storeCenter} from './center.js';
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
 import {getStateBlockGroupsFromNationalBlocks} from './import_data_state_computations.js';
+import {gdEeStatePrefix} from "../ee_paths.js";
 
 export {enableWhenReady};
 /** @VisibleForTesting */
@@ -69,9 +70,10 @@ function countDamageAndBuildings(feature, damage, buildings) {
         ee.FeatureCollection(damage).filterBounds(geometry).size();
     properties = properties.set(
         damageTag,
+        // If no buildings, this is probably spurious. Don't give any damage.
         ee.Algorithms.If(
             totalBuildings, ee.Number(damagedBuildings).divide(totalBuildings),
-            1));
+            0));
   } else {
     properties = properties.set(damageTag, 0);
   }
@@ -153,26 +155,31 @@ function run(disasterData) {
   if (!assetData) {
     return missingAssetError('SNAP/damage asset paths');
   }
-  const blockData = assetData['block_data'];
-  if (!blockData) {
-    return missingAssetError('Census block geometries');
+  const blockGroupPaths = assetData['block_group_asset_paths'];
+  if (!blockGroupPaths) {
+    return missingAssetError('Census TIGER block group shapefiles');
   }
-  const censusShapefileAsset = blockData['path'];
-  if (!censusShapefileAsset) {
-    return missingAssetError('TIGER Census Blocks');
-  }
-  const censusStateKey = blockData['state_key'];
-  if (!censusStateKey) {
-    return missingAssetError('TIGER Census state key');
-  }
-  const censusBlockIdKey = blockData['blockid_key'];
-  if (!censusBlockIdKey) {
-    return missingAssetError('TIGER Census block id key');
-  }
-  const censusBlockOnlyKey = blockData['blockonly_key'];
-  if (!censusBlockOnlyKey) {
-    return missingAssetError('TIGER Census block-only key');
-  }
+  // TODO(janakr): delete if not using blocks for block group calculation.
+  // const blockData = assetData['block_data'];
+  // if (!blockData) {
+  //   return missingAssetError('Census block geometries');
+  // }
+  // const censusShapefileAsset = blockData['path'];
+  // if (!censusShapefileAsset) {
+  //   return missingAssetError('TIGER Census Block Groups');
+  // }
+  // const censusStateKey = blockData['state_key'];
+  // if (!censusStateKey) {
+  //   return missingAssetError('TIGER Census state key');
+  // }
+  // const censusBlockIdKey = blockData['blockid_key'];
+  // if (!censusBlockIdKey) {
+  //   return missingAssetError('TIGER Census block id key');
+  // }
+  // const censusBlockOnlyKey = blockData['blockonly_key'];
+  // if (!censusBlockOnlyKey) {
+  //   return missingAssetError('TIGER Census block-only key');
+  // }
   const snapData = assetData['snap_data'];
   if (!snapData) {
     return missingAssetError('SNAP info');
@@ -210,15 +217,16 @@ function run(disasterData) {
   if (!buildingPaths) {
     return missingAssetError('building data asset paths');
   }
-  const {damage, mapBoundsRectangle} = calculateDamage(assetData);
-  if (!mapBoundsRectangle) {
+  const {damage, damageEnvelope} = calculateDamage(assetData);
+  if (!damageEnvelope) {
     // Must have been an error.
     return false;
   }
 
-  // Filter block groups to those in damage rectangle.
-  const censusBlocks = ee.FeatureCollection(censusShapefileAsset)
-                           .filterBounds(mapBoundsRectangle);
+  // TODO(janakr): delete if not using blocks for block group calculations.
+  // // Filter block groups to those in damage envelope.
+  // const censusBlocks = ee.FeatureCollection(censusShapefileAsset)
+  //                          .filterBounds(damageEnvelope);
 
   let allStatesProcessing = ee.FeatureCollection([]);
   for (const state of states) {
@@ -238,10 +246,17 @@ function run(disasterData) {
     if (!buildingPath) {
       return missingAssetError('building asset path for ' + state);
     }
+    const blockGroupPath = blockGroupPaths[state];
+    if (!blockGroupPath) {
+      return missingAssetError('Census TIGER block group shapefile for ' + state);
+    }
 
-    const stateGroups = getStateBlockGroupsFromNationalBlocks(
-        censusBlocks, state, censusStateKey, censusBlockIdKey,
-        censusBlockOnlyKey);
+    const stateGroups =
+        ee.FeatureCollection(blockGroupPath).filterBounds(damageEnvelope);
+    // TODO(janakr): delete if not using blocks for block group calculations.
+    // const stateGroups = getStateBlockGroupsFromNationalBlocks(
+    //     censusBlocks, state, censusStateKey, censusBlockIdKey,
+    //     censusBlockOnlyKey);
 
     let processing = ee.FeatureCollection(snapPath).map(stringifyGeoid);
 
@@ -257,15 +272,13 @@ function run(disasterData) {
         processing.map((f) => combineWithAsset(f, incomeTag, incomeKey));
     // Join with SVI (data is at the tract level).
     processing = processing.map(addTractInfo);
-    // allStatesProcessing =
-    // allStatesProcessing.merge(ee.FeatureCollection(sviPath));
 
     processing = innerJoin(processing, sviPath, tractTag, cdcGeoidKey);
     processing = processing.map((f) => combineWithAsset(f, sviTag, sviKey));
 
     // Get building count by block group.
     const buildingsHisto = computeBuildingsHisto(
-        mapBoundsRectangle, buildingPath, state, stateGroups);
+        damageEnvelope, buildingPath, state, stateGroups);
 
     // Create final feature collection.
     processing = processing.map(
@@ -273,7 +286,7 @@ function run(disasterData) {
     allStatesProcessing = allStatesProcessing.merge(processing);
   }
 
-  const assetName = 'data-ms-as-tot-refactor-few';
+  const assetName = 'data-ms-as-tot';
   const scoreAssetPath = gdEePathPrefix + getDisaster() + '/' + assetName;
   try {
     ee.data.deleteAsset(scoreAssetPath);
@@ -293,16 +306,20 @@ function run(disasterData) {
 
 const damageError = {
   damage: null,
-  mapBoundsRectangle: null,
+  damageEnvelope: null,
 };
+
+// Distance in meters away from damage point that we are still interested in
+// collecting information.
+const damageBuffer = 1000;
 
 /**
  * Calculates damage if there is a damage asset, or simply writes the
  * user-provided bounds to Firestore if not.
  * @param {Object} assetData
- * @return {{damage: ?ee.FeatureCollection, mapBoundsRectangle:
- *     ee.Geometry.Rectangle}|{damage: null, mapBoundsRectangle: null}} Returns
- *     the damage asset (if present) and the rectangle bounding the damage, or
+ * @return {{damage: ?ee.FeatureCollection, damageEnvelope:
+ *     ee.Geometry.Rectangle}|{damage: null, damageEnvelope: null}} Returns
+ *     the damage asset (if present) and the envelope bounding the damage, or
  *     both null if an error occurs
  */
 function calculateDamage(assetData) {
@@ -315,21 +332,22 @@ function calculateDamage(assetData) {
       'Error writing bounds to Firestore: ' + err;
   if (damagePath) {
     const damage = ee.FeatureCollection(damagePath);
-    // Uncomment to test with a restricted damage set (only a few block groups'
-    // worth).
+    // Uncomment to test with a restricted damage set (16 block groups' worth).
     // damage = damage.filterBounds(
     //     ee.FeatureCollection('users/gd/2017-harvey/data-ms-as-nod')
     //         .filterMetadata('GEOID', 'starts_with', '482015417002'));
     centerStatusLabel.innerText = 'Computing and storing bounds of map: ';
-    const mapBoundsRectangle = getDamageBounds(damage);
-    const damageBoundsPromise =
-        getLatLngBoundsPromiseFromEeRectangle(mapBoundsRectangle);
-    damageBoundsPromise.then(
-        (bounds) => centerStatusSpan.innerText =
-            'Found bounds ' + formatGeoNumbers(bounds));
-    damageBoundsPromise.then(saveBounds).catch(firestoreError);
-    return {damage, mapBoundsRectangle};
+    storeCenter(damage)
+        .then(displayGeoNumbers)
+        .then(
+            (bounds) => centerStatusSpan.innerText = 'Found bounds ' + bounds)
+        .catch((err) => centerStatusSpan.innerText = err);
+    return {damage, damageEnvelope: damage.geometry().buffer(damageBuffer)};
   }
+  // TODO(janakr): in the no-damage case, we're storing a rectangle, but
+  //  experiments show that, at least for Harvey, the page is very slow when we
+  //  load the entire rectangle around the damage. Maybe allow users to select a
+  //  polygon so they can draw a smaller area?
   centerStatusLabel.innerText = 'Storing bounds of map: ';
   const damageSw = assetData['map_bounds_sw'];
   if (!damageSw) {
@@ -347,11 +365,17 @@ function calculateDamage(assetData) {
   }
   const sw = makeLatLngFromString(damageSw);
   const ne = makeLatLngFromString(damageNe);
-  saveBounds({sw, ne}).catch(firestoreError);
+  const damageEnvelope = ee.Geometry.Rectangle([sw.lng, sw.lat, ne.lng, ne.lat]);
+  saveBounds(makeGeoJsonRectangle(sw, ne)).catch(firestoreError);
   return {
     damage: null,
-    mapBoundsRectangle: ee.Geometry.Rectangle([sw.lng, sw.lat, ne.lng, ne.lat]),
+    damageEnvelope: damageEnvelope,
   };
+}
+
+function makeGeoJsonRectangle(sw, ne) {
+  return {type: 'Polygon', coordinates: [[[sw.lng, sw.lat], [ne.lng, sw.lat],
+        [ne.lng, ne.lat], [sw.lng, ne.lat], [sw.lng, sw.lat]]]};
 }
 
 /**
@@ -364,16 +388,16 @@ function calculateDamage(assetData) {
  *
  * This method will go away or be greatly changed if we're using CrowdAI data
  * instead of previously computed building data.
- * @param {ee.Geometry.Rectangle} mapBoundsRectangle Area we are concerned with
+ * @param {ee.Geometry.Polygon} damageEnvelope Area we are concerned with
  * @param {string} buildingPath location of buildings asset in EE
  * @param {string} state
  * @param {ee.FeatureCollection} stateGroups Collection with block groups
  * @return {ee.Dictionary} Number of buildings per block group
  */
 function computeBuildingsHisto(
-    mapBoundsRectangle, buildingPath, state, stateGroups) {
+    damageEnvelope, buildingPath, state, stateGroups) {
   const buildings =
-      ee.FeatureCollection(buildingPath).filterBounds(mapBoundsRectangle);
+      ee.FeatureCollection(buildingPath).filterBounds(damageEnvelope);
   const withBlockGroup =
       ee.Join.saveFirst('bg')
           .apply(
@@ -395,25 +419,6 @@ function missingAssetError(str) {
           'Error! Please specify ' + str +
           ' at <a href="./add_disaster.html">add_disaster.html</a>');
   return false;
-}
-
-/**
- * Displays latitude/longitude in a reasonable way.
- * @param {{sw: {lng: number, lat: number}, ne: {lng: number, lat: number}}}
- *     latLngBounds
- * @return {string} numbers rounded to 2 digits. https://xkcd.com/2170/.
- */
-function formatGeoNumbers(latLngBounds) {
-  return formatLatLng(latLngBounds.sw) + ', ' + formatLatLng(latLngBounds.ne);
-}
-
-/**
- * Formats a LatLng for display.
- * @param {{lat: number, lng: number}} latLng
- * @return {string} numbers rounded to 2 digits. https://xkcd.com/2170/.
- */
-function formatLatLng(latLng) {
-  return '(' + latLng.lat.toFixed(2) + ', ' + latLng.lng.toFixed(2) + ')';
 }
 
 /**
@@ -457,4 +462,13 @@ function enableWhenReady(firebaseDataDoc) {
     // but what to do.
     run(firebaseDataDoc.data());
   });
+}
+
+/**
+ * Displays latitude/longitude in a reasonable way. https://xkcd.com/2170/.
+ * @param {Array<Array<number>>} latLngs
+ * @return {string} numbers truncated to 2 digits, latitude first, joined.
+ */
+function displayGeoNumbers(latLngs) {
+  return latLngs.map((coords) => '(' + coords[1].toFixed(2) + ', ' + coords[0].toFixed(2) + ')').join(', ');
 }

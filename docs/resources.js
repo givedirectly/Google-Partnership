@@ -15,7 +15,7 @@ function getDisaster() {
 
 /** @return {string} EE asset path for score asset for the current disaster */
 function getScoreAsset() {
-  return gdEePathPrefix + getDisaster() + '/data-ms-as-nod';
+  return gdEePathPrefix + getDisaster() + '/data-state-tiger-with-buildings';
 }
 
 /** The default disaster. */

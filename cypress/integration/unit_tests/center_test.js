@@ -1,6 +1,6 @@
-import {getDamageBounds, getLatLngBoundsPromiseFromEeRectangle, saveBounds} from '../../../docs/import/center.js';
 import {assertFirestoreMapBounds, expectLatLngBoundsWithin} from '../../support/firestore_map_bounds';
 import {addFirebaseHooks, loadScriptsBeforeForUnitTests} from '../../support/script_loader';
+import {storeCenter} from "../../../docs/import/center";
 
 describe('Unit test for center.js', () => {
   loadScriptsBeforeForUnitTests('ee', 'firebase');
@@ -17,15 +17,20 @@ describe('Unit test for center.js', () => {
       ee.Feature(ee.Geometry.Point([5, 60])),
     ]);
     const expectedLatLngBounds = {
-      sw: {lat: 2.49, lng: 1.49},
-      ne: {lat: 60.01, lng: 50.01},
+      sw: {lat: 2.5, lng: 1.5},
+      ne: {lat: 60, lng: 50},
     };
-    cy.wrap(getLatLngBoundsPromiseFromEeRectangle(
-                getDamageBounds(damageCollection)))
-        .then((bounds) => {
-          expectLatLngBoundsWithin(bounds, expectedLatLngBounds);
-          return saveBounds(bounds);
-        });
+    cy.wrap(storeCenter(damageCollection))
+        .then(makeLatLngBoundsFromGeoJsonPoints)
+        .then((bounds) => expectLatLngBoundsWithin(bounds, expectedLatLngBounds));
     assertFirestoreMapBounds(expectedLatLngBounds);
   });
 });
+
+function makeLatLngBoundsFromGeoJsonPoints(bounds) {
+  return {sw: makeLatLngFromGeoJsonPoint(bounds[0]), ne: makeLatLngFromGeoJsonPoint(bounds[1])};
+}
+
+function makeLatLngFromGeoJsonPoint(point) {
+  return {lng: point[0], lat: point[1]};
+}

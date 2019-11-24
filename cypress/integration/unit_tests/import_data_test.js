@@ -8,13 +8,18 @@ describe('Unit tests for import_data.js', () => {
   let testData;
   let exportStub;
   beforeEach(() => {
-    // Create a pretty trivial world: 4 blocks, each 1x1.
-    const tigerBlocks = ee.FeatureCollection([
-      makeCensusBlock(0, 0),
-      makeCensusBlock(0, 1),
-      makeCensusBlock(1, 0),
-      makeCensusBlock(1, 1),
-    ]);
+    // Create a pretty trivial world: 4 blocks, each 1x1, block groups are
+    // vertical stripes. Under the covers, we scale all dimensions down because
+    // production code creates an "envelope" 1 km wide around damage, and that
+    // envelope is assumed to fully contain any block group that has any damage.
+    // TODO(janakr): delete if not using blocks for block group calculations.
+    // const tigerBlocks = ee.FeatureCollection([
+    //   makeCensusBlock(0, 0),
+    //   makeCensusBlock(0, 1),
+    //   makeCensusBlock(1, 0),
+    //   makeCensusBlock(1, 1),
+    // ]);
+    const tigerBlockGroups = ee.FeatureCollection([makeCensusBlockGroup(0), makeCensusBlockGroup(1)]);
     // Three damage points, one of them outside the blocks, just for fun.
     // Relevant damage points are in SW and SE blocks.
     const damageData = ee.FeatureCollection(
@@ -44,12 +49,16 @@ describe('Unit tests for import_data.js', () => {
       states: ['NY'],
       asset_data: {
         damage_asset_path: damageData,
-        block_data: {
-          path: tigerBlocks,
-          state_key: 'testStateKey',
-          blockid_key: 'testBlockidKey',
-          blockonly_key: 'testBlockTabNumberKey',
+        block_group_asset_paths: {
+          NY: tigerBlockGroups,
         },
+        // TODO(janakr): delete if not using blocks for block group calculation.
+        // block_data: {
+        //   path: tigerBlocks,
+        //   state_key: 'testStateKey',
+        //   blockid_key: 'testBlockidKey',
+        //   blockonly_key: 'testBlockTabNumberKey',
+        // },
         snap_data: {
           paths: {
             NY: snapData,
@@ -92,13 +101,14 @@ describe('Unit tests for import_data.js', () => {
           });
         });
     assertFirestoreMapBounds(
-        {sw: {lng: 0.39, lat: 0.49}, ne: {lng: 10.01, lat: 12.01}});
+        scaleObject({sw: {lng: 0.4, lat: 0.5}, ne: {lng: 10, lat: 12}}));
   });
 
   it('Test with no damage asset', () => {
     testData.asset_data.damage_asset_path = null;
-    testData.asset_data.map_bounds_sw = '0.49, 0.39';
-    testData.asset_data.map_bounds_ne = '11, 13';
+    const expectedLatLngBounds = scaleObject({sw: {lng: 0.39, lat: 0.49}, ne: {lng: 13, lat: 11}});
+    testData.asset_data.map_bounds_sw = expectedLatLngBounds.sw.lat + ', ' + expectedLatLngBounds.sw.lng;
+    testData.asset_data.map_bounds_ne = expectedLatLngBounds.ne.lat + ', ' + expectedLatLngBounds.ne.lng;
 
     expect(run(testData)).to.be.true;
     expect(exportStub).to.be.calledOnce;
@@ -120,10 +130,16 @@ describe('Unit tests for import_data.js', () => {
           });
         });
     assertFirestoreMapBounds(
-        {sw: {lng: 0.39, lat: 0.49}, ne: {lng: 13, lat: 11}});
+        expectedLatLngBounds);
   });
 });
 
+// Make sure that our block groups aren't so big they escape the 1 km damage
+// envelope. 1 degree of longitude is 111 km at the equator, so this should be
+// plenty.
+const distanceScalingFactor = 0.0001;
+
+// TODO(janakr): delete if not using blocks for block group calculations.
 /**
  * Makes a census block in NY that is a 1x1 square, with southwest corner given
  * by the coordinates and a block id derived from the given coordinates.
@@ -136,7 +152,7 @@ function makeCensusBlock(swLng, swLat) {
   const testStateKey = '36';
   const testBlockidKey = testStateKey + testBlockTabNumberKey;
   return ee.Feature(
-      ee.Geometry.Polygon([
+      ee.Geometry.Polygon(scaleArray([
         swLng,
         swLat,
         swLng + 1,
@@ -147,8 +163,12 @@ function makeCensusBlock(swLng, swLat) {
         swLat + 1,
         swLng,
         swLat,
-      ]),
+      ])),
       {testStateKey, testBlockTabNumberKey, testBlockidKey});
+}
+
+function makeCensusBlockGroup(swLng) {
+  return ee.Feature(ee.Geometry.Rectangle(scaleArray([swLng, 0, swLng + 1, 2])), {GEOID: '36' + swLng})
 }
 
 /**
@@ -158,7 +178,7 @@ function makeCensusBlock(swLng, swLat) {
  * @return {ee.Feature}
  */
 function makePoint(lng, lat) {
-  return ee.Feature(ee.Geometry.Point([lng, lat]));
+  return ee.Feature(ee.Geometry.Point(scaleArray([lng, lat])));
 }
 
 /**
@@ -195,4 +215,32 @@ function makeSviTract(svi) {
  */
 function makeIncomeGroup(id, income) {
   return ee.Feature(null, {testIncomeKey: income, GEOid2: id});
+}
+
+/**
+ * Scales the given coordinate array by {@link distanceScalingFactor}.
+ * @param {Array<number>} array
+ * @returns {Array<number>} The scaled array
+ */
+function scaleArray(array) {
+  return array.map((num) => num * distanceScalingFactor);
+}
+
+/**
+ * Scales the given object's numerical entries by {@link distanceScalingFactor}.
+ * @param {Object} object LatLngBounds or a sub-object of that. Nothing complex!
+ * @returns {Object} The scaled object
+ */
+function scaleObject(object) {
+  if (typeof(object) === 'number') {
+    return object * distanceScalingFactor;
+  }
+  if (Array.isArray(object)) {
+    return scaleArray(object);
+  }
+  const newObject = {};
+  for (const key of Object.keys(object)) {
+    newObject[key] = scaleObject(object[key]);
+  }
+  return newObject;
 }
