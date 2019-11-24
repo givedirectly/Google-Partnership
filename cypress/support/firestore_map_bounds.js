@@ -5,7 +5,8 @@ export {assertFirestoreMapBounds, expectWithin};
 /**
  * Utility for center_test and import_data_test to assert on Firestore map
  * bounds.
- * @param {{sw: {lng: number, lat: number}, ne: {lng: number, lat: number}}} expectedLatLngBounds
+ * @param {{sw: {lng: number, lat: number}, ne: {lng: number, lat: number}}}
+ *     expectedLatLngBounds
  */
 function assertFirestoreMapBounds(expectedLatLngBounds) {
   cy.wrap(readDisasterDocument()).then((doc) => {

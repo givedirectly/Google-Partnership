@@ -344,8 +344,7 @@ function calculateDamage(assetData) {
   saveBounds({sw, ne}).catch(firestoreError);
   return {
     damage: null,
-        mapBoundsRectangle:
-            ee.Geometry.Rectangle([sw.lng, sw.lat, ne.lng, ne.lat]),
+    mapBoundsRectangle: ee.Geometry.Rectangle([sw.lng, sw.lat, ne.lng, ne.lat]),
   };
 }
 
