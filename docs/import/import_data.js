@@ -382,7 +382,10 @@ function makeGeoJsonRectangle(sw, ne) {
   return {
     type: 'Polygon',
     coordinates: [[
-      [sw.lng, sw.lat], [ne.lng, sw.lat], [ne.lng, ne.lat], [sw.lng, ne.lat],
+      [sw.lng, sw.lat],
+      [ne.lng, sw.lat],
+      [ne.lng, ne.lat],
+      [sw.lng, ne.lat],
       [sw.lng, sw.lat],
     ]],
   };
