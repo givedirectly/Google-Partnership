@@ -331,7 +331,7 @@ function calculateDamage(assetData) {
       'Error writing bounds to Firestore: ' + err;
   if (damagePath) {
     const damage = ee.FeatureCollection(damagePath);
-    // Uncomment to test with a restricted damage set (16 block groups' worth).
+    // Uncomment to test with a restricted damage set (14 block groups' worth).
     // damage = damage.filterBounds(
     //     ee.FeatureCollection('users/gd/2017-harvey/data-ms-as-nod')
     //         .filterMetadata('GEOID', 'starts_with', '482015417002'));
@@ -345,7 +345,7 @@ function calculateDamage(assetData) {
   // TODO(janakr): in the no-damage case, we're storing a rectangle, but
   //  experiments show that, at least for Harvey, the page is very slow when we
   //  load the entire rectangle around the damage. Maybe allow users to select a
-  //  polygon so they can draw a smaller area?
+  //  polygon so they can draw a tighter area?
   centerStatusLabel.innerText = 'Storing bounds of map: ';
   const damageSw = assetData['map_bounds_sw'];
   if (!damageSw) {
