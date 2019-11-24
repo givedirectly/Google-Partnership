@@ -10,9 +10,7 @@ import {enableWhenReady} from './import_data.js';
 const taskAccumulator =
     new TaskAccumulator(2, () => firebaseDataPromise.then(enableWhenReady));
 
-const firebaseAuthPromise =
-    Authenticator.trackEeAndFirebase(
-        taskAccumulator);
+const firebaseAuthPromise = Authenticator.trackEeAndFirebase(taskAccumulator);
 const firebaseDataPromise = firebaseAuthPromise.then(readDisasterDocument);
 
 $(() => {

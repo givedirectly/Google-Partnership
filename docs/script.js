@@ -22,8 +22,7 @@ if (inProduction()) {
   // We could just initialize firebaseAuthPromise and disasterMetadataPromise
   // here, but that's awkward, and gets annoying with the test branch below.
   firebaseAuthPromiseWrapper.setPromise(
-      Authenticator.trackEeAndFirebase(
-          taskAccumulator));
+      Authenticator.trackEeAndFirebase(taskAccumulator));
 } else {
   // We're inside a test. The test setup should have tokens for us that will
   // directly authenticate with Firebase and EarthEngine.

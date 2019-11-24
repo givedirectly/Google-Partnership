@@ -12,8 +12,8 @@ export {countDamageAndBuildings, run};
 
 /**
  * Processes all user-entered data to construct the "score" asset in EarthEngine
- * and write map bounds for the disaster to Firestore. Mandatory data (state-level
- * data needs to be present for every affected state):
+ * and write map bounds for the disaster to Firestore. Mandatory data
+ * (state-level data needs to be present for every affected state):
  * 1. National Census block shapes, normally provided by EarthEngine.
  * 2. State-level Census SNAP data, at the block group level.
  * 3. State-level SVI data, at the Census tract level.
@@ -28,8 +28,8 @@ export {countDamageAndBuildings, run};
  *    /path/to/snap/data.csv
  * 3. download crowd ai damage data .shp file
  * 4. upload results of (1) and (2) to EarthEngine via the code editor
- * 5. visit http://localhost:8080/import/add_disaster.html and fill out all required
- *    fields
+ * 5. visit http://localhost:8080/import/add_disaster.html and fill out all
+ * required fields
  * 6. visit http://localhost:8080/import/import_data.html and submit the page.
  * 7. make the created asset readable by all in the code editor.
  */
