@@ -1,4 +1,4 @@
-import {tigerGeoidKey} from "./import_data_keys.js";
+import {tigerGeoidKey} from './import_data_keys.js';
 export {getStateBlockGroupsFromNationalBlocks};
 
 /**
@@ -22,9 +22,11 @@ export {getStateBlockGroupsFromNationalBlocks};
  * could have three points in a straight line. That could be simplified to just
  * the two endpoints, but doesn't seem worth it.
  *
- * @param {ee.FeatureCollection} censusBlocks Should already be restricted to a limited area to minimize calculations
+ * @param {ee.FeatureCollection} censusBlocks Should already be restricted to a
+ *     limited area to minimize calculations
  * @param {string} state Two-letter abbreviation for affected state
- * @param {string} censusStateKey Property under which Census state FIPS code is found in {@code censusBlocks}. Currently 'statefp10'
+ * @param {string} censusStateKey Property under which Census state FIPS code is
+ *     found in {@code censusBlocks}. Currently 'statefp10'
  * @param {string} censusBlockIdKey See {@link computeGeoIdFromFeature}
  * @param {string} censusBlockOnlyKey See {@link computeGeoIdFromFeature}
  * @returns {ee.FeatureCollection}
@@ -44,7 +46,7 @@ function getStateBlockGroupsFromNationalBlocks(
   return groupedByBlockGroup.map((feature) => {
     const mergedGeometry =
         ee.Geometry(ee.List(feature.get('features'))
-            .iterate(mergeGeometries, ee.Number(0)));
+                        .iterate(mergeGeometries, ee.Number(0)));
     // Create a new geometry with just the first list of coordinates (the outer
     // ring). Holes come from EarthEngine fuzziness and (maybe?) gaps between
     // Census blocks that are filled in groups.
@@ -57,10 +59,12 @@ function getStateBlockGroupsFromNationalBlocks(
 
 /**
  * Computes the block group geoid from the given Census block. The block id
- * without all but the first character of the block tabulation number is the block group id
+ * without all but the first character of the block tabulation number is the
+ * block group id
  * @param {ee.Feature} feature Census block
  * @param {string} idKey property of Census block id ('blockid10')
- * @param {string} blockOnlyKey property of Census block tabulation number ('blockce')
+ * @param {string} blockOnlyKey property of Census block tabulation number
+ *     ('blockce')
  * @returns {string} Block group geoid
  */
 function computeGeoIdFromFeature(feature, idKey, blockOnlyKey) {
@@ -72,10 +76,12 @@ function computeGeoIdFromFeature(feature, idKey, blockOnlyKey) {
 }
 
 /**
- * Adds the block group geoid to the given block. See {@link computeGeoIdFromFeature}.
+ * Adds the block group geoid to the given block. See {@link
+ * computeGeoIdFromFeature}.
  * @param {ee.Feature} feature Census block
  * @param {string} idKey property of Census block id ('blockid10')
- * @param {string} blockOnlyKey property of Census block tabulation number ('blockce')
+ * @param {string} blockOnlyKey property of Census block tabulation number
+ *     ('blockce')
  * @returns {ee.Feature} Modified feature
  */
 function addGeoIdToBlock(feature, idKey, blockOnlyKey) {
