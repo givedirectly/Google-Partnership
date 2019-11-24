@@ -323,7 +323,7 @@ function calculateDamage(assetData) {
  * @return {ee.Dictionary} Number of buildings per block group
  */
 function computeBuildingsHisto(mapBoundsRectangle, state, stateGroups) {
-  const buildings = ee.FeatureCollection( gdEePathPrefix + 'buildings-' + state)
+  const buildings = ee.FeatureCollection(gdEePathPrefix + 'buildings-' + state)
                         .filterBounds(mapBoundsRectangle);
   const withBlockGroup =
       ee.Join.saveFirst('bg')
