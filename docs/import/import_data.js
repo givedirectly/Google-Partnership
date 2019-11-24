@@ -4,7 +4,7 @@ import {getDisaster} from '../resources.js';
 
 import {getDamageBounds, getLatLngBoundsPromiseFromEeRectangle, saveBounds} from './center.js';
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
-import {getStateBlockGroupsFromNationalBlocks} from "./import_data_state_computations.js";
+import {getStateBlockGroupsFromNationalBlocks} from './import_data_state_computations.js';
 
 export {enableWhenReady};
 /** @VisibleForTesting */
@@ -257,7 +257,10 @@ const damageError = {
  * Calculates damage if there is a damage asset, or simply writes the
  * user-provided bounds to Firestore if not.
  * @param {Object} assetData
- * @returns {{damage: ?ee.FeatureCollection, mapBoundsRectangle: ee.Geometry.Rectangle}|{damage: null, mapBoundsRectangle: null}} Returns the damage asset (if present) and the rectangle bounding the damage, or both null if an error occurs
+ * @returns {{damage: ?ee.FeatureCollection, mapBoundsRectangle:
+ *     ee.Geometry.Rectangle}|{damage: null, mapBoundsRectangle: null}} Returns
+ *     the damage asset (if present) and the rectangle bounding the damage, or
+ *     both null if an error occurs
  */
 function calculateDamage(assetData) {
   let damage;
@@ -272,9 +275,9 @@ function calculateDamage(assetData) {
   if (damagePath) {
     damage = ee.FeatureCollection(damagePath);
     // Uncomment to test with a restricted damage set (53 block groups' worth).
-    damage =
-    damage.filterBounds(ee.FeatureCollection('users/gd/2017-harvey/data-ms-as-nod').filterMetadata('GEOID',
-    'starts_with', '482015417002'));
+    damage = damage.filterBounds(
+        ee.FeatureCollection('users/gd/2017-harvey/data-ms-as-nod')
+            .filterMetadata('GEOID', 'starts_with', '482015417002'));
     centerStatusLabel.innerText = 'Computing and storing bounds of map: ';
     mapBoundsRectangle = getDamageBounds(damage);
     const damageBoundsPromise =
@@ -334,7 +337,8 @@ function computeBuildingsHisto(mapBoundsRectangle, state, stateGroups) {
 /**
  * Displays error to the user coming from incomplete asset entry.
  * @param {string} str Fragment of error message
- * @returns {boolean} Return value can be ignored, but is present so that callers can write "return missingAssetError" and save a line
+ * @returns {boolean} Return value can be ignored, but is present so that
+ *     callers can write "return missingAssetError" and save a line
  */
 function missingAssetError(str) {
   console.error(str);
@@ -347,7 +351,8 @@ function missingAssetError(str) {
 
 /**
  * Displays latitude/longitude in a reasonable way.
- * @param {{sw: {lng: number, lat: number}, ne: {lng: number, lat: number}}} latLngBounds
+ * @param {{sw: {lng: number, lat: number}, ne: {lng: number, lat: number}}}
+ *     latLngBounds
  * @return {string} numbers rounded to 2 digits. https://xkcd.com/2170/.
  */
 function formatGeoNumbers(latLngBounds) {
@@ -365,7 +370,8 @@ function formatLatLng(latLng) {
 
 /**
  * Makes a LatLng-style object from the given string.
- * @param {string} str Comma-separated string of the form "lat, lng", which is what Google Maps provides pretty easily
+ * @param {string} str Comma-separated string of the form "lat, lng", which is
+ *     what Google Maps provides pretty easily
  * @returns {{lng: *, lat: *}}
  */
 function makeLatLngFromString(str) {
@@ -390,7 +396,8 @@ function innerJoin(collection1, collection2, key1, key2) {
 
 /**
  * Enables the button to kick off calculations.
- * @param {firebase.firestore.DocumentSnapshot} firebaseDataDoc Contents of Firestore for current disaster, used when calculating
+ * @param {firebase.firestore.DocumentSnapshot} firebaseDataDoc Contents of
+ *     Firestore for current disaster, used when calculating
  */
 function enableWhenReady(firebaseDataDoc) {
   const processButton = $('#process-button');
