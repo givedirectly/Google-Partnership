@@ -1,5 +1,9 @@
 import {readDisasterDocument} from '../../../docs/firestore_document';
-import storeCenter from '../../../docs/import/center';
+import {
+  getDamageBounds,
+  getLatLngBoundsPromiseFromEeRectangle,
+    saveBounds,
+} from '../../../docs/import/center.js';
 import {addFirebaseHooks, loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 
 describe('Unit test for center.js', () => {
@@ -16,15 +20,14 @@ describe('Unit test for center.js', () => {
       ee.Feature(ee.Geometry.Point([50, 6])),
       ee.Feature(ee.Geometry.Point([5, 60])),
     ]);
-    // Firebase (and human convention) puts latitude first.
-    const expectedBounds = [2.5, 1.5, 60, 50];
-    cy.wrap(storeCenter(damageCollection, Promise.resolve()))
+    const expectedLatLngBounds = {sw: {lat: 2.49, lng: 1.49}, ne: {lat: 60.01, lng: 50.01}};
+    cy.wrap(getLatLngBoundsPromiseFromEeRectangle(getDamageBounds(damageCollection)))
         // Because of floating-point errors, can't assert exactly.
         .then((bounds) => {
           // Expect that result returned from function is correct.
-          expectArrayWithin(bounds, expectedBounds);
-          return readDisasterDocument();
-        })
+          expectLatLngBoundsWithin(bounds, expectedLatLngBounds);
+          return saveBounds(bounds);
+        }).then(() => readDisasterDocument())
         .then((doc) => {
           // Expect that result retrieved from Firestore is correct.
           const mapBounds = doc.data()['map-bounds'];
@@ -35,10 +38,31 @@ describe('Unit test for center.js', () => {
                 mapBounds.ne.latitude,
                 mapBounds.ne.longitude,
               ],
-              expectedBounds);
+              // Firebase (and human convention) puts latitude first.
+              [expectedLatLngBounds.sw.lat, expectedLatLngBounds.sw.lng, expectedLatLngBounds.ne.lat, expectedLatLngBounds.ne.lng]);
         });
   });
 });
+
+/**
+ * Asserts that actualBounds is equal to expectedBounds, up to tolerance.
+ * @param {{sw: {lng: number, lat: number}, ne: {lng: number, lat: number}}} actualBounds
+ * @param {{sw: {lng: number, lat: number}, ne: {lng: number, lat: number}}} expectedBounds
+ */
+function expectLatLngBoundsWithin(actualBounds, expectedBounds) {
+  expectLatLngWithin(actualBounds.sw, expectedBounds.sw);
+  expectLatLngWithin(actualBounds.ne, expectedBounds.ne);
+}
+
+/**
+ * Asserts that actual is equal to expected, up to tolerance.
+ * @param {{lng: number, lat: number}} actual
+ * @param {{lng: number, lat: number}} expected
+ */
+function expectLatLngWithin(actual, expected) {
+  expectWithin(actual.lat, expected.lat);
+  expectWithin(actual.lng, expected.lng);
+}
 
 /**
  * Utility function to compare two numerical arrays within a tolerance.
@@ -52,11 +76,12 @@ function expectArrayWithin(actualArray, expectedArray) {
   }
 }
 
+const floatingError = 0.000001;
 /**
- * Utility function to compare two numbers within a tolerance of 0.1.
+ * Utility function to compare two numbers within a tolerance of floatingError.
  * @param {number} actualNumber
  * @param {number} expectedNumber
  */
 function expectWithin(actualNumber, expectedNumber) {
-  expect(actualNumber).to.be.within(expectedNumber - 0.1, expectedNumber + 0.1);
+  expect(actualNumber).to.be.within(expectedNumber - floatingError, expectedNumber + floatingError);
 }

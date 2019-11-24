@@ -24,7 +24,7 @@
 
   <!-- Load our script. -->
   <!-- TODO(janakr): Verify there's no downside to using relative paths here and below. -->
-  <script type="module" src="./import_data.js"></script>
+  <script type="module" src="./import_data_startup.js"></script>
 
   <!-- Load our styles. -->
   <link rel="stylesheet" href="../style.css">
@@ -33,7 +33,7 @@
 <div id="navbar"></div>
 <div class="wrapper">
 <div class="main-content">
-<button disabled id="process-button">Kickoff Data Processing</button> (will take a while!)
+<button disabled id="process-button">Kick off Data Processing</button> (will take a while!)
   <div class="g-sign-in hidden">
   <span class="label">Sign in with:</span>
   <div class="button">
@@ -46,9 +46,5 @@
 <div class="upload-status"></div>
 </div>
 </div>
-<script type="module">
-  import {domLoaded} from './import_data.js';
-  domLoaded();
-</script>
 </body>
 </html>
