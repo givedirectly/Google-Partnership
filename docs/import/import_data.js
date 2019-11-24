@@ -346,7 +346,7 @@ function calculateDamage(assetData) {
     damage: null,
         mapBoundsRectangle:
             ee.Geometry.Rectangle([sw.lng, sw.lat, ne.lng, ne.lat]),
-  }
+  };
 }
 
 /**

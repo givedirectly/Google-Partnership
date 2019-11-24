@@ -1,4 +1,3 @@
-import {getFirestoreRoot, readDisasterDocument} from '../../../docs/firestore_document';
 import {run} from '../../../docs/import/import_data';
 import {convertEeObjectToPromise} from '../../../docs/map_util';
 import {assertFirestoreMapBounds} from '../../support/firestore_map_bounds';
