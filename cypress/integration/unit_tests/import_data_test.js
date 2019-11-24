@@ -150,8 +150,7 @@ const distanceScalingFactor = 0.0001;
  * @param {number} swLat
  * @return {ee.Feature}
  */
-function makeCensusBlock(swLng, swLat) { // eslint-disable-line no-unused-vars
-
+function makeCensusBlock(swLng, swLat) {  // eslint-disable-line no-unused-vars
   const testBlockTabNumberKey = swLng + '' + swLat;
   const testStateKey = '36';
   const testBlockidKey = testStateKey + testBlockTabNumberKey;
