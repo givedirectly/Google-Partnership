@@ -29,5 +29,6 @@ module.exports = {
     // Was fighting with clang and we believe clang is doing a good enough
     // job.
     'indent': 'off',
+    'no-multi-spaces': 'off',
   },
 };
