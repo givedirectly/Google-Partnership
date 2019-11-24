@@ -11,7 +11,7 @@ const taskAccumulator =
     new TaskAccumulator(2, () => firebaseDataPromise.then(enableWhenReady));
 
 const firebaseAuthPromise =
-    Authenticator.withFirebasePromiseCloudApiAndTaskAccumulator(
+    Authenticator.trackEeAndFirebase(
         taskAccumulator);
 const firebaseDataPromise = firebaseAuthPromise.then(readDisasterDocument);
 

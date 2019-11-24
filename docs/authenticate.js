@@ -142,7 +142,14 @@ class Authenticator {
   }
 }
 
-Authenticator.withFirebasePromiseCloudApiAndTaskAccumulator =
+/**
+ * Static utility function for the most common use of this Authenticator:
+ * logging into Firebase as soon as we have a Google user token, and
+ * counting down a {@link TaskAccumulator} when EarthEngine is logged in.
+ * @param {TaskAccumulator} taskAccumulator that will be counted down when EarthEngine is logged in
+ * @returns {Promise} Promise that completes when Firebase is logged in
+ */
+Authenticator.trackEeAndFirebase =
     (taskAccumulator) => {
       const firebaseAuthPromise = new SettablePromise();
       const authenticator = new Authenticator(

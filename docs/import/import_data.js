@@ -11,30 +11,27 @@ export {enableWhenReady};
 export {countDamageAndBuildings, run};
 
 /**
- * Joins a state's census block-group-level SNAP/population data with building
- * counts and damage, and creates a FeatureCollection. Requires that all of
- * the source assets are already uploaded. Uploading a .csv or .shp can be done
- * with something like the command line:
- * `earthengine upload table --asset_id users/janak/census_building_data \
- *      gs://noaa-michael-data/ACS_16_5YR_B25024_with_ann.csv`
- * (assuming the file has already been uploaded into Google Cloud Storage).
+ * Processes all user-entered data to construct the "score" asset in EarthEngine
+ * and write map bounds for the disaster to Firestore. Mandatory data (state-level
+ * data needs to be present for every affected state):
+ * 1. National Census block shapes, normally provided by EarthEngine.
+ * 2. State-level Census SNAP data, at the block group level.
+ * 3. State-level SVI data, at the Census tract level.
+ * 4. State-level income data, at the block group level.
+ * 5. State-level FeatureCollection of all buildings.
  *
  * Current workflow for a new disaster
  *
- * 0) download SNAP data from american fact finder (2016 ACS 5-year estimates)
+ * 1. download SNAP data from american fact finder (2016 ACS 5-year estimates)
  *      https://factfinder.census.gov/faces/nav/jsf/pages/download_center.xhtml
- * 1) clean up illegal property names in (0) by running ./cleanup_acs.sh
+ * 2. clean up illegal property names in (0) by running ./cleanup_acs.sh
  *    /path/to/snap/data.csv
- * 2) download TIGER block group .shp from census website
- *      https://www.census.gov/cgi-bin/geo/shapefiles/index.php
- * 3) download crowd ai damage data .shp file
- * 4) upload results of (1) (2) and (3) to GCS
- * 5) upload results of (5) to earth engine (see instructions above)
- * 6) add a new entry to {@code disasters} in ./resources.js
- * 7) update the {@code disaster} constant in ./resources.js
- * 8) visit http://localhost:8080/import_data.html
- * 9) make the new asset readable by all in code
- * editor.
+ * 3. download crowd ai damage data .shp file
+ * 4. upload results of (1) and (2) to EarthEngine via the code editor
+ * 5. visit http://localhost:8080/import/add_disaster.html and fill out all required
+ *    fields
+ * 6. visit http://localhost:8080/import/import_data.html and submit the page.
+ * 7. make the created asset readable by all in the code editor.
  */
 
 /**

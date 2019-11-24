@@ -52,7 +52,6 @@ function getStateBlockGroupsFromNationalBlocks(
     // Census blocks that are filled in groups.
     return ee.Feature(
         ee.Geometry.Polygon(mergedGeometry.coordinates().get(0)),
-        // mergedGeometry,
         ee.Dictionary().set(tigerGeoidKey, feature.get(tigerGeoidKey)));
   });
 }
@@ -76,8 +75,8 @@ function computeGeoIdFromFeature(feature, idKey, blockOnlyKey) {
 }
 
 /**
- * Adds the block group geoid to the given block. See {@link
- * computeGeoIdFromFeature}.
+ * Adds the block group geoid to the given block under the {@link tigerGeoidKey}
+ * field. See {@link computeGeoIdFromFeature} for the computation method.
  * @param {ee.Feature} feature Census block
  * @param {string} idKey property of Census block id ('blockid10')
  * @param {string} blockOnlyKey property of Census block tabulation number

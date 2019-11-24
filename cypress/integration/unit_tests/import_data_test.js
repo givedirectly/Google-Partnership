@@ -46,25 +46,25 @@ describe('Unit tests for import_data.js', () => {
         damage_asset_path: damageData,
         block_data: {
           path: tigerBlocks,
-          state_key: 'statefp10',
-          blockid_key: 'blockid10',
-          blockonly_key: 'blockce',
+          state_key: 'test_state_key',
+          blockid_key: 'test_blockid_key',
+          blockonly_key: 'test_block_tab_number_key',
         },
         snap_data: {
           paths: {
             NY: snapData,
           },
-          snap_key: 'HD01_VD02',
-          total_key: 'HD01_VD01',
+          snap_key: 'test_snap_key',
+          total_key: 'test_total_key',
         },
         svi_asset_paths: {
           NY: sviData,
         },
-        svi_key: 'RPL_THEMES',
+        svi_key: 'test_svi_key',
         income_asset_paths: {
           NY: incomeData,
         },
-        income_key: 'HD01_VD01',
+        income_key: 'test_income_key',
         building_asset_paths: {
           NY: buildingsCollection,
         },
@@ -132,9 +132,9 @@ describe('Unit tests for import_data.js', () => {
  * @return {ee.Feature}
  */
 function makeCensusBlock(swLng, swLat) {
-  const blockce = swLng + '' + swLat;
-  const statefp10 = '36';
-  const blockid10 = statefp10 + blockce;
+  const test_block_tab_number_key = swLng + '' + swLat;
+  const test_state_key = '36';
+  const test_blockid_key = test_state_key + test_block_tab_number_key;
   return ee.Feature(
       ee.Geometry.Polygon([
         swLng,
@@ -148,7 +148,7 @@ function makeCensusBlock(swLng, swLat) {
         swLng,
         swLat,
       ]),
-      {statefp10, blockce, blockid10});
+      {test_state_key, test_block_tab_number_key, test_blockid_key});
 }
 
 /**
@@ -170,8 +170,8 @@ function makePoint(lng, lat) {
  */
 function makeSnapGroup(id, snap, total) {
   return ee.Feature(null, {
-    'HD01_VD02': snap,
-    'HD01_VD01': total,
+    'test_snap_key': snap,
+    'test_total_key': total,
     'GEOdisplay-label': 'Some state, group ' + id,
     'GEOid2': id,
   });
@@ -184,7 +184,7 @@ function makeSnapGroup(id, snap, total) {
  * @return {ee.Feature}
  */
 function makeSviTract(svi) {
-  return ee.Feature(null, {'RPL_THEMES': svi, 'FIPS': '36'});
+  return ee.Feature(null, {'test_svi_key': svi, 'FIPS': '36'});
 }
 
 /**
@@ -194,5 +194,5 @@ function makeSviTract(svi) {
  * @return {ee.Feature}
  */
 function makeIncomeGroup(id, income) {
-  return ee.Feature(null, {HD01_VD01: income, GEOid2: id});
+  return ee.Feature(null, {test_income_key: income, GEOid2: id});
 }

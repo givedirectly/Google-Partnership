@@ -3,7 +3,7 @@ import {loadNavbarWithTitle} from '../navbar.js';
 import TaskAccumulator from '../task_accumulator.js';
 import {enableWhenReady, toggleState, updateAfterSort} from './add_disaster.js';
 
-// 2 tasks: EE authentication, page load, firebase is logged in.
+// 3 tasks: EE authentication, page load, firebase is logged in.
 const taskAccumulator = new TaskAccumulator(3, enableWhenReady);
 
 // TODO: EarthEngine processing can start even before Firebase authentication
@@ -12,7 +12,7 @@ const taskAccumulator = new TaskAccumulator(3, enableWhenReady);
 //  seems useful. When we start doing that, we can kick that off in
 //  enableWhenReady and condition remaining work on the Firebase promise
 //  completing.
-Authenticator.withFirebasePromiseCloudApiAndTaskAccumulator(taskAccumulator)
+Authenticator.trackEeAndFirebase(taskAccumulator)
     .then(() => taskAccumulator.taskCompleted());
 
 $(() => taskAccumulator.taskCompleted());
