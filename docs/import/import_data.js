@@ -1,10 +1,10 @@
 import {gdEePathPrefix} from '../ee_paths.js';
-import {gdEeStatePrefix} from '../ee_paths.js';
 import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, snapPercentageTag, snapPopTag, sviTag, totalPopTag, tractTag} from '../property_names.js';
 import {getDisaster} from '../resources.js';
 
 import {getDamageBounds, getLatLngBoundsPromiseFromEeRectangle, saveBounds} from './center.js';
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
+import {getStateBlockGroupsFromNationalBlocks} from "./import_data_state_computations.js";
 
 export {enableWhenReady};
 /** @VisibleForTesting */
@@ -140,28 +140,6 @@ function addTractInfo(feature) {
   return feature.set(tractTag, ee.String(feature.get(geoidTag)).slice(0, -1));
 }
 
-function computeGeoIdFromFeature(feature, idKey, blockOnlyKey) {
-  // Last index is negative, indicating count back from end of string.
-  return ee.String(feature.get(idKey))
-      .slice(
-          ee.Number(0),
-          ee.Number(1).subtract(ee.String(feature.get(blockOnlyKey)).length()));
-}
-
-function addGeoIdToBlock(feature, idKey, blockOnlyKey) {
-  return feature.set(
-      tigerGeoidKey, computeGeoIdFromFeature(feature, idKey, blockOnlyKey));
-}
-
-function missingAssetError(str) {
-  console.error(str);
-  $('.compute-status')
-      .html(
-          'Error! Please specify ' + str +
-          ' at <a href="./add_disaster.html">add_disaster.html</a>');
-  return false;
-}
-
 /** Performs operation of processing inputs and creating output asset. */
 function run(disasterData) {
   $('.compute-status').html('');
@@ -253,7 +231,7 @@ function run(disasterData) {
     allStatesProcessing = allStatesProcessing.merge(processing);
   }
 
-  const assetName = 'data-ms-as-tot';
+  const assetName = 'data-ms-as-tot-refactor-53';
   const scoreAssetPath = gdEePathPrefix + getDisaster() + '/' + assetName;
   try {
     ee.data.deleteAsset(scoreAssetPath);
@@ -275,6 +253,12 @@ const damageError = {
   mapBoundsRectangle: null
 };
 
+/**
+ * Calculates damage if there is a damage asset, or simply writes the
+ * user-provided bounds to Firestore if not.
+ * @param {Object} assetData
+ * @returns {{damage: ?ee.FeatureCollection, mapBoundsRectangle: ee.Geometry.Rectangle}|{damage: null, mapBoundsRectangle: null}} Returns the damage asset (if present) and the rectangle bounding the damage, or both null if an error occurs
+ */
 function calculateDamage(assetData) {
   let damage;
   let mapBoundsRectangle;
@@ -288,9 +272,9 @@ function calculateDamage(assetData) {
   if (damagePath) {
     damage = ee.FeatureCollection(damagePath);
     // Uncomment to test with a restricted damage set (53 block groups' worth).
-    // damage =
-    // damage.filterBounds(ee.FeatureCollection('users/gd/2017-harvey/data-ms-as-nod').filterMetadata('GEOID',
-    // 'starts_with', '4820154'));
+    damage =
+    damage.filterBounds(ee.FeatureCollection('users/gd/2017-harvey/data-ms-as-nod').filterMetadata('GEOID',
+    'starts_with', '482015417002'));
     centerStatusLabel.innerText = 'Computing and storing bounds of map: ';
     mapBoundsRectangle = getDamageBounds(damage);
     const damageBoundsPromise =
@@ -322,10 +306,21 @@ function calculateDamage(assetData) {
   return {damage, mapBoundsRectangle};
 }
 
-// attach block groups to buildings and aggregate to get block group building
-// counts
+/**
+ * Attaches block groups to buildings and aggregates to get per-block group
+ * building counts. Name of buildings resource is hard-coded, because we hope to
+ * not need it in the future, so not providing a user option.
+ *
+ * Joins the buildings to block groups using a "saveFirst" join, since each
+ * building should be in only one block group, then constructs a histogram based
+ * on the appended block group features.
+ * @param {ee.Geometry.Rectangle} mapBoundsRectangle Area we are concerned with
+ * @param {string} state
+ * @param {ee.FeatureCollection} stateGroups Collection with block groups
+ * @returns {ee.Dictionary} Number of buildings per block group
+ */
 function computeBuildingsHisto(mapBoundsRectangle, state, stateGroups) {
-  const buildings = ee.FeatureCollection(gdEeStatePrefix + state + '/buildings')
+  const buildings = ee.FeatureCollection( gdEePathPrefix + 'buildings-' + state)
                         .filterBounds(mapBoundsRectangle);
   const withBlockGroup =
       ee.Join.saveFirst('bg')
@@ -336,22 +331,23 @@ function computeBuildingsHisto(mapBoundsRectangle, state, stateGroups) {
   return ee.Dictionary(withBlockGroup.aggregate_histogram(geoidTag));
 }
 
-function enableWhenReady(firebaseDataDoc) {
-  const processButton = $('#process-button');
-  processButton.prop('disabled', false);
-  processButton.on('click', () => {
-    // Disable button to avoid over-clicking. User can reload page if needed.
-    processButton.prop('disabled', true);
-    // run does a fair amount of work, so this isn't great for UI responsiveness
-    // but what to do.
-    run(firebaseDataDoc.data());
-  });
+/**
+ * Displays error to the user coming from incomplete asset entry.
+ * @param {string} str Fragment of error message
+ * @returns {boolean} Return value can be ignored, but is present so that callers can write "return missingAssetError" and save a line
+ */
+function missingAssetError(str) {
+  console.error(str);
+  $('.compute-status')
+      .html(
+          'Error! Please specify ' + str +
+          ' at <a href="./add_disaster.html">add_disaster.html</a>');
+  return false;
 }
 
 /**
  * Displays latitude/longitude in a reasonable way.
- * @param {{sw: {lng: number, lat: number}, ne: {lng: number, lat: number}}}
- *     latLngBounds
+ * @param {{sw: {lng: number, lat: number}, ne: {lng: number, lat: number}}} latLngBounds
  * @return {string} numbers rounded to 2 digits. https://xkcd.com/2170/.
  */
 function formatGeoNumbers(latLngBounds) {
@@ -367,61 +363,43 @@ function formatLatLng(latLng) {
   return '(' + latLng.lat.toFixed(2) + ', ' + latLng.lng.toFixed(2) + ')';
 }
 
+/**
+ * Makes a LatLng-style object from the given string.
+ * @param {string} str Comma-separated string of the form "lat, lng", which is what Google Maps provides pretty easily
+ * @returns {{lng: *, lat: *}}
+ */
 function makeLatLngFromString(str) {
   const elts = str.split(/ *, */).map(Number);
   return {lat: elts[0], lng: elts[1]};
 }
 
+/**
+ * Performs an inner join on the given collections (creating a collection from
+ * {@code collection2} if necessary), on the given keys.
+ * @param {ee.FeatureCollection} collection1
+ * @param {ee.FeatureCollection|string} collection2
+ * @param {string} key1
+ * @param {string} key2
+ * @returns {ee.FeatureCollection}
+ */
 function innerJoin(collection1, collection2, key1, key2) {
   return ee.Join.inner().apply(
       collection1, ee.FeatureCollection(collection2),
       ee.Filter.equals({leftField: key1, rightField: key2}));
 }
 
-function getStateBlockGroupsFromNationalBlocks(
-    censusBlocks, state, censusStateKey, censusBlockIdKey, censusBlockOnlyKey) {
-  const stateBlocksWithGeoId =
-      censusBlocks.filter(ee.Filter.eq(censusStateKey, fipsMap.get(state)))
-          .map((f) => addGeoIdToBlock(f, censusBlockIdKey, censusBlockOnlyKey));
-  const perBlockGroup = stateBlocksWithGeoId.distinct(tigerGeoidKey);
-  const groupedByBlockGroup =
-      ee.Join.saveAll('features')
-          .apply(
-              perBlockGroup, stateBlocksWithGeoId,
-              ee.Filter.equals(
-                  {leftField: tigerGeoidKey, rightField: tigerGeoidKey}));
-  return groupedByBlockGroup.map((feature) => {
-    const mergedGeometry =
-        ee.Geometry(ee.List(feature.get('features'))
-                        .iterate(mergeGeometries, ee.Number(0)));
-    // Create a new geometry with just the first list of coordinates (the outer
-    // ring). Holes come from EarthEngine fuzziness and (maybe?) gaps between
-    // Census blocks that are filled in groups.
-    return ee.Feature(
-        ee.Geometry.Polygon(mergedGeometry.coordinates().get(0)),
-        // mergedGeometry,
-        ee.Dictionary().set(tigerGeoidKey, feature.get(tigerGeoidKey)));
-  })
+/**
+ * Enables the button to kick off calculations.
+ * @param {firebase.firestore.DocumentSnapshot} firebaseDataDoc Contents of Firestore for current disaster, used when calculating
+ */
+function enableWhenReady(firebaseDataDoc) {
+  const processButton = $('#process-button');
+  processButton.prop('disabled', false);
+  processButton.on('click', () => {
+    // Disable button to avoid over-clicking. User can reload page if needed.
+    processButton.prop('disabled', true);
+    // run does a fair amount of work, so this isn't great for UI responsiveness
+    // but what to do.
+    run(firebaseDataDoc.data());
+  });
 }
-
-function mergeGeometries(feature, runningGeo) {
-  const currentGeo = ee.Feature(feature).get('.geo');
-  return ee.Algorithms.If(
-      runningGeo, ee.Geometry(runningGeo).union(currentGeo), currentGeo);
-}
-
-// https://www.nrcs.usda.gov/wps/portal/nrcs/detail/?cid=nrcs143_013696
-// Use strings because that's what EE thinks FIPS code column is.
-const fipsMap = new Map([
-  ['AL', '1'],  ['AK', '2'],  ['AZ', '4'],  ['AR', '5'],  ['CA', '6'],
-  ['CO', '8'],  ['CT', '9'],  ['DE', '10'], ['FL', '12'], ['GA', '13'],
-  ['HI', '15'], ['ID', '16'], ['IL', '17'], ['IN', '18'], ['IA', '19'],
-  ['KS', '20'], ['KY', '21'], ['LA', '22'], ['ME', '23'], ['MD', '24'],
-  ['MA', '25'], ['MI', '26'], ['MN', '27'], ['MS', '28'], ['MO', '29'],
-  ['MT', '30'], ['NE', '31'], ['NV', '32'], ['NH', '33'], ['NJ', '34'],
-  ['NM', '35'], ['NY', '36'], ['NC', '37'], ['ND', '38'], ['OH', '39'],
-  ['OK', '40'], ['OR', '41'], ['PA', '42'], ['RI', '44'], ['SC', '45'],
-  ['SD', '46'], ['TN', '47'], ['TX', '48'], ['UT', '49'], ['VT', '50'],
-  ['VA', '51'], ['WA', '53'], ['WV', '54'], ['WI', '55'], ['WY', '56'],
-  ['AS', '60'], ['GU', '66'], ['MP', '69'], ['PR', '72'], ['VI', '78'],
-]);
