@@ -150,6 +150,7 @@ const distanceScalingFactor = 0.0001;
  * @param {number} swLat
  * @return {ee.Feature}
  */
+/* eslint-disable-next-line no-unused-vars */
 function makeCensusBlock(swLng, swLat) {
   const testBlockTabNumberKey = swLng + '' + swLat;
   const testStateKey = '36';
@@ -170,6 +171,13 @@ function makeCensusBlock(swLng, swLat) {
       {testStateKey, testBlockTabNumberKey, testBlockidKey});
 }
 
+/**
+ * Makes a NY Census block group that is a 1x2 rectangle, with southwest corner
+ * (swLng, 0), and block group id given by swLng. Note that the group's geometry
+ * is scaled.
+ * @param {number} swLng
+ * @returns {ee.Feature}
+ */
 function makeCensusBlockGroup(swLng) {
   return ee.Feature(
       ee.Geometry.Rectangle(scaleArray([swLng, 0, swLng + 1, 2])),

@@ -91,18 +91,6 @@ function addGeoIdToBlock(feature, idKey, blockOnlyKey) {
       tigerGeoidKey, computeGeoIdFromFeature(feature, idKey, blockOnlyKey));
 }
 
-/**
- * Merges the ee.Geometry of the given feature with runningGeo.
- * @param {ee.Feature} feature
- * @param {ee.Geometry} runningGeo ee.Geometry to merge with, or a false value
- * @return {ee.Geometry} the merged geometry
- */
-function mergeGeometries(feature, runningGeo) {
-  const currentGeo = ee.Feature(feature).get('.geo');
-  return ee.Algorithms.If(
-      runningGeo, ee.Geometry(runningGeo).union(currentGeo), currentGeo);
-}
-
 // https://www.nrcs.usda.gov/wps/portal/nrcs/detail/?cid=nrcs143_013696
 // Use strings because that's what EE thinks FIPS code column is.
 const fipsMap = new Map([

@@ -1,11 +1,9 @@
 import {gdEePathPrefix} from '../ee_paths.js';
-import {gdEeStatePrefix} from '../ee_paths.js';
 import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, snapPercentageTag, snapPopTag, sviTag, totalPopTag, tractTag} from '../property_names.js';
 import {getDisaster} from '../resources.js';
 
 import {saveBounds, storeCenter} from './center.js';
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
-import {getStateBlockGroupsFromNationalBlocks} from './import_data_state_computations.js';
 
 export {enableWhenReady};
 /** @VisibleForTesting */
@@ -374,13 +372,19 @@ function calculateDamage(assetData) {
   };
 }
 
+/**
+ * Creates a GeoJson-style rectangle from the southwest and northeast corners.
+ * @param {{lat: number, lng: number}} sw
+ * @param {{lat: number, lng: number}} ne
+ * @returns {Object} GeoJson Polygon
+ */
 function makeGeoJsonRectangle(sw, ne) {
   return {
     type: 'Polygon',
     coordinates: [[
       [sw.lng, sw.lat], [ne.lng, sw.lat], [ne.lng, ne.lat], [sw.lng, ne.lat],
-      [sw.lng, sw.lat]
-    ]]
+      [sw.lng, sw.lat],
+    ]],
   };
 }
 

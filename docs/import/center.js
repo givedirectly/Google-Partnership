@@ -4,16 +4,6 @@ import {convertEeObjectToPromise} from '../map_util.js';
 export {saveBounds, storeCenter};
 
 /**
- * Adds the lat and lng of a feature's centroid as properties.
- * @param {ee.Feature} feature
- * @return {ee.Feature}
- */
-function withGeo(feature) {
-  const centroid = feature.centroid().geometry().coordinates();
-  return feature.set('lng', centroid.get(0), 'lat', centroid.get(1));
-}
-
-/**
  * Stores an approximate bounds around a given feature collection.
  *
  * @param {ee.FeatureCollection} features the featureCollection around which you
