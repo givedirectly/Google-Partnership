@@ -28,13 +28,23 @@ describe('Unit test for center.js', () => {
   });
 });
 
+/**
+ * Makes a LatLngBounds-style point from two GeoJson points.
+ * @param {Array<Array<number>>} bounds
+ * @returns {{sw: {lng: number, lat: number}, ne: {lng: number, lat: number}}}
+ */
 function makeLatLngBoundsFromGeoJsonPoints(bounds) {
   return {
     sw: makeLatLngFromGeoJsonPoint(bounds[0]),
-    ne: makeLatLngFromGeoJsonPoint(bounds[1])
+    ne: makeLatLngFromGeoJsonPoint(bounds[1]),
   };
 }
 
+/**
+ * Makes a LatLng-style point from a GeoJson point (just an array).
+ * @param {Array<number>} point
+ * @returns {{lng: number, lat: number}}
+ */
 function makeLatLngFromGeoJsonPoint(point) {
   return {lng: point[0], lat: point[1]};
 }

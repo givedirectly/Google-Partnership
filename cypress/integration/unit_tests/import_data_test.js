@@ -180,7 +180,7 @@ function makeCensusBlock(swLng, swLat) {  // eslint-disable-line no-unused-vars
 function makeCensusBlockGroup(swLng) {
   return ee.Feature(
       ee.Geometry.Rectangle(scaleArray([swLng, 0, swLng + 1, 2])),
-      {GEOID: '36' + swLng})
+      {GEOID: '36' + swLng});
 }
 
 /**
