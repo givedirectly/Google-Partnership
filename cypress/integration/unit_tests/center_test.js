@@ -1,5 +1,5 @@
 import {readDisasterDocument} from '../../../docs/firestore_document';
-import {getDamageBounds, getLatLngBoundsPromiseFromEeRectangle, saveBounds,} from '../../../docs/import/center.js';
+import {getDamageBounds, getLatLngBoundsPromiseFromEeRectangle, saveBounds} from '../../../docs/import/center.js';
 import {addFirebaseHooks, loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 
 describe('Unit test for center.js', () => {
@@ -18,7 +18,7 @@ describe('Unit test for center.js', () => {
     ]);
     const expectedLatLngBounds = {
       sw: {lat: 2.49, lng: 1.49},
-      ne: {lat: 60.01, lng: 50.01}
+      ne: {lat: 60.01, lng: 50.01},
     };
     cy.wrap(getLatLngBoundsPromiseFromEeRectangle(
                 getDamageBounds(damageCollection)))
@@ -42,7 +42,7 @@ describe('Unit test for center.js', () => {
               // Firebase (and human convention) puts latitude first.
               [
                 expectedLatLngBounds.sw.lat, expectedLatLngBounds.sw.lng,
-                expectedLatLngBounds.ne.lat, expectedLatLngBounds.ne.lng
+                expectedLatLngBounds.ne.lat, expectedLatLngBounds.ne.lng,
               ]);
         });
   });

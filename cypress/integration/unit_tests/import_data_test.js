@@ -9,7 +9,7 @@ describe('Unit tests for import_data.js', () => {
   before(() => {
     const tigerBlocks = ee.FeatureCollection([
       makeCensusBlock(0, 0), makeCensusBlock(0, 1), makeCensusBlock(1, 0),
-      makeCensusBlock(1, 1)
+      makeCensusBlock(1, 1),
     ]);
     const damageData = ee.FeatureCollection(
         [makePoint(0.5, 0.5), makePoint(1.5, .5), makePoint(10, 10)]);
@@ -49,7 +49,7 @@ describe('Unit tests for import_data.js', () => {
     };
     const buildingsCollection = ee.FeatureCollection([
       makePoint(0.1, 0.9), makePoint(1.2, 0.5), makePoint(1.4, 0.7),
-      makePoint(1.5, 0.5)
+      makePoint(1.5, 0.5),
     ]);
     const oldFeatureCollectionMethod = ee.FeatureCollection;
     const stubFunction = (...params) => {
@@ -101,7 +101,7 @@ function makeCensusBlock(swLng, swLat) {
   return ee.Feature(
       ee.Geometry.Polygon([
         swLng, swLat, swLng + 1, swLat, swLng + 1, swLat + 1, swLng, swLat + 1,
-        swLng, swLat
+        swLng, swLat,
       ]),
       {statefp10, blockce, blockid10});
 }
