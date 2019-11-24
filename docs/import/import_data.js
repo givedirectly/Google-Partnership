@@ -243,7 +243,7 @@ function run(disasterData) {
     processing =
         innerJoin(processing, stateGroups, censusGeoidKey, tigerGeoidKey);
     processing = processing.map((f) => combineWithSnap(f, snapKey, totalKey));
-// Join with income.
+    // Join with income.
     // TODO: make income formatting prettier so it looks like a currency value.
     //  Not trivial because it has some non-valid values like '-'.
     processing = innerJoin(processing, incomePath, geoidTag, censusGeoidKey);
@@ -344,7 +344,8 @@ function calculateDamage(assetData) {
   saveBounds({sw, ne}).catch(firestoreError);
   return {
     damage: null,
-    mapBoundsRectangle: ee.Geometry.Rectangle([sw.lng, sw.lat, ne.lng, ne.lat]),
+        mapBoundsRectangle:
+            ee.Geometry.Rectangle([sw.lng, sw.lat, ne.lng, ne.lat]),
   }
 }
 

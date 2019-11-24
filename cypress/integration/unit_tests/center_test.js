@@ -1,6 +1,6 @@
 import {getDamageBounds, getLatLngBoundsPromiseFromEeRectangle, saveBounds} from '../../../docs/import/center.js';
+import {assertFirestoreMapBounds} from '../../support/firestore_map_bounds';
 import {addFirebaseHooks, loadScriptsBeforeForUnitTests} from '../../support/script_loader';
-import {assertFirestoreMapBounds} from "../../support/firestore_map_bounds";
 
 describe('Unit test for center.js', () => {
   loadScriptsBeforeForUnitTests('ee', 'firebase');

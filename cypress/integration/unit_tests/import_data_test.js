@@ -1,11 +1,8 @@
+import {getFirestoreRoot, readDisasterDocument} from '../../../docs/firestore_document';
 import {run} from '../../../docs/import/import_data';
 import {convertEeObjectToPromise} from '../../../docs/map_util';
+import {assertFirestoreMapBounds} from '../../support/firestore_map_bounds';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
-import {
-  getFirestoreRoot,
-  readDisasterDocument
-} from "../../../docs/firestore_document";
-import {assertFirestoreMapBounds} from "../../support/firestore_map_bounds";
 
 describe('Unit tests for import_data.js', () => {
   loadScriptsBeforeForUnitTests('ee', 'firebase', 'jquery');
@@ -93,7 +90,8 @@ describe('Unit tests for import_data.js', () => {
             'TOTAL HOUSEHOLDS': 15,
           });
         });
-    assertFirestoreMapBounds({sw: {lng: 0.39, lat: 0.49}, ne: {lng: 10.01, lat: 12.01}});
+    assertFirestoreMapBounds(
+        {sw: {lng: 0.39, lat: 0.49}, ne: {lng: 10.01, lat: 12.01}});
   });
 
   it('Test with no damage asset', () => {
@@ -120,7 +118,8 @@ describe('Unit tests for import_data.js', () => {
             'TOTAL HOUSEHOLDS': 15,
           });
         });
-    assertFirestoreMapBounds({sw: {lng: 0.39, lat: 0.49}, ne: {lng: 13, lat: 11}});
+    assertFirestoreMapBounds(
+        {sw: {lng: 0.39, lat: 0.49}, ne: {lng: 13, lat: 11}});
   });
 });
 

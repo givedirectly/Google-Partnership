@@ -1,16 +1,18 @@
-import {readDisasterDocument} from "../../docs/firestore_document";
+import {readDisasterDocument} from '../../docs/firestore_document';
 
 export {assertFirestoreMapBounds, expectWithin};
 
 function assertFirestoreMapBounds(expectedLatLngBounds) {
-  cy.wrap(readDisasterDocument())
-      .then((doc) => {
-        // Expect that result retrieved from Firestore is correct.
-        const mapBounds = doc.data()['map-bounds'];
-        expectLatLngBoundsWithin(
-            {sw: makeLatLngFromGeoPoint(mapBounds.sw), ne: makeLatLngFromGeoPoint(mapBounds.ne)},
-expectedLatLngBounds);
-      });
+  cy.wrap(readDisasterDocument()).then((doc) => {
+    // Expect that result retrieved from Firestore is correct.
+    const mapBounds = doc.data()['map-bounds'];
+    expectLatLngBoundsWithin(
+        {
+          sw: makeLatLngFromGeoPoint(mapBounds.sw),
+          ne: makeLatLngFromGeoPoint(mapBounds.ne)
+        },
+        expectedLatLngBounds);
+  });
 }
 
 
@@ -45,7 +47,7 @@ const floatingError = 0.000001;
 function expectWithin(actualNumber, expectedNumber) {
   expect(actualNumber)
       .to.be.within(
-      expectedNumber - floatingError, expectedNumber + floatingError);
+          expectedNumber - floatingError, expectedNumber + floatingError);
 }
 
 function makeLatLngFromGeoPoint(geopoint) {
