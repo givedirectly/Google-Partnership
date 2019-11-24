@@ -41,8 +41,10 @@ describe('Unit test for center.js', () => {
               ],
               // Firebase (and human convention) puts latitude first.
               [
-                expectedLatLngBounds.sw.lat, expectedLatLngBounds.sw.lng,
-                expectedLatLngBounds.ne.lat, expectedLatLngBounds.ne.lng,
+                expectedLatLngBounds.sw.lat,
+                expectedLatLngBounds.sw.lng,
+                expectedLatLngBounds.ne.lat,
+                expectedLatLngBounds.ne.lng,
               ]);
         });
   });
