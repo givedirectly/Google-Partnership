@@ -291,7 +291,8 @@ function calculateDamage(assetData) {
     const damageSw = assetData['map_bounds_sw'];
     if (!damageSw) {
       missingAssetError(
-          'damage asset or map bounds must be specified (southwest corner missing');
+          'damage asset or map bounds must be specified (southwest corner ' +
+          'missing');
       return damageError;
     }
     const damageNe = assetData['map_bounds_ne'];
