@@ -412,7 +412,7 @@ function mergeGeometries(feature, runningGeo) {
 
 // https://www.nrcs.usda.gov/wps/portal/nrcs/detail/?cid=nrcs143_013696
 // Use strings because that's what EE thinks FIPS code column is.
-const fipsMap =  new Map([
+const fipsMap = new Map([
   ['AL', '1'],  ['AK', '2'],  ['AZ', '4'],  ['AR', '5'],  ['CA', '6'],
   ['CO', '8'],  ['CT', '9'],  ['DE', '10'], ['FL', '12'], ['GA', '13'],
   ['HI', '15'], ['ID', '16'], ['IL', '17'], ['IN', '18'], ['IA', '19'],
