@@ -212,22 +212,22 @@ function run(disasterData) {
 
   // Filter block groups to those in damage rectangle.
   const censusBlocks = ee.FeatureCollection(censusShapefileAsset)
-                         .filterBounds(mapBoundsRectangle);
+                           .filterBounds(mapBoundsRectangle);
 
   let allStatesProcessing = ee.FeatureCollection([]);
   for (const state of states) {
     const snapPath = snapPaths[state];
     if (!snapPath) {
-    return missingAssetError('SNAP asset path for ' + state);
-  }
+      return missingAssetError('SNAP asset path for ' + state);
+    }
     const sviPath = sviPaths[state];
     if (!sviPath) {
-    return missingAssetError('SVI asset path for ' + state);
-  }
+      return missingAssetError('SVI asset path for ' + state);
+    }
     const incomePath = incomePaths[state];
     if (!incomePath) {
-    return missingAssetError('Income asset path for ' + state);
-  }
+      return missingAssetError('Income asset path for ' + state);
+    }
 
     const stateGroups = getStateBlockGroupsFromNationalBlocks(
         censusBlocks, state, censusStateKey, censusBlockIdKey,
