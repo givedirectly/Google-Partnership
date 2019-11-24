@@ -16,7 +16,7 @@ function withGeo(feature) {
 /**
  * Calculates approximate bounds around a given {@link ee.FeatureCollection}.
  * @param {ee.FeatureCollection} features
- * @returns {ee.Geometry.Rectangle} Rectangle around the given bounds.
+ * @return {ee.Geometry.Rectangle} Rectangle around the given bounds.
  */
 function getDamageBounds(features) {
   const damageWithCoords = ee.FeatureCollection(features.map(withGeo));
@@ -47,7 +47,7 @@ function saveBounds(latLngBounds) {
 
 /**
  * @param {ee.Geometry.Rectangle} eeRectangle
- * @returns {Promise<{sw: {lng: number, lat: number}, ne: {lng: number, lat:
+ * @return {Promise<{sw: {lng: number, lat: number}, ne: {lng: number, lat:
  *     number}}>}
  */
 function getLatLngBoundsPromiseFromEeRectangle(eeRectangle) {
@@ -62,7 +62,7 @@ function getLatLngBoundsPromiseFromEeRectangle(eeRectangle) {
 /**
  * Converts LatLng into Firestore GeoPoint.
  * @param {{lng: number, lat: number}} latLng
- * @returns {firebase.firestore.GeoPoint}
+ * @return {firebase.firestore.GeoPoint}
  */
 function makeGeoPointFromLatLng(latLng) {
   return new firebase.firestore.GeoPoint(latLng.lat, latLng.lng);
@@ -74,7 +74,7 @@ function makeGeoPointFromLatLng(latLng) {
  * avoid clipping off a census block group that contains damage.
  * @param {ee.Number} number
  * @param {boolean} fudgeUp Whether to fudge up (NE corner) or down (SW corner)
- * @returns {ee.Number} fudged number
+ * @return {ee.Number} fudged number
  */
 function fudgeBound(number, fudgeUp) {
   return ee.Number(number).add(fudgeUp ? 0.01 : -0.01);

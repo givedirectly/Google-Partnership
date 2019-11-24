@@ -1,4 +1,4 @@
-import {authenticateToFirebase, Authenticator} from '../authenticate.js';
+import {Authenticator} from '../authenticate.js';
 import {loadNavbarWithTitle} from '../navbar.js';
 import TaskAccumulator from '../task_accumulator.js';
 

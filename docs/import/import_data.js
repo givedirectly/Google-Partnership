@@ -140,7 +140,11 @@ function addTractInfo(feature) {
   return feature.set(tractTag, ee.String(feature.get(geoidTag)).slice(0, -1));
 }
 
-/** Performs operation of processing inputs and creating output asset. */
+/**
+ * Performs operation of processing inputs and creating output asset.
+ * @param {Object} disasterData Data for current disaster coming from Firestore
+ * @return {boolean} Whether in-thread operations succeeded
+ * */
 function run(disasterData) {
   $('.compute-status').html('');
   const states = disasterData['states'];
@@ -207,7 +211,7 @@ function run(disasterData) {
   const {damage, mapBoundsRectangle} = calculateDamage(assetData);
   if (!mapBoundsRectangle) {
     // Must have been an error.
-    return;
+    return false;
   }
 
   // Filter block groups to those in damage rectangle.
@@ -277,6 +281,7 @@ function run(disasterData) {
   task.start();
   $('.upload-status')
       .text('Check Code Editor console for upload progress. Task: ' + task.id);
+  return true;
 }
 
 const damageError = {

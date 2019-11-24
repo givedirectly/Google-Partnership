@@ -87,6 +87,13 @@ describe('Unit tests for import_data.js', () => {
   });
 });
 
+/**
+ * Makes a census block in NY that is a 1x1 square, with southwest corner given
+ * by the coordinates and a block id derived from the given coordinates.
+ * @param {number} swLng
+ * @param {number} swLat
+ * @return {ee.Feature}
+ */
 function makeCensusBlock(swLng, swLat) {
   const blockce = swLng + '' + swLat;
   const statefp10 = '36';
@@ -99,24 +106,48 @@ function makeCensusBlock(swLng, swLat) {
       {statefp10, blockce, blockid10});
 }
 
+/**
+ * Makes a feature with a single point.
+ * @param {number} lng
+ * @param {number} lat
+ * @return {ee.Feature}
+ */
 function makePoint(lng, lat) {
   return ee.Feature(ee.Geometry.Point([lng, lat]));
 }
 
+/**
+ * Makes a fake Census block group with SNAP data.
+ * @param {string} id Block group geoid
+ * @param {number} snap Number of SNAP households
+ * @param {number} total Total number of households
+ * @return {ee.Feature}
+ */
 function makeSnapGroup(id, snap, total) {
   return ee.Feature(null, {
     HD01_VD02: snap,
     HD01_VD01: total,
-    'GEOdisplay-label': 'NY, group ' + id,
-    GEOid2: '36' + id
+    'GEOdisplay-label': 'Some state, group ' + id,
+    GEOid2: id
   });
 }
 
-function makeSviTract(swLng, svi) {
-  // One SVI tract per state, eh.
+/**
+ * Makes a fake Census tract for the SVI FeatureCollection. The tract
+ * encompasses the full state.
+ * @param {number} svi SVI of tract
+ * @return {ee.Feature}
+ */
+function makeSviTract(svi) {
   return ee.Feature(null, {'RPL_THEMES': svi, 'FIPS': '36'});
 }
 
+/**
+ * Makes a fake Census block group for the income FeatureCollection.
+ * @param {string} id Block group geoid
+ * @param {number} income Average income of group
+ * @return {ee.Feature}
+ */
 function makeIncomeGroup(id, income) {
-  return ee.Feature(null, {HD01_VD01: income, GEOid2: '36' + id});
+  return ee.Feature(null, {HD01_VD01: income, GEOid2: id});
 }
