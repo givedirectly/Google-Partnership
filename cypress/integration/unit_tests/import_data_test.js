@@ -67,7 +67,7 @@ describe('Unit tests for import_data.js', () => {
         income_key: 'HD01_VD01',
         building_asset_paths: {
           NY: buildingsCollection,
-        }
+        },
       },
     };
   });
