@@ -119,7 +119,7 @@ describe('Integration tests for drawing polygons', () => {
     cy.get('#mapContainer').contains(notes).should('not.be.visible');
   });
 
-  it.only('Hides polygon, re-shows, tries to hide during edit', () => {
+  it('Hides polygon, re-shows, tries to hide during edit', () => {
     cy.visit('');
 
     drawPolygonAndClickOnIt();
