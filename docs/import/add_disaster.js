@@ -41,7 +41,11 @@ const disasterData = new Map();
 // Map of state to list of known assets
 const stateAssets = new Map();
 
-const scoreAssetTypes = ['Poverty', 'Income', 'SVI'];
+const scoreAssetTypes = {
+  'Poverty': ['Total Households', 'SNAP Households'],
+  'Income': ['Income'],
+  'SVI': ['SVI']
+};
 
 // TODO: general reminder to add loading indicators for things like creating
 // new state asset folders, etc.
@@ -372,61 +376,46 @@ function populateStateAssetPickers() {
 }
 
 /**
- * Initializes the select interace for score assets.
+ * Initializes the select interface for score assets.
  * @param {Array<string>} states array of state (abbreviations)
  */
 function initializeScoreSelectors(states) {
-  $('#asset-selection-table-body').empty();
-  $('#score-asset-header-row').empty();
-  if (states.length) {
-    $('#score-asset-selection').show();
-  } else {
-    $('#score-asset-selection').hide();
-    return;
-  }
+  const headerRow = $('#score-asset-header-row');
+  const tableBody = $('#asset-selection-table-body');
+  tableBody.empty();
+  headerRow.empty();
 
-  $('#score-asset-header-row')
-      .append($(document.createElement('td')).html('Score Assets'));
+  // Initialize headers.
+  headerRow.append(createTd().html('Score Assets'));
   for (const state of states) {
-    $('#score-asset-header-row')
-        .append($(document.createElement('td')).html(state + ' Assets'));
+    headerRow.append(createTd().html(state + ' Assets'));
   }
-  $('#score-asset-header-row')
-      .append($(document.createElement('td')).html('Column Names'));
+  headerRow.append(createTd().html('Column Names'));
 
-  for (let i = 0; i < scoreAssetTypes.length; i++) {
+  // For each asset type, add select for all assets for each state.
+  for (let scoreAssetType in scoreAssetTypes) {
     const row = $(document.createElement('tr')).attr({
-      id: scoreAssetTypes[i] + '-row',
+      id: scoreAssetType + '-row',
     });
-    row.append($(document.createElement('td'))
-                   .append($(document.createElement('div'))
-                               .attr({
-                                 id: scoreAssetTypes[i] + '-title',
-                               })
-                               .html(scoreAssetTypes[i])));
+    row.append(createTd().append(
+        $(document.createElement('div')).html(scoreAssetType)));
     for (const state of states) {
       if (stateAssets.get(state)) {
-        const assets = stateAssets.get(state);
-        row.append($(document.createElement('td'))
-                       .append(createAssetDropdown(
-                           assets, scoreAssetTypes[i], state)));
+        row.append(createTd().append(createAssetDropdown(
+            stateAssets.get(state), scoreAssetType, state)));
       }
     }
     // TODO: Make column names selects instead.
-    const columnCell = $(document.createElement('td'));
-    columnCell.append($(document.createElement('input')).attr({
-      id: scoreAssetTypes[i] + '-column',
-      type: 'text',
-    }));
-    if (scoreAssetTypes[i] == 'Poverty') {
+    const columnCell = createTd();
+    for (let i = 0; i < scoreAssetTypes[scoreAssetType].length; i++) {
       columnCell.append($(document.createElement('input')).attr({
-        id: scoreAssetTypes[i] + '-column-2',
+        id: scoreAssetType + '-column-' + i,
         type: 'text',
       }));
     }
     row.append(columnCell);
-    $('#asset-selection-table-body').append(row);
-    row.change(() => handleScoreAssetSelection(scoreAssetTypes[i]));
+    tableBody.append(row);
+    row.change(() => handleScoreAssetSelection(scoreAssetType));
   }
 }
 
