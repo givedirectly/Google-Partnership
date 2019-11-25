@@ -1,10 +1,9 @@
 import {eeStatePrefixLength, legacyStateDir} from '../ee_paths.js';
 import {LayerType} from '../firebase_layers.js';
 import {disasterCollectionReference, getDisasters} from '../firestore_document.js';
-
 import {clearStatus, disasterData, getCurrentData, getCurrentLayers, getRowIndex, ILLEGAL_STATE_ERR, onUpdate, setCurrentDisaster, setStatus, updateLayersInFirestore} from './add_disaster_util.js';
-import {processNewFeatureLayer} from './add_layer.js';
 import {populateColorFunctions, withColor} from './color_function_util.js';
+import {getDisaster} from '../resources.js';
 
 export {enableWhenReady, toggleState, updateAfterSort};
 // Visible for testing
@@ -60,12 +59,8 @@ function enableWhenReady() {
     });
 
     disasterPicker.on('change', () => toggleDisaster(disasterPicker.val()));
-    // TODO(NOW): remove this
-    disasterPicker.val('2017-harvey').trigger('change');
+    disasterPicker.val(getDisaster()).trigger('change');
     toggleState(true);
-
-    // TODO(NOW): remove this
-    processNewFeatureLayer();
   });
 }
 

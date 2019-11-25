@@ -3,8 +3,15 @@ import {getCurrentLayers, getRowIndex, ILLEGAL_STATE_ERR, setStatus, updateLayer
 
 export {populateColorFunctions, withColor};
 
+// At any given point in time, the color function div is displaying info
+// about a single asset. We use this global cell to keep trick of which
+// color function info is currently displayed.
 let globalTd;
 
+/**
+ * Fills out the #single #continuous and #discrete divs with the relevant
+ * DOM elements with attached on change handlers.
+ */
 function populateColorFunctions() {
   const colorFunctionDiv = $('#color-fxn-editor');
   colorFunctionDiv.prepend(createRadioFor(ColorStyle.SINGLE));
@@ -16,8 +23,8 @@ function populateColorFunctions() {
   $('#single').append(
       createLabelFor(singleColorPicker, 'color: '), singleColorPicker);
 
-  const continuousPicker = createColorPicker('continuous-picker');
-  continuousPicker.on('change', () => setColor(continuousPicker));
+  const continuousColorPicker = createColorPicker('continuous-color-picker');
+  continuousColorPicker.on('change', () => setColor(continuousColorPicker));
   const continuousPropertyPicker =
       $(document.createElement('select'))
           .prop('id', 'continuous-property-picker');
@@ -25,15 +32,15 @@ function populateColorFunctions() {
       'change', () => setProperty(continuousPropertyPicker));
   $('#continuous')
       .append(
-          createLabelFor(continuousPicker, 'base color: '), continuousPicker,
-          getBreak(), createLabelFor(continuousPropertyPicker, 'property: '),
+          createLabelFor(continuousColorPicker, 'base color: '), continuousColorPicker,
+          $(document.createElement('br')), createLabelFor(continuousPropertyPicker, 'property: '),
           continuousPropertyPicker);
 
   const discretePropertyPicker = $(document.createElement('select'))
                                      .prop('id', 'discrete-property-picker');
   discretePropertyPicker.on('change', () => {
     setProperty(discretePropertyPicker);
-    setDiscreteColorPickers();
+    populateDiscreteColorPickers();
   });
   const discreteColorPickers =
       $(document.createElement('ul')).prop('id', 'discrete-color-pickers');
@@ -43,25 +50,46 @@ function populateColorFunctions() {
           discretePropertyPicker, discreteColorPickers);
 }
 
+/**
+ * Updates the 'field' property which is shared by the continuous and discrete
+ * color schemas.
+ * @param {JQuery<HTMLElement>} picker
+ */
 function setProperty(picker) {
   getColorFunction()['field'] = picker.val();
   updateLayersInFirestore();
 }
 
+/**
+ * Updates an individual color choice for a single value in the discrete schema.
+ * @param {JQuery<HTMLElement>} picker
+ */
 function setDiscreteColor(picker) {
   const colorFunction = getColorFunction();
   const propertyValue = picker.data('value');
+  if (!colorFunction['colors']) {
+    colorFunction['colors'] = {};
+  }
   colorFunction['colors'][propertyValue] = picker.val();
   updateLayersInFirestore();
   populateColorTd(true);
 }
 
+/**
+ * Updates the 'color' property which is shared by the continuous and single
+ * color schemas.
+ * @param {JQuery<HTMLElement>} picker
+ */
 function setColor(picker) {
   getColorFunction()['color'] = picker.val();
   updateLayersInFirestore();
   populateColorTd(false);
 }
 
+/**
+ * Refreshes the current color cell.
+ * @param discrete
+ */
 function populateColorTd(discrete) {
   const colorFunction = getColorFunction();
   globalTd.empty();
@@ -72,6 +100,11 @@ function populateColorTd(discrete) {
   }
 }
 
+/**
+ * Creates a picker with our known colors.
+ * @param {string} id
+ * @return {JQuery<HTMLSelectElement>}
+ */
 function createColorPicker(id) {
   const colorPicker = $(document.createElement('select'));
   colorMap.forEach((value, key) => {
@@ -88,6 +121,11 @@ for (const t in ColorStyle) {
   }
 }
 
+/**
+ * Creates a radio button in the color schema set.
+ * @param {enum} colorType
+ * @return {[JQuery<HTMLSelectElement>]}
+ */
 function createRadioFor(colorType) {
   const buttonAndLabel = [];
   buttonAndLabel.push($(document.createElement('input'))
@@ -107,14 +145,16 @@ function createRadioFor(colorType) {
   return buttonAndLabel;
 }
 
+/**
+ * Utility function - helps create a label for the given element.
+ * @param element
+ * @param text
+ * @return {JQuery<HTMLLabelElement> | * | jQuery.fn.init | jQuery | HTMLElement}
+ */
 function createLabelFor(element, text) {
   return $(document.createElement('label'))
       .prop('for', element.prop('id'))
       .text(text);
-}
-
-function getBreak() {
-  return $(document.createElement('br'));
 }
 
 /**
@@ -147,22 +187,11 @@ function withColor(td, layer, property, index) {
   return td;
 }
 
-function createColorBoxesForDiscrete(colorFunction, td) {
-  const colorObject = colorFunction['colors'];
-  // coming from a place that has never had discrete before
-  if (!colorObject) {
-    return;
-  }
-  const colorSet = new Set();
-  Object.keys(colorObject).forEach((propertyValue) => {
-    const color = colorObject[propertyValue];
-    if (!colorSet.has(color)) {
-      colorSet.add(color);
-      td.append(createColorBox(colorObject[propertyValue]));
-    }
-  });
-}
-
+/**
+ * On click function for color tds - updates the globalTd.
+ * @param {JQuery<HTMLElement>} td
+ * @param {enum} type
+ */
 function onClick(td, type) {
   if ($(td).hasClass('na')) {
     return;
@@ -182,6 +211,10 @@ function onClick(td, type) {
       .trigger('change');
 }
 
+/**
+ * Switches the schema of {@link globalTd} to the given type.
+ * @param {enum} type
+ */
 function switchSchema(type) {
   const colorFunction = getColorFunction();
   $('.color-type-div').hide();
@@ -193,21 +226,29 @@ function switchSchema(type) {
       break;
     case ColorStyle.CONTINUOUS:
       $('#continuous-radio').prop('checked', true);
-      $('#continuous-picker').val(colorFunction['color']);
-      setPropertyPicker($('#continuous-property-picker'));
+      $('#continuous-color-picker').val(colorFunction['color']);
+      populatePropertyPicker($('#continuous-property-picker'));
       $('#continuous').show();
       break;
     case ColorStyle.DISCRETE:
       $('#discrete-radio').prop('checked', true);
-      setPropertyPicker($('#discrete-property-picker'));
-      if ($('#discrete-property-picker').val()) setDiscreteColorPickers();
+      const propertyPicker = $('#discrete-property-picker');
+      populatePropertyPicker(propertyPicker);
+      if (propertyPicker.val()) populateDiscreteColorPickers();
       $('#discrete').show();
       break;
   }
   populateColorTd(type === ColorStyle.DISCRETE);
+  colorFunction['current-style'] = type;
+  updateLayersInFirestore();
 }
 
-function setPropertyPicker(picker) {
+/**
+ * Updates the given select element with the properties of the earth engine
+ * asset related to {@link globalTd}.
+ * @param {JQuery<HTMLElement>} picker
+ */
+function populatePropertyPicker(picker) {
   picker.empty();
   const colorFunction = getColorFunction();
   const properties = colorFunction['columns'];
@@ -218,7 +259,14 @@ function setPropertyPicker(picker) {
   picker.append(asOptions).val(colorFunction['field']);
 }
 
-function setDiscreteColorPickers() {
+/**
+ * Updates the list of color pickers for the discrete schema to have one for
+ * each property of the earth engine asset related to {@link globalTd}.
+ *
+ * We add a piece of data to each of these pickers so they know what property
+ * they're attached to.
+ */
+function populateDiscreteColorPickers() {
   const pickerList = $('#discrete-color-pickers').empty();
   const colorFunction = getColorFunction();
   const values =
@@ -240,6 +288,27 @@ function setDiscreteColorPickers() {
 }
 
 /**
+ * Creates the set of color boxes for a discrete schema.
+ * @param {Object} colorFunction
+ * @param {JQuery<HTMLElement>} td cell in which to create the boxes.
+ */
+function createColorBoxesForDiscrete(colorFunction, td) {
+  const colorObject = colorFunction['colors'];
+  // coming from a place that has never had discrete before
+  if (!colorObject) {
+    return;
+  }
+  const colorSet = new Set();
+  Object.keys(colorObject).forEach((propertyValue) => {
+    const color = colorObject[propertyValue];
+    if (!colorSet.has(color)) {
+      colorSet.add(color);
+      td.append(createColorBox(colorObject[propertyValue]));
+    }
+  });
+}
+
+/**
  * Creates an instance of the color boxes for the color col.
  * @param {string} color what color to make the box.
  * @return {JQuery<HTMLDivElement>}
@@ -250,6 +319,10 @@ function createColorBox(color) {
       .css('background-color', color);
 }
 
+/**
+ * Gets color function related to {@link globalTd}.
+ * @return {*}
+ */
 function getColorFunction() {
   const index = getRowIndex(globalTd.parents('tr'));
   return getCurrentLayers()[index]['color-function'];
