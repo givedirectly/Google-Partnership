@@ -257,7 +257,10 @@ function populatePropertyPicker(picker) {
   const colorFunction = getColorFunction();
   const properties = colorFunction['columns'];
   const asOptions = [];
-  Object.keys(properties).forEach((key) => asOptions.push($(document.createElement('option')).val(key).text(key)));
+  Object.keys(properties)
+      .forEach(
+          (key) => asOptions.push(
+              $(document.createElement('option')).val(key).text(key)));
   picker.append(asOptions).val(colorFunction['field']);
 }
 

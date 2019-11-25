@@ -1,5 +1,6 @@
-import {getCurrentLayers, updateLayersInFirestore} from './add_disaster_util.js';
 import {convertEeObjectToPromise} from '../map_util.js';
+
+import {getCurrentLayers, updateLayersInFirestore} from './add_disaster_util.js';
 
 export {processNewFeatureLayer};
 
@@ -21,10 +22,12 @@ function processNewFeatureLayer() {
     const max = featureCollection.aggregate_max(property);
     const min = featureCollection.aggregate_min(property);
     const values = featureCollection.aggregate_array(property);
-    return ee.Dictionary.fromLists(['max', 'min', 'values'], [max, min, values]);
+    return ee.Dictionary.fromLists(
+        ['max', 'min', 'values'], [max, min, values]);
   });
-  return convertEeObjectToPromise(ee.Dictionary.fromLists(properties, stats)).then((columns) => {
-    layer['color-function']['columns'] = columns;
-    return updateLayersInFirestore();
-  });
+  return convertEeObjectToPromise(ee.Dictionary.fromLists(properties, stats))
+      .then((columns) => {
+        layer['color-function']['columns'] = columns;
+        return updateLayersInFirestore();
+      });
 }
