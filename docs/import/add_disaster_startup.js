@@ -3,6 +3,7 @@ import {loadNavbarWithTitle} from '../navbar.js';
 import SettablePromise from '../settable_promise.js';
 import TaskAccumulator from '../task_accumulator.js';
 import {enableWhenReady, toggleState, updateAfterSort} from './add_disaster.js';
+import {populateColorFunctions} from './color_function_util.js';
 
 export {taskAccumulator};
 
@@ -21,6 +22,8 @@ const authenticator = new Authenticator(
       taskAccumulator.taskCompleted();
     });
 authenticator.start();
+
+$(populateColorFunctions());
 
 $('#create-new-disaster').on('click', () => toggleState(false));
 $('#cancel-new-disaster').on('click', () => toggleState(true));

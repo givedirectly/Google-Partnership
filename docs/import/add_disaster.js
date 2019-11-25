@@ -38,8 +38,6 @@ const stateAssets = new Map();
  * @return {Promise<firebase.firestore.QuerySnapshot>}
  */
 function enableWhenReady() {
-  populateColorFunctions();
-
   // enable (currently hidden) add disaster button now that firestore is ready.
   const addDisasterButton = $('#add-disaster-button');
   addDisasterButton.prop('disabled', false);
