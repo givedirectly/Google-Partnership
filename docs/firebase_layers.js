@@ -36,8 +36,8 @@ function createStyleFunction(colorFunctionProperties) {
       return () => color;
     case ColorStyle.CONTINUOUS:
       return createContinuousFunction(
-          field, opacity, colorFunctionProperties['min'],
-          colorFunctionProperties['max'], colorFunctionProperties['color']);
+          field, opacity, colorFunctionProperties['columns'][field]['min'],
+          colorFunctionProperties['columns'][field]['max'], colorFunctionProperties['color']);
     case ColorStyle.DISCRETE:
       return createDiscreteFunction(
           field, opacity, colorFunctionProperties['colors']);
