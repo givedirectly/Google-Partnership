@@ -4,13 +4,15 @@ export {
   processNewFeatureLayer
 }
 
-const assetPath = 'users/gd/2017-harvey/gd-visits';
 const layerIndex = 4;
 
+/**
+ * One off function for processing a feature collection typed layer and putting
+ * its color column info into firestore.
+ */
 function processNewFeatureLayer() {
-  const featureCollection = ee.FeatureCollection(assetPath);
+  const featureCollection = ee.FeatureCollection(getCurrentLayers()[layerIndex]['ee-name']);
   const properties = featureCollection.first().toDictionary().keys();
-  const dictionary = ee.Dictionary();
   const stats = properties.map((property) => {
     const max = featureCollection.aggregate_max(property);
     const min = featureCollection.aggregate_min(property);

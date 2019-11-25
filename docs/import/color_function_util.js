@@ -151,7 +151,6 @@ function createColorBoxesForDiscrete(colorFunction, td) {
   const colorObject = colorFunction['colors'];
   // coming from a place that has never had discrete before
   if (!colorObject) {
-    td.append(createColorBox(colorFunction['color']));
     return;
   }
   const colorSet = new Set();
@@ -201,7 +200,7 @@ function switchSchema(type) {
     case ColorStyle.DISCRETE:
       $('#discrete-radio').prop('checked', true);
       setPropertyPicker($('#discrete-property-picker'));
-      setDiscreteColorPickers();
+      if ($('#discrete-property-picker').val()) setDiscreteColorPickers();
       $('#discrete').show();
       break;
   }
@@ -225,18 +224,15 @@ function setDiscreteColorPickers() {
   const values =
       colorFunction['columns'][$('#discrete-property-picker').val()]['values'];
   const asColorPickers = [];
+  const colors = getColorFunction()['colors'];
   for (const value of values) {
     const li = $(document.createElement('li'));
     li.append($(document.createElement('label')).text(value + ': '));
-    // maybe always initialize color array?
-    const color = getColorFunction()['colors'] ?
-        colorFunction['colors'][value] :
-        colorFunction['color'];
     const colorPicker =
         createColorPicker()
             .on('change', (event) => setDiscreteColor($(event.target)))
-            .val(color)
-            .data('value', value);
+            .data('value', value)
+            .val(colors ? colors[value] : null);
     li.append(colorPicker);
     asColorPickers.push(li);
   }

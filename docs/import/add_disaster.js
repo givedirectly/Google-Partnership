@@ -65,7 +65,7 @@ function enableWhenReady() {
     toggleState(true);
 
     // TODO(NOW): remove this
-    // processNewFeatureLayer();
+    processNewFeatureLayer();
   });
 }
 
