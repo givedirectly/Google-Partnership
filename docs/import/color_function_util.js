@@ -32,8 +32,9 @@ function populateColorFunctions() {
       'change', () => setProperty(continuousPropertyPicker));
   $('#continuous')
       .append(
-          createLabelFor(continuousColorPicker, 'base color: '), continuousColorPicker,
-          $(document.createElement('br')), createLabelFor(continuousPropertyPicker, 'property: '),
+          createLabelFor(continuousColorPicker, 'base color: '),
+          continuousColorPicker, $(document.createElement('br')),
+          createLabelFor(continuousPropertyPicker, 'property: '),
           continuousPropertyPicker);
 
   const discretePropertyPicker = $(document.createElement('select'))
@@ -149,7 +150,8 @@ function createRadioFor(colorType) {
  * Utility function - helps create a label for the given element.
  * @param element
  * @param text
- * @return {JQuery<HTMLLabelElement> | * | jQuery.fn.init | jQuery | HTMLElement}
+ * @return {JQuery<HTMLLabelElement> | * | jQuery.fn.init | jQuery |
+ *     HTMLElement}
  */
 function createLabelFor(element, text) {
   return $(document.createElement('label'))
