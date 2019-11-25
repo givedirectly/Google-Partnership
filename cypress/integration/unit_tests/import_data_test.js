@@ -126,7 +126,7 @@ describe('Unit tests for import_data.js', () => {
     testData.asset_data = null;
     expect(run(testData)).to.be.false;
     expect(exportStub).to.not.be.called;
-  })
+  });
 });
 
 // Make sure that our block groups aren't so big they escape the 1 km damage
