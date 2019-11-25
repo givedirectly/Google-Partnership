@@ -6,7 +6,7 @@ export {loadNavbar, loadNavbarWithTitle};
  * @param {Function} callback the callback invoked upon load
  */
 function loadNavbar(callback) {
-  $('#navbar').load('/navbar.html', callback);
+  $('#navbar').load('./navbar.html', callback);
 }
 
 /**
