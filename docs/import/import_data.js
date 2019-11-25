@@ -267,7 +267,7 @@ function run(disasterData) {
     }
   }
   const task = ee.batch.Export.table.toAsset(
-      allStatesProcessing, scoreAssetPath, scoreAssetPath);
+      allStatesProcessing, scoreAssetPath.substring(scoreAssetPath.lastIndexOf('/')), scoreAssetPath);
   task.start();
   $('#upload-status')
       .text('Check Code Editor console for upload progress. Task: ' + task.id);
