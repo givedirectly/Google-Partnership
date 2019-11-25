@@ -70,6 +70,9 @@ function countDamageAndBuildings(feature, damage, buildings) {
     properties = properties.set(
         damageTag,
         // If no buildings, this is probably spurious. Don't give any damage.
+        // We don't expect totalBuildings to be 0 in production, but it's bitten
+        // us when working with partial buildings datasets. If this starts
+        // showing up in production, we may need to surface it to user somehow.
         ee.Algorithms.If(
             totalBuildings, ee.Number(damagedBuildings).divide(totalBuildings),
             0));
