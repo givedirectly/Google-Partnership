@@ -3,7 +3,7 @@ import {LayerType} from '../firebase_layers.js';
 import {disasterCollectionReference, getDisasters} from '../firestore_document.js';
 import {getDisaster} from '../resources.js';
 import {clearStatus, disasterData, getCurrentData, getCurrentLayers, getRowIndex, ILLEGAL_STATE_ERR, onUpdate, setCurrentDisaster, setStatus, updateLayersInFirestore} from './add_disaster_util.js';
-import {populateColorFunctions, withColor} from './color_function_util.js';
+import {withColor} from './color_function_util.js';
 
 export {enableWhenReady, toggleState, updateAfterSort};
 // Visible for testing
