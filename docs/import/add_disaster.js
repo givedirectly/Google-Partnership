@@ -41,7 +41,7 @@ const disasterData = new Map();
 // Map of state to list of known assets
 const stateAssets = new Map();
 
-const scoreAssetTypes = ['Poverty', 'Income', 'SVI', 'Damage'];
+const scoreAssetTypes = ['Poverty', 'Income', 'SVI'];
 
 // TODO: general reminder to add loading indicators for things like creating
 // new state asset folders, etc.
