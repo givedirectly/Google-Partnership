@@ -5,6 +5,8 @@ import {getFirestoreRoot} from '../firestore_document.js';
 import {disasterCollectionReference, getDisasters} from '../firestore_document.js';
 import {addLoadingElement, loadingElementFinished} from '../loading.js';
 import {getDisaster} from '../resources.js';
+import {clearStatus, ILLEGAL_STATE_ERR, setStatus} from './add_disaster_util.js';
+import {withColor} from './color_function_util.js';
 
 export {enableWhenReady, toggleState, updateAfterSort};
 // Visible for testing
@@ -25,7 +27,6 @@ export {
   stateAssets,
   updateLayersInFirestore,
   withCheckbox,
-  withColor,
   withInput,
   withList,
   withType,
@@ -89,14 +90,14 @@ function toggleDisaster(disaster) {
   return populateStateAssetPickers();
 }
 
-const STATE = {
+const State = {
   SAVED: 0,
   WRITING: 1,
   QUEUED_WRITE: 2,
 };
-Object.freeze(STATE);
+Object.freeze(State);
 
-let state = STATE.SAVED;
+let state = State.SAVED;
 let pendingWriteCount = 0;
 
 window.onbeforeunload = () => pendingWriteCount > 0 ? true : null;
@@ -107,12 +108,12 @@ window.onbeforeunload = () => pendingWriteCount > 0 ? true : null;
  * queued a write and doesn't know when that will finish.
  */
 function updateLayersInFirestore() {
-  if (state !== STATE.SAVED) {
-    state = STATE.QUEUED_WRITE;
+  if (state !== State.SAVED) {
+    state = State.QUEUED_WRITE;
     return null;
   }
   addLoadingElement(writeWaiterId);
-  state = STATE.WRITING;
+  state = State.WRITING;
   pendingWriteCount++;
   return getFirestoreRoot()
       .collection('disaster-metadata')
@@ -121,15 +122,15 @@ function updateLayersInFirestore() {
       .then(() => {
         pendingWriteCount--;
         const oldState = state;
-        state = STATE.SAVED;
+        state = State.SAVED;
         switch (oldState) {
-          case STATE.WRITING:
+          case State.WRITING:
             loadingElementFinished(writeWaiterId);
             return null;
-          case STATE.QUEUED_WRITE:
+          case State.QUEUED_WRITE:
             loadingElementFinished(writeWaiterId);
             return updateLayersInFirestore();
-          case STATE.SAVED:
+          case State.SAVED:
             console.error('Unexpected layer write state');
             return null;
         }
@@ -298,49 +299,6 @@ function withCheckbox(td, layer, property) {
                        .prop('checked', layer[property])
                        .on('change', (event) => onCheck(event, property));
   return td.append(checkbox);
-}
-
-/**
- * Creates an instance of the color boxes for the color col.
- * @param {string} color what color to make the box.
- * @return {JQuery<HTMLDivElement>}
- */
-function createColorBox(color) {
-  return $(document.createElement('div'))
-      .addClass('box')
-      .css('background-color', color);
-}
-
-/**
- * Adds color function info to the given td.
- * @param {JQuery<HTMLElement>} td
- * @param {Object} layer
- * @param {string} property
- * @param {number} index
- * @return {JQuery<HTMLElement>}
- */
-function withColor(td, layer, property, index) {
-  const colorFunction = layer[property];
-  if (!colorFunction) {
-    td.text('N/A').addClass('na');
-  } else if (colorFunction['single-color']) {
-    td.append(createColorBox(colorFunction['single-color']));
-  } else if (colorFunction['base-color']) {
-    td.append(createColorBox(colorFunction['base-color']));
-  } else if (colorFunction['colors']) {
-    const colorObject = colorFunction['colors'];
-    const colorSet = new Set();
-    Object.keys(colorObject).forEach((propertyValue) => {
-      const color = colorObject[propertyValue];
-      if (!colorSet.has(color)) {
-        colorSet.add(color);
-        td.append(createColorBox(colorObject[propertyValue]));
-      }
-    });
-  } else {
-    setStatus(ILLEGAL_STATE_ERR + 'unrecognized color function: ' + layer);
-  }
-  return td;
 }
 
 /** Populates the layers table with layers of current disaster. */
@@ -720,19 +678,6 @@ function deleteDisaster() {
 }
 
 /**
- * Utility function for setting the status div.
- * @param {String} text
- */
-function setStatus(text) {
-  $('#status').text(text).show();
-}
-
-/** Utility function for clearing status div. */
-function clearStatus() {
-  $('#status').hide();
-}
-
-/**
  * Utility function for creating an option with the same val and innerText.
  * @param {String} innerTextAndValue
  * @return {JQuery<HTMLOptionElement>}
@@ -767,6 +712,3 @@ function getCurrentLayers() {
 function setCurrentDisaster(disasterId) {
   localStorage.setItem('disaster', disasterId);
 }
-
-const ILLEGAL_STATE_ERR =
-    'Internal Error: contact developer with the following information: ';
