@@ -157,27 +157,6 @@ function run(disasterData) {
   if (!blockGroupPaths) {
     return missingAssetError('Census TIGER block group shapefiles');
   }
-  // TODO(janakr): delete if not using blocks for block group calculation.
-  // const blockData = assetData['block_data'];
-  // if (!blockData) {
-  //   return missingAssetError('Census block geometries');
-  // }
-  // const censusShapefileAsset = blockData['path'];
-  // if (!censusShapefileAsset) {
-  //   return missingAssetError('TIGER Census Block Groups');
-  // }
-  // const censusStateKey = blockData['state_key'];
-  // if (!censusStateKey) {
-  //   return missingAssetError('TIGER Census state key');
-  // }
-  // const censusBlockIdKey = blockData['blockid_key'];
-  // if (!censusBlockIdKey) {
-  //   return missingAssetError('TIGER Census block id key');
-  // }
-  // const censusBlockOnlyKey = blockData['blockonly_key'];
-  // if (!censusBlockOnlyKey) {
-  //   return missingAssetError('TIGER Census block-only key');
-  // }
   const snapData = assetData['snap_data'];
   if (!snapData) {
     return missingAssetError('SNAP info');
@@ -221,11 +200,6 @@ function run(disasterData) {
     return false;
   }
 
-  // TODO(janakr): delete if not using blocks for block group calculations.
-  // // Filter block groups to those in damage envelope.
-  // const censusBlocks = ee.FeatureCollection(censusShapefileAsset)
-  //                          .filterBounds(damageEnvelope);
-
   let allStatesProcessing = ee.FeatureCollection([]);
   for (const state of states) {
     const snapPath = snapPaths[state];
@@ -252,10 +226,6 @@ function run(disasterData) {
 
     const stateGroups =
         ee.FeatureCollection(blockGroupPath).filterBounds(damageEnvelope);
-    // TODO(janakr): delete if not using blocks for block group calculations.
-    // const stateGroups = getStateBlockGroupsFromNationalBlocks(
-    //     censusBlocks, state, censusStateKey, censusBlockIdKey,
-    //     censusBlockOnlyKey);
 
     let processing = ee.FeatureCollection(snapPath).map(stringifyGeoid);
 

@@ -8,17 +8,10 @@ describe('Unit tests for import_data.js', () => {
   let testData;
   let exportStub;
   beforeEach(() => {
-    // Create a pretty trivial world: 4 blocks, each 1x1, block groups are
-    // vertical stripes. Under the covers, we scale all dimensions down because
+    // Create a pretty trivial world: 2 block groups, each a 1x2 vertical
+    // stripes. Under the covers, we scale all dimensions down because
     // production code creates an "envelope" 1 km wide around damage, and that
     // envelope is assumed to fully contain any block group that has any damage.
-    // TODO(janakr): delete if not using blocks for block group calculations.
-    // const tigerBlocks = ee.FeatureCollection([
-    //   makeCensusBlock(0, 0),
-    //   makeCensusBlock(0, 1),
-    //   makeCensusBlock(1, 0),
-    //   makeCensusBlock(1, 1),
-    // ]);
     const tigerBlockGroups = ee.FeatureCollection(
         [makeCensusBlockGroup(0), makeCensusBlockGroup(1)]);
     // Three damage points, one of them outside the blocks, just for fun.
@@ -53,13 +46,6 @@ describe('Unit tests for import_data.js', () => {
         block_group_asset_paths: {
           NY: tigerBlockGroups,
         },
-        // TODO(janakr): delete if not using blocks for block group calculation.
-        // block_data: {
-        //   path: tigerBlocks,
-        //   state_key: 'testStateKey',
-        //   blockid_key: 'testBlockidKey',
-        //   blockonly_key: 'testBlockTabNumberKey',
-        // },
         snap_data: {
           paths: {
             NY: snapData,
@@ -141,34 +127,6 @@ describe('Unit tests for import_data.js', () => {
 // envelope. 1 degree of longitude is 111 km at the equator, so this should be
 // plenty.
 const distanceScalingFactor = 0.0001;
-
-// TODO(janakr): delete if not using blocks for block group calculations.
-/**
- * Makes a census block in NY that is a 1x1 square, with southwest corner given
- * by the coordinates and a block id derived from the given coordinates.
- * @param {number} swLng
- * @param {number} swLat
- * @return {ee.Feature}
- */
-function makeCensusBlock(swLng, swLat) {  // eslint-disable-line no-unused-vars
-  const testBlockTabNumberKey = swLng + '' + swLat;
-  const testStateKey = '36';
-  const testBlockidKey = testStateKey + testBlockTabNumberKey;
-  return ee.Feature(
-      ee.Geometry.Polygon(scaleArray([
-        swLng,
-        swLat,
-        swLng + 1,
-        swLat,
-        swLng + 1,
-        swLat + 1,
-        swLng,
-        swLat + 1,
-        swLng,
-        swLat,
-      ])),
-      {testStateKey, testBlockTabNumberKey, testBlockidKey});
-}
 
 /**
  * Makes a NY Census block group that is a 1x2 rectangle, with southwest corner
