@@ -4,13 +4,13 @@ import {getCurrentLayers, getRowIndex, ILLEGAL_STATE_ERR, setStatus, updateLayer
 export {populateColorFunctions, withColor};
 
 // At any given point in time, the color function div is displaying info
-// about a single asset. We use this global cell to keep trick of which
+// about a single asset. We use this global cell to keep track of which
 // color function info is currently displayed.
 let globalTd;
 
 /**
  * Fills out the #single #continuous and #discrete divs with the relevant
- * DOM elements with attached on change handlers.
+ * DOM elements with attached on-change handlers.
  */
 function populateColorFunctions() {
   const colorFunctionDiv = $('#color-fxn-editor');
@@ -21,7 +21,7 @@ function populateColorFunctions() {
   const singleColorPicker = createColorPicker('single-color-picker');
   singleColorPicker.on('change', () => setColor(singleColorPicker));
   $('#single').append(
-      createLabelFor(singleColorPicker, 'color: '), singleColorPicker);
+      createLabelFor(singleColorPicker, 'color'), singleColorPicker);
 
   const continuousColorPicker = createColorPicker('continuous-color-picker');
   continuousColorPicker.on('change', () => setColor(continuousColorPicker));
@@ -32,9 +32,9 @@ function populateColorFunctions() {
       'change', () => setProperty(continuousPropertyPicker));
   $('#continuous')
       .append(
-          createLabelFor(continuousColorPicker, 'base color: '),
+          createLabelFor(continuousColorPicker, 'base color'),
           continuousColorPicker, $(document.createElement('br')),
-          createLabelFor(continuousPropertyPicker, 'property: '),
+          createLabelFor(continuousPropertyPicker, 'property'),
           continuousPropertyPicker);
 
   const discretePropertyPicker = $(document.createElement('select'))
@@ -47,7 +47,7 @@ function populateColorFunctions() {
       $(document.createElement('ul')).prop('id', 'discrete-color-pickers');
   $('#discrete')
       .append(
-          createLabelFor(discretePropertyPicker, 'property: '),
+          createLabelFor(discretePropertyPicker, 'property'),
           discretePropertyPicker, discreteColorPickers);
 }
 
@@ -67,13 +67,13 @@ function setProperty(picker) {
  */
 function setDiscreteColor(picker) {
   const colorFunction = getColorFunction();
-  const propertyValue = picker.data('value');
+  const propertyValue = picker.data(discreteColorPickerDataKey);
   if (!colorFunction['colors']) {
     colorFunction['colors'] = {};
   }
   colorFunction['colors'][propertyValue] = picker.val();
   updateLayersInFirestore();
-  populateColorTd(true);
+  populateColorTd();
 }
 
 /**
@@ -84,35 +84,39 @@ function setDiscreteColor(picker) {
 function setColor(picker) {
   getColorFunction()['color'] = picker.val();
   updateLayersInFirestore();
-  populateColorTd(false);
+  populateColorTd();
 }
 
 /**
  * Refreshes the current color cell.
- * @param {boolean} discrete
  */
-function populateColorTd(discrete) {
+function populateColorTd() {
   const colorFunction = getColorFunction();
+  const style = colorFunction['current-style'];
   globalTd.empty();
-  if (discrete) {
+  if (style === ColorStyle.DISCRETE) {
     createColorBoxesForDiscrete(colorFunction, globalTd);
   } else {
     globalTd.append(createColorBox(colorFunction['color']));
   }
 }
 
+const colorList = Array.from(colorMap.keys());
 /**
  * Creates a picker with our known colors.
- * @param {string} id
+ * @param {?string} id
  * @return {JQuery<HTMLSelectElement>}
  */
 function createColorPicker(id) {
   const colorPicker = $(document.createElement('select'));
-  colorMap.forEach((value, key) => {
-    const option = $(document.createElement('option')).val(key).text(key);
+  for (const color of colorList) {
+    const option = $(document.createElement('option')).val(color).text(color);
     colorPicker.append(option);
-  });
-  return colorPicker.prop('id', id);
+  }
+  if (id) {
+    colorPicker.prop('id', id);
+  }
+  return colorPicker;
 }
 
 const colorStyleTypeStrings = new Map();
@@ -129,19 +133,18 @@ for (const t in ColorStyle) {
  */
 function createRadioFor(colorType) {
   const buttonAndLabel = [];
+  const type = colorStyleTypeStrings.get(colorType);
   buttonAndLabel.push($(document.createElement('input'))
                           .attr({
                             name: 'color-type',
                             type: 'radio',
-                            id: colorStyleTypeStrings.get(colorType) + '-radio',
+                            id: type + '-radio',
                             value: colorType,
                           })
-                          .on('change', () => {
-                            switchSchema(colorType);
-                          }));
+                          .on('change', () => switchSchema(colorType)));
   buttonAndLabel.push($(document.createElement('label'))
                           .prop('for', colorType + 'radio')
-                          .text(colorStyleTypeStrings.get(colorType)));
+                          .text(type));
   buttonAndLabel.push($(document.createElement('span')).text('  '));
   return buttonAndLabel;
 }
@@ -155,7 +158,7 @@ function createRadioFor(colorType) {
 function createLabelFor(element, text) {
   return $(document.createElement('label'))
       .prop('for', element.prop('id'))
-      .text(text);
+      .text(text.concat(': '));
 }
 
 /**
@@ -206,14 +209,17 @@ function onClick(td, type) {
   if (td === globalTd) {
     return;
   }
+  $(globalTd).removeClass('selected');
   globalTd = td;
+  $(globalTd).addClass('selected');
   $('#' + colorStyleTypeStrings.get(type) + '-radio')
       .prop('checked', true)
       .trigger('change');
 }
 
 /**
- * Switches the schema of {@link globalTd} to the given type.
+ * Switches the schema of {@link globalTd} to the given type, shows the
+ * div of the new type, updates {@link globalTd}'s contents.
  * @param {enum} type
  */
 function switchSchema(type) {
@@ -221,26 +227,23 @@ function switchSchema(type) {
   $('.color-type-div').hide();
   switch (type) {
     case ColorStyle.SINGLE:
-      $('#single-color-radio').prop('checked', true);
       $('#single-color-picker').val(colorFunction['color']);
       $('#single').show();
       break;
     case ColorStyle.CONTINUOUS:
-      $('#continuous-radio').prop('checked', true);
       $('#continuous-color-picker').val(colorFunction['color']);
       populatePropertyPicker($('#continuous-property-picker'));
       $('#continuous').show();
       break;
     case ColorStyle.DISCRETE:
-      $('#discrete-radio').prop('checked', true);
       const propertyPicker = $('#discrete-property-picker');
       populatePropertyPicker(propertyPicker);
       if (propertyPicker.val()) populateDiscreteColorPickers();
       $('#discrete').show();
       break;
   }
-  populateColorTd(type === ColorStyle.DISCRETE);
   colorFunction['current-style'] = type;
+  populateColorTd();
   updateLayersInFirestore();
 }
 
@@ -254,11 +257,13 @@ function populatePropertyPicker(picker) {
   const colorFunction = getColorFunction();
   const properties = colorFunction['columns'];
   const asOptions = [];
-  Object.keys(properties).forEach((key) => {
-    asOptions.push($(document.createElement('option')).val(key).text(key));
-  });
+  Object.keys(properties).forEach((key) => asOptions.push($(document.createElement('option')).val(key).text(key)));
   picker.append(asOptions).val(colorFunction['field']);
 }
+
+// The key for the data in each discrete schema color select to know which
+// property it's linked.
+const discreteColorPickerDataKey = 'value';
 
 /**
  * Updates the list of color pickers for the discrete schema to have one for
@@ -280,7 +285,7 @@ function populateDiscreteColorPickers() {
     const colorPicker =
         createColorPicker()
             .on('change', (event) => setDiscreteColor($(event.target)))
-            .data('value', value)
+            .data(discreteColorPickerDataKey, value)
             .val(colors ? colors[value] : null);
     li.append(colorPicker);
     asColorPickers.push(li);
@@ -322,7 +327,7 @@ function createColorBox(color) {
 
 /**
  * Gets color function related to {@link globalTd}.
- * @return {*}
+ * @return {Object}
  */
 function getColorFunction() {
   const index = getRowIndex(globalTd.parents('tr'));

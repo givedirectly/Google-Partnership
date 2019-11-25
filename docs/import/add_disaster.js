@@ -5,6 +5,8 @@ import {getDisaster} from '../resources.js';
 import {clearStatus, disasterData, getCurrentData, getCurrentLayers, getRowIndex, ILLEGAL_STATE_ERR, onUpdate, setCurrentDisaster, setStatus, updateLayersInFirestore} from './add_disaster_util.js';
 import {populateColorFunctions, withColor} from './color_function_util.js';
 
+import {processNewFeatureLayer} from './add_layer.js';
+
 export {enableWhenReady, toggleState, updateAfterSort};
 // Visible for testing
 export {
@@ -61,6 +63,10 @@ function enableWhenReady() {
     disasterPicker.on('change', () => toggleDisaster(disasterPicker.val()));
     disasterPicker.val(getDisaster()).trigger('change');
     toggleState(true);
+
+    // TODO(NOW): remove
+    // processNewFeatureLayer();
+
   });
 }
 

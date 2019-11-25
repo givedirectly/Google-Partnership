@@ -8,6 +8,10 @@
   border: 1px solid black;
 }
 
+.selected {
+  background-color: var(--green-6);
+}
+
 textarea {
   width: 100%;
   box-sizing: border-box;
