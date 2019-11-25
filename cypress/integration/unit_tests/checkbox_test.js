@@ -8,7 +8,7 @@ import {createGoogleMap} from '../../support/test_map';
 const mockData = {};
 
 const colorProperties = {
-  'single-color': 'yellow',
+  'color': 'yellow',
 };
 const mockFirebaseLayers = [
   {
@@ -45,7 +45,7 @@ const mockFirebaseLayers = [
   {
     'ee-name': 'tile_asset',
     'asset-type': LayerType.MAP_TILES,
-    'tile-urls': ['tile-url1/{X}/{Y}/{Z}', 'tile-url2/{X}/{Y}/{Z}'],
+    'urls': ['tile-url1/{X}/{Y}/{Z}', 'tile-url2/{X}/{Y}/{Z}'],
     'display-name': 'tiles',
     'display-on-load': true,
     'index': 4,

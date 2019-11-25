@@ -3,7 +3,7 @@ import {colorMap, createStyleFunction} from '../../../docs/firebase_layers.js';
 describe('Unit test for generating style functions', () => {
   it('calculates a discrete function', () => {
     const fxn = createStyleFunction({
-      'continuous': false,
+      'current-style': 1,
       'field': 'flavor',
       'opacity': 100,
       'colors': {
@@ -21,9 +21,9 @@ describe('Unit test for generating style functions', () => {
 
   it('calculates a continuous function', () => {
     const fxn = createStyleFunction({
-      'continuous': true,
+      'current-style': 0,
       'field': 'oranges',
-      'base-color': 'orange',
+      'color': 'orange',
       'opacity': 83,
       'min': 14,
       'max': 10005,
@@ -39,7 +39,8 @@ describe('Unit test for generating style functions', () => {
 
   it('calculates a single-color function', () => {
     const fxn = createStyleFunction({
-      'single-color': 'blue',
+      'current-style': 2,
+      'color': 'blue',
       'opacity': 83,
     });
     const trueBlue = fxn({});

@@ -18,22 +18,29 @@ all `<data>` instances contain the following fields:
 ### Color Functions
 We have three types of coloring schemes: continuous, discrete, and single color. Each has a different schema for the <code>color-function</code> object:
 
+#### ColorStyle Enum:
+
+* Continuous: 0
+* Discrete: 1
+* Single Color: 2
+
 **continuous:**
-* continuous `{boolean}`: set to true
-* base-color `{string}`: from known colors
+* current-style `{enum}`: set to 0
+* color `{string}`: from set of known colors
 * field `{string}`: name of property we're using to calculate color
 * max `{number}`: max value of field
 * min `{number}`: min value of field
 * opacity `{number}`: opacity level
 
 **discrete:**
-* continuous `{boolean}`: set to false
+* current-style `{enum}`: set to 1
 * field `{string}`: name of property we're using to calculate color
 * colors `{Map}`: map of field value `{string}` to color `{string}` (from known colors)
 * opacity `{number}`
 
 **single-color:**
-* single-color `{string}`: from set of known colors
+* current-style `{enum}`: set to 2
+* color `{string}`: from set of known colors
 * opacity `{number}`
 
 Note - all `color-fxn` objects have the opacity field. 
