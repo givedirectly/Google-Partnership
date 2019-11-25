@@ -24,8 +24,8 @@ function processNewFeatureLayer() {
   });
   const keys = stats.map((stat) => ee.List(stat).get(0));
   const vals = stats.map((stat) => ee.List(stat).get(1));
-  ee.Dictionary.fromLists(keys, vals).evaluate((yes, no) => {
-    layer['color-function']['columns'] = yes;
+  ee.Dictionary.fromLists(keys, vals).evaluate((columns) => {
+    layer['color-function']['columns'] = columns;
     updateLayersInFirestore();
   });
 }
