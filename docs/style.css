@@ -82,7 +82,7 @@ h1 {
 }
 
 .g-sign-in .icon {
-  background: url('/g-icon.png') transparent 5px 50% no-repeat;
+  background: url('./g-icon.png') transparent 5px 50% no-repeat;
   display: inline-block;
   vertical-align: middle;
   width: 42px;
