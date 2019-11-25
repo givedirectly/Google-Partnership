@@ -261,7 +261,7 @@ function run(disasterData) {
     ee.data.deleteAsset(scoreAssetPath);
   } catch (err) {
     if (err.message === 'Asset not found.') {
-      console.log(scoreAssetPath + ' not found to delete');
+      console.log('Old ' + scoreAssetPath + ' not present, did not delete it');
     } else {
       throw err;
     }
