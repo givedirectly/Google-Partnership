@@ -1,9 +1,9 @@
 import {gdEePathPrefix} from '../ee_paths.js';
 import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, snapPercentageTag, snapPopTag, sviTag, totalPopTag, tractTag} from '../property_names.js';
-import {getDisaster} from '../resources.js';
 
-import {saveBounds, storeCenter} from './center.js';
+import {saveBounds, computeAndSaveBounds} from './center.js';
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
+import {getScoreAsset} from '../resources.js';
 
 export {enableWhenReady};
 /** @VisibleForTesting */
@@ -12,13 +12,13 @@ export {countDamageAndBuildings, run};
 /**
  * TODO: This should be moved to a user-readable doc and expanded.
  * Processes all user-entered data to construct the "score" asset in EarthEngine
- * and write map bounds for the disaster to Firestore. Mandatory data
- * (state-level data needs to be present for every affected state):
- * 1. National Census block shapes, normally provided by EarthEngine.
- * 2. State-level Census SNAP data, at the block group level.
- * 3. State-level SVI data, at the Census tract level.
- * 4. State-level income data, at the block group level.
- * 5. State-level FeatureCollection of all buildings.
+ * and write map bounds for the disaster to Firestore. Mandatory state-level
+ * data (needs to be present for every affected state):
+ * 1. Census block group shapes (TIGER shapefile).
+ * 2. Census SNAP data, at the block group level.
+ * 3. SVI data, at the Census tract level.
+ * 4. Income data, at the block group level.
+ * 5. FeatureCollection of all buildings.
  *
  * Current workflow for a new disaster
  *
@@ -26,8 +26,10 @@ export {countDamageAndBuildings, run};
  *      https://factfinder.census.gov/faces/nav/jsf/pages/download_center.xhtml
  * 2. clean up illegal property names in (0) by running ./cleanup_acs.sh
  *    /path/to/snap/data.csv
- * 3. download crowd ai damage data .shp file
- * 4. upload results of (1) and (2) to EarthEngine via the code editor
+ * 3. download TIGER block group .shp from census website
+ *      https://www.census.gov/cgi-bin/geo/shapefiles/index.php
+ * 4. download crowd ai damage data .shp file
+ * 5. upload results of (2), (3), and (4) to EarthEngine via the code editor
  * 5. visit http://localhost:8080/import/add_disaster.html and fill out all
  * required fields
  * 6. visit http://localhost:8080/import/import_data.html and submit the page.
@@ -142,9 +144,9 @@ function addTractInfo(feature) {
  * Performs operation of processing inputs and creating output asset.
  * @param {Object} disasterData Data for current disaster coming from Firestore
  * @return {boolean} Whether in-thread operations succeeded
- * */
+ */
 function run(disasterData) {
-  $('.compute-status').html('');
+  $('#compute-status').html('');
   const states = disasterData['states'];
   if (!states) {
     return missingAssetError('affected states');
@@ -247,7 +249,7 @@ function run(disasterData) {
 
     // Get building count by block group.
     const buildingsHisto =
-        computeBuildingsHisto(damageEnvelope, buildingPath, state, stateGroups);
+        computeBuildingsHisto(damageEnvelope, buildingPath, stateGroups);
 
     // Create final feature collection.
     processing = processing.map(
@@ -255,20 +257,20 @@ function run(disasterData) {
     allStatesProcessing = allStatesProcessing.merge(processing);
   }
 
-  const assetName = 'data-ms-as-tot';
-  const scoreAssetPath = gdEePathPrefix + getDisaster() + '/' + assetName;
+  const scoreAssetPath = getScoreAsset();
   try {
     ee.data.deleteAsset(scoreAssetPath);
   } catch (err) {
-    if (err.message !== 'Asset not found.') {
+    if (err.message === 'Asset not found.') {
+      console.log(scoreAssetPath + ' not found to delete');
+    } else {
       throw err;
     }
-    console.log(scoreAssetPath + ' not found to delete');
   }
   const task = ee.batch.Export.table.toAsset(
-      allStatesProcessing, assetName, scoreAssetPath);
+      allStatesProcessing, scoreAssetPath, scoreAssetPath);
   task.start();
-  $('.upload-status')
+  $('#upload-status')
       .text('Check Code Editor console for upload progress. Task: ' + task.id);
   return true;
 }
@@ -295,7 +297,7 @@ function calculateDamage(assetData) {
   const damagePath = assetData['damage_asset_path'];
   const centerStatusSpan = document.createElement('span');
   const centerStatusLabel = document.createElement('span');
-  $('.compute-status').append(centerStatusLabel).append(centerStatusSpan);
+  $('#compute-status').append(centerStatusLabel).append(centerStatusSpan);
   centerStatusSpan.innerText = 'in progress';
   const firestoreError = (err) => centerStatusSpan.innerText +=
       'Error writing bounds to Firestore: ' + err;
@@ -306,7 +308,7 @@ function calculateDamage(assetData) {
     //     ee.FeatureCollection('users/gd/2017-harvey/data-ms-as-nod')
     //         .filterMetadata('GEOID', 'starts_with', '482015417002'));
     centerStatusLabel.innerText = 'Computing and storing bounds of map: ';
-    storeCenter(damage)
+    computeAndSaveBounds(damage)
         .then(displayGeoNumbers)
         .then((bounds) => centerStatusSpan.innerText = 'Found bounds ' + bounds)
         .catch((err) => centerStatusSpan.innerText = err);
@@ -373,20 +375,20 @@ function makeGeoJsonRectangle(sw, ne) {
  * instead of previously computed building data.
  * @param {ee.Geometry.Polygon} damageEnvelope Area we are concerned with
  * @param {string} buildingPath location of buildings asset in EE
- * @param {string} state
  * @param {ee.FeatureCollection} stateGroups Collection with block groups
  * @return {ee.Dictionary} Number of buildings per block group
  */
 function computeBuildingsHisto(
-    damageEnvelope, buildingPath, state, stateGroups) {
+    damageEnvelope, buildingPath, stateGroups) {
   const buildings =
       ee.FeatureCollection(buildingPath).filterBounds(damageEnvelope);
+  const field = 'fieldToSaveBlockGroupUnder';
   const withBlockGroup =
-      ee.Join.saveFirst('bg')
+      ee.Join.saveFirst(field)
           .apply(
               buildings, stateGroups,
               ee.Filter.intersects({leftField: '.geo', rightField: '.geo'}))
-          .map((f) => f.set(geoidTag, ee.Feature(f.get('bg')).get(geoidTag)));
+          .map((f) => f.set(geoidTag, ee.Feature(f.get(field)).get(geoidTag)));
   return ee.Dictionary(withBlockGroup.aggregate_histogram(geoidTag));
 }
 
@@ -397,7 +399,7 @@ function computeBuildingsHisto(
  *     callers can write "return missingAssetError" and save a line
  */
 function missingAssetError(str) {
-  $('.compute-status')
+  $('#compute-status')
       .html(
           'Error! Please specify ' + str +
           ' at <a href="./add_disaster.html">add_disaster.html</a>');

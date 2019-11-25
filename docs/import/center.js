@@ -1,7 +1,7 @@
 import {disasterDocumentReference} from '../firestore_document.js';
 import {convertEeObjectToPromise} from '../map_util.js';
 
-export {saveBounds, storeCenter};
+export {saveBounds, computeAndSaveBounds};
 
 /**
  * Stores an approximate bounds around a given feature collection.
@@ -11,7 +11,7 @@ export {saveBounds, storeCenter};
  * @return {Promise<Array<number>>} Promise that completes with array of bounds
  * after Firestore write is complete.
  */
-function storeCenter(features) {
+function computeAndSaveBounds(features) {
   return convertEeObjectToPromise(features.geometry().bounds())
       .then(saveBounds);
 }

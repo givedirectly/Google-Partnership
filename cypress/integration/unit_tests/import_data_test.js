@@ -14,15 +14,15 @@ describe('Unit tests for import_data.js', () => {
     // envelope is assumed to fully contain any block group that has any damage.
     const tigerBlockGroups = ee.FeatureCollection(
         [makeCensusBlockGroup(0), makeCensusBlockGroup(1)]);
-    // Three damage points, one of them outside the blocks, just for fun.
-    // Relevant damage points are in SW and SE blocks.
+    // Three damage points, one of them outside the block groups, just for fun,
+    // and one of them in a block group with no SNAP info.
     const damageData = ee.FeatureCollection(
         [makePoint(0.4, 0.5), makePoint(1.5, .5), makePoint(10, 12)]);
-    // Only one SNAP block group, corresponding to western blocks.
+    // Only one SNAP block group, in the west.
     const snapData = ee.FeatureCollection([makeSnapGroup('361', 10, 15)]);
     // One SVI tract, encompassing the whole state.
     const sviData = ee.FeatureCollection([makeSviTract(0.5)]);
-    // One income block group, also western blocks.
+    // One income block group, also in the west.
     const incomeData = ee.FeatureCollection([makeIncomeGroup('361', 37)]);
     // Four buildings, three of which are in our block group.
     const buildingsCollection = ee.FeatureCollection([
@@ -121,6 +121,12 @@ describe('Unit tests for import_data.js', () => {
         });
     assertFirestoreMapBounds(expectedLatLngBounds);
   });
+
+  it('Test missing data', () => {
+    testData.asset_data = null;
+    expect(run(testData)).to.be.false;
+    expect(exportStub).to.not.be.called;
+  })
 });
 
 // Make sure that our block groups aren't so big they escape the 1 km damage
