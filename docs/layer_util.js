@@ -434,8 +434,7 @@ function addLayer(layer, map) {
           DeckParams.fromLayer(layer), layer['index']);
       break;
     case LayerType.KML:
-      addKmlLayers(layer, map);
-      break;
+      return addKmlLayers(layer, map);
     case LayerType.MAP_TILES:
       return addTileLayer(map, layer);
     default:
@@ -463,6 +462,7 @@ function addKmlLayers(layer, map) {
     }));
   }
   layerDisplayData.overlay = overlays;
+  return Promise.resolve();
 }
 
 /**
