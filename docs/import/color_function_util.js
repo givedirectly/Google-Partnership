@@ -89,7 +89,7 @@ function setColor(picker) {
 
 /**
  * Refreshes the current color cell.
- * @param discrete
+ * @param {boolean} discrete
  */
 function populateColorTd(discrete) {
   const colorFunction = getColorFunction();
@@ -148,10 +148,9 @@ function createRadioFor(colorType) {
 
 /**
  * Utility function - helps create a label for the given element.
- * @param element
- * @param text
- * @return {JQuery<HTMLLabelElement> | * | jQuery.fn.init | jQuery |
- *     HTMLElement}
+ * @param {JQuery<HTMLLabelElement>} element
+ * @param {string} text
+ * @return {JQuery<HTMLLabelElement>}
  */
 function createLabelFor(element, text) {
   return $(document.createElement('label'))
