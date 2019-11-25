@@ -1,9 +1,9 @@
 import {gdEePathPrefix} from '../ee_paths.js';
 import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, snapPercentageTag, snapPopTag, sviTag, totalPopTag, tractTag} from '../property_names.js';
-
-import {saveBounds, computeAndSaveBounds} from './center.js';
-import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
 import {getScoreAsset} from '../resources.js';
+
+import {computeAndSaveBounds, saveBounds} from './center.js';
+import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
 
 export {enableWhenReady};
 /** @VisibleForTesting */
@@ -378,8 +378,7 @@ function makeGeoJsonRectangle(sw, ne) {
  * @param {ee.FeatureCollection} stateGroups Collection with block groups
  * @return {ee.Dictionary} Number of buildings per block group
  */
-function computeBuildingsHisto(
-    damageEnvelope, buildingPath, stateGroups) {
+function computeBuildingsHisto(damageEnvelope, buildingPath, stateGroups) {
   const buildings =
       ee.FeatureCollection(buildingPath).filterBounds(damageEnvelope);
   const field = 'fieldToSaveBlockGroupUnder';

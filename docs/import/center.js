@@ -1,7 +1,7 @@
 import {disasterDocumentReference} from '../firestore_document.js';
 import {convertEeObjectToPromise} from '../map_util.js';
 
-export {saveBounds, computeAndSaveBounds};
+export {computeAndSaveBounds, saveBounds};
 
 /**
  * Stores an approximate bounds around a given feature collection.
