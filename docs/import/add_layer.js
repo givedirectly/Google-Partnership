@@ -11,7 +11,8 @@ const layerIndex = 4;
  * its color column info into firestore.
  */
 function processNewFeatureLayer() {
-  const featureCollection = ee.FeatureCollection(getCurrentLayers()[layerIndex]['ee-name']);
+  const featureCollection =
+      ee.FeatureCollection(getCurrentLayers()[layerIndex]['ee-name']);
   const properties = featureCollection.first().toDictionary().keys();
   const stats = properties.map((property) => {
     const max = featureCollection.aggregate_max(property);
