@@ -25,8 +25,7 @@ describe('Unit test for generating style functions', () => {
       'field': 'oranges',
       'color': 'orange',
       'opacity': 83,
-      'min': 14,
-      'max': 10005,
+      'columns': {'oranges': {'min': 14, 'max': 10005}},
     });
     const orangeish = fxn({'properties': {'oranges': 734}});
     // orange = [255, 140, 0]
