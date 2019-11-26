@@ -1,5 +1,5 @@
 import * as addDisasterUtil from '../../../docs/import/add_disaster_util.js';
-import {populateColorFunctions, setGlobalTd, withColor} from '../../../docs/import/color_function_util.js';
+import {populateColorFunctions, withColor} from '../../../docs/import/color_function_util.js';
 import {createTrs, setDisasterAndLayers} from '../../support/import_test_util.js';
 import {addFirebaseHooks, loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 

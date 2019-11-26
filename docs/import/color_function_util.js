@@ -7,7 +7,6 @@ export {populateColorFunctions, withColor};
 export {
   setColor,
   setDiscreteColor,
-  setGlobalTd,
   setProperty,
   switchSchema,
 };
@@ -223,7 +222,7 @@ function onClick(td, type) {
     return;
   }
   $(globalTd).removeClass('selected');
-  setGlobalTd(td);
+  globalTd = td;
   $(globalTd).addClass('selected');
   $('#' + colorStyleTypeStrings.get(type) + '-radio')
       .prop('checked', true)
@@ -352,12 +351,4 @@ function createColorBox(color) {
 function getColorFunction() {
   const index = getRowIndex(globalTd.parents('tr'));
   return getCurrentLayers()[index]['color-function'];
-}
-
-/**
- * Set global td.
- * @param {JQuery<HTMLDivElement>} td
- */
-function setGlobalTd(td) {
-  globalTd = td;
 }
