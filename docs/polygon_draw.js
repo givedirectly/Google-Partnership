@@ -4,6 +4,7 @@ import {getFirestoreRoot} from './firestore_document.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {geoPointToLatLng, latLngToGeoPoint} from './map_util.js';
 import {createPopup, isMarker, setUpPopup} from './popup.js';
+import {snapPopTag, totalPopTag} from './property_names.js';
 import {getScoreAsset} from './resources.js';
 import {userRegionData} from './user_region_data.js';
 
@@ -98,9 +99,9 @@ class StoredShapeData {
     const intersectingBlockGroups =
         StoredShapeData.getIntersectingBlockGroups(polygon);
     const weightedSnapHouseholds = StoredShapeData.calculateWeightedTotal(
-        intersectingBlockGroups, 'SNAP HOUSEHOLDS');
+        intersectingBlockGroups, snapPopTag);
     const weightedTotalHouseholds = StoredShapeData.calculateWeightedTotal(
-        intersectingBlockGroups, 'TOTAL HOUSEHOLDS');
+        intersectingBlockGroups, totalPopTag);
     return new Promise(((resolve, reject) => {
       ee.List([
           numDamagePoints,
@@ -363,7 +364,7 @@ function initializeAndProcessUserRegions(map, firebasePromise) {
       .then((doc) => {
         // Damage asset may not exist yet, so this is undefined. We tolerate
         // gracefully.
-        damageAsset = doc.data()['damage-asset-path'];
+        damageAsset = doc.data()['asset_data']['damage_asset_path'];
         userShapes = getFirestoreRoot().collection(collectionName);
       })
       .then(() => userShapes.get())

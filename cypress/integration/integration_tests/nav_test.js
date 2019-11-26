@@ -1,5 +1,5 @@
 describe('Integration test for the navbar', () => {
-  it('Switch disasters', () => {
+  it.only('Switch disasters', () => {
     cy.visit('');
 
     // Michael on top of Harvey.
