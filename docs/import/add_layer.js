@@ -1,5 +1,4 @@
 import {convertEeObjectToPromise} from '../map_util.js';
-
 import {getCurrentLayers, updateLayersInFirestore} from './add_disaster_util.js';
 
 export {processNewFeatureLayer};
@@ -7,7 +6,7 @@ export {processNewFeatureLayer};
 const layerIndex = 4;
 
 /**
- * One-off function for processing a feature collection typed layer and putting
+ * One-off function for processing a feature-collection-typed layer and putting
  * its color column info into firestore.
  * @return {Promise<void>} Finishes when the property information has been
  * written to firestore.

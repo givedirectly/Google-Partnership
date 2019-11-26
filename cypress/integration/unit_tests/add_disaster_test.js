@@ -5,6 +5,7 @@ import {withColor} from '../../../docs/import/color_function_util.js';
 import * as loading from '../../../docs/loading.js';
 import {getDisaster} from '../../../docs/resources';
 import {addFirebaseHooks, loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
+import {createTrs, setDisasterAndLayers} from '../../support/import_test_util.js';
 
 const KNOWN_STATE = 'WF';
 const UNKNOWN_STATE = 'DN';
@@ -225,7 +226,7 @@ describe('Unit tests for add_disaster page', () => {
         .then((doc) => expect(doc.exists).to.be.false);
   });
 
-  it.only('tests color cell', () => {
+  it('tests color cell', () => {
     const property = 'color';
 
     const noColor = withColor(createTd(), {}, property, 0);
@@ -367,16 +368,6 @@ describe('Unit tests for add_disaster page', () => {
 });
 
 /**
- * Sets local storage to point to disaster with the given layers.
- * @param {Array<Object>} layers
- */
-function setDisasterAndLayers(layers) {
-  const currentDisaster = '2005-fall';
-  disasterData.set(currentDisaster, {layers: layers});
-  window.localStorage.setItem('disaster', currentDisaster);
-}
-
-/**
  * Function that tests the save method works.
  * @param {Function} fxn save function
  * @param {string} property
@@ -400,22 +391,6 @@ function testSave(fxn, property, input, afterVal) {
       })
       .then(
           (doc) => expect(doc.data()['layers'][0][property]).to.eql(afterVal));
-}
-
-/**
- * Creates some amount of table rows with a .index-td td.
- * @param {number} num
- * @return {Array<JQuery<HTMLElement>>}
- */
-function createTrs(num) {
-  const rows = [];
-  for (let i = 0; i < num; i++) {
-    rows.push(
-        $(document.createElement('tr'))
-            .append(
-                $(document.createElement('td')).addClass('index-td').text(i)));
-  }
-  return rows;
 }
 
 /**

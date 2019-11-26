@@ -23,7 +23,7 @@ const authenticator = new Authenticator(
     });
 authenticator.start();
 
-$(populateColorFunctions());
+$(populateColorFunctions);
 
 $('#create-new-disaster').on('click', () => toggleState(false));
 $('#cancel-new-disaster').on('click', () => toggleState(true));

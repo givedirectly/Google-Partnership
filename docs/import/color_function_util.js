@@ -1,8 +1,16 @@
 import {colorMap, ColorStyle} from '../firebase_layers.js';
+
 import {getCurrentLayers, getRowIndex, ILLEGAL_STATE_ERR, setStatus, updateLayersInFirestore} from './add_disaster_util.js';
 
 export {populateColorFunctions, withColor};
-
+// Visible for testing.
+export {
+  setColor,
+  setDiscreteColor,
+  setGlobalTd,
+  setProperty,
+  switchSchema,
+}
 // At any given point in time, the color function div is displaying info
 // about a single asset. We use this global cell to keep track of which
 // color function info is currently displayed.
@@ -52,13 +60,30 @@ function populateColorFunctions() {
 }
 
 /**
+ * Writes most current disasterData information for {@link globalTd} to
+ * firestore and also refreshes the boxes in {@link globalTd}.
+ * @return {?Promise<void>} See updateLayersInFirestore doc
+ */
+function updateTdAndFirestore() {
+  const colorFunction = getColorFunction();
+  const style = colorFunction['current-style'];
+  globalTd.empty();
+  if (style === ColorStyle.DISCRETE) {
+    createColorBoxesForDiscrete(colorFunction, globalTd);
+  } else {
+    globalTd.append(createColorBox(colorFunction['color']));
+  }
+  return updateLayersInFirestore();
+}
+
+/**
  * Updates the 'field' property which is shared by the continuous and discrete
  * color schemas.
  * @param {JQuery<HTMLElement>} picker
  */
 function setProperty(picker) {
   getColorFunction()['field'] = picker.val();
-  updateLayersInFirestore();
+  updateTdAndFirestore();
 }
 
 /**
@@ -68,12 +93,12 @@ function setProperty(picker) {
 function setDiscreteColor(picker) {
   const colorFunction = getColorFunction();
   const propertyValue = picker.data(discreteColorPickerDataKey);
+  // TODO: remove, always have this around.
   if (!colorFunction['colors']) {
     colorFunction['colors'] = {};
   }
   colorFunction['colors'][propertyValue] = picker.val();
-  updateLayersInFirestore();
-  populateColorTd();
+  updateTdAndFirestore();
 }
 
 /**
@@ -83,22 +108,7 @@ function setDiscreteColor(picker) {
  */
 function setColor(picker) {
   getColorFunction()['color'] = picker.val();
-  updateLayersInFirestore();
-  populateColorTd();
-}
-
-/**
- * Refreshes the current color cell.
- */
-function populateColorTd() {
-  const colorFunction = getColorFunction();
-  const style = colorFunction['current-style'];
-  globalTd.empty();
-  if (style === ColorStyle.DISCRETE) {
-    createColorBoxesForDiscrete(colorFunction, globalTd);
-  } else {
-    globalTd.append(createColorBox(colorFunction['color']));
-  }
+  updateTdAndFirestore();
 }
 
 const colorList = Array.from(colorMap.keys());
@@ -166,10 +176,9 @@ function createLabelFor(element, text) {
  * @param {JQuery<HTMLElement>} td
  * @param {Object} layer
  * @param {string} property
- * @param {number} index
  * @return {JQuery<HTMLElement>}
  */
-function withColor(td, layer, property, index) {
+function withColor(td, layer, property) {
   const colorFunction = layer[property];
   if (!colorFunction) {
     return td.text('N/A').addClass('na');
@@ -210,7 +219,7 @@ function onClick(td, type) {
     return;
   }
   $(globalTd).removeClass('selected');
-  globalTd = td;
+  setGlobalTd(td);
   $(globalTd).addClass('selected');
   $('#' + colorStyleTypeStrings.get(type) + '-radio')
       .prop('checked', true)
@@ -238,13 +247,13 @@ function switchSchema(type) {
     case ColorStyle.DISCRETE:
       const propertyPicker = $('#discrete-property-picker');
       populatePropertyPicker(propertyPicker);
+      // TODO: remove this check.
       if (propertyPicker.val()) populateDiscreteColorPickers();
       $('#discrete').show();
       break;
   }
   colorFunction['current-style'] = type;
-  populateColorTd();
-  updateLayersInFirestore();
+  updateTdAndFirestore();
 }
 
 /**
@@ -281,6 +290,7 @@ function populateDiscreteColorPickers() {
   const values =
       colorFunction['columns'][$('#discrete-property-picker').val()]['values'];
   const asColorPickers = [];
+  // TODO: remove, always have this around.
   const colors = getColorFunction()['colors'];
   for (const value of values) {
     const li = $(document.createElement('li'));
@@ -303,6 +313,7 @@ function populateDiscreteColorPickers() {
  */
 function createColorBoxesForDiscrete(colorFunction, td) {
   const colorObject = colorFunction['colors'];
+  // TODO: remove, always have this around.
   // coming from a place that has never had discrete before
   if (!colorObject) {
     return;
@@ -335,4 +346,12 @@ function createColorBox(color) {
 function getColorFunction() {
   const index = getRowIndex(globalTd.parents('tr'));
   return getCurrentLayers()[index]['color-function'];
+}
+
+/**
+ * Set global td.
+ * @param {JQuery<HTMLDivElement>} td
+ */
+function setGlobalTd(td) {
+  globalTd = td;
 }
