@@ -7,8 +7,8 @@ import {addLoadingElement, loadingElementFinished} from '../loading.js';
 import {getDisaster} from '../resources.js';
 
 import {clearStatus, ILLEGAL_STATE_ERR, setStatus} from './add_disaster_util.js';
-import {processNewFeatureLayer} from './add_layer';
 import {withColor} from './color_function_util.js';
+import {processNewFeatureLayer} from './add_layer.js';
 
 export {enableWhenReady, toggleState, updateAfterSort};
 // Visible for testing
@@ -33,6 +33,7 @@ export {
   withList,
   withType,
   writeNewDisaster,
+  createLayerRow,
 };
 
 // A map of disaster names to data. This pulls once on firebase
@@ -310,31 +311,39 @@ function populateLayersTable() {
   tableBody.empty();
   for (let i = layers.length - 1; i >= 0; i--) {
     const layer = layers[i];
-    const row = $(document.createElement('tr'));
-    // index
-    row.append(createTd().text(i).addClass('index-td'));
-    // display name
-    // TODO: make this editable.
-    row.append(withInput(createTd(), layer, 'display-name'));
-    // asset path/url sample
-    const assetOrUrl = createTd();
-    if (layer['ee-name']) {
-      withText(assetOrUrl, layer, 'ee-name');
-    } else if (layer['urls']) {
-      withList(assetOrUrl, layer, 'urls');
-    } else {
-      setStatus(ILLEGAL_STATE_ERR + 'unrecognized type: ' + layer);
-    }
-    row.append(assetOrUrl);
-    // type
-    row.append(withType(createTd(), layer, 'asset-type'));
-    // display on load
-    row.append(withCheckbox(createTd(), layer, 'display-on-load'));
-    // color
-    // TODO: make this editable.
-    row.append(withColor(createTd(), layer, 'color-function', i));
-    tableBody.append(row);
+    tableBody.append(createLayerRow(layer, i));
   }
+}
+
+/**
+ * @param layer
+ * @param index
+ * @return {JQuery<HTMLTableRowElement> | * | jQuery.fn.init | jQuery | HTMLElement}
+ */
+function createLayerRow(layer, index) {
+  const row = $(document.createElement('tr'));
+  // index
+  row.append(createTd().text(index).addClass('index-td'));
+  // display name
+  // TODO: make this editable.
+  row.append(withInput(createTd(), layer, 'display-name'));
+  // asset path/url sample
+  const assetOrUrl = createTd();
+  if (layer['ee-name']) {
+    withText(assetOrUrl, layer, 'ee-name');
+  } else if (layer['urls']) {
+    withList(assetOrUrl, layer, 'urls');
+  } else {
+    setStatus(ILLEGAL_STATE_ERR + 'unrecognized type: ' + layer);
+  }
+  row.append(assetOrUrl);
+  // type
+  row.append(withType(createTd(), layer, 'asset-type'));
+  // display on load
+  row.append(withCheckbox(createTd(), layer, 'display-on-load'));
+  // color
+  row.append(withColor(createTd(), layer, 'color-function', index));
+  return row;
 }
 
 /**
@@ -353,7 +362,6 @@ function populateStateAndDisasterAssetPickers(disaster) {
   } else {
     const disasterDone = getDisasterAssetsFromEe(disaster).then((assets) => {
       disasterAssets.set(disaster, assets);
-      console.log(disasterAssets);
       createDisasterAssetPicker(disaster);
     });
     promises.push(disasterDone);
@@ -495,7 +503,7 @@ function getDisasterAssetsFromEe(disaster) {
  * @param {Array<string>} states e.g. ['WA']
  * @return {Promise<Array<Array<string | Array<string>>>>} 2-d array of all
  *     retrieved
- * assets in the form [['WA', ['asset/path']], ...]
+ * assets in the form [['WA', {'asset/path': type,...}], ...]
  */
 function getAssetsFromEe(states) {
   return ee.data.listAssets(legacyStateDir, {}, emptyCallback)
@@ -530,14 +538,15 @@ function getAssetsFromEe(states) {
 /**
  *
  * @param listAssetsResult
- * @return {[]}
+ * @param listAssetsResult
+ * @return {Map<string, string>}
  */
 function getIds(listAssetsResult) {
-  const assets = [];
+  const assets = new Map();
   if (listAssetsResult.assets) {
     for (const asset of listAssetsResult.assets) {
       if (checkSupportedAssetType(asset)) {
-        assets.push(asset.id);
+        assets.set(asset.id, asset.type);
       }
     }
   }
@@ -579,7 +588,7 @@ function createAssetPickers(pickers, assetMap, div) {
                             })
                             .width(200);
     if (assetMap.get(folder)) {
-      for (const asset of assetMap.get(folder)) {
+      for (const asset of Array.from(assetMap.get(folder).keys())) {
         assetPicker.append(createOptionFrom(asset));
       }
     }
@@ -588,9 +597,9 @@ function createAssetPickers(pickers, assetMap, div) {
     const addButton =
         $(document.createElement('button')).prop('type', 'button').text('add');
     addButton.on('click', () => {
-      const eeAsset = assetPicker.val();
-      const index = findLayer(eeAsset);
-      processNewFeatureLayer(index);
+      const asset = assetPicker.val();
+      const type = assetMap.get(folder).get(asset);
+      processNewFeatureLayer(asset, type);
     });
     div.append(assetPickerLabel);
     assetPickerLabel.append(assetPicker);
