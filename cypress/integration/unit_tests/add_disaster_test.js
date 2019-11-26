@@ -4,8 +4,8 @@ import {addDisaster, createAssetPickers, createOptionFrom, createTd, deleteDisas
 import {withColor} from '../../../docs/import/color_function_util.js';
 import * as loading from '../../../docs/loading.js';
 import {getDisaster} from '../../../docs/resources';
-import {addFirebaseHooks, loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 import {createTrs, setDisasterAndLayers} from '../../support/import_test_util.js';
+import {addFirebaseHooks, loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
 const KNOWN_STATE = 'WF';
 const UNKNOWN_STATE = 'DN';
