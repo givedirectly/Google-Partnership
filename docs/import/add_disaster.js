@@ -394,9 +394,8 @@ function initializeScoreSelectors(states) {
 
   // For each asset type, add select for all assets for each state.
   for (let scoreAssetType in scoreAssetTypes) {
-    const row = $(document.createElement('tr')).attr({
-      id: scoreAssetType + '-row',
-    });
+    const row =
+        $(document.createElement('tr')).prop('id', scoreAssetType + '-row');
     row.append(createTd().append(
         $(document.createElement('div')).html(scoreAssetType)));
     for (const state of states) {
@@ -408,6 +407,8 @@ function initializeScoreSelectors(states) {
     // TODO: Make column names selects instead.
     const columnCell = createTd();
     for (let i = 0; i < scoreAssetTypes[scoreAssetType].length; i++) {
+      columnCell.append($(document.createElement('label'))
+                            .text(scoreAssetTypes[scoreAssetType][i]));
       columnCell.append($(document.createElement('input')).attr({
         id: scoreAssetType + '-column-' + i,
         type: 'text',
@@ -415,7 +416,7 @@ function initializeScoreSelectors(states) {
     }
     row.append(columnCell);
     tableBody.append(row);
-    row.change(() => handleScoreAssetSelection(scoreAssetType));
+    row.on('change', () => handleScoreAssetSelection(scoreAssetType));
   }
 }
 
@@ -427,9 +428,8 @@ function initializeScoreSelectors(states) {
  */
 function createAssetDropdown(assets, row, state) {
   // Create the asset selector and add a 'None' option.
-  const select = $(document.createElement('select')).attr({
-    id: row + '-' + state,
-  });
+  const select =
+      $(document.createElement('select')).prop('id', row + '-' + state);
   select.append(createOptionFrom('None'));
 
   // Add assets to selector and return it.
