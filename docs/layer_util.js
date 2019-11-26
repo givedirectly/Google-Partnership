@@ -104,7 +104,7 @@ class LayerDisplayData {
   /**
    * @return {boolean} True if this layer is a KML layer
    */
-  isKmlLayer() {
+  isLayerKml() {
     return this.isKmlLayer;
   }
 }
@@ -159,7 +159,7 @@ function toggleLayerOn(layer, map) {
     addLayerFromFeatures(layerDisplayData, index);
     return null;
   }
-  if (layerDisplayData.overlay && !layerDisplayData.isKmlLayer()) {
+  if (layerDisplayData.overlay && !layerDisplayData.isLayerKml()) {
     // The promise returned in this branch does not need to be stored in the
     // pendingPromise field because it will complete immediately if this layer
     // is toggled off (see the createTileCallback doc). That means that if
@@ -189,7 +189,7 @@ function toggleLayerOn(layer, map) {
 function toggleLayerOff(index, map) {
   const layerDisplayData = layerArray[index];
   layerDisplayData.displayed = false;
-  if (layerDisplayData.isKmlLayer()) {
+  if (layerDisplayData.isLayerKml()) {
     for (let i = 0; i < layerDisplayData.overlay.length; i++) {
       layerDisplayData.overlay[i].setMap(null);
     }

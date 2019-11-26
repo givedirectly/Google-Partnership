@@ -53,7 +53,7 @@ const mockFirebaseLayers = [
   {
     'ee-name': 'kml_urls',
     'asset-type': LayerType.KML,
-    'urls': ['kml-url1/{X}/{Y}/{Z}', 'kml-url2/{X}/{Y}/{Z}'],
+    'urls': ['https://www.nhc.noaa.gov/storm_graphics/api/AL092017_043adv_CONE.kmz', 'kml-url2/{X}/{Y}/{Z}'],
     'display-name': 'tiles',
     'display-on-load': false,
     'index': 5,
