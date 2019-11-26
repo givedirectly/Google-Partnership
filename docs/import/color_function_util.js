@@ -230,7 +230,7 @@ function onClick(td, type) {
 
 /**
  * Switches the schema of {@link globalTd} to the given type, shows the
- * div of the new type, updates {@link globalTd}'s contents.
+ * div of the new type, updates {@link globalTd}'s contents and writes to firestore.
  * @param {enum} type
  * @return {?Promise<void>} See updateLayersInFirestore doc
  */
@@ -240,6 +240,10 @@ function switchSchema(type) {
   return updateTdAndFirestore();
 }
 
+/**
+ * Displays the given schema in the color editor box.
+ * @param {enum} type
+ */
 function displaySchema(type) {
   const colorFunction = getColorFunction();
   $('.color-type-div').hide();
