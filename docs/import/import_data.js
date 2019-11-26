@@ -160,6 +160,7 @@ function setMapBoundsInfo(message) {
     boundsStatusSpan.id = 'bounds-status-span';
     $('#compute-status').append(boundsStatusLabel).append(boundsStatusSpan);
     boundsStatusSpan.innerText = 'in progress...';
+    boundsStatusLabel.innerText = message;
     setMapBoundsInfoCalledOnce = true;
   }
 }
@@ -297,7 +298,7 @@ function run(disasterData, setMapBoundsInfoFunction = setMapBoundsInfo) {
   }
   const task = ee.batch.Export.table.toAsset(
       allStatesProcessing,
-      scoreAssetPath.substring(scoreAssetPath.lastIndexOf('/')),
+      scoreAssetPath.substring(scoreAssetPath.lastIndexOf('/') + 1),
       scoreAssetPath);
   task.start();
   $('#upload-status')
