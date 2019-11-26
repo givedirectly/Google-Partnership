@@ -1,12 +1,14 @@
 import {writeWaiterId} from '../dom_constants.js';
-import {eeStatePrefixLength, legacyStateDir} from '../ee_paths.js';
+import {eeLegacyPathPrefix, eeStatePrefixLength, legacyStateDir} from '../ee_paths.js';
 import {LayerType} from '../firebase_layers.js';
 import {getFirestoreRoot} from '../firestore_document.js';
 import {disasterCollectionReference, getDisasters} from '../firestore_document.js';
 import {addLoadingElement, loadingElementFinished} from '../loading.js';
 import {getDisaster} from '../resources.js';
+
 import {clearStatus, ILLEGAL_STATE_ERR, setStatus} from './add_disaster_util.js';
 import {withColor} from './color_function_util.js';
+import {processNewFeatureLayer} from './add_layer';
 
 export {enableWhenReady, toggleState, updateAfterSort};
 // Visible for testing
@@ -40,6 +42,8 @@ const disasterData = new Map();
 
 // Map of state to list of known assets
 const stateAssets = new Map();
+
+const disasterAssets = new Map();
 
 // TODO: general reminder to add loading indicators for things like creating
 // new state asset folders, etc.
@@ -85,7 +89,7 @@ function toggleDisaster(disaster) {
   // display layer table
   populateLayersTable();
   // display state asset pickers
-  return populateStateAssetPickers();
+  return populateStateAndDisasterAssetPickers(disaster);
 }
 
 const State = {
@@ -339,7 +343,22 @@ function populateLayersTable() {
  * @return {Promise<void>} returns when all asset pickers have been populated
  * after potentially retrieving states' assets from ee.
  */
-function populateStateAssetPickers() {
+function populateStateAndDisasterAssetPickers(disaster) {
+  const assetPickerDiv = $('.asset-pickers');
+  assetPickerDiv.empty();
+
+  const promises = [];
+  if (disasterAssets.has(disaster)) {
+    createDisasterAssetPicker(disaster);
+  } else {
+    const disasterDone = getDisasterAssetsFromEe(disaster).then((assets) => {
+      disasterAssets.set(disaster, assets);
+      console.log(disasterAssets);
+      createDisasterAssetPicker(disaster);
+    });
+    promises.push(disasterDone);
+  }
+
   const states = getCurrentData()['states'];
   const statesToFetch = [];
   for (const state of states) {
@@ -347,24 +366,19 @@ function populateStateAssetPickers() {
   }
   // TODO: add functionality to re-pull all cached states from ee without
   // reloading the page.
-  let assetPickersDone = Promise.resolve();
   if (statesToFetch.length === 0) {
-    createAssetPickers(states);
+    createStateAssetPickers(states);
   } else {
-    // We are already doing this inside createAssetPickers but not until
-    // after the first promise completes so also do it here so lingering
-    // pickers from previous disasters don't hang around.
-    $('#asset-pickers').empty();
-    assetPickersDone = getAssetsFromEe(statesToFetch).then((assets) => {
+    const statesDone = getAssetsFromEe(statesToFetch).then((assets) => {
       for (const asset of assets) {
         stateAssets.set(asset[0], asset[1]);
       }
-      createAssetPickers(states);
+      createStateAssetPickers(states);
     });
+    promises.push(statesDone);
   }
 
-  // TODO: display more disaster info including current layers etc.
-  return assetPickersDone;
+  return Promise.all(promises);
 }
 
 /**
@@ -464,6 +478,16 @@ function notAllLowercase(val) {
 // Needed for testing :/
 const emptyCallback = () => {};
 
+/**
+ *
+ * @param disaster
+ * @return {ee.api.ListAssetsResponse}
+ */
+function getDisasterAssetsFromEe(disaster) {
+  return ee.data.listAssets(eeLegacyPathPrefix + disaster, {}, emptyCallback)
+      .then(getIds);
+}
+
 // TODO: add functionality for adding assets to disaster records from these
 // pickers.
 /**
@@ -495,22 +519,29 @@ function getAssetsFromEe(states) {
             });
             promises.push(Promise.resolve([state, []]));
           } else {
-            promises.push(
-                ee.data.listAssets(dir, {}, emptyCallback).then((result) => {
-                  const assets = [];
-                  if (result.assets) {
-                    for (const asset of result.assets) {
-                      if (checkSupportedAssetType(asset)) {
-                        assets.push(asset.id);
-                      }
-                    }
-                  }
-                  return [state, assets];
-                }));
+            promises.push(ee.data.listAssets(dir, {}, emptyCallback)
+                              .then((result) => [state, getIds(result)]));
           }
         }
         return Promise.all(promises);
       });
+}
+
+/**
+ *
+ * @param listAssetsResult
+ * @return {[]}
+ */
+function getIds(listAssetsResult) {
+  const assets = [];
+  if (listAssetsResult.assets) {
+    for (const asset of listAssetsResult.assets) {
+      if (checkSupportedAssetType(asset)) {
+        assets.push(asset.id);
+      }
+    }
+  }
+  return assets;
 }
 
 // TODO: surface a warning if unsupported asset types are found?
@@ -525,31 +556,44 @@ function checkSupportedAssetType(asset) {
   return type === 'IMAGE' || type === 'IMAGE_COLLECTION' || type === 'TABLE';
 }
 
+function createStateAssetPickers(states) {
+  createAssetPickers(states, stateAssets, $('#state-asset-pickers'));
+}
+
+function createDisasterAssetPicker(disaster) {
+  createAssetPickers([disaster], disasterAssets, $('#disaster-asset-picker'));
+}
 /**
  * Given states, displays their assets in pickers. Right now, selecting on
  * those pickers doesn't actually do anything.
- * @param {Array<string>} states e.g. ['WA']
+ * @param {Array<string>} pickers
+ * @param {Map<string, Array<string>>} assetMap
+ * @param {JQuery<HTMLElement>} div
  */
-function createAssetPickers(states) {
-  const assetPickerDiv = $('#asset-pickers');
-  assetPickerDiv.empty();
-  for (const state of states) {
+function createAssetPickers(pickers, assetMap, div) {
+  for (const folder of pickers) {
     const assetPicker = $(document.createElement('select'))
                             .attr({
-                              multiple: 'multiple',
-                              id: state + '-adder',
+                              // multiple: 'multiple',
+                              id: folder + '-adder',
                             })
                             .width(200);
-    if (stateAssets.get(state)) {
-      for (const asset of stateAssets.get(state)) {
+    if (assetMap.get(folder)) {
+      for (const asset of assetMap.get(folder)) {
         assetPicker.append(createOptionFrom(asset));
       }
     }
     const assetPickerLabel = $(document.createElement('label'))
-                                 .text('Add EE asset(s) for ' + state + ': ');
+                                 .text('Add layer from ' + folder + ': ');
+    const addButton = $(document.createElement('button')).prop('type', 'button').text('add');
+    addButton.on('click', () => {
+      const eeAsset = assetPicker.val();
+      const index = findLayer(eeAsset);
+      processNewFeatureLayer(index);
+    });
+    div.append(assetPickerLabel);
     assetPickerLabel.append(assetPicker);
-    assetPickerDiv.append(assetPickerLabel);
-    assetPickerDiv.append(document.createElement('br'));
+    assetPickerLabel.append(addButton);
   }
 }
 
@@ -604,4 +648,14 @@ function getCurrentLayers() {
  */
 function setCurrentDisaster(disasterId) {
   localStorage.setItem('disaster', disasterId);
+}
+
+function findLayer(eeAssetName) {
+  const layers = getCurrentLayers();
+  for (let index = 0; index <layers.length; index++) {
+    if (layers[index]['ee-name'] === eeAssetName) {
+      return index;
+    }
+  }
+  return -1;
 }

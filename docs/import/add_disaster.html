@@ -36,7 +36,7 @@
   <select id="pending-disaster" style="width: 160px" hidden="true" disabled="true">
     <option value="pending" id="pending">...</option>
   </select>
-  <span>  OR  </span>
+  <span>OR</span>
   <button type="button" id="create-new-disaster">Create New Disaster</button>
 </div><br>
 <div id="status"></div>
@@ -58,10 +58,13 @@
     </div>
   </table>
   <br>
-  <div id="asset-pickers"></div>
+  <div id="asset-pickers">
+    <div id="disaster-asset-picker" class="asset-pickers"></div>
+    <div id="state-asset-pickers" class="asset-pickers"></div>
+  </div>
   <p>Upload additional assets via the <a href="https://code.earthengine.google.com/" target="_blank"> code editor </a></p>
   <br>
-  <button type="button" id="delete", disabled="true">Delete</button>
+  <button type="button" id="delete" disabled="true">Delete</button>
 </div>
 <div id="new-disaster" hidden="true">
   <button type="button" id="cancel-new-disaster">Cancel</button>
