@@ -10,7 +10,8 @@ export {
   setGlobalTd,
   setProperty,
   switchSchema,
-}
+};
+
 // At any given point in time, the color function div is displaying info
 // about a single asset. We use this global cell to keep track of which
 // color function info is currently displayed.
