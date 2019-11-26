@@ -1,5 +1,5 @@
 import {showError} from './error.js';
-import {inProduction} from './in_test_util.js';
+import {earthEngineTestTokenCookieName, firebaseTestTokenCookieName, getCookieValue, inProduction} from './in_test_util.js';
 import SettablePromise from './settable_promise.js';
 
 export {
@@ -10,7 +10,6 @@ export {
   initializeEE,
   initializeFirebase,
 };
-export {getFirebaseConfig as default};
 
 // The client ID from
 // https://console.cloud.google.com/apis/credentials?project=mapping-crisis
@@ -151,15 +150,38 @@ class Authenticator {
  * @return {Promise} Promise that completes when Firebase is logged in
  */
 Authenticator.trackEeAndFirebase = (taskAccumulator) => {
-  const firebaseAuthPromise = new SettablePromise();
-  const authenticator = new Authenticator(
-      (token) => firebaseAuthPromise.setPromise(authenticateToFirebase(token)),
-      () => {
-        ee.data.setCloudApiEnabled(true);
-        taskAccumulator.taskCompleted();
-      });
-  authenticator.start();
-  return firebaseAuthPromise.getPromise();
+  if (inProduction()) {
+    const firebaseAuthPromise = new SettablePromise();
+    const authenticator = new Authenticator(
+        (token) =>
+            firebaseAuthPromise.setPromise(authenticateToFirebase(token)),
+        () => {
+          ee.data.setCloudApiEnabled(true);
+          taskAccumulator.taskCompleted();
+        });
+    authenticator.start();
+    return firebaseAuthPromise.getPromise();
+  } else {
+    // We're inside a test. The test setup should have tokens for us that will
+    // directly authenticate with Firebase and EarthEngine.
+    initializeFirebase();
+    const firebaseToken = getCookieValue(firebaseTestTokenCookieName);
+    if (!firebaseToken) {
+      throw new Error('Did not receive Firebase token in test');
+    }
+    const eeToken = getCookieValue(earthEngineTestTokenCookieName);
+    if (!eeToken) {
+      throw new Error('Did not receive EarthEngine token in test');
+    }
+    ee.data.setAuthToken(
+        CLIENT_ID, 'Bearer', eeToken,
+        // Expires in 3600 is a lie, but no need to tell the truth.
+        /* expiresIn */ 3600, /* extraScopes */[],
+        /* callback */
+        () => initializeEE(() => taskAccumulator.taskCompleted()),
+        /* updateAuthLibrary */ false);
+    return firebase.auth().signInWithCustomToken(firebaseToken);
+  }
 };
 
 /** Initializes Firebase. Exposed only for use in test codepaths. */
