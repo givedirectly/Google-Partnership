@@ -70,7 +70,7 @@ describe('Unit test for ShapeData', () => {
     // Make sure userShapes is set in the code, and use our custom EarthEngine
     // FeatureCollections.
     return cy.wrap(initializeAndProcessUserRegions(null, Promise.resolve({
-      data: () => ({'damage-asset-path': damageCollection}),
+      data: () => ({asset_data: {damage_asset_path: damageCollection}}),
     })));
   });
 
@@ -330,7 +330,7 @@ describe('Unit test for ShapeData', () => {
     const popup = new StubPopup();
     const underTest = new StoredShapeData(null, null, null, popup);
     cy.wrap(initializeAndProcessUserRegions(
-                null, Promise.resolve({data: () => ({})})))
+                null, Promise.resolve({data: () => ({asset_data: {}})})))
         .then(() => {
           firebaseCollection.add = recordRecord(records, {id: 'new_id'});
           popup.notes = 'my notes';
