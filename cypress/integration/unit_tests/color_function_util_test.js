@@ -116,7 +116,10 @@ describe('Unit tests for add_disaster page', () => {
     expect(td.children().eq(1).css('background-color')).to.equal('blue');
   });
 
-  /** Gets the current color function. */
+  /**
+   * Gets the current color function.
+   * @return {Object}
+   */
   function getColorFunction() {
     return addDisasterUtil.getCurrentLayers()[0][property];
   }
