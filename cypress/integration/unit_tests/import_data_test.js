@@ -71,7 +71,8 @@ describe('Unit tests for import_data.js', () => {
     };
   });
   it('Basic test', () => {
-    expect(run(testData)).to.be.true;
+    const {boundsPromise, mapBoundsCallback} = makeCallbackForTextAndPromise('Found bounds');
+    expect(run(testData, mapBoundsCallback)).to.be.true;
     expect(exportStub).to.be.calledOnce;
     cy.wrap(convertEeObjectToPromise(exportStub.firstCall.args[0]))
         .then((result) => {
@@ -90,8 +91,7 @@ describe('Unit tests for import_data.js', () => {
             'TOTAL HOUSEHOLDS': 15,
           });
         });
-    cy.wrap(waitForText($('#compute-status'), 'Found bounds'));
-
+    cy.wrap(boundsPromise);
     assertFirestoreMapBounds(
         scaleObject({sw: {lng: 0.4, lat: 0.5}, ne: {lng: 10, lat: 12}}));
   });
@@ -105,7 +105,8 @@ describe('Unit tests for import_data.js', () => {
     testData.asset_data.map_bounds_ne =
         expectedLatLngBounds.ne.lat + ', ' + expectedLatLngBounds.ne.lng;
 
-    expect(run(testData)).to.be.true;
+    const {boundsPromise, mapBoundsCallback} = makeCallbackForTextAndPromise('Wrote bounds');
+    expect(run(testData, mapBoundsCallback)).to.be.true;
     expect(exportStub).to.be.calledOnce;
     cy.wrap(convertEeObjectToPromise(exportStub.firstCall.args[0]))
         .then((result) => {
@@ -124,7 +125,7 @@ describe('Unit tests for import_data.js', () => {
             'TOTAL HOUSEHOLDS': 15,
           });
         });
-    cy.wrap(waitForText($('#compute-status'), 'Wrote bounds'));
+    cy.wrap(boundsPromise);
     assertFirestoreMapBounds(expectedLatLngBounds);
   });
 
@@ -227,14 +228,20 @@ function scaleObject(object) {
   return newObject;
 }
 
-function waitForText(div, text, timeout = 4000, startTime = new Date()) {
-  if (new Date() - startTime > timeout) {
-    expect(div.text()).to.contain(text);
-  }
-  if (div.text().includes(text)) {
-    return Promise.resolve();
-  }
-  return new Promise(
-      (resolve) => setTimeout(
-          () => resolve(waitForText(div, text, timeout, startTime)), 100));
+/**
+ * Creates a callback for use with {@link run} so that we will be informed when
+ * the Firestore write has completed. Returns a Promise that can be waited on
+ * for that write to complete.
+ * @param {string} expectedText Text contained in message when Firestore write is complete
+ * @return {{boundsPromise: Promise, mapBoundsCallback: Function}}
+ */
+function makeCallbackForTextAndPromise(expectedText) {
+  let resolveFunction = null;
+  const boundsPromise = new Promise((resolve) => resolveFunction = resolve);
+  const mapBoundsCallback = (message) => {
+    if (message.includes(expectedText)) {
+      resolveFunction();
+    }
+  };
+  return {boundsPromise, mapBoundsCallback};
 }
