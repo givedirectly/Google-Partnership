@@ -230,7 +230,8 @@ function onClick(td, type) {
 
 /**
  * Switches the schema of {@link globalTd} to the given type, shows the
- * div of the new type, updates {@link globalTd}'s contents and writes to firestore.
+ * div of the new type, updates {@link globalTd}'s contents and writes to
+ * firestore.
  * @param {enum} type
  * @return {?Promise<void>} See updateLayersInFirestore doc
  */
