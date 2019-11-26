@@ -118,7 +118,7 @@ describe('Unit tests for color function utility', () => {
   });
 });
 
-/** Assert we wrote to firebase once and clear stub history. */
+/** Asserts we wrote to firebase once and clear stub history. */
 function expectOneFirebaseWrite() {
   expect(writeToFirebaseStub).to.be.calledOnce;
   writeToFirebaseStub.resetHistory();
