@@ -150,8 +150,8 @@ function addTractInfo(feature) {
  *     called, and then result the second time
  */
 function setMapBoundsInfo(message) {
-  const boundsStatusSpan = $('#bounds-status-span');
-  if (!boundsStatusSpan.length) {
+  const boundsStatusElement = $('#bounds-status-span');
+  if (!boundsStatusElement.length) {
     // Haven't done anything yet, create and initialize.
     const boundsStatusSpan = document.createElement('span');
     const boundsStatusLabel = document.createElement('span');
@@ -160,7 +160,7 @@ function setMapBoundsInfo(message) {
     boundsStatusSpan.innerText = 'in progress...';
     boundsStatusLabel.innerText = message;
   } else {
-    boundsStatusSpan.text(message);
+    boundsStatusElement.text(message);
   }
 }
 
