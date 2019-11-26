@@ -1,7 +1,6 @@
-import {Authenticator, CLIENT_ID, initializeEE, initializeFirebase} from './authenticate.js';
+import {Authenticator} from './authenticate.js';
 import createMap from './create_map.js';
 import {readDisasterDocument} from './firestore_document.js';
-import {earthEngineTestTokenCookieName, firebaseTestTokenCookieName, getCookieValue, inProduction} from './in_test_util.js';
 import {loadNavbarWithPicker} from './navbar.js';
 import run from './run.js';
 import SettablePromise from './settable_promise.js';
