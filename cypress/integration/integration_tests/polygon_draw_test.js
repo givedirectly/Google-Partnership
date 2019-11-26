@@ -132,10 +132,12 @@ describe('Integration tests for drawing polygons', () => {
     cy.get('#layer-user-features-checkbox').click();
     cy.get('#mapContainer').contains(notes).should('not.be.visible');
     // Notes is invisible even if we click on the polygon, so it's really gone.
-    // Use an offset because there's some weirdness around selecting block
-    // groups that then suppress clicks.
-    clickOnDrawnPolygon(-50);
+    clickOnDrawnPolygon();
+    cy.wait(100);
     cy.get('#mapContainer').contains(notes).should('not.be.visible');
+    // Click again to get rid of selected block group.
+    clickOnDrawnPolygon();
+    cy.wait(100);
 
     // Check box again and verify that notes box can now be brought up.
     cy.get('#layer-user-features-checkbox').click();
