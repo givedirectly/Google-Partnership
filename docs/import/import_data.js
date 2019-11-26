@@ -142,7 +142,7 @@ function addTractInfo(feature) {
   return feature.set(tractTag, ee.String(feature.get(geoidTag)).slice(0, -1));
 }
 
-let setMapBoundsInfoCalled = false;
+let setMapBoundsInfoCalledOnce = false;
 
 /**
  * Utility function that sets the label for the bounds status the first time it
@@ -152,7 +152,7 @@ let setMapBoundsInfoCalled = false;
  *     called, and then result the second time
  */
 function setMapBoundsInfo(message) {
-  if (setMapBoundsInfoCalled) {
+  if (setMapBoundsInfoCalledOnce) {
     $('#bounds-status-span').text(message);
   } else {
     const boundsStatusSpan = document.createElement('span');
@@ -160,6 +160,7 @@ function setMapBoundsInfo(message) {
     boundsStatusSpan.id = 'bounds-status-span';
     $('#compute-status').append(boundsStatusLabel).append(boundsStatusSpan);
     boundsStatusSpan.innerText = 'in progress...';
+    setMapBoundsInfoCalledOnce = true;
   }
 }
 
