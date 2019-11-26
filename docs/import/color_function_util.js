@@ -197,7 +197,8 @@ function withColor(td, layer, property) {
     default:
       setStatus(ILLEGAL_STATE_ERR + 'unrecognized color function: ' + layer);
   }
-  td.addClass('editable').on('click', () => onClick(td, colorFunction['current-style']));
+  td.addClass('editable')
+      .on('click', () => onClick(td, colorFunction['current-style']));
   return td;
 }
 
