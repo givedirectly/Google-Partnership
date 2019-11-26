@@ -142,8 +142,6 @@ function addTractInfo(feature) {
   return feature.set(tractTag, ee.String(feature.get(geoidTag)).slice(0, -1));
 }
 
-let setMapBoundsInfoCalledOnce = false;
-
 /**
  * Utility function that sets the label for the bounds status the first time it
  * is called, then sets the status the second time. Useful for injecting over in
@@ -152,16 +150,17 @@ let setMapBoundsInfoCalledOnce = false;
  *     called, and then result the second time
  */
 function setMapBoundsInfo(message) {
-  if (setMapBoundsInfoCalledOnce) {
-    $('#bounds-status-span').text(message);
-  } else {
+  const boundsStatusSpan = $('#bounds-status-span');
+  if (!boundsStatusSpan.length) {
+    // Haven't done anything yet, create and initialize.
     const boundsStatusSpan = document.createElement('span');
     const boundsStatusLabel = document.createElement('span');
     boundsStatusSpan.id = 'bounds-status-span';
     $('#compute-status').append(boundsStatusLabel).append(boundsStatusSpan);
     boundsStatusSpan.innerText = 'in progress...';
     boundsStatusLabel.innerText = message;
-    setMapBoundsInfoCalledOnce = true;
+  } else {
+    boundsStatusSpan.text(message);
   }
 }
 

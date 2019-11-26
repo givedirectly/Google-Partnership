@@ -8,9 +8,6 @@ describe('Unit tests for import_data.js', () => {
   let testData;
   let exportStub;
   beforeEach(() => {
-    const computeStatusDiv = document.createElement('div');
-    computeStatusDiv.id = 'compute-status';
-    document.body.appendChild(computeStatusDiv);
     // Create a pretty trivial world: 2 block groups, each a 1x2 vertical
     // stripes. Under the covers, we scale all dimensions down because
     // production code creates an "envelope" 1 km wide around damage, and that
