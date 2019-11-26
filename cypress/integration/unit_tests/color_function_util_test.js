@@ -3,13 +3,14 @@ import {populateColorFunctions, withColor} from '../../../docs/import/color_func
 import {createTrs, setDisasterAndLayers} from '../../support/import_test_util.js';
 import {addFirebaseHooks, loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
-describe('Unit tests for add_disaster page', () => {
+const property = 'color-function';
+let writeToFirebaseStub;
+
+describe('Unit tests for color function utility', () => {
   loadScriptsBeforeForUnitTests('ee', 'firebase', 'jquery');
   addFirebaseHooks();
 
-  const property = 'color-function';
   let colorFunctionEditor;
-  let writeToFirebaseStub;
 
   before(() => {
     cy.wrap(firebase.auth().signInWithCustomToken(firestoreCustomToken));
@@ -22,18 +23,6 @@ describe('Unit tests for add_disaster page', () => {
     $(document.body).append(colorFunctionEditor);
 
     populateColorFunctions();
-
-    /**
-     * Makes one of the type divs (mimicking html in add_disaster.html)
-     * @param {string} id
-     * @return {JQuery<HTMLDivElement>}
-     */
-    function makeTypeDiv(id) {
-      return $(document.createElement('div'))
-          .prop('id', id)
-          .hide()
-          .addClass('color-type-div');
-    }
   });
 
   beforeEach(() => {
@@ -61,50 +50,54 @@ describe('Unit tests for add_disaster page', () => {
 
     td.trigger('click');
     expect(colorFunctionEditor.is(':visible')).to.be.true;
-    expect(writeToFirebaseStub).to.be.calledOnce;
+    expect(writeToFirebaseStub).to.not.be.called;
     expect(getColorFunction()['color']).to.equal('yellow');
 
     // update color
     $('#single-color-picker').val('red').trigger('change');
-    expect(writeToFirebaseStub).to.be.calledTwice;
+    expectOneFirebaseWrite();
     expect(getColorFunction()['color']).to.equal('red');
     expect(td.children().length).to.equal(1);
     expect(td.children().first().css('background-color')).to.equal('red');
 
     // switch to continuous
     $('#CONTINUOUS-radio').trigger('change');
-    expect(writeToFirebaseStub).to.be.calledThrice;
+    expectOneFirebaseWrite();
     const continuousPropertyPicker = $('#continuous-property-picker');
     expect(getColorFunction()['current-style']).to.equal(0);
+    expect(getColorFunction()['color']).to.equal('red');
     expect(continuousPropertyPicker.val()).to.be.null;
 
     // update field
     continuousPropertyPicker.val('wings').trigger('change');
-    expect(writeToFirebaseStub).to.be.callCount(4);
+    expectOneFirebaseWrite();
     expect(getColorFunction()['field']).to.equal('wings');
+    expect($('#continuous-color-picker').val()).to.equal('red');
 
     // switch to discrete
     $('#DISCRETE-radio').trigger('change');
-    expect(writeToFirebaseStub).to.be.callCount(5);
+    expectOneFirebaseWrite();
     const discretePropertyPicker = $('#discrete-property-picker');
     expect(getColorFunction()['current-style']).to.equal(1);
     expect(td.children().length).to.equal(0);
+    expect(getColorFunction()['field']).to.equal('wings');
     expect(discretePropertyPicker.val()).to.equal('wings');
     const discreteColorPickerList = $('#discrete-color-pickers');
     expect(discreteColorPickerList.children('li').length).to.equal(3);
 
     // update field
     discretePropertyPicker.val('legs').trigger('change');
-    expect(writeToFirebaseStub).to.be.callCount(6);
+    expectOneFirebaseWrite();
     expect(getColorFunction()['field']).to.equal('legs');
 
     // update discrete color
+    expect(getColorFunction()['colors']).to.be.undefined;
     discreteColorPickerList.children('li')
         .first()
         .children('select')
         .val('orange')
         .trigger('change');
-    expect(writeToFirebaseStub).to.be.callCount(7);
+    expectOneFirebaseWrite();
     expect(getColorFunction()['colors']).to.eql({'0': 'orange'});
     expect(td.children().length).to.equal(1);
     expect(td.children().first().css('background-color')).to.equal('orange');
@@ -115,19 +108,38 @@ describe('Unit tests for add_disaster page', () => {
         .children('select')
         .val('blue')
         .trigger('change');
-    expect(writeToFirebaseStub).to.be.callCount(8);
+    expectOneFirebaseWrite();
     expect(td.children().length).to.equal(2);
     expect(td.children().eq(1).css('background-color')).to.equal('blue');
 
     td.trigger('click');
     expect(colorFunctionEditor.is(':visible')).to.be.false;
+    expect(writeToFirebaseStub).to.not.be.called;
   });
-
-  /**
-   * Gets the current color function.
-   * @return {Object}
-   */
-  function getColorFunction() {
-    return addDisasterUtil.getCurrentLayers()[0][property];
-  }
 });
+
+/** Assert we wrote to firebase once and clear stub history. */
+function expectOneFirebaseWrite() {
+  expect(writeToFirebaseStub).to.be.calledOnce;
+  writeToFirebaseStub.resetHistory();
+}
+
+/**
+ * Gets the current color function.
+ * @return {Object}
+ */
+function getColorFunction() {
+  return addDisasterUtil.getCurrentLayers()[0][property];
+}
+
+/**
+ * Makes one of the type divs (mimicking html in add_disaster.html)
+ * @param {string} id
+ * @return {JQuery<HTMLDivElement>}
+ */
+function makeTypeDiv(id) {
+  return $(document.createElement('div'))
+      .prop('id', id)
+      .hide()
+      .addClass('color-type-div');
+}

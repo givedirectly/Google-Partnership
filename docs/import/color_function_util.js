@@ -225,8 +225,8 @@ function onClick(td, type) {
   globalTd = td;
   $(globalTd).addClass('selected');
   $('#' + colorStyleTypeStrings.get(type) + '-radio')
-      .prop('checked', true)
-      .trigger('change');
+      .prop('checked', true);
+  displaySchema(type);
 }
 
 /**
@@ -236,6 +236,12 @@ function onClick(td, type) {
  * @return {?Promise<void>} See updateLayersInFirestore doc
  */
 function switchSchema(type) {
+  displaySchema(type);
+  getColorFunction()['current-style'] = type;
+  return updateTdAndFirestore();
+}
+
+function displaySchema(type) {
   const colorFunction = getColorFunction();
   $('.color-type-div').hide();
   switch (type) {
@@ -255,8 +261,6 @@ function switchSchema(type) {
       $('#discrete').show();
       break;
   }
-  colorFunction['current-style'] = type;
-  return updateTdAndFirestore();
 }
 
 /**
@@ -297,7 +301,7 @@ function populateDiscreteColorPickers() {
       colorFunction['columns'][$('#discrete-property-picker').val()]['values'];
   const asColorPickers = [];
   // TODO: remove, always have this around at this point.
-  const colors = getColorFunction()['colors'];
+  const colors = colorFunction['colors'];
   for (const value of values) {
     const li = $(document.createElement('li'));
     li.append($(document.createElement('label')).text(value + ': '));
@@ -336,7 +340,7 @@ function createColorBoxesForDiscrete(colorFunction, td) {
 
 /**
  * Creates an instance of the color boxes for the color col.
- * @param {string} color what color to make the box.
+ * @param {string} color what color to make the box.Ncolo
  * @return {JQuery<HTMLDivElement>}
  */
 function createColorBox(color) {
