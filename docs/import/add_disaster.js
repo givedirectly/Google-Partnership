@@ -7,8 +7,8 @@ import {addLoadingElement, loadingElementFinished} from '../loading.js';
 import {getDisaster} from '../resources.js';
 
 import {clearStatus, ILLEGAL_STATE_ERR, setStatus} from './add_disaster_util.js';
-import {withColor} from './color_function_util.js';
 import {processNewFeatureLayer} from './add_layer';
+import {withColor} from './color_function_util.js';
 
 export {enableWhenReady, toggleState, updateAfterSort};
 // Visible for testing
@@ -585,7 +585,8 @@ function createAssetPickers(pickers, assetMap, div) {
     }
     const assetPickerLabel = $(document.createElement('label'))
                                  .text('Add layer from ' + folder + ': ');
-    const addButton = $(document.createElement('button')).prop('type', 'button').text('add');
+    const addButton =
+        $(document.createElement('button')).prop('type', 'button').text('add');
     addButton.on('click', () => {
       const eeAsset = assetPicker.val();
       const index = findLayer(eeAsset);
@@ -652,7 +653,7 @@ function setCurrentDisaster(disasterId) {
 
 function findLayer(eeAssetName) {
   const layers = getCurrentLayers();
-  for (let index = 0; index <layers.length; index++) {
+  for (let index = 0; index < layers.length; index++) {
     if (layers[index]['ee-name'] === eeAssetName) {
       return index;
     }
