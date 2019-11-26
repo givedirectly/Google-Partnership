@@ -1,5 +1,6 @@
 import {convertEeObjectToPromise} from '../map_util.js';
-import {getCurrentLayers, updateLayersInFirestore, createTd, createLayerRow} from './add_disaster.js';
+
+import {createLayerRow, createTd, getCurrentLayers, updateLayersInFirestore} from './add_disaster.js';
 import {withColor} from './color_function_util.js';
 
 export {processNewFeatureLayer};
@@ -22,11 +23,10 @@ function processNewFeatureLayer(asset, type) {
       const stats = properties.map((property) => {
         const max = featureCollection.aggregate_max(property);
         const min = featureCollection.aggregate_min(property);
-        const values =
-            ee.Algorithms
-                .If(ee.Number(featureCollection.aggregate_count_distinct(property)).lte(
-                        ee.Number(25)),
-                    featureCollection.aggregate_array(property), ee.List([]));
+        const values = ee.Algorithms.If(
+            ee.Number(featureCollection.aggregate_count_distinct(property))
+                .lte(ee.Number(25)),
+            featureCollection.aggregate_array(property), ee.List([]));
         return ee.Dictionary.fromLists(
             ['max', 'min', 'values'], [max, min, values]);
       });
@@ -36,12 +36,11 @@ function processNewFeatureLayer(asset, type) {
             const layer = {
               'asset-type': 1,
               'ee-name': asset,
-              'color-function':
-                  {
-                    'columns': columns,
-                    'current-style': 2,
-                    'colors': {},
-                  },
+              'color-function': {
+                'columns': columns,
+                'current-style': 2,
+                'colors': {},
+              },
               'display-name': '',
               'display-on-load': false
             };

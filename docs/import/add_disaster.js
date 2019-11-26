@@ -7,14 +7,15 @@ import {addLoadingElement, loadingElementFinished} from '../loading.js';
 import {getDisaster} from '../resources.js';
 
 import {clearStatus, ILLEGAL_STATE_ERR, setStatus} from './add_disaster_util.js';
-import {withColor} from './color_function_util.js';
 import {processNewFeatureLayer} from './add_layer.js';
+import {withColor} from './color_function_util.js';
 
 export {enableWhenReady, toggleState, updateAfterSort};
 // Visible for testing
 export {
   addDisaster,
   createAssetPickers,
+  createLayerRow,
   createOptionFrom,
   createTd,
   deleteDisaster,
@@ -33,7 +34,6 @@ export {
   withList,
   withType,
   writeNewDisaster,
-  createLayerRow,
 };
 
 // A map of disaster names to data. This pulls once on firebase
@@ -318,7 +318,8 @@ function populateLayersTable() {
 /**
  * @param layer
  * @param index
- * @return {JQuery<HTMLTableRowElement> | * | jQuery.fn.init | jQuery | HTMLElement}
+ * @return {JQuery<HTMLTableRowElement> | * | jQuery.fn.init | jQuery |
+ *     HTMLElement}
  */
 function createLayerRow(layer, index) {
   const row = $(document.createElement('tr'));
