@@ -197,7 +197,7 @@ function withColor(td, layer, property) {
     default:
       setStatus(ILLEGAL_STATE_ERR + 'unrecognized color function: ' + layer);
   }
-  td.on('click', () => onClick(td, colorFunction['current-style']));
+  td.addClass('editable').on('click', () => onClick(td, colorFunction['current-style']));
   return td;
 }
 
@@ -213,10 +213,12 @@ function onClick(td, type) {
   const colorFunctionDiv = $('#color-fxn-editor');
   if (colorFunctionDiv.is(':visible') && td === globalTd) {
     colorFunctionDiv.hide();
+    $(globalTd).removeClass('selected');
     return;
   }
   colorFunctionDiv.show();
   if (td === globalTd) {
+    $(globalTd).addClass('selected');
     return;
   }
   $(globalTd).removeClass('selected');
@@ -248,8 +250,7 @@ function switchSchema(type) {
     case ColorStyle.DISCRETE:
       const propertyPicker = $('#discrete-property-picker');
       populatePropertyPicker(propertyPicker);
-      // TODO: remove this check.
-      if (propertyPicker.val()) populateDiscreteColorPickers();
+      populateDiscreteColorPickers();
       $('#discrete').show();
       break;
   }
@@ -288,10 +289,13 @@ const discreteColorPickerDataKey = 'value';
 function populateDiscreteColorPickers() {
   const pickerList = $('#discrete-color-pickers').empty();
   const colorFunction = getColorFunction();
+  if (!colorFunction['field']) {
+    return;
+  }
   const values =
       colorFunction['columns'][$('#discrete-property-picker').val()]['values'];
   const asColorPickers = [];
-  // TODO: remove, always have this around.
+  // TODO: remove, always have this around at this point.
   const colors = getColorFunction()['colors'];
   for (const value of values) {
     const li = $(document.createElement('li'));
