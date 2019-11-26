@@ -71,7 +71,8 @@ describe('Unit tests for import_data.js', () => {
     };
   });
   it('Basic test', () => {
-    const {boundsPromise, mapBoundsCallback} = makeCallbackForTextAndPromise('Found bounds');
+    const {boundsPromise, mapBoundsCallback} =
+        makeCallbackForTextAndPromise('Found bounds');
     expect(run(testData, mapBoundsCallback)).to.be.true;
     expect(exportStub).to.be.calledOnce;
     cy.wrap(convertEeObjectToPromise(exportStub.firstCall.args[0]))
@@ -105,7 +106,8 @@ describe('Unit tests for import_data.js', () => {
     testData.asset_data.map_bounds_ne =
         expectedLatLngBounds.ne.lat + ', ' + expectedLatLngBounds.ne.lng;
 
-    const {boundsPromise, mapBoundsCallback} = makeCallbackForTextAndPromise('Wrote bounds');
+    const {boundsPromise, mapBoundsCallback} =
+        makeCallbackForTextAndPromise('Wrote bounds');
     expect(run(testData, mapBoundsCallback)).to.be.true;
     expect(exportStub).to.be.calledOnce;
     cy.wrap(convertEeObjectToPromise(exportStub.firstCall.args[0]))
@@ -232,7 +234,8 @@ function scaleObject(object) {
  * Creates a callback for use with {@link run} so that we will be informed when
  * the Firestore write has completed. Returns a Promise that can be waited on
  * for that write to complete.
- * @param {string} expectedText Text contained in message when Firestore write is complete
+ * @param {string} expectedText Text contained in message when Firestore write
+ *     is complete
  * @return {{boundsPromise: Promise, mapBoundsCallback: Function}}
  */
 function makeCallbackForTextAndPromise(expectedText) {

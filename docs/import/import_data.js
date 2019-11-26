@@ -148,7 +148,8 @@ let setMapBoundsInfoCalled = false;
  * Utility function that sets the label for the bounds status the first time it
  * is called, then sets the status the second time. Useful for injecting over in
  * tests.
- * @param {string} message Description of task to be done the first time this is called, and then result the second time
+ * @param {string} message Description of task to be done the first time this is
+ *     called, and then result the second time
  */
 function setMapBoundsInfo(message) {
   if (setMapBoundsInfoCalled) {
@@ -165,7 +166,9 @@ function setMapBoundsInfo(message) {
 /**
  * Performs operation of processing inputs and creating output asset.
  * @param {Object} disasterData Data for current disaster coming from Firestore
- * @param {Function} setMapBoundsInfoFunction Function to be called when map bounds-related operations are complete. First called with a message about the task, then called with the results
+ * @param {Function} setMapBoundsInfoFunction Function to be called when map
+ *     bounds-related operations are complete. First called with a message about
+ *     the task, then called with the results
  * @return {boolean} Whether in-thread operations succeeded
  */
 function run(disasterData, setMapBoundsInfoFunction = setMapBoundsInfo) {
@@ -219,7 +222,8 @@ function run(disasterData, setMapBoundsInfoFunction = setMapBoundsInfo) {
   if (!buildingPaths) {
     return missingAssetError('building data asset paths');
   }
-  const {damage, damageEnvelope} = calculateDamage(assetData, setMapBoundsInfoFunction);
+  const {damage, damageEnvelope} =
+      calculateDamage(assetData, setMapBoundsInfoFunction);
   if (!damageEnvelope) {
     // Must have been an error.
     return false;
@@ -313,7 +317,8 @@ const damageBuffer = 1000;
  * Calculates damage if there is a damage asset, or simply writes the
  * user-provided bounds to Firestore if not.
  * @param {Object} assetData
- * @param {Function} setMapBoundsInfo Function to call with information about map bounds work. First call will have the task, second call the result.
+ * @param {Function} setMapBoundsInfo Function to call with information about
+ *     map bounds work. First call will have the task, second call the result.
  * @return {{damage: ?ee.FeatureCollection, damageEnvelope:
  *     ee.Geometry.Rectangle}|{damage: null, damageEnvelope: null}} Returns
  *     the damage asset (if present) and the envelope bounding the damage, or
