@@ -8,6 +8,9 @@ describe('Unit tests for import_data.js', () => {
   let testData;
   let exportStub;
   beforeEach(() => {
+    const computeStatusDiv = document.createElement('div');
+    computeStatusDiv.id = 'compute-status';
+    document.body.appendChild(computeStatusDiv);
     // Create a pretty trivial world: 2 block groups, each a 1x2 vertical
     // stripes. Under the covers, we scale all dimensions down because
     // production code creates an "envelope" 1 km wide around damage, and that
@@ -87,6 +90,8 @@ describe('Unit tests for import_data.js', () => {
             'TOTAL HOUSEHOLDS': 15,
           });
         });
+    cy.wrap(waitForText($('#compute-status'), 'Found bounds'));
+
     assertFirestoreMapBounds(
         scaleObject({sw: {lng: 0.4, lat: 0.5}, ne: {lng: 10, lat: 12}}));
   });
@@ -119,6 +124,7 @@ describe('Unit tests for import_data.js', () => {
             'TOTAL HOUSEHOLDS': 15,
           });
         });
+    cy.wrap(waitForText($('#compute-status'), 'Wrote bounds'));
     assertFirestoreMapBounds(expectedLatLngBounds);
   });
 
@@ -219,4 +225,16 @@ function scaleObject(object) {
     newObject[key] = scaleObject(object[key]);
   }
   return newObject;
+}
+
+function waitForText(div, text, timeout = 4000, startTime = new Date()) {
+  if (new Date() - startTime > timeout) {
+    expect(div.text()).to.contain(text);
+  }
+  if (div.text().includes(text)) {
+    return Promise.resolve();
+  }
+  return new Promise(
+      (resolve) => setTimeout(
+          () => resolve(waitForText(div, text, timeout, startTime)), 100));
 }

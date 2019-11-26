@@ -341,7 +341,9 @@ function calculateDamage(assetData) {
   const ne = makeLatLngFromString(damageNe);
   const damageEnvelope =
       ee.Geometry.Rectangle([sw.lng, sw.lat, ne.lng, ne.lat]);
-  saveBounds(makeGeoJsonRectangle(sw, ne)).catch(firestoreError);
+  saveBounds(makeGeoJsonRectangle(sw, ne))
+      .then(() => centerStatusSpan.innerText = 'Wrote bounds')
+      .catch(firestoreError);
   return {
     damage: null,
     damageEnvelope: damageEnvelope,
