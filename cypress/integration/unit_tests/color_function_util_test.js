@@ -40,7 +40,7 @@ describe('Unit tests for add_disaster page', () => {
     writeToFirebaseStub = cy.stub(addDisasterUtil, 'updateLayersInFirestore');
   });
 
-  it('switches schemas', () => {
+  it('switches schemas and writes data', () => {
     const layer = {
       'color-function': {
         'current-style': 2,

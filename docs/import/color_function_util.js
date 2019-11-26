@@ -233,6 +233,7 @@ function onClick(td, type) {
  * Switches the schema of {@link globalTd} to the given type, shows the
  * div of the new type, updates {@link globalTd}'s contents.
  * @param {enum} type
+ * @return {?Promise<void>} See updateLayersInFirestore doc
  */
 function switchSchema(type) {
   const colorFunction = getColorFunction();
@@ -255,7 +256,7 @@ function switchSchema(type) {
       break;
   }
   colorFunction['current-style'] = type;
-  updateTdAndFirestore();
+  return updateTdAndFirestore();
 }
 
 /**
@@ -276,7 +277,7 @@ function populatePropertyPicker(picker) {
 }
 
 // The key for the data in each discrete schema color select to know which
-// property it's linked.
+// property it's linked to.
 const discreteColorPickerDataKey = 'value';
 
 /**
