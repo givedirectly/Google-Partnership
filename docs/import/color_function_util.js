@@ -344,7 +344,7 @@ function createColorBoxesForDiscrete(colorFunction, td) {
 
 /**
  * Creates an instance of the color boxes for the color col.
- * @param {string} color what color to make the box.Ncolo
+ * @param {string} color what color to make the box.
  * @return {JQuery<HTMLDivElement>}
  */
 function createColorBox(color) {
