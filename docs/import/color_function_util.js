@@ -224,8 +224,7 @@ function onClick(td, type) {
   $(globalTd).removeClass('selected');
   globalTd = td;
   $(globalTd).addClass('selected');
-  $('#' + colorStyleTypeStrings.get(type) + '-radio')
-      .prop('checked', true);
+  $('#' + colorStyleTypeStrings.get(type) + '-radio').prop('checked', true);
   displaySchema(type);
 }
 
