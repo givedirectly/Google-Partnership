@@ -91,7 +91,7 @@ describe('Unit tests for import_data.js', () => {
         scaleObject({sw: {lng: 0.4, lat: 0.5}, ne: {lng: 10, lat: 12}}));
   });
 
-  it('Test with no damage asset', () => {
+  it.only('Test with no damage asset', () => {
     testData.asset_data.damage_asset_path = null;
     const expectedLatLngBounds =
         scaleObject({sw: {lng: 0.39, lat: 0.49}, ne: {lng: 13, lat: 11}});
