@@ -1,11 +1,6 @@
 import {showError} from './error.js';
+import {earthEngineTestTokenCookieName, firebaseTestTokenCookieName, getCookieValue, inProduction} from './in_test_util.js';
 import SettablePromise from './settable_promise.js';
-import {
-  inProduction,
-  earthEngineTestTokenCookieName,
-  firebaseTestTokenCookieName,
-  getCookieValue
-} from "./in_test_util.js";
 
 export {
   authenticateToFirebase,
@@ -158,7 +153,8 @@ Authenticator.trackEeAndFirebase = (taskAccumulator) => {
   if (inProduction()) {
     const firebaseAuthPromise = new SettablePromise();
     const authenticator = new Authenticator(
-        (token) => firebaseAuthPromise.setPromise(authenticateToFirebase(token)),
+        (token) =>
+            firebaseAuthPromise.setPromise(authenticateToFirebase(token)),
         () => {
           ee.data.setCloudApiEnabled(true);
           taskAccumulator.taskCompleted();
@@ -181,7 +177,8 @@ Authenticator.trackEeAndFirebase = (taskAccumulator) => {
         CLIENT_ID, 'Bearer', eeToken,
         // Expires in 3600 is a lie, but no need to tell the truth.
         /* expiresIn */ 3600, /* extraScopes */[],
-        /* callback */ () => initializeEE(() => taskAccumulator.taskCompleted()),
+        /* callback */
+        () => initializeEE(() => taskAccumulator.taskCompleted()),
         /* updateAuthLibrary */ false);
     return firebase.auth().signInWithCustomToken(firebaseToken);
   }
