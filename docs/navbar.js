@@ -8,7 +8,8 @@ export {loadNavbarWithPicker, loadNavbarWithTitle};
  * @param {Function} callback the callback invoked upon load
  */
 function loadNavbar(callback) {
-  $('#navbar').load('./navbar.html', callback);
+  // Use this script's URL to derive the URL for navbar.html.
+  $('#navbar').load(import.meta.url.replace(/\.js$/, '.html'), callback);
 }
 
 /**

@@ -1,5 +1,5 @@
 describe('Integration test for the navbar', () => {
-  it.only('Switch disasters', () => {
+  it('Switch disasters', () => {
     cy.visit('');
 
     // Michael on top of Harvey.
@@ -37,5 +37,7 @@ describe('Integration test for the navbar', () => {
 
     // The page should now be navigated to add_disaster.html.
     cy.url().should('include', '/add_disaster.html');
+    // Make sure navigation bar is visible.
+    cy.get('#nav-input');
   });
 });
