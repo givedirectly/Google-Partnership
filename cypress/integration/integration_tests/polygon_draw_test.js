@@ -334,5 +334,5 @@ function saveAndAwait() {
  * click because page may still be loading, causing "animation".
  */
 function startDrawing() {
-  cy.get('[title="Draw a shape"]', {timeout: 10000}).click({force: true});
+  cy.get('[title="Draw a shape"]', {timeout: 20000}).click({force: true});
 }
