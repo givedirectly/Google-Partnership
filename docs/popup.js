@@ -61,9 +61,6 @@ function setUpPopup() {
      */
     setCalculatedData(calculatedData) {
       this.calculatedData = calculatedData;
-      checkPresent(
-          this.calculatedDataDiv, 'calculatedDataDiv not present when setting');
-      this.calculatedDataDiv.style.color = 'black';
       this.updateCalculatedDataDiv();
     }
 
@@ -86,6 +83,7 @@ function setUpPopup() {
         this.calculatedDataDiv.style.color = 'grey';
       } else {
         displayCalculatedData(this.calculatedData, this.calculatedDataDiv);
+        this.calculatedDataDiv.style.color = 'black';
       }
     }
 
