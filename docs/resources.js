@@ -18,9 +18,7 @@ function getScoreAsset() {
   // TODO(janakr): Modify map to handle no-damage scenario more intuitively.
   //  Should make damage threshold, weight 0, probably hide those toggles
   //  completely. Other changes?
-  // TODO(janakr): switch back to -as-tot when regenerated, and make a backup
-  //  so you don't lose it again.
-  return gdEePathPrefix + getDisaster() + '/data-ms-as-nod';
+  return gdEePathPrefix + getDisaster() + '/data-ms-as-tot';
 }
 
 /** The default disaster. */

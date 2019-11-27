@@ -1,10 +1,7 @@
 import {run} from '../../../docs/import/import_data';
 import {convertEeObjectToPromise} from '../../../docs/map_util';
 import {assertFirestoreMapBounds} from '../../support/firestore_map_bounds';
-import {
-  initFirebaseForUnitTest,
-  loadScriptsBeforeForUnitTests
-} from '../../support/script_loader';
+import {initFirebaseForUnitTest, loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 
 describe('Unit tests for import_data.js', () => {
   loadScriptsBeforeForUnitTests('ee', 'firebase', 'jquery');

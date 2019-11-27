@@ -1,9 +1,6 @@
 import {computeAndSaveBounds} from '../../../docs/import/center';
 import {assertFirestoreMapBounds, expectLatLngBoundsWithin} from '../../support/firestore_map_bounds';
-import {
-  initFirebaseForUnitTest,
-  loadScriptsBeforeForUnitTests
-} from '../../support/script_loader';
+import {initFirebaseForUnitTest, loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 
 describe('Unit test for center.js', () => {
   loadScriptsBeforeForUnitTests('ee', 'firebase');
