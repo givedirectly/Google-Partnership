@@ -38,6 +38,8 @@
   </select>
   <span>  OR  </span>
   <button type="button" id="create-new-disaster">Create New Disaster</button>
+  <button type="button" id="delete", disabled="true">Delete Disaster</button>
+</div>
 </div><br>
 <div id="status"></div>
 <div id="selected-disaster" hidden="true">
@@ -68,7 +70,6 @@
   <div id="asset-pickers"></div>
   <p>Upload additional assets via the <a href="https://code.earthengine.google.com/" target="_blank"> code editor </a></p>
   <br>
-  <button type="button" id="delete", disabled="true">Delete</button>
 </div>
 <div id="new-disaster" hidden="true">
   <button type="button" id="cancel-new-disaster">Cancel</button>
@@ -131,6 +132,22 @@
     </select><br>
     <button type="button" id="add-disaster-button" disabled="true">Add Disaster</button>
   </form>
+</div>
+<div id="selected-disaster" hidden="true">
+  <p>Upload additional assets via the <a href="https://code.earthengine.google.com/" target="_blank"> code editor </a></p>
+  <div id="asset-pickers"></div>
+</div>
+<div id="score-asset-selection" style="padding-top: 40px;"> 
+  <div class="formTitle">Select Score Data</div>
+  <div>
+    <table id="asset-selection-table">
+      <thead>
+        <tr id="score-asset-header-row">
+        </tr>
+      </thead>
+      <tbody id="asset-selection-table-body"></tbody>
+    </table>
+  </div>
 </div>
 </body>
 </html>

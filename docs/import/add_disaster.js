@@ -29,6 +29,8 @@ export {
 // Map of state to list of known assets
 const stateAssets = new Map();
 
+const scoreAssetTypes = ['Poverty', 'Income', 'SVI'];
+
 // TODO: general reminder to add loading indicators for things like creating
 // new state asset folders, etc.
 
@@ -266,7 +268,8 @@ function populateStateAssetPickers() {
   // reloading the page.
   let assetPickersDone = Promise.resolve();
   if (statesToFetch.length === 0) {
-    createAssetPickers(states);
+    createAssetPickers(states, 'asset-pickers');
+    initializeScoreSelectors(states);
   } else {
     // We are already doing this inside createAssetPickers but not until
     // after the first promise completes so also do it here so lingering
@@ -276,12 +279,75 @@ function populateStateAssetPickers() {
       for (const asset of assets) {
         stateAssets.set(asset[0], asset[1]);
       }
-      createAssetPickers(states);
+      createAssetPickers(states, 'asset-pickers');
+      initializeScoreSelectors(states);
     });
   }
 
   // TODO: display more disaster info including current layers etc.
   return assetPickersDone;
+}
+
+/**
+ * Initializes the select interface for score assets.
+ * @param {Array<string>} states array of state (abbreviations)
+ */
+function initializeScoreSelectors(states) {
+  const headerRow = $('#score-asset-header-row');
+  const tableBody = $('#asset-selection-table-body');
+  tableBody.empty();
+  headerRow.empty();
+
+  // Initialize headers.
+  headerRow.append(createTd().html('Score Assets'));
+  for (const state of states) {
+    headerRow.append(createTd().html(state + ' Assets'));
+  }
+
+  // For each asset type, add select for all assets for each state.
+  for (let i = 0; i < scoreAssetTypes.length; i++) {
+    const scoreAssetType = scoreAssetTypes[i];
+    const row =
+        $(document.createElement('tr')).prop('id', scoreAssetType + '-row');
+    row.append(createTd().append(
+        $(document.createElement('div')).html(scoreAssetType)));
+    for (const state of states) {
+      if (stateAssets.get(state)) {
+        row.append(createTd().append(createAssetDropdown(
+            stateAssets.get(state), scoreAssetType, state)));
+      }
+    }
+    tableBody.append(row);
+    row.on('change', () => handleScoreAssetSelection(scoreAssetType));
+  }
+}
+
+/**
+ * Initializes a dropdown with assets.
+ * @param {Array<string>} assets array of assets for add to dropdown
+ * @param {string} row The asset type/row to put the dropdown in.
+ * @param {string} state The state the assets are in.
+ */
+function createAssetDropdown(assets, row, state) {
+  // Create the asset selector and add a 'None' option.
+  const select =
+      $(document.createElement('select')).prop('id', row + '-' + state);
+  select.append(createOptionFrom('None'));
+
+  // Add assets to selector and return it.
+  for (let i = 0; i < assets.length; i++) {
+    select.append(createOptionFrom(assets[i]));
+  }
+  return select;
+}
+
+/**
+ * Handles the user selecting an asset for one of the possible score types.
+ * @param {String} assetType The type of asset (poverty, income, etc)
+ */
+function handleScoreAssetSelection(assetType) {
+  // TODO: Write the asset name and type to firebase here.
+  return;
 }
 
 /**
