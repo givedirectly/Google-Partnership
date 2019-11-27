@@ -41,11 +41,7 @@ const disasterData = new Map();
 // Map of state to list of known assets
 const stateAssets = new Map();
 
-const scoreAssetTypes = {
-  'Poverty': ['Total Households', 'SNAP Households'],
-  'Income': ['Income'],
-  'SVI': ['SVI']
-};
+const scoreAssetTypes = ['Poverty', 'Income', 'SVI'];
 
 // TODO: general reminder to add loading indicators for things like creating
 // new state asset folders, etc.
@@ -390,10 +386,10 @@ function initializeScoreSelectors(states) {
   for (const state of states) {
     headerRow.append(createTd().html(state + ' Assets'));
   }
-  headerRow.append(createTd().html('Column Names'));
 
   // For each asset type, add select for all assets for each state.
-  for (let scoreAssetType in scoreAssetTypes) {
+  for (let i = 0; i < scoreAssetTypes.length; i++) {
+    const scoreAssetType = scoreAssetTypes[i];
     const row =
         $(document.createElement('tr')).prop('id', scoreAssetType + '-row');
     row.append(createTd().append(
@@ -404,17 +400,6 @@ function initializeScoreSelectors(states) {
             stateAssets.get(state), scoreAssetType, state)));
       }
     }
-    // TODO: Make column names selects instead.
-    const columnCell = createTd();
-    for (let i = 0; i < scoreAssetTypes[scoreAssetType].length; i++) {
-      columnCell.append($(document.createElement('label'))
-                            .text(scoreAssetTypes[scoreAssetType][i]));
-      columnCell.append($(document.createElement('input')).attr({
-        id: scoreAssetType + '-column-' + i,
-        type: 'text',
-      }));
-    }
-    row.append(columnCell);
     tableBody.append(row);
     row.on('change', () => handleScoreAssetSelection(scoreAssetType));
   }
