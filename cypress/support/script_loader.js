@@ -4,7 +4,7 @@ import {cypressTestCookieName, earthEngineTestTokenCookieName, firebaseTestToken
 export {
   addFirebaseHooks,
   initFirebaseForUnitTest,
-  loadScriptsBeforeForUnitTests
+  loadScriptsBeforeForUnitTests,
 };
 
 /**
