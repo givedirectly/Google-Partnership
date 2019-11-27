@@ -1,13 +1,10 @@
-import {readDisasterDocument} from '../../../docs/firestore_document';
-import storeCenter from '../../../docs/import/center';
-import {addFirebaseHooks, loadScriptsBeforeForUnitTests} from '../../support/script_loader';
+import {computeAndSaveBounds} from '../../../docs/import/center';
+import {assertFirestoreMapBounds, expectLatLngBoundsWithin} from '../../support/firestore_map_bounds';
+import {initFirebaseForUnitTest, loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 
 describe('Unit test for center.js', () => {
   loadScriptsBeforeForUnitTests('ee', 'firebase');
-  addFirebaseHooks();
-  before(
-      () =>
-          cy.wrap(firebase.auth().signInWithCustomToken(firestoreCustomToken)));
+  initFirebaseForUnitTest();
 
   it('calculates bounds', () => {
     const damageCollection = ee.FeatureCollection([
@@ -16,47 +13,35 @@ describe('Unit test for center.js', () => {
       ee.Feature(ee.Geometry.Point([50, 6])),
       ee.Feature(ee.Geometry.Point([5, 60])),
     ]);
-    // Firebase (and human convention) puts latitude first.
-    const expectedBounds = [2.5, 1.5, 60, 50];
-    cy.wrap(storeCenter(damageCollection, Promise.resolve()))
-        // Because of floating-point errors, can't assert exactly.
-        .then((bounds) => {
-          // Expect that result returned from function is correct.
-          expectArrayWithin(bounds, expectedBounds);
-          return readDisasterDocument();
-        })
-        .then((doc) => {
-          // Expect that result retrieved from Firestore is correct.
-          const mapBounds = doc.data()['map-bounds'];
-          expectArrayWithin(
-              [
-                mapBounds.sw.latitude,
-                mapBounds.sw.longitude,
-                mapBounds.ne.latitude,
-                mapBounds.ne.longitude,
-              ],
-              expectedBounds);
-        });
+    const expectedLatLngBounds = {
+      sw: {lat: 2.5, lng: 1.5},
+      ne: {lat: 60, lng: 50},
+    };
+    cy.wrap(computeAndSaveBounds(damageCollection))
+        .then(makeLatLngBoundsFromGeoJsonPoints)
+        .then(
+            (bounds) => expectLatLngBoundsWithin(bounds, expectedLatLngBounds));
+    assertFirestoreMapBounds(expectedLatLngBounds);
   });
 });
 
 /**
- * Utility function to compare two numerical arrays within a tolerance.
- * @param {Array<number>} actualArray
- * @param {Array<number>} expectedArray
+ * Makes a LatLngBounds-style point from two GeoJson points.
+ * @param {Array<Array<number>>} bounds
+ * @return {{sw: {lng: number, lat: number}, ne: {lng: number, lat: number}}}
  */
-function expectArrayWithin(actualArray, expectedArray) {
-  expect(actualArray).to.have.length(expectedArray.length);
-  for (let i = 0; i < actualArray.length; i++) {
-    expectWithin(actualArray[i], expectedArray[i]);
-  }
+function makeLatLngBoundsFromGeoJsonPoints(bounds) {
+  return {
+    sw: makeLatLngFromGeoJsonPoint(bounds[0]),
+    ne: makeLatLngFromGeoJsonPoint(bounds[1]),
+  };
 }
 
 /**
- * Utility function to compare two numbers within a tolerance of 0.1.
- * @param {number} actualNumber
- * @param {number} expectedNumber
+ * Makes a LatLng-style point from a GeoJson point (just an array).
+ * @param {Array<number>} point
+ * @return {{lng: number, lat: number}}
  */
-function expectWithin(actualNumber, expectedNumber) {
-  expect(actualNumber).to.be.within(expectedNumber - 0.1, expectedNumber + 0.1);
+function makeLatLngFromGeoJsonPoint(point) {
+  return {lng: point[0], lat: point[1]};
 }

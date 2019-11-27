@@ -58,6 +58,13 @@
     </div>
   </table>
   <br>
+  <div id="color-fxn-editor" class="editor" hidden="true">
+    <div id="color-radios"></div><br>
+    <div id="single" hidden="true" class="color-type-div"></div>
+    <div id="continuous" hidden="true" class="color-type-div"></div>
+    <div id="discrete" hidden="true" class="color-type-div"></div>
+  </div>
+  <br>
   <div id="asset-pickers">
     <div id="disaster-asset-picker" class="asset-pickers"></div>
     <div id="state-asset-pickers" class="asset-pickers"></div>
@@ -128,9 +135,5 @@
     <button type="button" id="add-disaster-button" disabled="true">Add Disaster</button>
   </form>
 </div>
-<script type="module">
-  import {taskAccumulator} from './add_disaster_startup.js';
-  taskAccumulator.taskCompleted();
-</script>
 </body>
 </html>

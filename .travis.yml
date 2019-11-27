@@ -38,6 +38,6 @@ before_install:
 - openssl aes-256-cbc -K $encrypted_8720699f085c_key -iv $encrypted_8720699f085c_iv
   -in service_account.json.enc -out $GOOGLE_APPLICATION_CREDENTIALS -d
 before_script:
-  - yarn run ws --directory docs --port 8080 &
+- yarn run ws --directory docs --port 8080 &
 script:
 - yarn run cypress run --env ON_TRAVIS=1 --record --parallel --browser=chromium --config video=false

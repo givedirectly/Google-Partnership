@@ -1,10 +1,8 @@
 import {convertEeObjectToPromise} from '../map_util.js';
-
 import {createLayerRow, createTd, getCurrentLayers, updateLayersInFirestore} from './add_disaster.js';
 import {withColor} from './color_function_util.js';
 
 export {processNewFeatureLayer};
-
 /**
  * One-off function for processing a feature-collection-typed layer and putting
  * its color column info into firestore.
