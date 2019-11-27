@@ -514,41 +514,26 @@ function checkSupportedAssetType(asset) {
  * @param {Array<string>} states e.g. ['WA']
  */
 function createAssetPickers(states) {
-  const assetPickerDiv =
-      $('#' +
-        'asset-pickers');
+  const assetPickerDiv = $('#asset-pickers');
   assetPickerDiv.empty();
   for (const state of states) {
+    const assetPicker = $(document.createElement('select'))
+                            .attr({
+                              multiple: 'multiple',
+                              id: state + '-adder',
+                            })
+                            .width(200);
     if (stateAssets.get(state)) {
-      const assetPicker = createAssetPicker(
-          stateAssets.get(state), assetPickerDiv, state + '-adder',
-          'Add EE asset(s) for ' + state + ': ');
+      for (const asset of stateAssets.get(state)) {
+        assetPicker.append(createOptionFrom(asset));
+      }
     }
+    const assetPickerLabel = $(document.createElement('label'))
+                                 .text('Add EE asset(s) for ' + state + ': ');
+    assetPickerLabel.append(assetPicker);
+    assetPickerDiv.append(assetPickerLabel);
+    assetPickerDiv.append(document.createElement('br'));
   }
-}
-
-
-/**
- * Given states, displays their assets in pickers.
- * @param {Array<string>} states e.g. ['WA']
- */
-function createAssetPicker(assets, parentDiv, selectName, label) {
-  const assetPicker = $(document.createElement('select'))
-                          .attr({
-                            multiple: 'multiple',
-                            id: selectName,
-                          })
-                          .width(200);
-  for (const asset of assets) {
-    assetPicker.append(createOptionFrom(asset));
-  }
-
-  if (label) {
-    const assetPickerLabel = $(document.createElement('label')).html(label);
-    parentDiv.append(assetPickerLabel);
-  }
-  parentDiv.append(assetPicker);
-  parentDiv.append(document.createElement('br'));
 }
 
 /**
