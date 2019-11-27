@@ -3,7 +3,7 @@ import {eeLegacyPathPrefix, eeStatePrefixLength, legacyStateDir} from '../ee_pat
 import {LayerType} from '../firebase_layers.js';
 import {disasterCollectionReference, getDisasters} from '../firestore_document.js';
 import {getDisaster} from '../resources.js';
-import {processNewFeatureLayer} from './add_layer.js';
+import {processNewEeLayer} from './add_layer.js';
 import {clearStatus, disasterData, getCurrentData, getCurrentLayers, getRowIndex, ILLEGAL_STATE_ERR, onUpdate, setCurrentDisaster, setStatus, updateLayersInFirestore} from './add_disaster_util.js';
 import {withColor} from './color_function_util.js';
 
@@ -517,11 +517,12 @@ function createAssetPickers(pickers, assetMap, div) {
     addButton.on('click', () => {
       const asset = assetPicker.val();
       const type = assetMap.get(folder).get(asset);
-      processNewFeatureLayer(asset, type);
+      processNewEeLayer(asset, type);
     });
     div.append(assetPickerLabel);
     assetPickerLabel.append(assetPicker);
     assetPickerLabel.append(addButton);
+    div.append(document.createElement('br'));
   }
 }
 
