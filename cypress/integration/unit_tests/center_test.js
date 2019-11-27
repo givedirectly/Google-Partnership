@@ -1,13 +1,13 @@
 import {computeAndSaveBounds} from '../../../docs/import/center';
 import {assertFirestoreMapBounds, expectLatLngBoundsWithin} from '../../support/firestore_map_bounds';
-import {addFirebaseHooks, loadScriptsBeforeForUnitTests} from '../../support/script_loader';
+import {
+  initFirebaseForUnitTest,
+  loadScriptsBeforeForUnitTests
+} from '../../support/script_loader';
 
 describe('Unit test for center.js', () => {
   loadScriptsBeforeForUnitTests('ee', 'firebase');
-  addFirebaseHooks();
-  before(
-      () =>
-          cy.wrap(firebase.auth().signInWithCustomToken(firestoreCustomToken)));
+  initFirebaseForUnitTest();
 
   it('calculates bounds', () => {
     const damageCollection = ee.FeatureCollection([

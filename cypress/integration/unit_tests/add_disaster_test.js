@@ -4,7 +4,7 @@ import {addDisaster, createAssetPickers, createOptionFrom, createTd, deleteDisas
 import {withColor} from '../../../docs/import/color_function_util.js';
 import * as loading from '../../../docs/loading.js';
 import {getDisaster} from '../../../docs/resources';
-import {addFirebaseHooks, loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
+import {initFirebaseForUnitTest, loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
 const KNOWN_STATE = 'WF';
 const UNKNOWN_STATE = 'DN';
@@ -15,10 +15,8 @@ let loadingFinishedStub;
 
 describe('Unit tests for add_disaster page', () => {
   loadScriptsBeforeForUnitTests('ee', 'firebase', 'jquery');
-  addFirebaseHooks();
+  initFirebaseForUnitTest();
   before(() => {
-    cy.wrap(firebase.auth().signInWithCustomToken(firestoreCustomToken));
-
     const disasterPicker = createAndAppend('select', 'disaster');
     disasterPicker.append(createOptionFrom('2003-spring'));
     disasterPicker.append(createOptionFrom('2001-summer'));
