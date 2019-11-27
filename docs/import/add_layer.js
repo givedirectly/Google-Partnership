@@ -20,9 +20,8 @@ function processNewEeLayer(asset, type) {
         'ee-name': asset,
         'display-name': '',
         'display-on-load': false
-      }
-      prependToTable(layer);
-      return updateLayersInFirestore();
+      }; 
+      return prependToTable(layer);
     case 'TABLE':
       const featureCollection = ee.FeatureCollection(asset);
       const properties = featureCollection.first().propertyNames();
@@ -50,8 +49,7 @@ function processNewEeLayer(asset, type) {
               'display-name': '',
               'display-on-load': false
             };
-            prependToTable(layer, index);
-            return updateLayersInFirestore();
+            return prependToTable(layer, index);
           });
   }
 }
@@ -60,4 +58,5 @@ function prependToTable(layer) {
   const index = getCurrentLayers().length;
   getCurrentLayers().push(layer);
   $('#tbody').prepend(createLayerRow(layer, index));
+  return updateLayersInFirestore();
 }
