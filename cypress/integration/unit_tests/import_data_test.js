@@ -1,10 +1,11 @@
 import {run} from '../../../docs/import/import_data';
 import {convertEeObjectToPromise} from '../../../docs/map_util';
 import {assertFirestoreMapBounds} from '../../support/firestore_map_bounds';
-import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
+import {initFirebaseForUnitTest, loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 
 describe('Unit tests for import_data.js', () => {
   loadScriptsBeforeForUnitTests('ee', 'firebase', 'jquery');
+  initFirebaseForUnitTest();
   let testData;
   let exportStub;
   beforeEach(() => {
@@ -68,7 +69,9 @@ describe('Unit tests for import_data.js', () => {
     };
   });
   it('Basic test', () => {
-    expect(run(testData)).to.be.true;
+    const {boundsPromise, mapBoundsCallback} =
+        makeCallbackForTextAndPromise('Found bounds');
+    expect(run(testData, mapBoundsCallback)).to.be.true;
     expect(exportStub).to.be.calledOnce;
     cy.wrap(convertEeObjectToPromise(exportStub.firstCall.args[0]))
         .then((result) => {
@@ -87,6 +90,7 @@ describe('Unit tests for import_data.js', () => {
             'TOTAL HOUSEHOLDS': 15,
           });
         });
+    cy.wrap(boundsPromise);
     assertFirestoreMapBounds(
         scaleObject({sw: {lng: 0.4, lat: 0.5}, ne: {lng: 10, lat: 12}}));
   });
@@ -100,7 +104,9 @@ describe('Unit tests for import_data.js', () => {
     testData.asset_data.map_bounds_ne =
         expectedLatLngBounds.ne.lat + ', ' + expectedLatLngBounds.ne.lng;
 
-    expect(run(testData)).to.be.true;
+    const {boundsPromise, mapBoundsCallback} =
+        makeCallbackForTextAndPromise('Wrote bounds');
+    expect(run(testData, mapBoundsCallback)).to.be.true;
     expect(exportStub).to.be.calledOnce;
     cy.wrap(convertEeObjectToPromise(exportStub.firstCall.args[0]))
         .then((result) => {
@@ -119,6 +125,7 @@ describe('Unit tests for import_data.js', () => {
             'TOTAL HOUSEHOLDS': 15,
           });
         });
+    cy.wrap(boundsPromise);
     assertFirestoreMapBounds(expectedLatLngBounds);
   });
 
@@ -219,4 +226,23 @@ function scaleObject(object) {
     newObject[key] = scaleObject(object[key]);
   }
   return newObject;
+}
+
+/**
+ * Creates a callback for use with {@link run} so that we will be informed when
+ * the Firestore write has completed. Returns a Promise that can be waited on
+ * for that write to complete.
+ * @param {string} expectedText Text contained in message when Firestore write
+ *     is complete
+ * @return {{boundsPromise: Promise, mapBoundsCallback: Function}}
+ */
+function makeCallbackForTextAndPromise(expectedText) {
+  let resolveFunction = null;
+  const boundsPromise = new Promise((resolve) => resolveFunction = resolve);
+  const mapBoundsCallback = (message) => {
+    if (message.includes(expectedText)) {
+      resolveFunction();
+    }
+  };
+  return {boundsPromise, mapBoundsCallback};
 }
