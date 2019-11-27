@@ -1,11 +1,8 @@
-import {writeWaiterId} from '../dom_constants.js';
 import {eeStatePrefixLength, legacyStateDir} from '../ee_paths.js';
 import {LayerType} from '../firebase_layers.js';
-import {getFirestoreRoot} from '../firestore_document.js';
 import {disasterCollectionReference, getDisasters} from '../firestore_document.js';
-import {addLoadingElement, loadingElementFinished} from '../loading.js';
 import {getDisaster} from '../resources.js';
-import {clearStatus, ILLEGAL_STATE_ERR, setStatus} from './add_disaster_util.js';
+import {clearStatus, disasterData, getCurrentData, getCurrentLayers, getRowIndex, ILLEGAL_STATE_ERR, onUpdate, setCurrentDisaster, setStatus, updateLayersInFirestore} from './add_disaster_util.js';
 import {withColor} from './color_function_util.js';
 
 export {enableWhenReady, toggleState, updateAfterSort};
@@ -16,27 +13,18 @@ export {
   createOptionFrom,
   createTd,
   deleteDisaster,
-  disasterData,
   emptyCallback,
   getAssetsFromEe,
-  getCurrentData,
-  getCurrentLayers,
   onCheck,
   onInputBlur,
   onListBlur,
   stateAssets,
-  updateLayersInFirestore,
   withCheckbox,
   withInput,
   withList,
   withType,
   writeNewDisaster,
 };
-
-// A map of disaster names to data. This pulls once on firebase
-// authentication and then makes local updates afterwards so we don't need to
-// wait on firebase writes to read new info.
-const disasterData = new Map();
 
 // Map of state to list of known assets
 const stateAssets = new Map();
@@ -90,53 +78,6 @@ function toggleDisaster(disaster) {
   return populateStateAssetPickers();
 }
 
-const State = {
-  SAVED: 0,
-  WRITING: 1,
-  QUEUED_WRITE: 2,
-};
-Object.freeze(State);
-
-let state = State.SAVED;
-let pendingWriteCount = 0;
-
-window.onbeforeunload = () => pendingWriteCount > 0 ? true : null;
-
-/**
- * Write the current state of {@code disasterData} to firestore.
- * @return {?Promise<void>} Returns when finished writing or null if it just
- * queued a write and doesn't know when that will finish.
- */
-function updateLayersInFirestore() {
-  if (state !== State.SAVED) {
-    state = State.QUEUED_WRITE;
-    return null;
-  }
-  addLoadingElement(writeWaiterId);
-  state = State.WRITING;
-  pendingWriteCount++;
-  return getFirestoreRoot()
-      .collection('disaster-metadata')
-      .doc(getDisaster())
-      .set({layers: getCurrentLayers()}, {merge: true})
-      .then(() => {
-        pendingWriteCount--;
-        const oldState = state;
-        state = State.SAVED;
-        switch (oldState) {
-          case State.WRITING:
-            loadingElementFinished(writeWaiterId);
-            return null;
-          case State.QUEUED_WRITE:
-            loadingElementFinished(writeWaiterId);
-            return updateLayersInFirestore();
-          case State.SAVED:
-            console.error('Unexpected layer write state');
-            return null;
-        }
-      });
-}
-
 /**
  * Update the table and disasterData with new indices after a layer has been
  * reordered. Then write to firestore.
@@ -165,35 +106,11 @@ function updateAfterSort(ui) {
 }
 
 /**
- * Looks up the real (not table) index of the given row.
- * @param {JQuery<HTMLTableDataCellElement>} row
- * @return {string}
- */
-function getRowIndex(row) {
-  return row.children('.index-td').text();
-}
-
-/**
  * Wrapper for creating table divs.
  * @return {JQuery<HTMLTableDataCellElement>}
  */
 function createTd() {
   return $(document.createElement('td'));
-}
-
-/**
- * A common update method that writes to local data and firestore based on
- * a customizable version of the value of the input.
- * @param {Object} event
- * @param {string} property
- * @param {Function} fxn how to read/transform the raw value from the DOM.
- * @return {?Promise<void>} See updateLayersInFirestore doc
- */
-function onUpdate(event, property, fxn) {
-  const input = $(event.target);
-  const index = getRowIndex(input.parents('tr'));
-  getCurrentLayers()[index][property] = fxn(input);
-  return updateLayersInFirestore();
 }
 
 /**
@@ -661,28 +578,4 @@ function createOptionFrom(innerTextAndValue) {
       .text(innerTextAndValue)
       .val(innerTextAndValue)
       .prop('id', innerTextAndValue);
-}
-
-/**
- * Utility function for getting current data.
- * @return {Object}
- */
-function getCurrentData() {
-  return disasterData.get(getDisaster());
-}
-
-/**
- * Utility function for getting current layers.
- * @return {Array<Object>}
- */
-function getCurrentLayers() {
-  return getCurrentData()['layers'];
-}
-
-/**
- * Sets the current disaster so getCurrentData works for testing.
- * @param {string} disasterId
- */
-function setCurrentDisaster(disasterId) {
-  localStorage.setItem('disaster', disasterId);
 }
