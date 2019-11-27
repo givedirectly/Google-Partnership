@@ -143,11 +143,36 @@ function addTractInfo(feature) {
 }
 
 /**
+ * Utility function that sets the label for the bounds status the first time it
+ * is called, then sets the status the second time. Useful for injecting over in
+ * tests.
+ * @param {string} message Description of task to be done the first time this is
+ *     called, and then result the second time
+ */
+function setMapBoundsInfo(message) {
+  const boundsStatusElement = $('#bounds-status-span');
+  if (!boundsStatusElement.length) {
+    // Haven't done anything yet, create and initialize.
+    const boundsStatusSpan = document.createElement('span');
+    const boundsStatusLabel = document.createElement('span');
+    boundsStatusSpan.id = 'bounds-status-span';
+    $('#compute-status').append(boundsStatusLabel).append(boundsStatusSpan);
+    boundsStatusSpan.innerText = 'in progress...';
+    boundsStatusLabel.innerText = message;
+  } else {
+    boundsStatusElement.text(message);
+  }
+}
+
+/**
  * Performs operation of processing inputs and creating output asset.
  * @param {Object} disasterData Data for current disaster coming from Firestore
+ * @param {Function} setMapBoundsInfoFunction Function to be called when map
+ *     bounds-related operations are complete. First called with a message about
+ *     the task, then called with the results
  * @return {boolean} Whether in-thread operations succeeded
  */
-function run(disasterData) {
+function run(disasterData, setMapBoundsInfoFunction = setMapBoundsInfo) {
   $('#compute-status').html('');
   const states = disasterData['states'];
   if (!states) {
@@ -198,7 +223,8 @@ function run(disasterData) {
   if (!buildingPaths) {
     return missingAssetError('building data asset paths');
   }
-  const {damage, damageEnvelope} = calculateDamage(assetData);
+  const {damage, damageEnvelope} =
+      calculateDamage(assetData, setMapBoundsInfoFunction);
   if (!damageEnvelope) {
     // Must have been an error.
     return false;
@@ -271,7 +297,7 @@ function run(disasterData) {
   }
   const task = ee.batch.Export.table.toAsset(
       allStatesProcessing,
-      scoreAssetPath.substring(scoreAssetPath.lastIndexOf('/')),
+      scoreAssetPath.substring(scoreAssetPath.lastIndexOf('/') + 1),
       scoreAssetPath);
   task.start();
   $('#upload-status')
@@ -292,37 +318,33 @@ const damageBuffer = 1000;
  * Calculates damage if there is a damage asset, or simply writes the
  * user-provided bounds to Firestore if not.
  * @param {Object} assetData
+ * @param {Function} setMapBoundsInfo Function to call with information about
+ *     map bounds work. First call will have the task, second call the result.
  * @return {{damage: ?ee.FeatureCollection, damageEnvelope:
  *     ee.Geometry.Rectangle}|{damage: null, damageEnvelope: null}} Returns
  *     the damage asset (if present) and the envelope bounding the damage, or
  *     both null if an error occurs
  */
-function calculateDamage(assetData) {
+function calculateDamage(assetData, setMapBoundsInfo) {
   const damagePath = assetData['damage_asset_path'];
-  const centerStatusSpan = document.createElement('span');
-  const centerStatusLabel = document.createElement('span');
-  $('#compute-status').append(centerStatusLabel).append(centerStatusSpan);
-  centerStatusSpan.innerText = 'in progress';
-  const firestoreError = (err) => centerStatusSpan.innerText +=
-      'Error writing bounds to Firestore: ' + err;
   if (damagePath) {
     const damage = ee.FeatureCollection(damagePath);
     // Uncomment to test with a restricted damage set (14 block groups' worth).
     // damage = damage.filterBounds(
     //     ee.FeatureCollection('users/gd/2017-harvey/data-ms-as-nod')
     //         .filterMetadata('GEOID', 'starts_with', '482015417002'));
-    centerStatusLabel.innerText = 'Computing and storing bounds of map: ';
+    setMapBoundsInfo('Computing and storing bounds of map: ');
     computeAndSaveBounds(damage)
         .then(displayGeoNumbers)
-        .then((bounds) => centerStatusSpan.innerText = 'Found bounds ' + bounds)
-        .catch((err) => centerStatusSpan.innerText = err);
+        .then((bounds) => setMapBoundsInfo('Found bounds ' + bounds))
+        .catch(setMapBoundsInfo);
     return {damage, damageEnvelope: damage.geometry().buffer(damageBuffer)};
   }
   // TODO(janakr): in the no-damage case, we're storing a rectangle, but
   //  experiments show that, at least for Harvey, the page is very slow when we
   //  load the entire rectangle around the damage. Maybe allow users to select a
   //  polygon so they can draw a tighter area?
-  centerStatusLabel.innerText = 'Storing bounds of map: ';
+  setMapBoundsInfo('Storing bounds of map: ');
   const damageSw = assetData['map_bounds_sw'];
   if (!damageSw) {
     missingAssetError(
@@ -341,7 +363,9 @@ function calculateDamage(assetData) {
   const ne = makeLatLngFromString(damageNe);
   const damageEnvelope =
       ee.Geometry.Rectangle([sw.lng, sw.lat, ne.lng, ne.lat]);
-  saveBounds(makeGeoJsonRectangle(sw, ne)).catch(firestoreError);
+  saveBounds(makeGeoJsonRectangle(sw, ne))
+      .then(() => setMapBoundsInfo('Wrote bounds'))
+      .catch(setMapBoundsInfo);
   return {
     damage: null,
     damageEnvelope: damageEnvelope,
