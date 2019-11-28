@@ -29,7 +29,8 @@ Object.freeze(ColorStyle);
  */
 function createStyleFunction(colorFunctionProperties) {
   const field = colorFunctionProperties['field'];
-  const opacity = colorFunctionProperties['opacity'];
+  // const opacity = colorFunctionProperties['opacity'];
+  const opacity = 500;
   switch (colorFunctionProperties['current-style']) {
     case ColorStyle.SINGLE:
       const color = colorMap.get(colorFunctionProperties['color']);
@@ -63,9 +64,8 @@ function createContinuousFunction(field, opacity, minVal, maxVal, color) {
     const value = feature['properties'][field];
     const rgba = [];
     for (let i = 0; i < 3; i++) {
-      rgba.push(
-          ((colorRgb[i] * (value - minVal)) + (white[i] * (maxVal - value))) /
-          2);
+      // https://www.alanzucconi.com/2016/01/06/colour-interpolation/
+      rgba.push(white[i] + (colorRgb[i] - white[i])*((value-minVal)/(maxVal-minVal)));
     }
     rgba.push(opacity);
     return rgba;
