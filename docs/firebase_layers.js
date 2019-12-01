@@ -65,7 +65,9 @@ function createContinuousFunction(field, opacity, minVal, maxVal, color) {
     const rgba = [];
     for (let i = 0; i < 3; i++) {
       // https://www.alanzucconi.com/2016/01/06/colour-interpolation/
-      rgba.push(white[i] + (colorRgb[i] - white[i])*((value-minVal)/(maxVal-minVal)));
+      rgba.push(
+          white[i] +
+          (colorRgb[i] - white[i]) * ((value - minVal) / (maxVal - minVal)));
     }
     rgba.push(opacity);
     return rgba;

@@ -3,6 +3,7 @@ import {eeLegacyPathPrefix, eeStatePrefixLength, legacyStateDir} from '../ee_pat
 import {LayerType} from '../firebase_layers.js';
 import {disasterCollectionReference, getDisasters} from '../firestore_document.js';
 import {getDisaster} from '../resources.js';
+
 import {clearStatus, disasterData, getCurrentData, getCurrentLayers, getRowIndex, ILLEGAL_STATE_ERR, onUpdate, setCurrentDisaster, setStatus, updateLayersInFirestore} from './add_disaster_util.js';
 import {processNewEeLayer} from './add_layer.js';
 import {withColor} from './color_function_util.js';
@@ -12,9 +13,9 @@ export {enableWhenReady, toggleState, updateAfterSort};
 export {
   addDisaster,
   createAssetPickers,
-    createStateAssetPickers,
   createLayerRow,
   createOptionFrom,
+  createStateAssetPickers,
   createTd,
   deleteDisaster,
   emptyCallback,

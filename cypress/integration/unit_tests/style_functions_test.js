@@ -28,9 +28,9 @@ describe('Unit test for generating style functions', () => {
     const orangeish = fxn({'properties': {'oranges': 734}});
     // orange = [255, 140, 0]
     // white = [255, 255, 255]
-    expect(orangeish[0]).to.eq(255+(255-255)*((734-14)/(10005-14)));
-    expect(orangeish[1]).to.eq(255+(140-255)*((734-14)/(10005-14)));
-    expect(orangeish[2]).to.eq(255+(0-255)*((734-14)/(10005-14)));
+    expect(orangeish[0]).to.eq(255 + (255 - 255) * ((734 - 14) / (10005 - 14)));
+    expect(orangeish[1]).to.eq(255 + (140 - 255) * ((734 - 14) / (10005 - 14)));
+    expect(orangeish[2]).to.eq(255 + (0 - 255) * ((734 - 14) / (10005 - 14)));
     expect(orangeish[3]).to.eq(500);
   });
 

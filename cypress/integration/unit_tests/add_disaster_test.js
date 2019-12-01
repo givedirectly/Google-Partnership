@@ -1,6 +1,6 @@
 import {gdEeStatePrefix, legacyStateDir, legacyStatePrefix} from '../../../docs/ee_paths.js';
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
-import {addDisaster, createStateAssetPickers, createOptionFrom, createTd, deleteDisaster, emptyCallback, getStatesAssetsFromEe, onCheck, onInputBlur, onListBlur, stateAssets, updateAfterSort, withCheckbox, withInput, withList, withType, writeNewDisaster} from '../../../docs/import/add_disaster.js';
+import {addDisaster, createOptionFrom, createStateAssetPickers, createTd, deleteDisaster, emptyCallback, getStatesAssetsFromEe, onCheck, onInputBlur, onListBlur, stateAssets, updateAfterSort, withCheckbox, withInput, withList, withType, writeNewDisaster} from '../../../docs/import/add_disaster.js';
 import {disasterData, getCurrentLayers} from '../../../docs/import/add_disaster_util.js';
 import {withColor} from '../../../docs/import/color_function_util.js';
 import * as loading from '../../../docs/loading.js';
@@ -66,16 +66,19 @@ describe('Unit tests for add_disaster page', () => {
   });
 
   it('gets state asset info from ee', () => {
-    cy.wrap(getStatesAssetsFromEe([KNOWN_STATE, UNKNOWN_STATE])).then((assets) => {
-      // tests folder type asset doesn't make it through
-      expect(assets[0]).to.eql([KNOWN_STATE, new Map([[KNOWN_STATE_ASSET, 'TABLE']])]);
-      expect(assets[1]).to.eql([UNKNOWN_STATE, new Map()]);
-      expect(ee.data.listAssets)
-          .to.be.calledWith(legacyStateDir, {}, emptyCallback);
-      expect(ee.data.listAssets)
-          .to.be.calledWith(legacyStatePrefix + KNOWN_STATE, {}, emptyCallback);
-      expect(ee.data.createFolder).to.be.calledOnce;
-    });
+    cy.wrap(getStatesAssetsFromEe([KNOWN_STATE, UNKNOWN_STATE]))
+        .then((assets) => {
+          // tests folder type asset doesn't make it through
+          expect(assets[0]).to.eql(
+              [KNOWN_STATE, new Map([[KNOWN_STATE_ASSET, 'TABLE']])]);
+          expect(assets[1]).to.eql([UNKNOWN_STATE, new Map()]);
+          expect(ee.data.listAssets)
+              .to.be.calledWith(legacyStateDir, {}, emptyCallback);
+          expect(ee.data.listAssets)
+              .to.be.calledWith(
+                  legacyStatePrefix + KNOWN_STATE, {}, emptyCallback);
+          expect(ee.data.createFolder).to.be.calledOnce;
+        });
   });
 
   it('populates state asset pickers', () => {

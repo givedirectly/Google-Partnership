@@ -19,7 +19,7 @@ function processNewEeLayer(asset, type) {
         'ee-name': asset,
         'display-name': '',
         'display-on-load': false
-      }; 
+      };
       return prependToTable(layer);
     case 'TABLE':
       const featureCollection = ee.FeatureCollection(asset);
