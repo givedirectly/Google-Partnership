@@ -5,7 +5,6 @@ describe('Unit test for generating style functions', () => {
     const fxn = createStyleFunction({
       'current-style': 1,
       'field': 'flavor',
-      'opacity': 100,
       'colors': {
         'cherry': 'red',
         'banana': 'yellow',
@@ -24,23 +23,21 @@ describe('Unit test for generating style functions', () => {
       'current-style': 0,
       'field': 'oranges',
       'color': 'orange',
-      'opacity': 83,
       'columns': {'oranges': {'min': 14, 'max': 10005}},
     });
     const orangeish = fxn({'properties': {'oranges': 734}});
     // orange = [255, 140, 0]
     // white = [255, 255, 255]
-    expect(orangeish[0]).to.eq((255 * (734 - 14) + 255 * (10005 - 734)) / 2);
-    expect(orangeish[1]).to.eq((140 * (734 - 14) + 255 * (10005 - 734)) / 2);
-    expect(orangeish[2]).to.eq((0 * (734 - 14) + 255 * (10005 - 734)) / 2);
-    expect(orangeish[3]).to.eq(83);
+    expect(orangeish[0]).to.eq(255+(255-255)*((734-14)/(10005-14)));
+    expect(orangeish[1]).to.eq(255+(140-255)*((734-14)/(10005-14)));
+    expect(orangeish[2]).to.eq(255+(0-255)*((734-14)/(10005-14)));
+    expect(orangeish[3]).to.eq(500);
   });
 
   it('calculates a single-color function', () => {
     const fxn = createStyleFunction({
       'current-style': 2,
       'color': 'blue',
-      'opacity': 83,
     });
     const trueBlue = fxn({});
     const blue = colorMap.get('blue');

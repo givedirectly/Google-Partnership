@@ -3,7 +3,6 @@ import {eeLegacyPathPrefix, eeStatePrefixLength, legacyStateDir} from '../ee_pat
 import {LayerType} from '../firebase_layers.js';
 import {disasterCollectionReference, getDisasters} from '../firestore_document.js';
 import {getDisaster} from '../resources.js';
-
 import {clearStatus, disasterData, getCurrentData, getCurrentLayers, getRowIndex, ILLEGAL_STATE_ERR, onUpdate, setCurrentDisaster, setStatus, updateLayersInFirestore} from './add_disaster_util.js';
 import {processNewEeLayer} from './add_layer.js';
 import {withColor} from './color_function_util.js';
@@ -18,7 +17,7 @@ export {
   createTd,
   deleteDisaster,
   emptyCallback,
-  getAssetsFromEe,
+  getStatesAssetsFromEe,
   onCheck,
   onInputBlur,
   onListBlur,
@@ -75,6 +74,7 @@ function enableWhenReady() {
  * pickers and pulled from firebase.
  */
 function toggleDisaster(disaster) {
+  console.log('setting to' + disaster + 'blah');
   setCurrentDisaster(disaster);
   // display layer table
   populateLayersTable();
@@ -105,7 +105,6 @@ function updateAfterSort(ui) {
     const tableIndex = numLayers - i;
     $('#tbody tr:nth-child(' + tableIndex + ') .index-td').text(i);
   }
-
   return updateLayersInFirestore();
 }
 
@@ -297,7 +296,7 @@ function populateStateAndDisasterAssetPickers(disaster) {
     createStateAssetPickers(states);
     initializeScoreSelectors(states);
   } else {
-    const statesDone = getAssetsFromEe(statesToFetch).then((assets) => {
+    const statesDone = getStatesAssetsFromEe(statesToFetch).then((assets) => {
       for (const asset of assets) {
         stateAssets.set(asset[0], asset[1]);
       }
@@ -488,7 +487,7 @@ function getDisasterAssetsFromEe(disaster) {
  *     retrieved
  * assets in the form [['WA', {'asset/path': type,...}], ...]
  */
-function getAssetsFromEe(states) {
+function getStatesAssetsFromEe(states) {
   return ee.data.listAssets(legacyStateDir, {}, emptyCallback)
       .then((result) => {
         const folders = new Set();

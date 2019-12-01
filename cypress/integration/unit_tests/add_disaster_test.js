@@ -1,6 +1,6 @@
 import {gdEeStatePrefix, legacyStateDir, legacyStatePrefix} from '../../../docs/ee_paths.js';
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
-import {addDisaster, createAssetPickers, createOptionFrom, createTd, deleteDisaster, emptyCallback, getAssetsFromEe, onCheck, onInputBlur, onListBlur, stateAssets, updateAfterSort, withCheckbox, withInput, withList, withType, writeNewDisaster} from '../../../docs/import/add_disaster.js';
+import {addDisaster, createAssetPickers, createOptionFrom, createTd, deleteDisaster, emptyCallback, getStatesAssetsFromEe, onCheck, onInputBlur, onListBlur, stateAssets, updateAfterSort, withCheckbox, withInput, withList, withType, writeNewDisaster} from '../../../docs/import/add_disaster.js';
 import {disasterData, getCurrentLayers} from '../../../docs/import/add_disaster_util.js';
 import {withColor} from '../../../docs/import/color_function_util.js';
 import * as loading from '../../../docs/loading.js';
@@ -65,11 +65,11 @@ describe('Unit tests for add_disaster page', () => {
     disasterData.clear();
   });
 
-  it('gets state asset info from ee', () => {
-    cy.wrap(getAssetsFromEe([KNOWN_STATE, UNKNOWN_STATE])).then((assets) => {
+  it.only('gets state asset info from ee', () => {
+    cy.wrap(getStatesAssetsFromEe([KNOWN_STATE, UNKNOWN_STATE])).then((assets) => {
       // tests folder type asset doesn't make it through
-      expect(assets[0]).to.eql([KNOWN_STATE, [KNOWN_STATE_ASSET]]);
-      expect(assets[1]).to.eql([UNKNOWN_STATE, []]);
+      expect(assets[0]).to.eql([KNOWN_STATE, {KNOWN_STATE_ASSET: 'TABLE'}]);
+      expect(assets[1]).to.eql([UNKNOWN_STATE, {}]);
       expect(ee.data.listAssets)
           .to.be.calledWith(legacyStateDir, {}, emptyCallback);
       expect(ee.data.listAssets)
