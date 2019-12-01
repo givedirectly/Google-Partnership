@@ -68,7 +68,7 @@ describe('Unit tests for add_disaster page', () => {
 
 /**
  * Stubs ee.FeatureCollection with the given number of features
- * @param numFeatures
+ * @param {number} numFeatures
  * @return {ee.FeatureCollection}
  */
 function stubFeatureCollection(numFeatures) {
