@@ -66,6 +66,11 @@ describe('Unit tests for add_disaster page', () => {
   });
 });
 
+/**
+ * Stubs ee.FeatureCollection with the given number of features
+ * @param numFeatures
+ * @return {ee.FeatureCollection}
+ */
 function stubFeatureCollection(numFeatures) {
   const features = [];
   for (let i = 0; i < numFeatures; i++) {
