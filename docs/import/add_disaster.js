@@ -592,7 +592,8 @@ function createAssetPickers(pickers, assetMap, div) {
     if (assetMap.get(folder)) {
       for (const asset of assetMap.get(folder)) {
         const type = layerTypeStrings.get(asset[1]);
-        assetPicker.append(createOptionFrom(asset[0]).text(asset[0] + '-' + type));
+        assetPicker.append(
+            createOptionFrom(asset[0]).text(asset[0] + '-' + type));
       }
     }
     const assetPickerLabel = $(document.createElement('label'))
