@@ -51,7 +51,10 @@ function populateColorFunctions() {
     setProperty(discretePropertyPicker);
     populateDiscreteColorPickers();
   });
-  const tooManyValuesWarning = $(document.createElement('p')).prop('id', 'too-many-values').text('Too many values to color discretely').hide();
+  const tooManyValuesWarning = $(document.createElement('p'))
+                                   .prop('id', 'too-many-values')
+                                   .text('Too many values to color discretely')
+                                   .hide();
   const discreteColorPickers =
       $(document.createElement('ul')).prop('id', 'discrete-color-pickers');
   $('#discrete')

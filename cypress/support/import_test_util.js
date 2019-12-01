@@ -1,6 +1,6 @@
 import {disasterData} from '../../docs/import/add_disaster_util';
 
-export {createTrs, setDisasterAndLayers, createAndAppend};
+export {createAndAppend, createTrs, setDisasterAndLayers};
 
 /**
  * Creates some amount of table rows with a .index-td td.

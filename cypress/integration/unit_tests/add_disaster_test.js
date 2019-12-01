@@ -5,7 +5,7 @@ import {disasterData, getCurrentLayers} from '../../../docs/import/add_disaster_
 import {withColor} from '../../../docs/import/color_function_util.js';
 import * as loading from '../../../docs/loading.js';
 import {getDisaster} from '../../../docs/resources';
-import {createTrs, setDisasterAndLayers, createAndAppend} from '../../support/import_test_util.js';
+import {createAndAppend, createTrs, setDisasterAndLayers} from '../../support/import_test_util.js';
 import {initFirebaseForUnitTest, loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
 const KNOWN_STATE = 'WF';

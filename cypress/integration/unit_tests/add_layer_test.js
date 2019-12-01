@@ -1,14 +1,11 @@
-import {
-  initFirebaseForUnitTest,
-  loadScriptsBeforeForUnitTests
-} from '../../support/script_loader';
-import {processNewEeLayer} from '../../../docs/import/add_layer.js';
-import {disasterData} from '../../../docs/import/add_disaster_util.js';
-import {setDisasterAndLayers, createAndAppend} from '../../support/import_test_util.js';
-import * as loading from '../../../docs/loading';
-import {getCurrentLayers} from '../../../docs/import/add_disaster_util';
 import {ColorStyle, LayerType} from '../../../docs/firebase_layers';
+import {getCurrentLayers} from '../../../docs/import/add_disaster_util';
+import {disasterData} from '../../../docs/import/add_disaster_util.js';
+import {processNewEeLayer} from '../../../docs/import/add_layer.js';
+import * as loading from '../../../docs/loading';
 import {createTrs} from '../../support/import_test_util';
+import {createAndAppend, setDisasterAndLayers} from '../../support/import_test_util.js';
+import {initFirebaseForUnitTest, loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 
 const mockAsset = 'mockAsset';
 
@@ -75,6 +72,8 @@ function stubFeatureCollection(numFeatures) {
     features.push(ee.Feature(null, {'scoops': i}));
   }
   const featureCollection = ee.FeatureCollection(features);
-  cy.stub(ee, 'FeatureCollection').withArgs(mockAsset).returns(featureCollection);
+  cy.stub(ee, 'FeatureCollection')
+      .withArgs(mockAsset)
+      .returns(featureCollection);
   return featureCollection;
 }
