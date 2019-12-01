@@ -448,6 +448,15 @@ describe('Unit test for toggleLayerOn', () => {
   });
 });
 
+it('tests adding kml urls', () => {
+    createGoogleMap().then((map) => {
+      const promise = addLayer(mockFirebaseLayers[4], map);
+      expect(promise).to.not.be.null;
+      expect(layerArray[4].displayed).to.be.true;
+      expect(layerArray[4].data).to.be.undefined;
+    });
+  });
+
 describe('Unit test for toggleLayerOff', () => {
   it('hides a displayed layer', () => {
     expect(layerArray[0].displayed).to.be.true;
