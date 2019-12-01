@@ -9,33 +9,6 @@ export {enableWhenReady};
 export {countDamageAndBuildings, run};
 
 /**
- * TODO: This should be moved to a user-readable doc and expanded.
- * Processes all user-entered data to construct the "score" asset in EarthEngine
- * and write map bounds for the disaster to Firestore. Mandatory state-level
- * data (needs to be present for every affected state):
- * 1. Census block group shapes (TIGER shapefile).
- * 2. Census SNAP data, at the block group level.
- * 3. SVI data, at the Census tract level.
- * 4. Income data, at the block group level.
- * 5. FeatureCollection of all buildings.
- *
- * Current workflow for a new disaster
- *
- * 1. download SNAP data from american fact finder (2016 ACS 5-year estimates)
- *      https://factfinder.census.gov/faces/nav/jsf/pages/download_center.xhtml
- * 2. clean up illegal property names in (0) by running ./cleanup_acs.sh
- *    /path/to/snap/data.csv
- * 3. download TIGER block group .shp from census website
- *      https://www.census.gov/cgi-bin/geo/shapefiles/index.php
- * 4. download crowd ai damage data .shp file
- * 5. upload results of (2), (3), and (4) to EarthEngine via the code editor
- * 5. visit http://localhost:8080/import/add_disaster.html and fill out all
- * required fields
- * 6. visit http://localhost:8080/import/import_data.html and submit the page.
- * 7. make the created asset readable by all in the code editor.
- */
-
-/**
  * Given a feature from the SNAP census data, returns a new
  * feature with GEOID, SNAP #, total pop #, total building count, building
  * counts for all damage categories, and SNAP percentage and damage percentage.
