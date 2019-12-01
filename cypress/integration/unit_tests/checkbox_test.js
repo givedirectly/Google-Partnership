@@ -53,7 +53,9 @@ const mockFirebaseLayers = [
   {
     'ee-name': 'kml_urls',
     'asset-type': LayerType.KML,
-    'urls': ['https://www.nhc.noaa.gov/storm_graphics/api/AL092017_043adv_CONE.kmz'],
+    'urls': [
+      'https://www.nhc.noaa.gov/storm_graphics/api/AL092017_043adv_CONE.kmz'
+    ],
     'display-name': 'tiles',
     'display-on-load': false,
     'index': 5,
@@ -94,7 +96,7 @@ describe('Unit test for toggleLayerOn', () => {
 
       // Turn layer off: disappears from map.
       toggleLayerOff(5, map);
-      
+
       expect(layerArray[5].displayed).to.be.false;
       expect(layerArray[5].overlay[0].getMap()).to.be.null;
     });
