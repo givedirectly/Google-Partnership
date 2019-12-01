@@ -1,25 +1,31 @@
-import {eeStatePrefixLength, legacyStateDir} from '../ee_paths.js';
 import {LayerType} from '../firebase_layers.js';
 import {
   disasterCollectionReference,
-  getDisasters,
   getDisastersData
 } from '../firestore_document.js';
 import {getDisaster} from '../resources.js';
-import {clearStatus, disasterData, getCurrentData, getCurrentLayers, getRowIndex, ILLEGAL_STATE_ERR, onUpdate, setCurrentDisaster, setStatus, updateLayersInFirestore} from './manage_layers_lib.js';
 import {withColor} from './color_function_util.js';
 import {createDisasterData} from "./create_disaster_lib.js";
+import {getStateEeAssets} from "./list_ee_assets.js";
+import {
+  clearStatus,
+  disasterData,
+  getCurrentData,
+  getCurrentLayers,
+  getRowIndex,
+  ILLEGAL_STATE_ERR,
+  onUpdate,
+  setCurrentDisaster,
+  setStatus,
+  updateLayersInFirestore
+} from './manage_layers_lib.js';
 
 export {enableWhenReady, toggleState, updateAfterSort};
 // Visible for testing
 export {
-  addDisaster,
   createAssetPickers,
   createOptionFrom,
   createTd,
-  deleteDisaster,
-  emptyCallback,
-  getAssetsFromEe,
   onCheck,
   onInputBlur,
   onListBlur,
@@ -34,8 +40,6 @@ export {
 // Map of state to list of known assets
 const stateAssets = new Map();
 
-const scoreAssetTypes = ['Poverty', 'Income', 'SVI'];
-
 // TODO: general reminder to add loading indicators for things like creating
 // new state asset folders, etc.
 
@@ -45,15 +49,6 @@ const scoreAssetTypes = ['Poverty', 'Income', 'SVI'];
  * @return {Promise<firebase.firestore.QuerySnapshot>}
  */
 function enableWhenReady() {
-  // enable (currently hidden) add disaster button now that firestore is ready.
-  const addDisasterButton = $('#add-disaster-button');
-  addDisasterButton.prop('disabled', false);
-  addDisasterButton.on('click', addDisaster);
-
-  const deleteButton = $('#delete');
-  deleteButton.prop('disabled', false);
-  deleteButton.on('click', deleteDisaster);
-
   // populate disaster picker.
   return getDisastersData().then((returnedData) => {
     disasterData = returnedData;
@@ -273,87 +268,20 @@ function populateStateAssetPickers() {
   let assetPickersDone = Promise.resolve();
   if (statesToFetch.length === 0) {
     createAssetPickers(states, 'asset-pickers');
-    initializeScoreSelectors(states);
   } else {
     // We are already doing this inside createAssetPickers but not until
     // after the first promise completes so also do it here so lingering
     // pickers from previous disasters don't hang around.
     $('#asset-pickers').empty();
-    assetPickersDone = getAssetsFromEe(statesToFetch).then((assets) => {
-      for (const asset of assets) {
-        stateAssets.set(asset[0], asset[1]);
-      }
+    assetPickersDone = getStateEeAssets(statesToFetch).then((assets) => {
+      assets.forEach((key, val) => stateAssets.set(key, val));
       createAssetPickers(states, 'asset-pickers');
-      initializeScoreSelectors(states);
     });
   }
 
   // TODO: display more disaster info including current layers etc.
   return assetPickersDone;
 }
-
-/**
- * Initializes the select interface for score assets.
- * @param {Array<string>} states array of state (abbreviations)
- */
-function initializeScoreSelectors(states) {
-  const headerRow = $('#score-asset-header-row');
-  const tableBody = $('#asset-selection-table-body');
-  tableBody.empty();
-  headerRow.empty();
-
-  // Initialize headers.
-  headerRow.append(createTd().html('Score Assets'));
-  for (const state of states) {
-    headerRow.append(createTd().html(state + ' Assets'));
-  }
-
-  // For each asset type, add select for all assets for each state.
-  for (let i = 0; i < scoreAssetTypes.length; i++) {
-    const scoreAssetType = scoreAssetTypes[i];
-    const row =
-        $(document.createElement('tr')).prop('id', scoreAssetType + '-row');
-    row.append(createTd().append(
-        $(document.createElement('div')).html(scoreAssetType)));
-    for (const state of states) {
-      if (stateAssets.get(state)) {
-        row.append(createTd().append(createAssetDropdown(
-            stateAssets.get(state), scoreAssetType, state)));
-      }
-    }
-    tableBody.append(row);
-    row.on('change', () => handleScoreAssetSelection(scoreAssetType));
-  }
-}
-
-/**
- * Initializes a dropdown with assets.
- * @param {Array<string>} assets array of assets for add to dropdown
- * @param {string} row The asset type/row to put the dropdown in.
- * @param {string} state The state the assets are in.
- */
-function createAssetDropdown(assets, row, state) {
-  // Create the asset selector and add a 'None' option.
-  const select =
-      $(document.createElement('select')).prop('id', row + '-' + state);
-  select.append(createOptionFrom('None'));
-
-  // Add assets to selector and return it.
-  for (let i = 0; i < assets.length; i++) {
-    select.append(createOptionFrom(assets[i]));
-  }
-  return select;
-}
-
-/**
- * Handles the user selecting an asset for one of the possible score types.
- * @param {String} assetType The type of asset (poverty, income, etc)
- */
-function handleScoreAssetSelection(assetType) {
-  // TODO: Write the asset name and type to firebase here.
-  return;
-}
-
 /**
  * Writes the given details to a new disaster entry in firestore. Fails if
  * there is an existing disaster with the same details.
@@ -410,106 +338,8 @@ function toggleState(known) {
   }
 }
 
-/**
- * Onclick function for submitting the new disaster form. Writes new disaster
- * to firestore, local disasters map and disaster picker. Doesn't allow name,
- * year or states to be empty fields.
- * @return {Promise<boolean>} resolves true if new disaster was successfully
- *     written.
- */
-function addDisaster() {
-  const year = $('#year').val();
-  const name = $('#name').val();
-  const states = $('#states').val();
-
-  if (!year || !name || !states) {
-    setStatus('Error: Disaster name, year, and states are required.');
-    return Promise.resolve(false);
-  }
-  if (isNaN(year)) {
-    setStatus('Error: Year must be a number.');
-    return Promise.resolve(false);
-  }
-  if (notAllLowercase(name)) {
-    setStatus(
-        'Error: disaster name must be comprised of only lowercase letters');
-    return Promise.resolve(false);
-  }
-  const disasterId = year + '-' + name;
-  return writeNewDisaster(disasterId, states);
-}
-
-/**
- * Returns true if the given string is *not* all lowercase letters.
- * @param {string} val
- * @return {boolean}
- */
-function notAllLowercase(val) {
-  return !/^[a-z]+$/.test(val);
-}
-
-// Needed for testing :/
-const emptyCallback = () => {};
-
 // TODO: add functionality for adding assets to disaster records from these
 // pickers.
-/**
- * Requests all assets in ee directories corresponding to given states.
- * @param {Array<string>} states e.g. ['WA']
- * @return {Promise<Map<string | Array<string>>>} Promise of map of list of assets retrieved, keyed by state. States with no assets will be in the map with an empty list value
- */
-function getAssetsFromEe(states) {
-  return ee.data.listAssets(legacyStateDir, {}, emptyCallback)
-      .then((result) => {
-        const folders = new Set();
-        for (const folder of result.assets) {
-          folders.add(folder.id.substring(eeStatePrefixLength));
-        }
-        const returnedMap = new Map();
-        const promises = [];
-        for (const state of states) {
-          const dir = legacyStateDir + '/' + state;
-          if (!folders.has(state)) {
-            // This will print a console error for anyone other than the gd
-            // account. Ee console seems to have the power to grant write access
-            // to non-owners but it doesn't seem to work. Sent an email to
-            // gestalt.
-            // TODO: replace with setIamPolicy when that works.
-            ee.data.createFolder(dir, false, () => {
-              // TODO: add status bar for when this is finished.
-              ee.data.setAssetAcl(dir, {all_users_can_read: true});
-            });
-            returnedMap.set(state, []);
-          } else {
-            promises.push(
-                ee.data.listAssets(dir, {}, emptyCallback).then((result) => {
-                  const assets = [];
-                  if (result.assets) {
-                    for (const asset of result.assets) {
-                      if (checkSupportedAssetType(asset)) {
-                        assets.push(asset.id);
-                      }
-                    }
-                  }
-                  returnedMap.set(state, assets);
-                }));
-          }
-        }
-        return Promise.all(promises).then(() => returnedMap);
-      });
-}
-
-// TODO: surface a warning if unsupported asset types are found?
-/**
- * Check that the type of the given asset is one we support (Unsupported:
- * ALGORITHM, FOLDER, UNKNOWN).
- * @param {Object} asset
- * @return {boolean}
- */
-function checkSupportedAssetType(asset) {
-  const type = asset.type;
-  return type === 'IMAGE' || type === 'IMAGE_COLLECTION' || type === 'TABLE';
-}
 
 /**
  * Given states, displays their assets in pickers. Right now, selecting on

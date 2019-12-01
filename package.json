@@ -7,7 +7,9 @@
     "eslint-config-google": "^0.14.0",
     "firebase": "^7.2.3",
     "firebase-admin": "^8.6.1",
-    "local-web-server": "^3.0.7"
+    "local-web-server": "^3.0.7",
+    "sinon": "^7.5.0"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {}
 }

@@ -32,6 +32,10 @@
 <div id="navbar"></div>
 <div class="wrapper">
 <div class="main-content">
+  <div>
+  <button type="button" id="create-new-disaster">Create New Disaster</button>
+  <button type="button" id="delete" disabled>Delete Disaster</button>
+  </div>
   <div id="new-disaster" hidden>
     <button type="button" id="cancel-new-disaster">Cancel</button>
     <form action="" id="new-disaster-form">
@@ -95,7 +99,20 @@
     </form>
   </div>
 
-<button disabled id="process-button">Kick off Data Processing</button> (will take a while!)
+  <div id="score-asset-selection" style="padding-top: 40px;">
+    <div class="formTitle">Select Score Data</div>
+    <div>
+      <table id="asset-selection-table">
+        <thead>
+        <tr id="score-asset-header-row">
+        </tr>
+        </thead>
+        <tbody id="asset-selection-table-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <button disabled id="process-button">Kick off Data Processing</button> (will take a while!)
   <div class="g-sign-in hidden">
   <span class="label">Sign in with:</span>
   <div class="button">

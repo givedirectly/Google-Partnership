@@ -3,17 +3,19 @@ import {Authenticator} from '../authenticate.js';
 import {loadNavbarWithPicker} from '../navbar.js';
 import TaskAccumulator from '../task_accumulator.js';
 
-import {enableWhenReady} from './manage_disaster.js';
+import {enableWhenReady, onSetDisaster, toggleState} from './manage_disaster.js';
 import {getDisastersData} from "../firestore_document.js";
 
 // Two tasks: EE and page load. Firebase is taken care of in the promise.
 const taskAccumulator =
-    new TaskAccumulator(2, () => firebaseDataPromise.then(enableWhenReady));
+    new TaskAccumulator(2, () => enableWhenReady(firebaseDataPromise));
 
 const firebaseAuthPromise = Authenticator.trackEeAndFirebase(taskAccumulator);
 const firebaseDataPromise = firebaseAuthPromise.then(getDisastersData);
 
 $(() => {
-  loadNavbarWithPicker(firebaseAuthPromise);
+  loadNavbarWithPicker(firebaseAuthPromise, onSetDisaster);
+  $('#create-new-disaster').on('click', () => toggleState(false));
+  $('#cancel-new-disaster').on('click', () => toggleState(true));
   taskAccumulator.taskCompleted();
 });
