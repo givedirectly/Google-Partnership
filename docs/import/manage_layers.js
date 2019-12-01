@@ -456,9 +456,7 @@ const emptyCallback = () => {};
 /**
  * Requests all assets in ee directories corresponding to given states.
  * @param {Array<string>} states e.g. ['WA']
- * @return {Promise<Array<Array<string | Array<string>>>>} 2-d array of all
- *     retrieved
- * assets in the form [['WA', ['asset/path']], ...]
+ * @return {Promise<Map<string | Array<string>>>} Promise of map of list of assets retrieved, keyed by state. States with no assets will be in the map with an empty list value
  */
 function getAssetsFromEe(states) {
   return ee.data.listAssets(legacyStateDir, {}, emptyCallback)
@@ -467,6 +465,7 @@ function getAssetsFromEe(states) {
         for (const folder of result.assets) {
           folders.add(folder.id.substring(eeStatePrefixLength));
         }
+        const returnedMap = new Map();
         const promises = [];
         for (const state of states) {
           const dir = legacyStateDir + '/' + state;
@@ -480,7 +479,7 @@ function getAssetsFromEe(states) {
               // TODO: add status bar for when this is finished.
               ee.data.setAssetAcl(dir, {all_users_can_read: true});
             });
-            promises.push(Promise.resolve([state, []]));
+            returnedMap.set(state, []);
           } else {
             promises.push(
                 ee.data.listAssets(dir, {}, emptyCallback).then((result) => {
@@ -492,11 +491,11 @@ function getAssetsFromEe(states) {
                       }
                     }
                   }
-                  return [state, assets];
+                  returnedMap.set(state, assets);
                 }));
           }
         }
-        return Promise.all(promises);
+        return Promise.all(promises).then(() => returnedMap);
       });
 }
 
