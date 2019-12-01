@@ -11,7 +11,6 @@ export {processNewEeLayer};
  * written to firestore.
  */
 function processNewEeLayer(asset, type) {
-  console.log(asset);
   switch (type) {
     case 'IMAGE':
     case 'IMAGE COLLECTION':

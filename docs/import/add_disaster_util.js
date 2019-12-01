@@ -26,8 +26,6 @@ const disasterData = new Map();
  * @return {Object}
  */
 function getCurrentData() {
-  console.log(disasterData);
-  console.log(getDisaster());
   return disasterData.get(getDisaster());
 }
 
@@ -44,7 +42,6 @@ function getCurrentLayers() {
  * @param {string} disasterId
  */
 function setCurrentDisaster(disasterId) {
-  console.log('setting to ' + disasterId);
   localStorage.setItem('disaster', disasterId);
 }
 

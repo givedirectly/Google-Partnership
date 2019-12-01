@@ -12,6 +12,7 @@ export {enableWhenReady, toggleState, updateAfterSort};
 export {
   addDisaster,
   createAssetPickers,
+    createStateAssetPickers,
   createLayerRow,
   createOptionFrom,
   createTd,
@@ -74,7 +75,6 @@ function enableWhenReady() {
  * pickers and pulled from firebase.
  */
 function toggleDisaster(disaster) {
-  console.log('setting to' + disaster + 'blah');
   setCurrentDisaster(disaster);
   // display layer table
   populateLayersTable();
@@ -507,7 +507,7 @@ function getStatesAssetsFromEe(states) {
               // TODO: add status bar for when this is finished.
               ee.data.setAssetAcl(dir, {all_users_can_read: true});
             });
-            promises.push(Promise.resolve([state, []]));
+            promises.push(Promise.resolve([state, new Map()]));
           } else {
             promises.push(ee.data.listAssets(dir, {}, emptyCallback)
                               .then((result) => [state, getIds(result)]));
@@ -570,6 +570,7 @@ function createAssetPickers(pickers, assetMap, div) {
                             })
                             .width(200);
     if (assetMap.get(folder)) {
+      console.log(assetMap.get(folder));
       for (const asset of Array.from(assetMap.get(folder).keys())) {
         assetPicker.append(createOptionFrom(asset));
       }
