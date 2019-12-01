@@ -5,7 +5,7 @@ import {disasterData, getCurrentLayers} from '../../../docs/import/add_disaster_
 import {withColor} from '../../../docs/import/color_function_util.js';
 import * as loading from '../../../docs/loading.js';
 import {getDisaster} from '../../../docs/resources';
-import {createTrs, setDisasterAndLayers} from '../../support/import_test_util.js';
+import {createTrs, setDisasterAndLayers, createAndAppend} from '../../support/import_test_util.js';
 import {initFirebaseForUnitTest, loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
 const KNOWN_STATE = 'WF';
@@ -91,7 +91,7 @@ describe('Unit tests for add_disaster page', () => {
     // 2 x <label> (w/ select nested inside) <br>
     expect(assetPickers.children().length).to.equal(4);
     const known = $('#' + KNOWN_STATE + '-adder');
-    expect(known).to.contain(gdEeStatePrefix + KNOWN_STATE + '/snap');
+    expect(known).to.contain(gdEeStatePrefix + KNOWN_STATE + '/snap,TABLE');
     expect(known.children().length).to.equal(1);
     expect($('#' + UNKNOWN_STATE + '-adder').children().length).to.equal(0);
   });
@@ -393,17 +393,4 @@ function testSave(fxn, property, input, afterVal) {
       })
       .then(
           (doc) => expect(doc.data()['layers'][0][property]).to.eql(afterVal));
-}
-
-/**
- * Utility function for creating an element and returning it wrapped as a
- * jquery object.
- * @param {string} tag
- * @param {string} id
- * @return {JQuery<HTMLElement>}
- */
-function createAndAppend(tag, id) {
-  const element = document.createElement(tag);
-  document.body.appendChild(element);
-  return $(element).attr('id', id);
 }

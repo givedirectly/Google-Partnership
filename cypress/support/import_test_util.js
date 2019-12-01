@@ -1,6 +1,6 @@
 import {disasterData} from '../../docs/import/add_disaster_util';
 
-export {createTrs, setDisasterAndLayers};
+export {createTrs, setDisasterAndLayers, createAndAppend};
 
 /**
  * Creates some amount of table rows with a .index-td td.
@@ -26,4 +26,17 @@ function setDisasterAndLayers(layers) {
   const currentDisaster = '2005-fall';
   disasterData.set(currentDisaster, {layers: layers});
   window.localStorage.setItem('disaster', currentDisaster);
+}
+
+/**
+ * Utility function for creating an element and returning it wrapped as a
+ * jquery object.
+ * @param {string} tag
+ * @param {string} id
+ * @return {JQuery<HTMLElement>}
+ */
+function createAndAppend(tag, id) {
+  const element = document.createElement(tag);
+  document.body.appendChild(element);
+  return $(element).attr('id', id);
 }

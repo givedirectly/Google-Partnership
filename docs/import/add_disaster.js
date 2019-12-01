@@ -32,6 +32,8 @@ export {
 
 // Map of state to list of known assets
 const stateAssets = new Map();
+// A map of maps of the form:
+// {'disaster-2017' => {'asset/path': 'TYPE'}}
 const disasterAssets = new Map();
 const scoreAssetTypes = ['Poverty', 'Income', 'SVI'];
 
@@ -566,23 +568,22 @@ function createDisasterAssetPicker(disaster) {
   createAssetPickers([disaster], disasterAssets, $('#disaster-asset-picker'));
 }
 /**
- * Given states, displays their assets in pickers. Right now, selecting on
- * those pickers doesn't actually do anything.
- * @param {Array<string>} pickers
+ * Given either states or disasters, displays their assets in pickers. Right
+ * now, selecting on those pickers doesn't actually do anything.
+ * @param {Array<string>} pickers e.g. ['WA',...] or ['harvey-2017']
  * @param {Map<string, Array<string>>} assetMap
- * @param {JQuery<HTMLElement>} div
+ * @param {JQuery<HTMLElement>} div where to attach new pickers
  */
 function createAssetPickers(pickers, assetMap, div) {
+  console.log(assetMap);
   for (const folder of pickers) {
     const assetPicker = $(document.createElement('select'))
                             .attr({
-                              // multiple: 'multiple',
                               id: folder + '-adder',
                             })
                             .width(200);
     if (assetMap.get(folder)) {
-      console.log(assetMap.get(folder));
-      for (const asset of Array.from(assetMap.get(folder).keys())) {
+      for (const asset of assetMap.get(folder)) {
         assetPicker.append(createOptionFrom(asset));
       }
     }
