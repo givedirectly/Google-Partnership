@@ -1,4 +1,3 @@
-import {writeWaiterId} from '../dom_constants.js';
 import {eeLegacyPathPrefix, eeStatePrefixLength, legacyStateDir} from '../ee_paths.js';
 import {LayerType} from '../firebase_layers.js';
 import {disasterCollectionReference, getDisasters} from '../firestore_document.js';
@@ -234,10 +233,11 @@ function populateLayersTable() {
 }
 
 /**
- * @param layer
- * @param index
- * @return {JQuery<HTMLTableRowElement> | * | jQuery.fn.init | jQuery |
- *     HTMLElement}
+ * Creates a new row in the layers table.
+ *
+ * @param {Object} layer
+ * @param {number} index
+ * @return {JQuery<HTMLTableRowElement>}
  */
 function createLayerRow(layer, index) {
   const row = $(document.createElement('tr'));
@@ -268,8 +268,9 @@ function createLayerRow(layer, index) {
 /**
  * Populates the state asset pickers with all known earth engine assets for
  * those states.
+ * @param {string} disaster disaster id in the form name-year
  * @return {Promise<void>} returns when all asset pickers have been populated
- * after potentially retrieving states' assets from ee.
+ * after potentially retrieving assets from ee.
  */
 function populateStateAndDisasterAssetPickers(disaster) {
   const assetPickerDiv = $('.asset-pickers');
@@ -349,6 +350,7 @@ function initializeScoreSelectors(states) {
  * @param {Array<string>} assets array of assets for add to dropdown
  * @param {string} row The asset type/row to put the dropdown in.
  * @param {string} state The state the assets are in.
+ * @return {JQuery<HTMLSelectElement>}
  */
 function createAssetDropdown(assets, row, state) {
   // Create the asset selector and add a 'None' option.
@@ -470,9 +472,10 @@ function notAllLowercase(val) {
 const emptyCallback = () => {};
 
 /**
- *
- * @param disaster
- * @return {ee.api.ListAssetsResponse}
+ * Gets all assets for the given disaster.
+ * @param {string} disaster disaster in the form name-year
+ * @return {Promise<Map<string, string>>} Returns a promise containing the map
+ * of asset path to type for the given disaster.
  */
 function getDisasterAssetsFromEe(disaster) {
   return ee.data.listAssets(eeLegacyPathPrefix + disaster, {}, emptyCallback)
@@ -519,9 +522,8 @@ function getStatesAssetsFromEe(states) {
 }
 
 /**
- *
- * @param listAssetsResult
- * @param listAssetsResult
+ * Turns a listAssets call result into a map of asset -> type.
+ * @param {Object} listAssetsResult result of call to ee.data.listAssets
  * @return {Map<string, string>}
  */
 function getIds(listAssetsResult) {
@@ -548,10 +550,18 @@ function checkSupportedAssetType(asset) {
   return type === 'IMAGE' || type === 'IMAGE_COLLECTION' || type === 'TABLE';
 }
 
+/**
+ * Create asset pickers for the given states.
+ * @param {Array<string>} states of the form ['WA', ...]
+ */
 function createStateAssetPickers(states) {
   createAssetPickers(states, stateAssets, $('#state-asset-pickers'));
 }
 
+/**
+ * Create an asset picker for the given disaster.
+ * @param {string} disaster
+ */
 function createDisasterAssetPicker(disaster) {
   createAssetPickers([disaster], disasterAssets, $('#disaster-asset-picker'));
 }

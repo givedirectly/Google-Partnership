@@ -1,12 +1,13 @@
 import {convertEeObjectToPromise} from '../map_util.js';
-import {createLayerRow, createTd} from './add_disaster.js';
+import {createLayerRow} from './add_disaster.js';
 import {getCurrentLayers, updateLayersInFirestore} from './add_disaster_util.js';
-import {withColor} from './color_function_util.js';
 
 export {processNewEeLayer};
 /**
- * One-off function for processing a feature-collection-typed layer and putting
- * its color column info into firestore.
+ * One-off function for processing a new feature-collection-typed layer and
+ * putting its color column info into firestore.
+ * @param {string} asset ee asset path
+ * @param {string} type
  * @return {Promise<void>} Finishes when the property information has been
  * written to firestore.
  */
@@ -18,7 +19,7 @@ function processNewEeLayer(asset, type) {
         'asset-type': type,
         'ee-name': asset,
         'display-name': '',
-        'display-on-load': false
+        'display-on-load': false,
       };
       return prependToTable(layer);
     case 'TABLE':
@@ -46,13 +47,18 @@ function processNewEeLayer(asset, type) {
                 'colors': {},
               },
               'display-name': '',
-              'display-on-load': false
+              'display-on-load': false,
             };
             return prependToTable(layer);
           });
   }
 }
 
+/**
+ * Given a new layer, adds to table and firestore.
+ * @param {Object} layer
+ * @return {?Promise<void>} See updateLayersInFirestore doc
+ */
 function prependToTable(layer) {
   const index = getCurrentLayers().length;
   getCurrentLayers().push(layer);
