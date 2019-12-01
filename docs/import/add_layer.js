@@ -1,20 +1,21 @@
 import {convertEeObjectToPromise} from '../map_util.js';
 import {createLayerRow} from './add_disaster.js';
 import {getCurrentLayers, updateLayersInFirestore} from './add_disaster_util.js';
+import {LayerType} from '../firebase_layers';
 
 export {processNewEeLayer};
 /**
  * One-off function for processing a new feature-collection-typed layer and
  * putting its color column info into firestore.
  * @param {string} asset ee asset path
- * @param {string} type
+ * @param {enum} type LayerType
  * @return {Promise<void>} Finishes when the property information has been
  * written to firestore.
  */
 function processNewEeLayer(asset, type) {
   switch (type) {
-    case 'IMAGE':
-    case 'IMAGE COLLECTION':
+    case LayerType.IMAGE:
+    case LayerType.IMAGE_COLLECTION:
       const layer = {
         'asset-type': type,
         'ee-name': asset,
@@ -22,7 +23,7 @@ function processNewEeLayer(asset, type) {
         'display-on-load': false,
       };
       return prependToTable(layer);
-    case 'TABLE':
+    case LayerType.FEATURE_COLLECTION:
       const featureCollection = ee.FeatureCollection(asset);
       const properties = featureCollection.first().propertyNames();
       const stats = properties.map((property) => {
@@ -39,7 +40,7 @@ function processNewEeLayer(asset, type) {
                  ee.Dictionary.fromLists(properties, stats))
           .then((columns) => {
             const layer = {
-              'asset-type': 1,
+              'asset-type': type,
               'ee-name': asset,
               'color-function': {
                 'columns': columns,

@@ -30,7 +30,8 @@ export {
   writeNewDisaster,
 };
 
-// Map of state to list of known assets
+// A map of maps of the form:
+// {'WA' => {'asset/path': 'TYPE'}}
 const stateAssets = new Map();
 // A map of maps of the form:
 // {'disaster-2017' => {'asset/path': 'TYPE'}}
@@ -532,9 +533,8 @@ function getIds(listAssetsResult) {
   const assets = new Map();
   if (listAssetsResult.assets) {
     for (const asset of listAssetsResult.assets) {
-      if (checkSupportedAssetType(asset)) {
-        assets.set(asset.id, asset.type);
-      }
+      const type = maybeConvertAssetType(asset);
+      if (type) assets.set(asset.id, type);
     }
   }
   return assets;
@@ -544,12 +544,20 @@ function getIds(listAssetsResult) {
 /**
  * Check that the type of the given asset is one we support (Unsupported:
  * ALGORITHM, FOLDER, UNKNOWN).
- * @param {Object} asset
- * @return {boolean}
+ * @param {Object} asset single item from result of listAssets
+ * @return {?number} the type of the asset if it's supported, else null
  */
-function checkSupportedAssetType(asset) {
-  const type = asset.type;
-  return type === 'IMAGE' || type === 'IMAGE_COLLECTION' || type === 'TABLE';
+function maybeConvertAssetType(asset) {
+  switch (asset.type) {
+    case 'IMAGE':
+      return LayerType.IMAGE;
+    case 'IMAGE_COLLECTION':
+      return LayerType.IMAGE_COLLECTION;
+    case 'TABLE':
+      return LayerType.FEATURE_COLLECTION;
+    default:
+      return null;
+  }
 }
 
 /**
@@ -575,7 +583,6 @@ function createDisasterAssetPicker(disaster) {
  * @param {JQuery<HTMLElement>} div where to attach new pickers
  */
 function createAssetPickers(pickers, assetMap, div) {
-  console.log(assetMap);
   for (const folder of pickers) {
     const assetPicker = $(document.createElement('select'))
                             .attr({
@@ -584,7 +591,8 @@ function createAssetPickers(pickers, assetMap, div) {
                             .width(200);
     if (assetMap.get(folder)) {
       for (const asset of assetMap.get(folder)) {
-        assetPicker.append(createOptionFrom(asset));
+        const type = layerTypeStrings.get(asset[1]);
+        assetPicker.append(createOptionFrom(asset[0]).text(asset[0] + '-' + type));
       }
     }
     const assetPickerLabel = $(document.createElement('label'))
