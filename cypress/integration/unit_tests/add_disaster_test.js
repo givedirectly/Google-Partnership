@@ -1,7 +1,7 @@
 import {gdEeStatePrefix, legacyStateDir, legacyStatePrefix} from '../../../docs/ee_paths.js';
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
-import {addDisaster, createAssetPickers, createOptionFrom, createTd, deleteDisaster, emptyCallback, getAssetsFromEe, onCheck, onInputBlur, onListBlur, stateAssets, updateAfterSort, withCheckbox, withInput, withList, withType, writeNewDisaster} from '../../../docs/import/add_disaster.js';
-import {disasterData, getCurrentLayers} from '../../../docs/import/add_disaster_util.js';
+import {addDisaster, createAssetPickers, createOptionFrom, createTd, deleteDisaster, emptyCallback, getAssetsFromEe, onCheck, onInputBlur, onListBlur, stateAssets, updateAfterSort, withCheckbox, withInput, withList, withType, writeNewDisaster} from '../../../docs/import/manage_layers.js';
+import {disasterData, getCurrentLayers} from '../../../docs/import/manage_layers_lib.js';
 import {withColor} from '../../../docs/import/color_function_util.js';
 import * as loading from '../../../docs/loading.js';
 import {getDisaster} from '../../../docs/resources';

@@ -30,11 +30,14 @@ function loadNavbarWithTitle(title) {
  * Loads the navbar with a disaster picker.
  * @param {Promise} firebaseAuthPromise Promise that completes when Firebase
  *     login is done
+ * @param {?Function} changeDisasterHandler Function invoked when disaster is
+ *     changed. If not specified, reloads page
  */
-function loadNavbarWithPicker(firebaseAuthPromise) {
+function loadNavbarWithPicker(firebaseAuthPromise, changeDisasterHandler = location.reload) {
   loadNavbar(
       () => $('#nav-left')
                 .load(
+                    import.meta.url.replace('/navbar.js', '') +
                     '/disaster_picker.html',
-                    () => initializeDisasterPicker(firebaseAuthPromise)));
+                    () => initializeDisasterPicker(firebaseAuthPromise, changeDisasterHandler)));
 }

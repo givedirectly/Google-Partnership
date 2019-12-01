@@ -5,6 +5,7 @@ export {
   disasterCollectionReference,
   disasterDocumentReference,
   getDisasters,
+    getDisastersData,
   getFirestoreRoot,
   readDisasterDocument,
 };
@@ -45,4 +46,10 @@ function disasterCollectionReference() {
 /** @return {Promise<firebase.firestore.QuerySnapshot>} listing of disasters */
 function getDisasters() {
   return disasterCollectionReference().get();
+}
+
+function getDisastersData() {
+  const disasterData = new Map();
+  return getDisasters().then((querySnapshot) => querySnapshot.forEach((doc) => disasterData.set(doc.id, doc.data())))
+      .then(() => disasterData);
 }

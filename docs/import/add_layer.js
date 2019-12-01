@@ -1,5 +1,5 @@
 import {convertEeObjectToPromise} from '../map_util.js';
-import {getCurrentLayers, updateLayersInFirestore} from './add_disaster_util.js';
+import {getCurrentLayers, updateLayersInFirestore} from './manage_layers_lib.js';
 
 export {processNewFeatureLayer};
 

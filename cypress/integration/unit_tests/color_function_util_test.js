@@ -1,4 +1,4 @@
-import * as addDisasterUtil from '../../../docs/import/add_disaster_util.js';
+import * as addDisasterUtil from '../../../docs/import/manage_layers_lib.js';
 import {populateColorFunctions, withColor} from '../../../docs/import/color_function_util.js';
 import {createTrs, setDisasterAndLayers} from '../../support/import_test_util.js';
 import {addFirebaseHooks, loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
@@ -133,7 +133,7 @@ function getColorFunction() {
 }
 
 /**
- * Makes one of the type divs (mimicking html in add_disaster.html)
+ * Makes one of the type divs (mimicking html in manage_layers.html)
  * @param {string} id
  * @return {JQuery<HTMLDivElement>}
  */
