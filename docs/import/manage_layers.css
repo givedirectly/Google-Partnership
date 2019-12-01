@@ -1,0 +1,50 @@
+.box{
+  width:10px;
+  height:10px;
+  border: 1px solid black;
+}
+
+.editor {
+  border: 1px solid black;
+}
+
+.editable {
+  cursor: pointer;
+}
+
+.selected {
+  background-color: var(--green-6);
+}
+
+textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  cursor: grab;
+}
+
+th {
+  text-align: left;
+}
+
+td {
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+table, th, td {
+  border: 1px solid black;
+  padding-left: 10px;
+  padding-right: 10px;
+  padding-bottom: 5px;
+  padding-top: 5px;
+}
+
+.na {
+  font-style: italic;
+  color: #888888;
+}
