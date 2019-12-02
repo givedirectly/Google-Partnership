@@ -8,7 +8,12 @@ export {loadNavbarWithPicker, loadNavbarWithTitle};
  * @param {Function} callback the callback invoked upon load
  */
 function loadNavbar(callback) {
-  $('#navbar').load(getUrlRelativeToNavbarJs('navbar.html'), callback);
+  $('#navbar').load(getUrlRelativeToNavbarJs('navbar.html'), () => {
+    $('#map-href').prop('href', getUrlRelativeToNavbarJs('index.html'));
+    $('#add-disaster-href')
+        .prop('href', getUrlRelativeToNavbarJs('import/add_disaster.html'));
+    callback();
+  });
 }
 
 /**
@@ -22,9 +27,6 @@ function loadNavbarWithTitle(title) {
       navHeader.addClass('nav-header');
       navHeader.html(title);
       $('#nav-left').append(navHeader);
-      $('#map-href').prop('href', getUrlRelativeToNavbarJs('index.html'));
-      $('#add-disaster-href')
-          .prop('href', getUrlRelativeToNavbarJs('import/add_disaster.html'));
     }));
 }
 
