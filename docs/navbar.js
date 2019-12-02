@@ -46,9 +46,9 @@ function loadNavbarWithPicker(firebaseAuthPromise) {
 /**
  * Get url of a file in or below our docs directory by using the path of this
  * current script.
- * @param {string} replaceWith
+ * @param {string} pathFragment path fragment to append to '.../docs/'
  * @return {string}
  */
-function getUrlUnderDocs(replaceWith) {
-  return import.meta.url.replace(/navbar\.js$/, replaceWith);
+function getUrlUnderDocs(pathFragment) {
+  return import.meta.url.replace(/navbar\.js$/, pathFragment);
 }
