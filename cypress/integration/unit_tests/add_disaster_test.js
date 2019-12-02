@@ -339,7 +339,7 @@ describe('Unit tests for add_disaster page', () => {
       expect(getCurrentLayers().length).to.equal(1);
       // ensure right layer was deleted
       expect(getCurrentLayers()[0]['layer']).to.equal(1);
-    })
+    });
   });
 
   it('checks data updates after a sort', () => {

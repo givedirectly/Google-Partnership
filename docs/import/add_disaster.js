@@ -79,6 +79,12 @@ function toggleDisaster(disaster) {
   return populateStateAssetPickers();
 }
 
+/**
+ * Reindex table rows in-between bounds (inclusive).
+ * @param {number} from
+ * @param {number} to
+ * @param {number} numLayers
+ */
 function reindex(from, to, numLayers) {
   for (let i = from; i <= to; i++) {
     const tableIndex = numLayers - i;
@@ -364,6 +370,7 @@ function initializeScoreSelectors(states) {
  * @param {Array<string>} assets array of assets for add to dropdown
  * @param {string} row The asset type/row to put the dropdown in.
  * @param {string} state The state the assets are in.
+ * @return {JQuery<HTMLSelectElement>}
  */
 function createAssetDropdown(assets, row, state) {
   // Create the asset selector and add a 'None' option.
