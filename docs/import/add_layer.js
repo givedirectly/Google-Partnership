@@ -1,7 +1,7 @@
 import {LayerType} from '../firebase_layers.js';
 import {convertEeObjectToPromise} from '../map_util.js';
 import {getCurrentLayers, updateLayersInFirestore} from './manage_layers_lib.js';
-import {createLayerRow} from './add_disaster.js';
+import {createLayerRow} from './manage_layers.js';
 
 export {processNewEeLayer};
 

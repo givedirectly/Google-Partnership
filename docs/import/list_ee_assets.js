@@ -3,7 +3,7 @@ import {
   eeStatePrefixLength,
   legacyStateDir
 } from '../ee_paths.js';
-import {LayerType} from '../firebase_layers';
+import {LayerType} from '../firebase_layers.js';
 
 export {getStatesAssetsFromEe, getDisasterAssetsFromEe};
 

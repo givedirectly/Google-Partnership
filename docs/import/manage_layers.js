@@ -1,14 +1,15 @@
 import {LayerType} from '../firebase_layers.js';
 import {
-  disasterCollectionReference,
   getDisastersData
 } from '../firestore_document.js';
 import {getDisaster} from '../resources.js';
+import {processNewEeLayer} from './add_layer.js';
 import {withColor} from './color_function_util.js';
-import {createDisasterData} from "./create_disaster_lib.js";
-import {getStateEeAssets} from "./list_ee_assets.js";
 import {
-  clearStatus,
+  getDisasterAssetsFromEe,
+  getStatesAssetsFromEe
+} from './list_ee_assets.js';
+import {
   disasterData,
   getCurrentData,
   getCurrentLayers,
@@ -21,7 +22,7 @@ import {
     setDisasterData
 } from './manage_layers_lib.js';
 
-export {enableWhenReady, toggleState, updateAfterSort};
+export {enableWhenReady, updateAfterSort};
 // Visible for testing
 export {
   createAssetPickers,
@@ -47,14 +48,12 @@ const stateAssets = new Map();
 // A map of maps of the form:
 // {'disaster-2017' => {'asset/path': LayerType}}
 const disasterAssets = new Map();
-const scoreAssetTypes = ['Poverty', 'Income', 'SVI'];
 
 // TODO: general reminder to add loading indicators for things like creating
 // new state asset folders, etc.
 
 /**
- * Populates the disaster picker with disasters from firestore, and enables
- * the ability to add a new disaster.
+ * Populates the disaster picker with disasters from firestore.
  * @return {Promise<firebase.firestore.QuerySnapshot>}
  */
 function enableWhenReady() {
@@ -68,7 +67,7 @@ function enableWhenReady() {
 
     disasterPicker.on('change', () => toggleDisaster(disasterPicker.val()));
     disasterPicker.val(getDisaster()).trigger('change');
-    toggleState(true);
+    $('#pending-disaster').hide();
   });
 }
 
@@ -257,7 +256,6 @@ function onDelete(row) {
 /**
  * Adds a delete row function to the given td.
  * @param {JQuery<HTMLTableDataCellElement>} td cell
- * @param {number} index
  * @return {JQuery<HTMLElement>}
  */
 function withDeleteButton(td) {
@@ -354,74 +352,6 @@ function populateStateAndDisasterAssetPickers(disaster) {
   }
 
   return Promise.all(promises);
-}
-
-/**
- * Writes the given details to a new disaster entry in firestore. Fails if
- * there is an existing disaster with the same details.
- * @param {string} disasterId of the form <year>-<name>
- * @param {Array<string>} states array of state (abbreviations)
- * @return {Promise<boolean>} returns true after successful write to firestore.
- */
-function writeNewDisaster(disasterId, states) {
-  if (disasterData.has(disasterId)) {
-    setStatus('Error: disaster with that name and year already exists.');
-    return Promise.resolve(false);
-  }
-  disasterData.set(disasterId, {states: states});
-  clearStatus();
-
-  const disasterPicker = $('#disaster');
-  const disasterOptions = disasterPicker.children();
-  let added = false;
-  // note: let's hope this tool isn't being used in the year 10000.
-  // comment needed to quiet eslint on no-invalid-this rules
-  disasterOptions.each(/* @this HTMLElement */ function() {
-    if ($(this).val() < disasterId) {
-      $(createOptionFrom(disasterId)).insertBefore($(this));
-      added = true;
-      return false;
-    }
-  });
-  if (!added) disasterPicker.append(createOptionFrom(disasterId));
-
-  disasterPicker.val(disasterId).trigger('change');
-  toggleState(true);
-
-  return disasterCollectionReference()
-      .doc(disasterId)
-      .set(createDisasterData(states))
-      .then(() => true);
-}
-
-/**
- * Changes page state between looking at a known disaster and adding a new one.
- * @param {boolean} known
- */
-function toggleState(known) {
-  if (known) {
-    $('#disaster').show();
-    $('#selected-disaster').show();
-    $('#pending-disaster').hide();
-    $('#new-disaster').hide();
-  } else {
-    $('#disaster').hide();
-    $('#selected-disaster').hide();
-    $('#pending-disaster').show();
-    $('#new-disaster').show();
-  }
-}
-
-/**
- * Gets all assets for the given disaster. Assumes an ee folder has already
- * been created for this disaster.
- * @param {string} disaster disaster in the form name-year
- * @return {Promise<Map<string, string>>} Returns a promise containing the map
- * of asset path to type for the given disaster.
- */
-function getDisasterAssetsFromEe(disaster) {
-  return ee.data.listAssets(eeLegacyPathPrefix + disaster, {}, () => {})
-      .then(getIds);
 }
 
 /**

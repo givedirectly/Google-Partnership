@@ -1,7 +1,7 @@
 import {Authenticator} from '../authenticate.js';
 import {loadNavbarWithTitle} from '../navbar.js';
 import TaskAccumulator from '../task_accumulator.js';
-import {enableWhenReady, toggleState, updateAfterSort} from './manage_layers.js';
+import {enableWhenReady, updateAfterSort} from './manage_layers.js';
 import {populateColorFunctions} from './color_function_util.js';
 
 // 3 tasks: EE authentication, page load, firebase is logged in.
@@ -19,9 +19,6 @@ Authenticator.trackEeAndFirebase(taskAccumulator)
 $(() => taskAccumulator.taskCompleted());
 
 $(populateColorFunctions);
-
-$('#create-new-disaster').on('click', () => toggleState(false));
-$('#cancel-new-disaster').on('click', () => toggleState(true));
 
 $('#tbody').sortable({
   revert: true,

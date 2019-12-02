@@ -6,7 +6,7 @@ import {getDisaster, getScoreAsset} from '../resources.js';
 import {computeAndSaveBounds, saveBounds} from './center.js';
 import {createDisasterData} from "./create_disaster_lib.js";
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
-import {listEeAssets} from "./list_ee_assets.js";
+import {getDisasterAssetsFromEe} from "./list_ee_assets.js";
 
 export {enableWhenReady, onSetDisaster, toggleState};
 /** @VisibleForTesting */
