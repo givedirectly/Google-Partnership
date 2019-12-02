@@ -456,7 +456,8 @@ function innerJoin(collection1, collection2, key1, key2) {
 
 /**
  * Enables page functionality.
- * @param {Promise<firebase.firestore.DocumentSnapshot>} allDisastersData Promise with contents of Firestore for all disasters
+ * @param {Promise<firebase.firestore.DocumentSnapshot>} allDisastersData
+ *     Promise with contents of Firestore for all disasters
  */
 function enableWhenReady(allDisastersData) {
   // Eagerly kick off current disaster asset listing before Firestore finishes.
