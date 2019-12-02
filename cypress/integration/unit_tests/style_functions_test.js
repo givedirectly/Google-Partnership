@@ -31,7 +31,7 @@ describe('Unit test for generating style functions', () => {
     expect(orangeish[0]).to.eq(255 + (255 - 255) * ((734 - 14) / (10005 - 14)));
     expect(orangeish[1]).to.eq(255 + (140 - 255) * ((734 - 14) / (10005 - 14)));
     expect(orangeish[2]).to.eq(255 + (0 - 255) * ((734 - 14) / (10005 - 14)));
-    expect(orangeish[3]).to.eq(500);
+    expect(orangeish[3]).to.eq(300);
   });
 
   it('calculates a single-color function', () => {
