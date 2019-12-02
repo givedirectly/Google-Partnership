@@ -1,4 +1,3 @@
-set -x
 set -e
 # Call this file from .git/hooks/pre-push to activate it. Put
 # "./pre-push-hook.sh" as the only content of that file.
