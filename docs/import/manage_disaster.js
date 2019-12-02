@@ -455,10 +455,8 @@ function innerJoin(collection1, collection2, key1, key2) {
 }
 
 /**
- * Enables the button to kick off calculations.
- * @param {Promise<firebase.firestore.DocumentSnapshot>} allDisastersData Promse
- *     with contents of Firestore for all disasters, the current disaster's data
- *     is used when calculating
+ * Enables page functionality.
+ * @param {Promise<firebase.firestore.DocumentSnapshot>} allDisastersData Promise with contents of Firestore for all disasters
  */
 function enableWhenReady(allDisastersData) {
   // Eagerly kick off current disaster asset listing before Firestore finishes.
@@ -470,7 +468,7 @@ function enableWhenReady(allDisastersData) {
 }
 
 /**
- * Enables the button to kick off calculations.
+ * Enables all Firestore-dependent functionality.
  * @param {firebase.firestore.DocumentSnapshot} allDisastersData Contents of
  *     Firestore for all disasters, the current disaster's data is used when
  * calculating
@@ -559,11 +557,11 @@ function maybeFetchDisasterAssets(disaster) {
  * @return {Promise<void>}
  */
 function deleteDisaster() {
-  // Don't know how to get "options" attribute in jQuery.
   const disasterPicker = $('#disaster-dropdown');
   const disasterId = disasterPicker.val();
   if (confirm('Delete ' + disasterId + '? This action cannot be undone')) {
     disasterData.delete(disasterId);
+    // Don't know how to get "options" attribute in jQuery.
     disasterPicker[0].remove(disasterPicker[0].selectedIndex);
     const newOption = disasterPicker.children().eq(0);
     disasterPicker.val(newOption.val()).trigger('change');

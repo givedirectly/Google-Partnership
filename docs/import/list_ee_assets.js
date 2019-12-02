@@ -24,10 +24,10 @@ function getStatesAssetsFromEe(states) {
         // to non-owners but it doesn't seem to work. Sent an email to
         // gestalt.
         // TODO: replace with setIamPolicy when that works.
-        ee.data.createFolder(dir, false, () => {
-          // TODO: add status bar for when this is finished.
-          ee.data.setAssetAcl(dir, {all_users_can_read: true});
-        });
+        // TODO: add status bar for when this is finished.
+        ee.data.createFolder(
+            dir, false,
+            () => ee.data.setAssetAcl(dir, {all_users_can_read: true}));
         promises.push(Promise.resolve([state, new Map()]));
       } else {
         promises.push(listEeAssets(dir).then((result) => [state, result]));
