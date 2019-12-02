@@ -77,38 +77,38 @@ describe('Unit tests for add_disaster page', () => {
         .returns(featureCollection);
 
     cy.wrap(processNewEeLayer(mockAsset, LayerType.FEATURE_COLLECTION))
-        .then(
-            () => expect(getCurrentLayers()[0]['color-function']['columns']
-                                           ['flavor']['values'])
-                      .to.eql(['vanilla']));
-  });
-
-  it('processes a new image layer', () => {
-    setDisasterAndLayers([]);
-    createAndAppend('tbody', 'tbody');
-
-    cy.wrap(processNewEeLayer(mockAsset, LayerType.IMAGE_COLLECTION))
         .then(() => {
-          const layers = getCurrentLayers();
-          expect(layers.length).to.equal(1);
-          const layer = layers[0];
-          expect(layer['asset-type']).to.equal(LayerType.IMAGE_COLLECTION);
-          expect(layer['color-function']).to.be.undefined;
+          const layer = getCurrentLayers()[0];
+          expect(layer['color-function']['columns']['flavor']['values'])
+              .to.eql(['vanilla']);
         });
-  });
-});
 
-/**
- * Stubs ee.FeatureCollection with the given number of features
- * @param {number} numFeatures
- */
-function stubFeatureCollection(numFeatures) {
-  const features = [];
-  for (let i = 0; i < numFeatures; i++) {
-    features.push(ee.Feature(null, {'scoops': i}));
+    it('processes a new image layer', () => {
+      setDisasterAndLayers([]);
+      createAndAppend('tbody', 'tbody');
+
+      cy.wrap(processNewEeLayer(mockAsset, LayerType.IMAGE_COLLECTION))
+          .then(() => {
+            const layers = getCurrentLayers();
+            expect(layers.length).to.equal(1);
+            const layer = layers[0];
+            expect(layer['asset-type']).to.equal(LayerType.IMAGE_COLLECTION);
+            expect(layer['color-function']).to.be.undefined;
+          });
+    });
+  });
+
+  /**
+   * Stubs ee.FeatureCollection with the given number of features
+   * @param {number} numFeatures
+   */
+  function stubFeatureCollection(numFeatures) {
+    const features = [];
+    for (let i = 0; i < numFeatures; i++) {
+      features.push(ee.Feature(null, {'scoops': i}));
+    }
+    const featureCollection = ee.FeatureCollection(features);
+    cy.stub(ee, 'FeatureCollection')
+        .withArgs(mockAsset)
+        .returns(featureCollection);
   }
-  const featureCollection = ee.FeatureCollection(features);
-  cy.stub(ee, 'FeatureCollection')
-      .withArgs(mockAsset)
-      .returns(featureCollection);
-}
