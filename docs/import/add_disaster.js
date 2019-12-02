@@ -232,16 +232,16 @@ function withCheckbox(td, layer, property) {
 
 /**
  * Deletes layer on confirmation.
- * @param {JQuery<HTMLTableDataCellElement>} td cell
- * @param {number} index
+ * @param {JQuery<HTMLTableDataCellElement>} row cell
  * @return {?Promise<void>} See updateLayersInFirestore doc
  */
-function onDelete(td, index) {
+function onDelete(row) {
   if (window.confirm('Delete layer?')) {
+    const index = row.children('.index-td').text();
     const layers = getCurrentLayers();
     layers.splice(index, 1);
     const numLayers = layers.length;
-    $(td).parent('tr').remove();
+    row.remove();
     reindex(index, numLayers - 1, numLayers);
     return updateLayersInFirestore();
   }
@@ -253,10 +253,10 @@ function onDelete(td, index) {
  * @param {number} index
  * @return {JQuery<HTMLElement>}
  */
-function withDeleteButton(td, index) {
+function withDeleteButton(td) {
   const button = $(document.createElement('button')).prop('type', 'button');
   button.append($(document.createElement('i')).addClass('fas fa-trash-alt'));
-  button.on('click', () => onDelete(td, index));
+  button.on('click', () => onDelete(td.parent('tr')));
   return td.append(button);
 }
 
@@ -289,8 +289,8 @@ function populateLayersTable() {
     row.append(withCheckbox(createTd(), layer, 'display-on-load'));
     // color
     // TODO: make this editable.
-    row.append(withColor(createTd(), layer, 'color-function', i));
-    row.append(withDeleteButton(createTd(), i));
+    row.append(withColor(createTd(), layer, 'color-function'));
+    row.append(withDeleteButton(createTd()));
     tableBody.append(row);
   }
 }

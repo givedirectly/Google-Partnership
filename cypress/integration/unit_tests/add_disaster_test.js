@@ -332,7 +332,7 @@ describe('Unit tests for add_disaster page', () => {
     tbody.append(rows);
 
     cy.stub(window, 'confirm').returns(true);
-    cy.wrap(onDelete(rows[0].children().first(), 0)).then(() => {
+    cy.wrap(onDelete(rows[0])).then(() => {
       expect(tbody.children('tr').length).to.equal(1);
       // ensure reindex
       expect(tbody.children('tr').children('.index-td').text()).to.equal('0');
