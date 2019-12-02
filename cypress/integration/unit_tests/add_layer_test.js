@@ -9,7 +9,7 @@ import {initFirebaseForUnitTest, loadScriptsBeforeForUnitTests} from '../../supp
 
 const mockAsset = 'mockAsset';
 
-describe('Unit tests for add_disaster page', () => {
+describe('Unit tests for adding layers', () => {
   loadScriptsBeforeForUnitTests('ee', 'firebase', 'jquery');
   initFirebaseForUnitTest();
 

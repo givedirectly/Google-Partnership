@@ -21,7 +21,7 @@ const ColorStyle = {
 };
 Object.freeze(ColorStyle);
 
-const opacity = 300;
+const opacity = 200;
 
 /**
  * Creates the style function for the given properties. Caller should cache to
@@ -58,14 +58,15 @@ function createStyleFunction(colorFunctionProperties) {
 function createContinuousFunction(field, minVal, maxVal, color) {
   const colorRgb = colorMap.get(color);
   const white = colorMap.get('white');
+  const range = maxVal - minVal;
   return (feature) => {
     const value = feature['properties'][field];
     const rgba = [];
     for (let i = 0; i < 3; i++) {
       // https://www.alanzucconi.com/2016/01/06/colour-interpolation/
+      // Just linear interpolation for now - we can make this smarter.
       rgba.push(
-          white[i] +
-          (colorRgb[i] - white[i]) * ((value - minVal) / (maxVal - minVal)));
+          white[i] + (colorRgb[i] - white[i]) * ((value - minVal) / range));
     }
     rgba.push(opacity);
     return rgba;
@@ -80,7 +81,7 @@ function createContinuousFunction(field, minVal, maxVal, color) {
  * @return {Function}
  */
 function createDiscreteFunction(field, colors) {
-  // TODO: allow for a default color if field value color isn't specified.
+  console.log(field, colors);
   return (feature) => {
     const color = colors[feature['properties'][field]];
     const rgba = colorMap.get(color);

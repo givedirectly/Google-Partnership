@@ -6,8 +6,8 @@ import {getCurrentLayers, updateLayersInFirestore} from './add_disaster_util.js'
 export {processNewEeLayer};
 
 /**
- * One-off function for processing a new feature-collection-typed layer and
- * putting its color column info into firestore.
+ * Processes a new feature-collection-typed layer and puts its color column
+ * info into firestore.
  * @param {string} asset ee asset path
  * @param {enum} type LayerType
  * @return {Promise<void>} Finishes when the property information has been
@@ -33,17 +33,18 @@ function processNewEeLayer(asset, type) {
         const values = ee.Algorithms.If(
             ee.Number(featureCollection.aggregate_count_distinct(property))
                 .lte(ee.Number(25)),
-            featureCollection.aggregate_histogram(property), ee.Dictionary());
+            // This is annoyingly indirect, but ee aggregate_values doesn't
+            // aggregate equal values.
+            ee.Dictionary(featureCollection.aggregate_histogram(property))
+                .keys(),
+            ee.List([]));
         return ee.Dictionary.fromLists(
             ['max', 'min', 'values'], [max, min, values]);
       });
       return convertEeObjectToPromise(
                  ee.Dictionary.fromLists(properties, stats))
           .then((columns) => {
-            for (const property of Object.keys(columns)) {
-              columns[property]['values'] =
-                  Object.keys(columns[property]['values']);
-            }
+            console.log(columns);
             const layer = {
               'asset-type': type,
               'ee-name': asset,
@@ -55,7 +56,7 @@ function processNewEeLayer(asset, type) {
               'display-name': '',
               'display-on-load': false,
             };
-            return prependToTable(layer);
+            // return prependToTable(layer);
           });
   }
 }

@@ -268,8 +268,8 @@ function createLayerRow(layer, index) {
 }
 
 /**
- * Populates the state asset pickers with all known earth engine assets for
- * those states.
+ * Populates the state and disaster asset pickers with all known earth engine
+ * assets for this disaster and relevant states.
  * @param {string} disaster disaster id in the form name-year
  * @return {Promise<void>} returns when all asset pickers have been populated
  * after potentially retrieving assets from ee.
@@ -349,7 +349,7 @@ function initializeScoreSelectors(states) {
 
 /**
  * Initializes a dropdown with assets.
- * @param {Array<string>} assets array of assets for add to dropdown
+ * @param {Map<string, LayerType>} assets map of assets to add to dropdown
  * @param {string} row The asset type/row to put the dropdown in.
  * @param {string} state The state the assets are in.
  * @return {JQuery<HTMLSelectElement>}
@@ -361,8 +361,8 @@ function createAssetDropdown(assets, row, state) {
   select.append(createOptionFrom('None'));
 
   // Add assets to selector and return it.
-  for (let i = 0; i < assets.length; i++) {
-    select.append(createOptionFrom(assets[i]));
+  for (const asset of assets.keys()) {
+    select.append(createOptionFrom(asset));
   }
   return select;
 }
@@ -576,8 +576,7 @@ function createDisasterAssetPicker(disaster) {
   createAssetPickers([disaster], disasterAssets, $('#disaster-asset-picker'));
 }
 /**
- * Given either states or disasters, displays their assets in pickers. Right
- * now, selecting on those pickers doesn't actually do anything.
+ * Given either states or disasters, displays their assets in pickers.
  * @param {Array<string>} pickers e.g. ['WA',...] or ['harvey-2017']
  * @param {Map<string, Array<string>>} assetMap
  * @param {JQuery<HTMLElement>} div where to attach new pickers
