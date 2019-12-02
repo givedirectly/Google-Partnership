@@ -405,13 +405,13 @@ function computeBuildingsHisto(damageEnvelope, buildingPath, stateGroups) {
 /**
  * Displays error to the user coming from incomplete asset entry.
  * @param {string} str Fragment of error message
- * @return {boolean} Return value can be ignored, but is present so that
+ * @return {null} Return value can be ignored, but is present so that
  *     callers can write "return missingAssetError" and save a line
  */
 function missingAssetError(str) {
   setStatus('Error! Please specify ' + str +
           ' at <a href="manage_layers.html">manage_layers.html</a>');
-  return false;
+  return null;
 }
 
 function setStatus(str) {
