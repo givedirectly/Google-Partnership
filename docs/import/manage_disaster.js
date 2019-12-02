@@ -1,4 +1,3 @@
-import {gdEePathPrefix} from '../ee_paths.js';
 import {LayerType} from '../firebase_layers.js';
 import {disasterCollectionReference} from '../firestore_document.js';
 import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, snapPercentageTag, snapPopTag, sviTag, totalPopTag, tractTag} from '../property_names.js';
@@ -421,6 +420,10 @@ function missingAssetError(str) {
   return null;
 }
 
+/**
+ * Displays status message to user.
+ * @param {string} str message
+ */
 function setStatus(str) {
   $('#compute-status').html(str);
 }
@@ -479,8 +482,6 @@ function enableWhenFirestoreReady(allDisastersData) {
   for (const disaster of disasterData.keys()) {
     maybeFetchDisasterAssets(disaster);
   }
-  for (const disasterInfo of disasterData.values()) {
-  }
   // enable add disaster button.
   const addDisasterButton = $('#add-disaster-button');
   addDisasterButton.prop('disabled', false);
@@ -502,6 +503,10 @@ function enableWhenFirestoreReady(allDisastersData) {
 
 let displayedCurrentDisaster = false;
 
+/**
+ * Function called when current disaster changes. Responsible for displaying the
+ * score selectors.
+ */
 function onSetDisaster() {
   displayedCurrentDisaster = false;
   const currentDisaster = getDisaster();
@@ -540,7 +545,7 @@ function onSetDisaster() {
 /**
  * If disaster assets not known for disaster, kicks off fetch and stores promise
  * in disasterAssets array.
- * @param disaster
+ * @param {string} disaster
  */
 function maybeFetchDisasterAssets(disaster) {
   if (!disasterAssets.has(disaster)) {
@@ -654,8 +659,10 @@ Object.freeze(scoreAssetTypes);
 function toggleState(known) {
   if (known) {
     $('#new-disaster').hide();
+    $('#current-disaster-interaction').show();
   } else {
     $('#new-disaster').show();
+    $('#current-disaster-interaction').hide();
   }
 }
 

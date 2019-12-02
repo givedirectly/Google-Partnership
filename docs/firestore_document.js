@@ -48,6 +48,7 @@ function getDisasters() {
   return disasterCollectionReference().get();
 }
 
+/** @return {Promise<Map<string, Object>>} data for all disasters */
 function getDisastersData() {
   const disasterData = new Map();
   return getDisasters()

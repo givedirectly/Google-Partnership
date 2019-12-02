@@ -1,4 +1,5 @@
 import {initializeDisasterPicker} from './disaster_picker.js';
+import {getDisastersData} from './firestore_document.js';
 
 export {loadNavbarWithPicker, loadNavbarWithTitle};
 
@@ -34,12 +35,16 @@ function loadNavbarWithTitle(title) {
  *     changed. If not specified, reloads page
  */
 function loadNavbarWithPicker(
-    firebaseAuthPromise, changeDisasterHandler = location.reload) {
+    firebaseAuthPromise, changeDisasterHandler = location.reload,
+    firebaseDataPromise = null) {
+  if (!firebaseDataPromise) {
+    firebaseDataPromise = firebaseAuthPromise.then(getDisastersData);
+  };
   loadNavbar(
       () => $('#nav-left')
                 .load(
                     import.meta.url.replace('/navbar.js', '') +
                         '/disaster_picker.html',
                     () => initializeDisasterPicker(
-                        firebaseAuthPromise, changeDisasterHandler)));
+                        firebaseDataPromise, changeDisasterHandler)));
 }

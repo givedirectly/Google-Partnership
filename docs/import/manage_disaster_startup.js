@@ -14,7 +14,7 @@ const firebaseAuthPromise = Authenticator.trackEeAndFirebase(taskAccumulator);
 const firebaseDataPromise = firebaseAuthPromise.then(getDisastersData);
 
 $(() => {
-  loadNavbarWithPicker(firebaseAuthPromise, onSetDisaster);
+  loadNavbarWithPicker(firebaseAuthPromise, onSetDisaster, firebaseDataPromise);
   $('#create-new-disaster').on('click', () => toggleState(false));
   $('#cancel-new-disaster').on('click', () => toggleState(true));
   taskAccumulator.taskCompleted();

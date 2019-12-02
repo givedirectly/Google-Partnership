@@ -33,7 +33,6 @@
 <div class="main-content">
   <div>
   <button type="button" id="create-new-disaster">Create New Disaster</button>
-  <button type="button" id="delete" disabled>Delete Disaster</button>
   </div>
   <div id="new-disaster" hidden>
     <button type="button" id="cancel-new-disaster">Cancel</button>
@@ -97,21 +96,24 @@
       <button type="button" id="add-disaster-button" disabled>Add Disaster</button>
     </form>
   </div>
-
-  <div id="score-asset-selection" style="padding-top: 40px;">
-    <div class="formTitle">Select Score Data</div>
-    <div>
-      <table id="asset-selection-table">
-        <thead>
-        <tr id="score-asset-header-row">
-        </tr>
-        </thead>
-        <tbody id="asset-selection-table-body"></tbody>
-      </table>
+<hr/>
+  <div id="current-disaster-interaction">
+    <button type="button" id="delete" disabled>Delete Current Disaster</button>
+    <div id="score-asset-selection" style="padding-top: 40px;">
+      <div class="formTitle">Select Score Data</div>
+      <div>
+        <table id="asset-selection-table">
+          <thead>
+          <tr id="score-asset-header-row">
+          </tr>
+          </thead>
+          <tbody id="asset-selection-table-body"></tbody>
+        </table>
+      </div>
     </div>
-  </div>
 
-  <button disabled id="process-button">Kick off Data Processing</button> (will take a while!)
+    <button disabled id="process-button">Kick off Data Processing</button> (will take a while!)
+  </div>
   <div class="g-sign-in hidden">
   <span class="label">Sign in with:</span>
   <div class="button">
