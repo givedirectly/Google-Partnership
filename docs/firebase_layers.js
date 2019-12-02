@@ -21,6 +21,8 @@ const ColorStyle = {
 };
 Object.freeze(ColorStyle);
 
+const opacity = 200;
+
 /**
  * Creates the style function for the given properties. Caller should cache to
  * avoid recomputing every time.
@@ -29,19 +31,17 @@ Object.freeze(ColorStyle);
  */
 function createStyleFunction(colorFunctionProperties) {
   const field = colorFunctionProperties['field'];
-  const opacity = colorFunctionProperties['opacity'];
   switch (colorFunctionProperties['current-style']) {
     case ColorStyle.SINGLE:
       const color = colorMap.get(colorFunctionProperties['color']);
       return () => color;
     case ColorStyle.CONTINUOUS:
       return createContinuousFunction(
-          field, opacity, colorFunctionProperties['columns'][field]['min'],
+          field, colorFunctionProperties['columns'][field]['min'],
           colorFunctionProperties['columns'][field]['max'],
           colorFunctionProperties['color']);
     case ColorStyle.DISCRETE:
-      return createDiscreteFunction(
-          field, opacity, colorFunctionProperties['colors']);
+      return createDiscreteFunction(field, colorFunctionProperties['colors']);
   }
 }
 
@@ -50,22 +50,23 @@ function createStyleFunction(colorFunctionProperties) {
  * base color to white.
  *
  * @param {String} field property whose value is used to determine color
- * @param {number} opacity
  * @param {number} minVal minVal of {@param field}
  * @param {number} maxVal maxVal of {@param field}
  * @param {String} color base color
  * @return {Function}
  */
-function createContinuousFunction(field, opacity, minVal, maxVal, color) {
+function createContinuousFunction(field, minVal, maxVal, color) {
   const colorRgb = colorMap.get(color);
   const white = colorMap.get('white');
+  const range = maxVal - minVal;
   return (feature) => {
     const value = feature['properties'][field];
     const rgba = [];
     for (let i = 0; i < 3; i++) {
+      // https://www.alanzucconi.com/2016/01/06/colour-interpolation/
+      // Just linear interpolation for now - we can make this smarter.
       rgba.push(
-          ((colorRgb[i] * (value - minVal)) + (white[i] * (maxVal - value))) /
-          2);
+          white[i] + (colorRgb[i] - white[i]) * ((value - minVal) / range));
     }
     rgba.push(opacity);
     return rgba;
@@ -75,13 +76,11 @@ function createContinuousFunction(field, opacity, minVal, maxVal, color) {
 /**
  * Creates a discrete color function for a feature collection.
  * @param {String} field property whose value is used to determine color
- * @param {number} opacity
  * @param {Map<String, String>} colors field value:color (e.g. 'minor-damage':
  *     'red')
  * @return {Function}
  */
-function createDiscreteFunction(field, opacity, colors) {
-  // TODO: allow for a default color if field value color isn't specified.
+function createDiscreteFunction(field, colors) {
   return (feature) => {
     const color = colors[feature['properties'][field]];
     const rgba = colorMap.get(color);

@@ -636,9 +636,8 @@ function initializeScoreSelectors(states) {
         $(document.createElement('div')).html(scoreAssetType)));
     for (const state of states) {
       if (stateAssets.get(state)) {
-        const select = createAssetDropdown(
-            stateAssets.get(state), scoreAssetType, state);
-        row.append(createTd().append(select));
+        row.append(createTd().append(createAssetDropdown(
+            stateAssets.get(state), scoreAssetType, state)));
         select.on('change', () => handleScoreAssetSelection(scoreAssetType, state));
       }
     }
@@ -656,9 +655,10 @@ function createTd() {
 
 /**
  * Initializes a dropdown with assets.
- * @param {Array<string>} assets array of assets for add to dropdown
+ * @param {Map<string, LayerType>} assets map of assets to add to dropdown
  * @param {string} row The asset type/row to put the dropdown in.
  * @param {string} state The state the assets are in.
+ * @return {JQuery<HTMLSelectElement>}
  */
 function createAssetDropdown(assets, row, state) {
   // Create the asset selector and add a 'None' option.
@@ -667,8 +667,8 @@ function createAssetDropdown(assets, row, state) {
   select.append(createOptionFrom('None'));
 
   // Add assets to selector and return it.
-  for (let i = 0; i < assets.length; i++) {
-    select.append(createOptionFrom(assets[i]));
+  for (const asset of assets.keys()) {
+    select.append(createOptionFrom(asset));
   }
   return select;
 }

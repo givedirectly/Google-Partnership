@@ -1,12 +1,17 @@
 import {gdEeStatePrefix, legacyStateDir, legacyStatePrefix} from '../../../docs/ee_paths.js';
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
+<<<<<<< HEAD:cypress/integration/unit_tests/manage_layers_test.js
 import {addDisaster, createAssetPickers, createOptionFrom, createTd, deleteDisaster, onCheck, onInputBlur, onListBlur, stateAssets, updateAfterSort, withCheckbox, withInput, withList, withType, writeNewDisaster} from '../../../docs/import/manage_layers.js';
 import {getStateEeAssets} from "../../../docs/import/list_ee_assets.js";
 import {disasterData, getCurrentLayers} from '../../../docs/import/manage_layers_lib.js';
+=======
+import {addDisaster, createOptionFrom, createStateAssetPickers, createTd, deleteDisaster, emptyCallback, getStatesAssetsFromEe, onCheck, onDelete, onInputBlur, onListBlur, stateAssets, updateAfterSort, withCheckbox, withInput, withList, withType, writeNewDisaster} from '../../../docs/import/add_disaster.js';
+import {disasterData, getCurrentLayers} from '../../../docs/import/add_disaster_util.js';
+>>>>>>> master:cypress/integration/unit_tests/add_disaster_test.js
 import {withColor} from '../../../docs/import/color_function_util.js';
 import * as loading from '../../../docs/loading.js';
 import {getDisaster} from '../../../docs/resources';
-import {createTrs, setDisasterAndLayers} from '../../support/import_test_util.js';
+import {createAndAppend, createTrs, setDisasterAndLayers} from '../../support/import_test_util.js';
 import {initFirebaseForUnitTest, loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
 const KNOWN_STATE = 'WF';
@@ -67,6 +72,7 @@ describe('Unit tests for add_disaster page', () => {
   });
 
   it('gets state asset info from ee', () => {
+<<<<<<< HEAD:cypress/integration/unit_tests/manage_layers_test.js
     cy.wrap(getStateEeAssets([KNOWN_STATE, UNKNOWN_STATE])).then((assets) => {
       // tests folder type asset doesn't make it through
       expect(assets.get(KNOWN_STATE)).to.eql([KNOWN_STATE_ASSET]);
@@ -77,14 +83,29 @@ describe('Unit tests for add_disaster page', () => {
           .to.be.calledWith(legacyStatePrefix + KNOWN_STATE, {}, Cypress.sinon.match.func);
       expect(ee.data.createFolder).to.be.calledOnce;
     });
+=======
+    cy.wrap(getStatesAssetsFromEe([KNOWN_STATE, UNKNOWN_STATE]))
+        .then((assets) => {
+          // tests folder type asset doesn't make it through
+          expect(assets[0]).to.eql(
+              [KNOWN_STATE, new Map([[KNOWN_STATE_ASSET, 'TABLE']])]);
+          expect(assets[1]).to.eql([UNKNOWN_STATE, new Map()]);
+          expect(ee.data.listAssets)
+              .to.be.calledWith(legacyStateDir, {}, emptyCallback);
+          expect(ee.data.listAssets)
+              .to.be.calledWith(
+                  legacyStatePrefix + KNOWN_STATE, {}, emptyCallback);
+          expect(ee.data.createFolder).to.be.calledOnce;
+        });
+>>>>>>> master:cypress/integration/unit_tests/add_disaster_test.js
   });
 
   it('populates state asset pickers', () => {
-    const assetPickers = createAndAppend('div', 'asset-pickers');
+    const assetPickers = createAndAppend('div', 'state-asset-pickers');
     const assets = [KNOWN_STATE, UNKNOWN_STATE];
-    stateAssets.set(KNOWN_STATE, [KNOWN_STATE_ASSET]);
-    stateAssets.set(UNKNOWN_STATE, []);
-    createAssetPickers(assets);
+    stateAssets.set(KNOWN_STATE, new Map([[KNOWN_STATE_ASSET, 'TABLE']]));
+    stateAssets.set(UNKNOWN_STATE, new Map());
+    createStateAssetPickers(assets);
 
     // 2 x <label> (w/ select nested inside) <br>
     expect(assetPickers.children().length).to.equal(4);
@@ -194,6 +215,23 @@ describe('Unit tests for add_disaster page', () => {
   it('tests checkbox cell check', () => checkboxTest(true));
   it('tests checkbox cell uncheck', () => checkboxTest(false));
 
+  it('deletes a layer', () => {
+    setDisasterAndLayers([{layer: 0}, {layer: 1}]);
+    const tbody = createAndAppend('tbody', 'tbody');
+    const rows = createTrs(2);
+    tbody.append(rows);
+
+    cy.stub(window, 'confirm').returns(true);
+    cy.wrap(onDelete(rows[0])).then(() => {
+      expect(tbody.children('tr').length).to.equal(1);
+      // ensure reindex
+      expect(tbody.children('tr').children('.index-td').text()).to.equal('0');
+      expect(getCurrentLayers().length).to.equal(1);
+      // ensure right layer was deleted
+      expect(getCurrentLayers()[0]['layer']).to.equal(1);
+    });
+  });
+
   it('checks data updates after a sort', () => {
     setDisasterAndLayers(
         [{initialIndex: 0}, {initialIndex: 1}, {initialIndex: 2}]);
@@ -259,17 +297,4 @@ function testSave(fxn, property, input, afterVal) {
       })
       .then(
           (doc) => expect(doc.data()['layers'][0][property]).to.eql(afterVal));
-}
-
-/**
- * Utility function for creating an element and returning it wrapped as a
- * jquery object.
- * @param {string} tag
- * @param {string} id
- * @return {JQuery<HTMLElement>}
- */
-function createAndAppend(tag, id) {
-  const element = document.createElement(tag);
-  document.body.appendChild(element);
-  return $(element).attr('id', id);
 }
