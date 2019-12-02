@@ -503,7 +503,7 @@ function enableWhenFirestoreReady(allDisastersData) {
 let displayedCurrentDisaster = false;
 
 function onSetDisaster() {
-  displayedCurrentDisaster =false;
+  displayedCurrentDisaster = false;
   const currentDisaster = getDisaster();
   if (currentDisaster) {
     const states = disasterData.get(currentDisaster).states;
