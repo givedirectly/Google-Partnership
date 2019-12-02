@@ -1,4 +1,5 @@
 import {gdEePathPrefix} from "../ee_paths.js";
+import {LayerType} from '../firebase_layers.js';
 import {disasterCollectionReference} from "../firestore_document.js";
 import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, snapPercentageTag, snapPopTag, sviTag, totalPopTag, tractTag} from '../property_names.js';
 import {getDisaster, getScoreAsset} from '../resources.js';
@@ -6,13 +7,16 @@ import {getDisaster, getScoreAsset} from '../resources.js';
 import {computeAndSaveBounds, saveBounds} from './center.js';
 import {createDisasterData} from "./create_disaster_lib.js";
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
-import {getDisasterAssetsFromEe} from "./list_ee_assets.js";
+import {
+  getDisasterAssetsFromEe,
+  getStatesAssetsFromEe
+} from "./list_ee_assets.js";
 
 export {enableWhenReady, onSetDisaster, toggleState};
 /** @VisibleForTesting */
 export {run, addDisaster, deleteDisaster, writeNewDisaster, disasterData};
 
-let disasterData = {};
+let disasterData = new Map();
 const disasterAssets = new Map();
 
 // Map of state to list of known assets
@@ -464,10 +468,15 @@ function enableWhenReady(allDisastersData) {
  *     Firestore for all disasters, the current disaster's data is used when calculating
  */
 function enableWhenFirestoreReady(allDisastersData) {
-  disasterData = allDisastersData.data();
+  disasterData = allDisastersData;
   onSetDisaster();
   // Kick off all EE asset fetches.
-  Object.keys(disasterData).forEach(maybeFetchDisasterAssets);
+  for (const disaster of disasterData.keys()) {
+    maybeFetchDisasterAssets(disaster);
+  }
+  for (const disasterInfo of disasterData.values()) {
+
+  }
   // enable add disaster button.
   const addDisasterButton = $('#add-disaster-button');
   addDisasterButton.prop('disabled', false);
@@ -491,13 +500,34 @@ function enableWhenFirestoreReady(allDisastersData) {
 function onSetDisaster() {
   const currentDisaster = getDisaster();
   if (currentDisaster) {
-    initializeScoreSelectors(disasterData[currentDisaster].states);
+    const states = disasterData.get(currentDisaster).states;
+    const neededStates = [];
+    for (const state of states) {
+      if (!stateAssets.has(state)) {
+        neededStates.push(state);
+      }
+    }
+    let promise = Promise.resolve();
+    if (neededStates) {
+      promise = getStatesAssetsFromEe(neededStates).then((result) => {
+        for (const stateItem of result) {
+          const features = [];
+          stateItem[1].forEach((val, key) => {
+            if (val === LayerType.FEATURE_COLLECTION) {
+              features.push(key);
+            }
+          });
+          stateAssets.set(stateItem[0], features);
+        }
+      });
+    }
+    promise.then(() => initializeScoreSelectors(states));
   }
 }
 
 function maybeFetchDisasterAssets(disaster) {
   if (!disasterAssets.has(disaster)) {
-    disasterAssets.set(disaster, listEeAssets(gdEePathPrefix + disaster));
+    disasterAssets.set(disaster, getDisasterAssetsFromEe(disaster));
   }
 }
 
@@ -511,7 +541,7 @@ function deleteDisaster() {
   const disasterPicker = $('#disaster-dropdown');
   const disasterId = disasterPicker.val();
   if (confirm('Delete ' + disasterId + '? This action cannot be undone')) {
-    delete disasterData[disasterId];
+    disasterData.delete(disasterId);
     disasterPicker[0].remove(disasterPicker[0].selectedIndex);
     const newOption = disasterPicker.children().eq(0);
     disasterPicker.val(newOption.val()).trigger('change');
@@ -557,12 +587,12 @@ function addDisaster() {
  * @return {Promise<boolean>} returns true after successful write to firestore.
  */
 function writeNewDisaster(disasterId, states) {
-  if (disasterData[disasterId]) {
+  if (disasterData.has(disasterId)) {
     setStatus('Error: disaster with that name and year already exists.');
     return Promise.resolve(false);
   }
   const currentData = createDisasterData(states);
-  disasterData[disasterId] = currentData;
+  disasterData.set(disasterId, currentData);
 
   const disasterPicker = $('#disaster-dropdown');
   const disasterOptions = disasterPicker.children();
@@ -628,16 +658,16 @@ function initializeScoreSelectors(states) {
   }
 
   // For each asset type, add select for all assets for each state.
-  for (let i = 0; i < scoreAssetTypes.length; i++) {
-    const scoreAssetType = scoreAssetTypes[i];
+  for (const scoreAssetType of scoreAssetTypes) {
     const row =
         $(document.createElement('tr')).prop('id', scoreAssetType + '-row');
     row.append(createTd().append(
         $(document.createElement('div')).html(scoreAssetType)));
     for (const state of states) {
       if (stateAssets.get(state)) {
-        row.append(createTd().append(createAssetDropdown(
-            stateAssets.get(state), scoreAssetType, state)));
+        const select = createAssetDropdown(
+            stateAssets.get(state), scoreAssetType, state);
+        row.append(createTd().append(select));
         select.on('change', () => handleScoreAssetSelection(scoreAssetType, state));
       }
     }
@@ -667,7 +697,7 @@ function createAssetDropdown(assets, row, state) {
   select.append(createOptionFrom('None'));
 
   // Add assets to selector and return it.
-  for (const asset of assets.keys()) {
+  for (const asset of assets) {
     select.append(createOptionFrom(asset));
   }
   return select;

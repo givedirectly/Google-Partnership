@@ -4,7 +4,7 @@ import {
   createOptionFrom,
   createStateAssetPickers,
   createTd,
-  onCheck,
+  onCheck, onDelete,
   onInputBlur,
   onListBlur,
   stateAssets,

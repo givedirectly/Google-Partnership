@@ -24,7 +24,7 @@ describe('Unit tests for manage_disaster.js', () => {
   let testData;
   let exportStub;
   beforeEach(() => {
-    Object.keys(disasterData).forEach((key) => delete disasterData[key]);
+    disasterData.clear();
 
     // Create a pretty trivial world: 2 block groups, each a 1x2 vertical
     // stripes. Under the covers, we scale all dimensions down because
@@ -155,7 +155,7 @@ describe('Unit tests for manage_disaster.js', () => {
 
   it('Test missing data', () => {
     testData.asset_data = null;
-    expect(run(testData)).to.be.false;
+    expect(run(testData)).to.be.null;
     expect(exportStub).to.not.be.called;
   });
 
