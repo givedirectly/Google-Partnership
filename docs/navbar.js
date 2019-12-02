@@ -33,6 +33,7 @@ function loadNavbarWithTitle(title) {
  *     login is done
  * @param {?Function} changeDisasterHandler Function invoked when disaster is
  *     changed. If not specified, reloads page
+ * @param {?Promise<Map<string, Object>>} firebaseDataPromise If caller has already kicked off a fetch of all disasters, pass that Promise in here to avoid a duplicate fetch
  */
 function loadNavbarWithPicker(
     firebaseAuthPromise, changeDisasterHandler = location.reload,

@@ -166,6 +166,8 @@ describe('Unit tests for manage_disaster.js', () => {
         .then((success) => {
           expect(success).to.be.true;
           expect($('#status').is(':visible')).to.be.false;
+          expect(disasterData.get(id)['layers']).to.eql([]);
+          expect(disasterData.get(id)['states']).to.eql(states);
           const disasterPicker = $('#disaster-dropdown');
           const options = disasterPicker.children();
           expect(options).to.have.length(3);
