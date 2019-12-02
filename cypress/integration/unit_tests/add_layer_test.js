@@ -1,13 +1,11 @@
-import {ColorStyle, LayerType} from '../../../docs/firebase_layers';
-import {getFirestoreRoot} from '../../../docs/firestore_document';
+import {ColorStyle, LayerType} from '../../../docs/firebase_layers.js';
 import {getCurrentLayers} from '../../../docs/import/add_disaster_util';
 import {disasterData} from '../../../docs/import/add_disaster_util.js';
 import {processNewEeLayer} from '../../../docs/import/add_layer.js';
-import * as loading from '../../../docs/loading';
-import {getDisaster} from '../../../docs/resources';
-import {createTrs} from '../../support/import_test_util';
+import * as loading from '../../../docs/loading.js';
+import {createTrs} from '../../support/import_test_util.js';
 import {createAndAppend, setDisasterAndLayers} from '../../support/import_test_util.js';
-import {initFirebaseForUnitTest, loadScriptsBeforeForUnitTests} from '../../support/script_loader';
+import {initFirebaseForUnitTest, loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
 const mockAsset = 'mockAsset';
 
@@ -74,7 +72,7 @@ describe('Unit tests for add_disaster page', () => {
     setDisasterAndLayers([]);
     const featureCollection = ee.FeatureCollection([
       ee.Feature(null, {'flavor': 'vanilla'}),
-      ee.Feature(null, {'flavor': 'vanilla'})
+      ee.Feature(null, {'flavor': 'vanilla'}),
     ]);
     cy.stub(ee, 'FeatureCollection')
         .withArgs(mockAsset)

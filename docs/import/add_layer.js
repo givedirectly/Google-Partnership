@@ -41,7 +41,7 @@ function processNewEeLayer(asset, type) {
       return convertEeObjectToPromise(
                  ee.Dictionary.fromLists(properties, stats))
           .then((columns) => {
-            for (let property of Object.keys(columns)) {
+            for (const property of Object.keys(columns)) {
               columns[property]['values'] =
                   Object.keys(columns[property]['values']);
             }
