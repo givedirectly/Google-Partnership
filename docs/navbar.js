@@ -8,10 +8,10 @@ export {loadNavbarWithPicker, loadNavbarWithTitle};
  * @param {Function} callback the callback invoked upon load
  */
 function loadNavbar(callback) {
-  $('#navbar').load(getUrlRelativeToNavbarJs('navbar.html'), () => {
-    $('#map-a').prop('href', getUrlRelativeToNavbarJs(''));
+  $('#navbar').load(getUrlUnderDocs('navbar.html'), () => {
+    $('#map-a').prop('href', getUrlUnderDocs(''));
     $('#add-disaster-a')
-        .prop('href', getUrlRelativeToNavbarJs('import/add_disaster.html'));
+        .prop('href', getUrlUnderDocs('import/add_disaster.html'));
     callback();
   });
 }
@@ -39,7 +39,7 @@ function loadNavbarWithPicker(firebaseAuthPromise) {
   loadNavbar(
       () => $('#nav-left')
                 .load(
-                    getUrlRelativeToNavbarJs('disaster_picker.html'),
+                    getUrlUnderDocs('disaster_picker.html'),
                     () => initializeDisasterPicker(firebaseAuthPromise)));
 }
 
@@ -49,6 +49,6 @@ function loadNavbarWithPicker(firebaseAuthPromise) {
  * @param {string} replaceWith
  * @return {string}
  */
-function getUrlRelativeToNavbarJs(replaceWith) {
+function getUrlUnderDocs(replaceWith) {
   return import.meta.url.replace(/navbar\.js$/, replaceWith);
 }
