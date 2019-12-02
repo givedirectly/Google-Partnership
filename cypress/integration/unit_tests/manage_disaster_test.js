@@ -4,6 +4,7 @@ import {addDisaster, deleteDisaster, writeNewDisaster} from '../../../docs/impor
 import {createOptionFrom} from '../../../docs/import/manage_layers.js';
 import {convertEeObjectToPromise} from '../../../docs/map_util';
 import {assertFirestoreMapBounds} from '../../support/firestore_map_bounds';
+import {createAndAppend} from '../../support/import_test_util.js';
 import {initFirebaseForUnitTest, loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 
 const KNOWN_STATE = 'WF';
@@ -403,17 +404,4 @@ function makeCallbackForTextAndPromise(expectedText) {
     }
   };
   return {boundsPromise, mapBoundsCallback};
-}
-
-/**
- * Utility function for creating an element and returning it wrapped as a
- * jquery object.
- * @param {string} tag
- * @param {string} id
- * @return {JQuery<HTMLElement>}
- */
-function createAndAppend(tag, id) {
-  const element = document.createElement(tag);
-  document.body.appendChild(element);
-  return $(element).attr('id', id);
 }
