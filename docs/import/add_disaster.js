@@ -16,6 +16,7 @@ export {
   emptyCallback,
   getAssetsFromEe,
   onCheck,
+  onDelete,
   onInputBlur,
   onListBlur,
   stateAssets,
@@ -78,6 +79,13 @@ function toggleDisaster(disaster) {
   return populateStateAssetPickers();
 }
 
+function reindex(from, to, numLayers) {
+  for (let i = from; i <= to; i++) {
+    const tableIndex = numLayers - i;
+    $('#tbody tr:nth-child(' + tableIndex + ') .index-td').text(i);
+  }
+}
+
 /**
  * Update the table and disasterData with new indices after a layer has been
  * reordered. Then write to firestore.
@@ -96,11 +104,7 @@ function updateAfterSort(ui) {
   layers.splice(newRealIndex, 0, row);
 
   // Reindex all the layers.
-  for (let i = Math.min(oldRealIndex, newRealIndex);
-       i <= Math.max(oldRealIndex, newRealIndex); i++) {
-    const tableIndex = numLayers - i;
-    $('#tbody tr:nth-child(' + tableIndex + ') .index-td').text(i);
-  }
+  reindex(Math.min(oldRealIndex, newRealIndex), Math.max(oldRealIndex, newRealIndex), numLayers);
 
   return updateLayersInFirestore();
 }
@@ -218,6 +222,36 @@ function withCheckbox(td, layer, property) {
   return td.append(checkbox);
 }
 
+/**
+ * Deletes layer on confirmation.
+ * @param {JQuery<HTMLTableDataCellElement>} td cell
+ * @param {number} index
+ * @return {?Promise<void>} See updateLayersInFirestore doc
+ */
+function onDelete(td, index) {
+  if(window.confirm('Delete layer?')) {
+    const layers = getCurrentLayers();
+    layers.splice(index, 1);
+    const numLayers = layers.length;
+    $(td).parent('tr').remove();
+    reindex(index, numLayers-1, numLayers);
+    return updateLayersInFirestore();
+  }
+}
+
+/**
+ * Adds a delete row function to the given td.
+ * @param {JQuery<HTMLTableDataCellElement>} td cell
+ * @param {number} index
+ * @return {JQuery<HTMLElement>}
+ */
+function withDeleteButton(td, index) {
+  const button = $(document.createElement('button')).prop('type', 'button');
+  button.append($(document.createElement('i')).addClass('fas fa-trash-alt'));
+  button.on('click', () => onDelete(td, index));
+  return td.append(button);
+}
+
 /** Populates the layers table with layers of current disaster. */
 function populateLayersTable() {
   const layers = getCurrentLayers();
@@ -248,6 +282,7 @@ function populateLayersTable() {
     // color
     // TODO: make this editable.
     row.append(withColor(createTd(), layer, 'color-function', i));
+    row.append(withDeleteButton(createTd(), i));
     tableBody.append(row);
   }
 }
