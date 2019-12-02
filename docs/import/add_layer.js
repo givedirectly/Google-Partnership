@@ -1,4 +1,4 @@
-import {LayerType} from '../firebase_layers';
+import {LayerType} from '../firebase_layers.js';
 import {convertEeObjectToPromise} from '../map_util.js';
 
 import {createLayerRow} from './add_disaster.js';
@@ -34,13 +34,16 @@ function processNewEeLayer(asset, type) {
         const values = ee.Algorithms.If(
             ee.Number(featureCollection.aggregate_count_distinct(property))
                 .lte(ee.Number(25)),
-            featureCollection.aggregate_array(property), ee.List([]));
+            featureCollection.aggregate_histogram(property), ee.Dictionary());
         return ee.Dictionary.fromLists(
             ['max', 'min', 'values'], [max, min, values]);
       });
       return convertEeObjectToPromise(
                  ee.Dictionary.fromLists(properties, stats))
           .then((columns) => {
+            for (let property of Object.keys(columns)) {
+              columns[property]['values'] = Object.keys(columns[property]['values']);
+            }
             const layer = {
               'asset-type': type,
               'ee-name': asset,

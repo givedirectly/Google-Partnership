@@ -6,6 +6,8 @@ import * as loading from '../../../docs/loading';
 import {createTrs} from '../../support/import_test_util';
 import {createAndAppend, setDisasterAndLayers} from '../../support/import_test_util.js';
 import {initFirebaseForUnitTest, loadScriptsBeforeForUnitTests} from '../../support/script_loader';
+import {getFirestoreRoot} from '../../../docs/firestore_document';
+import {getDisaster} from '../../../docs/resources';
 
 const mockAsset = 'mockAsset';
 
@@ -45,7 +47,7 @@ describe('Unit tests for add_disaster page', () => {
           const scoopsColumn = colorFunction['columns']['scoops'];
           expect(scoopsColumn['max']).to.equal(4);
           expect(scoopsColumn['min']).to.equal(0);
-          expect(scoopsColumn['values']).to.eql([0, 1, 2, 3, 4]);
+          expect(scoopsColumn['values']).to.eql(["0", "1", "2", "3", "4"]);
           expect($('#tbody').children('tr').length).to.equal(3);
         });
   });
@@ -68,6 +70,22 @@ describe('Unit tests for add_disaster page', () => {
         });
   });
 
+  it('properly reduces all values of a property', () => {
+    setDisasterAndLayers([]);
+    const featureCollection = ee.FeatureCollection([
+      ee.Feature(null, {'flavor': 'vanilla'}),
+      ee.Feature(null, {'flavor': 'vanilla'})
+    ]);
+    cy.stub(ee, 'FeatureCollection')
+        .withArgs(mockAsset)
+        .returns(featureCollection);
+
+    cy.wrap(processNewEeLayer(mockAsset, LayerType.FEATURE_COLLECTION)).then(() => {
+      const layer = getCurrentLayers()[0];
+      expect(layer['color-function']['columns']['flavor']['values']).to.eql(['vanilla']);
+    });
+  });
+
   it('processes a new image layer', () => {
     setDisasterAndLayers([]);
     createAndAppend('tbody', 'tbody');
@@ -86,7 +104,6 @@ describe('Unit tests for add_disaster page', () => {
 /**
  * Stubs ee.FeatureCollection with the given number of features
  * @param {number} numFeatures
- * @return {ee.FeatureCollection}
  */
 function stubFeatureCollection(numFeatures) {
   const features = [];
@@ -97,5 +114,4 @@ function stubFeatureCollection(numFeatures) {
   cy.stub(ee, 'FeatureCollection')
       .withArgs(mockAsset)
       .returns(featureCollection);
-  return featureCollection;
 }
