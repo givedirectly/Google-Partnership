@@ -1,7 +1,6 @@
 import {gdEeStatePrefix, legacyStateDir, legacyStatePrefix} from '../../../docs/ee_paths.js';
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
 import {addDisaster, createOptionFrom, createStateAssetPickers, createTd, deleteDisaster, emptyCallback, getStatesAssetsFromEe, onCheck, onDelete, onInputBlur, onListBlur, stateAssets, updateAfterSort, withCheckbox, withInput, withList, withType, writeNewDisaster} from '../../../docs/import/add_disaster.js';
-import {getCurrentData} from '../../../docs/import/add_disaster_util';
 import {disasterData, getCurrentLayers} from '../../../docs/import/add_disaster_util.js';
 import {withColor} from '../../../docs/import/color_function_util.js';
 import * as loading from '../../../docs/loading.js';
