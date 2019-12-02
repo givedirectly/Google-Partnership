@@ -50,6 +50,16 @@ const mockFirebaseLayers = [
     'display-on-load': true,
     'index': 4,
   },
+  {
+    'ee-name': 'kml_urls',
+    'asset-type': LayerType.KML,
+    'urls': [
+      'https://www.nhc.noaa.gov/storm_graphics/api/AL092017_043adv_CONE.kmz',
+    ],
+    'display-name': 'tiles',
+    'display-on-load': false,
+    'index': 5,
+  },
 ];
 
 describe('Unit test for toggleLayerOn', () => {
@@ -73,6 +83,23 @@ describe('Unit test for toggleLayerOn', () => {
     deckGlArray.length = 0;
     deckGlArray[0] = new deck.GeoJsonLayer({});
     deckGlArray[1] = new deck.GeoJsonLayer({});
+  });
+
+  it('tests adding kml urls', () => {
+    createGoogleMap().then((map) => {
+      const promise = addLayer(mockFirebaseLayers[5], map);
+      expect(promise).to.not.be.null;
+
+      expect(layerArray[5].displayed).to.be.true;
+      expect(layerArray[5].isLayerKml()).to.be.true;
+      expect(layerArray[5].overlay[0].getMap()).to.not.be.null;
+
+      // Turn layer off: disappears from map.
+      toggleLayerOff(5, map);
+
+      expect(layerArray[5].displayed).to.be.false;
+      expect(layerArray[5].overlay[0].getMap()).to.be.null;
+    });
   });
 
   it('displays a hidden but loaded layer', () => {

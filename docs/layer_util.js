@@ -85,11 +85,13 @@ class LayerDisplayData {
    *
    * @param {DeckParams} deckParams null if not rendered using deck
    * @param {boolean} displayed True if layer is currently displayed
+   * @param {?boolean} isKmlLayer, true if this layer is a KML layer
    */
-  constructor(deckParams, displayed) {
+  constructor(deckParams, displayed, isKmlLayer) {
     /** @const */
     this.deckParams = deckParams;
     this.displayed = displayed;
+    this.isKmlLayer = isKmlLayer;
   }
 
   /**
@@ -97,6 +99,11 @@ class LayerDisplayData {
    */
   deckRendered() {
     return this.deckParams != null;
+  }
+
+  /** @return {boolean} True if this layer is a KML layer */
+  isLayerKml() {
+    return this.isKmlLayer;
   }
 }
 
@@ -150,7 +157,7 @@ function toggleLayerOn(layer, map) {
     addLayerFromFeatures(layerDisplayData, index);
     return null;
   }
-  if (layerDisplayData.overlay) {
+  if (layerDisplayData.overlay && !layerDisplayData.isLayerKml()) {
     // The promise returned in this branch does not need to be stored in the
     // pendingPromise field because it will complete immediately if this layer
     // is toggled off (see the createTileCallback doc). That means that if
@@ -180,7 +187,9 @@ function toggleLayerOn(layer, map) {
 function toggleLayerOff(index, map) {
   const layerDisplayData = layerArray[index];
   layerDisplayData.displayed = false;
-  if (layerDisplayData.deckRendered()) {
+  if (layerDisplayData.isLayerKml()) {
+    layerDisplayData.overlay.forEach((o) => o.setMap(null));
+  } else if (layerDisplayData.deckRendered()) {
     addLayerFromFeatures(layerDisplayData, index);
   } else {
     map.overlayMapTypes.setAt(index, null);
@@ -419,6 +428,9 @@ function addLayer(layer, map) {
           convertEeObjectToPromise(
               ee.FeatureCollection(layerName).toList(maxNumFeaturesExpected)),
           DeckParams.fromLayer(layer), layer['index']);
+      break;
+    case LayerType.KML:
+      return addKmlLayers(layer, map);
     case LayerType.MAP_TILES:
       return addTileLayer(map, layer);
     default:
@@ -426,6 +438,28 @@ function addLayer(layer, map) {
           '[' + layer['index'] + ']: ' + layer['asset-name'] +
           ' not recognized layer type');
   }
+}
+
+/**
+ * Displays a collection of kmls (given by the 'urls' attribute of layer)
+ * on the map using google.maps.KmlLayer
+ * @param {Object} layer Data for layer coming from Firestore
+ * @param {google.maps.Map} map
+ * @return {Promise} A resolved promise
+ */
+function addKmlLayers(layer, map) {
+  const layerDisplayData = new LayerDisplayData(null, true, true);
+  layerArray[layer['index']] = layerDisplayData;
+  const overlays = [];
+  for (let i = 0; i < layer['urls'].length; i++) {
+    overlays.push(new google.maps.KmlLayer(layer['urls'][i], {
+      suppressInfoWindows: false,
+      preserveViewport: true,
+      map: map,
+    }));
+  }
+  layerDisplayData.overlay = overlays;
+  return Promise.resolve();
 }
 
 /**
