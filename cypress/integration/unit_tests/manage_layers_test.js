@@ -1,13 +1,23 @@
 import {gdEeStatePrefix, legacyStateDir, legacyStatePrefix} from '../../../docs/ee_paths.js';
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
-<<<<<<< HEAD:cypress/integration/unit_tests/manage_layers_test.js
-import {addDisaster, createAssetPickers, createOptionFrom, createTd, deleteDisaster, onCheck, onInputBlur, onListBlur, stateAssets, updateAfterSort, withCheckbox, withInput, withList, withType, writeNewDisaster} from '../../../docs/import/manage_layers.js';
-import {getStateEeAssets} from "../../../docs/import/list_ee_assets.js";
+import {
+  createOptionFrom,
+  createStateAssetPickers,
+  createTd,
+  onCheck,
+  onInputBlur,
+  onListBlur,
+  stateAssets,
+  updateAfterSort,
+  withCheckbox,
+  withInput,
+  withList,
+  withType
+} from '../../../docs/import/manage_layers.js';
+import {
+  getStatesAssetsFromEe
+} from "../../../docs/import/list_ee_assets.js";
 import {disasterData, getCurrentLayers} from '../../../docs/import/manage_layers_lib.js';
-=======
-import {addDisaster, createOptionFrom, createStateAssetPickers, createTd, deleteDisaster, emptyCallback, getStatesAssetsFromEe, onCheck, onDelete, onInputBlur, onListBlur, stateAssets, updateAfterSort, withCheckbox, withInput, withList, withType, writeNewDisaster} from '../../../docs/import/add_disaster.js';
-import {disasterData, getCurrentLayers} from '../../../docs/import/add_disaster_util.js';
->>>>>>> master:cypress/integration/unit_tests/add_disaster_test.js
 import {withColor} from '../../../docs/import/color_function_util.js';
 import * as loading from '../../../docs/loading.js';
 import {getDisaster} from '../../../docs/resources';
@@ -72,18 +82,6 @@ describe('Unit tests for add_disaster page', () => {
   });
 
   it('gets state asset info from ee', () => {
-<<<<<<< HEAD:cypress/integration/unit_tests/manage_layers_test.js
-    cy.wrap(getStateEeAssets([KNOWN_STATE, UNKNOWN_STATE])).then((assets) => {
-      // tests folder type asset doesn't make it through
-      expect(assets.get(KNOWN_STATE)).to.eql([KNOWN_STATE_ASSET]);
-      expect(assets.get(UNKNOWN_STATE)).to.eql([]);
-      expect(ee.data.listAssets)
-          .to.be.calledWith(legacyStateDir, {}, Cypress.sinon.match.func);
-      expect(ee.data.listAssets)
-          .to.be.calledWith(legacyStatePrefix + KNOWN_STATE, {}, Cypress.sinon.match.func);
-      expect(ee.data.createFolder).to.be.calledOnce;
-    });
-=======
     cy.wrap(getStatesAssetsFromEe([KNOWN_STATE, UNKNOWN_STATE]))
         .then((assets) => {
           // tests folder type asset doesn't make it through
@@ -91,13 +89,12 @@ describe('Unit tests for add_disaster page', () => {
               [KNOWN_STATE, new Map([[KNOWN_STATE_ASSET, 'TABLE']])]);
           expect(assets[1]).to.eql([UNKNOWN_STATE, new Map()]);
           expect(ee.data.listAssets)
-              .to.be.calledWith(legacyStateDir, {}, emptyCallback);
+              .to.be.calledWith(legacyStateDir, {}, Cypress.sinon.match.func);
           expect(ee.data.listAssets)
               .to.be.calledWith(
-                  legacyStatePrefix + KNOWN_STATE, {}, emptyCallback);
+                  legacyStatePrefix + KNOWN_STATE, {}, Cypress.sinon.match.func);
           expect(ee.data.createFolder).to.be.calledOnce;
         });
->>>>>>> master:cypress/integration/unit_tests/add_disaster_test.js
   });
 
   it('populates state asset pickers', () => {
