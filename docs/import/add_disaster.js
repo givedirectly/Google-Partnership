@@ -456,7 +456,8 @@ const emptyCallback = () => {};
  *     retrieved
  * assets in the form [['WA', ['asset/path']], ...]
  */
-function getAssetsFromEe(states) {
+function getAssetsFromEe(
+    states) {
   return ee.data.listAssets(legacyStateDir, {}, emptyCallback)
       .then((result) => {
         const folders = new Set();
