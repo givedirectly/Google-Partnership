@@ -81,7 +81,7 @@ describe('Unit tests for add_disaster page', () => {
         });
   });
 
-  it.only('populates state asset pickers', () => {
+  it('populates state asset pickers', () => {
     const assetPickers = createAndAppend('div', 'state-asset-pickers');
     const assets = [KNOWN_STATE, UNKNOWN_STATE];
     stateAssets.set(KNOWN_STATE, new Map([[KNOWN_STATE_ASSET, 'TABLE']]));
