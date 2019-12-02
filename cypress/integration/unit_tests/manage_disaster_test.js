@@ -47,7 +47,9 @@ describe('Unit tests for manage_disaster.js', () => {
       makePoint(1.5, 0.5),
     ]);
     // Stub out delete and export. We'll assert on what was exported, below.
-    cy.stub(ee.data, 'deleteAsset').returns(Promise.resolve());
+    cy.stub(ee.data, 'deleteAsset').callsFake((_, callback) => {
+      callback();
+    });
     exportStub = cy.stub(ee.batch.Export.table, 'toAsset')
                      .returns({start: () => {}, id: 'FAKE_ID'});
 
@@ -87,7 +89,7 @@ describe('Unit tests for manage_disaster.js', () => {
     const {boundsPromise, mapBoundsCallback} =
         makeCallbackForTextAndPromise('Found bounds');
     const promise = run(testData, mapBoundsCallback);
-    expect(promise).to.not.be.false;
+    expect(promise).to.not.be.null;
     cy.wrap(promise)
         .then(() => {
           expect(exportStub).to.be.calledOnce;
@@ -126,7 +128,7 @@ describe('Unit tests for manage_disaster.js', () => {
     const {boundsPromise, mapBoundsCallback} =
         makeCallbackForTextAndPromise('Wrote bounds');
     const promise = run(testData, mapBoundsCallback);
-    expect(promise).to.not.be.false;
+    expect(promise).to.not.be.null;
     cy.wrap(promise)
         .then(() => {
           expect(exportStub).to.be.calledOnce;

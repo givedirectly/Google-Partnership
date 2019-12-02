@@ -38,7 +38,7 @@ function loadNavbarWithTitle(title) {
  *     avoid a duplicate fetch
  */
 function loadNavbarWithPicker(
-    firebaseAuthPromise, changeDisasterHandler = location.reload,
+    firebaseAuthPromise, changeDisasterHandler = null,
     firebaseDataPromise = null) {
   if (!firebaseDataPromise) {
     firebaseDataPromise = firebaseAuthPromise.then(getDisastersData);

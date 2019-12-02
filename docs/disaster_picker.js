@@ -6,8 +6,8 @@ export {initializeDisasterPicker};
  * Initializes the disaster picker.
  * @param {Promise<Map<string, Object>>} firebaseDataPromise Promise with data
  *     for all disasters
- * @param {Function} changeDisasterHandler Function invoked when current
- *     disaster is changed
+ * @param {?Function} changeDisasterHandler Function invoked when current
+ *     disaster is changed. location.reload is called if null
  */
 function initializeDisasterPicker(firebaseDataPromise, changeDisasterHandler) {
   const disasterDropdown = $('#disaster-dropdown');
@@ -20,7 +20,7 @@ function initializeDisasterPicker(firebaseDataPromise, changeDisasterHandler) {
     disasterDropdown.val(currentDisaster);
     disasterDropdown.on('change', () => {
       localStorage.setItem('disaster', disasterDropdown.val());
-      changeDisasterHandler();
+      changeDisasterHandler ? changeDisasterHandler() : location.reload();
     });
   });
 }
