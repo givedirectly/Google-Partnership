@@ -91,7 +91,7 @@ describe('Unit test for toggleLayerOn', () => {
       expect(promise).to.not.be.null;
 
       expect(layerArray[5].displayed).to.be.true;
-      expect(layerArray[5].isKmlLayer).to.be.true;
+      expect(layerArray[5].isLayerKml()).to.be.true;
       expect(layerArray[5].overlay[0].getMap()).to.not.be.null;
 
       // Turn layer off: disappears from map.

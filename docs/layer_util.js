@@ -101,9 +101,7 @@ class LayerDisplayData {
     return this.deckParams != null;
   }
 
-  /**
-   * @return {boolean} True if this layer is a KML layer
-   */
+  /** @return {boolean} True if this layer is a KML layer */
   isLayerKml() {
     return this.isKmlLayer;
   }
@@ -190,9 +188,7 @@ function toggleLayerOff(index, map) {
   const layerDisplayData = layerArray[index];
   layerDisplayData.displayed = false;
   if (layerDisplayData.isLayerKml()) {
-    for (let i = 0; i < layerDisplayData.overlay.length; i++) {
-      layerDisplayData.overlay[i].setMap(null);
-    }
+    layerDisplayData.overlay.forEach((o) => o.setMap(null));
   } else if (layerDisplayData.deckRendered()) {
     addLayerFromFeatures(layerDisplayData, index);
   } else {
