@@ -9,7 +9,7 @@ export {loadNavbarWithPicker, loadNavbarWithTitle};
  */
 function loadNavbar(callback) {
   // Use this script's URL to derive the URL for navbar.html.
-  $('#navbar').load(import.meta.url.replace(/\.js$/, '.html'), callback);
+  $('#navbar').load(getUrlRelativeToNavbarJs('navbar.html'), callback);
 }
 
 /**
@@ -23,6 +23,9 @@ function loadNavbarWithTitle(title) {
       navHeader.addClass('nav-header');
       navHeader.html(title);
       $('#nav-left').append(navHeader);
+      $('#map-href').prop('href', getUrlRelativeToNavbarJs('index.html'));
+      $('#add-disaster-href')
+          .prop('href', getUrlRelativeToNavbarJs('import/add_disaster.html'));
     }));
 }
 
@@ -34,7 +37,13 @@ function loadNavbarWithTitle(title) {
 function loadNavbarWithPicker(firebaseAuthPromise) {
   loadNavbar(
       () => $('#nav-left')
+                // Use this script's URL to derive the URL for
+                // disaster_picker.html.
                 .load(
-                    '/disaster_picker.html',
+                    getUrlRelativeToNavbarJs('disaster_picker.html'),
                     () => initializeDisasterPicker(firebaseAuthPromise)));
+}
+
+function getUrlRelativeToNavbarJs(replaceWith) {
+  return import.meta.url.replace(/navbar\.js$/, replaceWith);
 }
