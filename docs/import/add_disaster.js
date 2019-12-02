@@ -1,8 +1,9 @@
-import {eeStatePrefixLength, legacyStateDir} from '../ee_paths.js';
+import {eeLegacyPathPrefix, eeStatePrefixLength, legacyStateDir} from '../ee_paths.js';
 import {LayerType} from '../firebase_layers.js';
 import {disasterCollectionReference, getDisasters} from '../firestore_document.js';
 import {getDisaster} from '../resources.js';
 import {clearStatus, disasterData, getCurrentData, getCurrentLayers, getRowIndex, ILLEGAL_STATE_ERR, onUpdate, setCurrentDisaster, setStatus, updateLayersInFirestore} from './add_disaster_util.js';
+import {processNewEeLayer} from './add_layer.js';
 import {withColor} from './color_function_util.js';
 
 export {enableWhenReady, toggleState, updateAfterSort};
@@ -10,12 +11,15 @@ export {enableWhenReady, toggleState, updateAfterSort};
 export {
   addDisaster,
   createAssetPickers,
+  createLayerRow,
   createOptionFrom,
+  createStateAssetPickers,
   createTd,
   deleteDisaster,
   emptyCallback,
-  getAssetsFromEe,
+  getStatesAssetsFromEe,
   onCheck,
+  onDelete,
   onInputBlur,
   onListBlur,
   stateAssets,
@@ -26,9 +30,12 @@ export {
   writeNewDisaster,
 };
 
-// Map of state to list of known assets
+// A map of maps of the form:
+// {'WA' => {'asset/path': LayerType}}
 const stateAssets = new Map();
-
+// A map of maps of the form:
+// {'disaster-2017' => {'asset/path': LayerType}}
+const disasterAssets = new Map();
 const scoreAssetTypes = ['Poverty', 'Income', 'SVI'];
 
 // TODO: general reminder to add loading indicators for things like creating
@@ -75,7 +82,20 @@ function toggleDisaster(disaster) {
   // display layer table
   populateLayersTable();
   // display state asset pickers
-  return populateStateAssetPickers();
+  return populateStateAndDisasterAssetPickers(disaster);
+}
+
+/**
+ * Reindex table rows in between bounds (inclusive).
+ * @param {number} from
+ * @param {number} to
+ * @param {number} numLayers
+ */
+function reindex(from, to, numLayers) {
+  for (let i = from; i <= to; i++) {
+    const tableIndex = numLayers - i;
+    $('#tbody tr:nth-child(' + tableIndex + ') .index-td').text(i);
+  }
 }
 
 /**
@@ -95,12 +115,10 @@ function updateAfterSort(ui) {
   // insert at new index
   layers.splice(newRealIndex, 0, row);
 
-  // Reindex all the layers.
-  for (let i = Math.min(oldRealIndex, newRealIndex);
-       i <= Math.max(oldRealIndex, newRealIndex); i++) {
-    const tableIndex = numLayers - i;
-    $('#tbody tr:nth-child(' + tableIndex + ') .index-td').text(i);
-  }
+  // reindex layers.
+  reindex(
+      Math.min(oldRealIndex, newRealIndex),
+      Math.max(oldRealIndex, newRealIndex), numLayers);
 
   return updateLayersInFirestore();
 }
@@ -218,6 +236,36 @@ function withCheckbox(td, layer, property) {
   return td.append(checkbox);
 }
 
+/**
+ * Deletes layer on confirmation.
+ * @param {JQuery<HTMLTableRowElement>} row
+ * @return {?Promise<void>} See updateLayersInFirestore doc
+ */
+function onDelete(row) {
+  if (window.confirm('Delete layer?')) {
+    const index = row.children('.index-td').text();
+    const layers = getCurrentLayers();
+    layers.splice(index, 1);
+    const numLayers = layers.length;
+    row.remove();
+    reindex(index, numLayers - 1, numLayers);
+    return updateLayersInFirestore();
+  }
+}
+
+/**
+ * Adds a delete row function to the given td.
+ * @param {JQuery<HTMLTableDataCellElement>} td cell
+ * @param {number} index
+ * @return {JQuery<HTMLElement>}
+ */
+function withDeleteButton(td) {
+  const button = $(document.createElement('button')).prop('type', 'button');
+  button.append($(document.createElement('i')).addClass('fas fa-trash-alt'));
+  button.on('click', () => onDelete(td.parent('tr')));
+  return td.append(button);
+}
+
 /** Populates the layers table with layers of current disaster. */
 function populateLayersTable() {
   const layers = getCurrentLayers();
@@ -225,40 +273,66 @@ function populateLayersTable() {
   tableBody.empty();
   for (let i = layers.length - 1; i >= 0; i--) {
     const layer = layers[i];
-    const row = $(document.createElement('tr'));
-    // index
-    row.append(createTd().text(i).addClass('index-td'));
-    // display name
-    // TODO: make this editable.
-    row.append(withInput(createTd(), layer, 'display-name'));
-    // asset path/url sample
-    const assetOrUrl = createTd();
-    if (layer['ee-name']) {
-      withText(assetOrUrl, layer, 'ee-name');
-    } else if (layer['urls']) {
-      withList(assetOrUrl, layer, 'urls');
-    } else {
-      setStatus(ILLEGAL_STATE_ERR + 'unrecognized type: ' + layer);
-    }
-    row.append(assetOrUrl);
-    // type
-    row.append(withType(createTd(), layer, 'asset-type'));
-    // display on load
-    row.append(withCheckbox(createTd(), layer, 'display-on-load'));
-    // color
-    // TODO: make this editable.
-    row.append(withColor(createTd(), layer, 'color-function', i));
-    tableBody.append(row);
+    tableBody.append(createLayerRow(layer, i));
   }
 }
 
 /**
- * Populates the state asset pickers with all known earth engine assets for
- * those states.
- * @return {Promise<void>} returns when all asset pickers have been populated
- * after potentially retrieving states' assets from ee.
+ * Creates a new row in the layers table.
+ *
+ * @param {Object} layer
+ * @param {number} index
+ * @return {JQuery<HTMLTableRowElement>}
  */
-function populateStateAssetPickers() {
+function createLayerRow(layer, index) {
+  const row = $(document.createElement('tr'));
+  // index
+  row.append(createTd().text(index).addClass('index-td'));
+  // display name
+  // TODO: make this editable.
+  row.append(withInput(createTd(), layer, 'display-name'));
+  // asset path/url sample
+  const assetOrUrl = createTd();
+  if (layer['ee-name']) {
+    withText(assetOrUrl, layer, 'ee-name');
+  } else if (layer['urls']) {
+    withList(assetOrUrl, layer, 'urls');
+  } else {
+    setStatus(ILLEGAL_STATE_ERR + 'unrecognized type: ' + layer);
+  }
+  row.append(assetOrUrl);
+  // type
+  row.append(withType(createTd(), layer, 'asset-type'));
+  // display on load
+  row.append(withCheckbox(createTd(), layer, 'display-on-load'));
+  // color
+  row.append(withColor(createTd(), layer, 'color-function'));
+  row.append(withDeleteButton(createTd()));
+  return row;
+}
+
+/**
+ * Populates the state and disaster asset pickers with all known earth engine
+ * assets for this disaster and relevant states.
+ * @param {string} disaster disaster id in the form name-year
+ * @return {Promise<void>} returns when all asset pickers have been populated
+ * after potentially retrieving assets from ee.
+ */
+function populateStateAndDisasterAssetPickers(disaster) {
+  const assetPickerDiv = $('.asset-pickers');
+  assetPickerDiv.empty();
+
+  const promises = [];
+  if (disasterAssets.has(disaster)) {
+    createDisasterAssetPicker(disaster);
+  } else {
+    const disasterDone = getDisasterAssetsFromEe(disaster).then((assets) => {
+      disasterAssets.set(disaster, assets);
+      createDisasterAssetPicker(disaster);
+    });
+    promises.push(disasterDone);
+  }
+
   const states = getCurrentData()['states'];
   const statesToFetch = [];
   for (const state of states) {
@@ -266,26 +340,21 @@ function populateStateAssetPickers() {
   }
   // TODO: add functionality to re-pull all cached states from ee without
   // reloading the page.
-  let assetPickersDone = Promise.resolve();
   if (statesToFetch.length === 0) {
-    createAssetPickers(states, 'asset-pickers');
+    createStateAssetPickers(states);
     initializeScoreSelectors(states);
   } else {
-    // We are already doing this inside createAssetPickers but not until
-    // after the first promise completes so also do it here so lingering
-    // pickers from previous disasters don't hang around.
-    $('#asset-pickers').empty();
-    assetPickersDone = getAssetsFromEe(statesToFetch).then((assets) => {
+    const statesDone = getStatesAssetsFromEe(statesToFetch).then((assets) => {
       for (const asset of assets) {
         stateAssets.set(asset[0], asset[1]);
       }
-      createAssetPickers(states, 'asset-pickers');
+      createStateAssetPickers(states);
       initializeScoreSelectors(states);
     });
+    promises.push(statesDone);
   }
 
-  // TODO: display more disaster info including current layers etc.
-  return assetPickersDone;
+  return Promise.all(promises);
 }
 
 /**
@@ -324,9 +393,10 @@ function initializeScoreSelectors(states) {
 
 /**
  * Initializes a dropdown with assets.
- * @param {Array<string>} assets array of assets for add to dropdown
+ * @param {Map<string, LayerType>} assets map of assets to add to dropdown
  * @param {string} row The asset type/row to put the dropdown in.
  * @param {string} state The state the assets are in.
+ * @return {JQuery<HTMLSelectElement>}
  */
 function createAssetDropdown(assets, row, state) {
   // Create the asset selector and add a 'None' option.
@@ -335,8 +405,8 @@ function createAssetDropdown(assets, row, state) {
   select.append(createOptionFrom('None'));
 
   // Add assets to selector and return it.
-  for (let i = 0; i < assets.length; i++) {
-    select.append(createOptionFrom(assets[i]));
+  for (const asset of assets.keys()) {
+    select.append(createOptionFrom(asset));
   }
   return select;
 }
@@ -447,6 +517,18 @@ function notAllLowercase(val) {
 // Needed for testing :/
 const emptyCallback = () => {};
 
+/**
+ * Gets all assets for the given disaster. Assumes an ee folder has already
+ * been created for this disaster.
+ * @param {string} disaster disaster in the form name-year
+ * @return {Promise<Map<string, string>>} Returns a promise containing the map
+ * of asset path to type for the given disaster.
+ */
+function getDisasterAssetsFromEe(disaster) {
+  return ee.data.listAssets(eeLegacyPathPrefix + disaster, {}, emptyCallback)
+      .then(getIds);
+}
+
 // TODO: add functionality for adding assets to disaster records from these
 // pickers.
 /**
@@ -454,9 +536,9 @@ const emptyCallback = () => {};
  * @param {Array<string>} states e.g. ['WA']
  * @return {Promise<Array<Array<string | Array<string>>>>} 2-d array of all
  *     retrieved
- * assets in the form [['WA', ['asset/path']], ...]
+ * assets in the form [['WA', {'asset/path': LayerType,...}], ...]
  */
-function getAssetsFromEe(states) {
+function getStatesAssetsFromEe(states) {
   return ee.data.listAssets(legacyStateDir, {}, emptyCallback)
       .then((result) => {
         const folders = new Set();
@@ -476,63 +558,100 @@ function getAssetsFromEe(states) {
               // TODO: add status bar for when this is finished.
               ee.data.setAssetAcl(dir, {all_users_can_read: true});
             });
-            promises.push(Promise.resolve([state, []]));
+            promises.push(Promise.resolve([state, new Map()]));
           } else {
-            promises.push(
-                ee.data.listAssets(dir, {}, emptyCallback).then((result) => {
-                  const assets = [];
-                  if (result.assets) {
-                    for (const asset of result.assets) {
-                      if (checkSupportedAssetType(asset)) {
-                        assets.push(asset.id);
-                      }
-                    }
-                  }
-                  return [state, assets];
-                }));
+            promises.push(ee.data.listAssets(dir, {}, emptyCallback)
+                              .then((result) => [state, getIds(result)]));
           }
         }
         return Promise.all(promises);
       });
 }
 
+/**
+ * Turns a listAssets call result into a map of asset -> type.
+ * @param {Object} listAssetsResult result of call to ee.data.listAssets
+ * @return {Map<string, string>}
+ */
+function getIds(listAssetsResult) {
+  const assets = new Map();
+  if (listAssetsResult.assets) {
+    for (const asset of listAssetsResult.assets) {
+      const type = maybeConvertAssetType(asset);
+      if (type) assets.set(asset.id, type);
+    }
+  }
+  return assets;
+}
+
 // TODO: surface a warning if unsupported asset types are found?
 /**
  * Check that the type of the given asset is one we support (Unsupported:
  * ALGORITHM, FOLDER, UNKNOWN).
- * @param {Object} asset
- * @return {boolean}
+ * @param {Object} asset single item from result of listAssets
+ * @return {?number} the type of the asset if it's supported, else null
  */
-function checkSupportedAssetType(asset) {
-  const type = asset.type;
-  return type === 'IMAGE' || type === 'IMAGE_COLLECTION' || type === 'TABLE';
+function maybeConvertAssetType(asset) {
+  switch (asset.type) {
+    case 'IMAGE':
+      return LayerType.IMAGE;
+    case 'IMAGE_COLLECTION':
+      return LayerType.IMAGE_COLLECTION;
+    case 'TABLE':
+      return LayerType.FEATURE_COLLECTION;
+    default:
+      return null;
+  }
 }
 
 /**
- * Given states, displays their assets in pickers. Right now, selecting on
- * those pickers doesn't actually do anything.
- * @param {Array<string>} states e.g. ['WA']
+ * Create asset pickers for the given states.
+ * @param {Array<string>} states of the form ['WA', ...]
  */
-function createAssetPickers(states) {
-  const assetPickerDiv = $('#asset-pickers');
-  assetPickerDiv.empty();
-  for (const state of states) {
+function createStateAssetPickers(states) {
+  createAssetPickers(states, stateAssets, $('#state-asset-pickers'));
+}
+
+/**
+ * Create an asset picker for the given disaster.
+ * @param {string} disaster
+ */
+function createDisasterAssetPicker(disaster) {
+  createAssetPickers([disaster], disasterAssets, $('#disaster-asset-picker'));
+}
+/**
+ * Given either states or disasters, displays their assets in pickers.
+ * @param {Array<string>} pickers e.g. ['WA',...] or ['harvey-2017']
+ * @param {Map<string, Array<string>>} assetMap
+ * @param {JQuery<HTMLElement>} div where to attach new pickers
+ */
+function createAssetPickers(pickers, assetMap, div) {
+  for (const folder of pickers) {
     const assetPicker = $(document.createElement('select'))
                             .attr({
-                              multiple: 'multiple',
-                              id: state + '-adder',
+                              id: folder + '-adder',
                             })
                             .width(200);
-    if (stateAssets.get(state)) {
-      for (const asset of stateAssets.get(state)) {
-        assetPicker.append(createOptionFrom(asset));
+    if (assetMap.get(folder)) {
+      for (const asset of assetMap.get(folder)) {
+        const type = layerTypeStrings.get(asset[1]);
+        assetPicker.append(
+            createOptionFrom(asset[0]).text(asset[0] + '-' + type));
       }
     }
     const assetPickerLabel = $(document.createElement('label'))
-                                 .text('Add EE asset(s) for ' + state + ': ');
+                                 .text('Add layer from ' + folder + ': ');
+    const addButton =
+        $(document.createElement('button')).prop('type', 'button').text('add');
+    addButton.on('click', () => {
+      const asset = assetPicker.val();
+      const type = assetMap.get(folder).get(asset);
+      processNewEeLayer(asset, type);
+    });
+    div.append(assetPickerLabel);
     assetPickerLabel.append(assetPicker);
-    assetPickerDiv.append(assetPickerLabel);
-    assetPickerDiv.append(document.createElement('br'));
+    assetPickerLabel.append(addButton);
+    div.append(document.createElement('br'));
   }
 }
 

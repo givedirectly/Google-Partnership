@@ -18,6 +18,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.4/jquery-ui.js"></script>
 
   <script src="https://apis.google.com/js/api.js"></script>
+
+  <!-- juliexxia@'s kit, switch to GD's if we want to use -->
+  <script src="https://kit.fontawesome.com/61a3fbf666.js" crossorigin="anonymous"></script>
   <script type="module" src="./add_disaster_startup.js"></script>
 
   <!-- Load our styles. -->
@@ -36,7 +39,7 @@
   <select id="pending-disaster" style="width: 160px" hidden="true" disabled="true">
     <option value="pending" id="pending">...</option>
   </select>
-  <span>  OR  </span>
+  <span>OR</span>
   <button type="button" id="create-new-disaster">Create New Disaster</button>
   <button type="button" id="delete", disabled="true">Delete Disaster</button>
 </div>
@@ -52,12 +55,10 @@
         <th>Type</th>
         <th>Display on Load</th>
         <th>Color</th>
+        <th></th>
       </tr>
     </thead>
     <tbody id="tbody"></tbody>
-    <div id="writeWaiter">
-      <div id="writeWaiter-loader"></div>
-    </div>
   </table>
   <br>
   <div id="color-fxn-editor" class="editor" hidden="true">
@@ -67,9 +68,15 @@
     <div id="discrete" hidden="true" class="color-type-div"></div>
   </div>
   <br>
-  <div id="asset-pickers"></div>
+  <div id="asset-pickers">
+    <div id="disaster-asset-picker" class="asset-pickers"></div>
+    <div id="state-asset-pickers" class="asset-pickers"></div>
+  </div>
   <p>Upload additional assets via the <a href="https://code.earthengine.google.com/" target="_blank"> code editor </a></p>
   <br>
+  <div id="writeWaiter">
+    <div id="writeWaiter-loader"></div>
+  </div>
 </div>
 <div id="new-disaster" hidden="true">
   <button type="button" id="cancel-new-disaster">Cancel</button>
@@ -133,11 +140,7 @@
     <button type="button" id="add-disaster-button" disabled="true">Add Disaster</button>
   </form>
 </div>
-<div id="selected-disaster" hidden="true">
-  <p>Upload additional assets via the <a href="https://code.earthengine.google.com/" target="_blank"> code editor </a></p>
-  <div id="asset-pickers"></div>
-</div>
-<div id="score-asset-selection" style="padding-top: 40px;"> 
+<div id="score-asset-selection" style="padding-top: 40px;">
   <div class="formTitle">Select Score Data</div>
   <div>
     <table id="asset-selection-table">
