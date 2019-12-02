@@ -1,6 +1,6 @@
 import {gdEeStatePrefix, legacyStateDir, legacyStatePrefix} from '../../../docs/ee_paths.js';
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
-import {addDisaster, createAssetPickers, createOptionFrom, createTd, deleteDisaster, emptyCallback, getAssetsFromEe, onCheck, onInputBlur, onListBlur, stateAssets, updateAfterSort, withCheckbox, withInput, withList, withType, writeNewDisaster} from '../../../docs/import/add_disaster.js';
+import {addDisaster, createAssetPickers, createOptionFrom, createTd, deleteDisaster, emptyCallback, getAssetsFromEe, onCheck, onDelete, onInputBlur, onListBlur, stateAssets, updateAfterSort, withCheckbox, withInput, withList, withType, writeNewDisaster} from '../../../docs/import/add_disaster.js';
 import {disasterData, getCurrentLayers} from '../../../docs/import/add_disaster_util.js';
 import {withColor} from '../../../docs/import/color_function_util.js';
 import * as loading from '../../../docs/loading.js';
@@ -324,6 +324,23 @@ describe('Unit tests for add_disaster page', () => {
 
   it('tests checkbox cell check', () => checkboxTest(true));
   it('tests checkbox cell uncheck', () => checkboxTest(false));
+
+  it('deletes a layer', () => {
+    setDisasterAndLayers([{layer: 0}, {layer: 1}]);
+    const tbody = createAndAppend('tbody', 'tbody');
+    const rows = createTrs(2);
+    tbody.append(rows);
+
+    cy.stub(window, 'confirm').returns(true);
+    cy.wrap(onDelete(rows[0])).then(() => {
+      expect(tbody.children('tr').length).to.equal(1);
+      // ensure reindex
+      expect(tbody.children('tr').children('.index-td').text()).to.equal('0');
+      expect(getCurrentLayers().length).to.equal(1);
+      // ensure right layer was deleted
+      expect(getCurrentLayers()[0]['layer']).to.equal(1);
+    });
+  });
 
   it('checks data updates after a sort', () => {
     setDisasterAndLayers(

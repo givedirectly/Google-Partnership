@@ -16,6 +16,7 @@ export {
   emptyCallback,
   getAssetsFromEe,
   onCheck,
+  onDelete,
   onInputBlur,
   onListBlur,
   stateAssets,
@@ -79,6 +80,19 @@ function toggleDisaster(disaster) {
 }
 
 /**
+ * Reindex table rows in between bounds (inclusive).
+ * @param {number} from
+ * @param {number} to
+ * @param {number} numLayers
+ */
+function reindex(from, to, numLayers) {
+  for (let i = from; i <= to; i++) {
+    const tableIndex = numLayers - i;
+    $('#tbody tr:nth-child(' + tableIndex + ') .index-td').text(i);
+  }
+}
+
+/**
  * Update the table and disasterData with new indices after a layer has been
  * reordered. Then write to firestore.
  * @param {Object} ui jquery object that contains details about this sort
@@ -95,12 +109,10 @@ function updateAfterSort(ui) {
   // insert at new index
   layers.splice(newRealIndex, 0, row);
 
-  // Reindex all the layers.
-  for (let i = Math.min(oldRealIndex, newRealIndex);
-       i <= Math.max(oldRealIndex, newRealIndex); i++) {
-    const tableIndex = numLayers - i;
-    $('#tbody tr:nth-child(' + tableIndex + ') .index-td').text(i);
-  }
+  // reindex layers.
+  reindex(
+      Math.min(oldRealIndex, newRealIndex),
+      Math.max(oldRealIndex, newRealIndex), numLayers);
 
   return updateLayersInFirestore();
 }
@@ -218,6 +230,36 @@ function withCheckbox(td, layer, property) {
   return td.append(checkbox);
 }
 
+/**
+ * Deletes layer on confirmation.
+ * @param {JQuery<HTMLTableRowElement>} row
+ * @return {?Promise<void>} See updateLayersInFirestore doc
+ */
+function onDelete(row) {
+  if (window.confirm('Delete layer?')) {
+    const index = row.children('.index-td').text();
+    const layers = getCurrentLayers();
+    layers.splice(index, 1);
+    const numLayers = layers.length;
+    row.remove();
+    reindex(index, numLayers - 1, numLayers);
+    return updateLayersInFirestore();
+  }
+}
+
+/**
+ * Adds a delete row function to the given td.
+ * @param {JQuery<HTMLTableDataCellElement>} td cell
+ * @param {number} index
+ * @return {JQuery<HTMLElement>}
+ */
+function withDeleteButton(td) {
+  const button = $(document.createElement('button')).prop('type', 'button');
+  button.append($(document.createElement('i')).addClass('fas fa-trash-alt'));
+  button.on('click', () => onDelete(td.parent('tr')));
+  return td.append(button);
+}
+
 /** Populates the layers table with layers of current disaster. */
 function populateLayersTable() {
   const layers = getCurrentLayers();
@@ -247,7 +289,8 @@ function populateLayersTable() {
     row.append(withCheckbox(createTd(), layer, 'display-on-load'));
     // color
     // TODO: make this editable.
-    row.append(withColor(createTd(), layer, 'color-function', i));
+    row.append(withColor(createTd(), layer, 'color-function'));
+    row.append(withDeleteButton(createTd()));
     tableBody.append(row);
   }
 }
@@ -327,6 +370,7 @@ function initializeScoreSelectors(states) {
  * @param {Array<string>} assets array of assets for add to dropdown
  * @param {string} row The asset type/row to put the dropdown in.
  * @param {string} state The state the assets are in.
+ * @return {JQuery<HTMLSelectElement>}
  */
 function createAssetDropdown(assets, row, state) {
   // Create the asset selector and add a 'None' option.
