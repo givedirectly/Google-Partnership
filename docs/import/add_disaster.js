@@ -232,7 +232,7 @@ function withCheckbox(td, layer, property) {
 
 /**
  * Deletes layer on confirmation.
- * @param {JQuery<HTMLTableDataCellElement>} row cell
+ * @param {JQuery<HTMLTableRowElement>} row
  * @return {?Promise<void>} See updateLayersInFirestore doc
  */
 function onDelete(row) {
