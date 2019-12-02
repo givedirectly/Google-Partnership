@@ -274,23 +274,24 @@ function run(disasterData, setMapBoundsInfoFunction = setMapBoundsInfo) {
       allStatesProcessing,
       scoreAssetPath.substring(scoreAssetPath.lastIndexOf('/') + 1),
       scoreAssetPath);
-  return ee.data.deleteAsset(scoreAssetPath, () => {})
-      .catch((err) => {
-        if (err.message === 'Asset not found.') {
+  return new Promise((resolve, reject) => {
+    ee.data.deleteAsset(scoreAssetPath, (_, err) => {
+      if (err) {
+        if (err === 'Asset not found.') {
           console.log(
               'Old ' + scoreAssetPath + ' not present, did not delete it');
         } else {
-          throw err;
+          reject(new Error('Error deleting: ' + err));
         }
-      })
-      .then(() => {
-        task.start();
-        $('#upload-status')
-            .text(
-                'Check Code Editor console for upload progress. Task: ' +
-                task.id);
-        return task;
-      });
+      }
+      task.start();
+      $('#upload-status')
+          .text(
+              'Check Code Editor console for upload progress. Task: ' +
+              task.id);
+      resolve(task);
+    });
+  });
 }
 
 const damageError = {
@@ -495,11 +496,14 @@ function enableWhenFirestoreReady(allDisastersData) {
   processButton.on('click', () => {
     // Disable button to avoid over-clicking. User can reload page if needed.
     processButton.prop('disabled', true);
-    run(disasterData[getDisaster()]);
+    run(disasterData.get(getDisaster()));
   });
 }
 
+let displayedCurrentDisaster = false;
+
 function onSetDisaster() {
+  displayedCurrentDisaster =false;
   const currentDisaster = getDisaster();
   if (currentDisaster) {
     const states = disasterData.get(currentDisaster).states;
@@ -523,10 +527,21 @@ function onSetDisaster() {
         }
       });
     }
-    promise.then(() => initializeScoreSelectors(states));
+    promise.then(() => {
+      if (getDisaster() === currentDisaster && !displayedCurrentDisaster) {
+        // Don't do anything unless this is still the right disaster.
+        initializeScoreSelectors(states);
+        displayedCurrentDisaster = true;
+      }
+    });
   }
 }
 
+/**
+ * If disaster assets not known for disaster, kicks off fetch and stores promise
+ * in disasterAssets array.
+ * @param disaster
+ */
 function maybeFetchDisasterAssets(disaster) {
   if (!disasterAssets.has(disaster)) {
     disasterAssets.set(disaster, getDisasterAssetsFromEe(disaster));
