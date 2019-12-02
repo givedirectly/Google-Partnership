@@ -41,8 +41,7 @@ function createStyleFunction(colorFunctionProperties) {
           colorFunctionProperties['columns'][field]['max'],
           colorFunctionProperties['color']);
     case ColorStyle.DISCRETE:
-      return createDiscreteFunction(
-          field, colorFunctionProperties['colors']);
+      return createDiscreteFunction(field, colorFunctionProperties['colors']);
   }
 }
 
