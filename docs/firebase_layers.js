@@ -21,6 +21,8 @@ const ColorStyle = {
 };
 Object.freeze(ColorStyle);
 
+const opacity = 300;
+
 /**
  * Creates the style function for the given properties. Caller should cache to
  * avoid recomputing every time.
@@ -29,20 +31,18 @@ Object.freeze(ColorStyle);
  */
 function createStyleFunction(colorFunctionProperties) {
   const field = colorFunctionProperties['field'];
-  // const opacity = colorFunctionProperties['opacity'];
-  const opacity = 500;
   switch (colorFunctionProperties['current-style']) {
     case ColorStyle.SINGLE:
       const color = colorMap.get(colorFunctionProperties['color']);
       return () => color;
     case ColorStyle.CONTINUOUS:
       return createContinuousFunction(
-          field, opacity, colorFunctionProperties['columns'][field]['min'],
+          field, colorFunctionProperties['columns'][field]['min'],
           colorFunctionProperties['columns'][field]['max'],
           colorFunctionProperties['color']);
     case ColorStyle.DISCRETE:
       return createDiscreteFunction(
-          field, opacity, colorFunctionProperties['colors']);
+          field, colorFunctionProperties['colors']);
   }
 }
 
@@ -51,13 +51,12 @@ function createStyleFunction(colorFunctionProperties) {
  * base color to white.
  *
  * @param {String} field property whose value is used to determine color
- * @param {number} opacity
  * @param {number} minVal minVal of {@param field}
  * @param {number} maxVal maxVal of {@param field}
  * @param {String} color base color
  * @return {Function}
  */
-function createContinuousFunction(field, opacity, minVal, maxVal, color) {
+function createContinuousFunction(field, minVal, maxVal, color) {
   const colorRgb = colorMap.get(color);
   const white = colorMap.get('white');
   return (feature) => {
@@ -77,12 +76,11 @@ function createContinuousFunction(field, opacity, minVal, maxVal, color) {
 /**
  * Creates a discrete color function for a feature collection.
  * @param {String} field property whose value is used to determine color
- * @param {number} opacity
  * @param {Map<String, String>} colors field value:color (e.g. 'minor-damage':
  *     'red')
  * @return {Function}
  */
-function createDiscreteFunction(field, opacity, colors) {
+function createDiscreteFunction(field, colors) {
   // TODO: allow for a default color if field value color isn't specified.
   return (feature) => {
     const color = colors[feature['properties'][field]];

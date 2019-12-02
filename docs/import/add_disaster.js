@@ -2,7 +2,6 @@ import {eeLegacyPathPrefix, eeStatePrefixLength, legacyStateDir} from '../ee_pat
 import {LayerType} from '../firebase_layers.js';
 import {disasterCollectionReference, getDisasters} from '../firestore_document.js';
 import {getDisaster} from '../resources.js';
-
 import {clearStatus, disasterData, getCurrentData, getCurrentLayers, getRowIndex, ILLEGAL_STATE_ERR, onUpdate, setCurrentDisaster, setStatus, updateLayersInFirestore} from './add_disaster_util.js';
 import {processNewEeLayer} from './add_layer.js';
 import {withColor} from './color_function_util.js';
@@ -31,10 +30,10 @@ export {
 };
 
 // A map of maps of the form:
-// {'WA' => {'asset/path': 'TYPE'}}
+// {'WA' => {'asset/path': LayerType}}
 const stateAssets = new Map();
 // A map of maps of the form:
-// {'disaster-2017' => {'asset/path': 'TYPE'}}
+// {'disaster-2017' => {'asset/path': LayerType}}
 const disasterAssets = new Map();
 const scoreAssetTypes = ['Poverty', 'Income', 'SVI'];
 
@@ -475,7 +474,8 @@ function notAllLowercase(val) {
 const emptyCallback = () => {};
 
 /**
- * Gets all assets for the given disaster.
+ * Gets all assets for the given disaster. Assumes an ee folder has already
+ * been created for this disaster.
  * @param {string} disaster disaster in the form name-year
  * @return {Promise<Map<string, string>>} Returns a promise containing the map
  * of asset path to type for the given disaster.

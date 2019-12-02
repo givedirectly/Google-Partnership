@@ -19,9 +19,7 @@ describe('Unit tests for add_disaster page', () => {
     disasterData.clear();
   });
 
-  afterEach(() => {
-    disasterData.clear();
-  });
+  afterEach(() => disasterData.clear());
 
   it('processes a new feature layer with <= 25 vals', () => {
     stubFeatureCollection(5);
@@ -79,11 +77,10 @@ describe('Unit tests for add_disaster page', () => {
         .returns(featureCollection);
 
     cy.wrap(processNewEeLayer(mockAsset, LayerType.FEATURE_COLLECTION))
-        .then(() => {
-          const layer = getCurrentLayers()[0];
-          expect(layer['color-function']['columns']['flavor']['values'])
-              .to.eql(['vanilla']);
-        });
+        .then(
+            () => expect(getCurrentLayers()[0]['color-function']['columns']
+                                           ['flavor']['values'])
+                      .to.eql(['vanilla']));
   });
 
   it('processes a new image layer', () => {
