@@ -602,7 +602,8 @@ function writeNewDisaster(disasterId, states) {
   // We expect this recently created disaster to go near the top of the list, so
   // do a linear scan down.
   // Note: let's hope this tool isn't being used in the year 10000.
-  disasterOptions.each(/* shh eslint @this HTMLElement */ function() {
+  // Comment needed to quiet eslint.
+  disasterOptions.each(/* @this HTMLElement */ function() {
     if ($(this).val() < disasterId) {
       $(createOptionFrom(disasterId)).insertBefore($(this));
       added = true;
@@ -706,6 +707,11 @@ function createAssetDropdown(assets, row, state) {
   return select;
 }
 
+/**
+ * Simple utility to create an option for a select.
+ * @param {string} text Displayed text/value of option
+ * @return {JQuery<HTMLOptionElement>}
+ */
 function createOptionFrom(text) {
   return $(document.createElement('option')).text(text);
 }

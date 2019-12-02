@@ -23,6 +23,10 @@ export {
 // ready, but set to an empty map for use in tests.
 let disasterData = new Map();
 
+/**
+ * Sets the global {@link disasterData} to the passed-in parameter.
+ * @param {Map} readDisasterData value to set disasterData to
+ */
 function setDisasterData(readDisasterData) {
   disasterData = readDisasterData;
 }
