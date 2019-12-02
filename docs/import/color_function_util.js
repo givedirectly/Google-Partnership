@@ -232,6 +232,10 @@ function onClick(td, type) {
   displaySchema(type);
 }
 
+/**
+ * Highlights or unhighlights the row of the current global td.
+ * @param {boolean} selected
+ */
 function selectCurrentRow(selected) {
   if (selected) {
     $(globalTd).parent('tr').addClass('selected');
