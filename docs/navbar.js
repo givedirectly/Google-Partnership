@@ -8,7 +8,6 @@ export {loadNavbarWithPicker, loadNavbarWithTitle};
  * @param {Function} callback the callback invoked upon load
  */
 function loadNavbar(callback) {
-  // Use this script's URL to derive the URL for navbar.html.
   $('#navbar').load(getUrlRelativeToNavbarJs('navbar.html'), callback);
 }
 
@@ -37,13 +36,17 @@ function loadNavbarWithTitle(title) {
 function loadNavbarWithPicker(firebaseAuthPromise) {
   loadNavbar(
       () => $('#nav-left')
-                // Use this script's URL to derive the URL for
-                // disaster_picker.html.
                 .load(
                     getUrlRelativeToNavbarJs('disaster_picker.html'),
                     () => initializeDisasterPicker(firebaseAuthPromise)));
 }
 
+/**
+ * Get url of a file in or below our docs directory by using the path of this
+ * current script.
+ * @param {string} replaceWith
+ * @return {string}
+ */
 function getUrlRelativeToNavbarJs(replaceWith) {
   return import.meta.url.replace(/navbar\.js$/, replaceWith);
 }
