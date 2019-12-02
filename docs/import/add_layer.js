@@ -56,7 +56,7 @@ function processNewEeLayer(asset, type) {
               'display-name': '',
               'display-on-load': false,
             };
-            // return prependToTable(layer);
+            return prependToTable(layer);
           });
   }
 }
