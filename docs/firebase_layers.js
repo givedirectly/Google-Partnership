@@ -81,7 +81,6 @@ function createContinuousFunction(field, minVal, maxVal, color) {
  * @return {Function}
  */
 function createDiscreteFunction(field, colors) {
-  console.log(field, colors);
   return (feature) => {
     const color = colors[feature['properties'][field]];
     const rgba = colorMap.get(color);

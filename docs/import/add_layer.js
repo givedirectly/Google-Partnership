@@ -44,7 +44,6 @@ function processNewEeLayer(asset, type) {
       return convertEeObjectToPromise(
                  ee.Dictionary.fromLists(properties, stats))
           .then((columns) => {
-            console.log(columns);
             const layer = {
               'asset-type': type,
               'ee-name': asset,
