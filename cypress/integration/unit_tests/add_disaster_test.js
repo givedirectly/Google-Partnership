@@ -81,7 +81,7 @@ describe('Unit tests for add_disaster page', () => {
         });
   });
 
-  it('populates state asset pickers', () => {
+  it.only('populates state asset pickers', () => {
     const assetPickers = createAndAppend('div', 'state-asset-pickers');
     const assets = [KNOWN_STATE, UNKNOWN_STATE];
     stateAssets.set(KNOWN_STATE, new Map([[KNOWN_STATE_ASSET, 'TABLE']]));
@@ -91,7 +91,7 @@ describe('Unit tests for add_disaster page', () => {
     // 2 x <label> (w/ select nested inside) <br>
     expect(assetPickers.children().length).to.equal(4);
     const known = $('#' + KNOWN_STATE + '-adder');
-    expect(known).to.contain(gdEeStatePrefix + KNOWN_STATE + '/snap,TABLE');
+    expect(known).to.contain(gdEeStatePrefix + KNOWN_STATE + '/snap');
     expect(known.children().length).to.equal(1);
     expect($('#' + UNKNOWN_STATE + '-adder').children().length).to.equal(0);
   });
