@@ -432,7 +432,8 @@ function writeNewDisaster(disasterId, states) {
     setStatus('Error: disaster with that name and year already exists.');
     return Promise.resolve(false);
   }
-  disasterData.set(disasterId, {states: states});
+  const data = {states: states, layers: []};
+  disasterData.set(disasterId, data);
   clearStatus();
 
   const disasterPicker = $('#disaster');
@@ -454,7 +455,7 @@ function writeNewDisaster(disasterId, states) {
 
   return disasterCollectionReference()
       .doc(disasterId)
-      .set({states: states, layers: []})
+      .set(data)
       .then(() => true);
 }
 
