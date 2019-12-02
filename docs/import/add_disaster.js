@@ -492,7 +492,7 @@ function getDisasterAssetsFromEe(disaster) {
  * @param {Array<string>} states e.g. ['WA']
  * @return {Promise<Array<Array<string | Array<string>>>>} 2-d array of all
  *     retrieved
- * assets in the form [['WA', {'asset/path': type,...}], ...]
+ * assets in the form [['WA', {'asset/path': LayerType,...}], ...]
  */
 function getStatesAssetsFromEe(states) {
   return ee.data.listAssets(legacyStateDir, {}, emptyCallback)
