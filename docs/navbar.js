@@ -9,7 +9,7 @@ export {loadNavbarWithPicker, loadNavbarWithTitle};
  */
 function loadNavbar(callback) {
   $('#navbar').load(getUrlRelativeToNavbarJs('navbar.html'), () => {
-    $('#map-a').prop('href', getUrlRelativeToNavbarJs('index.html'));
+    $('#map-a').prop('href', getUrlRelativeToNavbarJs(''));
     $('#add-disaster-a')
         .prop('href', getUrlRelativeToNavbarJs('import/add_disaster.html'));
     callback();
