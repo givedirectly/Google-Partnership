@@ -17,7 +17,8 @@ import {
   onUpdate,
   setCurrentDisaster,
   setStatus,
-  updateLayersInFirestore
+  updateLayersInFirestore,
+    setDisasterData
 } from './manage_layers_lib.js';
 
 export {enableWhenReady, toggleState, updateAfterSort};
@@ -51,7 +52,7 @@ const stateAssets = new Map();
 function enableWhenReady() {
   // populate disaster picker.
   return getDisastersData().then((returnedData) => {
-    disasterData = returnedData;
+    setDisasterData(returnedData);
     const disasterPicker = $('#disaster');
     for (const name of disasterData.keys())  {
       disasterPicker.prepend(createOptionFrom(name));
@@ -274,7 +275,7 @@ function populateStateAssetPickers() {
     // pickers from previous disasters don't hang around.
     $('#asset-pickers').empty();
     assetPickersDone = getStateEeAssets(statesToFetch).then((assets) => {
-      assets.forEach((key, val) => stateAssets.set(key, val));
+      assets.forEach((val, key) => stateAssets.set(key, val));
       createAssetPickers(states, 'asset-pickers');
     });
   }

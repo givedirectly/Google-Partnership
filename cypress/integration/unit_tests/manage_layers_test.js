@@ -69,8 +69,8 @@ describe('Unit tests for add_disaster page', () => {
   it('gets state asset info from ee', () => {
     cy.wrap(getStateEeAssets([KNOWN_STATE, UNKNOWN_STATE])).then((assets) => {
       // tests folder type asset doesn't make it through
-      expect(assets[0]).to.eql([KNOWN_STATE, [KNOWN_STATE_ASSET]]);
-      expect(assets[1]).to.eql([UNKNOWN_STATE, []]);
+      expect(assets.get(KNOWN_STATE)).to.eql([KNOWN_STATE_ASSET]);
+      expect(assets.get(UNKNOWN_STATE)).to.eql([]);
       expect(ee.data.listAssets)
           .to.be.calledWith(legacyStateDir, {}, Cypress.sinon.match.func);
       expect(ee.data.listAssets)

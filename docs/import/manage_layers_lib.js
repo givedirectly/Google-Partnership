@@ -14,13 +14,18 @@ export {
   setCurrentDisaster,
   setStatus,
   updateLayersInFirestore,
+    setDisasterData,
 };
 
 // A map of disaster names to data. This pulls once on firebase
 // authentication and then makes local updates afterwards so we don't need to
 // wait on firebase writes to read new info. Initialized when Firestore is
-// ready,
-let disasterData = null;
+// ready, but set to an empty map for use in tests.
+let disasterData = new Map();
+
+function setDisasterData(readDisasterData) {
+  disasterData = readDisasterData;
+}
 
 /**
  * Utility function for getting current data.

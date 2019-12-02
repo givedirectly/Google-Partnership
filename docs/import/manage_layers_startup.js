@@ -37,4 +37,4 @@ $('#tbody').sortable({
     return helper;
   },
 });
-loadNavbarWithTitle('Add disaster');
+loadNavbarWithTitle('Manage layers');

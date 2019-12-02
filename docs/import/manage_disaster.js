@@ -10,9 +10,9 @@ import {listEeAssets} from "./list_ee_assets.js";
 
 export {enableWhenReady, onSetDisaster, toggleState};
 /** @VisibleForTesting */
-export {run, addDisaster, deleteDisaster};
+export {run, addDisaster, deleteDisaster, writeNewDisaster, disasterData};
 
-let disasterData = null;
+let disasterData = {};
 const disasterAssets = new Map();
 
 // Map of state to list of known assets
@@ -464,12 +464,10 @@ function enableWhenReady(allDisastersData) {
  *     Firestore for all disasters, the current disaster's data is used when calculating
  */
 function enableWhenFirestoreReady(allDisastersData) {
-  disasterData = allDisastersData;
+  disasterData = allDisastersData.data();
   onSetDisaster();
   // Kick off all EE asset fetches.
-  for (const disaster of disasterData.keys()) {
-    maybeFetchDisasterAssets(disaster);
-  }
+  Object.keys(disasterData).forEach(maybeFetchDisasterAssets);
   // enable add disaster button.
   const addDisasterButton = $('#add-disaster-button');
   addDisasterButton.prop('disabled', false);
@@ -485,7 +483,7 @@ function enableWhenFirestoreReady(allDisastersData) {
   processButton.on('click', () => {
     // Disable button to avoid over-clicking. User can reload page if needed.
     processButton.prop('disabled', true);
-    run(disasterData.get(getDisaster()));
+    run(disasterData[getDisaster()]);
   });
 
 }
@@ -493,7 +491,7 @@ function enableWhenFirestoreReady(allDisastersData) {
 function onSetDisaster() {
   const currentDisaster = getDisaster();
   if (currentDisaster) {
-    initializeScoreSelectors(disasterData.get(currentDisaster).states);
+    initializeScoreSelectors(disasterData[currentDisaster].states);
   }
 }
 
@@ -513,7 +511,7 @@ function deleteDisaster() {
   const disasterPicker = $('#disaster-dropdown');
   const disasterId = disasterPicker.val();
   if (confirm('Delete ' + disasterId + '? This action cannot be undone')) {
-    disasterData.delete(disasterId);
+    delete disasterData[disasterId];
     disasterPicker[0].remove(disasterPicker[0].selectedIndex);
     const newOption = disasterPicker.children().eq(0);
     disasterPicker.val(newOption.val()).trigger('change');
@@ -559,11 +557,12 @@ function addDisaster() {
  * @return {Promise<boolean>} returns true after successful write to firestore.
  */
 function writeNewDisaster(disasterId, states) {
-  if (disasterData.has(disasterId)) {
+  if (disasterData[disasterId]) {
     setStatus('Error: disaster with that name and year already exists.');
     return Promise.resolve(false);
   }
-  disasterData.set(disasterId, {states: states});
+  const currentData = createDisasterData(states);
+  disasterData[disasterId] = currentData;
 
   const disasterPicker = $('#disaster-dropdown');
   const disasterOptions = disasterPicker.children();
@@ -584,7 +583,7 @@ function writeNewDisaster(disasterId, states) {
 
   return disasterCollectionReference()
       .doc(disasterId)
-      .set(createDisasterData(states))
+      .set(currentData)
       .then(() => true);
 }
 

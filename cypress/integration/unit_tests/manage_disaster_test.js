@@ -1,9 +1,10 @@
 import {getFirestoreRoot} from "../../../docs/firestore_document.js";
-import {run} from '../../../docs/import/manage_disaster';
+import {disasterData, run} from '../../../docs/import/manage_disaster';
 import {
   addDisaster, deleteDisaster,
   writeNewDisaster
 } from "../../../docs/import/manage_disaster.js";
+import {createOptionFrom} from "../../../docs/import/manage_layers.js";
 import {convertEeObjectToPromise} from '../../../docs/map_util';
 import {assertFirestoreMapBounds} from '../../support/firestore_map_bounds';
 import {initFirebaseForUnitTest, loadScriptsBeforeForUnitTests} from '../../support/script_loader';
@@ -13,9 +14,18 @@ const KNOWN_STATE = 'WF';
 describe('Unit tests for manage_disaster.js', () => {
   loadScriptsBeforeForUnitTests('ee', 'firebase', 'jquery');
   initFirebaseForUnitTest();
+  before(() => {
+    const disasterPicker = createAndAppend('select', 'disaster-dropdown');
+    disasterPicker.append(createOptionFrom('2003-spring'));
+    disasterPicker.append(createOptionFrom('2001-summer'));
+    disasterPicker.val('2003-spring');
+    createAndAppend('div', 'compute-status');
+  });
   let testData;
   let exportStub;
   beforeEach(() => {
+    Object.keys(disasterData).forEach((key) => delete disasterData[key]);
+
     // Create a pretty trivial world: 2 block groups, each a 1x2 vertical
     // stripes. Under the covers, we scale all dimensions down because
     // production code creates an "envelope" 1 km wide around damage, and that
@@ -75,6 +85,7 @@ describe('Unit tests for manage_disaster.js', () => {
       },
     };
   });
+
   it('Basic test', () => {
     const {boundsPromise, mapBoundsCallback} =
         makeCallbackForTextAndPromise('Found bounds');
@@ -151,17 +162,14 @@ describe('Unit tests for manage_disaster.js', () => {
   it('writes a new disaster to firestore', () => {
     let id = '2002-winter';
     const states = ['DN, WF'];
-    $('#disaster').hide();
 
     cy.wrap(writeNewDisaster(id, states))
         .then((success) => {
           expect(success).to.be.true;
           expect($('#status').is(':visible')).to.be.false;
-          const disasterPicker = $('#disaster');
-          expect(disasterPicker.is(':visible')).to.be.true;
-          expect($('#pending-disaster').is(':visible')).to.be.false;
+          const disasterPicker = $('#disaster-dropdown');
           const options = disasterPicker.children();
-          expect(options.length).to.eql(3);
+          expect(options).to.have.length(3);
           expect(options.eq(1).val()).to.eql('2002-winter');
           expect(options.eq(1).is(':selected')).to.be.true;
 
@@ -171,7 +179,7 @@ describe('Unit tests for manage_disaster.js', () => {
         })
         .then((success) => {
           expect(success).to.be.true;
-          expect($('#disaster').children().eq(3).val()).to.eql('1000-a');
+          expect($('#disaster-dropdown').children().eq(3).val()).to.eql('1000-a');
 
           // boundary condition checking
           id = '9999-z';
@@ -179,7 +187,7 @@ describe('Unit tests for manage_disaster.js', () => {
         })
         .then((success) => {
           expect(success).to.be.true;
-          expect($('#disaster').children().eq(0).val()).to.eql('9999-z');
+          expect($('#disaster-dropdown').children().eq(0).val()).to.eql('9999-z');
 
           return getFirestoreRoot()
               .collection('disaster-metadata')
@@ -205,7 +213,7 @@ describe('Unit tests for manage_disaster.js', () => {
         })
         .then((success) => {
           expect(success).to.be.false;
-          const status = $('#status');
+          const status = $('#compute-status');
           expect(status.is(':visible')).to.be.true;
           expect(status.text())
               .to.eql(
@@ -217,7 +225,7 @@ describe('Unit tests for manage_disaster.js', () => {
     const year = createAndAppend('input', 'year');
     const name = createAndAppend('input', 'name');
     const states = createAndAppend('input', 'states');
-    const status = $('#status');
+    const status = $('#compute-status');
 
     cy.wrap(addDisaster())
         .then((success) => {
@@ -390,4 +398,17 @@ function makeCallbackForTextAndPromise(expectedText) {
     }
   };
   return {boundsPromise, mapBoundsCallback};
+}
+
+/**
+ * Utility function for creating an element and returning it wrapped as a
+ * jquery object.
+ * @param {string} tag
+ * @param {string} id
+ * @return {JQuery<HTMLElement>}
+ */
+function createAndAppend(tag, id) {
+  const element = document.createElement(tag);
+  document.body.appendChild(element);
+  return $(element).attr('id', id);
 }
