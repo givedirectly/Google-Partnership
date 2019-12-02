@@ -1,10 +1,7 @@
-import {getFirestoreRoot} from "../../../docs/firestore_document.js";
+import {getFirestoreRoot} from '../../../docs/firestore_document.js';
 import {disasterData, run} from '../../../docs/import/manage_disaster';
-import {
-  addDisaster, deleteDisaster,
-  writeNewDisaster
-} from "../../../docs/import/manage_disaster.js";
-import {createOptionFrom} from "../../../docs/import/manage_layers.js";
+import {addDisaster, deleteDisaster, writeNewDisaster} from '../../../docs/import/manage_disaster.js';
+import {createOptionFrom} from '../../../docs/import/manage_layers.js';
 import {convertEeObjectToPromise} from '../../../docs/map_util';
 import {assertFirestoreMapBounds} from '../../support/firestore_map_bounds';
 import {initFirebaseForUnitTest, loadScriptsBeforeForUnitTests} from '../../support/script_loader';
@@ -91,10 +88,11 @@ describe('Unit tests for manage_disaster.js', () => {
         makeCallbackForTextAndPromise('Found bounds');
     const promise = run(testData, mapBoundsCallback);
     expect(promise).to.not.be.false;
-    cy.wrap(promise).then(() => {
-      expect(exportStub).to.be.calledOnce;
-      return convertEeObjectToPromise(exportStub.firstCall.args[0]);
-    })
+    cy.wrap(promise)
+        .then(() => {
+          expect(exportStub).to.be.calledOnce;
+          return convertEeObjectToPromise(exportStub.firstCall.args[0]);
+        })
         .then((result) => {
           const features = result.features;
           expect(features).to.have.length(1);
@@ -129,7 +127,8 @@ describe('Unit tests for manage_disaster.js', () => {
         makeCallbackForTextAndPromise('Wrote bounds');
     const promise = run(testData, mapBoundsCallback);
     expect(promise).to.not.be.false;
-    cy.wrap(promise).then(() => {
+    cy.wrap(promise)
+        .then(() => {
           expect(exportStub).to.be.calledOnce;
           return convertEeObjectToPromise(exportStub.firstCall.args[0]);
         })
@@ -179,7 +178,8 @@ describe('Unit tests for manage_disaster.js', () => {
         })
         .then((success) => {
           expect(success).to.be.true;
-          expect($('#disaster-dropdown').children().eq(3).val()).to.eql('1000-a');
+          expect($('#disaster-dropdown').children().eq(3).val())
+              .to.eql('1000-a');
 
           // boundary condition checking
           id = '9999-z';
@@ -187,7 +187,8 @@ describe('Unit tests for manage_disaster.js', () => {
         })
         .then((success) => {
           expect(success).to.be.true;
-          expect($('#disaster-dropdown').children().eq(0).val()).to.eql('9999-z');
+          expect($('#disaster-dropdown').children().eq(0).val())
+              .to.eql('9999-z');
 
           return getFirestoreRoot()
               .collection('disaster-metadata')
@@ -217,7 +218,7 @@ describe('Unit tests for manage_disaster.js', () => {
           expect(status.is(':visible')).to.be.true;
           expect(status.text())
               .to.eql(
-              'Error: disaster with that name and year already exists.');
+                  'Error: disaster with that name and year already exists.');
         });
   });
 
@@ -253,8 +254,8 @@ describe('Unit tests for manage_disaster.js', () => {
           expect(status.is(':visible')).to.be.true;
           expect(status.text())
               .to.eql(
-              'Error: disaster name must be comprised of only ' +
-              'lowercase letters');
+                  'Error: disaster name must be comprised of only ' +
+                  'lowercase letters');
 
           name.val('harvey');
           return addDisaster();
@@ -271,9 +272,9 @@ describe('Unit tests for manage_disaster.js', () => {
     cy.wrap(writeNewDisaster(id, states))
         .then(
             () => getFirestoreRoot()
-                .collection('disaster-metadata')
-                .doc(id)
-                .get())
+                      .collection('disaster-metadata')
+                      .doc(id)
+                      .get())
         .then((doc) => {
           expect(doc.exists).to.be.true;
           const deletePromise = deleteDisaster();
@@ -282,9 +283,9 @@ describe('Unit tests for manage_disaster.js', () => {
         })
         .then(
             () => getFirestoreRoot()
-                .collection('disaster-metadata')
-                .doc(id)
-                .get())
+                      .collection('disaster-metadata')
+                      .doc(id)
+                      .get())
         .then((doc) => expect(doc.exists).to.be.false);
   });
 });

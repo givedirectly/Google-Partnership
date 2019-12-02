@@ -33,11 +33,13 @@ function loadNavbarWithTitle(title) {
  * @param {?Function} changeDisasterHandler Function invoked when disaster is
  *     changed. If not specified, reloads page
  */
-function loadNavbarWithPicker(firebaseAuthPromise, changeDisasterHandler = location.reload) {
+function loadNavbarWithPicker(
+    firebaseAuthPromise, changeDisasterHandler = location.reload) {
   loadNavbar(
       () => $('#nav-left')
                 .load(
                     import.meta.url.replace('/navbar.js', '') +
-                    '/disaster_picker.html',
-                    () => initializeDisasterPicker(firebaseAuthPromise, changeDisasterHandler)));
+                        '/disaster_picker.html',
+                    () => initializeDisasterPicker(
+                        firebaseAuthPromise, changeDisasterHandler)));
 }

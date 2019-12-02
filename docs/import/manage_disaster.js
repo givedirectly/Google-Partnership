@@ -1,20 +1,17 @@
-import {gdEePathPrefix} from "../ee_paths.js";
+import {gdEePathPrefix} from '../ee_paths.js';
 import {LayerType} from '../firebase_layers.js';
-import {disasterCollectionReference} from "../firestore_document.js";
+import {disasterCollectionReference} from '../firestore_document.js';
 import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, snapPercentageTag, snapPopTag, sviTag, totalPopTag, tractTag} from '../property_names.js';
 import {getDisaster, getScoreAsset} from '../resources.js';
 
 import {computeAndSaveBounds, saveBounds} from './center.js';
-import {createDisasterData} from "./create_disaster_lib.js";
+import {createDisasterData} from './create_disaster_lib.js';
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
-import {
-  getDisasterAssetsFromEe,
-  getStatesAssetsFromEe
-} from "./list_ee_assets.js";
+import {getDisasterAssetsFromEe, getStatesAssetsFromEe} from './list_ee_assets.js';
 
 export {enableWhenReady, onSetDisaster, toggleState};
 /** @VisibleForTesting */
-export {run, addDisaster, deleteDisaster, writeNewDisaster, disasterData};
+export {addDisaster, deleteDisaster, disasterData, run, writeNewDisaster};
 
 let disasterData = new Map();
 const disasterAssets = new Map();
@@ -280,16 +277,20 @@ function run(disasterData, setMapBoundsInfoFunction = setMapBoundsInfo) {
   return ee.data.deleteAsset(scoreAssetPath, () => {})
       .catch((err) => {
         if (err.message === 'Asset not found.') {
-          console.log('Old ' + scoreAssetPath + ' not present, did not delete it');
+          console.log(
+              'Old ' + scoreAssetPath + ' not present, did not delete it');
         } else {
           throw err;
         }
-      }).then(() => {
-    task.start();
-    $('#upload-status')
-        .text('Check Code Editor console for upload progress. Task: ' + task.id);
-    return task;
-  });
+      })
+      .then(() => {
+        task.start();
+        $('#upload-status')
+            .text(
+                'Check Code Editor console for upload progress. Task: ' +
+                task.id);
+        return task;
+      });
 }
 
 const damageError = {
@@ -413,8 +414,9 @@ function computeBuildingsHisto(damageEnvelope, buildingPath, stateGroups) {
  *     callers can write "return missingAssetError" and save a line
  */
 function missingAssetError(str) {
-  setStatus('Error! Please specify ' + str +
-          ' at <a href="manage_layers.html">manage_layers.html</a>');
+  setStatus(
+      'Error! Please specify ' + str +
+      ' at <a href="manage_layers.html">manage_layers.html</a>');
   return null;
 }
 
@@ -450,8 +452,9 @@ function innerJoin(collection1, collection2, key1, key2) {
 
 /**
  * Enables the button to kick off calculations.
- * @param {Promise<firebase.firestore.DocumentSnapshot>} allDisastersData Promse with contents of
- *     Firestore for all disasters, the current disaster's data is used when calculating
+ * @param {Promise<firebase.firestore.DocumentSnapshot>} allDisastersData Promse
+ *     with contents of Firestore for all disasters, the current disaster's data
+ *     is used when calculating
  */
 function enableWhenReady(allDisastersData) {
   // Eagerly kick off current disaster asset listing before Firestore finishes.
@@ -465,7 +468,8 @@ function enableWhenReady(allDisastersData) {
 /**
  * Enables the button to kick off calculations.
  * @param {firebase.firestore.DocumentSnapshot} allDisastersData Contents of
- *     Firestore for all disasters, the current disaster's data is used when calculating
+ *     Firestore for all disasters, the current disaster's data is used when
+ * calculating
  */
 function enableWhenFirestoreReady(allDisastersData) {
   disasterData = allDisastersData;
@@ -475,7 +479,6 @@ function enableWhenFirestoreReady(allDisastersData) {
     maybeFetchDisasterAssets(disaster);
   }
   for (const disasterInfo of disasterData.values()) {
-
   }
   // enable add disaster button.
   const addDisasterButton = $('#add-disaster-button');
@@ -494,7 +497,6 @@ function enableWhenFirestoreReady(allDisastersData) {
     processButton.prop('disabled', true);
     run(disasterData[getDisaster()]);
   });
-
 }
 
 function onSetDisaster() {
@@ -665,10 +667,11 @@ function initializeScoreSelectors(states) {
         $(document.createElement('div')).html(scoreAssetType)));
     for (const state of states) {
       if (stateAssets.get(state)) {
-        const select = createAssetDropdown(
-            stateAssets.get(state), scoreAssetType, state);
+        const select =
+            createAssetDropdown(stateAssets.get(state), scoreAssetType, state);
         row.append(createTd().append(select));
-        select.on('change', () => handleScoreAssetSelection(scoreAssetType, state));
+        select.on(
+            'change', () => handleScoreAssetSelection(scoreAssetType, state));
       }
     }
     tableBody.append(row);

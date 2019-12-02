@@ -5,7 +5,7 @@ export {
   disasterCollectionReference,
   disasterDocumentReference,
   getDisasters,
-    getDisastersData,
+  getDisastersData,
   getFirestoreRoot,
   readDisasterDocument,
 };
@@ -50,6 +50,9 @@ function getDisasters() {
 
 function getDisastersData() {
   const disasterData = new Map();
-  return getDisasters().then((querySnapshot) => querySnapshot.forEach((doc) => disasterData.set(doc.id, doc.data())))
+  return getDisasters()
+      .then(
+          (querySnapshot) => querySnapshot.forEach(
+              (doc) => disasterData.set(doc.id, doc.data())))
       .then(() => disasterData);
 }

@@ -1,10 +1,10 @@
 // 3 tasks: EE authentication, page load, firebase data retrieved..
 import {Authenticator} from '../authenticate.js';
+import {getDisastersData} from '../firestore_document.js';
 import {loadNavbarWithPicker} from '../navbar.js';
 import TaskAccumulator from '../task_accumulator.js';
 
 import {enableWhenReady, onSetDisaster, toggleState} from './manage_disaster.js';
-import {getDisastersData} from "../firestore_document.js";
 
 // Two tasks: EE and page load. Firebase is taken care of in the promise.
 const taskAccumulator =

@@ -12,9 +12,9 @@ export {
   ILLEGAL_STATE_ERR,
   onUpdate,
   setCurrentDisaster,
+  setDisasterData,
   setStatus,
   updateLayersInFirestore,
-    setDisasterData,
 };
 
 // A map of disaster names to data. This pulls once on firebase

@@ -1,24 +1,9 @@
 import {gdEeStatePrefix, legacyStateDir, legacyStatePrefix} from '../../../docs/ee_paths.js';
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
-import {
-  createOptionFrom,
-  createStateAssetPickers,
-  createTd,
-  onCheck, onDelete,
-  onInputBlur,
-  onListBlur,
-  stateAssets,
-  updateAfterSort,
-  withCheckbox,
-  withInput,
-  withList,
-  withType
-} from '../../../docs/import/manage_layers.js';
-import {
-  getStatesAssetsFromEe
-} from "../../../docs/import/list_ee_assets.js";
-import {disasterData, getCurrentLayers} from '../../../docs/import/manage_layers_lib.js';
 import {withColor} from '../../../docs/import/color_function_util.js';
+import {getStatesAssetsFromEe} from '../../../docs/import/list_ee_assets.js';
+import {createOptionFrom, createStateAssetPickers, createTd, onCheck, onDelete, onInputBlur, onListBlur, stateAssets, updateAfterSort, withCheckbox, withInput, withList, withType} from '../../../docs/import/manage_layers.js';
+import {disasterData, getCurrentLayers} from '../../../docs/import/manage_layers_lib.js';
 import * as loading from '../../../docs/loading.js';
 import {getDisaster} from '../../../docs/resources';
 import {createAndAppend, createTrs, setDisasterAndLayers} from '../../support/import_test_util.js';
@@ -51,7 +36,8 @@ describe('Unit tests for add_disaster page', () => {
             id: gdEeStatePrefix + KNOWN_STATE,
           }],
         }));
-    listAssetsStub.withArgs(legacyStatePrefix + KNOWN_STATE, {}, Cypress.sinon.match.func)
+    listAssetsStub
+        .withArgs(legacyStatePrefix + KNOWN_STATE, {}, Cypress.sinon.match.func)
         .returns(Promise.resolve({
           'assets': [
             {
@@ -92,7 +78,8 @@ describe('Unit tests for add_disaster page', () => {
               .to.be.calledWith(legacyStateDir, {}, Cypress.sinon.match.func);
           expect(ee.data.listAssets)
               .to.be.calledWith(
-                  legacyStatePrefix + KNOWN_STATE, {}, Cypress.sinon.match.func);
+                  legacyStatePrefix + KNOWN_STATE, {},
+                  Cypress.sinon.match.func);
           expect(ee.data.createFolder).to.be.calledOnce;
         });
   });

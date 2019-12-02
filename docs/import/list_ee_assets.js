@@ -1,11 +1,7 @@
-import {
-  eeLegacyPathPrefix,
-  eeStatePrefixLength,
-  legacyStateDir
-} from '../ee_paths.js';
+import {eeLegacyPathPrefix, eeStatePrefixLength, legacyStateDir} from '../ee_paths.js';
 import {LayerType} from '../firebase_layers.js';
 
-export {getStatesAssetsFromEe, getDisasterAssetsFromEe};
+export {getDisasterAssetsFromEe, getStatesAssetsFromEe};
 
 /**
  * Requests all assets in ee directories corresponding to given states.
@@ -14,32 +10,31 @@ export {getStatesAssetsFromEe, getDisasterAssetsFromEe};
  *     retrieved assets in the form [['WA', {'asset/path': LayerType,...}], ...]
  */
 function getStatesAssetsFromEe(states) {
-  return ee.data.listAssets(legacyStateDir, {}, () => {})
-      .then((result) => {
-        const folders = new Set();
-        for (const folder of result.assets) {
-          folders.add(folder.id.substring(eeStatePrefixLength));
-        }
-        const promises = [];
-        for (const state of states) {
-          const dir = legacyStateDir + '/' + state;
-          if (!folders.has(state)) {
-            // This will print a console error for anyone other than the gd
-            // account. Ee console seems to have the power to grant write access
-            // to non-owners but it doesn't seem to work. Sent an email to
-            // gestalt.
-            // TODO: replace with setIamPolicy when that works.
-            ee.data.createFolder(dir, false, () => {
-              // TODO: add status bar for when this is finished.
-              ee.data.setAssetAcl(dir, {all_users_can_read: true});
-            });
-            promises.push(Promise.resolve([state, new Map()]));
-          } else {
-            promises.push(listEeAssets(dir).then((result) => [state, result]));
-          }
-        }
-        return Promise.all(promises);
-      });
+  return ee.data.listAssets(legacyStateDir, {}, () => {}).then((result) => {
+    const folders = new Set();
+    for (const folder of result.assets) {
+      folders.add(folder.id.substring(eeStatePrefixLength));
+    }
+    const promises = [];
+    for (const state of states) {
+      const dir = legacyStateDir + '/' + state;
+      if (!folders.has(state)) {
+        // This will print a console error for anyone other than the gd
+        // account. Ee console seems to have the power to grant write access
+        // to non-owners but it doesn't seem to work. Sent an email to
+        // gestalt.
+        // TODO: replace with setIamPolicy when that works.
+        ee.data.createFolder(dir, false, () => {
+          // TODO: add status bar for when this is finished.
+          ee.data.setAssetAcl(dir, {all_users_can_read: true});
+        });
+        promises.push(Promise.resolve([state, new Map()]));
+      } else {
+        promises.push(listEeAssets(dir).then((result) => [state, result]));
+      }
+    }
+    return Promise.all(promises);
+  });
 }
 
 /**

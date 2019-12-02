@@ -1,26 +1,11 @@
 import {LayerType} from '../firebase_layers.js';
-import {
-  getDisastersData
-} from '../firestore_document.js';
+import {getDisastersData} from '../firestore_document.js';
 import {getDisaster} from '../resources.js';
+
 import {processNewEeLayer} from './add_layer.js';
 import {withColor} from './color_function_util.js';
-import {
-  getDisasterAssetsFromEe,
-  getStatesAssetsFromEe
-} from './list_ee_assets.js';
-import {
-  disasterData,
-  getCurrentData,
-  getCurrentLayers,
-  getRowIndex,
-  ILLEGAL_STATE_ERR,
-  onUpdate,
-  setCurrentDisaster,
-  setStatus,
-  updateLayersInFirestore,
-    setDisasterData
-} from './manage_layers_lib.js';
+import {getDisasterAssetsFromEe, getStatesAssetsFromEe} from './list_ee_assets.js';
+import {disasterData, getCurrentData, getCurrentLayers, getRowIndex, ILLEGAL_STATE_ERR, onUpdate, setCurrentDisaster, setDisasterData, setStatus, updateLayersInFirestore} from './manage_layers_lib.js';
 
 export {enableWhenReady, updateAfterSort};
 // Visible for testing
@@ -61,7 +46,7 @@ function enableWhenReady() {
   return getDisastersData().then((returnedData) => {
     setDisasterData(returnedData);
     const disasterPicker = $('#disaster');
-    for (const name of disasterData.keys())  {
+    for (const name of disasterData.keys()) {
       disasterPicker.prepend(createOptionFrom(name));
     }
 

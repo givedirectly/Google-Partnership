@@ -7,7 +7,8 @@ export {initializeDisasterPicker};
  * Initializes the disaster picker.
  * @param {Promise} firebaseAuthPromise Promise that completes when logged in to
  *     Firebase
- * @param {Function} changeDisasterHandler Function invoked when current disaster is changed
+ * @param {Function} changeDisasterHandler Function invoked when current
+ *     disaster is changed
  */
 function initializeDisasterPicker(firebaseAuthPromise, changeDisasterHandler) {
   const disasterDropdown = $('#disaster-dropdown');
