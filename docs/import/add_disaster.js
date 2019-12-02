@@ -80,7 +80,7 @@ function toggleDisaster(disaster) {
 }
 
 /**
- * Reindex table rows in-between bounds (inclusive).
+ * Reindex table rows in between bounds (inclusive).
  * @param {number} from
  * @param {number} to
  * @param {number} numLayers
@@ -109,7 +109,7 @@ function updateAfterSort(ui) {
   // insert at new index
   layers.splice(newRealIndex, 0, row);
 
-  // Reindex all the layers.
+  // reindex layers.
   reindex(
       Math.min(oldRealIndex, newRealIndex),
       Math.max(oldRealIndex, newRealIndex), numLayers);
