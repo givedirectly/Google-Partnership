@@ -1,7 +1,11 @@
 import {CLIENT_ID, getFirebaseConfig} from '../../docs/authenticate';
 import {cypressTestCookieName, earthEngineTestTokenCookieName, firebaseTestTokenCookieName} from '../../docs/in_test_util';
 
-export {addFirebaseHooks, loadScriptsBeforeForUnitTests};
+export {
+  addFirebaseHooks,
+  initFirebaseForUnitTest,
+  loadScriptsBeforeForUnitTests,
+};
 
 /**
  * Scripts that unit tests may want to load. Values have script and callback
@@ -124,10 +128,9 @@ function loadScriptsBeforeForUnitTests(...scriptKeys) {
     });
   }
   if (usesFirebase) {
-    // Currently no unit test actually writes to Firestore, they just use the
-    // library. A unit test that really writes to Firestore will be responsible
-    // for calling the necessary functions (addFirebaseHooks and logging in with
-    // the custom token, similar to what is done in prod).
+    // Some unit tests just use the Firebase library, so that's all we prepare
+    // for here. A unit test that really writes to Firestore has to call
+    // initFirebaseForUnitTest.
     before(() => {
       firebase.initializeApp(getFirebaseConfig(/* inProduction */ false));
     });
@@ -152,6 +155,14 @@ function addFirebaseHooks() {
     cy.setCookie(cypressTestCookieName, testCookieValue);
   });
   afterEach(() => cy.task('deleteTestData', testCookieValue));
+}
+
+/** Prepares this unit test to actually write to and read from Firestore. */
+function initFirebaseForUnitTest() {
+  addFirebaseHooks();
+  before(
+      () =>
+          cy.wrap(firebase.auth().signInWithCustomToken(firestoreCustomToken)));
 }
 
 /**

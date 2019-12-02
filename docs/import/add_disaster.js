@@ -1,11 +1,8 @@
-import {writeWaiterId} from '../dom_constants.js';
 import {eeStatePrefixLength, legacyStateDir} from '../ee_paths.js';
 import {LayerType} from '../firebase_layers.js';
-import {getFirestoreRoot} from '../firestore_document.js';
 import {disasterCollectionReference, getDisasters} from '../firestore_document.js';
-import {addLoadingElement, loadingElementFinished} from '../loading.js';
 import {getDisaster} from '../resources.js';
-import {clearStatus, ILLEGAL_STATE_ERR, setStatus} from './add_disaster_util.js';
+import {clearStatus, disasterData, getCurrentData, getCurrentLayers, getRowIndex, ILLEGAL_STATE_ERR, onUpdate, setCurrentDisaster, setStatus, updateLayersInFirestore} from './add_disaster_util.js';
 import {withColor} from './color_function_util.js';
 
 export {enableWhenReady, toggleState, updateAfterSort};
@@ -16,16 +13,12 @@ export {
   createOptionFrom,
   createTd,
   deleteDisaster,
-  disasterData,
   emptyCallback,
   getAssetsFromEe,
-  getCurrentData,
-  getCurrentLayers,
   onCheck,
   onInputBlur,
   onListBlur,
   stateAssets,
-  updateLayersInFirestore,
   withCheckbox,
   withInput,
   withList,
@@ -33,13 +26,10 @@ export {
   writeNewDisaster,
 };
 
-// A map of disaster names to data. This pulls once on firebase
-// authentication and then makes local updates afterwards so we don't need to
-// wait on firebase writes to read new info.
-const disasterData = new Map();
-
 // Map of state to list of known assets
 const stateAssets = new Map();
+
+const scoreAssetTypes = ['Poverty', 'Income', 'SVI'];
 
 // TODO: general reminder to add loading indicators for things like creating
 // new state asset folders, etc.
@@ -88,53 +78,6 @@ function toggleDisaster(disaster) {
   return populateStateAssetPickers();
 }
 
-const State = {
-  SAVED: 0,
-  WRITING: 1,
-  QUEUED_WRITE: 2,
-};
-Object.freeze(State);
-
-let state = State.SAVED;
-let pendingWriteCount = 0;
-
-window.onbeforeunload = () => pendingWriteCount > 0 ? true : null;
-
-/**
- * Write the current state of {@code disasterData} to firestore.
- * @return {?Promise<void>} Returns when finished writing or null if it just
- * queued a write and doesn't know when that will finish.
- */
-function updateLayersInFirestore() {
-  if (state !== State.SAVED) {
-    state = State.QUEUED_WRITE;
-    return null;
-  }
-  addLoadingElement(writeWaiterId);
-  state = State.WRITING;
-  pendingWriteCount++;
-  return getFirestoreRoot()
-      .collection('disaster-metadata')
-      .doc(getDisaster())
-      .set({layers: getCurrentLayers()}, {merge: true})
-      .then(() => {
-        pendingWriteCount--;
-        const oldState = state;
-        state = State.SAVED;
-        switch (oldState) {
-          case State.WRITING:
-            loadingElementFinished(writeWaiterId);
-            return null;
-          case State.QUEUED_WRITE:
-            loadingElementFinished(writeWaiterId);
-            return updateLayersInFirestore();
-          case State.SAVED:
-            console.error('Unexpected layer write state');
-            return null;
-        }
-      });
-}
-
 /**
  * Update the table and disasterData with new indices after a layer has been
  * reordered. Then write to firestore.
@@ -163,35 +106,11 @@ function updateAfterSort(ui) {
 }
 
 /**
- * Looks up the real (not table) index of the given row.
- * @param {JQuery<HTMLTableDataCellElement>} row
- * @return {string}
- */
-function getRowIndex(row) {
-  return row.children('.index-td').text();
-}
-
-/**
  * Wrapper for creating table divs.
  * @return {JQuery<HTMLTableDataCellElement>}
  */
 function createTd() {
   return $(document.createElement('td'));
-}
-
-/**
- * A common update method that writes to local data and firestore based on
- * a customizable version of the value of the input.
- * @param {Object} event
- * @param {string} property
- * @param {Function} fxn how to read/transform the raw value from the DOM.
- * @return {?Promise<void>} See updateLayersInFirestore doc
- */
-function onUpdate(event, property, fxn) {
-  const input = $(event.target);
-  const index = getRowIndex(input.parents('tr'));
-  getCurrentLayers()[index][property] = fxn(input);
-  return updateLayersInFirestore();
 }
 
 /**
@@ -349,7 +268,8 @@ function populateStateAssetPickers() {
   // reloading the page.
   let assetPickersDone = Promise.resolve();
   if (statesToFetch.length === 0) {
-    createAssetPickers(states);
+    createAssetPickers(states, 'asset-pickers');
+    initializeScoreSelectors(states);
   } else {
     // We are already doing this inside createAssetPickers but not until
     // after the first promise completes so also do it here so lingering
@@ -359,12 +279,75 @@ function populateStateAssetPickers() {
       for (const asset of assets) {
         stateAssets.set(asset[0], asset[1]);
       }
-      createAssetPickers(states);
+      createAssetPickers(states, 'asset-pickers');
+      initializeScoreSelectors(states);
     });
   }
 
   // TODO: display more disaster info including current layers etc.
   return assetPickersDone;
+}
+
+/**
+ * Initializes the select interface for score assets.
+ * @param {Array<string>} states array of state (abbreviations)
+ */
+function initializeScoreSelectors(states) {
+  const headerRow = $('#score-asset-header-row');
+  const tableBody = $('#asset-selection-table-body');
+  tableBody.empty();
+  headerRow.empty();
+
+  // Initialize headers.
+  headerRow.append(createTd().html('Score Assets'));
+  for (const state of states) {
+    headerRow.append(createTd().html(state + ' Assets'));
+  }
+
+  // For each asset type, add select for all assets for each state.
+  for (let i = 0; i < scoreAssetTypes.length; i++) {
+    const scoreAssetType = scoreAssetTypes[i];
+    const row =
+        $(document.createElement('tr')).prop('id', scoreAssetType + '-row');
+    row.append(createTd().append(
+        $(document.createElement('div')).html(scoreAssetType)));
+    for (const state of states) {
+      if (stateAssets.get(state)) {
+        row.append(createTd().append(createAssetDropdown(
+            stateAssets.get(state), scoreAssetType, state)));
+      }
+    }
+    tableBody.append(row);
+    row.on('change', () => handleScoreAssetSelection(scoreAssetType));
+  }
+}
+
+/**
+ * Initializes a dropdown with assets.
+ * @param {Array<string>} assets array of assets for add to dropdown
+ * @param {string} row The asset type/row to put the dropdown in.
+ * @param {string} state The state the assets are in.
+ */
+function createAssetDropdown(assets, row, state) {
+  // Create the asset selector and add a 'None' option.
+  const select =
+      $(document.createElement('select')).prop('id', row + '-' + state);
+  select.append(createOptionFrom('None'));
+
+  // Add assets to selector and return it.
+  for (let i = 0; i < assets.length; i++) {
+    select.append(createOptionFrom(assets[i]));
+  }
+  return select;
+}
+
+/**
+ * Handles the user selecting an asset for one of the possible score types.
+ * @param {String} assetType The type of asset (poverty, income, etc)
+ */
+function handleScoreAssetSelection(assetType) {
+  // TODO: Write the asset name and type to firebase here.
+  return;
 }
 
 /**
@@ -580,28 +563,4 @@ function createOptionFrom(innerTextAndValue) {
       .text(innerTextAndValue)
       .val(innerTextAndValue)
       .prop('id', innerTextAndValue);
-}
-
-/**
- * Utility function for getting current data.
- * @return {Object}
- */
-function getCurrentData() {
-  return disasterData.get(getDisaster());
-}
-
-/**
- * Utility function for getting current layers.
- * @return {Array<Object>}
- */
-function getCurrentLayers() {
-  return getCurrentData()['layers'];
-}
-
-/**
- * Sets the current disaster so getCurrentData works for testing.
- * @param {string} disasterId
- */
-function setCurrentDisaster(disasterId) {
-  localStorage.setItem('disaster', disasterId);
 }

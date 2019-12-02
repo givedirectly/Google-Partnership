@@ -1,4 +1,4 @@
-const hackyWaitTime = 1000;
+const hackyWaitTime = 2000;
 const notes = 'Sphinx of black quartz, judge my vow';
 
 // This test generally doesn't wait for the page to load, since that's not
@@ -56,7 +56,7 @@ describe('Integration tests for drawing polygons', () => {
     assertExactlyPopUps(1, notes);
     // TODO(#18): wait for a notification that all writes have completed instead
     // of a hardcoded wait.
-    cy.wait(1000);
+    cy.wait(hackyWaitTime);
     cy.visit('');
     cy.awaitLoad();
     // Polygon is still there.
@@ -71,7 +71,7 @@ describe('Integration tests for drawing polygons', () => {
     // Polygon should be gone.
     clickOnDrawnPolygon();
     assertExactlyPopUps(0, notes);
-    cy.wait(1000);
+    cy.wait(hackyWaitTime);
     cy.visit('');
     cy.awaitLoad();
     // Polygon is gone.
@@ -132,10 +132,12 @@ describe('Integration tests for drawing polygons', () => {
     cy.get('#layer-user-features-checkbox').click();
     cy.get('#mapContainer').contains(notes).should('not.be.visible');
     // Notes is invisible even if we click on the polygon, so it's really gone.
-    // Use an offset because there's some weirdness around selecting block
-    // groups that then suppress clicks.
-    clickOnDrawnPolygon(-50);
+    clickOnDrawnPolygon();
+    cy.wait(100);
     cy.get('#mapContainer').contains(notes).should('not.be.visible');
+    // Click again to get rid of selected block group.
+    clickOnDrawnPolygon();
+    cy.wait(100);
 
     // Check box again and verify that notes box can now be brought up.
     cy.get('#layer-user-features-checkbox').click();
@@ -257,7 +259,7 @@ function drawPolygonAndClickOnIt(offset = 0) {
   drawPointAndPrepareForNext(150, 650 + offset);
   const handButton = cy.get('[title="Stop drawing"]');
   handButton.click();
-  cy.wait(500);
+  cy.wait(hackyWaitTime);
   // click to trigger pop up.
   clickOnDrawnPolygon(offset);
 }
@@ -332,5 +334,5 @@ function saveAndAwait() {
  * click because page may still be loading, causing "animation".
  */
 function startDrawing() {
-  cy.get('[title="Draw a shape"]', {timeout: 10000}).click({force: true});
+  cy.get('[title="Draw a shape"]', {timeout: 20000}).click({force: true});
 }

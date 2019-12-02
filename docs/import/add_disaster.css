@@ -4,6 +4,18 @@
   border: 1px solid black;
 }
 
+.editor {
+  border: 1px solid black;
+}
+
+.editable {
+  cursor: pointer;
+}
+
+.selected {
+  background-color: var(--green-6);
+}
+
 textarea {
   width: 100%;
   box-sizing: border-box;
