@@ -104,7 +104,9 @@ function updateAfterSort(ui) {
   layers.splice(newRealIndex, 0, row);
 
   // Reindex all the layers.
-  reindex(Math.min(oldRealIndex, newRealIndex), Math.max(oldRealIndex, newRealIndex), numLayers);
+  reindex(
+      Math.min(oldRealIndex, newRealIndex),
+      Math.max(oldRealIndex, newRealIndex), numLayers);
 
   return updateLayersInFirestore();
 }
@@ -229,12 +231,12 @@ function withCheckbox(td, layer, property) {
  * @return {?Promise<void>} See updateLayersInFirestore doc
  */
 function onDelete(td, index) {
-  if(window.confirm('Delete layer?')) {
+  if (window.confirm('Delete layer?')) {
     const layers = getCurrentLayers();
     layers.splice(index, 1);
     const numLayers = layers.length;
     $(td).parent('tr').remove();
-    reindex(index, numLayers-1, numLayers);
+    reindex(index, numLayers - 1, numLayers);
     return updateLayersInFirestore();
   }
 }
