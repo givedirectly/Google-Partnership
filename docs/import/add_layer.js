@@ -42,7 +42,8 @@ function processNewEeLayer(asset, type) {
                  ee.Dictionary.fromLists(properties, stats))
           .then((columns) => {
             for (let property of Object.keys(columns)) {
-              columns[property]['values'] = Object.keys(columns[property]['values']);
+              columns[property]['values'] =
+                  Object.keys(columns[property]['values']);
             }
             const layer = {
               'asset-type': type,

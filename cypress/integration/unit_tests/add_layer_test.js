@@ -1,13 +1,13 @@
 import {ColorStyle, LayerType} from '../../../docs/firebase_layers';
+import {getFirestoreRoot} from '../../../docs/firestore_document';
 import {getCurrentLayers} from '../../../docs/import/add_disaster_util';
 import {disasterData} from '../../../docs/import/add_disaster_util.js';
 import {processNewEeLayer} from '../../../docs/import/add_layer.js';
 import * as loading from '../../../docs/loading';
+import {getDisaster} from '../../../docs/resources';
 import {createTrs} from '../../support/import_test_util';
 import {createAndAppend, setDisasterAndLayers} from '../../support/import_test_util.js';
 import {initFirebaseForUnitTest, loadScriptsBeforeForUnitTests} from '../../support/script_loader';
-import {getFirestoreRoot} from '../../../docs/firestore_document';
-import {getDisaster} from '../../../docs/resources';
 
 const mockAsset = 'mockAsset';
 
@@ -47,7 +47,7 @@ describe('Unit tests for add_disaster page', () => {
           const scoopsColumn = colorFunction['columns']['scoops'];
           expect(scoopsColumn['max']).to.equal(4);
           expect(scoopsColumn['min']).to.equal(0);
-          expect(scoopsColumn['values']).to.eql(["0", "1", "2", "3", "4"]);
+          expect(scoopsColumn['values']).to.eql(['0', '1', '2', '3', '4']);
           expect($('#tbody').children('tr').length).to.equal(3);
         });
   });
@@ -80,10 +80,12 @@ describe('Unit tests for add_disaster page', () => {
         .withArgs(mockAsset)
         .returns(featureCollection);
 
-    cy.wrap(processNewEeLayer(mockAsset, LayerType.FEATURE_COLLECTION)).then(() => {
-      const layer = getCurrentLayers()[0];
-      expect(layer['color-function']['columns']['flavor']['values']).to.eql(['vanilla']);
-    });
+    cy.wrap(processNewEeLayer(mockAsset, LayerType.FEATURE_COLLECTION))
+        .then(() => {
+          const layer = getCurrentLayers()[0];
+          expect(layer['color-function']['columns']['flavor']['values'])
+              .to.eql(['vanilla']);
+        });
   });
 
   it('processes a new image layer', () => {
