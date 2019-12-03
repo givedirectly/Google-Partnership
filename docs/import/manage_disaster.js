@@ -684,7 +684,8 @@ function toggleState(known) {
 }
 
 const scoreAssetTypes = [
-  ['poverty', ['snap_data', 'paths']], ['income', ['income_asset_paths']],
+  ['poverty', ['snap_data', 'paths']],
+  ['income', ['income_asset_paths']],
   ['svi', ['svi_asset_paths']],
 ];
 Object.freeze(scoreAssetTypes);
