@@ -590,6 +590,12 @@ function maybeFetchDisasterAssets(disaster) {
 /**
  * Deletes a disaster from firestore. Confirms first. Returns when deletion is
  * complete (or instantly if deletion doesn't actually happen).
+ *
+ * TODO(janakr): If a slow write from {@link updateDataInFirestore} happens to
+ *  lose to this delete, the doc will be recreated, which isn't great. Could
+ *  maybe track all pending write promises and chain this one off of them, or
+ *  disable delete button until all pending writes were done (might be good to
+ *  give user an indication like that).
  * @return {Promise<void>}
  */
 function deleteDisaster() {
@@ -638,6 +644,11 @@ function addDisaster() {
 /**
  * Writes the given details to a new disaster entry in firestore. Fails if
  * there is an existing disaster with the same details.
+ *
+ * TODO(janakr): If the user starts editing a disaster before the Firestore
+ *  write completes, their edit could be overwritten by the initial Firestore
+ *  write here. Probably solved similar to the delete disaster issue: don't
+ *  actually show the disaster as editable until this write completes.
  * @param {string} disasterId of the form <year>-<name>
  * @param {Array<string>} states array of state (abbreviations)
  * @return {Promise<boolean>} returns true after successful write to firestore.
