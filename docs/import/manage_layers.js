@@ -407,14 +407,13 @@ function createOptionFrom(innerTextAndValue) {
 
 /**
  * Adds a non-ee layer to the map. 
+ * @return {Promise<void>} Finishes when the layer information has been
+ * written to firestore.
  */
 function addNonEELayer() {
   const type = parseInt($('#non-eelayer-type').val());
   const urls = $('#non-eelayer-urls').val().split('\n');
-
-  processNonEeLayer($('#non-eelayer-name').val(), type, urls);
-
-   // Clear values
-  $('#non-eelayer-name').val('');
   $('#non-eelayer-urls').val('');
+
+  return processNonEeLayer(type, urls);
 }
