@@ -677,6 +677,14 @@ function writeNewDisaster(disasterId, states) {
 
 /**
  * Returns a promise that resolves on the creation of the given folder.
+ *
+ * This will print a console error for anyone other than the gd
+ * account. Ee console seems to have the power to grant write access
+ * to non-owners but it doesn't seem to work. Sent an email to
+ * gestalt.
+ * TODO: replace with setIamPolicy when that works.
+ * TODO: add status bar for when this is finished.
+ *
  * @param {string} dir asset path of folder to create
  * @return {Promise<void>} resolves when after the directory is created and
  * set to world readable.
