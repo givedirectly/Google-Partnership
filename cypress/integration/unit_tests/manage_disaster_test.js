@@ -207,6 +207,8 @@ describe('Unit tests for manage_disaster.js', () => {
           expect(data['states']).to.eql(states);
           expect(data['layers']).to.eql([]);
           expect(data['asset_data']).to.eql(assetDataTemplate);
+          // Sanity-check structure.
+          expect(data['asset_data']['snap_data']['paths']).to.not.be.null;
         });
   });
 
