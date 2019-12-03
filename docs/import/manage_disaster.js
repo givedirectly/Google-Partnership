@@ -509,14 +509,16 @@ function enableWhenFirestoreReady(allDisastersData) {
   });
 }
 
-let displayedCurrentDisaster = false;
+let processedCurrentDisasterStateAssets = false;
+let processedCurrentDisasterSelfAssets = false;
 
 /**
  * Function called when current disaster changes. Responsible for displaying the
  * score selectors.
  */
 function onSetDisaster() {
-  displayedCurrentDisaster = false;
+  processedCurrentDisasterStateAssets = false;
+  processedCurrentDisasterSelfAssets = false;
   const currentDisaster = getDisaster();
   if (currentDisaster) {
     const states = disasterData.get(currentDisaster).states;
@@ -541,10 +543,17 @@ function onSetDisaster() {
       });
     }
     promise.then(() => {
-      if (getDisaster() === currentDisaster && !displayedCurrentDisaster) {
+      if (getDisaster() === currentDisaster && !processedCurrentDisasterStateAssets) {
         // Don't do anything unless this is still the right disaster.
         initializeScoreSelectors(states);
-        displayedCurrentDisaster = true;
+        processedCurrentDisasterStateAssets = true;
+      }
+    });
+    disasterAssets.get(currentDisaster).then((assets) => {
+      if (getDisaster() === currentDisaster && !processedCurrentDisasterSelfAssets) {
+        // Don't do anything unless this is still the right disaster.
+        initializeDamageSelector(assets);
+        processedCurrentDisasterSelfAssets = true;
       }
     });
   }
@@ -694,29 +703,35 @@ function initializeScoreSelectors(states) {
   // For each asset type, add select for all assets for each state.
   for (const scoreAssetType of scoreAssetTypes) {
     const name = scoreAssetType[0];
-    const propertyTree = scoreAssetType[1];
+    const propertyPath = scoreAssetType[1];
     const row =
         $(document.createElement('tr'));
     row.append(createTd().append(
         $(document.createElement('div')).text(name)));
     for (const state of states) {
       if (stateAssets.get(state)) {
-        let pathDictionary = disasterData.get(getDisaster()).asset_data;
-        for (const property of propertyTree) {
-          pathDictionary = pathDictionary[property];
-        }
+        let pathDictionary = getElementFromPath(propertyPath);
         const select = createAssetDropdown(stateAssets.get(state), pathDictionary[state]);
         select.val(pathDictionary[state]);
         row.append(createTd().append(select));
         select.on(
-            'change', () => handleScoreAssetSelection(propertyTree, state));
+            'change', () => handleScoreAssetSelection(propertyPath, state));
       }
     }
     tableBody.append(row);
   }
-  const row =
-      $(document.createElement('tr'));
-  row.append(createTd().append($(document.createElement('div')).text('Damage')));
+}
+
+function initializeDamageSelector(assets) {
+  createAssetDropdown(assets, getElementFromPath(['damage-asset-path']), $('#damage-asset-select'));
+}
+
+function getElementFromPath(propertyPath) {
+  let pathDictionary = disasterData.get(getDisaster()).asset_data;
+  for (const property of propertyPath) {
+    pathDictionary = pathDictionary[property];
+  }
+  return pathDictionary;
 }
 
 /**
@@ -729,18 +744,22 @@ function createTd() {
 
 /**
  * Initializes a dropdown with assets.
- * @param {Array<string>} assets map of assets to add to dropdown
+ * @param {Array<string>} assets List of assets to add to dropdown
+ * @param {string} value Current value of this select. If that value is found in options, it will be selected. Otherwise, no option will be selected
+ * @param {jQuery<HTMLSelectElement>} select Select element, will be created if not given
  * @return {JQuery<HTMLSelectElement>}
  */
-function createAssetDropdown(assets, value) {
-  // Create the asset selector and add a 'None' option.
-  const select = $(document.createElement('select'));
-  const noneOption = createOptionFrom('None');
-  select.append(noneOption);
+function createAssetDropdown(assets, value, select = $(document.createElement('select'))) {
+  select.append(createOptionFrom('None'));
 
+  let foundOption = false;
   // Add assets to selector and return it.
   for (const asset of assets) {
     const assetOption = createOptionFrom(asset);
+    if (asset === value) {
+      assetOption.attr('selected', true);
+      foundOption = true;
+    }
     select.append(assetOption);
   }
   return select;
