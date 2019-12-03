@@ -54,6 +54,8 @@ function enableWhenReady() {
     disasterPicker.val(getDisaster()).trigger('change');
     $('#pending-disaster').hide();
     $('#disaster').show();
+
+    $('#add-non-eelayer').on('click', () => addNonEELayer());
   });
 }
 
@@ -401,4 +403,23 @@ function createOptionFrom(innerTextAndValue) {
       .text(innerTextAndValue)
       .val(innerTextAndValue)
       .prop('id', innerTextAndValue);
+}
+
+/**
+ * Adds a non-ee layer to the map. 
+ */
+function addNonEELayer() {
+  const newLayer = {};
+  newLayer['asset-type'] = parseInt($('#non-eelayer-type').val());
+  newLayer['display-name'] = $('#non-eelayer-name').val();
+  newLayer['display-on-load'] = false;
+  newLayer['urls'] = $('#non-eelayer-urls').val().split('\n');
+
+  // Clear values
+  $('#non-eelayer-name').val('');
+  $('#non-eelayer-urls').val('');
+
+  const layers = getCurrentLayers();
+  layers.push(newLayer);
+  updateLayersInFirestore();
 }
