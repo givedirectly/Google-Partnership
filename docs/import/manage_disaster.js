@@ -562,7 +562,7 @@ function onSetDisaster() {
     };
     // Handle errors in disaster asset retrieval by just emptying out.
     disasterAssets.get(currentDisaster).then(disasterLambda, (err) => {
-      if (err !==
+      if (err && err !==
           'Asset "' + eeLegacyPathPrefix + currentDisaster + '" not found.') {
         setStatus(err);
       }
@@ -648,7 +648,7 @@ function writeNewDisaster(disasterId, states) {
   const currentData = createDisasterData(states);
   disasterData.set(disasterId, currentData);
   // We know there are no assets in folder yet.
-  disasterAssets.set(disasterId, Promise.resolve());
+  disasterAssets.set(disasterId, Promise.resolve([]));
 
   const disasterPicker = $('#disaster-dropdown');
   const disasterOptions = disasterPicker.children();
