@@ -680,8 +680,11 @@ function toggleState(known) {
   }
 }
 
-const scoreAssetTypes = [['Poverty', ['snap_data', 'paths']], ['Income', ['income_asset_paths']], ['SVI', ['svi_asset_paths']]];
+const scoreAssetTypes = [['poverty', ['snap_data', 'paths']], ['income', ['income_asset_paths']], ['svi', ['svi_asset_paths']]];
 Object.freeze(scoreAssetTypes);
+
+const assetSelectionRowPrefix = '#asset-selection-row-';
+Object.freeze(assetSelectionRowPrefix);
 
 /**
  * Initializes the select interface for score assets.
@@ -689,27 +692,22 @@ Object.freeze(scoreAssetTypes);
  */
 function initializeScoreSelectors(states) {
   const headerRow = $('#score-asset-header-row');
-  const tableBody = $('#asset-selection-table-body');
-  tableBody.empty();
-  headerRow.empty();
 
   // Initialize headers.
-  headerRow.append(createTd().html('Score Assets'));
+  removeAllButFirstFromRow(headerRow);
   for (const state of states) {
     headerRow.append(createTd().html(state + ' Assets'));
   }
 
   // For each asset type, add select for all assets for each state.
   for (const scoreAssetType of scoreAssetTypes) {
-    const name = scoreAssetType[0];
+    const id = assetSelectionRowPrefix + scoreAssetType[0];
     const propertyPath = scoreAssetType[1];
-    const row =
-        $(document.createElement('tr'));
-    row.append(createTd().append(
-        $(document.createElement('div')).text(name)));
+    const row =  $(id);
+    removeAllButFirstFromRow(row);
     for (const state of states) {
       if (stateAssets.get(state)) {
-        let pathDictionary = getElementFromPath(propertyPath);
+        const pathDictionary = getElementFromPath(propertyPath);
         const select = createAssetDropdown(stateAssets.get(state), pathDictionary[state]);
         select.val(pathDictionary[state]);
         row.append(createTd().append(select));
@@ -717,20 +715,19 @@ function initializeScoreSelectors(states) {
             'change', () => handleScoreAssetSelection(propertyPath, state));
       }
     }
-    tableBody.append(row);
   }
 }
 
 function initializeDamageSelector(assets) {
-  createAssetDropdown(assets, getElementFromPath(['damage-asset-path']), $('#damage-asset-select'));
+  createAssetDropdown(assets, getElementFromPath(['damage_asset_path']), $('#damage-asset-select'));
 }
 
 function getElementFromPath(propertyPath) {
-  let pathDictionary = disasterData.get(getDisaster()).asset_data;
+  let element = disasterData.get(getDisaster()).asset_data;
   for (const property of propertyPath) {
-    pathDictionary = pathDictionary[property];
+    element = element[property];
   }
-  return pathDictionary;
+  return element;
 }
 
 /**
@@ -739,6 +736,12 @@ function getElementFromPath(propertyPath) {
  */
 function createTd() {
   return $(document.createElement('td'));
+}
+
+function removeAllButFirstFromRow(row) {
+  while (row.length > 1) {
+    row.find('td:last').remove();
+  }
 }
 
 /**
