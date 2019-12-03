@@ -11,20 +11,18 @@ export {assetDataTemplate};
 //  level? Or only as a "global" default? Or just make them modify directly in
 //  Firestore?
 const assetDataTemplate = {
-  asset_data: {
-    damage_asset_path: null,
-    block_group_asset_paths: {},
-    snap_data: {
-      paths: {},
-      snap_key: 'HD01_VD02',
-      total_key: 'HD01_VD01',
-    },
-    svi_asset_paths: {},
-    svi_key: 'RPL_THEMES',
-    income_asset_paths: {},
-    income_key: 'HD01_VD01',
-    building_asset_paths: {},
+  damage_asset_path: null,
+  block_group_asset_paths: {},
+  snap_data: {
+    paths: {},
+    snap_key: 'HD01_VD02',
+    total_key: 'HD01_VD01',
   },
+  svi_asset_paths: {},
+  svi_key: 'RPL_THEMES',
+  income_asset_paths: {},
+  income_key: 'HD01_VD01',
+  building_asset_paths: {},
 };
 Object.freeze(assetDataTemplate);
 

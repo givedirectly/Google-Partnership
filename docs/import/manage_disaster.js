@@ -10,7 +10,7 @@ import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from '.
 import {getDisasterAssetsFromEe, getStatesAssetsFromEe} from './list_ee_assets.js';
 import {clearStatus} from './manage_layers_lib.js';
 
-export {enableWhenReady, onSetDisaster, toggleState};
+export {enableWhenReady, onSetDisaster, setUpScoreSelectorTable, toggleState};
 /** @VisibleForTesting */
 export {addDisaster, deleteDisaster, disasterData, run, writeNewDisaster};
 
@@ -21,8 +21,8 @@ export {addDisaster, deleteDisaster, disasterData, run, writeNewDisaster};
  */
 let disasterData = new Map();
 /**
- * @type {Map<string, Promise<Map<string, number>>>} Disaster id to listing of
- *     assets in corresponding EE folder, associated to asset type
+ * @type {Map<string, Promise<Array<string>>>} Disaster id to listing of
+ *     assets in corresponding EE folder
  */
 const disasterAssets = new Map();
 
@@ -467,8 +467,8 @@ function innerJoin(collection1, collection2, key1, key2) {
 
 /**
  * Enables page functionality.
- * @param {Promise<firebase.firestore.DocumentSnapshot>} allDisastersData
- *     Promise with contents of Firestore for all disasters
+ * @param {Promise<Map<string, Object>>} allDisastersData Promise with contents
+ *     of Firestore for all disasters
  */
 function enableWhenReady(allDisastersData) {
   // Eagerly kick off current disaster asset listing before Firestore finishes.
@@ -481,7 +481,7 @@ function enableWhenReady(allDisastersData) {
 
 /**
  * Enables all Firestore-dependent functionality.
- * @param {firebase.firestore.DocumentSnapshot} allDisastersData Contents of
+ * @param {Map<string, Object>} allDisastersData Contents of
  *     Firestore for all disasters, the current disaster's data is used when
  *     calculating
  */
@@ -511,14 +511,16 @@ function enableWhenFirestoreReady(allDisastersData) {
   });
 }
 
-let displayedCurrentDisaster = false;
+let processedCurrentDisasterStateAssets = false;
+let processedCurrentDisasterSelfAssets = false;
 
 /**
  * Function called when current disaster changes. Responsible for displaying the
  * score selectors.
  */
 function onSetDisaster() {
-  displayedCurrentDisaster = false;
+  processedCurrentDisasterStateAssets = false;
+  processedCurrentDisasterSelfAssets = false;
   const currentDisaster = getDisaster();
   if (currentDisaster) {
     const states = disasterData.get(currentDisaster).states;
@@ -543,10 +545,19 @@ function onSetDisaster() {
       });
     }
     promise.then(() => {
-      if (getDisaster() === currentDisaster && !displayedCurrentDisaster) {
+      if (getDisaster() === currentDisaster &&
+          !processedCurrentDisasterStateAssets) {
         // Don't do anything unless this is still the right disaster.
         initializeScoreSelectors(states);
-        displayedCurrentDisaster = true;
+        processedCurrentDisasterStateAssets = true;
+      }
+    });
+    disasterAssets.get(currentDisaster).then((assets) => {
+      if (getDisaster() === currentDisaster &&
+          !processedCurrentDisasterSelfAssets) {
+        // Don't do anything unless this is still the right disaster.
+        initializeDamageSelector(assets);
+        processedCurrentDisasterSelfAssets = true;
       }
     });
   }
@@ -559,7 +570,10 @@ function onSetDisaster() {
  */
 function maybeFetchDisasterAssets(disaster) {
   if (!disasterAssets.has(disaster)) {
-    disasterAssets.set(disaster, getDisasterAssetsFromEe(disaster));
+    disasterAssets.set(
+        disaster,
+        getDisasterAssetsFromEe(disaster).then(
+            (result) => Array.from(result.keys())));
   }
 }
 
@@ -685,9 +699,6 @@ function notAllLowercase(val) {
   return !/^[a-z]+$/.test(val);
 }
 
-const scoreAssetTypes = ['Poverty', 'Income', 'SVI'];
-Object.freeze(scoreAssetTypes);
-
 /**
  * Changes page state between looking at a known disaster and adding a new one.
  * @param {boolean} known
@@ -702,39 +713,83 @@ function toggleState(known) {
   }
 }
 
+const scoreAssetTypes = [
+  ['poverty', ['snap_data', 'paths'], 'Poverty'],
+  ['income', ['income_asset_paths'], 'Income'],
+  ['svi', ['svi_asset_paths'], 'SVI'],
+];
+Object.freeze(scoreAssetTypes);
+
+const assetSelectionRowPrefix = 'asset-selection-row-';
+
+/**
+ * Initializes score selector table based on {@link scoreAssetTypes} data. Done
+ * as soon as page is ready.
+ */
+function setUpScoreSelectorTable() {
+  const tbody = $('#asset-selection-table-body');
+  for (const scoreAssetType of scoreAssetTypes) {
+    const row = $(document.createElement('tr'));
+    row.append(createTd().text(scoreAssetType[2]));
+    row.prop('id', assetSelectionRowPrefix + scoreAssetType[0]);
+    tbody.append(row);
+  }
+}
+
 /**
  * Initializes the select interface for score assets.
  * @param {Array<string>} states array of state (abbreviations)
  */
 function initializeScoreSelectors(states) {
   const headerRow = $('#score-asset-header-row');
-  const tableBody = $('#asset-selection-table-body');
-  tableBody.empty();
-  headerRow.empty();
 
   // Initialize headers.
-  headerRow.append(createTd().html('Score Assets'));
+  removeAllButFirstFromRow(headerRow);
   for (const state of states) {
     headerRow.append(createTd().html(state + ' Assets'));
   }
 
   // For each asset type, add select for all assets for each state.
   for (const scoreAssetType of scoreAssetTypes) {
-    const row =
-        $(document.createElement('tr')).prop('id', scoreAssetType + '-row');
-    row.append(createTd().append(
-        $(document.createElement('div')).html(scoreAssetType)));
+    const id = assetSelectionRowPrefix + scoreAssetType[0];
+    const propertyPath = scoreAssetType[1];
+    const row = $('#' + id);
+    removeAllButFirstFromRow(row);
     for (const state of states) {
       if (stateAssets.get(state)) {
+        const pathDictionary = getElementFromPath(propertyPath);
         const select =
-            createAssetDropdown(stateAssets.get(state), scoreAssetType, state);
+            createAssetDropdown(stateAssets.get(state), pathDictionary[state]);
         row.append(createTd().append(select));
         select.on(
-            'change', () => handleScoreAssetSelection(scoreAssetType, state));
+            'change', () => handleScoreAssetSelection(propertyPath, state));
       }
     }
-    tableBody.append(row);
   }
+}
+
+/**
+ * Initializes the damage selector, given the provided assets.
+ * @param {Array<string>} assets List of assets in the disaster folder
+ */
+function initializeDamageSelector(assets) {
+  createAssetDropdown(
+      assets, getElementFromPath(['damage_asset_path']),
+      $('#damage-asset-select'));
+}
+
+/**
+ * Retrieves the object inside the current disaster's asset_data, given by the
+ * "path" of {@code propertyPath}
+ * @param {Array<string>} propertyPath List of attributes to follow
+ * @return {*}
+ */
+function getElementFromPath(propertyPath) {
+  let element = disasterData.get(getDisaster()).asset_data;
+  for (const property of propertyPath) {
+    element = element[property];
+  }
+  return element;
 }
 
 /**
@@ -746,21 +801,35 @@ function createTd() {
 }
 
 /**
+ * Removes all but first td from a row.
+ * @param {JQuery<HTMLTableRowElement>} row
+ */
+function removeAllButFirstFromRow(row) {
+  while (row.children('td').length > 1) {
+    row.find('td:last').remove();
+  }
+}
+
+/**
  * Initializes a dropdown with assets.
  * @param {Array<string>} assets List of assets to add to dropdown
- * @param {string} row The asset type/row to put the dropdown in.
- * @param {string} state The state the assets are in.
+ * @param {string} value Current value of this select. If that value is found in
+ *     options, it will be selected. Otherwise, no option will be selected
+ * @param {jQuery<HTMLSelectElement>} select Select element, will be created if
+ *     not given
  * @return {JQuery<HTMLSelectElement>}
  */
-function createAssetDropdown(assets, row, state) {
-  // Create the asset selector and add a 'None' option.
-  const select =
-      $(document.createElement('select')).prop('id', row + '-' + state);
+function createAssetDropdown(
+    assets, value, select = $(document.createElement('select'))) {
   select.append(createOptionFrom('None'));
 
   // Add assets to selector and return it.
   for (const asset of assets) {
-    select.append(createOptionFrom(asset));
+    const assetOption = createOptionFrom(asset);
+    if (asset === value) {
+      assetOption.attr('selected', true);
+    }
+    select.append(assetOption);
   }
   return select;
 }
