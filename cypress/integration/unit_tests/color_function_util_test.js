@@ -1,5 +1,5 @@
 import {populateColorFunctions, withColor} from '../../../docs/import/color_function_util.js';
-import * as addDisasterUtil from '../../../docs/import/manage_layers_lib.js';
+import * as manageLayersLib from '../../../docs/import/manage_layers_lib.js';
 import {createTrs, setDisasterAndLayers} from '../../support/import_test_util.js';
 import {addFirebaseHooks, loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
@@ -26,7 +26,7 @@ describe('Unit tests for color function utility', () => {
   });
 
   beforeEach(() => {
-    writeToFirebaseStub = cy.stub(addDisasterUtil, 'updateLayersInFirestore');
+    writeToFirebaseStub = cy.stub(manageLayersLib, 'updateLayersInFirestore');
   });
 
   it('switches schemas and writes data', () => {
@@ -129,7 +129,7 @@ function expectOneFirebaseWrite() {
  * @return {Object}
  */
 function getColorFunction() {
-  return addDisasterUtil.getCurrentLayers()[0][property];
+  return manageLayersLib.getCurrentLayers()[0][property];
 }
 
 /**

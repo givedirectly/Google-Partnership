@@ -12,7 +12,13 @@ export {enableWhenReady, onSetDisaster, toggleState};
 /** @VisibleForTesting */
 export {addDisaster, deleteDisaster, disasterData, run, writeNewDisaster};
 
+/**
+ * @type {Map<string, Object>} Disaster id to disaster data, corresponding to data in Firestore. Initialized when Firestore data is downloaded, but set to an empty map here for testing
+ */
 let disasterData = new Map();
+/**
+ * @type {Map<string, Promise<Map<string, number>>>} Disaster id to listing of assets in corresponding EE folder, associated to asset type
+ */
 const disasterAssets = new Map();
 
 // Map of state to list of known assets
@@ -280,7 +286,9 @@ function run(disasterData, setMapBoundsInfoFunction = setMapBoundsInfo) {
           console.log(
               'Old ' + scoreAssetPath + ' not present, did not delete it');
         } else {
-          reject(new Error('Error deleting: ' + err));
+          const message = 'Error deleting: ' + err;
+          setStatus(message);
+          reject(new Error(message));
         }
       }
       task.start();
@@ -414,9 +422,7 @@ function computeBuildingsHisto(damageEnvelope, buildingPath, stateGroups) {
  *     callers can write "return missingAssetError" and save a line
  */
 function missingAssetError(str) {
-  setStatus(
-      'Error! Please specify ' + str +
-      ' at <a href="manage_layers.html">manage_layers.html</a>');
+  setStatus('Error! Please specify ' + str);
   return null;
 }
 
@@ -425,7 +431,7 @@ function missingAssetError(str) {
  * @param {string} str message
  */
 function setStatus(str) {
-  $('#compute-status').html(str);
+  $('#compute-status').text(str);
 }
 
 /**
@@ -470,9 +476,7 @@ function enableWhenReady(allDisastersData) {
 
 /**
  * Enables all Firestore-dependent functionality.
- * @param {firebase.firestore.DocumentSnapshot} allDisastersData Contents of
- *     Firestore for all disasters, the current disaster's data is used when
- * calculating
+ * @param {firebase.firestore.DocumentSnapshot} allDisastersData Contents of Firestore for all disasters, the current disaster's data is used when calculating
  */
 function enableWhenFirestoreReady(allDisastersData) {
   disasterData = allDisastersData;

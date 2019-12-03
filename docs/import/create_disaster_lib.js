@@ -1,5 +1,8 @@
 export {createDisasterData};
 
+// For testing
+export {assetDataTemplate};
+
 const assetDataTemplate = {
   asset_data: {
     damage_asset_path: null,
@@ -16,6 +19,7 @@ const assetDataTemplate = {
     building_asset_paths: {},
   },
 };
+Object.freeze(assetDataTemplate);
 
 /**
  * Creates disaster data for a disaster with the following states.

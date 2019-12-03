@@ -18,6 +18,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.4/jquery-ui.js"></script>
 
   <script src="https://apis.google.com/js/api.js"></script>
+
+  <!-- juliexxia@'s kit, switch to GD's if we want to use -->
+  <script src="https://kit.fontawesome.com/61a3fbf666.js" crossorigin="anonymous"></script>
   <script type="module" src="manage_layers_startup.js"></script>
 
   <!-- Load our styles. -->
@@ -32,8 +35,8 @@
 
 <div id="disaster-picker">
   <label for="disaster">Disaster: </label>
-  <select id="disaster" style="width: 160px"></select>
-  <select id="pending-disaster" style="width: 160px" hidden="true" disabled="true">
+  <select id="disaster" style="width: 160px" hidden></select>
+  <select id="pending-disaster" style="width: 160px" disabled="true">
     <option value="pending" id="pending">...</option>
   </select>
 </div><br>
@@ -48,6 +51,7 @@
         <th>Type</th>
         <th>Display on Load</th>
         <th>Color</th>
+        <th></th>
       </tr>
     </thead>
     <tbody id="tbody"></tbody>

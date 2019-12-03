@@ -1,7 +1,6 @@
 import {Authenticator} from '../authenticate.js';
 import {loadNavbarWithTitle} from '../navbar.js';
 import TaskAccumulator from '../task_accumulator.js';
-
 import {populateColorFunctions} from './color_function_util.js';
 import {enableWhenReady, updateAfterSort} from './manage_layers.js';
 
