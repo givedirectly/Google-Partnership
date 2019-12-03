@@ -8,6 +8,7 @@ import {computeAndSaveBounds, saveBounds} from './center.js';
 import {createDisasterData} from './create_disaster_lib.js';
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
 import {getDisasterAssetsFromEe, getStatesAssetsFromEe} from './list_ee_assets.js';
+import {updateDataInFirestore} from './update_firestore_disaster.js';
 
 export {enableWhenReady, onSetDisaster, setUpScoreSelectorTable, toggleState};
 /** @VisibleForTesting */
@@ -832,7 +833,7 @@ function createOptionFrom(text) {
 function handleScoreAssetSelection(event, propertyPath) {
   const parentProperty = getElementFromPath(propertyPath.slice(0, -1));
   parentProperty[propertyPath[propertyPath.length - 1]] = $(event.target).val();
-
+  updateDataInFirestore(() => ({asset_data: disasterData.get(getDisaster())}), () => {}, () => {});
 }
 
 /**
@@ -847,14 +848,3 @@ function displayGeoNumbers(latLngs) {
               '(' + coords[1].toFixed(2) + ', ' + coords[0].toFixed(2) + ')')
       .join(', ');
 }
-
-const STATE = {
-  SAVED: 0,
-  WRITING: 1,
-  QUEUED_WRITE: 2,
-};
-Object.freeze(STATE);
-
-let state = STATE.SAVED;
-
-window.onbeforeunload = () => pendingWriteCount > 0 ? true : null;

@@ -2,6 +2,7 @@ import {writeWaiterId} from '../dom_constants.js';
 import {getFirestoreRoot} from '../firestore_document.js';
 import {addLoadingElement, loadingElementFinished} from '../loading.js';
 import {getDisaster} from '../resources.js';
+import {updateDataInFirestore} from './update_firestore_disaster.js';
 
 export {
   clearStatus,
@@ -79,51 +80,13 @@ function onUpdate(event, property, fxn) {
   return updateLayersInFirestore();
 }
 
-const STATE = {
-  SAVED: 0,
-  WRITING: 1,
-  QUEUED_WRITE: 2,
-};
-Object.freeze(STATE);
-
-let state = STATE.SAVED;
-let pendingWriteCount = 0;
-
-window.onbeforeunload = () => pendingWriteCount > 0 ? true : null;
-
 /**
- * Write the current state of {@code disasterData} to firestore.
+ * Writes the current state of {@code disasterData} layer data to firestore.
  * @return {?Promise<void>} Returns when finished writing or null if it just
  * queued a write and doesn't know when that will finish.
  */
 function updateLayersInFirestore() {
-  if (state !== STATE.SAVED) {
-    state = STATE.QUEUED_WRITE;
-    return null;
-  }
-  addLoadingElement(writeWaiterId);
-  state = STATE.WRITING;
-  pendingWriteCount++;
-  return getFirestoreRoot()
-      .collection('disaster-metadata')
-      .doc(getDisaster())
-      .set({layers: getCurrentLayers()}, {merge: true})
-      .then(() => {
-        pendingWriteCount--;
-        const oldState = state;
-        state = STATE.SAVED;
-        switch (oldState) {
-          case STATE.WRITING:
-            loadingElementFinished(writeWaiterId);
-            return null;
-          case STATE.QUEUED_WRITE:
-            loadingElementFinished(writeWaiterId);
-            return updateLayersInFirestore();
-          case STATE.SAVED:
-            console.error('Unexpected layer write state');
-            return null;
-        }
-      });
+  return updateDataInFirestore(() => ({layers: getCurrentLayers()}), () => addLoadingElement(writeWaiterId), () => loadingElementFinished(writeWaiterId));
 }
 
 /**
