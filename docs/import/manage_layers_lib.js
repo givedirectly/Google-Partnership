@@ -86,7 +86,10 @@ function onUpdate(event, property, fxn) {
  * queued a write and doesn't know when that will finish.
  */
 function updateLayersInFirestore() {
-  return updateDataInFirestore(() => ({layers: getCurrentLayers()}), () => addLoadingElement(writeWaiterId), () => loadingElementFinished(writeWaiterId));
+  return updateDataInFirestore(
+      () => ({layers: getCurrentLayers()}),
+      () => addLoadingElement(writeWaiterId),
+      () => loadingElementFinished(writeWaiterId));
 }
 
 /**

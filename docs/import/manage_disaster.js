@@ -562,7 +562,8 @@ function onSetDisaster() {
     };
     // Handle errors in disaster asset retrieval by just emptying out.
     disasterAssets.get(currentDisaster).then(disasterLambda, (err) => {
-      if (err !== 'Asset "' + eeLegacyPathPrefix + currentDisaster + '" not found.') {
+      if (err !==
+          'Asset "' + eeLegacyPathPrefix + currentDisaster + '" not found.') {
         setStatus(err);
       }
       disasterLambda([]);
@@ -744,7 +745,8 @@ function initializeScoreSelectors(states) {
     for (const state of states) {
       if (stateAssets.get(state)) {
         const statePropertyPath = propertyPath.concat([state]);
-        row.append(createTd().append(createAssetDropdown(stateAssets.get(state), statePropertyPath)));
+        row.append(createTd().append(
+            createAssetDropdown(stateAssets.get(state), statePropertyPath)));
       }
     }
   }
@@ -755,7 +757,8 @@ function initializeScoreSelectors(states) {
  * @param {Array<string>} assets List of assets in the disaster folder
  */
 function initializeDamageSelector(assets) {
-  createAssetDropdown(assets, ['damage_asset_path'], $('#damage-asset-select').empty());
+  createAssetDropdown(
+      assets, ['damage_asset_path'], $('#damage-asset-select').empty());
 }
 
 /**
@@ -793,8 +796,9 @@ function removeAllButFirstFromRow(row) {
 /**
  * Initializes a dropdown with assets and the appropriate change handler.
  * @param {Array<string>} assets List of assets to add to dropdown
- * @param {Array<string>} propertyPath List of attributes to follow to get value. If that value is found in
- *     options, it will be selected. Otherwise, no option will be selected
+ * @param {Array<string>} propertyPath List of attributes to follow to get
+ *     value. If that value is found in options, it will be selected. Otherwise,
+ *     no option will be selected
  * @param {jQuery<HTMLSelectElement>} select Select element, will be created if
  *     not given
  * @return {JQuery<HTMLSelectElement>}
@@ -821,12 +825,14 @@ function createAssetDropdown(
 /**
  * Handles the user selecting an asset for one of the possible score types.
  * @param {Event} event Event, used to identify the target
- * @param {Array<string>} propertyPath path to property inside asset data. We set this value by setting the parent's attribute to the target's value
+ * @param {Array<string>} propertyPath path to property inside asset data. We
+ *     set this value by setting the parent's attribute to the target's value
  */
 function handleScoreAssetSelection(event, propertyPath) {
   const parentProperty = getElementFromPath(propertyPath.slice(0, -1));
   parentProperty[propertyPath[propertyPath.length - 1]] = $(event.target).val();
-  updateDataInFirestore(() => disasterData.get(getDisaster()), () => {}, () => {});
+  updateDataInFirestore(
+      () => disasterData.get(getDisaster()), () => {}, () => {});
 }
 
 /**

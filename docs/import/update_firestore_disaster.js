@@ -42,11 +42,11 @@ function updateDataInFirestore(dataSupplier, startCallback, finishCallback) {
             return null;
           case STATE.QUEUED_WRITE:
             finishCallback();
-            return updateDataInFirestore(dataSupplier, startCallback, finishCallback);
+            return updateDataInFirestore(
+                dataSupplier, startCallback, finishCallback);
           case STATE.SAVED:
             console.error('Unexpected write state');
             return null;
         }
       });
 }
-
