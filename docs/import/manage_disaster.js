@@ -858,11 +858,3 @@ Object.freeze(STATE);
 let state = STATE.SAVED;
 
 window.onbeforeunload = () => pendingWriteCount > 0 ? true : null;
-
-const pendingWrites = [];
-
-function flushWritesToFirestore() {
-  for (const write of pendingWrites) {
-
-  }
-}
