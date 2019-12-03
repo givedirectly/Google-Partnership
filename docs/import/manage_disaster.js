@@ -21,8 +21,8 @@ export {addDisaster, deleteDisaster, disasterData, run, writeNewDisaster};
  */
 let disasterData = new Map();
 /**
- * @type {Map<string, Promise<Map<string, number>>>} Disaster id to listing of
- *     assets in corresponding EE folder, associated to asset type
+ * @type {Map<string, Promise<Array<string>>>} Disaster id to listing of
+ *     assets in corresponding EE folder
  */
 const disasterAssets = new Map();
 
