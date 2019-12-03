@@ -1,4 +1,4 @@
-import {eeLegacyPathPrefix, eeStatePrefixLength, legacyStateDir} from '../ee_paths.js';
+import {eeLegacyPathPrefix, legacyStateDir} from '../ee_paths.js';
 import {LayerType} from '../firebase_layers.js';
 
 export {getDisasterAssetsFromEe, getStatesAssetsFromEe};

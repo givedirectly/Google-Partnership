@@ -666,12 +666,12 @@ function writeNewDisaster(disasterId, states) {
  * @param {string} dir asset path of folder to create
  */
 function getCreateFolderPromise(dir) {
-  new Promise((resolve) => {
+  return new Promise((resolve) => {
     ee.data.createFolder(dir, false, () => {
       ee.data.setAssetAcl(dir, {all_users_can_read: true});
       resolve();
     });
-  })
+  });
 }
 
 /**
