@@ -13,7 +13,7 @@ function getStatesAssetsFromEe(states) {
   const promises = [];
   for (const state of states) {
     const dir = legacyStateDir + '/' + state;
-      promises.push(listEeAssets(dir).then((result) => [state, result]));
+    promises.push(listEeAssets(dir).then((result) => [state, result]));
   }
   return Promise.all(promises);
 }

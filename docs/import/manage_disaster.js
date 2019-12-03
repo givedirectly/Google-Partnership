@@ -639,10 +639,9 @@ function writeNewDisaster(disasterId, states) {
     const disasterPicker = $('#disaster-dropdown');
     const disasterOptions = disasterPicker.children();
     let added = false;
-    // We expect this recently created disaster to go near the top of the list, so
-    // do a linear scan down.
-    // Note: let's hope this tool isn't being used in the year 10000.
-    // Comment needed to quiet eslint.
+    // We expect this recently created disaster to go near the top of the list,
+    // so do a linear scan down. Note: let's hope this tool isn't being used in
+    // the year 10000. Comment needed to quiet eslint.
     disasterOptions.each(/* @this HTMLElement */ function() {
       if ($(this).val() < disasterId) {
         $(createOptionFrom(disasterId)).insertBefore($(this));
@@ -662,6 +661,10 @@ function writeNewDisaster(disasterId, states) {
       .then(() => true);
 }
 
+/**
+ * Returns a promise that resolves on the creation of the given folder.
+ * @param {string} dir asset path of folder to create
+ */
 function getCreateFolderPromise(dir) {
   new Promise((resolve) => {
     ee.data.createFolder(dir, false, () => {
