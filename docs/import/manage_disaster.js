@@ -664,6 +664,8 @@ function writeNewDisaster(disasterId, states) {
 /**
  * Returns a promise that resolves on the creation of the given folder.
  * @param {string} dir asset path of folder to create
+ * @return {Promise<void>} resolves when after the directory is created and
+ * set to world readable.
  */
 function getCreateFolderPromise(dir) {
   return new Promise((resolve) => {
