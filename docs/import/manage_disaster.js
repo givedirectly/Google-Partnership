@@ -1,3 +1,4 @@
+import {eeLegacyPathPrefix} from '../ee_paths';
 import {LayerType} from '../firebase_layers.js';
 import {disasterCollectionReference} from '../firestore_document.js';
 import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, snapPercentageTag, snapPopTag, sviTag, totalPopTag, tractTag} from '../property_names.js';
@@ -623,6 +624,7 @@ function writeNewDisaster(disasterId, states) {
   }
   const currentData = createDisasterData(states);
   disasterData.set(disasterId, currentData);
+  disasterAssets.set(disasterId, new Map());
 
   const disasterPicker = $('#disaster-dropdown');
   const disasterOptions = disasterPicker.children();
@@ -641,13 +643,20 @@ function writeNewDisaster(disasterId, states) {
   if (!added) disasterPicker.append(createOptionFrom(disasterId));
   toggleState(true);
 
-  disasterPicker.val(disasterId).trigger('change');
+  const dir = eeLegacyPathPrefix + disasterId;
+  // TODO: replace with setIamPolicy when that works. See comment in {@code
+  // getStatesAssetsFromEe}
+  ee.data.createFolder(dir, false, () => {
+    ee.data.setAssetAcl(dir, {all_users_can_read: true});
+    disasterPicker.val(disasterId).trigger('change');
+  });
 
   return disasterCollectionReference()
       .doc(disasterId)
       .set(currentData)
       .then(() => true);
 }
+
 
 /**
  * Returns true if the given string is *not* all lowercase letters.
