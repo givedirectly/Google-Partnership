@@ -46,7 +46,7 @@ function getStatesAssetsFromEe(states) {
  */
 function getDisasterAssetsFromEe(disaster) {
   return listEeAssets(eeLegacyPathPrefix + disaster)
-      .then((result) => result.keys());
+      .then((result) => Array.from(result.keys()));
 }
 
 /**

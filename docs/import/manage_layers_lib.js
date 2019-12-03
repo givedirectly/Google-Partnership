@@ -114,10 +114,10 @@ function updateLayersInFirestore() {
         state = STATE.SAVED;
         switch (oldState) {
           case STATE.WRITING:
-            loadingElementFinished(writeWaiterId);
+            // loadingElementFinished(writeWaiterId);
             return null;
           case STATE.QUEUED_WRITE:
-            loadingElementFinished(writeWaiterId);
+            // loadingElementFinished(writeWaiterId);
             return updateLayersInFirestore();
           case STATE.SAVED:
             console.error('Unexpected layer write state');

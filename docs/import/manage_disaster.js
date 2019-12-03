@@ -1,3 +1,4 @@
+import {eeLegacyPathPrefix} from '../ee_paths.js';
 import {LayerType} from '../firebase_layers.js';
 import {disasterCollectionReference} from '../firestore_document.js';
 import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, snapPercentageTag, snapPopTag, sviTag, totalPopTag, tractTag} from '../property_names.js';
@@ -550,13 +551,20 @@ function onSetDisaster() {
         processedCurrentDisasterStateAssets = true;
       }
     });
-    disasterAssets.get(currentDisaster).then((assets) => {
+    const disasterLambda = (assets) => {
       if (getDisaster() === currentDisaster &&
           !processedCurrentDisasterSelfAssets) {
         // Don't do anything unless this is still the right disaster.
         initializeDamageSelector(assets);
         processedCurrentDisasterSelfAssets = true;
       }
+    };
+    // Handle errors in disaster asset retrieval by just emptying out.
+    disasterAssets.get(currentDisaster).then(disasterLambda, (err) => {
+      if (err !== 'Asset "' + eeLegacyPathPrefix + currentDisaster + '" not found.') {
+        setStatus(err);
+      }
+      disasterLambda([]);
     });
   }
 }
@@ -695,7 +703,6 @@ const scoreAssetTypes = [
 Object.freeze(scoreAssetTypes);
 
 const assetSelectionRowPrefix = 'asset-selection-row-';
-Object.freeze(assetSelectionRowPrefix);
 
 /**
  * Initializes score selector table based on {@link scoreAssetTypes} data. Done
@@ -774,7 +781,7 @@ function createTd() {
  * @param {JQuery<HTMLTableRowElement>} row
  */
 function removeAllButFirstFromRow(row) {
-  while (row.length > 1) {
+  while (row.children('td').length > 1) {
     row.find('td:last').remove();
   }
 }
@@ -821,7 +828,7 @@ function createOptionFrom(text) {
  */
 function handleScoreAssetSelection(event, propertyPath) {
   const parentProperty = getElementFromPath(propertyPath.slice(0, -1));
-  parentProperty[propertyPath[propertyPath.length - 1]] = event.target.val();
+  parentProperty[propertyPath[propertyPath.length - 1]] = $(event.target).val();
 
 }
 
@@ -836,4 +843,23 @@ function displayGeoNumbers(latLngs) {
           (coords) =>
               '(' + coords[1].toFixed(2) + ', ' + coords[0].toFixed(2) + ')')
       .join(', ');
+}
+
+const STATE = {
+  SAVED: 0,
+  WRITING: 1,
+  QUEUED_WRITE: 2,
+};
+Object.freeze(STATE);
+
+let state = STATE.SAVED;
+
+window.onbeforeunload = () => pendingWriteCount > 0 ? true : null;
+
+const pendingWrites = [];
+
+function flushWritesToFirestore() {
+  for (const write of pendingWrites) {
+
+  }
 }
