@@ -8,7 +8,7 @@ import {createDisasterData} from './create_disaster_lib.js';
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
 import {getDisasterAssetsFromEe, getStatesAssetsFromEe} from './list_ee_assets.js';
 
-export {enableWhenReady, onSetDisaster, toggleState, setUpScoreSelectorTable};
+export {enableWhenReady, onSetDisaster, setUpScoreSelectorTable, toggleState};
 /** @VisibleForTesting */
 export {addDisaster, deleteDisaster, disasterData, run, writeNewDisaster};
 

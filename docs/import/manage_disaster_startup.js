@@ -4,12 +4,7 @@ import {getDisastersData} from '../firestore_document.js';
 import {loadNavbarWithPicker} from '../navbar.js';
 import TaskAccumulator from '../task_accumulator.js';
 
-import {
-  enableWhenReady,
-  onSetDisaster,
-  setUpScoreSelectorTable,
-  toggleState
-} from './manage_disaster.js';
+import {enableWhenReady, onSetDisaster, setUpScoreSelectorTable, toggleState} from './manage_disaster.js';
 
 // Two tasks: EE and page load. Firebase is taken care of in the promise.
 const taskAccumulator =
