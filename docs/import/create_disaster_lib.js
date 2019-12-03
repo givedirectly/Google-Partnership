@@ -5,6 +5,11 @@ export {assetDataTemplate};
 
 // Has all the basic fields needed for the score asset to be created: SNAP, SVI,
 // and income together with the columns of each, and optional damage asset path.
+// The default values for column names here are taken from Census American
+// FactFinder and CDC tables.
+// TODO: should we allow users to change the columns here, on a per-disaster
+//  level? Or only as a "global" default? Or just make them modify directly in
+//  Firestore?
 const assetDataTemplate = {
   asset_data: {
     damage_asset_path: null,
