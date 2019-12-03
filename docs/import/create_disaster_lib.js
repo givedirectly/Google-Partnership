@@ -3,6 +3,8 @@ export {createDisasterData};
 // For testing
 export {assetDataTemplate};
 
+// Has all the basic fields needed for the score asset to be created: SNAP, SVI,
+// and income together with the columns of each, and optional damage asset path.
 const assetDataTemplate = {
   asset_data: {
     damage_asset_path: null,
