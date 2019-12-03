@@ -781,13 +781,11 @@ function createAssetDropdown(
     assets, value, select = $(document.createElement('select'))) {
   select.append(createOptionFrom('None'));
 
-  let foundOption = false;
   // Add assets to selector and return it.
   for (const asset of assets) {
     const assetOption = createOptionFrom(asset);
     if (asset === value) {
       assetOption.attr('selected', true);
-      foundOption = true;
     }
     select.append(assetOption);
   }
