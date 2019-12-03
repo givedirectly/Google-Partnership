@@ -693,6 +693,10 @@ Object.freeze(scoreAssetTypes);
 const assetSelectionRowPrefix = 'asset-selection-row-';
 Object.freeze(assetSelectionRowPrefix);
 
+/**
+ * Initializes score selector table based on {@link scoreAssetTypes} data. Done
+ * as soon as page is ready.
+ */
 function setUpScoreSelectorTable() {
   const tbody = $('#asset-selection-table-body');
   for (const scoreAssetType of scoreAssetTypes) {
