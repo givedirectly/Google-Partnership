@@ -1,5 +1,4 @@
 import {writeWaiterId} from '../dom_constants.js';
-import {getFirestoreRoot} from '../firestore_document.js';
 import {addLoadingElement, loadingElementFinished} from '../loading.js';
 import {getDisaster} from '../resources.js';
 import {updateDataInFirestore} from './update_firestore_disaster.js';
