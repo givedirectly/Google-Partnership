@@ -1,4 +1,4 @@
-import {eeLegacyPathPrefix} from '../ee_paths';
+import {eeLegacyPathPrefix, legacyStateDir} from '../ee_paths.js';
 import {LayerType} from '../firebase_layers.js';
 import {disasterCollectionReference} from '../firestore_document.js';
 import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, snapPercentageTag, snapPopTag, sviTag, totalPopTag, tractTag} from '../property_names.js';
@@ -8,6 +8,7 @@ import {computeAndSaveBounds, saveBounds} from './center.js';
 import {createDisasterData} from './create_disaster_lib.js';
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
 import {getDisasterAssetsFromEe, getStatesAssetsFromEe} from './list_ee_assets.js';
+import {clearStatus} from './manage_layers_lib.js';
 
 export {enableWhenReady, onSetDisaster, toggleState};
 /** @VisibleForTesting */
@@ -622,32 +623,36 @@ function writeNewDisaster(disasterId, states) {
     setStatus('Error: disaster with that name and year already exists.');
     return Promise.resolve(false);
   }
+  clearStatus();
   const currentData = createDisasterData(states);
   disasterData.set(disasterId, currentData);
-  disasterAssets.set(disasterId, new Map());
 
-  const disasterPicker = $('#disaster-dropdown');
-  const disasterOptions = disasterPicker.children();
-  let added = false;
-  // We expect this recently created disaster to go near the top of the list, so
-  // do a linear scan down.
-  // Note: let's hope this tool isn't being used in the year 10000.
-  // Comment needed to quiet eslint.
-  disasterOptions.each(/* @this HTMLElement */ function() {
-    if ($(this).val() < disasterId) {
-      $(createOptionFrom(disasterId)).insertBefore($(this));
-      added = true;
-      return false;
-    }
-  });
-  if (!added) disasterPicker.append(createOptionFrom(disasterId));
-  toggleState(true);
+  const folderCreationPromises = [];
+  folderCreationPromises.push(
+      getCreateFolderPromise(eeLegacyPathPrefix + disasterId));
+  for (const state of states) {
+    folderCreationPromises.push(
+        getCreateFolderPromise(legacyStateDir + '/' + state));
+  }
 
-  const dir = eeLegacyPathPrefix + disasterId;
-  // TODO: replace with setIamPolicy when that works. See comment in {@code
-  // getStatesAssetsFromEe}
-  ee.data.createFolder(dir, false, () => {
-    ee.data.setAssetAcl(dir, {all_users_can_read: true});
+  Promise.all(folderCreationPromises).then(() => {
+    const disasterPicker = $('#disaster-dropdown');
+    const disasterOptions = disasterPicker.children();
+    let added = false;
+    // We expect this recently created disaster to go near the top of the list, so
+    // do a linear scan down.
+    // Note: let's hope this tool isn't being used in the year 10000.
+    // Comment needed to quiet eslint.
+    disasterOptions.each(/* @this HTMLElement */ function() {
+      if ($(this).val() < disasterId) {
+        $(createOptionFrom(disasterId)).insertBefore($(this));
+        added = true;
+        return false;
+      }
+    });
+    if (!added) disasterPicker.append(createOptionFrom(disasterId));
+    toggleState(true);
+
     disasterPicker.val(disasterId).trigger('change');
   });
 
@@ -655,6 +660,15 @@ function writeNewDisaster(disasterId, states) {
       .doc(disasterId)
       .set(currentData)
       .then(() => true);
+}
+
+function getCreateFolderPromise(dir) {
+  new Promise((resolve) => {
+    ee.data.createFolder(dir, false, () => {
+      ee.data.setAssetAcl(dir, {all_users_can_read: true});
+      resolve();
+    });
+  })
 }
 
 /**
