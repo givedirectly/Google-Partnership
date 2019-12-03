@@ -17,8 +17,10 @@ window.onbeforeunload = () => pendingWriteCount > 0 ? true : null;
 
 /**
  * Write the current state of a disaster's data to firestore.
- * @param {Function} dataSupplier Function that returns data to be written for current disaster
- * @param {Function} startCallback Function that should be called before a write starts (to indicate loading progress, for instance)
+ * @param {Function} dataSupplier Function that returns data to be written for
+ *     current disaster
+ * @param {Function} startCallback Function that should be called before a write
+ *     starts (to indicate loading progress, for instance)
  * @param {Function} finishCallback Function called whenever a write ends
  * @return {?Promise<void>} Returns when finished writing or null if it just
  * queued a write and doesn't know when that will finish.
