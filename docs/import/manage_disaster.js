@@ -720,7 +720,7 @@ function createTd() {
 
 /**
  * Initializes a dropdown with assets.
- * @param {Map<string, LayerType>} assets map of assets to add to dropdown
+ * @param {Array<string>} assets List of assets to add to dropdown
  * @param {string} row The asset type/row to put the dropdown in.
  * @param {string} state The state the assets are in.
  * @return {JQuery<HTMLSelectElement>}
