@@ -1,7 +1,6 @@
 import {ColorStyle, LayerType} from '../../../docs/firebase_layers.js';
-import {getCurrentLayers} from '../../../docs/import/add_disaster_util';
-import {disasterData} from '../../../docs/import/add_disaster_util.js';
 import {processNewEeLayer} from '../../../docs/import/add_layer.js';
+import {disasterData, getCurrentLayers} from '../../../docs/import/manage_layers_lib.js';
 import * as loading from '../../../docs/loading.js';
 import {createTrs} from '../../support/import_test_util.js';
 import {createAndAppend, setDisasterAndLayers} from '../../support/import_test_util.js';

@@ -1,4 +1,4 @@
-import {disasterData} from '../../docs/import/add_disaster_util';
+import {disasterData} from '../../docs/import/manage_layers_lib';
 
 export {createAndAppend, createTrs, setDisasterAndLayers};
 

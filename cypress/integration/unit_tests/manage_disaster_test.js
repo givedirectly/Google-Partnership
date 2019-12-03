@@ -1,14 +1,30 @@
-import {run} from '../../../docs/import/import_data';
+import {getFirestoreRoot} from '../../../docs/firestore_document.js';
+import {assetDataTemplate} from '../../../docs/import/create_disaster_lib.js';
+import {disasterData, run} from '../../../docs/import/manage_disaster';
+import {addDisaster, deleteDisaster, writeNewDisaster} from '../../../docs/import/manage_disaster.js';
+import {createOptionFrom} from '../../../docs/import/manage_layers.js';
 import {convertEeObjectToPromise} from '../../../docs/map_util';
 import {assertFirestoreMapBounds} from '../../support/firestore_map_bounds';
+import {createAndAppend} from '../../support/import_test_util.js';
 import {initFirebaseForUnitTest, loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 
-describe('Unit tests for import_data.js', () => {
+const KNOWN_STATE = 'WF';
+
+describe('Unit tests for manage_disaster.js', () => {
   loadScriptsBeforeForUnitTests('ee', 'firebase', 'jquery');
   initFirebaseForUnitTest();
+  before(() => {
+    const disasterPicker = createAndAppend('select', 'disaster-dropdown');
+    disasterPicker.append(createOptionFrom('2003-spring'));
+    disasterPicker.append(createOptionFrom('2001-summer'));
+    disasterPicker.val('2003-spring');
+    createAndAppend('div', 'compute-status');
+  });
   let testData;
   let exportStub;
   beforeEach(() => {
+    disasterData.clear();
+
     // Create a pretty trivial world: 2 block groups, each a 1x2 vertical
     // stripes. Under the covers, we scale all dimensions down because
     // production code creates an "envelope" 1 km wide around damage, and that
@@ -33,7 +49,9 @@ describe('Unit tests for import_data.js', () => {
       makePoint(1.5, 0.5),
     ]);
     // Stub out delete and export. We'll assert on what was exported, below.
-    cy.stub(ee.data, 'deleteAsset');
+    cy.stub(ee.data, 'deleteAsset').callsFake((_, callback) => {
+      callback();
+    });
     exportStub = cy.stub(ee.batch.Export.table, 'toAsset')
                      .returns({start: () => {}, id: 'FAKE_ID'});
 
@@ -68,12 +86,17 @@ describe('Unit tests for import_data.js', () => {
       },
     };
   });
+
   it('Basic test', () => {
     const {boundsPromise, mapBoundsCallback} =
         makeCallbackForTextAndPromise('Found bounds');
-    expect(run(testData, mapBoundsCallback)).to.be.true;
-    expect(exportStub).to.be.calledOnce;
-    cy.wrap(convertEeObjectToPromise(exportStub.firstCall.args[0]))
+    const promise = run(testData, mapBoundsCallback);
+    expect(promise).to.not.be.null;
+    cy.wrap(promise)
+        .then(() => {
+          expect(exportStub).to.be.calledOnce;
+          return convertEeObjectToPromise(exportStub.firstCall.args[0]);
+        })
         .then((result) => {
           const features = result.features;
           expect(features).to.have.length(1);
@@ -106,9 +129,13 @@ describe('Unit tests for import_data.js', () => {
 
     const {boundsPromise, mapBoundsCallback} =
         makeCallbackForTextAndPromise('Wrote bounds');
-    expect(run(testData, mapBoundsCallback)).to.be.true;
-    expect(exportStub).to.be.calledOnce;
-    cy.wrap(convertEeObjectToPromise(exportStub.firstCall.args[0]))
+    const promise = run(testData, mapBoundsCallback);
+    expect(promise).to.not.be.null;
+    cy.wrap(promise)
+        .then(() => {
+          expect(exportStub).to.be.calledOnce;
+          return convertEeObjectToPromise(exportStub.firstCall.args[0]);
+        })
         .then((result) => {
           const features = result.features;
           expect(features).to.have.length(1);
@@ -131,8 +158,142 @@ describe('Unit tests for import_data.js', () => {
 
   it('Test missing data', () => {
     testData.asset_data = null;
-    expect(run(testData)).to.be.false;
+    expect(run(testData)).to.be.null;
     expect(exportStub).to.not.be.called;
+  });
+
+  it('writes a new disaster to firestore', () => {
+    let id = '2002-winter';
+    const states = ['DN, WF'];
+
+    cy.wrap(writeNewDisaster(id, states))
+        .then((success) => {
+          expect(success).to.be.true;
+          expect($('#status').is(':visible')).to.be.false;
+          expect(disasterData.get(id)['layers']).to.eql([]);
+          expect(disasterData.get(id)['states']).to.eql(states);
+          const disasterPicker = $('#disaster-dropdown');
+          const options = disasterPicker.children();
+          expect(options).to.have.length(3);
+          expect(options.eq(1).val()).to.eql('2002-winter');
+          expect(options.eq(1).is(':selected')).to.be.true;
+
+          // boundary condition checking
+          id = '1000-a';
+          return writeNewDisaster(id, states);
+        })
+        .then((success) => {
+          expect(success).to.be.true;
+          expect($('#disaster-dropdown').children().eq(3).val())
+              .to.eql('1000-a');
+
+          // boundary condition checking
+          id = '9999-z';
+          return writeNewDisaster(id, states);
+        })
+        .then((success) => {
+          expect(success).to.be.true;
+          expect($('#disaster-dropdown').children().eq(0).val())
+              .to.eql('9999-z');
+
+          return getFirestoreRoot()
+              .collection('disaster-metadata')
+              .doc(id)
+              .get();
+        })
+        .then((doc) => {
+          expect(doc.exists).to.be.true;
+          const data = doc.data();
+          expect(data['states']).to.eql(states);
+          expect(data['layers']).to.eql([]);
+          expect(data['asset_data']).to.eql(assetDataTemplate);
+        });
+  });
+
+  it('tries to write a disaster id that already exists', () => {
+    const id = '2005-summer';
+    const states = [KNOWN_STATE];
+
+    cy.wrap(writeNewDisaster(id, states))
+        .then((success) => {
+          expect(success).to.be.true;
+          return writeNewDisaster(id, states);
+        })
+        .then((success) => {
+          expect(success).to.be.false;
+          const status = $('#compute-status');
+          expect(status.is(':visible')).to.be.true;
+          expect(status.text())
+              .to.eql(
+                  'Error: disaster with that name and year already exists.');
+        });
+  });
+
+  it('tries to write a disaster with bad info, then fixes it', () => {
+    const year = createAndAppend('input', 'year');
+    const name = createAndAppend('input', 'name');
+    const states = createAndAppend('input', 'states');
+    const status = $('#compute-status');
+
+    cy.wrap(addDisaster())
+        .then((success) => {
+          expect(success).to.be.false;
+          expect(status.is(':visible')).to.be.true;
+          expect(status.text())
+              .to.eql('Error: Disaster name, year, and states are required.');
+
+          year.val('hello');
+          name.val('my name is');
+          states.val(['IG', 'MY']);
+          return addDisaster();
+        })
+        .then((success) => {
+          expect(success).to.be.false;
+          expect(status.is(':visible')).to.be.true;
+          expect(status.text()).to.eql('Error: Year must be a number.');
+
+          year.val('2000');
+          name.val('HARVEY');
+          return addDisaster();
+        })
+        .then((success) => {
+          expect(success).to.be.false;
+          expect(status.is(':visible')).to.be.true;
+          expect(status.text())
+              .to.eql(
+                  'Error: disaster name must be comprised of only ' +
+                  'lowercase letters');
+
+          name.val('harvey');
+          return addDisaster();
+        })
+        .then((success) => expect(success).to.be.true);
+  });
+
+  it('deletes a disaster', () => {
+    const confirmStub = cy.stub(window, 'confirm').returns(true);
+
+    const id = '2002-winter';
+    const states = ['DN, WF'];
+
+    cy.wrap(writeNewDisaster(id, states))
+        .then(
+            () => getFirestoreRoot()
+                      .collection('disaster-metadata')
+                      .doc(id)
+                      .get())
+        .then((doc) => {
+          expect(doc.exists).to.be.true;
+          const deletePromise = deleteDisaster();
+          expect(confirmStub).to.be.calledOnce;
+          return deletePromise;
+        })
+        .then(
+            () => getFirestoreRoot()
+                      .collection('disaster-metadata')
+                      .doc(id)
+                      .get())
+        .then((doc) => expect(doc.exists).to.be.false);
   });
 });
 

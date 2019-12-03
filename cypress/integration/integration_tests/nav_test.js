@@ -35,8 +35,8 @@ describe('Integration test for the navbar', () => {
     // 0x0.
     cy.get('.nav-menu a:first').next().click({force: true});
 
-    // The page should now be navigated to add_disaster.html.
-    cy.url().should('include', '/add_disaster.html');
+    // The page should now be navigated to manage_layers.html.
+    cy.url().should('include', '/manage_layers.html');
     // Make sure navigation bar is visible.
     cy.get('#nav-input');
   });

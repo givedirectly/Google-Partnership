@@ -12,14 +12,24 @@ export {
   ILLEGAL_STATE_ERR,
   onUpdate,
   setCurrentDisaster,
+  setDisasterData,
   setStatus,
   updateLayersInFirestore,
 };
 
 // A map of disaster names to data. This pulls once on firebase
 // authentication and then makes local updates afterwards so we don't need to
-// wait on firebase writes to read new info.
-const disasterData = new Map();
+// wait on firebase writes to read new info. Initialized when Firestore is
+// ready, but set to an empty map for use in tests.
+let disasterData = new Map();
+
+/**
+ * Sets the global {@link disasterData} to the passed-in parameter.
+ * @param {Map} readDisasterData value to set disasterData to
+ */
+function setDisasterData(readDisasterData) {
+  disasterData = readDisasterData;
+}
 
 /**
  * Utility function for getting current data.

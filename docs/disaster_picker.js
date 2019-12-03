@@ -1,28 +1,26 @@
-import {getDisasters} from './firestore_document.js';
 import {getDisaster} from './resources.js';
 
 export {initializeDisasterPicker};
 
 /**
  * Initializes the disaster picker.
- * @param {Promise} firebaseAuthPromise Promise that completes when logged in to
- *     Firebase
+ * @param {Promise<Map<string, Object>>} firebaseDataPromise Promise with data
+ *     for all disasters
+ * @param {?Function} changeDisasterHandler Function invoked when current
+ *     disaster is changed. location.reload is called if null
  */
-function initializeDisasterPicker(firebaseAuthPromise) {
+function initializeDisasterPicker(firebaseDataPromise, changeDisasterHandler) {
   const disasterDropdown = $('#disaster-dropdown');
-  firebaseAuthPromise.then(() => {
-    getDisasters().then((querySnapshot) => {
-      const currentDisaster = getDisaster();
-      querySnapshot.forEach((disasterDoc) => {
-        const disaster = disasterDoc.id;
-        const disasterItem = $(document.createElement('option')).text(disaster);
-        disasterDropdown.prepend(disasterItem);
-      });
-      disasterDropdown.val(currentDisaster);
-    });
+  firebaseDataPromise.then((allDisasters) => {
+    const currentDisaster = getDisaster();
+    for (const disaster of allDisasters.keys()) {
+      const disasterItem = $(document.createElement('option')).text(disaster);
+      disasterDropdown.prepend(disasterItem);
+    }
+    disasterDropdown.val(currentDisaster);
     disasterDropdown.on('change', () => {
       localStorage.setItem('disaster', disasterDropdown.val());
-      location.reload();
+      changeDisasterHandler ? changeDisasterHandler() : location.reload();
     });
   });
 }

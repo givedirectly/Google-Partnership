@@ -1,6 +1,6 @@
 import {colorMap, ColorStyle} from '../firebase_layers.js';
 
-import {getCurrentLayers, getRowIndex, ILLEGAL_STATE_ERR, setStatus, updateLayersInFirestore} from './add_disaster_util.js';
+import {getCurrentLayers, getRowIndex, ILLEGAL_STATE_ERR, setStatus, updateLayersInFirestore} from './manage_layers_lib.js';
 
 export {populateColorFunctions, withColor};
 // Visible for testing.

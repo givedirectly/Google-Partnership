@@ -1,8 +1,9 @@
 import {gdEeStatePrefix, legacyStateDir, legacyStatePrefix} from '../../../docs/ee_paths.js';
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
-import {addDisaster, createOptionFrom, createStateAssetPickers, createTd, deleteDisaster, emptyCallback, getStatesAssetsFromEe, onCheck, onDelete, onInputBlur, onListBlur, stateAssets, updateAfterSort, withCheckbox, withInput, withList, withType, writeNewDisaster} from '../../../docs/import/add_disaster.js';
-import {disasterData, getCurrentLayers} from '../../../docs/import/add_disaster_util.js';
 import {withColor} from '../../../docs/import/color_function_util.js';
+import {getStatesAssetsFromEe} from '../../../docs/import/list_ee_assets.js';
+import {createOptionFrom, createStateAssetPickers, createTd, onCheck, onDelete, onInputBlur, onListBlur, stateAssets, updateAfterSort, withCheckbox, withInput, withList, withType} from '../../../docs/import/manage_layers.js';
+import {disasterData, getCurrentLayers} from '../../../docs/import/manage_layers_lib.js';
 import * as loading from '../../../docs/loading.js';
 import {getDisaster} from '../../../docs/resources';
 import {createAndAppend, createTrs, setDisasterAndLayers} from '../../support/import_test_util.js';
@@ -29,13 +30,14 @@ describe('Unit tests for add_disaster page', () => {
 
   beforeEach(() => {
     const listAssetsStub = cy.stub(ee.data, 'listAssets');
-    listAssetsStub.withArgs(legacyStateDir, {}, emptyCallback)
+    listAssetsStub.withArgs(legacyStateDir, {}, Cypress.sinon.match.func)
         .returns(Promise.resolve({
           'assets': [{
             id: gdEeStatePrefix + KNOWN_STATE,
           }],
         }));
-    listAssetsStub.withArgs(legacyStatePrefix + KNOWN_STATE, {}, emptyCallback)
+    listAssetsStub
+        .withArgs(legacyStatePrefix + KNOWN_STATE, {}, Cypress.sinon.match.func)
         .returns(Promise.resolve({
           'assets': [
             {
@@ -73,10 +75,11 @@ describe('Unit tests for add_disaster page', () => {
               [KNOWN_STATE, new Map([[KNOWN_STATE_ASSET, 'TABLE']])]);
           expect(assets[1]).to.eql([UNKNOWN_STATE, new Map()]);
           expect(ee.data.listAssets)
-              .to.be.calledWith(legacyStateDir, {}, emptyCallback);
+              .to.be.calledWith(legacyStateDir, {}, Cypress.sinon.match.func);
           expect(ee.data.listAssets)
               .to.be.calledWith(
-                  legacyStatePrefix + KNOWN_STATE, {}, emptyCallback);
+                  legacyStatePrefix + KNOWN_STATE, {},
+                  Cypress.sinon.match.func);
           expect(ee.data.createFolder).to.be.calledOnce;
         });
   });
@@ -94,138 +97,6 @@ describe('Unit tests for add_disaster page', () => {
     expect(known).to.contain(gdEeStatePrefix + KNOWN_STATE + '/snap');
     expect(known.children().length).to.equal(1);
     expect($('#' + UNKNOWN_STATE + '-adder').children().length).to.equal(0);
-  });
-
-  it('writes a new disaster to firestore', () => {
-    let id = '2002-winter';
-    const states = ['DN, WF'];
-    $('#disaster').hide();
-
-    cy.wrap(writeNewDisaster(id, states))
-        .then((success) => {
-          expect(success).to.be.true;
-          expect($('#status').is(':visible')).to.be.false;
-          const disasterPicker = $('#disaster');
-          expect(disasterPicker.is(':visible')).to.be.true;
-          expect($('#pending-disaster').is(':visible')).to.be.false;
-          const options = disasterPicker.children();
-          expect(options.length).to.eql(3);
-          expect(options.eq(1).val()).to.eql('2002-winter');
-          expect(options.eq(1).is(':selected')).to.be.true;
-
-          // boundary condition checking
-          id = '1000-a';
-          return writeNewDisaster(id, states);
-        })
-        .then((success) => {
-          expect(success).to.be.true;
-          expect($('#disaster').children().eq(3).val()).to.eql('1000-a');
-
-          // boundary condition checking
-          id = '9999-z';
-          return writeNewDisaster(id, states);
-        })
-        .then((success) => {
-          expect(success).to.be.true;
-          expect($('#disaster').children().eq(0).val()).to.eql('9999-z');
-
-          return getFirestoreRoot()
-              .collection('disaster-metadata')
-              .doc(id)
-              .get();
-        })
-        .then((doc) => {
-          expect(doc.exists).to.be.true;
-          const data = doc.data();
-          expect(data['states']).to.eql(states);
-          expect(data['layers']).to.eql([]);
-        });
-  });
-
-  it('tries to write a disaster id that already exists', () => {
-    const id = '2005-summer';
-    const states = [KNOWN_STATE];
-
-    cy.wrap(writeNewDisaster(id, states))
-        .then((success) => {
-          expect(success).to.be.true;
-          return writeNewDisaster(id, states);
-        })
-        .then((success) => {
-          expect(success).to.be.false;
-          const status = $('#status');
-          expect(status.is(':visible')).to.be.true;
-          expect(status.text())
-              .to.eql(
-                  'Error: disaster with that name and year already exists.');
-        });
-  });
-
-  it('tries to write a disaster with bad info, then fixes it', () => {
-    const year = createAndAppend('input', 'year');
-    const name = createAndAppend('input', 'name');
-    const states = createAndAppend('input', 'states');
-    const status = $('#status');
-
-    cy.wrap(addDisaster())
-        .then((success) => {
-          expect(success).to.be.false;
-          expect(status.is(':visible')).to.be.true;
-          expect(status.text())
-              .to.eql('Error: Disaster name, year, and states are required.');
-
-          year.val('hello');
-          name.val('my name is');
-          states.val(['IG', 'MY']);
-          return addDisaster();
-        })
-        .then((success) => {
-          expect(success).to.be.false;
-          expect(status.is(':visible')).to.be.true;
-          expect(status.text()).to.eql('Error: Year must be a number.');
-
-          year.val('2000');
-          name.val('HARVEY');
-          return addDisaster();
-        })
-        .then((success) => {
-          expect(success).to.be.false;
-          expect(status.is(':visible')).to.be.true;
-          expect(status.text())
-              .to.eql(
-                  'Error: disaster name must be comprised of only ' +
-                  'lowercase letters');
-
-          name.val('harvey');
-          return addDisaster();
-        })
-        .then((success) => expect(success).to.be.true);
-  });
-
-  it('deletes a disaster', () => {
-    const confirmStub = cy.stub(window, 'confirm').returns(true);
-
-    const id = '2002-winter';
-    const states = ['DN, WF'];
-
-    cy.wrap(writeNewDisaster(id, states))
-        .then(
-            () => getFirestoreRoot()
-                      .collection('disaster-metadata')
-                      .doc(id)
-                      .get())
-        .then((doc) => {
-          expect(doc.exists).to.be.true;
-          const deletePromise = deleteDisaster();
-          expect(confirmStub).to.be.calledOnce;
-          return deletePromise;
-        })
-        .then(
-            () => getFirestoreRoot()
-                      .collection('disaster-metadata')
-                      .doc(id)
-                      .get())
-        .then((doc) => expect(doc.exists).to.be.false);
   });
 
   it('tests color cell', () => {

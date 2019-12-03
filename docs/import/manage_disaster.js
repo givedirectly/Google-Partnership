@@ -1,12 +1,31 @@
+import {LayerType} from '../firebase_layers.js';
+import {disasterCollectionReference} from '../firestore_document.js';
 import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, snapPercentageTag, snapPopTag, sviTag, totalPopTag, tractTag} from '../property_names.js';
-import {getScoreAsset} from '../resources.js';
+import {getDisaster, getScoreAsset} from '../resources.js';
 
 import {computeAndSaveBounds, saveBounds} from './center.js';
+import {createDisasterData} from './create_disaster_lib.js';
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
+import {getDisasterAssetsFromEe, getStatesAssetsFromEe} from './list_ee_assets.js';
 
-export {enableWhenReady};
+export {enableWhenReady, onSetDisaster, toggleState};
 /** @VisibleForTesting */
-export {countDamageAndBuildings, run};
+export {addDisaster, deleteDisaster, disasterData, run, writeNewDisaster};
+
+/**
+ * @type {Map<string, Object>} Disaster id to disaster data, corresponding to
+ *     data in Firestore. Initialized when Firestore data is downloaded, but set
+ *     to an empty map here for testing
+ */
+let disasterData = new Map();
+/**
+ * @type {Map<string, Promise<Map<string, number>>>} Disaster id to listing of
+ *     assets in corresponding EE folder, associated to asset type
+ */
+const disasterAssets = new Map();
+
+// Map of state to list of known assets
+const stateAssets = new Map();
 
 /**
  * Given a feature from the SNAP census data, returns a new
@@ -143,7 +162,7 @@ function setMapBoundsInfo(message) {
  * @param {Function} setMapBoundsInfoFunction Function to be called when map
  *     bounds-related operations are complete. First called with a message about
  *     the task, then called with the results
- * @return {boolean} Whether in-thread operations succeeded
+ * @return {?Promise<ee.batch.ExportTask>} Promise for task of asset write.
  */
 function run(disasterData, setMapBoundsInfoFunction = setMapBoundsInfo) {
   $('#compute-status').html('');
@@ -259,23 +278,30 @@ function run(disasterData, setMapBoundsInfoFunction = setMapBoundsInfo) {
   }
 
   const scoreAssetPath = getScoreAsset();
-  try {
-    ee.data.deleteAsset(scoreAssetPath);
-  } catch (err) {
-    if (err.message === 'Asset not found.') {
-      console.log('Old ' + scoreAssetPath + ' not present, did not delete it');
-    } else {
-      throw err;
-    }
-  }
   const task = ee.batch.Export.table.toAsset(
       allStatesProcessing,
       scoreAssetPath.substring(scoreAssetPath.lastIndexOf('/') + 1),
       scoreAssetPath);
-  task.start();
-  $('#upload-status')
-      .text('Check Code Editor console for upload progress. Task: ' + task.id);
-  return true;
+  return new Promise((resolve, reject) => {
+    ee.data.deleteAsset(scoreAssetPath, (_, err) => {
+      if (err) {
+        if (err === 'Asset not found.') {
+          console.log(
+              'Old ' + scoreAssetPath + ' not present, did not delete it');
+        } else {
+          const message = 'Error deleting: ' + err;
+          setStatus(message);
+          reject(new Error(message));
+        }
+      }
+      task.start();
+      $('#upload-status')
+          .text(
+              'Check Code Editor console for upload progress. Task: ' +
+              task.id);
+      resolve(task);
+    });
+  });
 }
 
 const damageError = {
@@ -395,15 +421,20 @@ function computeBuildingsHisto(damageEnvelope, buildingPath, stateGroups) {
 /**
  * Displays error to the user coming from incomplete asset entry.
  * @param {string} str Fragment of error message
- * @return {boolean} Return value can be ignored, but is present so that
+ * @return {null} Return value can be ignored, but is present so that
  *     callers can write "return missingAssetError" and save a line
  */
 function missingAssetError(str) {
-  $('#compute-status')
-      .html(
-          'Error! Please specify ' + str +
-          ' at <a href="./add_disaster.html">add_disaster.html</a>');
-  return false;
+  setStatus('Error! Please specify ' + str);
+  return null;
+}
+
+/**
+ * Displays status message to user.
+ * @param {string} str message
+ */
+function setStatus(str) {
+  $('#compute-status').text(str);
 }
 
 /**
@@ -433,20 +464,295 @@ function innerJoin(collection1, collection2, key1, key2) {
 }
 
 /**
- * Enables the button to kick off calculations.
- * @param {firebase.firestore.DocumentSnapshot} firebaseDataDoc Contents of
- *     Firestore for current disaster, used when calculating
+ * Enables page functionality.
+ * @param {Promise<firebase.firestore.DocumentSnapshot>} allDisastersData
+ *     Promise with contents of Firestore for all disasters
  */
-function enableWhenReady(firebaseDataDoc) {
+function enableWhenReady(allDisastersData) {
+  // Eagerly kick off current disaster asset listing before Firestore finishes.
+  const currentDisaster = getDisaster();
+  if (currentDisaster) {
+    maybeFetchDisasterAssets(currentDisaster);
+  }
+  allDisastersData.then(enableWhenFirestoreReady);
+}
+
+/**
+ * Enables all Firestore-dependent functionality.
+ * @param {firebase.firestore.DocumentSnapshot} allDisastersData Contents of
+ *     Firestore for all disasters, the current disaster's data is used when
+ *     calculating
+ */
+function enableWhenFirestoreReady(allDisastersData) {
+  disasterData = allDisastersData;
+  onSetDisaster();
+  // Kick off all EE asset fetches.
+  for (const disaster of disasterData.keys()) {
+    maybeFetchDisasterAssets(disaster);
+  }
+  // enable add disaster button.
+  const addDisasterButton = $('#add-disaster-button');
+  addDisasterButton.prop('disabled', false);
+  addDisasterButton.on('click', addDisaster);
+
+  // Enable delete button.
+  const deleteButton = $('#delete');
+  deleteButton.prop('disabled', false);
+  deleteButton.on('click', deleteDisaster);
+
   const processButton = $('#process-button');
   processButton.prop('disabled', false);
   processButton.on('click', () => {
     // Disable button to avoid over-clicking. User can reload page if needed.
     processButton.prop('disabled', true);
-    // run does a fair amount of work, so this isn't great for UI responsiveness
-    // but what to do.
-    run(firebaseDataDoc.data());
+    run(disasterData.get(getDisaster()));
   });
+}
+
+let displayedCurrentDisaster = false;
+
+/**
+ * Function called when current disaster changes. Responsible for displaying the
+ * score selectors.
+ */
+function onSetDisaster() {
+  displayedCurrentDisaster = false;
+  const currentDisaster = getDisaster();
+  if (currentDisaster) {
+    const states = disasterData.get(currentDisaster).states;
+    const neededStates = [];
+    for (const state of states) {
+      if (!stateAssets.has(state)) {
+        neededStates.push(state);
+      }
+    }
+    let promise = Promise.resolve();
+    if (neededStates) {
+      promise = getStatesAssetsFromEe(neededStates).then((result) => {
+        for (const stateItem of result) {
+          const features = [];
+          stateItem[1].forEach((val, key) => {
+            if (val === LayerType.FEATURE_COLLECTION) {
+              features.push(key);
+            }
+          });
+          stateAssets.set(stateItem[0], features);
+        }
+      });
+    }
+    promise.then(() => {
+      if (getDisaster() === currentDisaster && !displayedCurrentDisaster) {
+        // Don't do anything unless this is still the right disaster.
+        initializeScoreSelectors(states);
+        displayedCurrentDisaster = true;
+      }
+    });
+  }
+}
+
+/**
+ * If disaster assets not known for disaster, kicks off fetch and stores promise
+ * in disasterAssets map.
+ * @param {string} disaster
+ */
+function maybeFetchDisasterAssets(disaster) {
+  if (!disasterAssets.has(disaster)) {
+    disasterAssets.set(disaster, getDisasterAssetsFromEe(disaster));
+  }
+}
+
+/**
+ * Deletes a disaster from firestore. Confirms first. Returns when deletion is
+ * complete (or instantly if deletion doesn't actually happen).
+ * @return {Promise<void>}
+ */
+function deleteDisaster() {
+  const disasterPicker = $('#disaster-dropdown');
+  const disasterId = disasterPicker.val();
+  if (confirm('Delete ' + disasterId + '? This action cannot be undone')) {
+    disasterData.delete(disasterId);
+    // Don't know how to get a select element's "options" field in jQuery.
+    disasterPicker[0].remove(disasterPicker[0].selectedIndex);
+    const newOption = disasterPicker.children().eq(0);
+    disasterPicker.val(newOption.val()).trigger('change');
+    return disasterCollectionReference().doc(disasterId).delete();
+  }
+  return Promise.resolve();
+}
+
+/**
+ * Onclick function for submitting the new disaster form. Writes new disaster
+ * to firestore, local disasters map and disaster picker. Doesn't allow name,
+ * year or states to be empty fields.
+ * @return {Promise<boolean>} resolves true if new disaster was successfully
+ *     written.
+ */
+function addDisaster() {
+  const year = $('#year').val();
+  const name = $('#name').val();
+  const states = $('#states').val();
+
+  if (!year || !name || !states) {
+    setStatus('Error: Disaster name, year, and states are required.');
+    return Promise.resolve(false);
+  }
+  if (isNaN(year)) {
+    setStatus('Error: Year must be a number.');
+    return Promise.resolve(false);
+  }
+  if (notAllLowercase(name)) {
+    setStatus(
+        'Error: disaster name must be comprised of only lowercase letters');
+    return Promise.resolve(false);
+  }
+  const disasterId = year + '-' + name;
+  return writeNewDisaster(disasterId, states);
+}
+
+/**
+ * Writes the given details to a new disaster entry in firestore. Fails if
+ * there is an existing disaster with the same details.
+ * @param {string} disasterId of the form <year>-<name>
+ * @param {Array<string>} states array of state (abbreviations)
+ * @return {Promise<boolean>} returns true after successful write to firestore.
+ */
+function writeNewDisaster(disasterId, states) {
+  if (disasterData.has(disasterId)) {
+    setStatus('Error: disaster with that name and year already exists.');
+    return Promise.resolve(false);
+  }
+  const currentData = createDisasterData(states);
+  disasterData.set(disasterId, currentData);
+
+  const disasterPicker = $('#disaster-dropdown');
+  const disasterOptions = disasterPicker.children();
+  let added = false;
+  // We expect this recently created disaster to go near the top of the list, so
+  // do a linear scan down.
+  // Note: let's hope this tool isn't being used in the year 10000.
+  // Comment needed to quiet eslint.
+  disasterOptions.each(/* @this HTMLElement */ function() {
+    if ($(this).val() < disasterId) {
+      $(createOptionFrom(disasterId)).insertBefore($(this));
+      added = true;
+      return false;
+    }
+  });
+  if (!added) disasterPicker.append(createOptionFrom(disasterId));
+  toggleState(true);
+
+  disasterPicker.val(disasterId).trigger('change');
+
+  return disasterCollectionReference()
+      .doc(disasterId)
+      .set(currentData)
+      .then(() => true);
+}
+
+/**
+ * Returns true if the given string is *not* all lowercase letters.
+ * @param {string} val
+ * @return {boolean}
+ */
+function notAllLowercase(val) {
+  return !/^[a-z]+$/.test(val);
+}
+
+const scoreAssetTypes = ['Poverty', 'Income', 'SVI'];
+Object.freeze(scoreAssetTypes);
+
+/**
+ * Changes page state between looking at a known disaster and adding a new one.
+ * @param {boolean} known
+ */
+function toggleState(known) {
+  if (known) {
+    $('#new-disaster').hide();
+    $('#current-disaster-interaction').show();
+  } else {
+    $('#new-disaster').show();
+    $('#current-disaster-interaction').hide();
+  }
+}
+
+/**
+ * Initializes the select interface for score assets.
+ * @param {Array<string>} states array of state (abbreviations)
+ */
+function initializeScoreSelectors(states) {
+  const headerRow = $('#score-asset-header-row');
+  const tableBody = $('#asset-selection-table-body');
+  tableBody.empty();
+  headerRow.empty();
+
+  // Initialize headers.
+  headerRow.append(createTd().html('Score Assets'));
+  for (const state of states) {
+    headerRow.append(createTd().html(state + ' Assets'));
+  }
+
+  // For each asset type, add select for all assets for each state.
+  for (const scoreAssetType of scoreAssetTypes) {
+    const row =
+        $(document.createElement('tr')).prop('id', scoreAssetType + '-row');
+    row.append(createTd().append(
+        $(document.createElement('div')).html(scoreAssetType)));
+    for (const state of states) {
+      if (stateAssets.get(state)) {
+        const select =
+            createAssetDropdown(stateAssets.get(state), scoreAssetType, state);
+        row.append(createTd().append(select));
+        select.on(
+            'change', () => handleScoreAssetSelection(scoreAssetType, state));
+      }
+    }
+    tableBody.append(row);
+  }
+}
+
+/**
+ * Wrapper for creating table divs.
+ * @return {JQuery<HTMLTableDataCellElement>}
+ */
+function createTd() {
+  return $(document.createElement('td'));
+}
+
+/**
+ * Initializes a dropdown with assets.
+ * @param {Array<string>} assets List of assets to add to dropdown
+ * @param {string} row The asset type/row to put the dropdown in.
+ * @param {string} state The state the assets are in.
+ * @return {JQuery<HTMLSelectElement>}
+ */
+function createAssetDropdown(assets, row, state) {
+  // Create the asset selector and add a 'None' option.
+  const select =
+      $(document.createElement('select')).prop('id', row + '-' + state);
+  select.append(createOptionFrom('None'));
+
+  // Add assets to selector and return it.
+  for (const asset of assets) {
+    select.append(createOptionFrom(asset));
+  }
+  return select;
+}
+
+/**
+ * Simple utility to create an option for a select.
+ * @param {string} text Displayed text/value of option
+ * @return {JQuery<HTMLOptionElement>}
+ */
+function createOptionFrom(text) {
+  return $(document.createElement('option')).text(text);
+}
+
+/**
+ * Handles the user selecting an asset for one of the possible score types.
+ * @param {String} assetType The type of asset (poverty, income, etc)
+ */
+function handleScoreAssetSelection(assetType) {
+  // TODO: Write the asset name and type to firebase here.
 }
 
 /**

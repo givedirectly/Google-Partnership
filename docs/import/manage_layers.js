@@ -1,23 +1,20 @@
-import {eeLegacyPathPrefix, eeStatePrefixLength, legacyStateDir} from '../ee_paths.js';
 import {LayerType} from '../firebase_layers.js';
-import {disasterCollectionReference, getDisasters} from '../firestore_document.js';
+import {getDisastersData} from '../firestore_document.js';
 import {getDisaster} from '../resources.js';
-import {clearStatus, disasterData, getCurrentData, getCurrentLayers, getRowIndex, ILLEGAL_STATE_ERR, onUpdate, setCurrentDisaster, setStatus, updateLayersInFirestore} from './add_disaster_util.js';
+
 import {processNewEeLayer} from './add_layer.js';
 import {withColor} from './color_function_util.js';
+import {getDisasterAssetsFromEe, getStatesAssetsFromEe} from './list_ee_assets.js';
+import {disasterData, getCurrentData, getCurrentLayers, getRowIndex, ILLEGAL_STATE_ERR, onUpdate, setCurrentDisaster, setDisasterData, setStatus, updateLayersInFirestore} from './manage_layers_lib.js';
 
-export {enableWhenReady, toggleState, updateAfterSort};
+export {enableWhenReady, updateAfterSort};
 // Visible for testing
 export {
-  addDisaster,
   createAssetPickers,
   createLayerRow,
   createOptionFrom,
   createStateAssetPickers,
   createTd,
-  deleteDisaster,
-  emptyCallback,
-  getStatesAssetsFromEe,
   onCheck,
   onDelete,
   onInputBlur,
@@ -27,47 +24,36 @@ export {
   withInput,
   withList,
   withType,
-  writeNewDisaster,
 };
 
 // A map of maps of the form:
 // {'WA' => {'asset/path': LayerType}}
 const stateAssets = new Map();
+
 // A map of maps of the form:
 // {'disaster-2017' => {'asset/path': LayerType}}
 const disasterAssets = new Map();
-const scoreAssetTypes = ['Poverty', 'Income', 'SVI'];
 
 // TODO: general reminder to add loading indicators for things like creating
 // new state asset folders, etc.
 
 /**
- * Populates the disaster picker with disasters from firestore, and enables
- * the ability to add a new disaster.
+ * Populates the disaster picker with disasters from firestore.
  * @return {Promise<firebase.firestore.QuerySnapshot>}
  */
 function enableWhenReady() {
-  // enable (currently hidden) add disaster button now that firestore is ready.
-  const addDisasterButton = $('#add-disaster-button');
-  addDisasterButton.prop('disabled', false);
-  addDisasterButton.on('click', addDisaster);
-
-  const deleteButton = $('#delete');
-  deleteButton.prop('disabled', false);
-  deleteButton.on('click', deleteDisaster);
-
   // populate disaster picker.
-  return getDisasters().then((querySnapshot) => {
+  return getDisastersData().then((returnedData) => {
+    setDisasterData(returnedData);
     const disasterPicker = $('#disaster');
-    querySnapshot.forEach((doc) => {
-      const name = doc.id;
+    for (const name of disasterData.keys()) {
       disasterPicker.prepend(createOptionFrom(name));
-      disasterData.set(name, doc.data());
-    });
+    }
 
     disasterPicker.on('change', () => toggleDisaster(disasterPicker.val()));
     disasterPicker.val(getDisaster()).trigger('change');
-    toggleState(true);
+    $('#pending-disaster').hide();
+    $('#disaster').show();
   });
 }
 
@@ -256,7 +242,6 @@ function onDelete(row) {
 /**
  * Adds a delete row function to the given td.
  * @param {JQuery<HTMLTableDataCellElement>} td cell
- * @param {number} index
  * @return {JQuery<HTMLElement>}
  */
 function withDeleteButton(td) {
@@ -342,266 +327,17 @@ function populateStateAndDisasterAssetPickers(disaster) {
   // reloading the page.
   if (statesToFetch.length === 0) {
     createStateAssetPickers(states);
-    initializeScoreSelectors(states);
   } else {
     const statesDone = getStatesAssetsFromEe(statesToFetch).then((assets) => {
       for (const asset of assets) {
         stateAssets.set(asset[0], asset[1]);
       }
       createStateAssetPickers(states);
-      initializeScoreSelectors(states);
     });
     promises.push(statesDone);
   }
 
   return Promise.all(promises);
-}
-
-/**
- * Initializes the select interface for score assets.
- * @param {Array<string>} states array of state (abbreviations)
- */
-function initializeScoreSelectors(states) {
-  const headerRow = $('#score-asset-header-row');
-  const tableBody = $('#asset-selection-table-body');
-  tableBody.empty();
-  headerRow.empty();
-
-  // Initialize headers.
-  headerRow.append(createTd().html('Score Assets'));
-  for (const state of states) {
-    headerRow.append(createTd().html(state + ' Assets'));
-  }
-
-  // For each asset type, add select for all assets for each state.
-  for (let i = 0; i < scoreAssetTypes.length; i++) {
-    const scoreAssetType = scoreAssetTypes[i];
-    const row =
-        $(document.createElement('tr')).prop('id', scoreAssetType + '-row');
-    row.append(createTd().append(
-        $(document.createElement('div')).html(scoreAssetType)));
-    for (const state of states) {
-      if (stateAssets.get(state)) {
-        row.append(createTd().append(createAssetDropdown(
-            stateAssets.get(state), scoreAssetType, state)));
-      }
-    }
-    tableBody.append(row);
-    row.on('change', () => handleScoreAssetSelection(scoreAssetType));
-  }
-}
-
-/**
- * Initializes a dropdown with assets.
- * @param {Map<string, LayerType>} assets map of assets to add to dropdown
- * @param {string} row The asset type/row to put the dropdown in.
- * @param {string} state The state the assets are in.
- * @return {JQuery<HTMLSelectElement>}
- */
-function createAssetDropdown(assets, row, state) {
-  // Create the asset selector and add a 'None' option.
-  const select =
-      $(document.createElement('select')).prop('id', row + '-' + state);
-  select.append(createOptionFrom('None'));
-
-  // Add assets to selector and return it.
-  for (const asset of assets.keys()) {
-    select.append(createOptionFrom(asset));
-  }
-  return select;
-}
-
-/**
- * Handles the user selecting an asset for one of the possible score types.
- * @param {String} assetType The type of asset (poverty, income, etc)
- */
-function handleScoreAssetSelection(assetType) {
-  // TODO: Write the asset name and type to firebase here.
-  return;
-}
-
-/**
- * Writes the given details to a new disaster entry in firestore. Fails if
- * there is an existing disaster with the same details.
- * @param {string} disasterId of the form <year>-<name>
- * @param {Array<string>} states array of state (abbreviations)
- * @return {Promise<boolean>} returns true after successful write to firestore.
- */
-function writeNewDisaster(disasterId, states) {
-  if (disasterData.has(disasterId)) {
-    setStatus('Error: disaster with that name and year already exists.');
-    return Promise.resolve(false);
-  }
-  disasterData.set(disasterId, {states: states});
-  clearStatus();
-
-  const disasterPicker = $('#disaster');
-  const disasterOptions = disasterPicker.children();
-  let added = false;
-  // note: let's hope this tool isn't being used in the year 10000.
-  // comment needed to quiet eslint on no-invalid-this rules
-  disasterOptions.each(/* @this HTMLElement */ function() {
-    if ($(this).val() < disasterId) {
-      $(createOptionFrom(disasterId)).insertBefore($(this));
-      added = true;
-      return false;
-    }
-  });
-  if (!added) disasterPicker.append(createOptionFrom(disasterId));
-
-  disasterPicker.val(disasterId).trigger('change');
-  toggleState(true);
-
-  return disasterCollectionReference()
-      .doc(disasterId)
-      .set({states: states, layers: []})
-      .then(() => true);
-}
-
-/**
- * Changes page state between looking at a known disaster and adding a new one.
- * @param {boolean} known
- */
-function toggleState(known) {
-  if (known) {
-    $('#disaster').show();
-    $('#selected-disaster').show();
-    $('#pending-disaster').hide();
-    $('#new-disaster').hide();
-  } else {
-    $('#disaster').hide();
-    $('#selected-disaster').hide();
-    $('#pending-disaster').show();
-    $('#new-disaster').show();
-  }
-}
-
-/**
- * Onclick function for submitting the new disaster form. Writes new disaster
- * to firestore, local disasters map and disaster picker. Doesn't allow name,
- * year or states to be empty fields.
- * @return {Promise<boolean>} resolves true if new disaster was successfully
- *     written.
- */
-function addDisaster() {
-  const year = $('#year').val();
-  const name = $('#name').val();
-  const states = $('#states').val();
-
-  if (!year || !name || !states) {
-    setStatus('Error: Disaster name, year, and states are required.');
-    return Promise.resolve(false);
-  }
-  if (isNaN(year)) {
-    setStatus('Error: Year must be a number.');
-    return Promise.resolve(false);
-  }
-  if (notAllLowercase(name)) {
-    setStatus(
-        'Error: disaster name must be comprised of only lowercase letters');
-    return Promise.resolve(false);
-  }
-  const disasterId = year + '-' + name;
-  return writeNewDisaster(disasterId, states);
-}
-
-/**
- * Returns true if the given string is *not* all lowercase letters.
- * @param {string} val
- * @return {boolean}
- */
-function notAllLowercase(val) {
-  return !/^[a-z]+$/.test(val);
-}
-
-// Needed for testing :/
-const emptyCallback = () => {};
-
-/**
- * Gets all assets for the given disaster. Assumes an ee folder has already
- * been created for this disaster.
- * @param {string} disaster disaster in the form name-year
- * @return {Promise<Map<string, string>>} Returns a promise containing the map
- * of asset path to type for the given disaster.
- */
-function getDisasterAssetsFromEe(disaster) {
-  return ee.data.listAssets(eeLegacyPathPrefix + disaster, {}, emptyCallback)
-      .then(getIds);
-}
-
-// TODO: add functionality for adding assets to disaster records from these
-// pickers.
-/**
- * Requests all assets in ee directories corresponding to given states.
- * @param {Array<string>} states e.g. ['WA']
- * @return {Promise<Array<Array<string | Array<string>>>>} 2-d array of all
- *     retrieved
- * assets in the form [['WA', {'asset/path': LayerType,...}], ...]
- */
-function getStatesAssetsFromEe(states) {
-  return ee.data.listAssets(legacyStateDir, {}, emptyCallback)
-      .then((result) => {
-        const folders = new Set();
-        for (const folder of result.assets) {
-          folders.add(folder.id.substring(eeStatePrefixLength));
-        }
-        const promises = [];
-        for (const state of states) {
-          const dir = legacyStateDir + '/' + state;
-          if (!folders.has(state)) {
-            // This will print a console error for anyone other than the gd
-            // account. Ee console seems to have the power to grant write access
-            // to non-owners but it doesn't seem to work. Sent an email to
-            // gestalt.
-            // TODO: replace with setIamPolicy when that works.
-            ee.data.createFolder(dir, false, () => {
-              // TODO: add status bar for when this is finished.
-              ee.data.setAssetAcl(dir, {all_users_can_read: true});
-            });
-            promises.push(Promise.resolve([state, new Map()]));
-          } else {
-            promises.push(ee.data.listAssets(dir, {}, emptyCallback)
-                              .then((result) => [state, getIds(result)]));
-          }
-        }
-        return Promise.all(promises);
-      });
-}
-
-/**
- * Turns a listAssets call result into a map of asset -> type.
- * @param {Object} listAssetsResult result of call to ee.data.listAssets
- * @return {Map<string, string>}
- */
-function getIds(listAssetsResult) {
-  const assets = new Map();
-  if (listAssetsResult.assets) {
-    for (const asset of listAssetsResult.assets) {
-      const type = maybeConvertAssetType(asset);
-      if (type) assets.set(asset.id, type);
-    }
-  }
-  return assets;
-}
-
-// TODO: surface a warning if unsupported asset types are found?
-/**
- * Check that the type of the given asset is one we support (Unsupported:
- * ALGORITHM, FOLDER, UNKNOWN).
- * @param {Object} asset single item from result of listAssets
- * @return {?number} the type of the asset if it's supported, else null
- */
-function maybeConvertAssetType(asset) {
-  switch (asset.type) {
-    case 'IMAGE':
-      return LayerType.IMAGE;
-    case 'IMAGE_COLLECTION':
-      return LayerType.IMAGE_COLLECTION;
-    case 'TABLE':
-      return LayerType.FEATURE_COLLECTION;
-    default:
-      return null;
-  }
 }
 
 /**
@@ -653,23 +389,6 @@ function createAssetPickers(pickers, assetMap, div) {
     assetPickerLabel.append(addButton);
     div.append(document.createElement('br'));
   }
-}
-
-/**
- * Deletes a disaster from firestore. Confirms first. Returns when deletion is
- * complete (or instantly if deletion doesn't actually happen).
- * @return {Promise<void>}
- */
-function deleteDisaster() {
-  const disasterPicker = $('#disaster');
-  const disasterId = disasterPicker.val();
-  if (confirm('Delete ' + disasterId + '? This action cannot be undone')) {
-    disasterData.delete(disasterId);
-    disasterPicker.val(disasterPicker.children().eq(0).val()).trigger('change');
-    $('#' + disasterId).remove();
-    return disasterCollectionReference().doc(disasterId).delete();
-  }
-  return Promise.resolve();
 }
 
 /**
