@@ -75,7 +75,7 @@ function prependToTable(layer) {
 /**
  * Adds a new non-ee layer to the table and firestore.
  * @param {enum} type The LayerType (kml or map tile)
- * @param  {Array<string>} The urls for the layer display
+ * @param  {Array<string>} urls The urls for the layer display
  * @return {Promise<void>} Finishes when the layer information has been
  * written to firestore.
  */
@@ -84,7 +84,7 @@ function processNonEeLayer(type, urls) {
     'display-name': '',
     'asset-type': type,
     'urls': urls,
-    'display-on-load': false
+    'display-on-load': false,
   };
   return prependToTable(layer);
 }
