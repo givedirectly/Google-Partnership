@@ -8,7 +8,7 @@ import {createDisasterData} from './create_disaster_lib.js';
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
 import {getDisasterAssetsFromEe, getStatesAssetsFromEe} from './list_ee_assets.js';
 
-export {enableWhenReady, onSetDisaster, toggleState};
+export {enableWhenReady, onSetDisaster, toggleState, setUpScoreSelectorTable};
 /** @VisibleForTesting */
 export {addDisaster, deleteDisaster, disasterData, run, writeNewDisaster};
 
@@ -684,14 +684,24 @@ function toggleState(known) {
 }
 
 const scoreAssetTypes = [
-  ['poverty', ['snap_data', 'paths']],
-  ['income', ['income_asset_paths']],
-  ['svi', ['svi_asset_paths']],
+  ['poverty', ['snap_data', 'paths'], 'Poverty'],
+  ['income', ['income_asset_paths'], 'Income'],
+  ['svi', ['svi_asset_paths'], 'SVI'],
 ];
 Object.freeze(scoreAssetTypes);
 
-const assetSelectionRowPrefix = '#asset-selection-row-';
+const assetSelectionRowPrefix = 'asset-selection-row-';
 Object.freeze(assetSelectionRowPrefix);
+
+function setUpScoreSelectorTable() {
+  const tbody = $('#asset-selection-table-body');
+  for (const scoreAssetType of scoreAssetTypes) {
+    const row = $(document.createElement('tr'));
+    row.append(createTd().text(scoreAssetType[2]));
+    row.prop('id', assetSelectionRowPrefix + scoreAssetType[0]);
+    tbody.append(row);
+  }
+}
 
 /**
  * Initializes the select interface for score assets.
@@ -710,7 +720,7 @@ function initializeScoreSelectors(states) {
   for (const scoreAssetType of scoreAssetTypes) {
     const id = assetSelectionRowPrefix + scoreAssetType[0];
     const propertyPath = scoreAssetType[1];
-    const row = $(id);
+    const row = $('#' + id);
     removeAllButFirstFromRow(row);
     for (const state of states) {
       if (stateAssets.get(state)) {
