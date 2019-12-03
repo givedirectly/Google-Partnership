@@ -648,9 +648,6 @@ function notAllLowercase(val) {
   return !/^[a-z]+$/.test(val);
 }
 
-const scoreAssetTypes = ['Poverty', 'Income', 'SVI'];
-Object.freeze(scoreAssetTypes);
-
 /**
  * Changes page state between looking at a known disaster and adding a new one.
  * @param {boolean} known
@@ -664,6 +661,9 @@ function toggleState(known) {
     $('#current-disaster-interaction').hide();
   }
 }
+
+const scoreAssetTypes = [['Poverty', ['snap_data', 'paths']], ['Income', ['income_asset_paths']], ['SVI', ['svi_asset_paths']]];
+Object.freeze(scoreAssetTypes);
 
 /**
  * Initializes the select interface for score assets.
@@ -683,21 +683,30 @@ function initializeScoreSelectors(states) {
 
   // For each asset type, add select for all assets for each state.
   for (const scoreAssetType of scoreAssetTypes) {
+    const name = scoreAssetType[0];
+    const propertyTree = scoreAssetType[1];
     const row =
-        $(document.createElement('tr')).prop('id', scoreAssetType + '-row');
+        $(document.createElement('tr'));
     row.append(createTd().append(
-        $(document.createElement('div')).html(scoreAssetType)));
+        $(document.createElement('div')).text(name)));
     for (const state of states) {
       if (stateAssets.get(state)) {
-        const select =
-            createAssetDropdown(stateAssets.get(state), scoreAssetType, state);
+        const select = createAssetDropdown(stateAssets.get(state));
+        let propertyValue = disasterData.get(getDisaster()).asset_data;
+        for (const property of propertyTree) {
+          propertyValue = propertyValue[property];
+        }
+        select.val(propertyValue[state]);
         row.append(createTd().append(select));
         select.on(
-            'change', () => handleScoreAssetSelection(scoreAssetType, state));
+            'change', () => handleScoreAssetSelection(propertyTree, state));
       }
     }
     tableBody.append(row);
   }
+  const row =
+      $(document.createElement('tr'));
+  row.append(createTd().append($(document.createElement('div')).text('Damage')));
 }
 
 /**
@@ -711,14 +720,11 @@ function createTd() {
 /**
  * Initializes a dropdown with assets.
  * @param {Map<string, LayerType>} assets map of assets to add to dropdown
- * @param {string} row The asset type/row to put the dropdown in.
- * @param {string} state The state the assets are in.
  * @return {JQuery<HTMLSelectElement>}
  */
-function createAssetDropdown(assets, row, state) {
+function createAssetDropdown(assets) {
   // Create the asset selector and add a 'None' option.
-  const select =
-      $(document.createElement('select')).prop('id', row + '-' + state);
+  const select = $(document.createElement('select'));
   select.append(createOptionFrom('None'));
 
   // Add assets to selector and return it.
