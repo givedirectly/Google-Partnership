@@ -685,7 +685,7 @@ function toggleState(known) {
 
 const scoreAssetTypes = [
   ['poverty', ['snap_data', 'paths']], ['income', ['income_asset_paths']],
-  ['svi', ['svi_asset_paths']]
+  ['svi', ['svi_asset_paths']],
 ];
 Object.freeze(scoreAssetTypes);
 
@@ -725,12 +725,22 @@ function initializeScoreSelectors(states) {
   }
 }
 
+/**
+ * Initializes the damage selector, given the provided assets.
+ * @param {Array<string>} assets List of assets in the disaster folder
+ */
 function initializeDamageSelector(assets) {
   createAssetDropdown(
       assets, getElementFromPath(['damage_asset_path']),
       $('#damage-asset-select'));
 }
 
+/**
+ * Retrieves the object inside the current disaster's asset_data, given by the
+ * "path" of {@code propertyPath}
+ * @param {Array<string>} propertyPath List of attributes to follow
+ * @return {*}
+ */
 function getElementFromPath(propertyPath) {
   let element = disasterData.get(getDisaster()).asset_data;
   for (const property of propertyPath) {
@@ -747,6 +757,10 @@ function createTd() {
   return $(document.createElement('td'));
 }
 
+/**
+ * Removes all but first td from a row.
+ * @param {JQuery<HTMLTableRowElement>} row
+ */
 function removeAllButFirstFromRow(row) {
   while (row.length > 1) {
     row.find('td:last').remove();
