@@ -568,7 +568,8 @@ function onSetDisaster() {
  */
 function maybeFetchDisasterAssets(disaster) {
   if (!disasterAssets.has(disaster)) {
-    disasterAssets.set(disaster, getDisasterAssetsFromEe(disaster));
+    disasterAssets.set(disaster, getDisasterAssetsFromEe(disaster)
+        .then((result) => Array.from(result.keys())));
   }
 }
 
