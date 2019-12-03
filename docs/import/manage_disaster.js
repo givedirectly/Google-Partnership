@@ -528,7 +528,7 @@ function onSetDisaster() {
         neededStates.push(state);
       }
     }
-    let promise = Promise.resolve();
+    let promise = Promise.resolve([]);
     if (neededStates) {
       promise = getStatesAssetsFromEe(neededStates).then((result) => {
         for (const stateItem of result) {
@@ -634,6 +634,8 @@ function writeNewDisaster(disasterId, states) {
   }
   const currentData = createDisasterData(states);
   disasterData.set(disasterId, currentData);
+  // We know there are no assets in folder yet.
+  disasterAssets.set(disasterId, Promise.resolve());
 
   const disasterPicker = $('#disaster-dropdown');
   const disasterOptions = disasterPicker.children();
@@ -687,6 +689,8 @@ const scoreAssetTypes = [
   ['poverty', ['snap_data', 'paths'], 'Poverty'],
   ['income', ['income_asset_paths'], 'Income'],
   ['svi', ['svi_asset_paths'], 'SVI'],
+  ['tiger', ['block_group_asset_paths'], 'Census TIGER Shapefiles'],
+  ['buildings', ['building_asset_paths'], 'Microsoft Building Shapefiles'],
 ];
 Object.freeze(scoreAssetTypes);
 
@@ -728,13 +732,8 @@ function initializeScoreSelectors(states) {
     removeAllButFirstFromRow(row);
     for (const state of states) {
       if (stateAssets.get(state)) {
-        const pathDictionary = getElementFromPath(propertyPath);
-        const select =
-            createAssetDropdown(stateAssets.get(state), pathDictionary[state]);
-        select.val(pathDictionary[state]);
-        row.append(createTd().append(select));
-        select.on(
-            'change', () => handleScoreAssetSelection(propertyPath, state));
+        const statePropertyPath = propertyPath.concat([state]);
+        row.append(createTd().append(createAssetDropdown(stateAssets.get(state), statePropertyPath)));
       }
     }
   }
@@ -745,9 +744,7 @@ function initializeScoreSelectors(states) {
  * @param {Array<string>} assets List of assets in the disaster folder
  */
 function initializeDamageSelector(assets) {
-  createAssetDropdown(
-      assets, getElementFromPath(['damage_asset_path']),
-      $('#damage-asset-select'));
+  createAssetDropdown(assets, ['damage_asset_path'], $('#damage-asset-select').empty());
 }
 
 /**
@@ -783,18 +780,19 @@ function removeAllButFirstFromRow(row) {
 }
 
 /**
- * Initializes a dropdown with assets.
+ * Initializes a dropdown with assets and the appropriate change handler.
  * @param {Array<string>} assets List of assets to add to dropdown
- * @param {string} value Current value of this select. If that value is found in
+ * @param {Array<string>} propertyPath List of attributes to follow to get value. If that value is found in
  *     options, it will be selected. Otherwise, no option will be selected
  * @param {jQuery<HTMLSelectElement>} select Select element, will be created if
  *     not given
  * @return {JQuery<HTMLSelectElement>}
  */
 function createAssetDropdown(
-    assets, value, select = $(document.createElement('select'))) {
+    assets, propertyPath, select = $(document.createElement('select'))) {
   select.append(createOptionFrom('None'));
 
+  const value = getElementFromPath(propertyPath);
   // Add assets to selector and return it.
   for (const asset of assets) {
     const assetOption = createOptionFrom(asset);
@@ -803,6 +801,9 @@ function createAssetDropdown(
     }
     select.append(assetOption);
   }
+  select.on(
+      'change', (event) => handleScoreAssetSelection(event, propertyPath));
+
   return select;
 }
 
@@ -817,10 +818,11 @@ function createOptionFrom(text) {
 
 /**
  * Handles the user selecting an asset for one of the possible score types.
- * @param {String} assetType The type of asset (poverty, income, etc)
  */
-function handleScoreAssetSelection(assetType) {
-  // TODO: Write the asset name and type to firebase here.
+function handleScoreAssetSelection(event, propertyPath) {
+  const parentProperty = getElementFromPath(propertyPath.slice(0, -1));
+  parentProperty[propertyPath[propertyPath.length - 1]] = event.target.val();
+
 }
 
 /**
