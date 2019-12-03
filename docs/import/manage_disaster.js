@@ -13,11 +13,14 @@ export {enableWhenReady, onSetDisaster, toggleState};
 export {addDisaster, deleteDisaster, disasterData, run, writeNewDisaster};
 
 /**
- * @type {Map<string, Object>} Disaster id to disaster data, corresponding to data in Firestore. Initialized when Firestore data is downloaded, but set to an empty map here for testing
+ * @type {Map<string, Object>} Disaster id to disaster data, corresponding to
+ *     data in Firestore. Initialized when Firestore data is downloaded, but set
+ *     to an empty map here for testing
  */
 let disasterData = new Map();
 /**
- * @type {Map<string, Promise<Map<string, number>>>} Disaster id to listing of assets in corresponding EE folder, associated to asset type
+ * @type {Map<string, Promise<Map<string, number>>>} Disaster id to listing of
+ *     assets in corresponding EE folder, associated to asset type
  */
 const disasterAssets = new Map();
 
@@ -476,7 +479,9 @@ function enableWhenReady(allDisastersData) {
 
 /**
  * Enables all Firestore-dependent functionality.
- * @param {firebase.firestore.DocumentSnapshot} allDisastersData Contents of Firestore for all disasters, the current disaster's data is used when calculating
+ * @param {firebase.firestore.DocumentSnapshot} allDisastersData Contents of
+ *     Firestore for all disasters, the current disaster's data is used when
+ *     calculating
  */
 function enableWhenFirestoreReady(allDisastersData) {
   disasterData = allDisastersData;
@@ -547,7 +552,7 @@ function onSetDisaster() {
 
 /**
  * If disaster assets not known for disaster, kicks off fetch and stores promise
- * in disasterAssets array.
+ * in disasterAssets map.
  * @param {string} disaster
  */
 function maybeFetchDisasterAssets(disaster) {
@@ -566,7 +571,7 @@ function deleteDisaster() {
   const disasterId = disasterPicker.val();
   if (confirm('Delete ' + disasterId + '? This action cannot be undone')) {
     disasterData.delete(disasterId);
-    // Don't know how to get "options" attribute in jQuery.
+    // Don't know how to get a select element's "options" field in jQuery.
     disasterPicker[0].remove(disasterPicker[0].selectedIndex);
     const newOption = disasterPicker.children().eq(0);
     disasterPicker.val(newOption.val()).trigger('change');
@@ -634,6 +639,7 @@ function writeNewDisaster(disasterId, states) {
     }
   });
   if (!added) disasterPicker.append(createOptionFrom(disasterId));
+  toggleState(true);
 
   disasterPicker.val(disasterId).trigger('change');
 
