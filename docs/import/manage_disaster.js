@@ -562,8 +562,10 @@ function onSetDisaster() {
     };
     // Handle errors in disaster asset retrieval by just emptying out.
     disasterAssets.get(currentDisaster).then(disasterLambda, (err) => {
-      if (err && err !==
-          'Asset "' + eeLegacyPathPrefix + currentDisaster + '" not found.') {
+      if (err &&
+          err !==
+              'Asset "' + eeLegacyPathPrefix + currentDisaster +
+                  '" not found.') {
         setStatus(err);
       }
       disasterLambda([]);
