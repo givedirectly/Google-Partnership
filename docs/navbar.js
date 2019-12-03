@@ -19,8 +19,6 @@ function loadNavbar(callback) {
   });
 }
 
-
-
 /**
  * Loads the navbar and sets the title.
  *
