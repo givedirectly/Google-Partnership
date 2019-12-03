@@ -171,6 +171,7 @@ describe('Unit tests for manage_disaster.js', () => {
   it('writes a new disaster to firestore', () => {
     let id = '2002-winter';
     const states = ['DN, WF'];
+
     cy.wrap(writeNewDisaster(id, states))
         .then((success) => {
           expect(success).to.be.true;

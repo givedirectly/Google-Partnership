@@ -657,7 +657,6 @@ function writeNewDisaster(disasterId, states) {
       .then(() => true);
 }
 
-
 /**
  * Returns true if the given string is *not* all lowercase letters.
  * @param {string} val
