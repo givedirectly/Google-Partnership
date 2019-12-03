@@ -74,7 +74,7 @@ function prependToTable(layer) {
 
 /**
  * Adds a new non-ee layer to the table and firestore.
- * @param {number} type The layer type (kml or map tile)
+ * @param {enum} type The LayerType (kml or map tile)
  * @param  {Array<string>} The urls for the layer display
  * @return {Promise<void>} Finishes when the layer information has been
  * written to firestore.
