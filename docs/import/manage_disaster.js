@@ -819,21 +819,23 @@ function createAssetDropdown(
 }
 
 /**
+ * Handles the user selecting an asset for one of the possible score types.
+ * @param {Event} event Event, used to identify the target
+ * @param {Array<string>} propertyPath path to property inside asset data. We set this value by setting the parent's attribute to the target's value
+ */
+function handleScoreAssetSelection(event, propertyPath) {
+  const parentProperty = getElementFromPath(propertyPath.slice(0, -1));
+  parentProperty[propertyPath[propertyPath.length - 1]] = $(event.target).val();
+  updateDataInFirestore(() => disasterData.get(getDisaster()), () => {}, () => {});
+}
+
+/**
  * Simple utility to create an option for a select.
  * @param {string} text Displayed text/value of option
  * @return {JQuery<HTMLOptionElement>}
  */
 function createOptionFrom(text) {
   return $(document.createElement('option')).text(text);
-}
-
-/**
- * Handles the user selecting an asset for one of the possible score types.
- */
-function handleScoreAssetSelection(event, propertyPath) {
-  const parentProperty = getElementFromPath(propertyPath.slice(0, -1));
-  parentProperty[propertyPath[propertyPath.length - 1]] = $(event.target).val();
-  updateDataInFirestore(() => ({asset_data: disasterData.get(getDisaster())}), () => {}, () => {});
 }
 
 /**
