@@ -691,7 +691,6 @@ const scoreAssetTypes = [
 Object.freeze(scoreAssetTypes);
 
 const assetSelectionRowPrefix = 'asset-selection-row-';
-Object.freeze(assetSelectionRowPrefix);
 
 /**
  * Initializes score selector table based on {@link scoreAssetTypes} data. Done
@@ -731,7 +730,6 @@ function initializeScoreSelectors(states) {
         const pathDictionary = getElementFromPath(propertyPath);
         const select =
             createAssetDropdown(stateAssets.get(state), pathDictionary[state]);
-        select.val(pathDictionary[state]);
         row.append(createTd().append(select));
         select.on(
             'change', () => handleScoreAssetSelection(propertyPath, state));
