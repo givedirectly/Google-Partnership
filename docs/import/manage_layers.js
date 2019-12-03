@@ -406,7 +406,7 @@ function createOptionFrom(innerTextAndValue) {
 }
 
 /**
- * Adds a non-ee layer to the map. 
+ * Adds a non-ee layer to the map.
  * @return {Promise<void>} Finishes when the layer information has been
  * written to firestore.
  */
