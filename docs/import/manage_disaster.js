@@ -530,7 +530,7 @@ function onSetDisaster() {
         neededStates.push(state);
       }
     }
-    let promise = Promise.resolve([]);
+    let promise = Promise.resolve();
     if (neededStates) {
       promise = getStatesAssetsFromEe(neededStates).then((result) => {
         for (const stateItem of result) {
