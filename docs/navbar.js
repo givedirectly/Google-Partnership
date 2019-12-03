@@ -9,9 +9,17 @@ export {loadNavbarWithPicker, loadNavbarWithTitle};
  * @param {Function} callback the callback invoked upon load
  */
 function loadNavbar(callback) {
-  // Use this script's URL to derive the URL for navbar.html.
-  $('#navbar').load(import.meta.url.replace(/\.js$/, '.html'), callback);
+  $('#navbar').load(getUrlUnderDocs('navbar.html'), () => {
+    $('#map-a').prop('href', getUrlUnderDocs(''));
+    $('#manage-layers-a')
+        .prop('href', getUrlUnderDocs('import/manage_layers.html'));
+    $('#manage-disaster-a')
+        .prop('href', getUrlUnderDocs('import/manage_disaster.html'));
+    callback();
+  });
 }
+
+
 
 /**
  * Loads the navbar and sets the title.
@@ -46,8 +54,17 @@ function loadNavbarWithPicker(
   loadNavbar(
       () => $('#nav-left')
                 .load(
-                    import.meta.url.replace('/navbar.js', '') +
-                        '/disaster_picker.html',
+                    getUrlUnderDocs('disaster_picker.html'),
                     () => initializeDisasterPicker(
                         firebaseDataPromise, changeDisasterHandler)));
+}
+
+/**
+ * Get url of a file in or below our docs directory by using the path of this
+ * current script.
+ * @param {string} pathFragment path fragment to append to '.../docs/'
+ * @return {string}
+ */
+function getUrlUnderDocs(pathFragment) {
+  return import.meta.url.replace(/navbar\.js$/, pathFragment);
 }

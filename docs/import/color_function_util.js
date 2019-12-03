@@ -217,19 +217,31 @@ function onClick(td, type) {
   const colorFunctionDiv = $('#color-fxn-editor');
   if (colorFunctionDiv.is(':visible') && td === globalTd) {
     colorFunctionDiv.hide();
-    $(globalTd).removeClass('selected');
+    selectCurrentRow(false);
     return;
   }
   colorFunctionDiv.show();
   if (td === globalTd) {
-    $(globalTd).addClass('selected');
+    selectCurrentRow(true);
     return;
   }
-  $(globalTd).removeClass('selected');
+  selectCurrentRow(false);
   globalTd = td;
-  $(globalTd).addClass('selected');
+  selectCurrentRow(true);
   $('#' + colorStyleTypeStrings.get(type) + '-radio').prop('checked', true);
   displaySchema(type);
+}
+
+/**
+ * Highlights or unhighlights the row of the current global td.
+ * @param {boolean} selected
+ */
+function selectCurrentRow(selected) {
+  if (selected) {
+    $(globalTd).parent('tr').addClass('selected');
+  } else {
+    $(globalTd).parent('tr').removeClass('selected');
+  }
 }
 
 /**
