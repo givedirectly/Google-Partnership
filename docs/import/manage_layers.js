@@ -53,6 +53,7 @@ function enableWhenReady() {
     disasterPicker.on('change', () => toggleDisaster(disasterPicker.val()));
     disasterPicker.val(getDisaster()).trigger('change');
     $('#pending-disaster').hide();
+    $('#disaster').show();
   });
 }
 

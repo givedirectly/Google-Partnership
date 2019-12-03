@@ -1,4 +1,5 @@
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
+import {assetDataTemplate} from '../../../docs/import/create_disaster_lib.js';
 import {disasterData, run} from '../../../docs/import/manage_disaster';
 import {addDisaster, deleteDisaster, writeNewDisaster} from '../../../docs/import/manage_disaster.js';
 import {createOptionFrom} from '../../../docs/import/manage_layers.js';
@@ -205,6 +206,7 @@ describe('Unit tests for manage_disaster.js', () => {
           const data = doc.data();
           expect(data['states']).to.eql(states);
           expect(data['layers']).to.eql([]);
+          expect(data['asset_data']).to.eql(assetDataTemplate);
         });
   });
 

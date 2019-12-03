@@ -49,7 +49,7 @@ function getDisasterAssetsFromEe(disaster) {
 }
 
 /**
- * Lists the EE assets in dir, filtering out uninteresting ones.
+ * Lists the EE assets in dir, filtering out unsupported ones.
  * @param {string} dir fully qualified EE path
  * @return {Promise<Map<string, string>>} Promise with a map whose keys are the
  *     asset names, and values are types
