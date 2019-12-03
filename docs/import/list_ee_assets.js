@@ -45,7 +45,8 @@ function getStatesAssetsFromEe(states) {
  * of asset path to type for the given disaster.
  */
 function getDisasterAssetsFromEe(disaster) {
-  return listEeAssets(eeLegacyPathPrefix + disaster).then((result) => result.keys());
+  return listEeAssets(eeLegacyPathPrefix + disaster)
+      .then((result) => result.keys());
 }
 
 /**
