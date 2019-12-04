@@ -3,7 +3,7 @@ import {convertEeObjectToPromise} from '../map_util.js';
 import {createLayerRow} from './manage_layers.js';
 import {getCurrentLayers, updateLayersInFirestore} from './manage_layers_lib.js';
 
-export {processNewEeLayer};
+export {processNewEeLayer, processNonEeLayer};
 
 /**
  * Processes a new feature-collection-typed layer and puts its color column
@@ -70,4 +70,21 @@ function prependToTable(layer) {
   getCurrentLayers().push(layer);
   $('#tbody').prepend(createLayerRow(layer, index));
   return updateLayersInFirestore();
+}
+
+/**
+ * Adds a new non-ee layer to the table and firestore.
+ * @param {enum} type The LayerType (kml or map tile)
+ * @param  {Array<string>} urls The urls for the layer display
+ * @return {Promise<void>} Finishes when the layer information has been
+ * written to firestore.
+ */
+function processNonEeLayer(type, urls) {
+  const layer = {
+    'display-name': '',
+    'asset-type': type,
+    'urls': urls,
+    'display-on-load': false,
+  };
+  return prependToTable(layer);
 }
