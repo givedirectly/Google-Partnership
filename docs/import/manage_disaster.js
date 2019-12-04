@@ -842,6 +842,10 @@ function createAssetDropdown(
  *     set this value by setting the parent's attribute to the target's value
  */
 function handleScoreAssetSelection(event, propertyPath) {
+  // We want to change the value, which means we have to write an expression
+  // like "parent[prop] = val". To obtain the parent object, we just follow the
+  // same path as the child's, but stop one property short. That last property
+  // is then the "prop" in the expression above.
   const parentProperty = getElementFromPath(propertyPath.slice(0, -1));
   parentProperty[propertyPath[propertyPath.length - 1]] = $(event.target).val();
   updateDataInFirestore(
