@@ -310,7 +310,7 @@ describe('Unit tests for manage_disaster.js', () => {
             'have.text',
             'Missing asset(s): Poverty [WY], SVI [NY, WY], Census TIGER ' +
                 'Shapefiles [NY, WY], Microsoft Building Shapefiles [NY, WY],' +
-                'and must specify either damage asset or map bounds');
+                ' and must specify either damage asset or map bounds');
   });
 
   it('writes a new disaster to firestore', () => {
