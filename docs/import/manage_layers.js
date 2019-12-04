@@ -2,7 +2,7 @@ import {LayerType} from '../firebase_layers.js';
 import {getDisastersData} from '../firestore_document.js';
 import {getDisaster} from '../resources.js';
 
-import {processNewEeLayer} from './add_layer.js';
+import {processNewEeLayer, processNonEeLayer} from './add_layer.js';
 import {withColor} from './color_function_util.js';
 import {getDisasterAssetsFromEe, getStatesAssetsFromEe} from './list_ee_assets.js';
 import {disasterData, getCurrentData, getCurrentLayers, getRowIndex, ILLEGAL_STATE_ERR, onUpdate, setCurrentDisaster, setDisasterData, setStatus, updateLayersInFirestore} from './manage_layers_lib.js';
@@ -54,6 +54,8 @@ function enableWhenReady() {
     disasterPicker.val(getDisaster()).trigger('change');
     $('#pending-disaster').hide();
     $('#disaster').show();
+
+    $('#add-non-eelayer').on('click', () => addNonEELayer());
   });
 }
 
@@ -401,4 +403,17 @@ function createOptionFrom(innerTextAndValue) {
       .text(innerTextAndValue)
       .val(innerTextAndValue)
       .prop('id', innerTextAndValue);
+}
+
+/**
+ * Adds a non-ee layer to the map.
+ * @return {Promise<void>} Finishes when the layer information has been
+ * written to firestore.
+ */
+function addNonEELayer() {
+  const type = parseInt($('#non-eelayer-type').val());
+  const urls = $('#non-eelayer-urls').val().split('\n');
+  $('#non-eelayer-urls').val('');
+
+  return processNonEeLayer(type, urls);
 }
