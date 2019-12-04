@@ -631,8 +631,8 @@ function addDisaster() {
  * there is an existing disaster with the same details.
  * @param {string} disasterId of the form <year>-<name>
  * @param {Array<string>} states array of state (abbreviations)
- * @return {Promise<[null, boolean]>} returns when all ee folders have been
- * created and firestore write has finished.
+ * @return {Promise<boolean>} returns true after successful write to firestore
+ * and earth engine folder creations.
  */
 function writeNewDisaster(disasterId, states) {
   if (disasterData.has(disasterId)) {
@@ -672,12 +672,12 @@ function writeNewDisaster(disasterId, states) {
     disasterPicker.val(disasterId).trigger('change');
   });
 
-  return Promise.all(
-      eePromisesResult,
-      disasterCollectionReference()
-          .doc(disasterId)
-          .set(currentData)
-          .then(() => true));
+  return Promise
+      .all([
+        eePromisesResult,
+        disasterCollectionReference().doc(disasterId).set(currentData)
+      ])
+      .then(() => true);
 }
 
 /**
@@ -699,7 +699,7 @@ function getCreateFolderPromise(dir) {
       (resolve) => ee.data.createFolder(
           dir, false,
           () => ee.data.setAssetAcl(
-              dir, {all_users_can_read: true}, () => resolve())));
+              dir, {all_users_can_read: true}, () => resolve)));
 }
 
 /**
