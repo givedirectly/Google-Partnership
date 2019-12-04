@@ -758,8 +758,9 @@ function initializeScoreSelectors(states) {
     for (const state of states) {
       if (stateAssets.get(state)) {
         const statePropertyPath = propertyPath.concat([state]);
-        row.append(createTd().append(
-            addChangeHandler(createAssetDropdown(stateAssets.get(state), statePropertyPath), statePropertyPath)));
+        row.append(createTd().append(addChangeHandler(
+            createAssetDropdown(stateAssets.get(state), statePropertyPath),
+            statePropertyPath)));
       }
     }
   }
@@ -773,12 +774,11 @@ function initializeDamageSelector(assets) {
   const mapBoundsSpan = $('#map-bounds-div');
   const select = createAssetDropdown(
       assets, ['damage_asset_path'], $('#damage-asset-select').empty());
-  select.on(
-      'change', (event) => {
-        const val = $(event.target).val();
-        !val || val === 'None' ? mapBoundsSpan.show() : mapBoundsSpan.hide();
-        handleScoreAssetSelection(val, propertyPath);
-      });
+  select.on('change', (event) => {
+    const val = $(event.target).val();
+    !val || val === 'None' ? mapBoundsSpan.show() : mapBoundsSpan.hide();
+    handleScoreAssetSelection(val, propertyPath);
+  });
   const swPath = ['map_bounds_sw'];
   const nePath = ['map_bounds_ne'];
   const swInput = $('#map-bounds-sw');
@@ -788,8 +788,8 @@ function initializeDamageSelector(assets) {
   neInput.val(getElementFromPath(nePath));
   addChangeHandler(neInput, nePath);
   const selectVal = select.val();
-  selectVal && selectVal !== 'None' ? mapBoundsSpan.hide() : mapBoundsSpan.show();
-
+  selectVal && selectVal !== 'None' ? mapBoundsSpan.hide() :
+                                      mapBoundsSpan.show();
 }
 
 /**
@@ -851,9 +851,18 @@ function createAssetDropdown(
   return select;
 }
 
+/**
+ * Adds the default change handler, which updates our internal data (and
+ * Firestore) when this element changes.
+ * @param {JQuery<HTMLElement>} elt
+ * @param {Array<string>} propertyPath The path to the value of this element
+ * @return {JQuery<HTMLElement>} The passed-in element, for chaining
+ */
 function addChangeHandler(elt, propertyPath) {
   return elt.on(
-      'change', (event) => handleScoreAssetSelection($(event.target).val(), propertyPath));
+      'change',
+      (event) =>
+          handleScoreAssetSelection($(event.target).val(), propertyPath));
 }
 /**
  * Handles the user entering a value into score-related input
@@ -867,7 +876,8 @@ function handleScoreAssetSelection(val, propertyPath) {
   // same path as the child's, but stop one property short. That last property
   // is then the "prop" in the expression above.
   const parentProperty = getElementFromPath(propertyPath.slice(0, -1));
-  parentProperty[propertyPath[propertyPath.length - 1]] = val === 'None' ? null : val;
+  parentProperty[propertyPath[propertyPath.length - 1]] =
+      val === 'None' ? null : val;
   updateDataInFirestore(
       () => disasterData.get(getDisaster()), () => {}, () => {});
 }
