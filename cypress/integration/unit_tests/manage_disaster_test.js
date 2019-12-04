@@ -1,9 +1,10 @@
-import {getFirestoreRoot} from '../../../docs/firestore_document.js';
+import {getFirestoreRoot, readDisasterDocument} from '../../../docs/firestore_document.js';
 import {assetDataTemplate} from '../../../docs/import/create_disaster_lib.js';
-import {disasterData, run} from '../../../docs/import/manage_disaster';
+import {disasterData, initializeDamageSelector, run} from '../../../docs/import/manage_disaster';
 import {addDisaster, deleteDisaster, writeNewDisaster} from '../../../docs/import/manage_disaster.js';
 import {createOptionFrom} from '../../../docs/import/manage_layers.js';
 import {convertEeObjectToPromise} from '../../../docs/map_util';
+import {getDisaster} from '../../../docs/resources.js';
 import {assertFirestoreMapBounds} from '../../support/firestore_map_bounds';
 import {createAndAppend} from '../../support/import_test_util.js';
 import {initFirebaseForUnitTest, loadScriptsBeforeForUnitTests} from '../../support/script_loader';
@@ -28,7 +29,7 @@ describe('Unit tests for manage_disaster.js', () => {
     disasterData.clear();
 
     // Create a pretty trivial world: 2 block groups, each a 1x2 vertical
-    // stripes. Under the covers, we scale all dimensions down because
+    // stripe. Under the covers, we scale all dimensions down because
     // production code creates an "envelope" 1 km wide around damage, and that
     // envelope is assumed to fully contain any block group that has any damage.
     const tigerBlockGroups = ee.FeatureCollection(
@@ -67,6 +68,8 @@ describe('Unit tests for manage_disaster.js', () => {
       states: ['NY'],
       asset_data: {
         damage_asset_path: damageData,
+        map_bounds_sw: null,
+        map_bounds_ne: null,
         block_group_asset_paths: {
           NY: tigerBlockGroups,
         },
@@ -165,6 +168,58 @@ describe('Unit tests for manage_disaster.js', () => {
     testData.asset_data = null;
     expect(run(testData)).to.be.null;
     expect(exportStub).to.not.be.called;
+  });
+
+  it('damage asset/map-bounds elements', () => {
+    const assetData = testData['asset_data'];
+    assetData['damage_asset_path'] = null;
+    assetData['block_group_asset_paths'] = {};
+    assetData['snap_data']['paths'] = {};
+    assetData['svi_asset_paths'] = {};
+    assetData['income_asset_paths'] = {};
+    assetData['building_asset_paths'] = {};
+    testData['asset_data']['map_bounds_sw'] = '0, 1';
+    disasterData.set(getDisaster(), testData);
+    cy.document().then((doc) => {
+      // Lightly fake out jQuery so that we can use Cypress selectors. Might not
+      // work if manage_disaster.js starts doing fancier jQuery operations.
+      cy.stub(document, 'getElementById')
+          .callsFake((id) => doc.getElementById(id));
+      const damageSelect = doc.createElement('select');
+      damageSelect.id = 'damage-asset-select';
+      doc.body.appendChild(damageSelect);
+      const boundsDiv = doc.createElement('div');
+      boundsDiv.id = 'map-bounds-div';
+      doc.body.appendChild(boundsDiv);
+      const swInput = doc.createElement('input');
+      swInput.id = 'map-bounds-sw';
+      boundsDiv.appendChild(swInput);
+      const neInput = doc.createElement('input');
+      neInput.id = 'map-bounds-ne';
+      boundsDiv.appendChild(neInput);
+    });
+    cy.get('#map-bounds-div')
+        .should('be.visible')
+        .then(() => $('#map-bounds-div').hide());
+    cy.get('#map-bounds-div')
+        .should('not.be.visible')
+        .then(() => initializeDamageSelector(['asset1', 'asset2']));
+    cy.get('#damage-asset-select').should('have.value', '');
+    cy.get('#map-bounds-div').should('be.visible');
+    cy.get('#map-bounds-sw').should('have.value', '0, 1');
+    cy.get('#map-bounds-ne').should('have.value', '');
+    cy.get('#map-bounds-ne').type('1, 1').blur();
+    // TODO(janakr): is there a way to tell all writes are finished?
+    cy.wait(1000).then(readDisasterDocument).then((doc) => {
+      const data = doc.data();
+      expect(data['asset_data']['map_bounds_ne']).to.eql('1, 1');
+    });
+    cy.get('#damage-asset-select').select('asset2').blur();
+    cy.get('#map-bounds-div').should('not.be.visible');
+    cy.wait(1000).then(readDisasterDocument).then((doc) => {
+      const data = doc.data();
+      expect(data['asset_data']['damage_asset_path']).to.eql('asset2');
+    });
   });
 
   it('writes a new disaster to firestore', () => {
