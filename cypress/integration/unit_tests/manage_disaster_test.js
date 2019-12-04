@@ -620,7 +620,7 @@ function makeCallbackForTextAndPromise(expectedText) {
  * Utility function to set the first select in the given score asset row. See
  * {@link getFirstTdInScoreRow}.
  * @param {number} rowNum See {@link getFirstTdInScoreRow}
- * @return {Cypress.Chainable}
+ * @return {Cypress.Chainable} Cypress promise of the select
  */
 function setFirstSelectInScoreRow(rowNum) {
   return getFirstTdInScoreRow(rowNum)
@@ -635,7 +635,7 @@ function setFirstSelectInScoreRow(rowNum) {
  * Poverty/SVI/Income/Buildings row.
  * @param {number} rowNum index of row, corresponding to its index in {@link
  *     scoreAssetTypes}
- * @return {Cypress.Chainable}
+ * @return {Cypress.Chainable} Cypress promise of the td
  */
 function getFirstTdInScoreRow(rowNum) {
   return cy.get('#' + assetSelectionRowPrefix + scoreAssetTypes[rowNum][0])
