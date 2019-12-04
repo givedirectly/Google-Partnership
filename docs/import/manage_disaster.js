@@ -516,7 +516,7 @@ let processedCurrentDisasterSelfAssets = false;
 
 /**
  * Function called when current disaster changes. Responsible for displaying the
- * score selectors.
+ * score selectors and enabling/disabling the kick-off button.
  */
 function onSetDisaster() {
   processedCurrentDisasterStateAssets = false;
