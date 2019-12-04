@@ -120,10 +120,10 @@ module.exports = (on, config) => {
               .then((token) => testApp.auth().signInWithCustomToken(token));
       const deletePromise = deleteTestData(currentTestRoot, testAdminApp);
       const writePromises = [];
-      for (const disaster of [
-          '2017-harvey',
-        // TODO(janakr): add a second one so we have multiple disasters.
-        // '2018-michael'
+      for (const disaster
+               of ['2017-harvey',
+                   // TODO(janakr): add a second one so we have multiple
+                   // disasters. '2018-michael'
       ]) {
         const documentPath = 'disaster-metadata/' + disaster;
         const prodDisasterDoc = prodApp.firestore().doc(documentPath);
