@@ -675,7 +675,7 @@ function writeNewDisaster(disasterId, states) {
   return Promise
       .all([
         eePromisesResult,
-        disasterCollectionReference().doc(disasterId).set(currentData)
+        disasterCollectionReference().doc(disasterId).set(currentData),
       ])
       .then(() => true);
 }
