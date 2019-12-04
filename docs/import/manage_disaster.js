@@ -1,3 +1,4 @@
+import {eeLegacyPathPrefix} from '../ee_paths.js';
 import {LayerType} from '../firebase_layers.js';
 import {disasterCollectionReference} from '../firestore_document.js';
 import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, snapPercentageTag, snapPopTag, sviTag, totalPopTag, tractTag} from '../property_names.js';
@@ -7,6 +8,7 @@ import {computeAndSaveBounds, saveBounds} from './center.js';
 import {createDisasterData} from './create_disaster_lib.js';
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
 import {getDisasterAssetsFromEe, getStatesAssetsFromEe} from './list_ee_assets.js';
+import {updateDataInFirestore} from './update_firestore_disaster.js';
 
 export {enableWhenReady, onSetDisaster, setUpScoreSelectorTable, toggleState};
 /** @VisibleForTesting */
@@ -550,13 +552,23 @@ function onSetDisaster() {
         processedCurrentDisasterStateAssets = true;
       }
     });
-    disasterAssets.get(currentDisaster).then((assets) => {
+    const disasterLambda = (assets) => {
       if (getDisaster() === currentDisaster &&
           !processedCurrentDisasterSelfAssets) {
         // Don't do anything unless this is still the right disaster.
         initializeDamageSelector(assets);
         processedCurrentDisasterSelfAssets = true;
       }
+    };
+    // Handle errors in disaster asset retrieval by just emptying out.
+    disasterAssets.get(currentDisaster).then(disasterLambda, (err) => {
+      if (err &&
+          err !==
+              'Asset "' + eeLegacyPathPrefix + currentDisaster +
+                  '" not found.') {
+        setStatus(err);
+      }
+      disasterLambda([]);
     });
   }
 }
@@ -578,6 +590,12 @@ function maybeFetchDisasterAssets(disaster) {
 /**
  * Deletes a disaster from firestore. Confirms first. Returns when deletion is
  * complete (or instantly if deletion doesn't actually happen).
+ *
+ * TODO(janakr): If a slow write from {@link updateDataInFirestore} happens to
+ *  lose to this delete, the doc will be recreated, which isn't great. Could
+ *  maybe track all pending write promises and chain this one off of them, or
+ *  disable delete button until all pending writes were done (might be good to
+ *  give user an indication like that).
  * @return {Promise<void>}
  */
 function deleteDisaster() {
@@ -626,6 +644,11 @@ function addDisaster() {
 /**
  * Writes the given details to a new disaster entry in firestore. Fails if
  * there is an existing disaster with the same details.
+ *
+ * TODO(janakr): If the user starts editing a disaster before the Firestore
+ *  write completes, their edit could be overwritten by the initial Firestore
+ *  write here. Probably solved similar to the delete disaster issue: don't
+ *  actually show the disaster as editable until this write completes.
  * @param {string} disasterId of the form <year>-<name>
  * @param {Array<string>} states array of state (abbreviations)
  * @return {Promise<boolean>} returns true after successful write to firestore.
@@ -637,6 +660,8 @@ function writeNewDisaster(disasterId, states) {
   }
   const currentData = createDisasterData(states);
   disasterData.set(disasterId, currentData);
+  // We know there are no assets in folder yet.
+  disasterAssets.set(disasterId, Promise.resolve([]));
 
   const disasterPicker = $('#disaster-dropdown');
   const disasterOptions = disasterPicker.children();
@@ -690,6 +715,8 @@ const scoreAssetTypes = [
   ['poverty', ['snap_data', 'paths'], 'Poverty'],
   ['income', ['income_asset_paths'], 'Income'],
   ['svi', ['svi_asset_paths'], 'SVI'],
+  ['tiger', ['block_group_asset_paths'], 'Census TIGER Shapefiles'],
+  ['buildings', ['building_asset_paths'], 'Microsoft Building Shapefiles'],
 ];
 Object.freeze(scoreAssetTypes);
 
@@ -730,12 +757,9 @@ function initializeScoreSelectors(states) {
     removeAllButFirstFromRow(row);
     for (const state of states) {
       if (stateAssets.get(state)) {
-        const pathDictionary = getElementFromPath(propertyPath);
-        const select =
-            createAssetDropdown(stateAssets.get(state), pathDictionary[state]);
-        row.append(createTd().append(select));
-        select.on(
-            'change', () => handleScoreAssetSelection(propertyPath, state));
+        const statePropertyPath = propertyPath.concat([state]);
+        row.append(createTd().append(
+            createAssetDropdown(stateAssets.get(state), statePropertyPath)));
       }
     }
   }
@@ -747,8 +771,7 @@ function initializeScoreSelectors(states) {
  */
 function initializeDamageSelector(assets) {
   createAssetDropdown(
-      assets, getElementFromPath(['damage_asset_path']),
-      $('#damage-asset-select'));
+      assets, ['damage_asset_path'], $('#damage-asset-select').empty());
 }
 
 /**
@@ -784,18 +807,20 @@ function removeAllButFirstFromRow(row) {
 }
 
 /**
- * Initializes a dropdown with assets.
+ * Initializes a dropdown with assets and the appropriate change handler.
  * @param {Array<string>} assets List of assets to add to dropdown
- * @param {string} value Current value of this select. If that value is found in
- *     options, it will be selected. Otherwise, no option will be selected
+ * @param {Array<string>} propertyPath List of attributes to follow to get
+ *     value. If that value is found in options, it will be selected. Otherwise,
+ *     no option will be selected
  * @param {jQuery<HTMLSelectElement>} select Select element, will be created if
  *     not given
  * @return {JQuery<HTMLSelectElement>}
  */
 function createAssetDropdown(
-    assets, value, select = $(document.createElement('select'))) {
+    assets, propertyPath, select = $(document.createElement('select'))) {
   select.append(createOptionFrom('None'));
 
+  const value = getElementFromPath(propertyPath);
   // Add assets to selector and return it.
   for (const asset of assets) {
     const assetOption = createOptionFrom(asset);
@@ -804,7 +829,27 @@ function createAssetDropdown(
     }
     select.append(assetOption);
   }
+  select.on(
+      'change', (event) => handleScoreAssetSelection(event, propertyPath));
+
   return select;
+}
+
+/**
+ * Handles the user selecting an asset for one of the possible score types.
+ * @param {Event} event Event, used to identify the target
+ * @param {Array<string>} propertyPath path to property inside asset data. We
+ *     set this value by setting the parent's attribute to the target's value
+ */
+function handleScoreAssetSelection(event, propertyPath) {
+  // We want to change the value, which means we have to write an expression
+  // like "parent[prop] = val". To obtain the parent object, we just follow the
+  // same path as the child's, but stop one property short. That last property
+  // is then the "prop" in the expression above.
+  const parentProperty = getElementFromPath(propertyPath.slice(0, -1));
+  parentProperty[propertyPath[propertyPath.length - 1]] = $(event.target).val();
+  updateDataInFirestore(
+      () => disasterData.get(getDisaster()), () => {}, () => {});
 }
 
 /**
@@ -814,14 +859,6 @@ function createAssetDropdown(
  */
 function createOptionFrom(text) {
   return $(document.createElement('option')).text(text);
-}
-
-/**
- * Handles the user selecting an asset for one of the possible score types.
- * @param {String} assetType The type of asset (poverty, income, etc)
- */
-function handleScoreAssetSelection(assetType) {
-  // TODO: Write the asset name and type to firebase here.
 }
 
 /**
