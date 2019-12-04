@@ -759,7 +759,7 @@ function initializeScoreSelectors(states) {
       if (stateAssets.get(state)) {
         const statePropertyPath = propertyPath.concat([state]);
         row.append(createTd().append(
-            createAssetDropdown(stateAssets.get(state), statePropertyPath)));
+            addChangeHandler(createAssetDropdown(stateAssets.get(state), statePropertyPath), statePropertyPath)));
       }
     }
   }
@@ -770,8 +770,26 @@ function initializeScoreSelectors(states) {
  * @param {Array<string>} assets List of assets in the disaster folder
  */
 function initializeDamageSelector(assets) {
-  createAssetDropdown(
+  const mapBoundsSpan = $('#map-bounds-div');
+  const select = createAssetDropdown(
       assets, ['damage_asset_path'], $('#damage-asset-select').empty());
+  select.on(
+      'change', (event) => {
+        const val = $(event.target).val();
+        !val || val === 'None' ? mapBoundsSpan.show() : mapBoundsSpan.hide();
+        handleScoreAssetSelection(val, propertyPath);
+      });
+  const swPath = ['map_bounds_sw'];
+  const nePath = ['map_bounds_ne'];
+  const swInput = $('#map-bounds-sw');
+  swInput.val(getElementFromPath(swPath));
+  addChangeHandler(swInput, swPath);
+  const neInput = $('#map-bounds-ne');
+  neInput.val(getElementFromPath(nePath));
+  addChangeHandler(neInput, nePath);
+  const selectVal = select.val();
+  selectVal && selectVal !== 'None' ? mapBoundsSpan.hide() : mapBoundsSpan.show();
+
 }
 
 /**
@@ -807,7 +825,7 @@ function removeAllButFirstFromRow(row) {
 }
 
 /**
- * Initializes a dropdown with assets and the appropriate change handler.
+ * Initializes a dropdown with assets.
  * @param {Array<string>} assets List of assets to add to dropdown
  * @param {Array<string>} propertyPath List of attributes to follow to get
  *     value. If that value is found in options, it will be selected. Otherwise,
@@ -829,25 +847,27 @@ function createAssetDropdown(
     }
     select.append(assetOption);
   }
-  select.on(
-      'change', (event) => handleScoreAssetSelection(event, propertyPath));
 
   return select;
 }
 
+function addChangeHandler(elt, propertyPath) {
+  return elt.on(
+      'change', (event) => handleScoreAssetSelection($(event.target).val(), propertyPath));
+}
 /**
- * Handles the user selecting an asset for one of the possible score types.
- * @param {Event} event Event, used to identify the target
+ * Handles the user entering a value into score-related input
+ * @param {string} val Value of input. 'None' is treated like null (ugh)
  * @param {Array<string>} propertyPath path to property inside asset data. We
  *     set this value by setting the parent's attribute to the target's value
  */
-function handleScoreAssetSelection(event, propertyPath) {
+function handleScoreAssetSelection(val, propertyPath) {
   // We want to change the value, which means we have to write an expression
   // like "parent[prop] = val". To obtain the parent object, we just follow the
   // same path as the child's, but stop one property short. That last property
   // is then the "prop" in the expression above.
   const parentProperty = getElementFromPath(propertyPath.slice(0, -1));
-  parentProperty[propertyPath[propertyPath.length - 1]] = $(event.target).val();
+  parentProperty[propertyPath[propertyPath.length - 1]] = val === 'None' ? null : val;
   updateDataInFirestore(
       () => disasterData.get(getDisaster()), () => {}, () => {});
 }
