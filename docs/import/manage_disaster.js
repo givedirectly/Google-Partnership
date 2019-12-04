@@ -922,13 +922,9 @@ function handleAssetDataChange(val, propertyPath) {
   // same path as the child's, but stop one property short. That last property
   // is then the "prop" in the expression above.
   const parentProperty = getElementFromPath(propertyPath.slice(0, -1));
-<<<<<<< HEAD
   parentProperty[propertyPath[propertyPath.length - 1]] =
-      hasValue(val) ? val : null;
+      val === '' ? val : null;
   validateUserFields();
-=======
-  parentProperty[propertyPath[propertyPath.length - 1]] = val ? val : null;
->>>>>>> no-damage-bounds
   updateDataInFirestore(
       () => disasterData.get(getDisaster()), () => {}, () => {});
 }
