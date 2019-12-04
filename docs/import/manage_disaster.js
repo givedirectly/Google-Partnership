@@ -172,6 +172,8 @@ function run(disasterData, setMapBoundsInfoFunction = setMapBoundsInfo) {
   if (!states) {
     return missingAssetError('affected states');
   }
+  const {asset_data: {block_group_paths}} = disasterData['asset_data'];
+
   const assetData = disasterData['asset_data'];
   if (!assetData) {
     return missingAssetError('SNAP/damage asset paths');
