@@ -525,6 +525,7 @@ function onSetDisaster() {
   if (currentDisaster) {
     const states = disasterData.get(currentDisaster).states;
     const neededStates = [];
+    // TODO: eagerly fetch all states assets.
     for (const state of states) {
       if (!stateAssets.has(state)) {
         neededStates.push(state);
@@ -630,7 +631,8 @@ function addDisaster() {
  * there is an existing disaster with the same details.
  * @param {string} disasterId of the form <year>-<name>
  * @param {Array<string>} states array of state (abbreviations)
- * @return {Promise<boolean>} returns true after successful write to firestore.
+ * @return {Promise<[null, boolean]>} returns when all ee folders have been
+ * created and firestore write has finished.
  */
 function writeNewDisaster(disasterId, states) {
   if (disasterData.has(disasterId)) {
@@ -649,13 +651,14 @@ function writeNewDisaster(disasterId, states) {
         getCreateFolderPromise(legacyStateDir + '/' + state));
   }
 
-  Promise.all(folderCreationPromises).then(() => {
+  const eePromisesResult = Promise.all(folderCreationPromises).then(() => {
     const disasterPicker = $('#disaster-dropdown');
     const disasterOptions = disasterPicker.children();
     let added = false;
     // We expect this recently created disaster to go near the top of the list,
     // so do a linear scan down. Note: let's hope this tool isn't being used in
-    // the year 10000. Comment needed to quiet eslint.
+    // the year 10000.
+    // Comment needed to quiet eslint.
     disasterOptions.each(/* @this HTMLElement */ function() {
       if ($(this).val() < disasterId) {
         $(createOptionFrom(disasterId)).insertBefore($(this));
@@ -669,10 +672,12 @@ function writeNewDisaster(disasterId, states) {
     disasterPicker.val(disasterId).trigger('change');
   });
 
-  return disasterCollectionReference()
-      .doc(disasterId)
-      .set(currentData)
-      .then(() => true);
+  return Promise.all(
+      eePromisesResult,
+      disasterCollectionReference()
+          .doc(disasterId)
+          .set(currentData)
+          .then(() => true));
 }
 
 /**
@@ -690,12 +695,11 @@ function writeNewDisaster(disasterId, states) {
  * set to world readable.
  */
 function getCreateFolderPromise(dir) {
-  return new Promise((resolve) => {
-    ee.data.createFolder(dir, false, () => {
-      ee.data.setAssetAcl(dir, {all_users_can_read: true});
-      resolve();
-    });
-  });
+  return new Promise(
+      (resolve) => ee.data.createFolder(
+          dir, false,
+          () => ee.data.setAssetAcl(
+              dir, {all_users_can_read: true}, () => resolve())));
 }
 
 /**
