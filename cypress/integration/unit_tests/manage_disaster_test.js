@@ -1,9 +1,13 @@
 import {getFirestoreRoot, readDisasterDocument} from '../../../docs/firestore_document.js';
-import {assetDataTemplate} from '../../../docs/import/create_disaster_lib.js';
 import {
+  assetDataTemplate,
+  createDisasterData
+} from '../../../docs/import/create_disaster_lib.js';
+import {
+  assetSelectionRowPrefix,
   disasterData,
   initializeDamageSelector, initializeScoreSelectors,
-  run,
+  run, scoreAssetTypes,
   setUpScoreSelectorTable, stateAssets, validateUserFields
 } from '../../../docs/import/manage_disaster';
 import {addDisaster, deleteDisaster, writeNewDisaster} from '../../../docs/import/manage_disaster.js';
@@ -171,7 +175,7 @@ describe('Unit tests for manage_disaster.js', () => {
   });
 
   it('damage asset/map-bounds elements', () => {
-    clearFeatureCollectionsAndSetUpDamageInputs();
+    setAssetDataAndCreateDamageInputsForScoreValidationTests();
     cy.get('#map-bounds-div')
         .should('be.visible')
         .then(() => $('#map-bounds-div').hide());
@@ -196,47 +200,86 @@ describe('Unit tests for manage_disaster.js', () => {
     });
   });
 
-  it.only('validates asset data', () => {
-    clearFeatureCollectionsAndSetUpDamageInputs().then((doc) => {
-      cy.stub(document, 'createElement').callsFake(
-          (tag) => doc.createElement(tag));
-      const tbody = doc.createElement('tbody');
-      tbody.id = 'asset-selection-table-body';
-      doc.body.appendChild(tbody);
-      const button = doc.createElement('button');
-      button.id = 'process-button';
-      button.disabled = true;
-      button.hidden = true;
-      doc.body.appendChild(button);
-      setUpScoreSelectorTable();
-      initializeDamageSelector(['asset1', 'asset2']);
-      stateAssets.set('NY', ['state1', 'state2', 'state3', 'state4', 'state5']);
-      initializeScoreSelectors(['NY']);
-    });
+  it('validates asset data', () => {
+    setUpAssetValidationTests();
+
+    // Check table is properly initialized, then do validation.
     cy.get('#asset-selection-table-body').find('tr').its('length').should('eq', 5).then(validateUserFields);
+    // We haven't set anything, so button is not enabled.
     cy.get('#process-button').should('be.disabled');
-    cy.get('#process-button').should('have.css', {'background-color': 'grey'});
-    const allStateAssetsMissingText = 'Missing assets: Poverty, Income, SVI, Census TIGER Shapefiles, Microsoft Building Shapefiles';
+    const allStateAssetsMissingText = 'Missing asset(s): Poverty, Income, SVI, Census TIGER Shapefiles, Microsoft Building Shapefiles';
     const allMissingText = allStateAssetsMissingText + ', and must specify either damage asset or map bounds';
     cy.get('#process-button').should('have.text', allMissingText);
+
+    // Confirm that entering just one corner of map doesn't help anything.
     cy.get('#map-bounds-sw').clear().type('0, 0').blur();
     cy.get('#process-button').should('have.text', allMissingText);
+    // Adding the second corner gets rid of the "damage/bounds" missing part.
     cy.get('#map-bounds-ne').type('1, 1').blur();
     cy.get('#process-button').should('have.text', allStateAssetsMissingText);
+
+    // Clearing puts us back where we started.
     cy.get('#map-bounds-ne').clear().blur();
     cy.get('#process-button').should('have.text', allMissingText);
+
+    // Specifying the damage asset works too.
     cy.get('#damage-asset-select').select('asset2').blur();
     cy.get('#process-button').should('have.text', allStateAssetsMissingText);
-    cy.get('#asset-selection-table-body > tr').first().find('td').first().next().find('select').select('state1').blur();
-    cy.get('#process-button').should('have.text', 'Missing assets: Income, SVI, Census TIGER Shapefiles, Microsoft Building Shapefiles');
-    cy.get('#asset-selection-table-body > tr').first().find('td').first().next().find('select').select('').blur();
+
+    // Setting one asset has the expected effect.
+    setFirstSelectInScoreRow(0);
+    cy.get('#process-button').should('have.text', 'Missing asset(s): Income, SVI, Census TIGER Shapefiles, Microsoft Building Shapefiles');
+    cy.get('#process-button').should('be.disabled');
+    // Clear that select: back where we started.
+    setFirstSelectInScoreRow(0).select('').blur();
     cy.get('#process-button').should('have.text', allStateAssetsMissingText);
-    let i = 1;
-    cy.get('#asset-selection-table-body > tr')
-        .each(
-            ($tr) =>
-                $tr.children('td').eq(1).children('select').val('state' + i++));
+    // Now set all the per-state assets.
+    for (let i = 0; i < scoreAssetTypes.length; i++) {
+      setFirstSelectInScoreRow(i);
+    }
+    // Yay! We're ready to go.
+    cy.get('#process-button').should('have.text', 'Kick off Data Processing (will take a while!)');
+    cy.get('#process-button').should('be.enabled');
+    // Get rid of damage: not ready anymore.
+    cy.get('#damage-asset-select').select('').blur();
+    // Message is just about damage.
+    cy.get('#process-button').should('have.text', 'Must specify either damage asset or map bounds');
+    cy.get('#process-button').should('be.disabled');
+    // Get rid of score asset.
+    setFirstSelectInScoreRow(0).select('');
+    cy.get('#process-button').should('have.text', 'Missing asset(s): Poverty, and must specify either damage asset or map bounds');
+    cy.get('#process-button').should('be.disabled');
+    // Validate that score data was correctly written
+    cy.wait(1000).then(readDisasterDocument).then((doc) => {
+      const assetData = doc.data()['asset_data'];
+
+      expect(assetData['damage_asset_path']).to.be.null;
+      expect(assetData['map_bounds_sw']).to.eql('0, 0');
+      expect(assetData['svi_asset_paths']).to.eql({'NY': 'state2'});
+      expect(assetData['snap_data']['paths']).to.eql({'NY': null});
+    });
+  });
+
+  it('multistate displays properly', () => {
+    setUpAssetValidationTests().then(() => {
+      // Overwrite disaster data with multistate disaster.
+      disasterData.set(getDisaster(), createDisasterData(['NY', 'WY']));
+      stateAssets.set('WY', ['wy0', 'wy1', 'wy2', 'wy3', 'wy4']);
+      initializeScoreSelectors(['NY', 'WY']);
+    });
+    // Check table is properly initialized, then validate.
+    cy.get('#asset-selection-table-body').find('tr').its('length').should('eq', 5).then(validateUserFields);
+    cy.get('#process-button').should('be.disabled');
+    const allStateAssetsMissingText = 'Missing asset(s): Poverty [NY, WY], Income [NY, WY], SVI [NY, WY], Census TIGER Shapefiles [NY, WY], Microsoft Building Shapefiles [NY, WY], and must specify either damage asset or map bounds';
     cy.get('#process-button').should('have.text', allStateAssetsMissingText);
+    // Specifying one state has desired effect.
+    setFirstSelectInScoreRow(0);
+    cy.get('#process-button').should('have.text', 'Missing asset(s): Poverty [WY], Income [NY, WY], SVI [NY, WY], Census TIGER Shapefiles [NY, WY], Microsoft Building Shapefiles [NY, WY], and must specify either damage asset or map bounds');
+    // Specifying assets for income, both states, one type, gets rid of income
+    // from message.
+    setFirstSelectInScoreRow(1);
+    getFirstTdInScoreRow(1).next().next().find('select').select('wy1').blur();
+    cy.get('#process-button').should('have.text', 'Missing asset(s): Poverty [WY], SVI [NY, WY], Census TIGER Shapefiles [NY, WY], Microsoft Building Shapefiles [NY, WY], and must specify either damage asset or map bounds');
   });
 
   it('writes a new disaster to firestore', () => {
@@ -375,16 +418,15 @@ describe('Unit tests for manage_disaster.js', () => {
         .then((doc) => expect(doc.exists).to.be.false);
   });
 
-  function clearFeatureCollectionsAndSetUpDamageInputs() {
-    const assetData = testData['asset_data'];
-    assetData['damage_asset_path'] = null;
-    assetData['block_group_asset_paths'] = {};
-    assetData['snap_data']['paths'] = {};
-    assetData['svi_asset_paths'] = {};
-    assetData['income_asset_paths'] = {};
-    assetData['building_asset_paths'] = {};
-    testData['asset_data']['map_bounds_sw'] = '0, 1';
-    disasterData.set(getDisaster(), testData);
+  /**
+   * Sets up fresh asset data (no feature collections), and prepares fake page
+   * with damage/map-bounds-related HTML elements.
+   * @return {Cypress.Chainable<Document>}
+   */
+  function setAssetDataAndCreateDamageInputsForScoreValidationTests() {
+    const currentData = createDisasterData(['NY']);
+    currentData['asset_data']['map_bounds_sw'] = '0, 1';
+    disasterData.set(getDisaster(), currentData);
     return cy.document().then((doc) => {
       // Lightly fake out jQuery so that we can use Cypress selectors. Might not
       // work if manage_disaster.js starts doing fancier jQuery operations.
@@ -403,6 +445,34 @@ describe('Unit tests for manage_disaster.js', () => {
       neInput.id = 'map-bounds-ne';
       boundsDiv.appendChild(neInput);
       return doc;
+    });
+  }
+
+  /**
+   * Sets up tests for score asset data validation beyond just damage.
+   * @return {Cypress.Chainable}
+   */
+  function setUpAssetValidationTests() {
+    // Clear out any modifications we've done to the document.
+    cy.visit('test_utils/empty.html');
+    return setAssetDataAndCreateDamageInputsForScoreValidationTests().then((doc) => {
+      cy.stub(document, 'createElement').callsFake(
+          (tag) => doc.createElement(tag));
+      const tbody = doc.createElement('tbody');
+      tbody.id = 'asset-selection-table-body';
+      doc.body.appendChild(tbody);
+
+      const button = doc.createElement('button');
+      button.id = 'process-button';
+      button.disabled = true;
+      button.hidden = true;
+      doc.body.appendChild(button);
+      stateAssets.set('NY', ['state0', 'state1', 'state2', 'state3', 'state4']);
+
+      // Use production code to prime score asset table, get damage set up.
+      setUpScoreSelectorTable();
+      initializeDamageSelector(['asset1', 'asset2']);
+      initializeScoreSelectors(['NY']);
     });
   }
 });
@@ -516,4 +586,24 @@ function makeCallbackForTextAndPromise(expectedText) {
     }
   };
   return {boundsPromise, mapBoundsCallback};
+}
+
+/**
+ * Utility function to set the first select in the given score asset row. See
+ * {@link getFirstTdInScoreRow}.
+ * @param {number} rowNum See {@link getFirstTdInScoreRow}
+ * @return {Cypress.Chainable}
+ */
+function setFirstSelectInScoreRow(rowNum) {
+  return getFirstTdInScoreRow(rowNum).next().find('select').select('state' + rowNum).blur();
+}
+
+/**
+ * Utility function to get the first cell in a "score asset" row, like the
+ * Poverty/SVI/Income/Buildings row.
+ * @param {number} rowNum index of row, corresponding to its index in {@link scoreAssetTypes}
+ * @return {Cypress.Chainable}
+ */
+function getFirstTdInScoreRow(rowNum) {
+  return cy.get('#' + assetSelectionRowPrefix + scoreAssetTypes[rowNum][0]).find('td').first();
 }

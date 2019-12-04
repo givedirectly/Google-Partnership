@@ -14,11 +14,13 @@ export {enableWhenReady, onSetDisaster, setUpScoreSelectorTable, toggleState};
 /** @VisibleForTesting */
 export {
   addDisaster,
+    assetSelectionRowPrefix,
   deleteDisaster,
   disasterData,
   initializeDamageSelector,
     initializeScoreSelectors,
   run,
+    scoreAssetTypes,
     stateAssets,
     validateUserFields,
   writeNewDisaster,
@@ -179,13 +181,13 @@ function validateUserFields() {
       }
     }
     if (missingForType.length) {
-      missingItems.push(scoreAssetType[2] + (states.length > 1 ? ': [' + missingForType.join(', ') + ']' : ''));
+      missingItems.push(scoreAssetType[2] + (states.length > 1 ? ' [' + missingForType.join(', ') + ']' : ''));
     }
   }
   const hasDamage = getElementFromPath(damagePropertyPath) || (getElementFromPath(swPropertyPath) && getElementFromPath(nePropertyPath));
   let message = '';
   if (missingItems.length) {
-    message = 'Missing assets: ' + missingItems.join(', ');
+    message = 'Missing asset(s): ' + missingItems.join(', ');
   }
   if (!hasDamage) {
     message += (message ? ', and m' : 'M') + 'ust specify either damage asset or map bounds';
@@ -195,11 +197,9 @@ function validateUserFields() {
   if (message) {
     processButton.text(message);
     processButton.attr('disabled', true);
-    processButton.css({backgroundColor: 'grey'});
   } else {
     processButton.text('Kick off Data Processing (will take a while!)');
     processButton.attr('disabled', false);
-    processButton.css({backgroundColor: ''});
   }
 }
 
