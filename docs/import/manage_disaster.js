@@ -776,7 +776,7 @@ function initializeDamageSelector(assets) {
       assets, ['damage_asset_path'], $('#damage-asset-select').empty());
   select.on('change', (event) => {
     const val = $(event.target).val();
-    !val || val === 'None' ? mapBoundsSpan.show() : mapBoundsSpan.hide();
+    hasValue(val) ? mapBoundsSpan.hide() : mapBoundsSpan.show();
     handleScoreAssetSelection(val, propertyPath);
   });
   const swPath = ['map_bounds_sw'];
@@ -787,9 +787,21 @@ function initializeDamageSelector(assets) {
   const neInput = $('#map-bounds-ne');
   neInput.val(getElementFromPath(nePath));
   addChangeHandler(neInput, nePath);
-  const selectVal = select.val();
-  selectVal && selectVal !== 'None' ? mapBoundsSpan.hide() :
-                                      mapBoundsSpan.show();
+  hasValue(select.val()) ? mapBoundsSpan.hide() : mapBoundsSpan.show();
+}
+
+/**
+ * Returns true if val is a "real" value (not empty or the string 'None', which
+ * we are using as a placeholder).
+ *
+ * TODO(janakr): better way to do this? Maybe we can set None option to empty
+ *  string, but that still leaves it ambiguous if it's null or empty, which
+ *  maybe doesn't matter.
+ * @param {string} val
+ * @return {boolean}
+ */
+function hasValue(val) {
+  return val && val !== 'None';
 }
 
 /**
