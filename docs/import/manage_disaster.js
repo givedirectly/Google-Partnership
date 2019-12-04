@@ -18,7 +18,7 @@ export {
   disasterData,
   initializeDamageSelector,
   run,
-  writeNewDisaster
+  writeNewDisaster,
 };
 
 /**
