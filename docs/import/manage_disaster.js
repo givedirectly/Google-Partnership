@@ -869,8 +869,7 @@ function createAssetDropdown(
 function addAssetDataChangeHandler(elt, propertyPath) {
   return elt.on(
       'change',
-      (event) =>
-          handleAssetDataChange($(event.target).val(), propertyPath));
+      (event) => handleAssetDataChange($(event.target).val(), propertyPath));
 }
 /**
  * Handles the user entering a value into score-related input
