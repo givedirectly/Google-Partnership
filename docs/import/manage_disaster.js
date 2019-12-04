@@ -1,4 +1,4 @@
-import {eeLegacyPathPrefix} from '../ee_paths.js';
+import {eeLegacyPathPrefix, legacyStateDir} from '../ee_paths.js';
 import {LayerType} from '../firebase_layers.js';
 import {disasterCollectionReference} from '../firestore_document.js';
 import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, snapPercentageTag, snapPopTag, sviTag, totalPopTag, tractTag} from '../property_names.js';
@@ -8,6 +8,7 @@ import {computeAndSaveBounds, saveBounds} from './center.js';
 import {createDisasterData} from './create_disaster_lib.js';
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
 import {getDisasterAssetsFromEe, getStatesAssetsFromEe} from './list_ee_assets.js';
+import {clearStatus} from './manage_layers_lib.js';
 import {updateDataInFirestore} from './update_firestore_disaster.js';
 
 export {enableWhenReady, onSetDisaster, setUpScoreSelectorTable, toggleState};
@@ -581,6 +582,7 @@ function onSetDisaster() {
   if (currentDisaster) {
     const states = disasterData.get(currentDisaster).states;
     const neededStates = [];
+    // TODO: eagerly fetch all states assets.
     for (const state of states) {
       if (!stateAssets.has(state)) {
         neededStates.push(state);
@@ -709,41 +711,77 @@ function addDisaster() {
  *  actually show the disaster as editable until this write completes.
  * @param {string} disasterId of the form <year>-<name>
  * @param {Array<string>} states array of state (abbreviations)
- * @return {Promise<boolean>} returns true after successful write to firestore.
+ * @return {Promise<boolean>} returns true after successful write to firestore
+ * and earth engine folder creations.
  */
 function writeNewDisaster(disasterId, states) {
   if (disasterData.has(disasterId)) {
     setStatus('Error: disaster with that name and year already exists.');
     return Promise.resolve(false);
   }
+  clearStatus();
   const currentData = createDisasterData(states);
   disasterData.set(disasterId, currentData);
   // We know there are no assets in folder yet.
   disasterAssets.set(disasterId, Promise.resolve([]));
 
-  const disasterPicker = $('#disaster-dropdown');
-  const disasterOptions = disasterPicker.children();
-  let added = false;
-  // We expect this recently created disaster to go near the top of the list, so
-  // do a linear scan down.
-  // Note: let's hope this tool isn't being used in the year 10000.
-  // Comment needed to quiet eslint.
-  disasterOptions.each(/* @this HTMLElement */ function() {
-    if ($(this).val() < disasterId) {
-      $(createOptionFrom(disasterId)).insertBefore($(this));
-      added = true;
-      return false;
-    }
+  const folderCreationPromises = [];
+  folderCreationPromises.push(
+      getCreateFolderPromise(eeLegacyPathPrefix + disasterId));
+  for (const state of states) {
+    folderCreationPromises.push(
+        getCreateFolderPromise(legacyStateDir + '/' + state));
+  }
+
+  const eePromisesResult = Promise.all(folderCreationPromises).then(() => {
+    const disasterPicker = $('#disaster-dropdown');
+    const disasterOptions = disasterPicker.children();
+    let added = false;
+    // We expect this recently created disaster to go near the top of the list,
+    // so do a linear scan down. Note: let's hope this tool isn't being used in
+    // the year 10000.
+    // Comment needed to quiet eslint.
+    disasterOptions.each(/* @this HTMLElement */ function() {
+      if ($(this).val() < disasterId) {
+        $(createOptionFrom(disasterId)).insertBefore($(this));
+        added = true;
+        return false;
+      }
+    });
+    if (!added) disasterPicker.append(createOptionFrom(disasterId));
+    toggleState(true);
+
+    disasterPicker.val(disasterId).trigger('change');
   });
-  if (!added) disasterPicker.append(createOptionFrom(disasterId));
-  toggleState(true);
 
-  disasterPicker.val(disasterId).trigger('change');
-
-  return disasterCollectionReference()
-      .doc(disasterId)
-      .set(currentData)
+  return Promise
+      .all([
+        eePromisesResult,
+        disasterCollectionReference().doc(disasterId).set(currentData),
+      ])
       .then(() => true);
+}
+
+/**
+ * Returns a promise that resolves on the creation of the given folder.
+ *
+ * This will print a console error for anyone other than the gd
+ * account. Ee console seems to have the power to grant write access
+ * to non-owners but it doesn't seem to work. Sent an email to
+ * gestalt.
+ * TODO: replace with setIamPolicy when that works.
+ * TODO: add status bar for when this is finished.
+ *
+ * @param {string} dir asset path of folder to create
+ * @return {Promise<void>} resolves when after the directory is created and
+ * set to world readable.
+ */
+function getCreateFolderPromise(dir) {
+  return new Promise(
+      (resolve) => ee.data.createFolder(
+          dir, false,
+          () => ee.data.setAssetAcl(
+              dir, {all_users_can_read: true}, () => resolve())));
 }
 
 /**
