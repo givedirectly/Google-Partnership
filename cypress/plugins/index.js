@@ -122,8 +122,8 @@ module.exports = (on, config) => {
       const writePromises = [];
       for (const disaster
                of ['2017-harvey',
-                   // TODO(janakr): add a second one so we have multiple
-                   // disasters. '2018-michael'
+                   // TODO(janakr): add back so we have multiple disasters.
+                   //  '2018-michael'
       ]) {
         const documentPath = 'disaster-metadata/' + disaster;
         const prodDisasterDoc = prodApp.firestore().doc(documentPath);
