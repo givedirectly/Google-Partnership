@@ -12,7 +12,14 @@ import {updateDataInFirestore} from './update_firestore_disaster.js';
 
 export {enableWhenReady, onSetDisaster, setUpScoreSelectorTable, toggleState};
 /** @VisibleForTesting */
-export {addDisaster, deleteDisaster, disasterData, run, writeNewDisaster};
+export {
+  addDisaster,
+  deleteDisaster,
+  disasterData,
+  initializeDamageSelector,
+  run,
+  writeNewDisaster,
+};
 
 /**
  * @type {Map<string, Object>} Disaster id to disaster data, corresponding to
@@ -772,8 +779,9 @@ function initializeScoreSelectors(states) {
     for (const state of states) {
       if (stateAssets.get(state)) {
         const statePropertyPath = propertyPath.concat([state]);
-        row.append(createTd().append(
-            createAssetDropdown(stateAssets.get(state), statePropertyPath)));
+        row.append(createTd().append(addChangeHandler(
+            createAssetDropdown(stateAssets.get(state), statePropertyPath),
+            statePropertyPath)));
       }
     }
   }
@@ -784,8 +792,24 @@ function initializeScoreSelectors(states) {
  * @param {Array<string>} assets List of assets in the disaster folder
  */
 function initializeDamageSelector(assets) {
-  createAssetDropdown(
-      assets, ['damage_asset_path'], $('#damage-asset-select').empty());
+  const mapBoundsDiv = $('#map-bounds-div');
+  const damagePropertyPath = ['damage_asset_path'];
+  const select = createAssetDropdown(
+      assets, damagePropertyPath, $('#damage-asset-select').empty());
+  select.on('change', (event) => {
+    const val = $(event.target).val();
+    hasValue(val) ? mapBoundsDiv.hide() : mapBoundsDiv.show();
+    handleScoreAssetSelection(val, damagePropertyPath);
+  });
+  const swPath = ['map_bounds_sw'];
+  const nePath = ['map_bounds_ne'];
+  const swInput = $('#map-bounds-sw');
+  swInput.val(getElementFromPath(swPath));
+  addChangeHandler(swInput, swPath);
+  const neInput = $('#map-bounds-ne');
+  neInput.val(getElementFromPath(nePath));
+  addChangeHandler(neInput, nePath);
+  hasValue(select.val()) ? mapBoundsDiv.hide() : mapBoundsDiv.show();
 }
 
 /**
@@ -843,25 +867,37 @@ function createAssetDropdown(
     }
     select.append(assetOption);
   }
-  select.on(
-      'change', (event) => handleScoreAssetSelection(event, propertyPath));
 
   return select;
 }
 
 /**
- * Handles the user selecting an asset for one of the possible score types.
- * @param {Event} event Event, used to identify the target
+ * Adds the default change handler, which updates our internal data (and
+ * Firestore) when this element changes.
+ * @param {JQuery<HTMLElement>} elt
+ * @param {Array<string>} propertyPath The path to the value of this element
+ * @return {JQuery<HTMLElement>} The passed-in element, for chaining
+ */
+function addChangeHandler(elt, propertyPath) {
+  return elt.on(
+      'change',
+      (event) =>
+          handleScoreAssetSelection($(event.target).val(), propertyPath));
+}
+/**
+ * Handles the user entering a value into score-related input
+ * @param {string} val Value of input. 'None'/empty are treated like null (ugh)
  * @param {Array<string>} propertyPath path to property inside asset data. We
  *     set this value by setting the parent's attribute to the target's value
  */
-function handleScoreAssetSelection(event, propertyPath) {
+function handleScoreAssetSelection(val, propertyPath) {
   // We want to change the value, which means we have to write an expression
   // like "parent[prop] = val". To obtain the parent object, we just follow the
   // same path as the child's, but stop one property short. That last property
   // is then the "prop" in the expression above.
   const parentProperty = getElementFromPath(propertyPath.slice(0, -1));
-  parentProperty[propertyPath[propertyPath.length - 1]] = $(event.target).val();
+  parentProperty[propertyPath[propertyPath.length - 1]] =
+      hasValue(val) ? val : null;
   updateDataInFirestore(
       () => disasterData.get(getDisaster()), () => {}, () => {});
 }
@@ -886,4 +922,15 @@ function displayGeoNumbers(latLngs) {
           (coords) =>
               '(' + coords[1].toFixed(2) + ', ' + coords[0].toFixed(2) + ')')
       .join(', ');
+}
+
+/**
+ * Returns true if val is a "real" value (not empty or the string 'None', which
+ * we are using as a placeholder).
+ *
+ * @param {string} val
+ * @return {boolean}
+ */
+function hasValue(val) {
+  return val && val !== 'None';
 }
