@@ -1,6 +1,11 @@
 import {getFirestoreRoot, readDisasterDocument} from '../../../docs/firestore_document.js';
 import {assetDataTemplate} from '../../../docs/import/create_disaster_lib.js';
-import {disasterData, initializeDamageSelector, run} from '../../../docs/import/manage_disaster';
+import {
+  disasterData,
+  initializeDamageSelector,
+  run,
+  setUpScoreSelectorTable, validateUserFields
+} from '../../../docs/import/manage_disaster';
 import {addDisaster, deleteDisaster, writeNewDisaster} from '../../../docs/import/manage_disaster.js';
 import {createOptionFrom} from '../../../docs/import/manage_layers.js';
 import {convertEeObjectToPromise} from '../../../docs/map_util';
@@ -166,33 +171,7 @@ describe('Unit tests for manage_disaster.js', () => {
   });
 
   it('damage asset/map-bounds elements', () => {
-    const assetData = testData['asset_data'];
-    assetData['damage_asset_path'] = null;
-    assetData['block_group_asset_paths'] = {};
-    assetData['snap_data']['paths'] = {};
-    assetData['svi_asset_paths'] = {};
-    assetData['income_asset_paths'] = {};
-    assetData['building_asset_paths'] = {};
-    testData['asset_data']['map_bounds_sw'] = '0, 1';
-    disasterData.set(getDisaster(), testData);
-    cy.document().then((doc) => {
-      // Lightly fake out jQuery so that we can use Cypress selectors. Might not
-      // work if manage_disaster.js starts doing fancier jQuery operations.
-      cy.stub(document, 'getElementById')
-          .callsFake((id) => doc.getElementById(id));
-      const damageSelect = doc.createElement('select');
-      damageSelect.id = 'damage-asset-select';
-      doc.body.appendChild(damageSelect);
-      const boundsDiv = doc.createElement('div');
-      boundsDiv.id = 'map-bounds-div';
-      doc.body.appendChild(boundsDiv);
-      const swInput = doc.createElement('input');
-      swInput.id = 'map-bounds-sw';
-      boundsDiv.appendChild(swInput);
-      const neInput = doc.createElement('input');
-      neInput.id = 'map-bounds-ne';
-      boundsDiv.appendChild(neInput);
-    });
+    clearFeatureCollectionsAndSetUpDamageInputs();
     cy.get('#map-bounds-div')
         .should('be.visible')
         .then(() => $('#map-bounds-div').hide());
@@ -352,6 +331,57 @@ describe('Unit tests for manage_disaster.js', () => {
                       .get())
         .then((doc) => expect(doc.exists).to.be.false);
   });
+
+  it.only('validates asset data', () => {
+    clearFeatureCollectionsAndSetUpDamageInputs().then((doc) => {
+      cy.stub(document, 'createElement').callsFake(
+          (tag) => doc.createElement(tag));
+      const tbody = doc.createElement('tbody');
+      tbody.id = 'asset-selection-table-body';
+      doc.body.appendChild(tbody);
+      const button = doc.createElement('button');
+      button.id = 'process-button';
+      button.disabled = true;
+      button.hidden = true;
+      doc.body.appendChild(button);
+      setUpScoreSelectorTable();
+    });
+    cy.get('#asset-selection-table-body').find('tr').its('length').should('eq', 5).then(validateUserFields);
+    cy.get('#process-button').should('be.disabled');
+    cy.get('#process-button').should('have.css', {'background-color': 'grey'});
+    cy.get('#process-button').should('')
+  });
+
+  function clearFeatureCollectionsAndSetUpDamageInputs() {
+    const assetData = testData['asset_data'];
+    assetData['damage_asset_path'] = null;
+    assetData['block_group_asset_paths'] = {};
+    assetData['snap_data']['paths'] = {};
+    assetData['svi_asset_paths'] = {};
+    assetData['income_asset_paths'] = {};
+    assetData['building_asset_paths'] = {};
+    testData['asset_data']['map_bounds_sw'] = '0, 1';
+    disasterData.set(getDisaster(), testData);
+    return cy.document().then((doc) => {
+      // Lightly fake out jQuery so that we can use Cypress selectors. Might not
+      // work if manage_disaster.js starts doing fancier jQuery operations.
+      cy.stub(document, 'getElementById')
+          .callsFake((id) => doc.getElementById(id));
+      const damageSelect = doc.createElement('select');
+      damageSelect.id = 'damage-asset-select';
+      doc.body.appendChild(damageSelect);
+      const boundsDiv = doc.createElement('div');
+      boundsDiv.id = 'map-bounds-div';
+      doc.body.appendChild(boundsDiv);
+      const swInput = doc.createElement('input');
+      swInput.id = 'map-bounds-sw';
+      boundsDiv.appendChild(swInput);
+      const neInput = doc.createElement('input');
+      neInput.id = 'map-bounds-ne';
+      boundsDiv.appendChild(neInput);
+      return doc;
+    });
+  }
 });
 
 // Make sure that our block groups aren't so big they escape the 1 km damage

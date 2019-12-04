@@ -18,6 +18,7 @@ export {
   disasterData,
   initializeDamageSelector,
   run,
+    validateUserFields,
   writeNewDisaster,
 };
 
@@ -176,13 +177,13 @@ function validateUserFields() {
         missingForType.push(state);
       }
     }
-    if (missingForType) {
+    if (missingForType.length) {
       missingItems.push(scoreAssetType[2] + (states.length > 1 ? ': [' + missingForType.join(', ') + ']' : ''));
     }
   }
   const hasDamage = getElementFromPath(damagePropertyPath) || (getElementFromPath(swPropertyPath) && getElementFromPath(nePropertyPath));
   let message = '';
-  if (missingItems) {
+  if (missingItems.length) {
     message = 'Missing assets: ' + missingItems.join(', ');
   }
   if (!hasDamage) {
@@ -193,9 +194,11 @@ function validateUserFields() {
   if (message) {
     processButton.text(message);
     processButton.attr('disabled', true);
+    processButton.css({backgroundColor: 'grey'});
   } else {
     processButton.text('Kick off Data Processing (will take a while!)');
     processButton.attr('disabled', false);
+    processButton.css({backgroundColor: ''});
   }
 }
 
