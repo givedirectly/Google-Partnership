@@ -205,7 +205,7 @@ describe('Unit tests for manage_disaster.js', () => {
         .its('length')
         .should('eq', 5)
         .then(validateUserFields);
-    // We haven't set anything, so button is not enabled.
+    // We haven't set much, so button is not enabled.
     cy.get('#process-button').should('be.disabled');
     const allStateAssetsMissingText =
         'Missing asset(s): Poverty, Income, SVI, Census TIGER Shapefiles, ' +
