@@ -440,6 +440,22 @@ function addLayer(layer, map) {
   }
 }
 
+function trimFeatures(layer) {
+  const asset = layer['ee-name'];
+  const property = layer['color-function']['field'];
+  let featureCollection = ee.FeatureCollection(asset);
+  if (property) {
+    featureCollection = featureCollection.map((feature) => {
+      return ee.Feature(feature.geometry(), ee.Dictionary.fromLists([property], [feature.get(property)]));
+    });
+  } else {
+    featureCollection = featureCollection.map((feature) => {
+      return ee.Feature(feature.geometry(), ee.Dictionary());
+    });
+  }
+  return featureCollection.toList(maxNumFeaturesExpected);
+}
+
 /**
  * Displays a collection of kmls (given by the 'urls' attribute of layer)
  * on the map using google.maps.KmlLayer
