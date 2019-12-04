@@ -230,7 +230,7 @@ describe('Unit tests for manage_disaster.js', () => {
         .should(
             'have.text',
             'Missing asset(s): Income, SVI, Census TIGER Shapefiles, ' +
-            'Microsoft Building Shapefiles');
+                'Microsoft Building Shapefiles');
     cy.get('#process-button').should('be.disabled');
     // Clear that select: back where we started.
     setFirstSelectInScoreRow(0).select('').blur();
@@ -255,7 +255,7 @@ describe('Unit tests for manage_disaster.js', () => {
         .should(
             'have.text',
             'Missing asset(s): Poverty, and must specify either damage asset ' +
-            'or map bounds');
+                'or map bounds');
     cy.get('#process-button').should('be.disabled');
     // Validate that score data was correctly written
     cy.wait(1000).then(readDisasterDocument).then((doc) => {
