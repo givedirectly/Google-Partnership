@@ -23,6 +23,8 @@ describe('Unit tests for manage_disaster.js', () => {
   });
   let testData;
   let exportStub;
+  let createFolderStub;
+  let setAclsStub;
   beforeEach(() => {
     disasterData.clear();
 
@@ -50,11 +52,14 @@ describe('Unit tests for manage_disaster.js', () => {
       makePoint(1.5, 0.5),
     ]);
     // Stub out delete and export. We'll assert on what was exported, below.
-    cy.stub(ee.data, 'deleteAsset').callsFake((_, callback) => {
-      callback();
-    });
+    cy.stub(ee.data, 'deleteAsset').callsFake((_, callback) => callback());
     exportStub = cy.stub(ee.batch.Export.table, 'toAsset')
                      .returns({start: () => {}, id: 'FAKE_ID'});
+    createFolderStub =
+        cy.stub(ee.data, 'createFolder')
+            .callsFake((asset, overwrite, callback) => callback());
+    setAclsStub = cy.stub(ee.data, 'setAssetAcl')
+                      .callsFake((asset, acls, callback) => callback());
 
     // Test data is reasonably real. All of the keys should be able to vary,
     // with corresponding changes to test data (but no production changes). The
@@ -219,11 +224,13 @@ describe('Unit tests for manage_disaster.js', () => {
 
   it('writes a new disaster to firestore', () => {
     let id = '2002-winter';
-    const states = ['DN, WF'];
+    const states = ['DN', 'WF'];
 
     cy.wrap(writeNewDisaster(id, states))
         .then((success) => {
           expect(success).to.be.true;
+          expect(createFolderStub).to.be.calledThrice;
+          expect(setAclsStub).to.be.calledThrice;
           expect($('#status').is(':visible')).to.be.false;
           expect(disasterData.get(id)['layers']).to.eql([]);
           expect(disasterData.get(id)['states']).to.eql(states);
