@@ -159,10 +159,19 @@ function setMapBoundsInfo(message) {
 }
 
 function validateUserFields() {
+  const states = disasterData.get(getDisaster()).states;
+  for (const state of states) {
+    const val = getElementFromPath()
+  }
   const assetData = disasterData.get(getDisaster()).asset_data;
   const blockGroupPaths = assetData['block_group_asset_paths'];
-
+  const snapPaths = assetData['snap_paths']['paths'];
+  const sviPaths = assetData['svi_asset_paths'];
+  const incomePaths = assetData['income_asset_paths'];
+  const buildingPaths = assetData['building_asset_paths'];
+  for
 }
+
 /**
  * Performs operation of processing inputs and creating output asset.
  * @param {Object} disasterData Data for current disaster coming from Firestore
