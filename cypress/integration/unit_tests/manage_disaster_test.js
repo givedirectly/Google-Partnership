@@ -178,7 +178,7 @@ describe('Unit tests for manage_disaster.js', () => {
     cy.get('#map-bounds-div')
         .should('not.be.visible')
         .then(() => initializeDamageSelector(['asset1', 'asset2']));
-    cy.get('#damage-asset-select').should('have.value', 'None');
+    cy.get('#damage-asset-select').should('have.value', '');
     cy.get('#map-bounds-div').should('be.visible');
     cy.get('#map-bounds-sw').should('have.value', '0, 1');
     cy.get('#map-bounds-ne').should('have.value', '');
