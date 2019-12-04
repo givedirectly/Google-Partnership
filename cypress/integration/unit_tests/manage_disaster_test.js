@@ -196,6 +196,49 @@ describe('Unit tests for manage_disaster.js', () => {
     });
   });
 
+  it.only('validates asset data', () => {
+    clearFeatureCollectionsAndSetUpDamageInputs().then((doc) => {
+      cy.stub(document, 'createElement').callsFake(
+          (tag) => doc.createElement(tag));
+      const tbody = doc.createElement('tbody');
+      tbody.id = 'asset-selection-table-body';
+      doc.body.appendChild(tbody);
+      const button = doc.createElement('button');
+      button.id = 'process-button';
+      button.disabled = true;
+      button.hidden = true;
+      doc.body.appendChild(button);
+      setUpScoreSelectorTable();
+      initializeDamageSelector(['asset1', 'asset2']);
+      stateAssets.set('NY', ['state1', 'state2', 'state3', 'state4', 'state5']);
+      initializeScoreSelectors(['NY']);
+    });
+    cy.get('#asset-selection-table-body').find('tr').its('length').should('eq', 5).then(validateUserFields);
+    cy.get('#process-button').should('be.disabled');
+    cy.get('#process-button').should('have.css', {'background-color': 'grey'});
+    const allStateAssetsMissingText = 'Missing assets: Poverty, Income, SVI, Census TIGER Shapefiles, Microsoft Building Shapefiles';
+    const allMissingText = allStateAssetsMissingText + ', and must specify either damage asset or map bounds';
+    cy.get('#process-button').should('have.text', allMissingText);
+    cy.get('#map-bounds-sw').clear().type('0, 0').blur();
+    cy.get('#process-button').should('have.text', allMissingText);
+    cy.get('#map-bounds-ne').type('1, 1').blur();
+    cy.get('#process-button').should('have.text', allStateAssetsMissingText);
+    cy.get('#map-bounds-ne').clear().blur();
+    cy.get('#process-button').should('have.text', allMissingText);
+    cy.get('#damage-asset-select').select('asset2').blur();
+    cy.get('#process-button').should('have.text', allStateAssetsMissingText);
+    cy.get('#asset-selection-table-body > tr').first().find('td').first().next().find('select').select('state1').blur();
+    cy.get('#process-button').should('have.text', 'Missing assets: Income, SVI, Census TIGER Shapefiles, Microsoft Building Shapefiles');
+    cy.get('#asset-selection-table-body > tr').first().find('td').first().next().find('select').select('').blur();
+    cy.get('#process-button').should('have.text', allStateAssetsMissingText);
+    let i = 1;
+    cy.get('#asset-selection-table-body > tr')
+        .each(
+            ($tr) =>
+                $tr.children('td').eq(1).children('select').val('state' + i++));
+    cy.get('#process-button').should('have.text', allStateAssetsMissingText);
+  });
+
   it('writes a new disaster to firestore', () => {
     let id = '2002-winter';
     const states = ['DN, WF'];
@@ -330,49 +373,6 @@ describe('Unit tests for manage_disaster.js', () => {
                       .doc(id)
                       .get())
         .then((doc) => expect(doc.exists).to.be.false);
-  });
-
-  it.only('validates asset data', () => {
-    clearFeatureCollectionsAndSetUpDamageInputs().then((doc) => {
-      cy.stub(document, 'createElement').callsFake(
-          (tag) => doc.createElement(tag));
-      const tbody = doc.createElement('tbody');
-      tbody.id = 'asset-selection-table-body';
-      doc.body.appendChild(tbody);
-      const button = doc.createElement('button');
-      button.id = 'process-button';
-      button.disabled = true;
-      button.hidden = true;
-      doc.body.appendChild(button);
-      setUpScoreSelectorTable();
-      initializeDamageSelector(['asset1', 'asset2']);
-      stateAssets.set('NY', ['state1', 'state2', 'state3', 'state4', 'state5']);
-      initializeScoreSelectors(['NY']);
-    });
-    cy.get('#asset-selection-table-body').find('tr').its('length').should('eq', 5).then(validateUserFields);
-    cy.get('#process-button').should('be.disabled');
-    cy.get('#process-button').should('have.css', {'background-color': 'grey'});
-    const allStateAssetsMissingText = 'Missing assets: Poverty, Income, SVI, Census TIGER Shapefiles, Microsoft Building Shapefiles';
-    const allMissingText = allStateAssetsMissingText + ', and must specify either damage asset or map bounds';
-    cy.get('#process-button').should('have.text', allMissingText);
-    cy.get('#map-bounds-sw').clear().type('0, 0').blur();
-    cy.get('#process-button').should('have.text', allMissingText);
-    cy.get('#map-bounds-ne').type('1, 1').blur();
-    cy.get('#process-button').should('have.text', allStateAssetsMissingText);
-    cy.get('#map-bounds-ne').clear().blur();
-    cy.get('#process-button').should('have.text', allMissingText);
-    cy.get('#damage-asset-select').select('asset2').blur();
-    cy.get('#process-button').should('have.text', allStateAssetsMissingText);
-    cy.get('#asset-selection-table-body > tr').first().find('td').first().next().find('select').select('state1').blur();
-    cy.get('#process-button').should('have.text', 'Missing assets: Income, SVI, Census TIGER Shapefiles, Microsoft Building Shapefiles');
-    cy.get('#asset-selection-table-body > tr').first().find('td').first().next().find('select').select('').blur();
-    cy.get('#process-button').should('have.text', allStateAssetsMissingText);
-    let i = 1;
-    cy.get('#asset-selection-table-body > tr')
-        .each(
-            ($tr) =>
-                $tr.children('td').eq(1).children('select').val('state' + i++));
-    cy.get('#process-button').should('have.text', allStateAssetsMissingText);
   });
 
   function clearFeatureCollectionsAndSetUpDamageInputs() {
