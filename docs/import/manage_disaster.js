@@ -15,10 +15,15 @@ export {enableWhenReady, onSetDisaster, setUpScoreSelectorTable, toggleState};
 /** @VisibleForTesting */
 export {
   addDisaster,
+  assetSelectionRowPrefix,
   deleteDisaster,
   disasterData,
   initializeDamageSelector,
+  initializeScoreSelectors,
   run,
+  scoreAssetTypes,
+  stateAssets,
+  validateUserFields,
   writeNewDisaster,
 };
 
@@ -163,6 +168,50 @@ function setMapBoundsInfo(message) {
     boundsStatusLabel.innerText = message;
   } else {
     boundsStatusElement.text(message);
+  }
+}
+
+/**
+ * Checks that all fields that can be entered by the user have a non-empty
+ * value. Does not check that assets actually exist, are of valid type, etc. If
+ * all validation succeeds, enables kick-off button, otherwise disables and
+ * changes button text to say what is missing.
+ */
+function validateUserFields() {
+  const states = disasterData.get(getDisaster()).states;
+  const missingItems = [];
+  for (const scoreAssetType of scoreAssetTypes) {
+    const missingForType = [];
+    for (const state of states) {
+      if (!getElementFromPath(scoreAssetType[1].concat([state]))) {
+        missingForType.push(state);
+      }
+    }
+    if (missingForType.length) {
+      missingItems.push(
+          scoreAssetType[2] +
+          (states.length > 1 ? ' [' + missingForType.join(', ') + ']' : ''));
+    }
+  }
+  const hasDamage = getElementFromPath(damagePropertyPath) ||
+      (getElementFromPath(swPropertyPath) &&
+       getElementFromPath(nePropertyPath));
+  let message = '';
+  if (missingItems.length) {
+    message = 'Missing asset(s): ' + missingItems.join(', ');
+  }
+  if (!hasDamage) {
+    message += (message ? ', and m' : 'M') +
+        'ust specify either damage asset or map bounds';
+  }
+  const processButton = $('#process-button');
+  processButton.show();
+  if (message) {
+    processButton.text(message);
+    processButton.attr('disabled', true);
+  } else {
+    processButton.text('Kick off Data Processing (will take a while!)');
+    processButton.attr('disabled', false);
   }
 }
 
@@ -524,7 +573,7 @@ let processedCurrentDisasterSelfAssets = false;
 
 /**
  * Function called when current disaster changes. Responsible for displaying the
- * score selectors.
+ * score selectors and enabling/disabling the kick-off button.
  */
 function onSetDisaster() {
   processedCurrentDisasterStateAssets = false;
@@ -553,7 +602,7 @@ function onSetDisaster() {
         }
       });
     }
-    promise.then(() => {
+    const scorePromise = promise.then(() => {
       if (getDisaster() === currentDisaster &&
           !processedCurrentDisasterStateAssets) {
         // Don't do anything unless this is still the right disaster.
@@ -570,15 +619,17 @@ function onSetDisaster() {
       }
     };
     // Handle errors in disaster asset retrieval by just emptying out.
-    disasterAssets.get(currentDisaster).then(disasterLambda, (err) => {
-      if (err &&
-          err !==
-              'Asset "' + eeLegacyPathPrefix + currentDisaster +
-                  '" not found.') {
-        setStatus(err);
-      }
-      disasterLambda([]);
-    });
+    const damagePromise =
+        disasterAssets.get(currentDisaster).then(disasterLambda, (err) => {
+          if (err &&
+              err !==
+                  'Asset "' + eeLegacyPathPrefix + currentDisaster +
+                      '" not found.') {
+            setStatus(err);
+          }
+          disasterLambda([]);
+        });
+    Promise.all([scorePromise, damagePromise]).then(validateUserFields);
   }
 }
 
@@ -811,13 +862,16 @@ function initializeScoreSelectors(states) {
   }
 }
 
+const damagePropertyPath = Object.freeze(['damage_asset_path']);
+const swPropertyPath = Object.freeze(['map_bounds_sw']);
+const nePropertyPath = Object.freeze(['map_bounds_ne']);
+
 /**
  * Initializes the damage selector, given the provided assets.
  * @param {Array<string>} assets List of assets in the disaster folder
  */
 function initializeDamageSelector(assets) {
   const mapBoundsDiv = $('#map-bounds-div');
-  const damagePropertyPath = ['damage_asset_path'];
   const select = createAssetDropdown(
       assets, damagePropertyPath, $('#damage-asset-select').empty());
   select.on('change', (event) => {
@@ -825,14 +879,12 @@ function initializeDamageSelector(assets) {
     val ? mapBoundsDiv.hide() : mapBoundsDiv.show();
     handleAssetDataChange(val, damagePropertyPath);
   });
-  const swPath = ['map_bounds_sw'];
-  const nePath = ['map_bounds_ne'];
   const swInput = $('#map-bounds-sw');
-  swInput.val(getElementFromPath(swPath));
-  addAssetDataChangeHandler(swInput, swPath);
+  swInput.val(getElementFromPath(swPropertyPath));
+  addAssetDataChangeHandler(swInput, swPropertyPath);
   const neInput = $('#map-bounds-ne');
-  neInput.val(getElementFromPath(nePath));
-  addAssetDataChangeHandler(neInput, nePath);
+  neInput.val(getElementFromPath(nePropertyPath));
+  addAssetDataChangeHandler(neInput, nePropertyPath);
   select.val() ? mapBoundsDiv.hide() : mapBoundsDiv.show();
 }
 
@@ -923,6 +975,7 @@ function handleAssetDataChange(val, propertyPath) {
   const parentProperty = getElementFromPath(propertyPath.slice(0, -1));
   parentProperty[propertyPath[propertyPath.length - 1]] =
       val !== '' ? val : null;
+  validateUserFields();
   updateDataInFirestore(
       () => disasterData.get(getDisaster()), () => {}, () => {});
 }

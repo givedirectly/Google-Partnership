@@ -354,6 +354,10 @@ input[type='button']:hover, button:hover {
   box-shadow: var(--shadow-2);
 }
 
+input[type='button']:disabled, button:disabled {
+  background-color: grey;
+}
+
 .form-button {
   font-size: var(--font-size-3);
   line-height: 24px;
