@@ -203,7 +203,8 @@ describe('Unit tests for manage_disaster.js', () => {
     // We haven't set anything, so button is not enabled.
     cy.get('#process-button').should('be.disabled');
     const allStateAssetsMissingText =
-        'Missing asset(s): Poverty, Income, SVI, Census TIGER Shapefiles, Microsoft Building Shapefiles';
+        'Missing asset(s): Poverty, Income, SVI, Census TIGER Shapefiles, ' +
+        'Microsoft Building Shapefiles';
     const allMissingText = allStateAssetsMissingText +
         ', and must specify either damage asset or map bounds';
     cy.get('#process-button').should('have.text', allMissingText);
@@ -228,7 +229,8 @@ describe('Unit tests for manage_disaster.js', () => {
     cy.get('#process-button')
         .should(
             'have.text',
-            'Missing asset(s): Income, SVI, Census TIGER Shapefiles, Microsoft Building Shapefiles');
+            'Missing asset(s): Income, SVI, Census TIGER Shapefiles, ' +
+            'Microsoft Building Shapefiles');
     cy.get('#process-button').should('be.disabled');
     // Clear that select: back where we started.
     setFirstSelectInScoreRow(0).select('').blur();
@@ -252,7 +254,8 @@ describe('Unit tests for manage_disaster.js', () => {
     cy.get('#process-button')
         .should(
             'have.text',
-            'Missing asset(s): Poverty, and must specify either damage asset or map bounds');
+            'Missing asset(s): Poverty, and must specify either damage asset ' +
+            'or map bounds');
     cy.get('#process-button').should('be.disabled');
     // Validate that score data was correctly written
     cy.wait(1000).then(readDisasterDocument).then((doc) => {
@@ -281,8 +284,8 @@ describe('Unit tests for manage_disaster.js', () => {
     cy.get('#process-button').should('be.disabled');
     const allStateAssetsMissingText =
         'Missing asset(s): Poverty [NY, WY], Income [NY, WY], SVI [NY, WY], ' +
-        'Census TIGER Shapefiles [NY, WY], Microsoft Building Shapefiles [NY, ' +
-        'WY], and must specify either damage asset or map bounds';
+        'Census TIGER Shapefiles [NY, WY], Microsoft Building Shapefiles [NY,' +
+        ' WY], and must specify either damage asset or map bounds';
     cy.get('#process-button').should('have.text', allStateAssetsMissingText);
     // Specifying one state has desired effect.
     setFirstSelectInScoreRow(0);
@@ -290,8 +293,9 @@ describe('Unit tests for manage_disaster.js', () => {
         .should(
             'have.text',
             'Missing asset(s): Poverty [WY], Income [NY, WY], SVI [NY, WY], ' +
-                'Census TIGER Shapefiles [NY, WY], Microsoft Building Shapefiles [NY, WY]' +
-                ', and must specify either damage asset or map bounds');
+                'Census TIGER Shapefiles [NY, WY], Microsoft Building ' +
+                'Shapefiles [NY, WY], and must specify either damage asset ' +
+                'or map bounds');
     // Specifying assets for income, both states, one type, gets rid of income
     // from message.
     setFirstSelectInScoreRow(1);
@@ -300,8 +304,8 @@ describe('Unit tests for manage_disaster.js', () => {
         .should(
             'have.text',
             'Missing asset(s): Poverty [WY], SVI [NY, WY], Census TIGER ' +
-                'Shapefiles [NY, WY], Microsoft Building Shapefiles [NY, WY], and must ' +
-                'specify either damage asset or map bounds');
+                'Shapefiles [NY, WY], Microsoft Building Shapefiles [NY, WY],' +
+                'and must specify either damage asset or map bounds');
   });
 
   it('writes a new disaster to firestore', () => {
