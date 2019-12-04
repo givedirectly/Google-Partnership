@@ -170,6 +170,12 @@ function setMapBoundsInfo(message) {
   }
 }
 
+/**
+ * Checks that all fields that can be entered by the user have a non-empty
+ * value. Does not check that assets actually exist, are of valid type, etc. If
+ * all validation succeeds, enables kick-off button, otherwise disables and
+ * changes button text to say what is missing.
+ */
 function validateUserFields() {
   const states = disasterData.get(getDisaster()).states;
   const missingItems = [];
