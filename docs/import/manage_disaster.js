@@ -14,15 +14,15 @@ export {enableWhenReady, onSetDisaster, setUpScoreSelectorTable, toggleState};
 /** @VisibleForTesting */
 export {
   addDisaster,
-    assetSelectionRowPrefix,
+  assetSelectionRowPrefix,
   deleteDisaster,
   disasterData,
   initializeDamageSelector,
-    initializeScoreSelectors,
+  initializeScoreSelectors,
   run,
-    scoreAssetTypes,
-    stateAssets,
-    validateUserFields,
+  scoreAssetTypes,
+  stateAssets,
+  validateUserFields,
   writeNewDisaster,
 };
 
@@ -181,16 +181,21 @@ function validateUserFields() {
       }
     }
     if (missingForType.length) {
-      missingItems.push(scoreAssetType[2] + (states.length > 1 ? ' [' + missingForType.join(', ') + ']' : ''));
+      missingItems.push(
+          scoreAssetType[2] +
+          (states.length > 1 ? ' [' + missingForType.join(', ') + ']' : ''));
     }
   }
-  const hasDamage = getElementFromPath(damagePropertyPath) || (getElementFromPath(swPropertyPath) && getElementFromPath(nePropertyPath));
+  const hasDamage = getElementFromPath(damagePropertyPath) ||
+      (getElementFromPath(swPropertyPath) &&
+       getElementFromPath(nePropertyPath));
   let message = '';
   if (missingItems.length) {
     message = 'Missing asset(s): ' + missingItems.join(', ');
   }
   if (!hasDamage) {
-    message += (message ? ', and m' : 'M') + 'ust specify either damage asset or map bounds';
+    message += (message ? ', and m' : 'M') +
+        'ust specify either damage asset or map bounds';
   }
   const processButton = $('#process-button');
   processButton.show();
@@ -606,15 +611,16 @@ function onSetDisaster() {
       }
     };
     // Handle errors in disaster asset retrieval by just emptying out.
-    const damagePromise = disasterAssets.get(currentDisaster).then(disasterLambda, (err) => {
-      if (err &&
-          err !==
-              'Asset "' + eeLegacyPathPrefix + currentDisaster +
-                  '" not found.') {
-        setStatus(err);
-      }
-      disasterLambda([]);
-    });
+    const damagePromise =
+        disasterAssets.get(currentDisaster).then(disasterLambda, (err) => {
+          if (err &&
+              err !==
+                  'Asset "' + eeLegacyPathPrefix + currentDisaster +
+                      '" not found.') {
+            setStatus(err);
+          }
+          disasterLambda([]);
+        });
     Promise.all([scorePromise, damagePromise]).then(validateUserFields);
   }
 }
@@ -924,7 +930,7 @@ function handleAssetDataChange(val, propertyPath) {
   // is then the "prop" in the expression above.
   const parentProperty = getElementFromPath(propertyPath.slice(0, -1));
   parentProperty[propertyPath[propertyPath.length - 1]] =
-  val !== '' ? val : null;
+      val !== '' ? val : null;
   validateUserFields();
   updateDataInFirestore(
       () => disasterData.get(getDisaster()), () => {}, () => {});
