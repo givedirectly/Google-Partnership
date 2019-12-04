@@ -280,18 +280,18 @@ describe('Unit tests for manage_disaster.js', () => {
         .then(validateUserFields);
     cy.get('#process-button').should('be.disabled');
     const allStateAssetsMissingText =
-        'Missing asset(s): Poverty [NY, WY], Income [NY, WY], SVI [NY, WY], '
-    + 'Census TIGER Shapefiles [NY, WY], Microsoft Building Shapefiles [NY, '
-    + 'WY], and must specify either damage asset or map bounds';
+        'Missing asset(s): Poverty [NY, WY], Income [NY, WY], SVI [NY, WY], ' +
+        'Census TIGER Shapefiles [NY, WY], Microsoft Building Shapefiles [NY, ' +
+        'WY], and must specify either damage asset or map bounds';
     cy.get('#process-button').should('have.text', allStateAssetsMissingText);
     // Specifying one state has desired effect.
     setFirstSelectInScoreRow(0);
     cy.get('#process-button')
         .should(
             'have.text',
-            'Missing asset(s): Poverty [WY], Income [NY, WY], SVI [NY, WY], '
-    + 'Census TIGER Shapefiles [NY, WY], Microsoft Building Shapefiles [NY, WY]'
-            + ', and must specify either damage asset or map bounds');
+            'Missing asset(s): Poverty [WY], Income [NY, WY], SVI [NY, WY], ' +
+                'Census TIGER Shapefiles [NY, WY], Microsoft Building Shapefiles [NY, WY]' +
+                ', and must specify either damage asset or map bounds');
     // Specifying assets for income, both states, one type, gets rid of income
     // from message.
     setFirstSelectInScoreRow(1);
@@ -299,9 +299,9 @@ describe('Unit tests for manage_disaster.js', () => {
     cy.get('#process-button')
         .should(
             'have.text',
-            'Missing asset(s): Poverty [WY], SVI [NY, WY], Census TIGER '
-    + 'Shapefiles [NY, WY], Microsoft Building Shapefiles [NY, WY], and must '
-    + 'specify either damage asset or map bounds');
+            'Missing asset(s): Poverty [WY], SVI [NY, WY], Census TIGER ' +
+                'Shapefiles [NY, WY], Microsoft Building Shapefiles [NY, WY], and must ' +
+                'specify either damage asset or map bounds');
   });
 
   it('writes a new disaster to firestore', () => {
