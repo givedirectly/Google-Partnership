@@ -172,8 +172,7 @@ function validateUserFields() {
   for (const scoreAssetType of scoreAssetTypes) {
     const missingForType = [];
     for (const state of states) {
-      const val = getElementFromPath(scoreAssetType[1].concat([state]));
-      if (!hasValue(val)) {
+      if (!getElementFromPath(scoreAssetType[1].concat([state]))) {
         missingForType.push(state);
       }
     }

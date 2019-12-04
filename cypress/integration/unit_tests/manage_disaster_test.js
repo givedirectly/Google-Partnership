@@ -345,11 +345,22 @@ describe('Unit tests for manage_disaster.js', () => {
       button.hidden = true;
       doc.body.appendChild(button);
       setUpScoreSelectorTable();
+      initializeDamageSelector(['asset1, asset2']);
     });
     cy.get('#asset-selection-table-body').find('tr').its('length').should('eq', 5).then(validateUserFields);
     cy.get('#process-button').should('be.disabled');
     cy.get('#process-button').should('have.css', {'background-color': 'grey'});
-    cy.get('#process-button').should('')
+    const allStateAssetsMissingText = 'Missing assets: Poverty, Income, SVI, Census TIGER Shapefiles, Microsoft Building Shapefiles';
+    const allMissingText = allStateAssetsMissingText + ', and must specify either damage asset or map bounds';
+    cy.get('#process-button').should('have.text', allMissingText);
+    cy.get('#map-bounds-sw').clear().type('0, 0').blur();
+    cy.get('#process-button').should('have.text', allMissingText);
+    cy.get('#map-bounds-ne').type('1, 1').blur();
+    cy.get('#process-button').should('have.text', allStateAssetsMissingText);
+    cy.get('#map-bounds-ne').clear().blur();
+    cy.get('#process-button').should('have.text', allMissingText);
+
+
   });
 
   function clearFeatureCollectionsAndSetUpDamageInputs() {
