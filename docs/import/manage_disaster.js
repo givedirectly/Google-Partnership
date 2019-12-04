@@ -723,7 +723,7 @@ function getCreateFolderPromise(dir) {
       (resolve) => ee.data.createFolder(
           dir, false,
           () => ee.data.setAssetAcl(
-              dir, {all_users_can_read: true}, () => resolve)));
+              dir, {all_users_can_read: true}, () => resolve())));
 }
 
 /**

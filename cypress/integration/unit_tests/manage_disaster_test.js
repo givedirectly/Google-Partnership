@@ -167,7 +167,7 @@ describe('Unit tests for manage_disaster.js', () => {
     expect(exportStub).to.not.be.called;
   });
 
-  it('writes a new disaster to firestore', () => {
+  it.only('writes a new disaster to firestore', () => {
     let id = '2002-winter';
     const states = ['DN', 'WF'];
 
