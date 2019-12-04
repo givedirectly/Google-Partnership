@@ -2,9 +2,9 @@ import {getFirestoreRoot, readDisasterDocument} from '../../../docs/firestore_do
 import {assetDataTemplate} from '../../../docs/import/create_disaster_lib.js';
 import {
   disasterData,
-  initializeDamageSelector,
+  initializeDamageSelector, initializeScoreSelectors,
   run,
-  setUpScoreSelectorTable, validateUserFields
+  setUpScoreSelectorTable, stateAssets, validateUserFields
 } from '../../../docs/import/manage_disaster';
 import {addDisaster, deleteDisaster, writeNewDisaster} from '../../../docs/import/manage_disaster.js';
 import {createOptionFrom} from '../../../docs/import/manage_layers.js';
@@ -345,7 +345,9 @@ describe('Unit tests for manage_disaster.js', () => {
       button.hidden = true;
       doc.body.appendChild(button);
       setUpScoreSelectorTable();
-      initializeDamageSelector(['asset1, asset2']);
+      initializeDamageSelector(['asset1', 'asset2']);
+      stateAssets.set('NY', ['state1', 'state2', 'state3', 'state4', 'state5']);
+      initializeScoreSelectors(['NY']);
     });
     cy.get('#asset-selection-table-body').find('tr').its('length').should('eq', 5).then(validateUserFields);
     cy.get('#process-button').should('be.disabled');
@@ -359,8 +361,18 @@ describe('Unit tests for manage_disaster.js', () => {
     cy.get('#process-button').should('have.text', allStateAssetsMissingText);
     cy.get('#map-bounds-ne').clear().blur();
     cy.get('#process-button').should('have.text', allMissingText);
-
-
+    cy.get('#damage-asset-select').select('asset2').blur();
+    cy.get('#process-button').should('have.text', allStateAssetsMissingText);
+    cy.get('#asset-selection-table-body > tr').first().find('td').first().next().find('select').select('state1').blur();
+    cy.get('#process-button').should('have.text', 'Missing assets: Income, SVI, Census TIGER Shapefiles, Microsoft Building Shapefiles');
+    cy.get('#asset-selection-table-body > tr').first().find('td').first().next().find('select').select('').blur();
+    cy.get('#process-button').should('have.text', allStateAssetsMissingText);
+    let i = 1;
+    cy.get('#asset-selection-table-body > tr')
+        .each(
+            ($tr) =>
+                $tr.children('td').eq(1).children('select').val('state' + i++));
+    cy.get('#process-button').should('have.text', allStateAssetsMissingText);
   });
 
   function clearFeatureCollectionsAndSetUpDamageInputs() {

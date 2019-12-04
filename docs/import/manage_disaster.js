@@ -17,7 +17,9 @@ export {
   deleteDisaster,
   disasterData,
   initializeDamageSelector,
+    initializeScoreSelectors,
   run,
+    stateAssets,
     validateUserFields,
   writeNewDisaster,
 };
