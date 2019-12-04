@@ -57,7 +57,7 @@ describe('Unit tests for manage_disaster.js', () => {
     createFolderStub =
         cy.stub(ee.data, 'createFolder')
             .callsFake((asset, overwrite, callback) => callback());
-    setAclsStub = cy.stub(ee.data, 'setAssetAcl');
+    setAclsStub = cy.stub(ee.data, 'setAssetAcl').callsFake((asset, acls, callback) => callback());
 
     // Test data is reasonably real. All of the keys should be able to vary,
     // with corresponding changes to test data (but no production changes). The
