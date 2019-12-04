@@ -12,7 +12,14 @@ import {updateDataInFirestore} from './update_firestore_disaster.js';
 
 export {enableWhenReady, onSetDisaster, setUpScoreSelectorTable, toggleState};
 /** @VisibleForTesting */
-export {addDisaster, deleteDisaster, disasterData, run, writeNewDisaster, initializeDamageSelector};
+export {
+  addDisaster,
+  deleteDisaster,
+  disasterData,
+  initializeDamageSelector,
+  run,
+  writeNewDisaster
+};
 
 /**
  * @type {Map<string, Object>} Disaster id to disaster data, corresponding to

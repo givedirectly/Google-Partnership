@@ -1,13 +1,6 @@
-import {
-  getFirestoreRoot,
-  readDisasterDocument
-} from '../../../docs/firestore_document.js';
+import {getFirestoreRoot, readDisasterDocument} from '../../../docs/firestore_document.js';
 import {assetDataTemplate} from '../../../docs/import/create_disaster_lib.js';
-import {
-  disasterData,
-  initializeDamageSelector,
-  run
-} from '../../../docs/import/manage_disaster';
+import {disasterData, initializeDamageSelector, run} from '../../../docs/import/manage_disaster';
 import {addDisaster, deleteDisaster, writeNewDisaster} from '../../../docs/import/manage_disaster.js';
 import {createOptionFrom} from '../../../docs/import/manage_layers.js';
 import {convertEeObjectToPromise} from '../../../docs/map_util';
@@ -185,8 +178,8 @@ describe('Unit tests for manage_disaster.js', () => {
     cy.document().then((doc) => {
       // Lightly fake out jQuery so that we can use Cypress selectors. Might not
       // work if manage_disaster.js starts doing fancier jQuery operations.
-      cy.stub(document, 'getElementById').callsFake(
-          (id) => doc.getElementById(id));
+      cy.stub(document, 'getElementById')
+          .callsFake((id) => doc.getElementById(id));
       const damageSelect = doc.createElement('select');
       damageSelect.id = 'damage-asset-select';
       doc.body.appendChild(damageSelect);
@@ -203,7 +196,8 @@ describe('Unit tests for manage_disaster.js', () => {
     cy.get('#map-bounds-div')
         .should('be.visible')
         .then(() => $('#map-bounds-div').hide());
-    cy.get('#map-bounds-div').should('not.be.visible')
+    cy.get('#map-bounds-div')
+        .should('not.be.visible')
         .then(() => initializeDamageSelector(['asset1', 'asset2']));
     cy.get('#damage-asset-select').should('have.value', 'None');
     cy.get('#map-bounds-div').should('be.visible');
@@ -211,18 +205,16 @@ describe('Unit tests for manage_disaster.js', () => {
     cy.get('#map-bounds-ne').should('have.value', '');
     cy.get('#map-bounds-ne').type('1, 1').blur();
     // TODO(janakr): is there a way to tell all writes are finished?
-    cy.wait(1000).then(readDisasterDocument)
-        .then((doc) => {
-          const data = doc.data();
-          expect(data['asset_data']['map_bounds_ne']).to.eql('1, 1');
-        });
+    cy.wait(1000).then(readDisasterDocument).then((doc) => {
+      const data = doc.data();
+      expect(data['asset_data']['map_bounds_ne']).to.eql('1, 1');
+    });
     cy.get('#damage-asset-select').select('asset2').blur();
     cy.get('#map-bounds-div').should('not.be.visible');
-    cy.wait(1000).then(readDisasterDocument)
-        .then((doc) => {
-          const data = doc.data();
-          expect(data['asset_data']['damage_asset_path']).to.eql('asset2');
-        });
+    cy.wait(1000).then(readDisasterDocument).then((doc) => {
+      const data = doc.data();
+      expect(data['asset_data']['damage_asset_path']).to.eql('asset2');
+    });
   });
 
   it('writes a new disaster to firestore', () => {
