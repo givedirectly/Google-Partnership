@@ -872,7 +872,7 @@ function addChangeHandler(elt, propertyPath) {
 }
 /**
  * Handles the user entering a value into score-related input
- * @param {string} val Value of input. 'None' is treated like null (ugh)
+ * @param {string} val Value of input. 'None'/empty are treated like null (ugh)
  * @param {Array<string>} propertyPath path to property inside asset data. We
  *     set this value by setting the parent's attribute to the target's value
  */
