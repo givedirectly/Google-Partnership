@@ -825,7 +825,7 @@ function removeAllButFirstFromRow(row) {
 }
 
 /**
- * Initializes a dropdown with assets.
+ * Initializes a dropdown with assets and the appropriate change handler.
  * @param {Array<string>} assets List of assets to add to dropdown
  * @param {Array<string>} propertyPath List of attributes to follow to get
  *     value. If that value is found in options, it will be selected. Otherwise,
