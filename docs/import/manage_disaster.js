@@ -158,6 +158,11 @@ function setMapBoundsInfo(message) {
   }
 }
 
+function validateUserFields() {
+  const assetData = disasterData.get(getDisaster()).asset_data;
+  const blockGroupPaths = assetData['block_group_asset_paths'];
+
+}
 /**
  * Performs operation of processing inputs and creating output asset.
  * @param {Object} disasterData Data for current disaster coming from Firestore
@@ -172,8 +177,6 @@ function run(disasterData, setMapBoundsInfoFunction = setMapBoundsInfo) {
   if (!states) {
     return missingAssetError('affected states');
   }
-  const {asset_data: {block_group_paths}} = disasterData['asset_data'];
-
   const assetData = disasterData['asset_data'];
   if (!assetData) {
     return missingAssetError('SNAP/damage asset paths');
