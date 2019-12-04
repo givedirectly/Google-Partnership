@@ -68,16 +68,14 @@ describe('Unit tests for manage_layers page', () => {
   });
 
   it('gets state asset info from ee', () => {
-    cy.wrap(getStatesAssetsFromEe([KNOWN_STATE]))
-        .then((assets) => {
-          // tests folder type asset doesn't make it through
-          expect(assets[0]).to.eql(
-              [KNOWN_STATE, new Map([[KNOWN_STATE_ASSET, 'TABLE']])]);
-          expect(ee.data.listAssets)
-              .to.be.calledWith(
-                  legacyStatePrefix + KNOWN_STATE, {},
-                  Cypress.sinon.match.func);
-        });
+    cy.wrap(getStatesAssetsFromEe([KNOWN_STATE])).then((assets) => {
+      // tests folder type asset doesn't make it through
+      expect(assets[0]).to.eql(
+          [KNOWN_STATE, new Map([[KNOWN_STATE_ASSET, 'TABLE']])]);
+      expect(ee.data.listAssets)
+          .to.be.calledWith(
+              legacyStatePrefix + KNOWN_STATE, {}, Cypress.sinon.match.func);
+    });
   });
 
   it('populates state asset pickers', () => {
