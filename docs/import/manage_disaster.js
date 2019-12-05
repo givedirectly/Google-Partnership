@@ -550,16 +550,3 @@ function handleAssetDataChange(val, propertyPath) {
 function createOptionFrom(text) {
   return $(document.createElement('option')).text(text);
 }
-
-/**
- * Displays latitude/longitude in a reasonable way. https://xkcd.com/2170/.
- * @param {Array<Array<number>>} latLngs
- * @return {string} numbers truncated to 2 digits, latitude first, joined.
- */
-function displayGeoNumbers(latLngs) {
-  return latLngs
-      .map(
-          (coords) =>
-              '(' + coords[1].toFixed(2) + ', ' + coords[0].toFixed(2) + ')')
-      .join(', ');
-}

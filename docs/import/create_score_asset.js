@@ -442,3 +442,16 @@ function innerJoin(collection1, collection2, key1, key2) {
       collection1, ee.FeatureCollection(collection2),
       ee.Filter.equals({leftField: key1, rightField: key2}));
 }
+
+/**
+ * Displays latitude/longitude in a reasonable way. https://xkcd.com/2170/.
+ * @param {Array<Array<number>>} latLngs
+ * @return {string} numbers truncated to 2 digits, latitude first, joined.
+ */
+function displayGeoNumbers(latLngs) {
+  return latLngs
+      .map(
+          (coords) =>
+              '(' + coords[1].toFixed(2) + ', ' + coords[0].toFixed(2) + ')')
+      .join(', ');
+}
