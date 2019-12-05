@@ -1,19 +1,12 @@
-import {
-  blockGroupTag, buildingCountTag, damageTag,
-  geoidTag, incomeTag, snapPercentageTag,
-  snapPopTag, sviTag,
-  totalPopTag, tractTag
-} from '../property_names.js';
+import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, snapPercentageTag, snapPopTag, sviTag, totalPopTag, tractTag} from '../property_names.js';
 import {getScoreAsset} from '../resources.js';
 import {computeAndSaveBounds, saveBounds} from './center.js';
-import {
-  cdcGeoidKey,
-  censusBlockGroupKey,
-  censusGeoidKey,
-  tigerGeoidKey
-} from './import_data_keys.js';
+import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
 
-export {createScoreAsset, setStatus}
+export {
+  createScoreAsset,
+  setStatus
+}
 /**
  * Given a feature from the SNAP census data, returns a new
  * feature with GEOID, SNAP #, total pop #, total building count, building
@@ -57,8 +50,7 @@ function countDamageAndBuildings(feature, damage, buildings) {
             0));
   } else {
     properties = properties.set(damageTag, 0);
-  }
-  return ee.Feature(geometry, properties);
+  } return ee.Feature(geometry, properties);
 }
 
 /**
@@ -70,8 +62,7 @@ function countDamageAndBuildings(feature, damage, buildings) {
  * @return {ee.Feature}
  */
 function combineWithSnap(feature, snapKey, totalKey) {
-  const snapFeature = ee.Feature(feature.get('primary'));
-  return ee.Feature(
+  const snapFeature = ee.Feature(feature.get('primary')); return ee.Feature(
       ee.Feature(feature.get('secondary')).geometry(), ee.Dictionary([
         geoidTag,
         snapFeature.get(censusGeoidKey),
@@ -129,8 +120,7 @@ function addTractInfo(feature) {
  *     callers can write "return missingAssetError" and save a line
  */
 function missingAssetError(str) {
-  setStatus('Error! Please specify ' + str);
-  return null;
+  setStatus('Error! Please specify ' + str); return null;
 }
 
 /**
@@ -171,49 +161,38 @@ function setMapBoundsInfo(message) {
  *     the task, then called with the results
  * @return {?Promise<ee.batch.ExportTask>} Promise for task of asset write.
  */
-function createScoreAsset(disasterData, setMapBoundsInfoFunction = setMapBoundsInfo) {
-  setStatus('');
-  const states = disasterData['states'];
-  if (!states) {
+function createScoreAsset(
+    disasterData, setMapBoundsInfoFunction = setMapBoundsInfo) {
+  setStatus(''); const states = disasterData['states']; if (!states) {
     return missingAssetError('affected states');
-  }
-  const assetData = disasterData['asset_data'];
+  } const assetData = disasterData['asset_data'];
   if (!assetData) {
     return missingAssetError('SNAP/damage asset paths');
-  }
-  const blockGroupPaths = assetData['block_group_asset_paths'];
+  } const blockGroupPaths = assetData['block_group_asset_paths'];
   if (!blockGroupPaths) {
     return missingAssetError('Census TIGER block group shapefiles');
-  }
-  const snapData = assetData['snap_data'];
+  } const snapData = assetData['snap_data'];
   if (!snapData) {
     return missingAssetError('SNAP info');
-  }
-  const snapPaths = snapData['paths'];
+  } const snapPaths = snapData['paths'];
   if (!snapPaths) {
     return missingAssetError('SNAP table asset paths');
-  }
-  const snapKey = snapData['snap_key'];
+  } const snapKey = snapData['snap_key'];
   if (!snapKey) {
     return missingAssetError('column name for SNAP recipients in SNAP table');
-  }
-  const totalKey = snapData['total_key'];
+  } const totalKey = snapData['total_key'];
   if (!totalKey) {
     return missingAssetError('column name for total population in SNAP table');
-  }
-  const sviPaths = assetData['svi_asset_paths'];
+  } const sviPaths = assetData['svi_asset_paths'];
   if (!sviPaths) {
     return missingAssetError('SVI table asset paths');
-  }
-  const sviKey = assetData['svi_key'];
+  } const sviKey = assetData['svi_key'];
   if (!sviKey) {
     return missingAssetError('column name for SVI table');
-  }
-  const incomePaths = assetData['income_asset_paths'];
+  } const incomePaths = assetData['income_asset_paths'];
   if (!incomePaths) {
     return missingAssetError('income table asset paths');
-  }
-  const incomeKey = assetData['income_key'];
+  } const incomeKey = assetData['income_key'];
   if (!incomeKey) {
     return missingAssetError('column name for income table');
   }
@@ -221,8 +200,7 @@ function createScoreAsset(disasterData, setMapBoundsInfoFunction = setMapBoundsI
   const buildingPaths = assetData['building_asset_paths'];
   if (!buildingPaths) {
     return missingAssetError('building data asset paths');
-  }
-  const {damage, damageEnvelope} =
+  } const {damage, damageEnvelope} =
       calculateDamage(assetData, setMapBoundsInfoFunction);
   if (!damageEnvelope) {
     // Must have been an error.

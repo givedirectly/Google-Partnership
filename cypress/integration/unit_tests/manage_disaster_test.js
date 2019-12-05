@@ -606,9 +606,9 @@ function scaleObject(object) {
 }
 
 /**
- * Creates a callback for use with {@link createScoreAsset} so that we will be informed when
- * the Firestore write has completed. Returns a Promise that can be waited on
- * for that write to complete.
+ * Creates a callback for use with {@link createScoreAsset} so that we will be
+ * informed when the Firestore write has completed. Returns a Promise that can
+ * be waited on for that write to complete.
  * @param {string} expectedText Text contained in message when Firestore write
  *     is complete
  * @return {{boundsPromise: Promise, mapBoundsCallback: Function}}

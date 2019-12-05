@@ -6,10 +6,10 @@ import {getDisaster, getScoreAsset} from '../resources.js';
 
 import {computeAndSaveBounds, saveBounds} from './center.js';
 import {createDisasterData} from './create_disaster_lib.js';
+import {createScoreAsset, setStatus} from './create_score_asset.js';
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
 import {getDisasterAssetsFromEe, getStatesAssetsFromEe} from './list_ee_assets.js';
 import {clearStatus} from './manage_layers_lib.js';
-import {createScoreAsset, setStatus} from './create_score_asset.js';
 import {updateDataInFirestore} from './update_firestore_disaster.js';
 
 export {enableWhenReady, onSetDisaster, setUpScoreSelectorTable, toggleState};
@@ -17,11 +17,11 @@ export {enableWhenReady, onSetDisaster, setUpScoreSelectorTable, toggleState};
 export {
   addDisaster,
   assetSelectionRowPrefix,
+  createScoreAsset,
   deleteDisaster,
   disasterData,
   initializeDamageSelector,
   initializeScoreSelectors,
-  createScoreAsset,
   scoreAssetTypes,
   stateAssets,
   validateUserFields,
