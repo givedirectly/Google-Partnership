@@ -1,9 +1,9 @@
 import {populateColorFunctions, withColor} from '../../../docs/import/color_function_util.js';
 import * as manageLayersLib from '../../../docs/import/manage_layers_lib.js';
-import {createTrs, setDisasterAndLayers} from '../../support/import_test_util.js';
-import {addFirebaseHooks, loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 import {getCurrentLayers} from '../../../docs/import/manage_layers_lib.js';
+import {createTrs, setDisasterAndLayers} from '../../support/import_test_util.js';
 import {initFirebaseForUnitTest} from '../../support/script_loader';
+import {addFirebaseHooks, loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
 const property = 'color-function';
 let writeToFirebaseStub;

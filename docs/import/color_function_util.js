@@ -46,7 +46,10 @@ function populateColorFunctions() {
           .append([
             createMinOrMaxInputForContinuous(true, continuousPropertyPicker),
             createMinOrMaxInputForContinuous(false, continuousPropertyPicker),
-            $(document.createElement('p')).prop('id', 'max-min-error').val('Error: min value > max value').hide()
+            $(document.createElement('p'))
+                .prop('id', 'max-min-error')
+                .val('Error: min value > max value')
+                .hide()
           ])
           .hide();
   $('#continuous').append([
@@ -116,7 +119,7 @@ function updateMinMax(event, continuousPropertyPicker) {
   const propertyStats = getColorFunction()['columns'][property];
   const min = input.prop('id') === 'continuous-min';
   let string;
-  const errorDiv =  $('#max-min-error');
+  const errorDiv = $('#max-min-error');
   if (min) {
     string = 'min';
     if (potentialNewVal > propertyStats['max']) {
