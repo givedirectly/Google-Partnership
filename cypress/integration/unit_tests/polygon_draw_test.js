@@ -209,7 +209,7 @@ describe('Unit test for ShapeData', () => {
         .then((map) => {
           event.overlay = new google.maps.Polygon({
             map: map,
-            paths: [{lat: 0, lng: 0}, {lat: 1, lng: 1}, {lat: 0, lng: 1}],
+            paths: [{lat: 0, lng: 0}, {lat: 4, lng: 2}, {lat: 0, lng: 2}],
           });
           return setUpPolygonDrawing(map, Promise.resolve());
         })
@@ -228,6 +228,7 @@ describe('Unit test for ShapeData', () => {
     cy.get('.popup-calculated-data')
         .should('have.css', 'color')
         .and('eq', 'rgb(0, 0, 0)');
+    cy.get('.popup-calculated-data').contains('damage count: 1');
   });
 
   it('Draws marker, edits notes, then deletes', () => {
