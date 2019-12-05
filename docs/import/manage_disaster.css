@@ -1,0 +1,19 @@
+/* Undo grabby set by default in manage.css */
+table {
+  cursor: default;
+}
+
+/* states select picker */
+#states {
+  height: 160px;
+}
+
+/* div with score asset selection interface */
+#score-asset-selection {
+  padding-top: 40px;
+}
+
+/* Kick-off button */
+#process-button {
+  text-transform: none
+}
