@@ -36,14 +36,25 @@ function populateColorFunctions() {
   const continuousPropertyPicker =
       $(document.createElement('select'))
           .prop('id', 'continuous-property-picker');
-  continuousPropertyPicker.on(
-      'change', () => setProperty(continuousPropertyPicker));
-  $('#continuous')
-      .append(
-          createLabelFor(continuousColorPicker, 'base color'),
-          continuousColorPicker, $(document.createElement('br')),
-          createLabelFor(continuousPropertyPicker, 'property'),
-          continuousPropertyPicker);
+  continuousPropertyPicker.on('change', () => {
+    setProperty(continuousPropertyPicker);
+    displayMinMax(continuousPropertyPicker);
+  });
+  const minMaxDiv =
+      $(document.createElement('div'))
+          .prop('id', 'min-max')
+          .append([
+            createMinOrMaxInputForContinuous(true, continuousPropertyPicker),
+            createMinOrMaxInputForContinuous(false, continuousPropertyPicker),
+            $(document.createElement('p')).prop('id', 'max-min-error').val('Error: min value > max value').hide()
+          ])
+          .hide();
+  $('#continuous').append([
+    createLabelFor(continuousColorPicker, 'base color'), continuousColorPicker,
+    $(document.createElement('br')),
+    createLabelFor(continuousPropertyPicker, 'property'),
+    continuousPropertyPicker, minMaxDiv
+  ]);
 
   const discretePropertyPicker = $(document.createElement('select'))
                                      .prop('id', 'discrete-property-picker');
@@ -90,6 +101,40 @@ function setProperty(picker) {
   updateTdAndFirestore();
 }
 
+function displayMinMax(picker) {
+  $('#min-max').show();
+  const property = picker.val();
+  const stats = getColorFunction()['columns'][property];
+  $('#continuous-min').val(stats['min']);
+  $('#continuous-max').val(stats['max']);
+}
+
+function updateMinMax(event, continuousPropertyPicker) {
+  const input = $(event.target);
+  const property = continuousPropertyPicker.val();
+  const potentialNewVal = Number(input.val());
+  const propertyStats = getColorFunction()['columns'][property];
+  const min = input.prop('id') === 'continuous-min';
+  let string;
+  const errorDiv =  $('#max-min-error');
+  if (min) {
+    string = 'min';
+    if (potentialNewVal > propertyStats['max']) {
+      errorDiv.show();
+      return;
+    }
+  } else {
+    string = 'max';
+    if (potentialNewVal < propertyStats['min']) {
+      errorDiv.show();
+      return;
+    }
+  }
+  errorDiv.hide();
+  propertyStats[string] = potentialNewVal;
+  updateLayersInFirestore()
+}
+
 /**
  * Updates an individual color choice for a single value in the discrete schema.
  * @param {JQuery<HTMLElement>} picker
@@ -113,6 +158,23 @@ function setDiscreteColor(picker) {
 function setColor(picker) {
   getColorFunction()['color'] = picker.val();
   updateTdAndFirestore();
+}
+
+/**
+ *
+ * @param {boolean} min if true, creating for min, else for max
+ * @param {JQuery<HTMLElement>} continuousPropertyPicker
+ * @return {JQuery<HTMLLabelElement>} containing the relevant input
+ */
+function createMinOrMaxInputForContinuous(min, continuousPropertyPicker) {
+  const minOrMax = min ? 'min' : 'max';
+  const input =
+      $(document.createElement('input'))
+          .prop('id', 'continuous-' + minOrMax)
+          .on('blur', (event) => updateMinMax(event, continuousPropertyPicker));
+  // TODO(juliexxia): add padding to all labels and take out spaces in label
+  // text.
+  return $(document.createElement('label')).text(minOrMax + ': ').append(input);
 }
 
 const colorList = Array.from(colorMap.keys());
@@ -271,7 +333,9 @@ function displaySchema(type) {
       break;
     case ColorStyle.CONTINUOUS:
       $('#continuous-color-picker').val(colorFunction['color']);
-      populatePropertyPicker($('#continuous-property-picker'));
+      const picker = $('#continuous-property-picker');
+      populatePropertyPicker(picker);
+      if (picker.val()) displayMinMax(picker);
       $('#continuous').show();
       break;
     case ColorStyle.DISCRETE:
