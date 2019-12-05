@@ -3,10 +3,8 @@ import {getScoreAsset} from '../resources.js';
 import {computeAndSaveBounds, saveBounds} from './center.js';
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
 
-export {
-  createScoreAsset,
-  setStatus
-}
+export {createScoreAsset, setStatus};
+
 /**
  * Given a feature from the SNAP census data, returns a new
  * feature with GEOID, SNAP #, total pop #, total building count, building
