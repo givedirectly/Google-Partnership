@@ -113,9 +113,12 @@ function downloadContent(content) {
 }
 
 /**
- * Wraps up a {@link TableSelector} in an opaque lambda for use by external callers.
+ * Wraps up a {@link TableSelector} in an opaque lambda for use by external
+ * callers.
  * @param {TableSelector} tableSelector
- * @return {Function} A function that takes an iterable of strings and selects rows in the table whose geoids are those strings. The function returns the row selected if there was exactly one, or null otherwise
+ * @return {Function} A function that takes an iterable of strings and selects
+ *     rows in the table whose geoids are those strings. The function returns
+ *     the row selected if there was exactly one, or null otherwise
  */
 function makeTableSelectorLambda(tableSelector) {
   return (geoids) => tableSelector.selectRowsFor(geoids);

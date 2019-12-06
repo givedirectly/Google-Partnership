@@ -356,7 +356,7 @@ describe('Unit test for toggleLayerOn', () => {
         });
   });
 
-  const tilesOnMap = /* width */ 5 *  /* height */ 3;
+  const tilesOnMap = /* width */ 5 * /* height */ 3;
 
   it('tests composite tiles', () => {
     // Stub out HTTP fetch, so we can return a promise that waits a while.

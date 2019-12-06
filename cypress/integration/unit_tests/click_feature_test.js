@@ -17,9 +17,9 @@ describe('Unit tests for click_feature.js with map and table', () => {
 
   before(() => {
     const feature1 = createFeatureFromCorners(0.25, 0.25, 0.75, 1)
-        .set(blockGroupTag, 'my block group');
+                         .set(blockGroupTag, 'my block group');
     const feature2 = createFeatureFromCorners(0.75, 0.25, 1.5, 0.75)
-        .set(blockGroupTag, 'another group');
+                         .set(blockGroupTag, 'another group');
     const offMapFeature = createFeatureFromCorners(10, 10, 20, 20);
     const otherFeature = createFeatureFromCorners(-11, -11, -10, -10);
     features =
@@ -59,8 +59,8 @@ describe('Unit tests for click_feature.js with map and table', () => {
       tableDiv.id = 'table';
       containerDiv.appendChild(tableDiv);
       drawTableAndSetUpHandlers(
-          convertEeObjectToPromise(scoredFeatures).then((fc) => fc.features), map,
-          features);
+          convertEeObjectToPromise(scoredFeatures).then((fc) => fc.features),
+          map, features);
     });
     cy.wrap(loadingFinishedPromise);
     return assertNoSelection();
@@ -131,7 +131,8 @@ function assertNoSelection() {
  * @return {ee.Feature}
  */
 function createFeatureFromCorners(west, south, east, north) {
-  const polygonCoordinates = [west, south, west, north, east, north, east, south];
+  const polygonCoordinates =
+      [west, south, west, north, east, north, east, south];
   let result = ee.Feature(ee.Geometry.Polygon(polygonCoordinates));
   for (let i = 0; i < tableHeadings.length; i++) {
     result = result.set(
