@@ -79,7 +79,6 @@ function drawTableAndSetUpHandlers(processedData, map, scoreAsset) {
   drawTable(
       processedData, (features) => highlightFeatures(features, map, true),
       (tableSelector) => {
-        console.log('finished, wow');
         loadingElementFinished(tableContainerId);
         // every time we get a new table and data, reselect elements in the
         // table based on {@code currentFeatures} in highlight_features.js.

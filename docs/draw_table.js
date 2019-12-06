@@ -48,7 +48,6 @@ function drawTable(
         for (const feature of features) {
           list.push(tableHeadings.map((col) => feature.properties[col]));
         }
-        console.log('got features fine');
         // Multiple calls to this are fine:
         // https://developers.google.com/chart/interactive/docs/basic_load_libs#Callback
         google.charts.setOnLoadCallback(
@@ -91,10 +90,7 @@ function renderTable(
     },
   });
   table.draw();
-  waitForChart(table);
-  google.visualization.events.addOneTimeListener(
-      table, 'ready',
-      () => selectorReceiver(
+  waitForChart(table, () => selectorReceiver(
           makeLambda(new TableSelecter(table.getChart(), list))));
 
   google.visualization.events.addListener(table, 'select', () => {
@@ -113,14 +109,14 @@ function renderTable(
   });
 }
 
-function waitForChart(table) {
+function waitForChart(table, callback) {
   if (table.getChart() === null) {
-    setTimeout(() => waitForChart(table), 100);
+    setTimeout(() => waitForChart(table, callback), 100);
   } else {
-
-    console.log('got non-null chart: ' + table.getChart());
+    callback();
   }
 }
+
 /**
  * Generates a file with the content passed and downloads it.
  *

@@ -37,7 +37,7 @@ describe('Unit test for click_feature.js with map', () => {
       const tableDiv = doc.createElement('div');
       tableDiv.id = 'table';
       containerDiv.appendChild(tableDiv);
-      drawTableAndSetUpHandlers(Promise.resolve(JSON.parse(scoreResult)), map, features);
+      drawTableAndSetUpHandlers(Promise.resolve(scoreResult), map, features);
     });
     cy.wrap(loadingFinishedPromise);
     cy.get('#test-map-div').click(0, 1);
@@ -57,4 +57,4 @@ function createFeature(...polygonCoordinates) {
   return result;
 }
 
-const scoreResult = '[{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-10,-10],[10,-10],[10,10],[-10,10],[-10,-10]]]},"id":"0","properties":{"BLOCK GROUP":-10,"BUILDING COUNT":10,"DAMAGE PERCENTAGE":10,"GEOID":-10,"SCORE":1,"SNAP PERCENTAGE":10,"SVI":-10,"TOTAL HOUSEHOLDS":10}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-11,-11],[-10,-11],[-10,-10],[-11,-10],[-11,-11]]]},"id":"1","properties":{"BLOCK GROUP":-11,"BUILDING COUNT":-10,"DAMAGE PERCENTAGE":-10,"GEOID":-11,"SCORE":0,"SNAP PERCENTAGE":-10,"SVI":-11,"TOTAL HOUSEHOLDS":-10}}]';
+const scoreResult = [{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-10,-10],[10,-10],[10,10],[-10,10],[-10,-10]]]},"id":"0","properties":{"BLOCK GROUP":-10,"BUILDING COUNT":10,"DAMAGE PERCENTAGE":10,"GEOID":-10,"SCORE":1,"SNAP PERCENTAGE":10,"SVI":-10,"TOTAL HOUSEHOLDS":10}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-11,-11],[-10,-11],[-10,-10],[-11,-10],[-11,-11]]]},"id":"1","properties":{"BLOCK GROUP":-11,"BUILDING COUNT":-10,"DAMAGE PERCENTAGE":-10,"GEOID":-11,"SCORE":0,"SNAP PERCENTAGE":-10,"SVI":-11,"TOTAL HOUSEHOLDS":-10}}];
