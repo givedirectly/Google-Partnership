@@ -5,26 +5,21 @@ import {createAndDisplayJoinedData} from './run.js';
 export {
   createToggles,
   damageThresholdKey,
-  initialDamageThreshold,
-  initialPovertyThreshold,
-  initialPovertyWeight,
   povertyThresholdKey,
   povertyWeightKey,
   setUpInitialToggleValues,
+  toggles
 };
-/* @VisibleForTesting */
-export {toggles};
-
-const initialPovertyThreshold = 0.3;
-let initialDamageThreshold = 0.0;
-// The initial damage weight is 1-this value.
-let initialPovertyWeight = 1.0;
 
 const povertyThresholdKey = 'poverty threshold';
 const damageThresholdKey = 'damage threshold';
 const povertyWeightKey = 'poverty weight';
 
-const toggles = new Map([[povertyThresholdKey, initialPovertyThreshold]]);
+const toggles = new Map([
+  [povertyThresholdKey, 0.3],
+  [damageThresholdKey, 0.0],
+  [povertyWeightKey, 1.0],
+]);
 
 const povertyWeightValueId = 'poverty weight value';
 const damageWeightValueId = 'damage weight value';
@@ -64,17 +59,16 @@ function setUpInitialToggleValues(disasterMetadataPromise) {
   return disasterMetadataPromise.then((doc) => {
     hasDamageAsset = doc.data()['asset_data']['damage_asset_path'];
     if (hasDamageAsset) {
-      initialDamageThreshold = 0.5;
-      initialPovertyWeight = 0.5;
+      toggles.set(damageThresholdKey, 0.5);
+      toggles.set(povertyWeightKey, 0.5);
     }
-    toggles.set(damageThresholdKey, initialDamageThreshold);
-    toggles.set(povertyWeightKey, initialPovertyWeight);
     return toggles;
   });
 }
 
 /**
- * Creates the form for toggling the equation.
+ * Creates the form for toggling the equation. Expects to know at this point
+ * if the damage asset exists or not.
  * @param {google.maps.Map} map
  */
 function createToggles(map) {
