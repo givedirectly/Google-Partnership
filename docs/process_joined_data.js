@@ -1,5 +1,5 @@
 import {damageTag, scoreTag, snapPercentageTag} from './property_names.js';
-import {povertyThresholdKey, damageThresholdKey, povertyWeightKey} from './update.js';
+import {damageThresholdKey, povertyThresholdKey, povertyWeightKey} from './update.js';
 
 export {processJoinedData as default};
 
@@ -60,17 +60,18 @@ function colorAndRate(
  */
 function processJoinedData(
     dataPromise, scalingFactor, initialTogglesValuesPromise) {
-  return Promise.all([dataPromise, initialTogglesValuesPromise]).then((results) => {
-    const featureCollection = results[0];
-    const toggleValues = results[1];
-    const povertyThreshold = toggleValues.get(povertyThresholdKey);
-    const damageThreshold = toggleValues.get(damageThresholdKey);
-    const povertyWeight = toggleValues.get(povertyWeightKey);
-    for (const feature of featureCollection.features) {
-      colorAndRate(
-          feature, scalingFactor, povertyThreshold, damageThreshold,
-          povertyWeight);
-    }
-    return featureCollection.features;
-  });
+  return Promise.all([dataPromise, initialTogglesValuesPromise])
+      .then((results) => {
+        const featureCollection = results[0];
+        const toggleValues = results[1];
+        const povertyThreshold = toggleValues.get(povertyThresholdKey);
+        const damageThreshold = toggleValues.get(damageThresholdKey);
+        const povertyWeight = toggleValues.get(povertyWeightKey);
+        for (const feature of featureCollection.features) {
+          colorAndRate(
+              feature, scalingFactor, povertyThreshold, damageThreshold,
+              povertyWeight);
+        }
+        return featureCollection.features;
+      });
 }

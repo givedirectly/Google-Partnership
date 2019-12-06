@@ -4,13 +4,13 @@ import {createAndDisplayJoinedData} from './run.js';
 
 export {
   createToggles,
+  damageThresholdKey,
   initialDamageThreshold,
   initialPovertyThreshold,
   initialPovertyWeight,
-  setUpInitialToggleValues,
   povertyThresholdKey,
-  damageThresholdKey,
   povertyWeightKey,
+  setUpInitialToggleValues,
 };
 /* @VisibleForTesting */
 export {toggles};

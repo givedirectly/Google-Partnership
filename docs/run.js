@@ -36,7 +36,8 @@ function run(map, firebaseAuthPromise, disasterMetadataPromise) {
   setMapToDrawLayersOn(map);
   snapAndDamagePromise =
       convertEeObjectToPromise(ee.FeatureCollection(snapAndDamageAsset));
-  const initialTogglesValuesPromise = setUpInitialToggleValues(disasterMetadataPromise);
+  const initialTogglesValuesPromise =
+      setUpInitialToggleValues(disasterMetadataPromise);
   initialTogglesValuesPromise.then(() => createToggles(map));
   createAndDisplayJoinedData(map, initialTogglesValuesPromise);
   initializeAndProcessUserRegions(map, disasterMetadataPromise);
