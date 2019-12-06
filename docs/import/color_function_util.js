@@ -165,10 +165,6 @@ function updateMinMax(min, continuousPropertyPicker) {
 function setDiscreteColor(picker) {
   const colorFunction = getColorFunction();
   const propertyValue = picker.data(discreteColorPickerDataKey);
-  // TODO: remove, always have this around.
-  if (!colorFunction['colors']) {
-    colorFunction['colors'] = {};
-  }
   colorFunction['colors'][propertyValue] = picker.val();
   updateTdAndFirestore();
 }
@@ -411,7 +407,6 @@ function populateDiscreteColorPickers() {
     $('#too-many-values').hide();
   }
   const asColorPickers = [];
-  // TODO: remove, always have this around at this point.
   const colors = colorFunction['colors'];
   for (const value of values) {
     const li = $(document.createElement('li'));
@@ -420,7 +415,7 @@ function populateDiscreteColorPickers() {
         createColorPicker()
             .on('change', (event) => setDiscreteColor($(event.target)))
             .data(discreteColorPickerDataKey, value)
-            .val(colors ? colors[value] : null);
+            .val(colors[value]);
     li.append(colorPicker);
     asColorPickers.push(li);
   }
@@ -434,11 +429,6 @@ function populateDiscreteColorPickers() {
  */
 function createColorBoxesForDiscrete(colorFunction, td) {
   const colorObject = colorFunction['colors'];
-  // TODO: remove, always have this around.
-  // coming from a place that has never had discrete before
-  if (!colorObject) {
-    return;
-  }
   const colorSet = new Set();
   Object.keys(colorObject).forEach((propertyValue) => {
     const color = colorObject[propertyValue];
