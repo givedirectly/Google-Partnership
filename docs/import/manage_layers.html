@@ -25,7 +25,7 @@
 
   <!-- Load our styles. -->
   <link rel="stylesheet" href="../style.css">
-  <link rel="stylesheet" href="manage_layers.css">
+  <link rel="stylesheet" href="manage.css">
 </head>
 <body>
 
@@ -33,46 +33,65 @@
 
 <br><br><br>  <!-- TODO(ramvellanki): switch to using a margin above the main content of this page -->
 
-<div id="disaster-picker">
-  <label for="disaster">Disaster: </label>
-  <select id="disaster" style="width: 160px" hidden></select>
-  <select id="pending-disaster" style="width: 160px" disabled="true">
-    <option value="pending" id="pending">...</option>
-  </select>
-</div><br>
-<div id="status"></div>
-<div id="selected-disaster">
-  <table id="layer-manager" class="table table-bordered pagin-table">
-    <thead>
-      <tr>
-        <th style="width:20px"></th>
-        <th style="width:200px">Layer Name</th>
-        <th style="width:600px">EE Path/URL</th>
-        <th>Type</th>
-        <th>Display on Load</th>
-        <th>Color</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody id="tbody"></tbody>
-    <div id="writeWaiter">
-      <div id="writeWaiter-loader"></div>
+<div style="margin-left: 10px">
+  <div id="disaster-picker">
+    <label for="disaster">Disaster: </label>
+    <select id="disaster" style="width: 160px" hidden></select>
+    <select id="pending-disaster" style="width: 160px" disabled="true">
+      <option value="pending" id="pending">...</option>
+    </select>
+  </div><br>
+  <div id="status"></div>
+  <div id="selected-disaster">
+    <table id="layer-manager" class="table table-bordered pagin-table">
+      <thead>
+        <tr>
+          <th style="width:20px"></th>
+          <th style="width:200px">Layer Name</th>
+          <th style="width:600px">EE Path/URL</th>
+          <th>Type</th>
+          <th>Display on Load</th>
+          <th>Color</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+      <div id="writeWaiter">
+        <div id="writeWaiter-loader"></div>
+      </div>
+    </table>
+    <br>
+    <div id="color-fxn-editor" class="editor" hidden="true">
+      <div id="color-radios"></div><br>
+      <div id="single" hidden="true" class="color-type-div"></div>
+      <div id="continuous" hidden="true" class="color-type-div"></div>
+      <div id="discrete" hidden="true" class="color-type-div"></div>
     </div>
-  </table>
-  <br>
-  <div id="color-fxn-editor" class="editor" hidden="true">
-    <div id="color-radios"></div><br>
-    <div id="single" hidden="true" class="color-type-div"></div>
-    <div id="continuous" hidden="true" class="color-type-div"></div>
-    <div id="discrete" hidden="true" class="color-type-div"></div>
+    <br>
+    <div id="asset-pickers">
+      <div id="disaster-asset-picker" class="asset-pickers"></div>
+      <div id="state-asset-pickers" class="asset-pickers"></div>
+    </div>
+    <p>Upload additional assets via the <a href="https://code.earthengine.google.com/" target="_blank"> code editor </a></p>
+    <br>
+    <div>
+      <div style="font-weight:bold">Add Other Layer Type</div>
+      <div>
+        <label>Layer Type</label>
+        <select id="non-eelayer-type">
+          <option value="4">Map Tiles</option>
+          <option value="5">KML</option>
+        </select>
+      </div>
+      <br>
+      <div>
+        <label>Layer Urls</label>
+        <textarea id="non-eelayer-urls" style="width:500px" rows="3"></textarea>
+        <button id="add-non-eelayer">Add Layer</button>
+      </div>
+    </div>
+    <br>
   </div>
-  <br>
-  <div id="asset-pickers">
-    <div id="disaster-asset-picker" class="asset-pickers"></div>
-    <div id="state-asset-pickers" class="asset-pickers"></div>
-  </div>
-  <p>Upload additional assets via the <a href="https://code.earthengine.google.com/" target="_blank"> code editor </a></p>
-  <br>
 </div>
 </body>
 </html>

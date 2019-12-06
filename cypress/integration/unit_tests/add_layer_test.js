@@ -1,5 +1,5 @@
 import {ColorStyle, LayerType} from '../../../docs/firebase_layers.js';
-import {processNewEeLayer} from '../../../docs/import/add_layer.js';
+import {processNewEeLayer, processNonEeLayer} from '../../../docs/import/add_layer.js';
 import {disasterData, getCurrentLayers} from '../../../docs/import/manage_layers_lib.js';
 import * as loading from '../../../docs/loading.js';
 import {createTrs} from '../../support/import_test_util.js';
@@ -94,6 +94,21 @@ describe('Unit tests for adding layers', () => {
           const layer = layers[0];
           expect(layer['asset-type']).to.equal(LayerType.IMAGE_COLLECTION);
           expect(layer['color-function']).to.be.undefined;
+        });
+  });
+
+  it('processes a new non-ee layer', () => {
+    setDisasterAndLayers([]);
+    createAndAppend('tbody', 'tbody');
+
+    cy.wrap(processNonEeLayer(LayerType.KML, ['fake-url1', 'fake-url2']))
+        .then(() => {
+          const layers = getCurrentLayers();
+          expect(layers.length).to.equal(1);
+          const layer = layers[0];
+          expect(layer['asset-type']).to.equal(LayerType.KML);
+          expect(layer['color-function']).to.be.undefined;
+          expect(layer['urls'].length).to.equal(2);
         });
   });
 });

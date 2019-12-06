@@ -1,20 +1,20 @@
 import {populateColorFunctions, withColor} from '../../../docs/import/color_function_util.js';
 import * as manageLayersLib from '../../../docs/import/manage_layers_lib.js';
+import {getCurrentLayers} from '../../../docs/import/manage_layers_lib.js';
 import {createTrs, setDisasterAndLayers} from '../../support/import_test_util.js';
-import {addFirebaseHooks, loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
+import {initFirebaseForUnitTest} from '../../support/script_loader';
+import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
 const property = 'color-function';
 let writeToFirebaseStub;
 
 describe('Unit tests for color function utility', () => {
   loadScriptsBeforeForUnitTests('ee', 'firebase', 'jquery');
-  addFirebaseHooks();
+  initFirebaseForUnitTest();
 
   let colorFunctionEditor;
 
   before(() => {
-    cy.wrap(firebase.auth().signInWithCustomToken(firestoreCustomToken));
-
     colorFunctionEditor =
         $(document.createElement('div')).prop('id', 'color-fxn-editor').hide();
     colorFunctionEditor.append(
@@ -27,6 +27,61 @@ describe('Unit tests for color function utility', () => {
 
   beforeEach(() => {
     writeToFirebaseStub = cy.stub(manageLayersLib, 'updateLayersInFirestore');
+    colorFunctionEditor.hide();
+  });
+
+  afterEach(() => colorFunctionEditor.hide());
+
+  it('updates min-max values', () => {
+    // layer in pre-picking a property state
+    const layer = {
+      'color-function': {
+        'current-style': 0,
+        'columns': {
+          'wings': {'min': 0, 'max': 100, 'values': [0, 1, 2, 100]},
+        },
+      },
+    };
+    const td = setUpWithLayer(layer);
+    td.trigger('click');
+    const maxMin = $('#max-min');
+    expect(maxMin.is(':visible')).to.be.false;
+
+    const continuousPropertyPicker = $('#continuous-property-picker');
+    continuousPropertyPicker.val('wings').trigger('change');
+    expectOneFirebaseWrite();
+    expect(maxMin.is(':visible'));
+    const maxInput = $('#continuous-max');
+    const minInput = $('#continuous-min');
+    expect(maxInput.val()).to.equal('100');
+    expect(minInput.val()).to.equal('0');
+    // not one of actual values
+    maxInput.val(20).trigger('blur');
+    expectOneFirebaseWrite();
+    // one of actual values
+    minInput.val(1).trigger('blur');
+    expectOneFirebaseWrite();
+
+    // make sure new values still there on close and reopen.
+    td.trigger('click');
+    td.trigger('click');
+    expect(maxMin.is(':visible'));
+    expect(maxInput.val()).to.equal('20');
+    expect(minInput.val()).to.equal('1');
+    const wings = getCurrentLayers()[0]['color-function']['columns']['wings'];
+    expect(wings['min']).to.equal(1);
+    expect(wings['max']).to.equal(20);
+
+    // try to input a bad val (min < max)
+    const errorDiv = $('#max-min-error');
+    expect(errorDiv.is(':visible')).to.be.false;
+    minInput.val(30).trigger('blur');
+    expect(errorDiv.is(':visible')).to.be.true;
+    expect(errorDiv.text()).to.equal('Error: min value > max value');
+    expect(writeToFirebaseStub).to.not.be.called;
+    minInput.val(10).trigger('blur');
+    expect(errorDiv.is(':visible')).to.be.false;
+    expectOneFirebaseWrite();
   });
 
   it('switches schemas and writes data', () => {
@@ -37,15 +92,11 @@ describe('Unit tests for color function utility', () => {
           'wings': {'min': 0, 'max': 2, 'values': [0, 1, 2]},
           'legs': {'min': 0, 'max': 100, 'values': [0, 2, 4, 8, 100]},
         },
+        'colors': {},
         'color': 'yellow',
       },
     };
-    setDisasterAndLayers([layer]);
-
-    const td = withColor($(document.createElement('td')), layer, property);
-    const row = createTrs(1);
-    row[0].append(td);
-
+    const td = setUpWithLayer(layer);
     expect(colorFunctionEditor.is(':visible')).to.be.false;
 
     td.trigger('click');
@@ -91,7 +142,7 @@ describe('Unit tests for color function utility', () => {
     expect(getColorFunction()['field']).to.equal('legs');
 
     // update discrete color
-    expect(getColorFunction()['colors']).to.be.undefined;
+    expect(getColorFunction()['colors']).to.be.empty;
     discreteColorPickerList.children('li')
         .first()
         .children('select')
@@ -117,6 +168,21 @@ describe('Unit tests for color function utility', () => {
     expect(writeToFirebaseStub).to.not.be.called;
   });
 });
+
+/**
+ * Sets up td in row as expected by code with the given layer information.
+ * @param {Object} layer
+ * @return {JQuery<HTMLElement>}
+ */
+function setUpWithLayer(layer) {
+  setDisasterAndLayers([layer]);
+
+  const td = withColor($(document.createElement('td')), layer, property);
+  const row = createTrs(1);
+  row[0].append(td);
+
+  return td;
+}
 
 /** Asserts we wrote to firebase once and clear stub history. */
 function expectOneFirebaseWrite() {

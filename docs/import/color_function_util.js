@@ -36,14 +36,30 @@ function populateColorFunctions() {
   const continuousPropertyPicker =
       $(document.createElement('select'))
           .prop('id', 'continuous-property-picker');
-  continuousPropertyPicker.on(
-      'change', () => setProperty(continuousPropertyPicker));
-  $('#continuous')
-      .append(
-          createLabelFor(continuousColorPicker, 'base color'),
-          continuousColorPicker, $(document.createElement('br')),
-          createLabelFor(continuousPropertyPicker, 'property'),
-          continuousPropertyPicker);
+  continuousPropertyPicker.on('change', () => {
+    setProperty(continuousPropertyPicker);
+    maybeDisplayMinMax(continuousPropertyPicker);
+  });
+  const minMaxDiv =
+      $(document.createElement('div'))
+          .prop('id', 'min-max')
+          .append([
+            createMinOrMaxInputForContinuous(true, continuousPropertyPicker),
+            createMinOrMaxInputForContinuous(false, continuousPropertyPicker),
+            $(document.createElement('p'))
+                .prop('id', 'max-min-error')
+                .text('Error: min value > max value')
+                .hide(),
+          ])
+          .hide();
+  $('#continuous').append([
+    createLabelFor(continuousColorPicker, 'base color'),
+    continuousColorPicker,
+    $(document.createElement('br')),
+    createLabelFor(continuousPropertyPicker, 'property'),
+    continuousPropertyPicker,
+    minMaxDiv,
+  ]);
 
   const discretePropertyPicker = $(document.createElement('select'))
                                      .prop('id', 'discrete-property-picker');
@@ -91,16 +107,64 @@ function setProperty(picker) {
 }
 
 /**
+ * If there's a set property, ('field' in firestore,) shows the min-max div and
+ * fills it in with the currently picked property's max and min. Else, hides
+ * the min and max and returns early.
+ * @param {JQuery<HTMLElement>} picker
+ */
+function maybeDisplayMinMax(picker) {
+  const property = picker.val();
+  const minMaxDiv = $('#min-max');
+  if (!property) {
+    minMaxDiv.hide();
+    return;
+  }
+  minMaxDiv.show();
+  const stats = getColorFunction()['columns'][property];
+  $('#continuous-min').val(stats['min']);
+  $('#continuous-max').val(stats['max']);
+}
+
+/**
+ * Validates the given min or max value is valid and writes it.
+ * @param {boolean} min
+ * @param {JQuery<HTMLElement>} continuousPropertyPicker
+ * @return {?Promise<void>} Returns when finished writing or null if it just
+ * queued a write and doesn't know when that will finish. Also returns null
+ * if the new max or min value was bad.
+ */
+function updateMinMax(min, continuousPropertyPicker) {
+  const property = continuousPropertyPicker.val();
+  const input = min ? $('#continuous-min') : $('#continuous-max');
+  const potentialNewVal = Number(input.val());
+  const propertyStats = getColorFunction()['columns'][property];
+  let minOrMax;
+  const errorDiv = $('#max-min-error');
+  if (min) {
+    minOrMax = 'min';
+    if (potentialNewVal > propertyStats['max']) {
+      errorDiv.show();
+      return null;
+    }
+  } else {
+    minOrMax = 'max';
+    if (potentialNewVal < propertyStats['min']) {
+      errorDiv.show();
+      return null;
+    }
+  }
+  errorDiv.hide();
+  propertyStats[minOrMax] = potentialNewVal;
+  return updateLayersInFirestore();
+}
+
+/**
  * Updates an individual color choice for a single value in the discrete schema.
  * @param {JQuery<HTMLElement>} picker
  */
 function setDiscreteColor(picker) {
   const colorFunction = getColorFunction();
   const propertyValue = picker.data(discreteColorPickerDataKey);
-  // TODO: remove, always have this around.
-  if (!colorFunction['colors']) {
-    colorFunction['colors'] = {};
-  }
   colorFunction['colors'][propertyValue] = picker.val();
   updateTdAndFirestore();
 }
@@ -113,6 +177,22 @@ function setDiscreteColor(picker) {
 function setColor(picker) {
   getColorFunction()['color'] = picker.val();
   updateTdAndFirestore();
+}
+
+/**
+ *
+ * @param {boolean} min if true, creating for min, else for max
+ * @param {JQuery<HTMLElement>} continuousPropertyPicker
+ * @return {JQuery<HTMLLabelElement>} containing the relevant input
+ */
+function createMinOrMaxInputForContinuous(min, continuousPropertyPicker) {
+  const minOrMax = min ? 'min' : 'max';
+  const input =
+      $(document.createElement('input'))
+          .prop('id', 'continuous-' + minOrMax)
+          .on('blur', () => updateMinMax(min, continuousPropertyPicker));
+  // TODO: add padding to all labels and take out spaces in label text.
+  return $(document.createElement('label')).text(minOrMax + ': ').append(input);
 }
 
 const colorList = Array.from(colorMap.keys());
@@ -271,7 +351,9 @@ function displaySchema(type) {
       break;
     case ColorStyle.CONTINUOUS:
       $('#continuous-color-picker').val(colorFunction['color']);
-      populatePropertyPicker($('#continuous-property-picker'));
+      const picker = $('#continuous-property-picker');
+      populatePropertyPicker(picker);
+      maybeDisplayMinMax(picker);
       $('#continuous').show();
       break;
     case ColorStyle.DISCRETE:
@@ -325,7 +407,6 @@ function populateDiscreteColorPickers() {
     $('#too-many-values').hide();
   }
   const asColorPickers = [];
-  // TODO: remove, always have this around at this point.
   const colors = colorFunction['colors'];
   for (const value of values) {
     const li = $(document.createElement('li'));
@@ -334,7 +415,7 @@ function populateDiscreteColorPickers() {
         createColorPicker()
             .on('change', (event) => setDiscreteColor($(event.target)))
             .data(discreteColorPickerDataKey, value)
-            .val(colors ? colors[value] : null);
+            .val(colors[value]);
     li.append(colorPicker);
     asColorPickers.push(li);
   }
@@ -348,11 +429,6 @@ function populateDiscreteColorPickers() {
  */
 function createColorBoxesForDiscrete(colorFunction, td) {
   const colorObject = colorFunction['colors'];
-  // TODO: remove, always have this around.
-  // coming from a place that has never had discrete before
-  if (!colorObject) {
-    return;
-  }
   const colorSet = new Set();
   Object.keys(colorObject).forEach((propertyValue) => {
     const color = colorObject[propertyValue];

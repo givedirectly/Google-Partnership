@@ -26,6 +26,8 @@
 
   <!-- Load our styles. -->
   <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="manage.css">
+  <link rel="stylesheet" href="manage_disaster.css">
 </head>
 <body>
 <div id="navbar"></div>
@@ -40,7 +42,7 @@
       <label for="name">Disaster Name: </label><input id="name"><label for="name"><i> ex: harvey</i></label><br>
       <label for="year">Disaster Year: </label><input id="year"><label for="year"><i> ex: 2017</i></label><br>
       <!-- TODO(#207): support us territory data sets and add them here -->
-      <label for="states">State(s): </label><select multiple="multiple" id="states" style="height: 160px">
+      <label for="states">State(s): </label><select multiple="multiple" id="states">
       <option value="AL">Alabama</option>
       <option value="AK">Alaska</option>
       <option value="AZ">Arizona</option>
@@ -99,20 +101,22 @@
 <hr/>
   <div id="current-disaster-interaction">
     <button type="button" id="delete" disabled>Delete Current Disaster</button>
-    <div id="score-asset-selection" style="padding-top: 40px;">
+    <div id="score-asset-selection">
       <div class="formTitle">Select Score Data</div>
       <div>
         <table id="asset-selection-table">
           <thead>
-          <tr id="score-asset-header-row">
-          </tr>
+          <tr id="score-asset-header-row"><td>Score Assets</td></tr>
           </thead>
           <tbody id="asset-selection-table-body"></tbody>
         </table>
       </div>
+      <div><label for="damage-asset-select">Damage asset <a href="https://docs.google.com/document/d/1WnjHIexMnlVkn5lqnzYlBVg4aWxh2wVDZI2DBAu-TGI/edit?ts=5de7cd32#bookmark=id.ppvphy5dof7n" target="_blank">(?)</a>: </label><select id="damage-asset-select"></select>
+        <div id="map-bounds-div" hidden>
+         OR (before damage asset available)<br/><label for="map-bounds-sw">Southwest damage bounds, in "lat, lng" format, ex: 39.4, -40.1 <a href="https://docs.google.com/document/d/1WnjHIexMnlVkn5lqnzYlBVg4aWxh2wVDZI2DBAu-TGI/edit?ts=5de7cd32#bookmark=id.pmr206t53gos" target="_blank">(?)</a>: </label><input id="map-bounds-sw"><br/><label for="map-bounds-sw">Northeast damage bounds, in "lat, lng" format: </label><input id="map-bounds-ne"></div>
     </div>
 
-    <button disabled id="process-button">Kick off Data Processing</button> (will take a while!)
+    <button disabled hidden id="process-button"></button>
   </div>
   <div class="g-sign-in hidden">
   <span class="label">Sign in with:</span>
@@ -120,8 +124,8 @@
     <span class="icon"></span>
     <span class="button-text">Google</span>
   </div>
-</div>
-
+  </div>
+  </div>
 <div id="compute-status"></div>
 <div id="upload-status"></div>
 </div>

@@ -19,11 +19,12 @@ let polyLatLng;
 const firebaseCollection = {};
 const calculatedData = {
   damage: 1,
-  snapFraction: 0.6,
+  snapFraction: 0.1,
+  totalHouseholds: 3,
 };
 
 describe('Unit test for ShapeData', () => {
-  loadScriptsBeforeForUnitTests('ee', 'maps', 'firebase');
+  loadScriptsBeforeForUnitTests('ee', 'maps', 'firebase', 'jquery');
   let polygonGeometry;
   let damageCollection;
   before(() => {
@@ -39,10 +40,10 @@ describe('Unit test for ShapeData', () => {
     // Polygon intersects feature1 and feature2, not feature3.
     const feature1 = ee.Feature(
         ee.Geometry.Polygon(0, 0, 0, 10, 10, 10, 10, 0),
-        {'SNAP HOUSEHOLDS': 1, 'TOTAL HOUSEHOLDS': 2});
+        {'SNAP HOUSEHOLDS': 1, 'TOTAL HOUSEHOLDS': 20});
     const feature2 = ee.Feature(
         ee.Geometry.Polygon(10, 0, 10, 10, 20, 10, 20, 0),
-        {'SNAP HOUSEHOLDS': 3, 'TOTAL HOUSEHOLDS': 4});
+        {'SNAP HOUSEHOLDS': 3, 'TOTAL HOUSEHOLDS': 40});
     const feature3 = ee.Feature(
         ee.Geometry.Polygon(20, 0, 20, 10, 30, 10, 30, 0),
         {'SNAP HOUSEHOLDS': 1000, 'TOTAL HOUSEHOLDS': 1000});
@@ -209,7 +210,7 @@ describe('Unit test for ShapeData', () => {
         .then((map) => {
           event.overlay = new google.maps.Polygon({
             map: map,
-            paths: [{lat: 0, lng: 0}, {lat: 1, lng: 1}, {lat: 0, lng: 1}],
+            paths: [{lat: 0, lng: 0}, {lat: 4, lng: 2}, {lat: 0, lng: 2}],
           });
           return setUpPolygonDrawing(map, Promise.resolve());
         })
@@ -228,6 +229,7 @@ describe('Unit test for ShapeData', () => {
     cy.get('.popup-calculated-data')
         .should('have.css', 'color')
         .and('eq', 'rgb(0, 0, 0)');
+    cy.get('.popup-calculated-data').contains('damage count: 1');
   });
 
   it('Draws marker, edits notes, then deletes', () => {
@@ -338,7 +340,8 @@ describe('Unit test for ShapeData', () => {
         })
         .then(() => {
           expect(records).to.eql([{
-            calculatedData: {damage: 'unknown', snapFraction: 0.6},
+            calculatedData:
+                {damage: 'unknown', snapFraction: 0.1, totalHouseholds: 3},
             geometry: polygonGeometry,
             notes: 'my notes',
           }]);
