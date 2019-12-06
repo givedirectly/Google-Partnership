@@ -127,34 +127,34 @@ function maybeDisplayMinMax(picker) {
 
 /**
  * Validates the given min or max value is valid and writes it.
- * @param {JQuery<HTMLElement>} input
+ * @param {boolean} min
  * @param {JQuery<HTMLElement>} continuousPropertyPicker
  * @return {?Promise<void>} Returns when finished writing or null if it just
  * queued a write and doesn't know when that will finish. Also returns null
  * if there the new max or min value was bad.
  */
-function updateMinMax(input, continuousPropertyPicker) {
+function updateMinMax(min, continuousPropertyPicker) {
   const property = continuousPropertyPicker.val();
+  const input = min ? $('#continuous-min') : $('#continuous-max');
   const potentialNewVal = Number(input.val());
   const propertyStats = getColorFunction()['columns'][property];
-  const min = input.prop('id') === 'continuous-min';
-  let string;
+  let minOrMax;
   const errorDiv = $('#max-min-error');
   if (min) {
-    string = 'min';
+    minOrMax = 'min';
     if (potentialNewVal > propertyStats['max']) {
       errorDiv.show();
       return null;
     }
   } else {
-    string = 'max';
+    minOrMax = 'max';
     if (potentialNewVal < propertyStats['min']) {
       errorDiv.show();
       return null;
     }
   }
   errorDiv.hide();
-  propertyStats[string] = potentialNewVal;
+  propertyStats[minOrMax] = potentialNewVal;
   return updateLayersInFirestore();
 }
 
@@ -191,11 +191,10 @@ function setColor(picker) {
  */
 function createMinOrMaxInputForContinuous(min, continuousPropertyPicker) {
   const minOrMax = min ? 'min' : 'max';
-  const input = $(document.createElement('input'))
-                    .prop('id', 'continuous-' + minOrMax)
-                    .on('blur',
-                        (event) => updateMinMax(
-                            $(event.target), continuousPropertyPicker));
+  const input =
+      $(document.createElement('input'))
+          .prop('id', 'continuous-' + minOrMax)
+          .on('blur', () => updateMinMax(min, continuousPropertyPicker));
   // TODO(juliexxia): add padding to all labels and take out spaces in label
   // text.
   return $(document.createElement('label')).text(minOrMax + ': ').append(input);
