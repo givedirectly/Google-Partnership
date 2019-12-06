@@ -8,6 +8,9 @@ export {
   initialPovertyThreshold,
   initialPovertyWeight,
   setUpInitialToggleValues,
+  povertyThresholdKey,
+  damageThresholdKey,
+  povertyWeightKey,
 };
 /* @VisibleForTesting */
 export {toggles};
@@ -17,11 +20,11 @@ let initialDamageThreshold = 0.0;
 // The initial damage weight is 1-this value.
 let initialPovertyWeight = 1.0;
 
-const povertyThreshold = 'poverty threshold';
-const damageThreshold = 'damage threshold';
-const povertyWeight = 'poverty weight';
+const povertyThresholdKey = 'poverty threshold';
+const damageThresholdKey = 'damage threshold';
+const povertyWeightKey = 'poverty weight';
 
-const toggles = new Map([povertyThreshold, initialPovertyThreshold]);
+const toggles = new Map([[povertyThresholdKey, initialPovertyThreshold]]);
 
 const povertyWeightValueId = 'poverty weight value';
 const damageWeightValueId = 'damage weight value';
@@ -42,9 +45,7 @@ function update(map) {
   }
 
   removeScoreLayer();
-  createAndDisplayJoinedData(
-      map, toggles.get('poverty threshold'), toggles.get('damage threshold'),
-      toggles.get('poverty weight'));
+  createAndDisplayJoinedData(map, Promise.resolve(toggles));
   // clear old listeners
   google.maps.event.clearListeners(map, 'click');
   google.maps.event.clearListeners(map.data, 'click');
@@ -56,7 +57,7 @@ let hasDamageAsset = null;
  * Initializes, damage-related toggle values based on whether or not we have
  * a damage asset.
  * @param {Promise<Object>} disasterMetadataPromise
- * @return {Promise<void>} returns when we've set up all the toggle initial
+ * @return {Promise<Map<string, number>>} returns all the toggle initial
  * values.
  */
 function setUpInitialToggleValues(disasterMetadataPromise) {
@@ -66,8 +67,9 @@ function setUpInitialToggleValues(disasterMetadataPromise) {
       initialDamageThreshold = 0.5;
       initialPovertyWeight = 0.5;
     }
-    toggles.set(damageThreshold, initialDamageThreshold);
-    toggles.set(povertyWeight, initialPovertyWeight);
+    toggles.set(damageThresholdKey, initialDamageThreshold);
+    toggles.set(povertyWeightKey, initialPovertyWeight);
+    return toggles;
   });
 }
 
@@ -91,10 +93,10 @@ function createToggles(map) {
   thresholdTitle.className = 'formTitle';
   thresholdTitle.innerHTML = 'thresholds';
   form.appendChild(thresholdTitle);
-  form.appendChild(createInput(povertyThreshold));
+  form.appendChild(createInput(povertyThresholdKey));
 
   if (hasDamageAsset) {
-    form.appendChild(createInput(damageThreshold));
+    form.appendChild(createInput(damageThresholdKey));
 
     // weight toggle
     const weightInputDiv = document.createElement('div');
@@ -162,6 +164,7 @@ function createInput(toggle) {
   const input = createBasicToggleInputElement(toggle);
   input.type = 'number';
   thresholdInputDiv.appendChild(input);
+  return thresholdInputDiv;
 }
 
 /**

@@ -36,12 +36,9 @@ function run(map, firebaseAuthPromise, disasterMetadataPromise) {
   setMapToDrawLayersOn(map);
   snapAndDamagePromise =
       convertEeObjectToPromise(ee.FeatureCollection(snapAndDamageAsset));
-  setUpInitialToggleValues(disasterMetadataPromise).then(() => {
-    createToggles(map);
-    createAndDisplayJoinedData(
-        map, initialPovertyThreshold, initialDamageThreshold,
-        initialPovertyWeight);
-  });
+  const initialTogglesValuesPromise = setUpInitialToggleValues(disasterMetadataPromise);
+  initialTogglesValuesPromise.then(() => createToggles(map));
+  createAndDisplayJoinedData(map, initialTogglesValuesPromise);
   initializeAndProcessUserRegions(map, disasterMetadataPromise);
   disasterMetadataPromise.then((doc) => addLayers(map, doc.data().layers));
 }
@@ -53,25 +50,18 @@ let featureSelectListener = null;
  * Creates the score overlay and draws the table
  *
  * @param {google.maps.Map} map main map
- * @param {number} povertyThreshold a number between 0 and 1 representing what
- *     fraction of the population must be SNAP eligible to be considered.
- * @param {number} damageThreshold a number between 0 and 1 representing what
- *     fraction of a block group's building must be damaged to be considered.
- * @param {number} povertyWeight float between 0 and 1 that describes what
- *     percentage of the score should be based on poverty (this is also a proxy
- *     for damageWeight which is 1-this value).
- * @param {number} numLayers number of layers stored in firebase for this
- *     disaster.
+ * @param {Promise<Map<string, number>>} initialTogglesValuesPromise promise
+ * that returns the poverty and damage thresholds and the poverty weight (from
+ * which the damage weight is derived).
  */
-function createAndDisplayJoinedData(
-    map, povertyThreshold, damageThreshold, povertyWeight) {
+function createAndDisplayJoinedData(map, initialTogglesValuesPromise) {
   addLoadingElement(tableContainerId);
   // clear old listeners
   google.maps.event.removeListener(mapSelectListener);
   google.maps.event.removeListener(featureSelectListener);
+  // TODO: doesn't this return a promise?
   const processedData = processJoinedData(
-      snapAndDamagePromise, scalingFactor, povertyThreshold, damageThreshold,
-      povertyWeight);
+      snapAndDamagePromise, scalingFactor, initialTogglesValuesPromise);
   addScoreLayer(processedData);
   maybeCheckScoreCheckbox();
   drawTable(

@@ -1,4 +1,5 @@
 import {damageTag, scoreTag, snapPercentageTag} from './property_names.js';
+import {povertyThresholdKey, damageThresholdKey, povertyWeightKey} from './update.js';
 
 export {processJoinedData as default};
 
@@ -52,19 +53,19 @@ function colorAndRate(
  * @param {number} scalingFactor multiplies the raw score, it can be
  *     adjusted to make sure that the values span the desired range of ~0 to
  *     ~100.
- * @param {number} povertyThreshold between 0 and 1 representing what
- *     fraction of a population must be SNAP eligible to be considered.
- * @param {number} damageThreshold a number between 0 and 1 representing what
- *     fraction of a block group's building must be damaged to be considered.
- * @param {number} povertyWeight float between 0 and 1 that describes what
- *     percentage of the score should be based on poverty (this is also a proxy
- *     for damageWeight which is 1-this value).
+ * @param {Promise<Map<string, number>>} initialTogglesValuesPromise promise
+ * that returns the poverty and damage thresholds and the poverty weight (from
+ * which the damage weight is derived).
  * @return {Promise}
  */
 function processJoinedData(
-    dataPromise, scalingFactor, povertyThreshold, damageThreshold,
-    povertyWeight) {
-  return dataPromise.then((featureCollection) => {
+    dataPromise, scalingFactor, initialTogglesValuesPromise) {
+  return Promise.all([dataPromise, initialTogglesValuesPromise]).then((results) => {
+    const featureCollection = results[0];
+    const toggleValues = results[1];
+    const povertyThreshold = toggleValues.get(povertyThresholdKey);
+    const damageThreshold = toggleValues.get(damageThresholdKey);
+    const povertyWeight = toggleValues.get(povertyWeightKey);
     for (const feature of featureCollection.features) {
       colorAndRate(
           feature, scalingFactor, povertyThreshold, damageThreshold,
