@@ -2,7 +2,7 @@ import {disasterData, getCurrentData} from '../../../docs/import/manage_layers_l
 import * as LayerUtil from '../../../docs/layer_util.js';
 import * as Run from '../../../docs/run.js';
 import {setUpInitialToggleValues} from '../../../docs/update.js';
-import {createToggles, damageThresholdKey, povertyThresholdKey, povertyWeightKey, toggles} from '../../../docs/update.js';
+import {createToggles, toggles} from '../../../docs/update.js';
 import {initFirebaseForUnitTest, loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
 let lastPassedPovertyThreshold;
@@ -63,10 +63,12 @@ describe('Unit test for updates.js', () => {
     expect($('input').length).to.equal(3);
   });
 
-  it('does have a damage asset', () => {cy.wrap(setUpDamageAsset()).then(() => {
-                                   createToggles({});
-                                   expect($('input').length).to.equal(5);
-                                 })});
+  it('does have a damage asset', () => {
+    cy.wrap(setUpDamageAsset()).then(() => {
+      createToggles({});
+      expect($('input').length).to.equal(5);
+    });
+  });
 
   it('updates weight labels', () => {
     cy.wrap(setUpDamageAsset()).then(() => {
@@ -144,6 +146,7 @@ describe('Unit test for updates.js', () => {
   });
 });
 
+/** Sets up as if we have a damage asset. */
 function setUpDamageAsset() {
   const currentDisaster = '2005-fall';
   disasterData.set(currentDisaster, {asset_data: {damage_asset_path: 'foo'}});

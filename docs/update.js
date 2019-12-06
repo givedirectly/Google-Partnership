@@ -66,10 +66,14 @@ function setUpInitialToggleValues(disasterMetadataPromise) {
   });
 }
 
+/**
+ * Gets all the toggle values as an array.
+ * @return {[number, number, number]}
+ */
 function getValuesAsArray() {
   return [
     toggles.get(povertyThresholdKey), toggles.get(damageThresholdKey),
-    toggles.get(povertyWeightKey)
+    toggles.get(povertyWeightKey),
   ];
 }
 
