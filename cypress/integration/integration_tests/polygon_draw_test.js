@@ -13,20 +13,6 @@ describe('Integration tests for drawing polygons', () => {
     cy.get('.map').contains(notes);
   });
 
-  // TODO(janakr): re-enable or delete.
-  xit('Draws a polygon, calculates damage', () => {
-    cy.visit('');
-    // Sometimes the map load interacts strangely with the search. So wait.
-    cy.awaitLoad();
-    cy.get('[placeholder="Search"]').clear().type('Aldine Estates{enter}');
-    drawPolygonAndClickOnIt(-250);
-    cy.get('.popup-calculated-data').contains('damage count: 1');
-    cy.get('.popup-calculated-data').contains('Approximate SNAP fraction: 0.4');
-    cy.get('.popup-calculated-data')
-        .should('have.css', 'color')
-        .and('eq', 'rgb(0, 0, 0)');
-  });
-
   it('Draws a polygon and deletes it', () => {
     // Accept confirmation when it happens.
     cy.on('window:confirm', () => true);

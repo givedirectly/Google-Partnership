@@ -1,6 +1,5 @@
 describe('Integration test for the navbar', () => {
-  // TODO(janakr): re-enable when we have multiple disasters.
-  xit('Switch disasters', () => {
+  it('Switch disasters', () => {
     cy.visit('');
 
     // Michael on top of Harvey.
