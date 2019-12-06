@@ -455,7 +455,6 @@ function addKmlLayers(layer, map) {
   const overlays = [];
   for (let i = 0; i < layer['urls'].length; i++) {
     const kmlLayer =new google.maps.KmlLayer(layer['urls'][i], {
-      suppressInfoWindows: false,
       preserveViewport: true,
       map: map,
       clickable: false,
