@@ -289,7 +289,7 @@ function displayCalculatedData(calculatedData, parentDiv) {
     divWithText('damage count: ' + calculatedData.damage),
     divWithText('approximate SNAP fraction: ' + calculatedData.snapFraction),
     divWithText(
-        'approximate total households: ' + calculatedData.totalHouseholds)
+        'approximate total households: ' + calculatedData.totalHouseholds),
   ]);
 }
 

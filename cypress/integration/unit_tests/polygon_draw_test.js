@@ -20,7 +20,7 @@ const firebaseCollection = {};
 const calculatedData = {
   damage: 1,
   snapFraction: 0.1,
-  totalHouseholds: 3
+  totalHouseholds: 3,
 };
 
 describe('Unit test for ShapeData', () => {
