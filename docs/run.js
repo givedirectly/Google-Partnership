@@ -9,7 +9,7 @@ import {initializeAndProcessUserRegions} from './polygon_draw.js';
 import {setUserFeatureVisibility} from './popup.js';
 import processJoinedData from './process_joined_data.js';
 import {getScoreAsset} from './resources.js';
-import {createToggles, initialDamageThreshold, initialPovertyThreshold, initialPovertyWeight} from './update.js';
+import {createToggles, initialDamageThreshold, initialPovertyThreshold, initialPovertyWeight, setUpInitialToggleValues} from './update.js';
 
 export {
   createAndDisplayJoinedData,
@@ -34,12 +34,14 @@ const scalingFactor = 100;
  */
 function run(map, firebaseAuthPromise, disasterMetadataPromise) {
   setMapToDrawLayersOn(map);
-  createToggles(map);
   snapAndDamagePromise =
       convertEeObjectToPromise(ee.FeatureCollection(snapAndDamageAsset));
-  createAndDisplayJoinedData(
-      map, initialPovertyThreshold, initialDamageThreshold,
-      initialPovertyWeight);
+  setUpInitialToggleValues(disasterMetadataPromise).then(() => {
+    createToggles(map);
+    createAndDisplayJoinedData(
+        map, initialPovertyThreshold, initialDamageThreshold,
+        initialPovertyWeight);
+  });
   initializeAndProcessUserRegions(map, disasterMetadataPromise);
   disasterMetadataPromise.then((doc) => addLayers(map, doc.data().layers));
 }
