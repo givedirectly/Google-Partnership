@@ -131,7 +131,7 @@ function maybeDisplayMinMax(picker) {
  * @param {JQuery<HTMLElement>} continuousPropertyPicker
  * @return {?Promise<void>} Returns when finished writing or null if it just
  * queued a write and doesn't know when that will finish. Also returns null
- * if there the new max or min value was bad.
+ * if the new max or min value was bad.
  */
 function updateMinMax(min, continuousPropertyPicker) {
   const property = continuousPropertyPicker.val();

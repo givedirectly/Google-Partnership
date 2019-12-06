@@ -32,7 +32,7 @@ describe('Unit tests for color function utility', () => {
 
   afterEach(() => colorFunctionEditor.hide());
 
-  it.only('updates min-max values', () => {
+  it('updates min-max values', () => {
     // layer in pre-picking a property state
     const layer = {
       'color-function': {
