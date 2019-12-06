@@ -1,10 +1,10 @@
 import {tableContainerId} from '../../../docs/dom_constants.js';
 import {tableHeadings} from '../../../docs/draw_table.js';
 import {currentFeatures} from '../../../docs/highlight_features';
-import * as loading from '../../../docs/loading.js'
+import * as loading from '../../../docs/loading.js';
 import {convertEeObjectToPromise} from '../../../docs/map_util.js';
 import {blockGroupTag} from '../../../docs/property_names';
-import {geoidTag, scoreTag} from '../../../docs/property_names.js';
+import {scoreTag} from '../../../docs/property_names.js';
 import {drawTableAndSetUpHandlers} from '../../../docs/run.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 import {createGoogleMap} from '../../support/test_map.js';
@@ -26,7 +26,7 @@ describe('Unit tests for click_feature.js with map and table', () => {
         ee.FeatureCollection([feature1, feature2, offMapFeature, otherFeature]);
     scoredFeatures = ee.FeatureCollection([
       feature1.set(scoreTag, 1), feature2.set(scoreTag, 3),
-      offMapFeature.set(scoreTag, 2), otherFeature.set(scoreTag, 0)
+      offMapFeature.set(scoreTag, 2), otherFeature.set(scoreTag, 0),
     ]);
   });
 
@@ -43,9 +43,9 @@ describe('Unit tests for click_feature.js with map and table', () => {
       loading.loadingElementFinished =
           (id) => {
             if (id === tableContainerId) resolve();
-          }
+          };
     });
-    createGoogleMap().then((mapResult) => map = mapResult)
+    createGoogleMap().then((mapResult) => map = mapResult);
     cy.document().then((doc) => {
       // Lightly fake out prod document access.
       cy.stub(document, 'getElementById')

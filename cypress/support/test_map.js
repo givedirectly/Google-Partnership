@@ -1,5 +1,3 @@
-import {geoPointToLatLng} from '../../docs/map_util.js';
-
 export {createGoogleMap};
 
 /**
