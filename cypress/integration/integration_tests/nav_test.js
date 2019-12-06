@@ -18,6 +18,7 @@ describe('Integration test for the navbar', () => {
     cy.get('.google-visualization-table-td').contains('Florida');
 
     cy.visit('');
+    cy.awaitLoad();
 
     // On reload, the most recently selected disaster should be persisted.
     cy.get('#disaster-dropdown').should('have.value', '2018-michael');
