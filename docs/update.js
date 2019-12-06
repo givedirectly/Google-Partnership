@@ -1,5 +1,6 @@
 import {showError} from './error.js';
 import {removeScoreLayer} from './layer_util.js';
+import {getScoreAsset} from './resources.js';
 import {createAndDisplayJoinedData} from './run.js';
 
 export {
@@ -42,7 +43,7 @@ function update(map) {
 
   removeScoreLayer();
   createAndDisplayJoinedData(map, toggles.get('poverty threshold'), toggles.get(
-      'damage threshold'), toggles.get('poverty weight'), snapAndDamageAsset);
+      'damage threshold'), toggles.get('poverty weight'), getScoreAsset());
   // clear old listeners
   google.maps.event.clearListeners(map, 'click');
   google.maps.event.clearListeners(map.data, 'click');

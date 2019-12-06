@@ -12,7 +12,7 @@ function createGoogleMap() {
   return cy.document().then((document) => {
     const div = document.createElement('div');
     div.id = 'test-map-div';
-    div.style = 'height: 60%';
+    div.style = 'height: 80%; width: 100%';
     document.body.appendChild(div);
     const map = new google.maps.Map(div, {center: {lat: 0, lng: 0}, zoom: 1});
     map.fitBounds(new google.maps.LatLngBounds(

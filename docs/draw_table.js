@@ -77,26 +77,34 @@ function renderTable(
   const dataView = new google.visualization.DataView(data);
   // don't display geoid
   dataView.hideColumns([0]);
-  // Instantiate and draw the chart.
-  const table = new google.visualization.ChartWrapper({
-    'chartType': 'Table',
-    'containerId': 'table',
-    'dataTable': dataView,
-    'options': {
-      'page': 'enable',
-      'pageSize': 25,
-      'sortColumn': 1,
-      'sortAscending': false,
-    },
-  });
-  table.draw();
-  waitForChart(table, () => selectorReceiver(
-          makeLambda(new TableSelecter(table.getChart(), list))));
+  const table = new google.visualization.Table(document.getElementById('table'));
+  table.draw(dataView, {page: 'enable', pageSize: 25, sortColumn: 1, sortAscending: false});
+  // // Instantiate and draw the chart.
+  // const table = new google.visualization.ChartWrapper({
+  //   'chartType': 'Table',
+  //   'containerId': 'table',
+  //   'dataTable': dataView,
+  //   'options': {
+  //     'page': 'enable',
+  //     'pageSize': 25,
+  //     'sortColumn': 1,
+  //     'sortAscending': false,
+  //   },
+  // });
+  selectorReceiver(
+      makeLambda(new TableSelector(table, list)));
+  // google.visualization.events.addListener(table, 'ready', () => selectorReceiver(
+  //     makeLambda(new TableSelector(table, list)))
+  //     // makeLambda(new TableSelector(table.getChart(), list)))
+  // );
 
   google.visualization.events.addListener(table, 'select', () => {
-    const selection = table.getChart().getSelection();
+    const selection = table.getSelection();
+    // const selection = table.getChart().getSelection();
     selectTableCallback(selection.map((elt) => features[elt.row]));
   });
+  // table.draw();
+  // waitForChart(table, () => {});
 
   const downloadButton = document.getElementById('downloadButton');
   // Generate content and download on click.
@@ -113,6 +121,7 @@ function waitForChart(table, callback) {
   if (table.getChart() === null) {
     setTimeout(() => waitForChart(table, callback), 100);
   } else {
+    console.log('finally non-null');
     callback();
   }
 }
@@ -135,7 +144,7 @@ function makeLambda(tableSelecter) {
   return (geoids) => tableSelecter.selectRowsFor(geoids);
 }
 
-class TableSelecter {
+class TableSelector {
   constructor(table, tableData) {
     this.table = table;
     this.tableData = tableData;
