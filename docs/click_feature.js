@@ -1,5 +1,7 @@
+import {tableHeadings} from './draw_table.js';
 import {currentFeatures, highlightFeatures} from './highlight_features.js';
 import {blockGroupTag, geoidTag} from './property_names.js';
+
 export {clickFeature, selectHighlightedFeatures};
 
 /**
@@ -9,12 +11,10 @@ export {clickFeature, selectHighlightedFeatures};
  * @param {number} lng longitude of the click
  * @param {number} lat latitude of the click
  * @param {google.maps.Map} map
- * @param {string} featuresAsset asset path of features which could be clicked.
- * @param {google.visualization.TableChart} table the actual table object
- * @param {array} tableData 2-d array with inner arrays of form {@code headings}
- *        in draw_table.js where the first inner array is {@code headings}.
+ * @param {ee.FeatureCollection} featuresAsset asset path of features which could be clicked
+ * @param {Function} tableSelector See drawTable
  */
-function clickFeature(lng, lat, map, featuresAsset, table, tableData) {
+function clickFeature(lng, lat, map, featuresAsset, tableSelector) {
   const point = ee.Geometry.Point(lng, lat);
   const blockGroups = ee.FeatureCollection(featuresAsset).filterBounds(point);
   const selected = blockGroups.first();
@@ -31,20 +31,12 @@ function clickFeature(lng, lat, map, featuresAsset, table, tableData) {
     // Allow unselecting via the map.
     if (currentKeys.length === 1 && currentKeys.includes(geoid)) {
       highlightFeatures([], map);
-      table.setSelection([]);
+      tableSelector([]);
     } else {
       highlightFeatures([feature], map);
-      const rowNumber = findRowNumber(geoid, tableData);
-      // TODO: flip to page of the list the highlighted area is on if not
-      // current page.
-      if (rowNumber === null) {
-        table.setSelection([]);
-      } else {
-        // underlying data does not include headings row.
-        table.setSelection([{row: rowNumber - 1, column: null}]);
-      }
+      const rowData = tableSelector([geoid]);
       const infoWindow = new google.maps.InfoWindow();
-      infoWindow.setContent(createHtmlForPopup(feature, tableData, rowNumber));
+      infoWindow.setContent(createHtmlForPopup(feature, rowData));
       const borderPoint = feature.geometry.coordinates[0][0];
       infoWindow.setPosition(
           new google.maps.LatLng({lat: borderPoint[1], lng: borderPoint[0]}));
@@ -57,35 +49,33 @@ function clickFeature(lng, lat, map, featuresAsset, table, tableData) {
 /**
  * Puts the information for a blockgroup into a div.
  * @param {Feature} feature post-evaluate JSON feature
- * @param {array} tableData 2-d array with inner arrays of form {@code headings}
- *        in draw_table.js where the first inner array is {@code headings}.
- * @param {?integer} rowNumber the row in the table with relevent info
- * @return {HTMLDivElement}
+ * @param {?Array<string>} rowData Data from selected row in table for this feature, if found
+ * @return {HTMLDivElement} Div with information
  */
-function createHtmlForPopup(feature, tableData, rowNumber) {
+function createHtmlForPopup(feature, rowData) {
   const div = document.createElement('div');
   const heading = document.createElement('h4');
   heading.innerText = feature.properties[blockGroupTag];
   const properties = document.createElement('ul');
   properties.style.listStyleType = 'none';
   // We know the score was 0 if the block group isn't in the list
-  if (rowNumber === null) {
+  if (rowData === null) {
     const property = document.createElement('li');
     property.innerText = 'SCORE: 0';
     properties.appendChild(property);
   } else {
     const property = document.createElement('li');
-    property.innerText = 'SCORE: ' + tableData[rowNumber][2];
+    property.innerText = 'SCORE: ' + rowData[2];
     properties.appendChild(property);
   }
-  const headings = tableData[0];
-  for (let col = 3; col < headings.length; col++) {
+  for (let col = 3; col < tableHeadings.length; col++) {
+    const heading = tableHeadings[col];
     const property = document.createElement('li');
-    let value = feature.properties[headings[col]];
-    if (headings[col].endsWith(' PERCENTAGE')) {
+    let value = feature.properties[heading];
+    if (heading.endsWith(' PERCENTAGE')) {
       value = parseFloat(value).toFixed(3);
     }
-    property.innerText = headings[col] + ': ' + value;
+    property.innerText = heading + ': ' + value;
     properties.appendChild(property);
   }
   div.appendChild(heading);
@@ -97,18 +87,10 @@ function createHtmlForPopup(feature, tableData, rowNumber) {
  * Given the new table and data, reselect all the current features. This is
  * meant to be called after an 'update';
  *
- * @param {google.visualization.TableChart} table the actual table object
- * @param {array} tableData 2-d array with inner arrays of form {@code headings}
- *        in draw_table.js where the first inner array is {@code headings}.
+ * @param {Function} tableSelector Selects table rows with specified geoids
  */
-function selectHighlightedFeatures(table, tableData) {
-  const selection = [];
-  for (const geoid of currentFeatures.keys()) {
-    const row = findRowNumber(geoid, tableData);
-    // underlying data does not include headings row.
-    selection.push({row: row - 1, column: null});
-  }
-  table.setSelection(selection);
+function selectHighlightedFeatures(tableSelector) {
+  tableSelector(currentFeatures.keys());
 }
 
 /**

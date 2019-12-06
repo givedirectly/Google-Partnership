@@ -60,6 +60,14 @@ const scriptMap = new Map([
       callback: () => typeof ($) !== 'undefined',
     },
   ],
+    [
+        'charts',
+      {
+        script: 'https://www.gstatic.com/charts/loader.js',
+        callback: () => typeof (google) !== 'undefined' &&
+            typeof (google.charts) !== 'undefined',
+      }
+    ],
 ]);
 
 let earthEngineCustomToken = null;
@@ -80,6 +88,7 @@ function loadScriptsBeforeForUnitTests(...scriptKeys) {
   const scriptsSet = new Set(scriptKeys);
   const usesEe = scriptsSet.has('ee');
   const usesFirebase = scriptsSet.has('firebase');
+  const usesCharts = scriptsSet.has('charts');
   before(() => {
     const callbacks = [];
     const extraScripts = new Map();
@@ -133,6 +142,11 @@ function loadScriptsBeforeForUnitTests(...scriptKeys) {
     // initFirebaseForUnitTest.
     before(() => {
       firebase.initializeApp(getFirebaseConfig(/* inProduction */ false));
+    });
+  }
+  if (usesCharts) {
+    before(() => {
+      google.charts.load('current', {packages: ['table', 'controls']});
     });
   }
 }

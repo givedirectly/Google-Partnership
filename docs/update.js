@@ -41,9 +41,8 @@ function update(map) {
   }
 
   removeScoreLayer();
-  createAndDisplayJoinedData(
-      map, toggles.get('poverty threshold'), toggles.get('damage threshold'),
-      toggles.get('poverty weight'));
+  createAndDisplayJoinedData(map, toggles.get('poverty threshold'), toggles.get(
+      'damage threshold'), toggles.get('poverty weight'), snapAndDamageAsset);
   // clear old listeners
   google.maps.event.clearListeners(map, 'click');
   google.maps.event.clearListeners(map.data, 'click');

@@ -1,4 +1,5 @@
 import {createError} from './error.js';
+import {currentFeatures} from './highlight_features.js';
 import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, scoreTag, snapPercentageTag, sviTag, totalPopTag} from './property_names.js';
 
 export {drawTable, tableHeadings};
@@ -19,13 +20,12 @@ const tableHeadings = [
  * Display a ranked table of the given features that have non-zero score.
  *
  * @param {Promise} scoredFeatures
- * @param {Object} selectTableCallback Callback to be invoked for selected table
- *     row
- * @param {Object} chartAndFeaturesReceiver receiver for chart and contents
- *     when they are ready.
+ * @param {Function} selectTableCallback Callback to be invoked for selected
+ *     table row. Not invoked on rows selected via the selectorReceiver below
+ * @param {Function} selectorReceiver receiver for a function that, given an Iterable of geoid strings, will select the desired rows in the table
  */
 function drawTable(
-    scoredFeatures, selectTableCallback, chartAndFeaturesReceiver) {
+    scoredFeatures, selectTableCallback, selectorReceiver) {
   // Create download button.
   const downloadButton = document.createElement('button');
   downloadButton.style.visibility = 'hidden';
@@ -52,7 +52,7 @@ function drawTable(
         // https://developers.google.com/chart/interactive/docs/basic_load_libs#Callback
         google.charts.setOnLoadCallback(
             () => renderTable(
-                list, features, selectTableCallback, chartAndFeaturesReceiver));
+                list, features, selectTableCallback, selectorReceiver));
         // Set download button to visible once table data is loaded.
         document.getElementById('downloadButton').style.visibility = 'visible';
         // TODO(juliexxia): more robust error reporting
@@ -68,13 +68,11 @@ function drawTable(
  *
  * @param {Array} list The data to display in the chart, with headings
  * @param {Array} features The list of features corresponding to that data
- * @param {Object} selectTableCallback Callback to be invoked for selected table
- *     row
- * @param {Object} chartAndFeaturesReceiver receiver for chart and contents
- *     when they are ready.
+ * @param {Function} selectTableCallback See {@link drawTable}
+ * @param {Function} selectorReceiver receiver See {@link drawTable}
  */
 function renderTable(
-    list, features, selectTableCallback, chartAndFeaturesReceiver) {
+    list, features, selectTableCallback, selectorReceiver) {
   const data = google.visualization.arrayToDataTable(list, false);
   const dataView = new google.visualization.DataView(data);
   // don't display geoid
@@ -91,13 +89,16 @@ function renderTable(
       'sortAscending': false,
     },
   });
+  table.draw();
+  google.visualization.events.addOneTimeListener(
+      table, 'ready',
+      () => selectorReceiver(
+          makeLambda(new TableSelecter(table.getChart(), list))));
+
   google.visualization.events.addListener(table, 'select', () => {
     const selection = table.getChart().getSelection();
     selectTableCallback(selection.map((elt) => features[elt.row]));
   });
-  table.draw();
-
-  chartAndFeaturesReceiver(table.getChart(), list);
 
   const downloadButton = document.getElementById('downloadButton');
   // Generate content and download on click.
@@ -122,4 +123,51 @@ function downloadContent(content) {
   downloadLink.download = 'data.csv';
 
   downloadLink.click();
+}
+
+function makeLambda(tableSelecter) {
+  return (geoids) => tableSelecter.selectRowsFor(geoids);
+}
+
+class TableSelecter {
+  constructor(table, tableData) {
+    this.table = table;
+    this.tableData = tableData;
+  }
+
+  /**
+   * Finds the rows with the given geoids and selects them in the table.
+   * @param {Iterable<string>} geoids Ids of rows (0th element)
+   * @return {?Array<string>} selected row, if exactly one was found, or null
+   */
+  selectRowsFor(geoids) {
+    const selection = [];
+    for (const geoid of currentFeatures.keys()) {
+      const row = this.findRowNumber(geoid);
+      // underlying data does not include headings row.
+      selection.push({row: row - 1, column: null});
+    }
+    // TODO: flip to page of the list the selected area is on if not current
+    //  page.
+    this.table.setSelection(selection);
+    if (selection.length === 1) {
+      return this.tableData[selection[0]];
+    }
+    return null;
+  }
+
+  /**
+   * Given a geoid, find it in the tableData
+   *
+   * @param {string} geoid
+   * @return {number|null}
+   */
+  findRowNumber(geoid) {
+    for (let i = 1; i < this.tableData.length; i++) {
+      if (this.tableData[i][0] === geoid) {
+        return i;
+      }
+    }
+    return null;
+  }
 }
