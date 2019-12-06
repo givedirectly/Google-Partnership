@@ -9,7 +9,7 @@ import {initializeAndProcessUserRegions} from './polygon_draw.js';
 import {setUserFeatureVisibility} from './popup.js';
 import processJoinedData from './process_joined_data.js';
 import {getScoreAsset} from './resources.js';
-import {createToggles, initialDamageThreshold, initialPovertyThreshold, initialPovertyWeight, setUpInitialToggleValues} from './update.js';
+import {createToggles, setUpInitialToggleValues} from './update.js';
 
 export {
   createAndDisplayJoinedData,

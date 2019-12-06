@@ -148,6 +148,7 @@ function createToggles(map) {
 /**
  * Creates an div including input and label for the given toggle.
  * @param {string} toggle
+ * @return {HTMLDivElement}
  */
 function createInput(toggle) {
   const thresholdInputDiv = document.createElement('div');
