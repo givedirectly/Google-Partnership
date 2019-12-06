@@ -38,7 +38,7 @@ function populateColorFunctions() {
           .prop('id', 'continuous-property-picker');
   continuousPropertyPicker.on('change', () => {
     setProperty(continuousPropertyPicker);
-    displayMinMax(continuousPropertyPicker);
+    maybeDisplayMinMax(continuousPropertyPicker);
   });
   const minMaxDiv =
       $(document.createElement('div'))
@@ -111,7 +111,7 @@ function setProperty(picker) {
  * max and min if there is one. Else, hides the min and max and returns early.
  * @param {JQuery<HTMLElement>} picker
  */
-function displayMinMax(picker) {
+function maybeDisplayMinMax(picker) {
   const property = picker.val();
   const minMaxDiv = $('#min-max');
   if (!property) {
@@ -356,7 +356,7 @@ function displaySchema(type) {
       $('#continuous-color-picker').val(colorFunction['color']);
       const picker = $('#continuous-property-picker');
       populatePropertyPicker(picker);
-      displayMinMax(picker);
+      maybeDisplayMinMax(picker);
       $('#continuous').show();
       break;
     case ColorStyle.DISCRETE:
