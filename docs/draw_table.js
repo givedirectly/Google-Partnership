@@ -48,6 +48,7 @@ function drawTable(
         for (const feature of features) {
           list.push(tableHeadings.map((col) => feature.properties[col]));
         }
+        console.log('got features fine');
         // Multiple calls to this are fine:
         // https://developers.google.com/chart/interactive/docs/basic_load_libs#Callback
         google.charts.setOnLoadCallback(
@@ -90,6 +91,7 @@ function renderTable(
     },
   });
   table.draw();
+  waitForChart(table);
   google.visualization.events.addOneTimeListener(
       table, 'ready',
       () => selectorReceiver(
@@ -111,6 +113,14 @@ function renderTable(
   });
 }
 
+function waitForChart(table) {
+  if (table.getChart() === null) {
+    setTimeout(() => waitForChart(table), 100);
+  } else {
+
+    console.log('got non-null chart: ' + table.getChart());
+  }
+}
 /**
  * Generates a file with the content passed and downloads it.
  *
@@ -142,7 +152,7 @@ class TableSelecter {
    */
   selectRowsFor(geoids) {
     const selection = [];
-    for (const geoid of currentFeatures.keys()) {
+    for (const geoid of geoids) {
       const row = this.findRowNumber(geoid);
       // underlying data does not include headings row.
       selection.push({row: row - 1, column: null});
@@ -151,7 +161,7 @@ class TableSelecter {
     //  page.
     this.table.setSelection(selection);
     if (selection.length === 1) {
-      return this.tableData[selection[0]];
+      return this.tableData[selection[0].row + 1];
     }
     return null;
   }

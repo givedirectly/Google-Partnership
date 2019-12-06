@@ -92,20 +92,3 @@ function createHtmlForPopup(feature, rowData) {
 function selectHighlightedFeatures(tableSelector) {
   tableSelector(currentFeatures.keys());
 }
-
-/**
- * Given a geoid, find it in the tableData
- *
- * @param {string} geoid
- * @param {array} tableData 2-d array with inner arrays of form {@code headings}
- *        in draw_table.js where the first inner array is {@code headings}.
- * @return {number|null}
- */
-function findRowNumber(geoid, tableData) {
-  for (let i = 1; i < tableData.length; i++) {
-    if (tableData[i][0] === geoid) {
-      return i;
-    }
-  }
-  return null;
-}

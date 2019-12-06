@@ -1,16 +1,15 @@
+import {tableContainerId} from '../../../docs/dom_constants.js';
 import {tableHeadings} from '../../../docs/draw_table.js';
 import {convertEeObjectToPromise} from '../../../docs/map_util.js';
 import {
-  blockGroupTag, buildingCountTag, damageTag,
-  geoidTag, incomeTag, scoreTag,
-  snapPercentageTag, sviTag, totalPopTag
+  geoidTag, scoreTag
 } from '../../../docs/property_names.js';
 import {
-  addClickFeatureListener,
   drawTableAndSetUpHandlers
 } from '../../../docs/run.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 import {createGoogleMap} from '../../support/test_map.js';
+import * as loading from '../../../docs/loading.js'
 
 describe('Unit test for click_feature.js with map', () => {
   loadScriptsBeforeForUnitTests('ee', 'charts', 'maps');
@@ -19,23 +18,30 @@ describe('Unit test for click_feature.js with map', () => {
     const feature1 = createFeatureFromCorners(-10, -10, 10, 10);
     const otherFeature = createFeatureFromCorners(-11, -11, -10, -10);
     const features = ee.FeatureCollection([feature1, otherFeature]);
-    const scoredFeatures = features.map((f) => f.set(scoreTag, ee.Number(f.get(geoidTag)).eq(-10)));
     let map;
+    const loadingFinishedPromise = new Promise((resolve) => {
+      loading.loadingElementFinished = (id) => {
+        if (id === tableContainerId) resolve();
+      }
+    });
     createGoogleMap().then((mapResult) => map = mapResult);
     cy.document().then((doc) => {
+      // Lightly fake out prod
+      cy.stub(document, 'getElementById')
+          .callsFake((id) => doc.getElementById(id));
+      cy.stub(document, 'createElement')
+          .callsFake((tag) => doc.createElement(tag));
       const containerDiv = doc.createElement('div');
       containerDiv.id = 'tableContainer';
       doc.body.appendChild(containerDiv);
       const tableDiv = doc.createElement('div');
       tableDiv.id = 'table';
       containerDiv.appendChild(tableDiv);
-      // Lightly fake out prod
-      cy.stub(document, 'getElementById')
-          .callsFake((id) => doc.getElementById(id));
-      drawTableAndSetUpHandlers(convertEeObjectToPromise(scoredFeatures).then((fc) => fc.features), map, features);
+      drawTableAndSetUpHandlers(Promise.resolve(JSON.parse(scoreResult)), map, features);
     });
+    cy.wrap(loadingFinishedPromise);
     cy.get('#test-map-div').click(0, 1);
-
+    cy.get('#test-map-div').should('contain', 'SCORE: 1');
   })
 });
 
@@ -50,3 +56,5 @@ function createFeature(...polygonCoordinates) {
   }
   return result;
 }
+
+const scoreResult = '[{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-10,-10],[10,-10],[10,10],[-10,10],[-10,-10]]]},"id":"0","properties":{"BLOCK GROUP":-10,"BUILDING COUNT":10,"DAMAGE PERCENTAGE":10,"GEOID":-10,"SCORE":1,"SNAP PERCENTAGE":10,"SVI":-10,"TOTAL HOUSEHOLDS":10}},{"type":"Feature","geometry":{"type":"Polygon","coordinates":[[[-11,-11],[-10,-11],[-10,-10],[-11,-10],[-11,-11]]]},"id":"1","properties":{"BLOCK GROUP":-11,"BUILDING COUNT":-10,"DAMAGE PERCENTAGE":-10,"GEOID":-11,"SCORE":0,"SNAP PERCENTAGE":-10,"SVI":-11,"TOTAL HOUSEHOLDS":-10}}]';
