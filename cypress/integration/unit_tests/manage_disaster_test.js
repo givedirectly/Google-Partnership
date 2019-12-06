@@ -1,6 +1,7 @@
 import {getFirestoreRoot, readDisasterDocument} from '../../../docs/firestore_document.js';
 import {assetDataTemplate, createDisasterData} from '../../../docs/import/create_disaster_lib.js';
-import {assetSelectionRowPrefix, disasterData, initializeDamageSelector, initializeScoreSelectors, run, scoreAssetTypes, setUpScoreSelectorTable, stateAssets, validateUserFields} from '../../../docs/import/manage_disaster';
+import {createScoreAsset} from '../../../docs/import/create_score_asset.js';
+import {assetSelectionRowPrefix, disasterData, initializeDamageSelector, initializeScoreSelectors, scoreAssetTypes, setUpScoreSelectorTable, stateAssets, validateUserFields} from '../../../docs/import/manage_disaster';
 import {addDisaster, deleteDisaster, writeNewDisaster} from '../../../docs/import/manage_disaster.js';
 import {createOptionFrom} from '../../../docs/import/manage_layers.js';
 import {convertEeObjectToPromise} from '../../../docs/map_util';
@@ -98,7 +99,7 @@ describe('Unit tests for manage_disaster.js', () => {
   it('Basic test', () => {
     const {boundsPromise, mapBoundsCallback} =
         makeCallbackForTextAndPromise('Found bounds');
-    const promise = run(testData, mapBoundsCallback);
+    const promise = createScoreAsset(testData, mapBoundsCallback);
     expect(promise).to.not.be.null;
     cy.wrap(promise)
         .then(() => {
@@ -137,7 +138,7 @@ describe('Unit tests for manage_disaster.js', () => {
 
     const {boundsPromise, mapBoundsCallback} =
         makeCallbackForTextAndPromise('Wrote bounds');
-    const promise = run(testData, mapBoundsCallback);
+    const promise = createScoreAsset(testData, mapBoundsCallback);
     expect(promise).to.not.be.null;
     cy.wrap(promise)
         .then(() => {
@@ -166,7 +167,7 @@ describe('Unit tests for manage_disaster.js', () => {
 
   it('Test missing data', () => {
     testData.asset_data = null;
-    expect(run(testData)).to.be.null;
+    expect(createScoreAsset(testData)).to.be.null;
     expect(exportStub).to.not.be.called;
   });
 
@@ -605,9 +606,9 @@ function scaleObject(object) {
 }
 
 /**
- * Creates a callback for use with {@link run} so that we will be informed when
- * the Firestore write has completed. Returns a Promise that can be waited on
- * for that write to complete.
+ * Creates a callback for use with {@link createScoreAsset} so that we will be
+ * informed when the Firestore write has completed. Returns a Promise that can
+ * be waited on for that write to complete.
  * @param {string} expectedText Text contained in message when Firestore write
  *     is complete
  * @return {{boundsPromise: Promise, mapBoundsCallback: Function}}
