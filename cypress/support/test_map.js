@@ -15,6 +15,7 @@ function createGoogleMap() {
     div.style = 'height: 80%; width: 100%';
     document.body.appendChild(div);
     const map = new google.maps.Map(div, {center: {lat: 0, lng: 0}, zoom: 1});
+    // Corresponds to zoom level 0.
     map.fitBounds(new google.maps.LatLngBounds(
         new google.maps.LatLng({lat: 0, lng: 0}),
         new google.maps.LatLng({lat: 1, lng: 1})));

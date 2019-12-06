@@ -1,5 +1,4 @@
 import {createError} from './error.js';
-import {currentFeatures} from './highlight_features.js';
 import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, scoreTag, snapPercentageTag, sviTag, totalPopTag} from './property_names.js';
 
 export {drawTable, tableHeadings};
@@ -81,32 +80,12 @@ function renderTable(list, features, selectTableCallback, selectorReceiver) {
   table.draw(
       dataView,
       {page: 'enable', pageSize: 25, sortColumn: 1, sortAscending: false});
-  // // Instantiate and draw the chart.
-  // const table = new google.visualization.ChartWrapper({
-  //   'chartType': 'Table',
-  //   'containerId': 'table',
-  //   'dataTable': dataView,
-  //   'options': {
-  //     'page': 'enable',
-  //     'pageSize': 25,
-  //     'sortColumn': 1,
-  //     'sortAscending': false,
-  //   },
-  // });
-  selectorReceiver(makeLambda(new TableSelector(table, list)));
-  // google.visualization.events.addListener(table, 'ready', () =>
-  // selectorReceiver(
-  //     makeLambda(new TableSelector(table, list)))
-  //     // makeLambda(new TableSelector(table.getChart(), list)))
-  // );
+  selectorReceiver(makeTableSelectorLambda(new TableSelector(table, list)));
 
-  google.visualization.events.addListener(table, 'select', () => {
-    const selection = table.getSelection();
-    // const selection = table.getChart().getSelection();
-    selectTableCallback(selection.map((elt) => features[elt.row]));
-  });
-  // table.draw();
-  // waitForChart(table, () => {});
+  google.visualization.events.addListener(
+      table, 'select',
+      () => selectTableCallback(
+          table.getSelection().map((elt) => features[elt.row])));
 
   const downloadButton = document.getElementById('downloadButton');
   // Generate content and download on click.
@@ -117,15 +96,6 @@ function renderTable(list, features, selectTableCallback, selectorReceiver) {
         columnHeaders + '\n' + google.visualization.dataTableToCsv(data);
     downloadContent(content);
   });
-}
-
-function waitForChart(table, callback) {
-  if (table.getChart() === null) {
-    setTimeout(() => waitForChart(table, callback), 100);
-  } else {
-    console.log('finally non-null');
-    callback();
-  }
 }
 
 /**
@@ -142,11 +112,25 @@ function downloadContent(content) {
   downloadLink.click();
 }
 
-function makeLambda(tableSelecter) {
-  return (geoids) => tableSelecter.selectRowsFor(geoids);
+/**
+ * Wraps up a {@link TableSelector} in an opaque lambda for use by external callers.
+ * @param {TableSelector} tableSelector
+ * @return {Function} A function that takes an iterable of strings and selects rows in the table whose geoids are those strings. The function returns the row selected if there was exactly one, or null otherwise
+ */
+function makeTableSelectorLambda(tableSelector) {
+  return (geoids) => tableSelector.selectRowsFor(geoids);
 }
 
+/**
+ * Utility class to do the work of finding matching rows in the table and
+ * selecting them.
+ */
 class TableSelector {
+  /**
+   * @constructor
+   * @param {google.visualization.Table} table
+   * @param {Array<Array<string>>} tableData
+   */
   constructor(table, tableData) {
     this.table = table;
     this.tableData = tableData;

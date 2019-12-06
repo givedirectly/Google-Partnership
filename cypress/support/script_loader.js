@@ -65,7 +65,7 @@ const scriptMap = new Map([
       script: 'https://www.gstatic.com/charts/loader.js',
       callback: () => typeof (google) !== 'undefined' &&
           typeof (google.charts) !== 'undefined',
-    }
+    },
   ],
 ]);
 

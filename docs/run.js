@@ -75,6 +75,13 @@ function createAndDisplayJoinedData(
   drawTableAndSetUpHandlers(processedData, map, scoreAsset);
 }
 
+/**
+ * Invokes {@link drawTable} with the appropriate callbacks to set up click
+ * handlers for the map.
+ * @param {Promise<Array<GeoJson.Feature>>} processedData
+ * @param {google.maps.Map} map
+ * @param {string} scoreAsset EE path to score asset FeatureCollection
+ */
 function drawTableAndSetUpHandlers(processedData, map, scoreAsset) {
   drawTable(
       processedData, (features) => highlightFeatures(features, map, true),
@@ -83,29 +90,20 @@ function drawTableAndSetUpHandlers(processedData, map, scoreAsset) {
         // every time we get a new table and data, reselect elements in the
         // table based on {@code currentFeatures} in highlight_features.js.
         selectHighlightedFeatures(tableSelector);
-        addClickFeatureListener(map, tableSelector, scoreAsset);
+        // TODO: handle ctrl+click situations
+        mapSelectListener = map.addListener(
+            'click',
+            (event) => clickFeature(
+                event.latLng.lng(), event.latLng.lat(), map, scoreAsset,
+                tableSelector));
+        // map.data covers clicks to map areas underneath map.data so we need
+        // two listeners
+        featureSelectListener = map.data.addListener(
+            'click',
+            (event) => clickFeature(
+                event.latLng.lng(), event.latLng.lat(), map, scoreAsset,
+                tableSelector));
       });
-}
-
-/**
- * Adds listener to map so that we can pop up info box for a feature that's
- * clicked on.
- * @param {google.maps.Map} map
- * @param {Function} tableSelector Selects table rows with specified geoids
- * @param {ee.FeatureCollection} scoreAsset
- */
-function addClickFeatureListener(map, tableSelector, scoreAsset) {
-  // TODO: handle ctrl+click situations
-  mapSelectListener = map.addListener('click', (event) => {
-    clickFeature(
-        event.latLng.lng(), event.latLng.lat(), map, scoreAsset, tableSelector);
-  });
-  // map.data covers clicks to map areas underneath map.data so we need
-  // two listeners
-  featureSelectListener = map.data.addListener('click', (event) => {
-    clickFeature(
-        event.latLng.lng(), event.latLng.lat(), map, scoreAsset, tableSelector);
-  });
 }
 
 /**
