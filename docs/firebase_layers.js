@@ -61,7 +61,12 @@ function createContinuousFunction(field, minVal, maxVal, color) {
   const white = colorMap.get('white');
   const range = maxVal - minVal;
   return (feature) => {
-    const value = feature['properties'][field];
+    let value = feature['properties'][field];
+    if (value > maxVal) {
+      value = maxVal;
+    } else if (value < minVal) {
+      value = minVal;
+    }
     const rgba = [];
     for (let i = 0; i < 3; i++) {
       // https://www.alanzucconi.com/2016/01/06/colour-interpolation/
