@@ -8,7 +8,7 @@ export {
   povertyThresholdKey,
   povertyWeightKey,
   setUpInitialToggleValues,
-  toggles
+  toggles,
 };
 
 const povertyThresholdKey = 'poverty threshold';
