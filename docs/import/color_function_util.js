@@ -53,10 +53,12 @@ function populateColorFunctions() {
           ])
           .hide();
   $('#continuous').append([
-    createLabelFor(continuousColorPicker, 'base color'), continuousColorPicker,
+    createLabelFor(continuousColorPicker, 'base color'),
+    continuousColorPicker,
     $(document.createElement('br')),
     createLabelFor(continuousPropertyPicker, 'property'),
-    continuousPropertyPicker, minMaxDiv,
+    continuousPropertyPicker,
+    minMaxDiv,
   ]);
 
   const discretePropertyPicker = $(document.createElement('select'))
@@ -186,10 +188,11 @@ function setColor(picker) {
  */
 function createMinOrMaxInputForContinuous(min, continuousPropertyPicker) {
   const minOrMax = min ? 'min' : 'max';
-  const input =
-      $(document.createElement('input'))
-          .prop('id', 'continuous-' + minOrMax)
-          .on('blur', (event) => updateMinMax($(event.input), continuousPropertyPicker));
+  const input = $(document.createElement('input'))
+                    .prop('id', 'continuous-' + minOrMax)
+                    .on('blur',
+                        (event) => updateMinMax(
+                            $(event.input), continuousPropertyPicker));
   // TODO(juliexxia): add padding to all labels and take out spaces in label
   // text.
   return $(document.createElement('label')).text(minOrMax + ': ').append(input);
