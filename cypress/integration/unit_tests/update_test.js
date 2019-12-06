@@ -35,16 +35,18 @@ describe('Unit test for updates.js', () => {
   beforeEach(() => {
     // function that resolves the createAndDisplayJoinedDataPromise
     let resolvePromise;
-    createAndDisplayJoinedDataPromise = new Promise((resolve) => resolvePromise = () => resolve());
-    createAndDisplayJoinedDataStub = cy.stub(Run, 'createAndDisplayJoinedData')
-        .callsFake((map, valuesPromise) => {
-          valuesPromise.then((toggles) => {
-            lastPassedPovertyThreshold = toggles[0];
-            lastPassedDamageThreshold = toggles[1];
-            lastPassedPovertyWeight = toggles[2];
-            resolvePromise();
-          });
-        });
+    createAndDisplayJoinedDataPromise =
+        new Promise((resolve) => resolvePromise = () => resolve());
+    createAndDisplayJoinedDataStub =
+        cy.stub(Run, 'createAndDisplayJoinedData')
+            .callsFake((map, valuesPromise) => {
+              valuesPromise.then((toggles) => {
+                lastPassedPovertyThreshold = toggles[0];
+                lastPassedDamageThreshold = toggles[1];
+                lastPassedPovertyWeight = toggles[2];
+                resolvePromise();
+              });
+            });
     cy.stub(LayerUtil, 'removeScoreLayer');
 
     lastPassedDamageThreshold = null;
@@ -61,12 +63,10 @@ describe('Unit test for updates.js', () => {
     expect($('input').length).to.equal(3);
   });
 
-  it('does have a damage asset', () => {
-    cy.wrap(setUpDamageAsset()).then(() => {
-      createToggles({});
-      expect($('input').length).to.equal(5);
-    })
-  });
+  it('does have a damage asset', () => {cy.wrap(setUpDamageAsset()).then(() => {
+                                   createToggles({});
+                                   expect($('input').length).to.equal(5);
+                                 })});
 
   it('updates weight labels', () => {
     cy.wrap(setUpDamageAsset()).then(() => {
