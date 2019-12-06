@@ -55,8 +55,8 @@ let hasDamageAsset = null;
 /**
  * Initializes, damage-related toggle values based on whether or not we have
  * a damage asset.
- * @param disasterMetadataPromise
- * @return Promise<void> returns when we've set up all the toggle initial
+ * @param {Promise<Object>} disasterMetadataPromise
+ * @return {Promise<void>} returns when we've set up all the toggle initial
  * values.
  */
 function setUpInitialToggleValues(disasterMetadataPromise) {
@@ -67,7 +67,7 @@ function setUpInitialToggleValues(disasterMetadataPromise) {
       initialPovertyWeight = 0.5;
     }
     toggles.set(damageThreshold, initialDamageThreshold);
-    toggles.set(povertyWeight, initialPovertyWeight)
+    toggles.set(povertyWeight, initialPovertyWeight);
   });
 }
 
