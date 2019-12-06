@@ -25,8 +25,10 @@ describe('Unit tests for click_feature.js with map and table', () => {
     features =
         ee.FeatureCollection([feature1, feature2, offMapFeature, otherFeature]);
     scoredFeatures = ee.FeatureCollection([
-      feature1.set(scoreTag, 1), feature2.set(scoreTag, 3),
-      offMapFeature.set(scoreTag, 2), otherFeature.set(scoreTag, 0),
+      feature1.set(scoreTag, 1),
+      feature2.set(scoreTag, 3),
+      offMapFeature.set(scoreTag, 2),
+      otherFeature.set(scoreTag, 0),
     ]);
   });
 
@@ -40,10 +42,9 @@ describe('Unit tests for click_feature.js with map and table', () => {
   function setUpPage() {
     let map;
     const loadingFinishedPromise = new Promise((resolve) => {
-      loading.loadingElementFinished =
-          (id) => {
-            if (id === tableContainerId) resolve();
-          };
+      loading.loadingElementFinished = (id) => {
+        if (id === tableContainerId) resolve();
+      };
     });
     createGoogleMap().then((mapResult) => map = mapResult);
     cy.document().then((doc) => {
