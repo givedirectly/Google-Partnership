@@ -40,7 +40,7 @@ function update(map) {
   }
 
   removeScoreLayer();
-  createAndDisplayJoinedData(map, Promise.resolve(toggles));
+  createAndDisplayJoinedData(map, Promise.resolve(getValuesAsArray()));
   // clear old listeners
   google.maps.event.clearListeners(map, 'click');
   google.maps.event.clearListeners(map.data, 'click');
@@ -52,7 +52,7 @@ let hasDamageAsset = null;
  * Initializes, damage-related toggle values based on whether or not we have
  * a damage asset.
  * @param {Promise<Object>} disasterMetadataPromise
- * @return {Promise<Map<string, number>>} returns all the toggle initial
+ * @return {Promise<Array<number>>} returns all the toggle initial
  * values.
  */
 function setUpInitialToggleValues(disasterMetadataPromise) {
@@ -62,8 +62,12 @@ function setUpInitialToggleValues(disasterMetadataPromise) {
       toggles.set(damageThresholdKey, 0.5);
       toggles.set(povertyWeightKey, 0.5);
     }
-    return toggles;
+    return getValuesAsArray();
   });
+}
+
+function getValuesAsArray() {
+  return [toggles.get(povertyThresholdKey), toggles.get(damageThresholdKey), toggles.get(povertyWeightKey)];
 }
 
 /**
@@ -129,9 +133,7 @@ function createToggles(map) {
   }
 
   // buttons
-  form.appendChild(createButton('update', () => {
-    update(map);
-  }));
+  form.appendChild(createButton('update', () => update(map)));
   form.appendChild(document.createElement('br'));
   form.appendChild(createButton('current settings', reset));
 
@@ -150,7 +152,7 @@ function createInput(toggle) {
 
   const label = document.createElement('label');
   label.for = toggle;
-  label.id = 'for ' + toggle;
+  label.id = 'for-' + toggle;
   label.innerHTML = ' ' + toggle;
   thresholdInputDiv.appendChild(label);
 

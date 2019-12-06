@@ -51,7 +51,7 @@ let featureSelectListener = null;
  * Creates the score overlay and draws the table
  *
  * @param {google.maps.Map} map main map
- * @param {Promise<Map<string, number>>} initialTogglesValuesPromise promise
+ * @param {Promise<Array<number>>} initialTogglesValuesPromise promise
  * that returns the poverty and damage thresholds and the poverty weight (from
  * which the damage weight is derived).
  */
@@ -60,7 +60,6 @@ function createAndDisplayJoinedData(map, initialTogglesValuesPromise) {
   // clear old listeners
   google.maps.event.removeListener(mapSelectListener);
   google.maps.event.removeListener(featureSelectListener);
-  // TODO: doesn't this return a promise?
   const processedData = processJoinedData(
       snapAndDamagePromise, scalingFactor, initialTogglesValuesPromise);
   addScoreLayer(processedData);
