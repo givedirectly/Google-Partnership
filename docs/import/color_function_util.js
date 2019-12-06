@@ -49,14 +49,14 @@ function populateColorFunctions() {
             $(document.createElement('p'))
                 .prop('id', 'max-min-error')
                 .val('Error: min value > max value')
-                .hide()
+                .hide(),
           ])
           .hide();
   $('#continuous').append([
     createLabelFor(continuousColorPicker, 'base color'), continuousColorPicker,
     $(document.createElement('br')),
     createLabelFor(continuousPropertyPicker, 'property'),
-    continuousPropertyPicker, minMaxDiv
+    continuousPropertyPicker, minMaxDiv,
   ]);
 
   const discretePropertyPicker = $(document.createElement('select'))
@@ -104,16 +104,31 @@ function setProperty(picker) {
   updateTdAndFirestore();
 }
 
+/**
+ * Shows the min-max div and fills it in with the currently picked property's
+ * max and min if there is one. Else, hides the min and max and returns early.
+ * @param {JQuery<HTMLElement>} picker
+ */
 function displayMinMax(picker) {
-  $('#min-max').show();
   const property = picker.val();
+  const minMaxDiv = $('#min-max');
+  if (!property) {
+    minMaxDiv.hide();
+    return;
+  }
+  minMaxDiv.show();
   const stats = getColorFunction()['columns'][property];
   $('#continuous-min').val(stats['min']);
   $('#continuous-max').val(stats['max']);
 }
 
-function updateMinMax(event, continuousPropertyPicker) {
-  const input = $(event.target);
+/**
+ * Validates the given min or max value is valid and writes it.
+ * @param {JQuery<HTMLElement>} input
+ * @param {JQuery<HTMLElement>} continuousPropertyPicker
+ * @return {?Promise<void>} See updateLayersInFirestore doc
+ */
+function updateMinMax(input, continuousPropertyPicker) {
   const property = continuousPropertyPicker.val();
   const potentialNewVal = Number(input.val());
   const propertyStats = getColorFunction()['columns'][property];
@@ -135,7 +150,7 @@ function updateMinMax(event, continuousPropertyPicker) {
   }
   errorDiv.hide();
   propertyStats[string] = potentialNewVal;
-  updateLayersInFirestore()
+  return updateLayersInFirestore();
 }
 
 /**
@@ -174,7 +189,7 @@ function createMinOrMaxInputForContinuous(min, continuousPropertyPicker) {
   const input =
       $(document.createElement('input'))
           .prop('id', 'continuous-' + minOrMax)
-          .on('blur', (event) => updateMinMax(event, continuousPropertyPicker));
+          .on('blur', (event) => updateMinMax($(event.input), continuousPropertyPicker));
   // TODO(juliexxia): add padding to all labels and take out spaces in label
   // text.
   return $(document.createElement('label')).text(minOrMax + ': ').append(input);
@@ -338,7 +353,7 @@ function displaySchema(type) {
       $('#continuous-color-picker').val(colorFunction['color']);
       const picker = $('#continuous-property-picker');
       populatePropertyPicker(picker);
-      if (picker.val()) displayMinMax(picker);
+      displayMinMax(picker);
       $('#continuous').show();
       break;
     case ColorStyle.DISCRETE:
