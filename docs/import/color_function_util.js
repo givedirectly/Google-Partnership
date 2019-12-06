@@ -48,7 +48,7 @@ function populateColorFunctions() {
             createMinOrMaxInputForContinuous(false, continuousPropertyPicker),
             $(document.createElement('p'))
                 .prop('id', 'max-min-error')
-                .val('Error: min value > max value')
+                .text('Error: min value > max value')
                 .hide(),
           ])
           .hide();
@@ -107,8 +107,9 @@ function setProperty(picker) {
 }
 
 /**
- * Shows the min-max div and fills it in with the currently picked property's
- * max and min if there is one. Else, hides the min and max and returns early.
+ * If there's a set property, ('field' in firestore,) shows the min-max div and
+ * fills it in with the currently picked property's max and min. Else, hides
+ * the min and max and returns early.
  * @param {JQuery<HTMLElement>} picker
  */
 function maybeDisplayMinMax(picker) {
@@ -128,7 +129,9 @@ function maybeDisplayMinMax(picker) {
  * Validates the given min or max value is valid and writes it.
  * @param {JQuery<HTMLElement>} input
  * @param {JQuery<HTMLElement>} continuousPropertyPicker
- * @return {?Promise<void>} See updateLayersInFirestore doc
+ * @return {?Promise<void>} Returns when finished writing or null if it just
+ * queued a write and doesn't know when that will finish. Also returns null
+ * if there the new max or min value was bad.
  */
 function updateMinMax(input, continuousPropertyPicker) {
   const property = continuousPropertyPicker.val();
@@ -141,13 +144,13 @@ function updateMinMax(input, continuousPropertyPicker) {
     string = 'min';
     if (potentialNewVal > propertyStats['max']) {
       errorDiv.show();
-      return;
+      return null;
     }
   } else {
     string = 'max';
     if (potentialNewVal < propertyStats['min']) {
       errorDiv.show();
-      return;
+      return null;
     }
   }
   errorDiv.hide();
@@ -192,7 +195,7 @@ function createMinOrMaxInputForContinuous(min, continuousPropertyPicker) {
                     .prop('id', 'continuous-' + minOrMax)
                     .on('blur',
                         (event) => updateMinMax(
-                            $(event.input), continuousPropertyPicker));
+                            $(event.target), continuousPropertyPicker));
   // TODO(juliexxia): add padding to all labels and take out spaces in label
   // text.
   return $(document.createElement('label')).text(minOrMax + ': ').append(input);

@@ -32,7 +32,7 @@ describe('Unit tests for color function utility', () => {
 
   afterEach(() => colorFunctionEditor.hide());
 
-  it('updates min-max values', () => {
+  it.only('updates min-max values', () => {
     // layer in pre-picking a property state
     const layer = {
       'color-function': {
@@ -77,7 +77,7 @@ describe('Unit tests for color function utility', () => {
     expect(errorDiv.is(':visible')).to.be.false;
     minInput.val(30).trigger('blur');
     expect(errorDiv.is(':visible')).to.be.true;
-    expect(errorDiv.val()).to.equal('Error: min value > max value');
+    expect(errorDiv.text()).to.equal('Error: min value > max value');
     expect(writeToFirebaseStub).to.not.be.called;
     minInput.val(10).trigger('blur');
     expect(errorDiv.is(':visible')).to.be.false;
