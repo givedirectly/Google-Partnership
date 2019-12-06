@@ -37,6 +37,7 @@ describe('Unit tests for color function utility', () => {
           'wings': {'min': 0, 'max': 2, 'values': [0, 1, 2]},
           'legs': {'min': 0, 'max': 100, 'values': [0, 2, 4, 8, 100]},
         },
+        'colors': {},
         'color': 'yellow',
       },
     };
@@ -91,7 +92,7 @@ describe('Unit tests for color function utility', () => {
     expect(getColorFunction()['field']).to.equal('legs');
 
     // update discrete color
-    expect(getColorFunction()['colors']).to.be.undefined;
+    expect(getColorFunction()['colors']).to.be.empty;
     discreteColorPickerList.children('li')
         .first()
         .children('select')
