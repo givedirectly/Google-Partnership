@@ -195,8 +195,7 @@ function createMinOrMaxInputForContinuous(min, continuousPropertyPicker) {
       $(document.createElement('input'))
           .prop('id', 'continuous-' + minOrMax)
           .on('blur', () => updateMinMax(min, continuousPropertyPicker));
-  // TODO(juliexxia): add padding to all labels and take out spaces in label
-  // text.
+  // TODO: add padding to all labels and take out spaces in label text.
   return $(document.createElement('label')).text(minOrMax + ': ').append(input);
 }
 
