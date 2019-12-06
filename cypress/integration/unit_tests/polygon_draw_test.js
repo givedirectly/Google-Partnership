@@ -340,7 +340,8 @@ describe('Unit test for ShapeData', () => {
         })
         .then(() => {
           expect(records).to.eql([{
-            calculatedData: {damage: 'unknown', snapFraction: 0.1, totalHouseholds: 3},
+            calculatedData:
+                {damage: 'unknown', snapFraction: 0.1, totalHouseholds: 3},
             geometry: polygonGeometry,
             notes: 'my notes',
           }]);
