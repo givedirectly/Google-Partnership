@@ -452,11 +452,13 @@ function addKmlLayers(layer, map) {
   layerArray[layer['index']] = layerDisplayData;
   const overlays = [];
   for (let i = 0; i < layer['urls'].length; i++) {
-    overlays.push(new google.maps.KmlLayer(layer['urls'][i], {
+    const kmlLayer =new google.maps.KmlLayer(layer['urls'][i], {
       suppressInfoWindows: false,
       preserveViewport: true,
       map: map,
-    }));
+      clickable: false,
+    });
+    overlays.push(kmlLayer);
   }
   layerDisplayData.overlay = overlays;
   return Promise.resolve();
