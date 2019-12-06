@@ -146,7 +146,10 @@ describe('Unit test for updates.js', () => {
   });
 });
 
-/** Sets up as if we have a damage asset. */
+/**
+ * Sets up as if we have a damage asset.
+ * @return {Promise<Array<number>>}
+ */
 function setUpDamageAsset() {
   const currentDisaster = '2005-fall';
   disasterData.set(currentDisaster, {asset_data: {damage_asset_path: 'foo'}});
