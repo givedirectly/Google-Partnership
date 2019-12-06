@@ -2,7 +2,6 @@ import {eeLegacyPathPrefix, legacyStateDir} from '../ee_paths.js';
 import {LayerType} from '../firebase_layers.js';
 import {disasterCollectionReference} from '../firestore_document.js';
 import {getDisaster} from '../resources.js';
-
 import {createDisasterData} from './create_disaster_lib.js';
 import {createScoreAsset, setStatus} from './create_score_asset.js';
 import {getDisasterAssetsFromEe, getStatesAssetsFromEe} from './list_ee_assets.js';
