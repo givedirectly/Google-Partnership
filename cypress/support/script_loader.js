@@ -60,14 +60,13 @@ const scriptMap = new Map([
       callback: () => typeof ($) !== 'undefined',
     },
   ],
-    [
-        'charts',
-      {
-        script: 'https://www.gstatic.com/charts/loader.js',
-        callback: () => typeof (google) !== 'undefined' &&
-            typeof (google.charts) !== 'undefined',
-      }
-    ],
+  [
+    'charts', {
+      script: 'https://www.gstatic.com/charts/loader.js',
+      callback: () => typeof (google) !== 'undefined' &&
+          typeof (google.charts) !== 'undefined',
+    }
+  ],
 ]);
 
 let earthEngineCustomToken = null;

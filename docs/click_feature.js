@@ -11,7 +11,8 @@ export {clickFeature, selectHighlightedFeatures};
  * @param {number} lng longitude of the click
  * @param {number} lat latitude of the click
  * @param {google.maps.Map} map
- * @param {ee.FeatureCollection} featuresAsset asset path of features which could be clicked
+ * @param {ee.FeatureCollection} featuresAsset asset path of features which
+ *     could be clicked
  * @param {Function} tableSelector See drawTable
  */
 function clickFeature(lng, lat, map, featuresAsset, tableSelector) {
@@ -49,7 +50,8 @@ function clickFeature(lng, lat, map, featuresAsset, tableSelector) {
 /**
  * Puts the information for a blockgroup into a div.
  * @param {Feature} feature post-evaluate JSON feature
- * @param {?Array<string>} rowData Data from selected row in table for this feature, if found
+ * @param {?Array<string>} rowData Data from selected row in table for this
+ *     feature, if found
  * @return {HTMLDivElement} Div with information
  */
 function createHtmlForPopup(feature, rowData) {

@@ -13,7 +13,7 @@ import {createToggles, initialDamageThreshold, initialPovertyThreshold, initialP
 
 export {
   createAndDisplayJoinedData,
-drawTableAndSetUpHandlers,
+  drawTableAndSetUpHandlers,
   run as default,
 };
 
@@ -98,15 +98,13 @@ function addClickFeatureListener(map, tableSelector, scoreAsset) {
   // TODO: handle ctrl+click situations
   mapSelectListener = map.addListener('click', (event) => {
     clickFeature(
-        event.latLng.lng(), event.latLng.lat(), map, scoreAsset,
-        tableSelector);
+        event.latLng.lng(), event.latLng.lat(), map, scoreAsset, tableSelector);
   });
   // map.data covers clicks to map areas underneath map.data so we need
   // two listeners
   featureSelectListener = map.data.addListener('click', (event) => {
     clickFeature(
-        event.latLng.lng(), event.latLng.lat(), map, scoreAsset,
-        tableSelector);
+        event.latLng.lng(), event.latLng.lat(), map, scoreAsset, tableSelector);
   });
 }
 

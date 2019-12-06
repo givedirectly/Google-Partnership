@@ -22,10 +22,10 @@ const tableHeadings = [
  * @param {Promise} scoredFeatures
  * @param {Function} selectTableCallback Callback to be invoked for selected
  *     table row. Not invoked on rows selected via the selectorReceiver below
- * @param {Function} selectorReceiver receiver for a function that, given an Iterable of geoid strings, will select the desired rows in the table
+ * @param {Function} selectorReceiver receiver for a function that, given an
+ *     Iterable of geoid strings, will select the desired rows in the table
  */
-function drawTable(
-    scoredFeatures, selectTableCallback, selectorReceiver) {
+function drawTable(scoredFeatures, selectTableCallback, selectorReceiver) {
   // Create download button.
   const downloadButton = document.createElement('button');
   downloadButton.style.visibility = 'hidden';
@@ -71,14 +71,16 @@ function drawTable(
  * @param {Function} selectTableCallback See {@link drawTable}
  * @param {Function} selectorReceiver receiver See {@link drawTable}
  */
-function renderTable(
-    list, features, selectTableCallback, selectorReceiver) {
+function renderTable(list, features, selectTableCallback, selectorReceiver) {
   const data = google.visualization.arrayToDataTable(list, false);
   const dataView = new google.visualization.DataView(data);
   // don't display geoid
   dataView.hideColumns([0]);
-  const table = new google.visualization.Table(document.getElementById('table'));
-  table.draw(dataView, {page: 'enable', pageSize: 25, sortColumn: 1, sortAscending: false});
+  const table =
+      new google.visualization.Table(document.getElementById('table'));
+  table.draw(
+      dataView,
+      {page: 'enable', pageSize: 25, sortColumn: 1, sortAscending: false});
   // // Instantiate and draw the chart.
   // const table = new google.visualization.ChartWrapper({
   //   'chartType': 'Table',
@@ -91,9 +93,9 @@ function renderTable(
   //     'sortAscending': false,
   //   },
   // });
-  selectorReceiver(
-      makeLambda(new TableSelector(table, list)));
-  // google.visualization.events.addListener(table, 'ready', () => selectorReceiver(
+  selectorReceiver(makeLambda(new TableSelector(table, list)));
+  // google.visualization.events.addListener(table, 'ready', () =>
+  // selectorReceiver(
   //     makeLambda(new TableSelector(table, list)))
   //     // makeLambda(new TableSelector(table.getChart(), list)))
   // );
