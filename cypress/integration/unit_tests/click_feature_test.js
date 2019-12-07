@@ -151,17 +151,20 @@ describe('Unit tests for click_feature.js with map and table', () => {
       const expected = [
         {
           lng: expectedFeatureCoordinates[0],
-          lat: expectedFeatureCoordinates[1]
+          lat: expectedFeatureCoordinates[1],
         },
         {
           lng: expectedFeatureCoordinates[2],
-          lat: expectedFeatureCoordinates[1]
+          lat: expectedFeatureCoordinates[1],
         },
         {
           lng: expectedFeatureCoordinates[2],
-          lat: expectedFeatureCoordinates[3]
+          lat: expectedFeatureCoordinates[3],
         },
-        {lng: expectedFeatureCoordinates[0], lat: expectedFeatureCoordinates[3]}
+        {
+          lng: expectedFeatureCoordinates[0],
+          lat: expectedFeatureCoordinates[3],
+        },
       ];
       expect(coordinates).to.eql(expected);
     });
