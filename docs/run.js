@@ -83,9 +83,8 @@ function createAndDisplayJoinedData(
  * @param {string} scoreAsset EE path to score asset FeatureCollection
  */
 function drawTableAndSetUpHandlers(processedData, map, scoreAsset) {
-  drawTable(
-      processedData, (features) => highlightFeatures(features, map, true)).then(
-      (tableSelector) => {
+  drawTable(processedData, (features) => highlightFeatures(features, map, true))
+      .then((tableSelector) => {
         loadingElementFinished(tableContainerId);
         // every time we get a new table and data, reselect elements in the
         // table based on {@code currentFeatures} in highlight_features.js.

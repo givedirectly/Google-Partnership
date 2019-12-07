@@ -56,8 +56,7 @@ function drawTable(scoredFeatures, selectTableCallback) {
           // Multiple calls to this are fine:
           // https://developers.google.com/chart/interactive/docs/basic_load_libs#Callback
           google.charts.setOnLoadCallback(
-              () => renderTable(
-                  list, features, selectTableCallback, resolve));
+              () => renderTable(list, features, selectTableCallback, resolve));
         });
       })
       .catch(createError('Failure evaluating scored features'));
