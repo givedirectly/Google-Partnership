@@ -1,6 +1,7 @@
 import mapStyles from './map_styles.js';
 import {geoPointToLatLng} from './map_util.js';
 import {setUpPolygonDrawing} from './polygon_draw.js';
+import {HELP_DOC_URL, POLYGON_HELP_SECTION} from './help.js';
 
 export {createMap as default};
 
@@ -34,6 +35,20 @@ function createMap(firebasePromise) {
         new google.maps.LatLng(geoPointToLatLng(mapBounds.ne))));
   });
   setUpPolygonDrawing(map, firebasePromise);
+
+  // Add the help link.
+  const helpContainer = document.createElement('div');
+  helpContainer.style.padding = '6px';
+  const helpLink = document.createElement('a');
+  helpLink.href = HELP_DOC_URL + POLYGON_HELP_SECTION;
+  helpLink.target = '_blank';
+  helpLink.style.fontSize = '18px';
+  const helpIcon = document.createElement('i');
+  helpIcon.className = 'help fa fa-question-circle';
+  helpIcon.setAttribute('aria-hidden', 'true');
+  helpLink.appendChild(helpIcon);
+  helpContainer.appendChild(helpLink);
+  map.controls[google.maps.ControlPosition.TOP_LEFT].push(helpContainer);
 
   // Search box code roughly taken from
   // https://developers.google.com/maps/documentation/javascript/examples/places-searchbox.
