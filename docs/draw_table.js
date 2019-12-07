@@ -135,7 +135,7 @@ class TableSelector {
   /**
    * Finds the rows with the given geoids and selects them in the table.
    * @param {Iterable<string>} geoids Ids of rows (0th element)
-   * @return {?Array<string>} selected row, if exactly one was found, or null
+   * @return {?Array<string>} Selected row, if exactly one was found, or null
    */
   selectRowsFor(geoids) {
     const selection = [];

@@ -90,18 +90,15 @@ function drawTableAndSetUpHandlers(processedData, map, scoreAsset) {
         // table based on {@code currentFeatures} in highlight_features.js.
         selectHighlightedFeatures(tableSelector);
         // TODO: handle ctrl+click situations
-        mapSelectListener = map.addListener(
-            'click',
-            (event) => clickFeature(
-                event.latLng.lng(), event.latLng.lat(), map, scoreAsset,
-                tableSelector));
+        const clickFeatureHandler = (event) => clickFeature(
+            event.latLng.lng(), event.latLng.lat(), map, scoreAsset,
+            tableSelector);
+        mapSelectListener = map.addListener('click', clickFeatureHandler);
         // map.data covers clicks to map areas underneath map.data so we need
         // two listeners
         featureSelectListener = map.data.addListener(
             'click',
-            (event) => clickFeature(
-                event.latLng.lng(), event.latLng.lat(), map, scoreAsset,
-                tableSelector));
+            clickFeatureHandler);
       });
 }
 
