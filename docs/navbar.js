@@ -1,6 +1,6 @@
 import {initializeDisasterPicker} from './disaster_picker.js';
 import {getDisastersData} from './firestore_document.js';
-import {HELP_DOC_URL, MANAGE_DISASTERS_HELP_SECTION, MANAGE_LAYERS_HELP_SECTION} from './help.js';
+import {HELP_DOC_URL, MANAGE_DISASTERS_HELP_URL, MANAGE_LAYERS_HELP_URL} from './help.js';
 
 export {loadNavbarWithPicker, loadNavbarWithTitle};
 
@@ -79,8 +79,8 @@ function getHelpUrl() {
   if (window.location.pathname === '/') {
     return HELP_DOC_URL;
   } else if (window.location.pathname === '/' + MANAGE_LAYERS_PAGE) {
-    return HELP_DOC_URL + MANAGE_LAYERS_HELP_SECTION;
+    return MANAGE_LAYERS_HELP_URL;
   } else if (window.location.pathname === '/' + MANAGE_DISASTERS_PAGE) {
-    return HELP_DOC_URL + MANAGE_DISASTERS_HELP_SECTION;
+    return MANAGE_DISASTERS_HELP_URL;
   }
 }

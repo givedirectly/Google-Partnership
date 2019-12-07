@@ -1,4 +1,4 @@
-import {HELP_DOC_URL, POLYGON_HELP_SECTION} from './help.js';
+import {POLYGON_HELP_URL} from './help.js';
 import mapStyles from './map_styles.js';
 import {geoPointToLatLng} from './map_util.js';
 import {setUpPolygonDrawing} from './polygon_draw.js';
@@ -40,7 +40,7 @@ function createMap(firebasePromise) {
   const helpContainer = document.createElement('div');
   helpContainer.style.padding = '6px';
   const helpLink = document.createElement('a');
-  helpLink.href = HELP_DOC_URL + POLYGON_HELP_SECTION;
+  helpLink.href = POLYGON_HELP_URL;
   helpLink.target = '_blank';
   helpLink.style.fontSize = '18px';
   const helpIcon = document.createElement('i');
