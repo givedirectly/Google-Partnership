@@ -69,7 +69,8 @@ function drawTable(scoredFeatures, selectTableCallback) {
  * @param {Array} list The data to display in the chart, with headings
  * @param {Array} features The list of features corresponding to that data
  * @param {Function} selectTableCallback See {@link drawTable}
- * @param {Function} selectorReceiver receiver for the function inside the Promise returned by {@link drawTable}
+ * @param {Function} selectorReceiver receiver for the function inside the
+ *     Promise returned by {@link drawTable}
  */
 function renderTable(list, features, selectTableCallback, selectorReceiver) {
   const data = google.visualization.arrayToDataTable(list, false);
