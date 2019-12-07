@@ -9,6 +9,9 @@ import {drawTableAndSetUpHandlers} from '../../../docs/run.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 import {createGoogleMap} from '../../support/test_map.js';
 
+// Clicks on the map can sometimes happen too fast for the map to react.
+const waitBeforeClick = 100;
+
 describe('Unit tests for click_feature.js with map and table', () => {
   loadScriptsBeforeForUnitTests('ee', 'charts', 'maps');
 
@@ -41,11 +44,10 @@ describe('Unit tests for click_feature.js with map and table', () => {
    */
   function setUpPage() {
     let map;
-    const loadingFinishedPromise = new Promise((resolve) => {
-      loading.loadingElementFinished = (id) => {
-        if (id === tableContainerId) resolve();
-      };
-    });
+    const loadingFinishedPromise =
+        new Promise((resolve) => loading.loadingElementFinished = (id) => {
+          if (id === tableContainerId) resolve();
+        });
     createGoogleMap().then((mapResult) => map = mapResult);
     cy.document().then((doc) => {
       // Lightly fake out prod document access.
@@ -70,7 +72,7 @@ describe('Unit tests for click_feature.js with map and table', () => {
   it('clicks on a feature on the map, then unclicks it', () => {
     setUpPage();
     clickAndVerifyBlockGroup();
-    cy.wait(100);
+    cy.wait(waitBeforeClick);
     cy.get('#test-map-div').click(500, 100);
     assertNoSelection();
   });
@@ -78,7 +80,7 @@ describe('Unit tests for click_feature.js with map and table', () => {
   it('clicks on a feature on the map, then clicks on another', () => {
     setUpPage();
     clickAndVerifyBlockGroup();
-    cy.wait(100);
+    cy.wait(waitBeforeClick);
     cy.get('#test-map-div').click(800, 200);
     cy.get('#test-map-div').should('contain', 'SCORE: 3');
     cy.get('#test-map-div').should('contain', 'another group');

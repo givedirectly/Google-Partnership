@@ -19,12 +19,13 @@ const tableHeadings = [
  * Display a ranked table of the given features that have non-zero score.
  *
  * @param {Promise} scoredFeatures
- * @param {Function} selectTableCallback Callback to be invoked for selected
- *     table row. Not invoked on rows selected via the selectorReceiver below
- * @param {Function} selectorReceiver receiver for a function that, given an
- *     Iterable of geoid strings, will select the desired rows in the table
+ * @param {Function} selectTableCallback Callback to be invoked when a table row
+ *     is selected by the user
+ * @return {Promise<Function>} Promise for a function that, given an Iterable of
+ *     geoid strings, will select the desired rows in the table. Complete when
+ *     table has finished drawing
  */
-function drawTable(scoredFeatures, selectTableCallback, selectorReceiver) {
+function drawTable(scoredFeatures, selectTableCallback) {
   // Create download button.
   const downloadButton = document.createElement('button');
   downloadButton.style.visibility = 'hidden';
@@ -38,7 +39,7 @@ function drawTable(scoredFeatures, selectTableCallback, selectorReceiver) {
 
   // TODO(#37): These callbacks could be executed out of order, and the table
   //  might not reflect the user's latest request.
-  scoredFeatures
+  return scoredFeatures
       .then((allFeatures) => {
         const features =
             allFeatures.filter((feature) => feature.properties[scoreTag]);
@@ -47,15 +48,17 @@ function drawTable(scoredFeatures, selectTableCallback, selectorReceiver) {
         for (const feature of features) {
           list.push(tableHeadings.map((col) => feature.properties[col]));
         }
-        // Multiple calls to this are fine:
-        // https://developers.google.com/chart/interactive/docs/basic_load_libs#Callback
-        google.charts.setOnLoadCallback(
-            () => renderTable(
-                list, features, selectTableCallback, selectorReceiver));
         // Set download button to visible once table data is loaded.
         document.getElementById('downloadButton').style.visibility = 'visible';
         // TODO(juliexxia): more robust error reporting
         // https://developers.google.com/chart/interactive/docs/reference#errordisplay
+        return new Promise((resolve) => {
+          // Multiple calls to this are fine:
+          // https://developers.google.com/chart/interactive/docs/basic_load_libs#Callback
+          google.charts.setOnLoadCallback(
+              () => renderTable(
+                  list, features, selectTableCallback, resolve));
+        });
       })
       .catch(createError('Failure evaluating scored features'));
 }
@@ -68,7 +71,8 @@ function drawTable(scoredFeatures, selectTableCallback, selectorReceiver) {
  * @param {Array} list The data to display in the chart, with headings
  * @param {Array} features The list of features corresponding to that data
  * @param {Function} selectTableCallback See {@link drawTable}
- * @param {Function} selectorReceiver receiver See {@link drawTable}
+ * @param {Function} selectorReceiver receiver for a function that, given an
+ *     Iterable of geoid strings, will select the desired rows in the table
  */
 function renderTable(list, features, selectTableCallback, selectorReceiver) {
   const data = google.visualization.arrayToDataTable(list, false);
