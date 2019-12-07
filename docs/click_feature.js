@@ -11,8 +11,8 @@ export {clickFeature, selectHighlightedFeatures};
  * @param {number} lng longitude of the click
  * @param {number} lat latitude of the click
  * @param {google.maps.Map} map
- * @param {ee.FeatureCollection} featuresAsset asset path of features which
- *     could be clicked
+ * @param {string|ee.FeatureCollection} featuresAsset asset (path) of features
+ *     which could be clicked
  * @param {Function} tableSelector See drawTable
  */
 function clickFeature(lng, lat, map, featuresAsset, tableSelector) {
