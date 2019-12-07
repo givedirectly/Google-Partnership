@@ -13,8 +13,10 @@ export {
   displayCalculatedData,
   initializeAndProcessUserRegions,
   setUpPolygonDrawing,
-  StoredShapeData,
 };
+
+// For testing.
+export {userShapes, StoredShapeData, transformGeoPointArrayToLatLng};
 
 let damageAsset = null;
 

@@ -1,10 +1,20 @@
-import {getFirestoreRoot} from '../../../docs/firestore_document';
 import * as loading from '../../../docs/loading';
-import {initializeAndProcessUserRegions, setUpPolygonDrawing, StoredShapeData} from '../../../docs/polygon_draw';
+import {
+  initializeAndProcessUserRegions,
+  setUpPolygonDrawing,
+  StoredShapeData,
+  userShapes
+} from '../../../docs/polygon_draw';
+import {transformGeoPointArrayToLatLng} from "../../../docs/polygon_draw.js";
+import {allPopups} from "../../../docs/popup.js";
 import * as resourceGetter from '../../../docs/resources';
 import SettablePromise from '../../../docs/settable_promise';
+import {userRegionData} from "../../../docs/user_region_data.js";
 import {CallbackLatch} from '../../support/callback_latch';
-import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
+import {
+  initFirebaseForUnitTest,
+  loadScriptsBeforeForUnitTests
+} from '../../support/script_loader';
 import {createGoogleMap} from '../../support/test_map';
 
 const polyCoords = [
@@ -16,7 +26,6 @@ const polyCoords = [
 ];
 
 let polyLatLng;
-const firebaseCollection = {};
 const calculatedData = {
   damage: 1,
   snapFraction: 0.1,
@@ -25,6 +34,7 @@ const calculatedData = {
 
 describe('Unit test for ShapeData', () => {
   loadScriptsBeforeForUnitTests('ee', 'maps', 'firebase', 'jquery');
+  initFirebaseForUnitTest();
   let polygonGeometry;
   let damageCollection;
   before(() => {
@@ -36,6 +46,10 @@ describe('Unit test for ShapeData', () => {
     loading.addLoadingElement = () => {};
     loading.loadingElementFinished = () => {};
   });
+  let map;
+  let drawingManager;
+  const event = new Event('overlaycomplete');
+
   beforeEach(() => {
     // Polygon intersects feature1 and feature2, not feature3.
     const feature1 = ee.Feature(
@@ -57,42 +71,49 @@ describe('Unit test for ShapeData', () => {
     // Use our custom EarthEngine FeatureCollections.
     cy.stub(resourceGetter, 'getScoreAsset').returns(scoreCollection);
 
-    // Set up appropriate Firestore mocks.
-    cy.stub(getFirestoreRoot(), 'collection')
-        .withArgs('usershapes')
-        .returns(firebaseCollection);
-    for (const prop in firebaseCollection) {
-      if (firebaseCollection.hasOwnProperty(prop)) {
-        delete firebaseCollection[prop];
-      }
-    }
-    // Make sure .get() succeeds.
-    firebaseCollection.get = () => [];
-    // Make sure userShapes is set in the code, and use our custom EarthEngine
-    // FeatureCollections.
-    return cy.wrap(initializeAndProcessUserRegions(null, Promise.resolve({
-      data: () => ({asset_data: {damage_asset_path: damageCollection}}),
-    })));
+    createGoogleMap()
+        .then((mapResult) => map = mapResult)
+        .then(() => setUpPolygonDrawing(map, Promise.resolve(null)))
+        .then((drawingManagerResult) => drawingManager = drawingManagerResult)
+        .then(
+            () => initializeAndProcessUserRegions(map, Promise.resolve({
+          data: () => ({asset_data: {damage_asset_path: damageCollection}}),
+        })));
   });
 
-  it('Add shape', () => {
-    const popup = new StubPopup();
-    const underTest = new StoredShapeData(null, null, null, popup);
-    const records = [];
-    firebaseCollection.add = recordRecord(records, {id: 'new_id'});
-    popup.notes = 'my notes';
-    cy.wrap(underTest.update()).then(() => {
-      expect(records).to.eql([{
-        calculatedData: calculatedData,
-        geometry: polygonGeometry,
-        notes: 'my notes',
-      }]);
-      expect(underTest.id).to.eql('new_id');
-      expect(StoredShapeData.pendingWriteCount).to.eql(0);
+  function addShape() {
+    const path = [{lat: 0, lng: 0}, {lat: 4, lng: 2}, {lat: 0, lng: 2}];
+    const polygon = new google.maps.Polygon({
+      map: map,
+      paths: path,
     });
+    event.overlay = polygon;
+    google.maps.event.trigger(drawingManager, 'overlaycomplete', event);
+    cy.wrap(event.resultPromise)
+        .then(() => expect(StoredShapeData.pendingWriteCount).to.eql(0))
+        .then(() => userShapes.get())
+        .then((querySnapshot) => {
+          expect(querySnapshot).to.have.property('size', 1);
+          const polygonDoc = querySnapshot.docs[0];
+          const firestoreId = polygonDoc.id;
+          expect(transformGeoPointArrayToLatLng(polygonDoc.get('geometry'))).to.eql(path);
+          expect(polygonDoc.get('calculatedData')).to.eql({damage: 1, snapFraction: 0.1, totalHouseholds: 1});
+          expect(userRegionData).to.have.property('size', 1);
+          const featureData = getOnlyUserRegionData();
+          expect(featureData[0]).to.eql(polygon);
+          expect(featureData[1]).to.have.property('id', firestoreId);
+        });
+    cy.get()
+  }
+
+  it.only('Add shape', () => {
+    addShape();
   });
 
   it('Update shape', () => {
+    addShape().then((featureData) => {
+      featureData
+    });
     const popup = new StubPopup();
     popup.setCalculatedData(calculatedData);
     const underTest =
@@ -409,4 +430,8 @@ function pressPopupButton(button) {
   // Force-click because we don't have a real page, so who knows what elements
   // are "visible".
   return cy.get(':button').contains(button).click({force: true});
+}
+
+function getOnlyUserRegionData() {
+  return [...userRegionData.entries()][0];
 }
