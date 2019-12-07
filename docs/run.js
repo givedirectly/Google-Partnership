@@ -96,9 +96,8 @@ function drawTableAndSetUpHandlers(processedData, map, scoreAsset) {
         mapSelectListener = map.addListener('click', clickFeatureHandler);
         // map.data covers clicks to map areas underneath map.data so we need
         // two listeners
-        featureSelectListener = map.data.addListener(
-            'click',
-            clickFeatureHandler);
+        featureSelectListener =
+            map.data.addListener('click', clickFeatureHandler);
       });
 }
 
