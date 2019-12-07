@@ -67,7 +67,7 @@ function highlightFeatures(features, map, zoom = false) {
   // Add new features.
   for (const [id, feature] of newFeatures.entries()) {
     // This is a JSON object representing a Google Maps API feature.
-    const jsonFeature = {type: 'Feature', geometry: feature.geometry, id: id};
+    const jsonFeature = {'type': 'Feature', 'geometry': feature.geometry};
     const dataFeatures = map.data.addGeoJson(jsonFeature);
     // Store the features so they can be removed later on deselect.
     currentFeatures.set(id, new CurrentFeatureValue(dataFeatures));
