@@ -3,6 +3,11 @@ import {getDisastersData} from './firestore_document.js';
 
 export {loadNavbarWithPicker, loadNavbarWithTitle};
 
+const HELP_DOC_URL = 'https://docs.google.com/document/d/1WnjHIexMnlVkn5lqnzYlBVg4aWxh2wVDZI2DBAu-TGI/edit';
+
+const MANAGE_LAYERS_PAGE = 'import/manage_layers.html';
+const MANAGE_DISASTERS_PAGE = 'import/manage_disaster.html';
+
 /**
  * Loads the navbar and invokes the callback upon load.
  *
@@ -12,9 +17,10 @@ function loadNavbar(callback) {
   $('#navbar').load(getUrlUnderDocs('navbar.html'), () => {
     $('#map-a').prop('href', getUrlUnderDocs(''));
     $('#manage-layers-a')
-        .prop('href', getUrlUnderDocs('import/manage_layers.html'));
+        .prop('href', getUrlUnderDocs(MANAGE_LAYERS_PAGE));
     $('#manage-disaster-a')
-        .prop('href', getUrlUnderDocs('import/manage_disaster.html'));
+        .prop('href', getUrlUnderDocs(MANAGE_DISASTERS_PAGE));
+    $('#help-a').prop('href', getHelpUrl());
     callback();
   });
 }
@@ -65,4 +71,15 @@ function loadNavbarWithPicker(
  */
 function getUrlUnderDocs(pathFragment) {
   return import.meta.url.replace(/navbar\.js$/, pathFragment);
+}
+
+/** Returns the url for the help section relevant to the current page */
+function getHelpUrl() {
+  if (window.location.pathname === '/') {
+    return HELP_DOC_URL;
+  } else if (window.location.pathname === '/' + MANAGE_LAYERS_PAGE) {
+    return HELP_DOC_URL + '#heading=h.jv40ss65f833';
+  } else if (window.location.pathname === '/' + MANAGE_DISASTERS_PAGE) {
+    return HELP_DOC_URL + '#heading=h.erg80sovj4x2';
+  }
 }
