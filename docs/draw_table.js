@@ -51,12 +51,12 @@ function drawTable(scoredFeatures, selectTableCallback) {
         }
         // TODO(juliexxia): more robust error reporting
         // https://developers.google.com/chart/interactive/docs/reference#errordisplay
-        return new Promise((resolve) => {
-          // Multiple calls to this are fine:
-          // https://developers.google.com/chart/interactive/docs/basic_load_libs#Callback
-          google.charts.setOnLoadCallback(
-              () => renderTable(list, features, selectTableCallback, resolve));
-        });
+        // Multiple calls to this are fine:
+        // https://developers.google.com/chart/interactive/docs/basic_load_libs#Callback
+        return new Promise(
+            (resolve) => google.charts.setOnLoadCallback(
+                () =>
+                    renderTable(list, features, selectTableCallback, resolve)));
       })
       .catch(createError('Failure evaluating scored features'));
 }
