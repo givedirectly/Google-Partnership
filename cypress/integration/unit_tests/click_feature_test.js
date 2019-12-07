@@ -116,6 +116,7 @@ describe('Unit tests for click_feature.js with map and table', () => {
 
   /**
    * Gets all features currently displayed on map.
+   * @return {Cypress.Chainable<Array<google.maps.Data.Feature>>}
    */
   function getDataFeatures() {
     return cy.wrap(null).then(() => {
@@ -136,34 +137,41 @@ describe('Unit tests for click_feature.js with map and table', () => {
     cy.get('.google-visualization-table-tr-sel')
         .find('[class="google-visualization-table-td"]')
         .should('have.text', 'my block group');
-    assertFeatureShownOnMap(feature1Corners);
+    return assertFeatureShownOnMap(feature1Corners);
   }
 
-  function assertFeatureShownOnMap(expectedFeatureCoordinates) {
+  /**
+   * Asserts that there is exactly one feature on the map, and that it has the
+   * given geometry.
+   * @param {Array<number>} expectedFeatureCorners The expected coordinates of the feature, in the same form as {@link createFeatureFromCorners}
+   * @return {Cypress.Chainable}
+   */
+  function assertFeatureShownOnMap(expectedFeatureCorners) {
     return getDataFeatures().then((features) => {
       expect(features).to.have.length(1);
       const feature = features[0];
       expect(feature.getGeometry()).to.not.be.null;
       const rings = feature.getGeometry().getArray();
       expect(rings).to.have.length(1);
+      // chai is bad at equality on google.maps.LatLng objects, so convert.
       const coordinates = rings[0].getArray().map(
           (latlng) => ({lng: latlng.lng(), lat: latlng.lat()}));
       const expected = [
         {
-          lng: expectedFeatureCoordinates[0],
-          lat: expectedFeatureCoordinates[1],
+          lng: expectedFeatureCorners[0],
+          lat: expectedFeatureCorners[1],
         },
         {
-          lng: expectedFeatureCoordinates[2],
-          lat: expectedFeatureCoordinates[1],
+          lng: expectedFeatureCorners[2],
+          lat: expectedFeatureCorners[1],
         },
         {
-          lng: expectedFeatureCoordinates[2],
-          lat: expectedFeatureCoordinates[3],
+          lng: expectedFeatureCorners[2],
+          lat: expectedFeatureCorners[3],
         },
         {
-          lng: expectedFeatureCoordinates[0],
-          lat: expectedFeatureCoordinates[3],
+          lng: expectedFeatureCorners[0],
+          lat: expectedFeatureCorners[3],
         },
       ];
       expect(coordinates).to.eql(expected);
