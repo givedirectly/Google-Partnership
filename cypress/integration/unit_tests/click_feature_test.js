@@ -146,8 +146,23 @@ describe('Unit tests for click_feature.js with map and table', () => {
       expect(feature.getGeometry()).to.not.be.null;
       const rings = feature.getGeometry().getArray();
       expect(rings).to.have.length(1);
-      const coordinates = rings[0].getArray().map((latlng) => ({lng: latlng.lng(), lat: latlng.lat()}));
-      const expected = [{lng: expectedFeatureCoordinates[0], lat: expectedFeatureCoordinates[1]}, {lng: expectedFeatureCoordinates[2], lat: expectedFeatureCoordinates[1]}, {lng: expectedFeatureCoordinates[2], lat: expectedFeatureCoordinates[3]}, {lng: expectedFeatureCoordinates[0], lat: expectedFeatureCoordinates[3]}];
+      const coordinates = rings[0].getArray().map(
+          (latlng) => ({lng: latlng.lng(), lat: latlng.lat()}));
+      const expected = [
+        {
+          lng: expectedFeatureCoordinates[0],
+          lat: expectedFeatureCoordinates[1]
+        },
+        {
+          lng: expectedFeatureCoordinates[2],
+          lat: expectedFeatureCoordinates[1]
+        },
+        {
+          lng: expectedFeatureCoordinates[2],
+          lat: expectedFeatureCoordinates[3]
+        },
+        {lng: expectedFeatureCoordinates[0], lat: expectedFeatureCoordinates[3]}
+      ];
       expect(coordinates).to.eql(expected);
     });
   }
