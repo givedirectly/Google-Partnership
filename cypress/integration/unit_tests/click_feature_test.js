@@ -143,7 +143,8 @@ describe('Unit tests for click_feature.js with map and table', () => {
   /**
    * Asserts that there is exactly one feature on the map, and that it has the
    * given geometry.
-   * @param {Array<number>} expectedFeatureCorners The expected coordinates of the feature, in the same form as {@link createFeatureFromCorners}
+   * @param {Array<number>} expectedFeatureCorners The expected coordinates of
+   *     the feature, in the same form as {@link createFeatureFromCorners}
    * @return {Cypress.Chainable}
    */
   function assertFeatureShownOnMap(expectedFeatureCorners) {
