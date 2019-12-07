@@ -198,9 +198,11 @@ describe('Unit tests for manage_layers page', () => {
     const tbody = createAndAppend('tbody', 'tbody');
     const rows = createTrs(2);
     tbody.append(rows);
+    const colorEditor = createAndAppend('div', 'color-fxn-editor').show();
 
     cy.stub(window, 'confirm').returns(true);
     cy.wrap(onDelete(rows[0])).then(() => {
+      expect(colorEditor.is(':visible')).to.be.false;
       expect(tbody.children('tr').length).to.equal(1);
       // ensure reindex
       expect(tbody.children('tr').children('.index-td').text()).to.equal('0');
