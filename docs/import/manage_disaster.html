@@ -28,6 +28,9 @@
   <link rel="stylesheet" href="../style.css">
   <link rel="stylesheet" href="manage.css">
   <link rel="stylesheet" href="manage_disaster.css">
+
+  <!-- Load icons. -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 </head>
 <body>
 <div id="navbar"></div>
@@ -111,9 +114,9 @@
           <tbody id="asset-selection-table-body"></tbody>
         </table>
       </div>
-      <div><label for="damage-asset-select">Damage asset <a href="https://docs.google.com/document/d/1WnjHIexMnlVkn5lqnzYlBVg4aWxh2wVDZI2DBAu-TGI/edit?ts=5de7cd32#bookmark=id.ppvphy5dof7n" target="_blank">(?)</a>: </label><select id="damage-asset-select"></select>
+      <div><label for="damage-asset-select">Damage asset <a href="https://docs.google.com/document/d/1WnjHIexMnlVkn5lqnzYlBVg4aWxh2wVDZI2DBAu-TGI/edit?ts=5de7cd32#bookmark=id.ppvphy5dof7n" target="_blank"><i class="help fa fa-question-circle" aria-hidden="true"></i></a>: </label><select id="damage-asset-select"></select>
         <div id="map-bounds-div" hidden>
-         OR (before damage asset available)<br/><label for="map-bounds-sw">Southwest damage bounds, in "lat, lng" format, ex: 39.4, -40.1 <a href="https://docs.google.com/document/d/1WnjHIexMnlVkn5lqnzYlBVg4aWxh2wVDZI2DBAu-TGI/edit?ts=5de7cd32#bookmark=id.pmr206t53gos" target="_blank">(?)</a>: </label><input id="map-bounds-sw"><br/><label for="map-bounds-sw">Northeast damage bounds, in "lat, lng" format: </label><input id="map-bounds-ne"></div>
+         OR (before damage asset available)<br/><label for="map-bounds-sw">Southwest damage bounds, in "lat, lng" format, ex: 39.4, -40.1 <a href="https://docs.google.com/document/d/1WnjHIexMnlVkn5lqnzYlBVg4aWxh2wVDZI2DBAu-TGI/edit?ts=5de7cd32#bookmark=id.pmr206t53gos" target="_blank"><i class="help fa fa-question-circle" aria-hidden="true"></i></a>: </label><input id="map-bounds-sw"><br/><label for="map-bounds-sw">Northeast damage bounds, in "lat, lng" format: </label><input id="map-bounds-ne"></div>
     </div>
 
     <button disabled hidden id="process-button"></button>
