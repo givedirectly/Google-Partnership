@@ -1,7 +1,7 @@
+import {HELP_DOC_URL, POLYGON_HELP_SECTION} from './help.js';
 import mapStyles from './map_styles.js';
 import {geoPointToLatLng} from './map_util.js';
 import {setUpPolygonDrawing} from './polygon_draw.js';
-import {HELP_DOC_URL, POLYGON_HELP_SECTION} from './help.js';
 
 export {createMap as default};
 
