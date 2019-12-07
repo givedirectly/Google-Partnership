@@ -11,17 +11,20 @@ import {createGoogleMap} from '../../support/test_map.js';
 
 // Clicks on the map can sometimes happen too fast for the map to react.
 const waitBeforeClick = 100;
+const feature1Corners = [0.25, 0.25, 0.75, 1];
+const feature2Corners = [0.75, 0.25, 1.5, 0.75];
 
 describe('Unit tests for click_feature.js with map and table', () => {
   loadScriptsBeforeForUnitTests('ee', 'charts', 'maps');
 
   let features;
   let scoredFeatures;
+  let map;
 
   before(() => {
-    const feature1 = createFeatureFromCorners(0.25, 0.25, 0.75, 1)
+    const feature1 = createFeatureFromCorners(...feature1Corners)
                          .set(blockGroupTag, 'my block group');
-    const feature2 = createFeatureFromCorners(0.75, 0.25, 1.5, 0.75)
+    const feature2 = createFeatureFromCorners(...feature2Corners)
                          .set(blockGroupTag, 'another group');
     const offMapFeature = createFeatureFromCorners(10, 10, 20, 20);
     const otherFeature = createFeatureFromCorners(-11, -11, -10, -10);
@@ -43,7 +46,6 @@ describe('Unit tests for click_feature.js with map and table', () => {
    * @return {Cypress.Chainable}
    */
   function setUpPage() {
-    let map;
     const loadingFinishedPromise =
         new Promise((resolve) => loading.loadingElementFinished = (id) => {
           if (id === tableContainerId) resolve();
@@ -84,6 +86,7 @@ describe('Unit tests for click_feature.js with map and table', () => {
     cy.get('#test-map-div').click(800, 200);
     cy.get('#test-map-div').should('contain', 'SCORE: 3');
     cy.get('#test-map-div').should('contain', 'another group');
+    assertFeatureShownOnMap(feature2Corners);
   });
 
   it('click highlights correct feature even after resort', () => {
@@ -99,30 +102,56 @@ describe('Unit tests for click_feature.js with map and table', () => {
     cy.get('#test-map-div').click(900, 100);
     assertNoSelection();
   });
+
+  /**
+   * Asserts that there is currently no pop-up on the map or selected row in the
+   * table.
+   * @return {Cypress.Chainable}
+   */
+  function assertNoSelection() {
+    cy.get('#test-map-div').should('not.contain', 'SCORE:');
+    getDataFeatures().then((features) => expect(features).to.be.empty);
+    return cy.get('.google-visualization-table-tr-sel').should('not.exist');
+  }
+
+  /**
+   * Gets all features currently displayed on map.
+   */
+  function getDataFeatures() {
+    return cy.wrap(null).then(() => {
+      const features = [];
+      map.data.forEach((feature) => features.push(feature));
+      return features;
+    });
+  }
+
+  /**
+   * Clicks on the map to pop up feature1 and asserts presence.
+   * @return {Cypress.Chainable}
+   */
+  function clickAndVerifyBlockGroup() {
+    cy.get('#test-map-div').click(0, 0);
+    cy.get('#test-map-div').should('contain', 'SCORE: 1');
+    cy.get('#test-map-div').should('contain', 'my block group');
+    cy.get('.google-visualization-table-tr-sel')
+        .find('[class="google-visualization-table-td"]')
+        .should('have.text', 'my block group');
+    assertFeatureShownOnMap(feature1Corners);
+  }
+
+  function assertFeatureShownOnMap(expectedFeatureCoordinates) {
+    return getDataFeatures().then((features) => {
+      expect(features).to.have.length(1);
+      const feature = features[0];
+      expect(feature.getGeometry()).to.not.be.null;
+      const rings = feature.getGeometry().getArray();
+      expect(rings).to.have.length(1);
+      const coordinates = rings[0].getArray().map((latlng) => ({lng: latlng.lng(), lat: latlng.lat()}));
+      const expected = [{lng: expectedFeatureCoordinates[0], lat: expectedFeatureCoordinates[1]}, {lng: expectedFeatureCoordinates[2], lat: expectedFeatureCoordinates[1]}, {lng: expectedFeatureCoordinates[2], lat: expectedFeatureCoordinates[3]}, {lng: expectedFeatureCoordinates[0], lat: expectedFeatureCoordinates[3]}];
+      expect(coordinates).to.eql(expected);
+    });
+  }
 });
-
-/**
- * Clicks on the map to pop up feature1.
- * @return {Cypress.Chainable}
- */
-function clickAndVerifyBlockGroup() {
-  cy.get('#test-map-div').click(0, 0);
-  cy.get('#test-map-div').should('contain', 'SCORE: 1');
-  cy.get('#test-map-div').should('contain', 'my block group');
-  return cy.get('.google-visualization-table-tr-sel')
-      .find('[class="google-visualization-table-td"]')
-      .should('have.text', 'my block group');
-}
-
-/**
- * Asserts that there is currently no pop-up on the map or selected row in the
- * table.
- * @return {Cypress.Chainable}
- */
-function assertNoSelection() {
-  cy.get('#test-map-div').should('not.contain', 'SCORE:');
-  return cy.get('.google-visualization-table-tr-sel').should('not.exist');
-}
 
 /**
  * Creates a rectangular test feature, with properties filled in from the
