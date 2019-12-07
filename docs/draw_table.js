@@ -16,14 +16,15 @@ const tableHeadings = [
 ];
 
 /**
- * Display a ranked table of the given features that have non-zero score.
+ * Displays a ranked table of the given features that have non-zero score.
  *
  * @param {Promise} scoredFeatures
  * @param {Function} selectTableCallback Callback to be invoked when a table row
  *     is selected by the user
- * @return {Promise<Function>} Promise for a function that, given an Iterable of
- *     geoid strings, will select the desired rows in the table. Complete when
- *     table has finished drawing
+ * @return {Promise<Function>} Promise for a function that takes an iterable of
+ *     strings and selects rows in the table whose geoids are those strings. The
+ *     function returns the row selected if there was exactly one, or null
+ *     otherwise. Complete when table has finished drawing
  */
 function drawTable(scoredFeatures, selectTableCallback) {
   // Create download button.
@@ -48,8 +49,6 @@ function drawTable(scoredFeatures, selectTableCallback) {
         for (const feature of features) {
           list.push(tableHeadings.map((col) => feature.properties[col]));
         }
-        // Set download button to visible once table data is loaded.
-        document.getElementById('downloadButton').style.visibility = 'visible';
         // TODO(juliexxia): more robust error reporting
         // https://developers.google.com/chart/interactive/docs/reference#errordisplay
         return new Promise((resolve) => {
@@ -70,8 +69,7 @@ function drawTable(scoredFeatures, selectTableCallback) {
  * @param {Array} list The data to display in the chart, with headings
  * @param {Array} features The list of features corresponding to that data
  * @param {Function} selectTableCallback See {@link drawTable}
- * @param {Function} selectorReceiver receiver for a function that, given an
- *     Iterable of geoid strings, will select the desired rows in the table
+ * @param {Function} selectorReceiver receiver for the function inside the Promise returned by {@link drawTable}
  */
 function renderTable(list, features, selectTableCallback, selectorReceiver) {
   const data = google.visualization.arrayToDataTable(list, false);
@@ -83,7 +81,8 @@ function renderTable(list, features, selectTableCallback, selectorReceiver) {
   table.draw(
       dataView,
       {page: 'enable', pageSize: 25, sortColumn: 1, sortAscending: false});
-  selectorReceiver(makeTableSelectorLambda(new TableSelector(table, list)));
+  const tableSelector = new TableSelector(table, list);
+  selectorReceiver((geoids) => tableSelector.selectRowsFor(geoids));
 
   google.visualization.events.addListener(
       table, 'select',
@@ -99,6 +98,8 @@ function renderTable(list, features, selectTableCallback, selectorReceiver) {
         columnHeaders + '\n' + google.visualization.dataTableToCsv(data);
     downloadContent(content);
   });
+  // Set download button to visible once table data is loaded.
+  document.getElementById('downloadButton').style.visibility = 'visible';
 }
 
 /**
@@ -113,18 +114,6 @@ function downloadContent(content) {
   downloadLink.download = 'data.csv';
 
   downloadLink.click();
-}
-
-/**
- * Wraps up a {@link TableSelector} in an opaque lambda for use by external
- * callers.
- * @param {TableSelector} tableSelector
- * @return {Function} A function that takes an iterable of strings and selects
- *     rows in the table whose geoids are those strings. The function returns
- *     the row selected if there was exactly one, or null otherwise
- */
-function makeTableSelectorLambda(tableSelector) {
-  return (geoids) => tableSelector.selectRowsFor(geoids);
 }
 
 /**
@@ -164,10 +153,10 @@ class TableSelector {
   }
 
   /**
-   * Given a geoid, find it in the tableData
+   * Given a geoid string, searches for it in this.tableData's 0th columns.
    *
    * @param {string} geoid
-   * @return {number|null}
+   * @return {number|null} the 1-indexed row, or null if not found
    */
   findRowNumber(geoid) {
     for (let i = 1; i < this.tableData.length; i++) {
