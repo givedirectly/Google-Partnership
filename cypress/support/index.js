@@ -11,7 +11,7 @@ beforeEach(() => window.localStorage.setItem('disaster', '2017-harvey'));
 // Grab a screenshot of the page as well.
 afterEach(function() {
   // eslint-disable-next-line no-invalid-this
-  if (this.currentTest.state === 'failed' && Cypress.env('ON_TRAVIS')) {
+  if (this.currentTest.state === 'failed' && Cypress.env('ON_TRAVIS') && Cypress.browser.name !== 'electron') {
     cy.screenshot({capture: 'viewport'});
   }
 });
