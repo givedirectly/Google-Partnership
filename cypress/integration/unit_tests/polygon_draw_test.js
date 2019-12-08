@@ -80,7 +80,7 @@ describe('Unit test for ShapeData', () => {
    * Initializes the Google Map; sets up the polygon drawing manager; and sets
    * up user feature handling. No features are expected on first call, since the
    * test Firestore database is empty.
-   * @returns {Cypress.Chainable}
+   * @return {Cypress.Chainable}
    */
   function setUpPage() {
     return createGoogleMap()
@@ -678,7 +678,7 @@ function getFirstUserRegionDataEntry() {
  * @return {boolean}
  */
 function getFirstFeatureVisibility() {
-  return getFirstFeature().getVisibility();
+  return getFirstFeature().getVisible();
 }
 
 /**
