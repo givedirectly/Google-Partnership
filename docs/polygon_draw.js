@@ -14,9 +14,8 @@ export {
   initializeAndProcessUserRegions,
   setUpPolygonDrawing,
 };
-
 // For testing.
-export {userShapes, StoredShapeData, transformGeoPointArrayToLatLng};
+export {StoredShapeData, transformGeoPointArrayToLatLng, userShapes};
 
 let damageAsset = null;
 

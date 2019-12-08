@@ -73,7 +73,8 @@ function drawPolygonAndClickOnIt() {
   handButton.click();
   cy.wait(hackyWaitTime);
   // click to trigger pop up.
-  clickOnDrawnPolygon();}
+  clickOnDrawnPolygon();
+}
 
 /**
  * Click on the map inside the test-drawn polygon to trigger a pop-up if it's
