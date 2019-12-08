@@ -11,6 +11,11 @@ const notes = 'Sphinx of black quartz, judge my vow';
 
 const path = [{lat: 0, lng: 0}, {lat: 4, lng: 2}, {lat: 0, lng: 2}];
 
+// The helper functions in this test fall into two categories: those that do
+// their actual work during the "Cypress phase" of the test, and those that
+// execute right away. The latter type always return a non-Cypress value, and
+// should probably be inside a Cypress .then() block.
+
 /**
  * @typedef {google.maps.Polygon|google.maps.Marker} Feature
  * @typedef {sinon.SinonSpy|sinon.SinonStub} Spy
@@ -553,9 +558,10 @@ describe('Unit test for ShapeData', () => {
   /**
    * Triggers the creation of a polygon with the given path.
    * @param {Array<LatLngLiteral>} polygonPath Defaults to {@link path}
+   * @return {Cypress.Chainable<void>}
    */
   function drawPolygon(polygonPath = path) {
-    cy.wrap(null).then(() => {
+    return cy.wrap(null).then(() => {
       event.overlay = new google.maps.Polygon({
         map: map,
         paths: polygonPath,
@@ -673,22 +679,16 @@ function getFirstUserRegionDataEntry() {
  * feature has the expected visibility.
  * @param {boolean} visibility
  * @param {boolean} expectedSuccess
- * @returns {Cypress.Chainable}
+ * @return {Cypress.Chainable}
  */
 function setUserFeatureVisibilityInCypressAndAssert(
     visibility, expectedSuccess) {
   return cy.wrap(null).then(() => {
-    const oldVisibility =
-        expectedSuccess ? getFirstFeatureVisibility() : undefined;
-    const callExpect = expect(setUserFeatureVisibility(visibility)).to.be;
-    const visibleExpect = expect(getFirstFeatureVisibility()).to.be;
-    if (expectedSuccess) {
-      callExpect.true;
-      visibility ? visibleExpect.true : visibleExpect.false;
-    } else {
-      callExpect.false;
-      oldVisibility ? visibleExpect.true : visibleExpect.false;
-    }
+    // Visibility won't change if we expect failure.
+    const expectedVisibility =
+        expectedSuccess ? visibility : getFirstFeatureVisibility();
+    expect(setUserFeatureVisibility(visibility)).to.eql(expectedSuccess);
+    expect(getFirstFeatureVisibility()).to.eql(expectedSuccess ? visibility : expectedVisibility);
   });
 }
 
