@@ -24,7 +24,7 @@ function createGoogleMap() {
 /**
  * Converts a Google LatLng object to a LatLng literal.
  * @param {google.maps.LatLng} latlng
- * @returns {{lng: number, lat: number}}
+ * @return {{lng: number, lat: number}}
  */
 function convertGoogleLatLngToObject(latlng) {
   return {lng: latlng.lng(), lat: latlng.lat()};
@@ -34,7 +34,7 @@ function convertGoogleLatLngToObject(latlng) {
  * Converts an MVCArray of Google LatLng objects to a normal array
  * of LatLng-literal objects.
  * @param  {google.maps.MVCArray<google.maps.LatLng>} path
- * @returns {Array<LatLng>}
+ * @return {Array<LatLng>}
  */
 function convertPathToLatLng(path) {
   return path.getArray().map(convertGoogleLatLngToObject);

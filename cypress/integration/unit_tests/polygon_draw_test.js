@@ -507,7 +507,7 @@ describe('Unit test for ShapeData', () => {
    * asserts that the write succeeded and the map has the desired polygon data,
    * and clicks on the polygon.
    * @param {Array<LatLng>} polygonPath
-   * @returns {Cypress.Chainable<void>}
+   * @return {Cypress.Chainable<void>}
    */
   function drawPolygonAndClickOnIt(polygonPath = path) {
     drawPolygon(polygonPath);
@@ -535,7 +535,7 @@ describe('Unit test for ShapeData', () => {
    * @param {Array<LatLng>} path
    * @param {{damage: *, snapFraction: number, totalHouseholds: number, notes:
    *     string}} expectedData
-   * @returns {Cypress.Chainable}
+   * @return {Cypress.Chainable}
    */
   function assertOnFirestoreAndPopup(path, expectedData) {
     cy.wrap(null)
@@ -564,7 +564,7 @@ describe('Unit test for ShapeData', () => {
    * Clicks on map to bring up polygon popup and asserts on contents.
    * @param {{damage: *, snapFraction: number, totalHouseholds: number, notes:
    *     string}} expectedData
-   * @returns {Cypress.Chainable}
+   * @return {Cypress.Chainable}
    */
   function assertOnPopup(expectedData) {
     cy.get('#test-map-div').click();
@@ -585,9 +585,9 @@ describe('Unit test for ShapeData', () => {
    * Presses the given button ('save' or 'delete') and waits for any pending
    * writes to complete.
    * @param {string} button Text of button to press
-   * @returns {Cypress.Chainable<Promise<void>>}
+   * @return {Cypress.Chainable<Promise<void>>}
    */
-  function pressButtonAndWaitForPromise(button) {
+  function pressButtonAndWaitForPromise(button) { 
     pressPopupButton(button);
     return getOnlyPendingUpdatePromise();
   }
@@ -609,7 +609,7 @@ describe('Unit test for ShapeData', () => {
    * executed does Cypress go back and execute its pending commands. When that
    * happens, this function will return the value of currentUpdatePromise, which
    * will be the promise returned from {@link StoredShapeData#update}.
-   * @returns {Cypress.Chainable<Promise<void>>}
+   * @return {Cypress.Chainable<Promise<void>>}
    */
   function getOnlyPendingUpdatePromise() {
     return cy.wait(0).then(() => currentUpdatePromise);
@@ -628,7 +628,7 @@ function pressPopupButton(button) {
 /**
  * Gets the first (feature, StoredShapeData) pair in the {@link userRegionData}
  * map.
- * @returns {[google.maps.Polygon|google.maps.Marker, StoredShapeData]}
+ * @return {[google.maps.Polygon|google.maps.Marker, StoredShapeData]}
  */
 function getFirstUserRegionDataEntry() {
   return [...userRegionData.entries()][0];
@@ -645,7 +645,7 @@ function getFirstFeatureVisibility() {
 
 /**
  * Returns the first feature stored in the {@link userRegionData} map.
- * @returns {google.maps.Polygon|google.maps.Marker}
+ * @return {google.maps.Polygon|google.maps.Marker}
  */
 function getFirstFeature() {
   return [...userRegionData.keys()][0];
@@ -654,7 +654,7 @@ function getFirstFeature() {
 /**
  * Creates an expectedData object based on {@link defaultData} with notes set.
  * @param {string} notes Expected notes
- * @returns {{damage: number, snapFraction: number, totalHouseholds: number,
+ * @return {{damage: number, snapFraction: number, totalHouseholds: number,
  *     notes: string}}
  */
 function withNotes(notes) {
