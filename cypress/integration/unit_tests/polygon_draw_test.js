@@ -280,7 +280,8 @@ describe('Unit test for ShapeData', () => {
     const position = {lat: 0, lng: 0};
     event.overlay = new google.maps.Marker({map: map, position: position});
     google.maps.event.trigger(drawingManager, 'overlaycomplete', event);
-    getCurrentUpdatePromiseInCypress().then(() => assertMarker(position, ''));
+    getCurrentUpdatePromiseInCypress();
+    assertMarker(position, '');
     // Found through unpleasant trial and error.
     cy.get('#test-map-div').click(310, 435);
     pressPopupButton('edit');
