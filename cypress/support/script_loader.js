@@ -160,20 +160,22 @@ function addFirebaseHooks() {
   date.setMilliseconds(0);
   before(() => {
     cy.task('initializeTestFirebase', null, {
-      timeout: 10000,
-    }).then((token) => global.firestoreCustomToken = token);
-    cy.task('getTestFirestoreData', {timeout: 5000}).
-        then((result) => disastersData = result).then(() => {
-      // Write a copy of the data to backup documents in case of accidental
-      // deletion.
-      cy.task('populateTestFirestoreData', {disastersData, currentTestRoot: date.getTime() + '-backup'});
-    });
+        timeout: 10000,
+      }).then((token) => global.firestoreCustomToken = token);
+    cy.task('getTestFirestoreData', {timeout: 5000})
+        .then((result) => disastersData = result)
+        .then(() => {
+          // Write a copy of the data to backup documents in case of accidental
+          // deletion.
+          cy.task(
+              'populateTestFirestoreData',
+              {disastersData, currentTestRoot: date.getTime() + '-backup'});
+        });
   });
   let currentTestRoot = null;
   beforeEach(() => {
     currentTestRoot = testPrefix + Math.random();
-    cy.task('populateTestFirestoreData', {disastersData,
-      currentTestRoot});
+    cy.task('populateTestFirestoreData', {disastersData, currentTestRoot});
     cy.setCookie(cypressTestCookieName, currentTestRoot);
   });
   afterEach(() => cy.task('deleteTestData', currentTestRoot));

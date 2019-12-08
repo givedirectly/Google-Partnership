@@ -109,9 +109,8 @@ module.exports = (on, config) => {
       for (const disaster of ['2017-harvey', '2018-michael']) {
         const documentPath = 'disaster-metadata/' + disaster;
         const prodDisasterDoc = prodApp.firestore().doc(documentPath);
-        readPromises.push(
-            prodDisasterDoc.get()
-                .then((result) => ({disaster, data: result.data()})));
+        readPromises.push(prodDisasterDoc.get().then(
+            (result) => ({disaster, data: result.data()})));
       }
       return Promise.all(readPromises).then(async (result) => {
         await prodApp.delete();
@@ -125,7 +124,8 @@ module.exports = (on, config) => {
      * add a dummy field inside test/currentTestRoot so that Firestore will
      * deign to list this document later
      * (https://stackoverflow.com/questions/47043651/this-document-does-not-exist-and-will-not-appear-in-queries-or-snapshots-but-id)
-     * @param {{disaster: Object, currentTestRoot: string}} disastersDataAndTestRoot
+     * @param {{disaster: Object, currentTestRoot: string}}
+     *     disastersDataAndTestRoot
      * @return {Promise<null>} Promise that completes when writes are done
      */
     populateTestFirestoreData(disastersDataAndTestRoot) {
@@ -138,15 +138,15 @@ module.exports = (on, config) => {
       const writePromises = [];
       for (const disasterData of disastersData) {
         const documentPath = 'disaster-metadata/' + disasterData.disaster;
-        const testDisasterDocReference = testApp.firestore().doc('test/' + currentTestRoot + '/' + documentPath);
+        const testDisasterDocReference = testApp.firestore().doc(
+            'test/' + currentTestRoot + '/' + documentPath);
         const data = disasterData.data;
         data.dummy = true;
         writePromises.push(testDisasterDocReference.set(data));
       }
       return Promise.all(writePromises)
-      .then(
-          () => testApp.delete())
-      .then(() => null);
+          .then(() => testApp.delete())
+          .then(() => null);
     },
 
     /**
@@ -224,7 +224,7 @@ function deleteAllOldTestData(app) {
       const testRunName = ref.id;
       const dateElement = testRunName.split('-')[0];
       const date = new Date(parseInt(dateElement, 10));
-      if (currentDate - date >  millisecondsIn7Days) {
+      if (currentDate - date > millisecondsIn7Days) {
         promises.push(deleteDocRecursively(ref));
       }
     });
