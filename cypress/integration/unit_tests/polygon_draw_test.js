@@ -361,11 +361,20 @@ describe('Unit test for ShapeData', () => {
     assertOnFirestoreAndPopup(newPath, defaultData)
   });
 
+  /**
+   * Draws the default polygon and clicks on it. Then returns spies to observe
+   * calculated-data-related calls made to the polygon's popup, and {@link ee#List} and
+   * {@link userShapes#doc} calls. Because EE is finicky about spying, the `eeSpy` returned
+   * is not actually spying on the real {@link ee#List} but rather on a dummy
+   * object that shadows it, and that we call with the same arguments as the
+   * real {@link ee#List}.
+   * @returns {Cypress.Chainable<{popupPendingCalculationSpy: Cypress.Agent, popupCalculatedDataSpy: Cypress.Agent, eeSpy: Cypress.Agent, firestoreSpy: Cypress.Agent}>}
+   */
   function drawPolygonAndSetUpSpies() {
     let popupPendingCalculationSpy;
     let popupCalculatedDataSpy;
     let firestoreSpy;
-    const dummyObjectForSpyAssertions = {method: () => {}};
+    const dummyObjectForSpyAssertions = {method: (args) => {}};
     const eeSpy = cy.spy(dummyObjectForSpyAssertions, 'method');
     drawPolygonAndClickOnIt().then(() => {
       const [, data] = getFirstUserRegionDataEntry();
@@ -377,7 +386,7 @@ describe('Unit test for ShapeData', () => {
       const oldList = ee.List;
       const trackingFunction = (list) => {
         ee.List = oldList;
-        dummyObjectForSpyAssertions.method();
+        dummyObjectForSpyAssertions.method(list);
         const returnValue = ee.List(list);
         ee.List = trackingFunction;
         return returnValue;
@@ -388,13 +397,13 @@ describe('Unit test for ShapeData', () => {
                                            popupPendingCalculationSpy,
                                            popupCalculatedDataSpy,
                                            eeSpy,
-                                           firestoreSpy
+                                           firestoreSpy,
                                          }));
   }
 
   it('Absence of damage asset tolerated', () => {
     cy.wrap(initializeAndProcessUserRegions(map, Promise.resolve({
-      data: () => ({asset_data: {damage_asset_path: null}})
+      data: () => ({asset_data: {damage_asset_path: null}}),
     })));
     drawPolygon();
     const expectedData = Object.assign({}, defaultData);
