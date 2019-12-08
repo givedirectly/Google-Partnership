@@ -640,7 +640,7 @@ function getFirstUserRegionDataEntry() {
  * @return {boolean}
  */
 function getFirstFeatureVisibility() {
-  getFirstFeature().getVisibility();
+  return getFirstFeature().getVisibility();
 }
 
 /**
