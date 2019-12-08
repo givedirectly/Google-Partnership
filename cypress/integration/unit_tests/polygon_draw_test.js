@@ -11,7 +11,8 @@ const notes = 'Sphinx of black quartz, judge my vow';
 
 const path = [{lat: 0, lng: 0}, {lat: 4, lng: 2}, {lat: 0, lng: 2}];
 /**
- * @typedef {{damage: number, snapFraction: number, notes: string, totalHouseholds: number}} ExpectedData
+ * @typedef {{damage: number, snapFraction: number, notes: string,
+ * totalHouseholds: number}} ExpectedData
  * @type {ExpectedData}
  */
 const defaultData = {
