@@ -17,11 +17,6 @@ const path = [{lat: 0, lng: 0}, {lat: 4, lng: 2}, {lat: 0, lng: 2}];
 // should always be inside a Cypress .then() block.
 
 /**
- * @typedef {google.maps.Polygon|google.maps.Marker} Feature
- * @typedef {sinon.SinonSpy|sinon.SinonStub} Spy
- */
-
-/**
  * @typedef {{damage: number, snapFraction: number, notes: string,
  * totalHouseholds: number}} ExpectedData
  * @type {ExpectedData}
@@ -182,6 +177,7 @@ describe('Unit test for ShapeData', () => {
     pressPopupButton('edit');
     cy.get('.notes').type(notes);
     pressPopupButton('close').then(() => expect(confirmStub).to.be.calledOnce);
+    cy.get('#test-map-div').should('not.contain', notes);
     cy.get('#test-map-div').contains('damage count');
     cy.get('#test-map-div').contains('damage count').should('not.be.visible');
     assertOnFirestoreAndPopup(path, defaultData);
@@ -192,9 +188,7 @@ describe('Unit test for ShapeData', () => {
     newPath[0].lng = 0.5;
     const confirmStub = cy.stub(window, 'confirm').returns(true);
     drawPolygonAndClickOnIt();
-    pressPopupButton('edit').then(() => {
-      getFirstFeature().setPath(newPath);
-    });
+    pressPopupButton('edit').then(() => getFirstFeature().setPath(newPath));
     pressButtonAndWaitForPromise('close').then(() => {
       expect(confirmStub).to.be.calledOnce;
       expect(convertPathToLatLng(getFirstFeature().getPath())).to.eql(path);
@@ -310,9 +304,10 @@ describe('Unit test for ShapeData', () => {
    * and with the expected notes.
    * @param {LatLngLiteral} position
    * @param {string} notes
+   * @return {Cypress.Chainable}
    */
   function assertMarker(position, notes) {
-    cy.wrap(null)
+    return cy.wrap(null)
         .then(() => expect(StoredShapeData.pendingWriteCount).to.eql(0))
         .then(() => userShapes.get())
         .then((querySnapshot) => {
@@ -411,6 +406,7 @@ describe('Unit test for ShapeData', () => {
    * `eeSpy` returned is not actually spying on the real {@link ee#List} but
    * rather on a dummy object that shadows it, and that we call with the same
    * arguments as the real {@link ee#List}.
+   * @typedef {sinon.SinonSpy|sinon.SinonStub} Spy
    * @return {Cypress.Chainable<{popupPendingCalculationSpy: Spy,
    *     popupCalculatedDataSpy: Spy, eeSpy: Spy, firestoreSpy: Spy}>}
    */
@@ -667,7 +663,7 @@ function pressPopupButton(button) {
 /**
  * Gets the first (feature, StoredShapeData) pair in the {@link userRegionData}
  * map.
- * @return {Array<google.maps.Polygon|google.maps.Marker|StoredShapeData>}
+ * @return {Array<Feature|StoredShapeData>}
  */
 function getFirstUserRegionDataEntry() {
   return [...userRegionData.entries()][0];
@@ -704,6 +700,7 @@ function getFirstFeatureVisibility() {
 
 /**
  * Returns the first feature stored in the {@link userRegionData} map.
+ * @typedef {google.maps.Polygon|google.maps.Marker} Feature
  * @return {Feature}
  */
 function getFirstFeature() {
