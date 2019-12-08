@@ -198,11 +198,8 @@ describe('Unit test for ShapeData', () => {
   });
 
   it.only('Updates while update pending', () => {
-    cy.task('logg', 'starting test');
     let fakeCalled = false;
-    cy.task('logg', 'next up');
     drawPolygonAndClickOnIt().then(() => {
-      cy.task('logg', 'in then');
       currentUpdatePromise = null;
       const [, data] = getFirstUserRegionDataEntry();
       const realDoc = userShapes.doc(data.id);
@@ -232,17 +229,14 @@ describe('Unit test for ShapeData', () => {
       cy.stub(document, 'getElementsByClassName')
           .callsFake((id) => doc.getElementsByClassName(id));
     });
-    cy.task('logg', 'about to edit');
     pressPopupButton('edit');
     cy.get('.notes').type('new notes');
     pressPopupButton('save');
-    cy.task('logg', 'pressed ');
     assertOnPopup(withNotes('racing notes'));
+    pressPopupButton('close');
     getCurrentUpdatePromiseInCypress().then(
         () => expect(fakeCalled).to.be.true);
-    cy.task('logg', 'got racing');
     assertOnFirestoreAndPopup(path, withNotes('racing notes'));
-    cy.task('logg', 'done racing');
   });
 
   it('Shows calculating before update finishes', () => {
@@ -589,7 +583,6 @@ describe('Unit test for ShapeData', () => {
         .then(() => expect(StoredShapeData.pendingWriteCount).to.eql(0))
         .then(() => userShapes.get())
         .then((querySnapshot) => {
-          cy.task('logg', 'doing basic assert with ' + expectedData);
           expect(querySnapshot).to.have.property('size', 1);
           const polygonDoc = querySnapshot.docs[0];
           const firestoreId = polygonDoc.id;
@@ -614,20 +607,14 @@ describe('Unit test for ShapeData', () => {
    * @return {Cypress.Chainable}
    */
   function assertOnPopup(expectedData) {
-    cy.task('logg', 'asserting on popup with ' + expectedData.notes);
     cy.get('#test-map-div').click();
-    cy.task('logg', 'clicked ' + expectedData.notes);
     cy.get('#test-map-div').contains('damage count: ' + expectedData.damage);
-    cy.task('logg', 'got damage ' + expectedData.notes);
     cy.get('#test-map-div')
         .contains('approximate SNAP fraction: ' + expectedData.snapFraction);
-    cy.task('logg', 'got snap ' + expectedData.notes);
     cy.get('#test-map-div')
         .contains(
             'approximate total households: ' + expectedData.totalHouseholds);
-    cy.task('logg', 'finish most with ' + expectedData.notes);
     if (expectedData.notes) {
-      cy.task('logg', 'returning soon with ' + expectedData.notes);
       return cy.get('#test-map-div').contains(expectedData.notes);
     } else {
       return cy.wrap(null);
