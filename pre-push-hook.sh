@@ -10,8 +10,8 @@ set -e
 # this trigger won't even be hit then (git will say everything is up to date).
 if [[ $(git diff --name-only HEAD) ]]; then
   echo "Uncommitted changes exist: "
-#  git diff --name-only HEAD
-#  exit 1
+  git diff --name-only HEAD
+  exit 1
 fi
 
 # --diff-filter=dr excludes deleted and renamed files, which don't exist
