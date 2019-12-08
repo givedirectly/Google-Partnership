@@ -1,12 +1,15 @@
-import * as loading from '../../../docs/loading';
-import {initializeAndProcessUserRegions, setUpPolygonDrawing, StoredShapeData, userShapes} from '../../../docs/polygon_draw';
-import {transformGeoPointArrayToLatLng} from '../../../docs/polygon_draw.js';
+import * as loading from '../../../docs/loading.js';
+import {transformGeoPointArrayToLatLng, initializeAndProcessUserRegions, setUpPolygonDrawing, StoredShapeData, userShapes} from '../../../docs/polygon_draw.js';
 import {setUserFeatureVisibility} from '../../../docs/popup.js';
-import * as resourceGetter from '../../../docs/resources';
+import * as resourceGetter from '../../../docs/resources.js';
 import {userRegionData} from '../../../docs/user_region_data.js';
-import {CallbackLatch} from '../../support/callback_latch';
-import {initFirebaseForUnitTest, loadScriptsBeforeForUnitTests} from '../../support/script_loader';
-import {createGoogleMap} from '../../support/test_map';
+import {CallbackLatch} from '../../support/callback_latch.js';
+import {initFirebaseForUnitTest, loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
+import {
+  createGoogleMap,
+  convertGoogleLatLngToObject,
+  convertPathToLatLng
+} from "../../support/test_map.js";
 
 const notes = 'Sphinx of black quartz, judge my vow';
 
@@ -165,12 +168,11 @@ describe('Unit test for ShapeData', () => {
     const confirmStub = cy.stub(window, 'confirm').returns(true);
     drawPolygonAndClickOnIt();
     pressPopupButton('edit').then(() => {
-      getOnlyUserRegionData()[0].setPath(newPath);
+      getFirstFeature().setPath(newPath);
     });
     pressButtonAndWaitForPromise('close').then(() => {
       expect(confirmStub).to.be.calledOnce;
-      expect(convertPathToLatLng(getOnlyUserRegionData()[0].getPath()))
-          .to.eql(path);
+      expect(convertPathToLatLng(getFirstFeature().getPath())).to.eql(path);
     });
     assertOnFirestoreAndPopup(path, defaultData);
   });
@@ -179,7 +181,7 @@ describe('Unit test for ShapeData', () => {
     let fakeCalled = false;
     drawPolygonAndClickOnIt().then(() => {
       currentUpdatePromise = null;
-      const [, data] = getOnlyUserRegionData();
+      const [, data] = getFirstUserRegionDataEntry();
       const realDoc = userShapes.doc(data.id);
       const realDocFunction = userShapes.doc;
       const fakeDoc = {};
@@ -288,7 +290,7 @@ describe('Unit test for ShapeData', () => {
       ]);
       expect(markerDoc.get('notes')).to.eql(notes);
       expect(userRegionData).to.have.property('size', 1);
-      const [storedMarker, shapeData] = getOnlyUserRegionData();
+      const [storedMarker, shapeData] = getFirstUserRegionDataEntry();
       expect(storedMarker.getMap()).to.eql(map);
       expect(convertGoogleLatLngToObject(storedMarker.getPosition()))
           .to.eql(position);
@@ -352,8 +354,7 @@ describe('Unit test for ShapeData', () => {
         firestoreSpy,
         eeSpy
       } = spyResult);
-      const [polygon] = getOnlyUserRegionData();
-      polygon.setPath(newPath);
+      getFirstFeature().setPath(newPath);
     });
     pressButtonAndWaitForPromise('save').then(() => {
       expect(popupPendingCalculationSpy).to.be.calledOnce;
@@ -371,7 +372,7 @@ describe('Unit test for ShapeData', () => {
     const dummyObjectForSpyAssertions = {method: () => {}};
     const eeSpy = cy.spy(dummyObjectForSpyAssertions, 'method');
     drawPolygonAndClickOnIt().then(() => {
-      const [, data] = getOnlyUserRegionData();
+      const [, data] = getFirstUserRegionDataEntry();
       popupPendingCalculationSpy = cy.spy(data.popup, 'setPendingCalculation');
       popupCalculatedDataSpy = cy.spy(data.popup, 'setCalculatedData');
       firestoreSpy = cy.spy(userShapes, 'doc');
@@ -409,7 +410,7 @@ describe('Unit test for ShapeData', () => {
   it('Hides polygon, re-shows, tries to hide during edit', () => {
     const alertStub = cy.stub(window, 'alert');
     drawPolygonAndClickOnIt().then(
-        () => expect(getOnlyUserRegionData()[0].getVisible()).to.be.true);
+        () => expect(getFirstFeatureVisibility()).to.be.true);
     pressPopupButton('edit');
     cy.get('.notes').type(notes);
     pressButtonAndWaitForPromise('save');
@@ -417,7 +418,7 @@ describe('Unit test for ShapeData', () => {
     cy.wrap(null)
         .then(() => setUserFeatureVisibility(false))
         .then(
-            () => expect(getOnlyUserRegionData()[0].getVisible()).to.be.false);
+            () => expect(getFirstFeatureVisibility()).to.be.false);
     cy.get('#test-map-div').contains(notes).should('not.be.visible');
     // Notes is invisible even if we click on the polygon, so it's really gone.
     cy.get('#test-map-div').click();
@@ -426,7 +427,7 @@ describe('Unit test for ShapeData', () => {
     // Check box again and verify that notes box can now be brought up.
     cy.wrap(null)
         .then(() => setUserFeatureVisibility(true))
-        .then(() => expect(getOnlyUserRegionData()[0].getVisible()).to.be.true);
+        .then(() => expect(getFirstFeatureVisibility()).to.be.true);
     // Notes not visible yet.
     cy.get('#test-map-div').contains(notes).should('not.be.visible');
     cy.wait(500);
@@ -438,7 +439,7 @@ describe('Unit test for ShapeData', () => {
     pressPopupButton('edit').then(() => expect(alertStub).to.not.be.called);
     cy.wrap(null).then(() => setUserFeatureVisibility(false)).then(() => {
       expect(alertStub).to.be.calledOnce;
-      expect(getOnlyUserRegionData()[0].getVisible()).to.be.true;
+      expect(getFirstFeatureVisibility()).to.be.true;
     });
     // Confirm that save is still around to be pressed.
     const newNotes = 'new notes to force save';
@@ -450,7 +451,7 @@ describe('Unit test for ShapeData', () => {
     cy.wrap(null)
         .then(() => setUserFeatureVisibility(false))
         .then(
-            () => expect(getOnlyUserRegionData()[0].getVisible()).to.be.false);
+            () => expect(getFirstFeatureVisibility()).to.be.false);
     cy.get('#test-map-div').contains(newNotes);
     cy.get('#test-map-div').contains(newNotes).should('not.be.visible');
   });
@@ -458,7 +459,7 @@ describe('Unit test for ShapeData', () => {
   it('Hides, draws new one, tries to hide during edit, re-shows, hides', () => {
     const alertStub = cy.stub(window, 'alert');
     drawPolygonAndClickOnIt().then(
-        () => expect(getOnlyUserRegionData()[0].getVisible()).to.be.true);
+        () => expect(getFirstFeatureVisibility()).to.be.true);
     pressPopupButton('edit');
     cy.get('.notes').type(notes);
     pressButtonAndWaitForPromise('save');
@@ -501,7 +502,7 @@ describe('Unit test for ShapeData', () => {
     cy.wrap(null)
         .then(() => setUserFeatureVisibility(false))
         .then(
-            () => expect(getOnlyUserRegionData()[0].getVisible()).to.be.false);
+            () => expect(getFirstFeatureVisibility()).to.be.false);
     cy.get('#test-map-div').contains(notes).should('not.be.visible');
     // Notes is invisible even if we click on the polygon, so it's really gone.
     cy.get('#test-map-div').click(200, 300);
@@ -558,7 +559,7 @@ describe('Unit test for ShapeData', () => {
           expect(polygonDoc.get('calculatedData')).to.eql(calculatedData);
           expect(polygonDoc.get('notes')).to.eql(expectedData.notes);
           expect(userRegionData).to.have.property('size', 1);
-          const [storedPolygon, shapeData] = getOnlyUserRegionData();
+          const [storedPolygon, shapeData] = getFirstUserRegionDataEntry();
           expect(storedPolygon.getMap()).to.eql(map);
           expect(convertPathToLatLng(storedPolygon.getPath())).to.eql(path);
           expect(shapeData).to.have.property('id', firestoreId);
@@ -574,12 +575,12 @@ describe('Unit test for ShapeData', () => {
    */
   function assertOnPopup(expectedData) {
     cy.get('#test-map-div').click();
-    mapContainsText('damage count: ' + expectedData.damage);
-    mapContainsText('approximate SNAP fraction: ' + expectedData.snapFraction);
-    mapContainsText(
+    cy.get('#test-map-div').contains('damage count: ' + expectedData.damage);
+    cy.get('#test-map-div').contains('approximate SNAP fraction: ' + expectedData.snapFraction);
+    cy.get('#test-map-div').contains(
         'approximate total households: ' + expectedData.totalHouseholds);
     if (expectedData.notes) {
-      return mapContainsText(expectedData.notes);
+      return cy.get('#test-map-div').contains(expectedData.notes);
     } else {
       return cy.wrap(null);
     }
@@ -629,24 +630,38 @@ function pressPopupButton(button) {
   return cy.get(':button:visible').contains(button).click();
 }
 
-function getOnlyUserRegionData() {
+/**
+ * Gets the first (feature, StoredShapeData) pair in the {@link userRegionData}
+ * map.
+ * @returns {[google.maps.Polygon|google.maps.Marker, StoredShapeData]}
+ */
+function getFirstUserRegionDataEntry() {
   return [...userRegionData.entries()][0];
 }
 
+/**
+ * Returns the visibility attribute of the first feature stored in the {@link userRegionData} map.
+ * @return {boolean}
+ */
+function getFirstFeatureVisibility() {
+  getFirstFeature().getVisibility();
+}
+
+/**
+ * Returns the first feature stored in the {@link userRegionData} map.
+ * @returns {google.maps.Polygon|google.maps.Marker}
+ */
+function getFirstFeature() {
+  return [...userRegionData.keys()][0];
+}
+
+/**
+ * Creates an expectedData object based on {@link defaultData} with notes set.
+ * @param {string} notes Expected notes
+ * @returns {{damage: number, snapFraction: number, totalHouseholds: number, notes: string}}
+ */
 function withNotes(notes) {
   const newData = Object.assign({}, defaultData);
   newData.notes = notes;
   return newData;
-}
-
-function mapContainsText(text) {
-  cy.get('#test-map-div').contains(text);
-}
-
-function convertGoogleLatLngToObject(latlng) {
-  return {lng: latlng.lng(), lat: latlng.lat()};
-}
-
-function convertPathToLatLng(path) {
-  return path.getArray().map(convertGoogleLatLngToObject);
 }
