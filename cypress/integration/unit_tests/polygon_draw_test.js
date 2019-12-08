@@ -197,7 +197,7 @@ describe('Unit test for ShapeData', () => {
     assertOnFirestoreAndPopup(path, defaultData);
   });
 
-  it.only('Updates while update pending', () => {
+  it('Updates while update pending', () => {
     let fakeCalled = false;
     drawPolygonAndClickOnIt().then(() => {
       currentUpdatePromise = null;
