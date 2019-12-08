@@ -616,9 +616,12 @@ describe('Unit test for ShapeData', () => {
   function assertOnPopup(expectedData) {
     cy.task('logg', 'asserting on popup with ' + expectedData.notes);
     cy.get('#test-map-div').click();
+    cy.task('logg', 'clicked ' + expectedData.notes);
     cy.get('#test-map-div').contains('damage count: ' + expectedData.damage);
+    cy.task('logg', 'got damage ' + expectedData.notes);
     cy.get('#test-map-div')
         .contains('approximate SNAP fraction: ' + expectedData.snapFraction);
+    cy.task('logg', 'got snap ' + expectedData.notes);
     cy.get('#test-map-div')
         .contains(
             'approximate total households: ' + expectedData.totalHouseholds);
