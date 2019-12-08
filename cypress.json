@@ -2,6 +2,5 @@
   "projectId": "jr8ks8",
   "nodeVersion": "system",
   "animationDistanceThreshold": 20,
-  "baseUrl": "http://localhost:8080/",
-  "videoUploadOnPasses": false
+  "baseUrl": "http://localhost:8080/"
 }
