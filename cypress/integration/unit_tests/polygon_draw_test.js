@@ -286,8 +286,8 @@ describe('Unit test for ShapeData', () => {
     // Found through unpleasant trial and error.
     cy.get('#test-map-div').click(310, 435);
     pressPopupButton('edit');
-    cy.get('.notes').type(notes)
-        .then(() => getFirstFeature().setPosition(newPosition));
+    cy.get('.notes').type(notes).then(
+        () => getFirstFeature().setPosition(newPosition));
     pressButtonAndWaitForPromise('save');
     assertMarker(newPosition, notes);
     pressButtonAndWaitForPromise('delete')
