@@ -333,6 +333,7 @@ describe('Unit test for ShapeData', () => {
     let popupCalculatedDataSpy;
     let eeSpy;
     let firestoreSpy;
+
     drawPolygonAndSetUpSpies().then((spyResult) => ({
                                       popupPendingCalculationSpy,
                                       popupCalculatedDataSpy,
@@ -369,6 +370,8 @@ describe('Unit test for ShapeData', () => {
     });
   });
 
+  // This test also incidentally tests that we correctly update Firestore on a
+  // dragged polygon.
   it('Dragged polygon triggers recalculation', () => {
     // Clone path and edit.
     const newPath = JSON.parse(JSON.stringify(path));
@@ -404,8 +407,7 @@ describe('Unit test for ShapeData', () => {
    * rather on a dummy object that shadows it, and that we call with the same
    * arguments as the real {@link ee#List}.
    * @return {Cypress.Chainable<{popupPendingCalculationSpy: Spy,
-   *     popupCalculatedDataSpy: Spy, eeSpy: Spy,
-   *     firestoreSpy: Spy}>}
+   *     popupCalculatedDataSpy: Spy, eeSpy: Spy, firestoreSpy: Spy}>}
    */
   function drawPolygonAndSetUpSpies() {
     let popupPendingCalculationSpy;
@@ -445,8 +447,8 @@ describe('Unit test for ShapeData', () => {
     drawPolygon();
     const expectedData = Object.assign({}, defaultData);
     expectedData.damage = 'unknown';
-    getCurrentUpdatePromiseInCypress().then(
-        () => assertOnFirestoreAndPopup(path, expectedData));
+    getCurrentUpdatePromiseInCypress();
+    assertOnFirestoreAndPopup(path, expectedData);
   });
 
   it('Hides polygon, re-shows, tries to hide during edit', () => {
@@ -457,18 +459,14 @@ describe('Unit test for ShapeData', () => {
     cy.get('.notes').type(notes);
     pressButtonAndWaitForPromise('save');
     cy.get('#test-map-div').contains(notes).should('be.visible');
-    cy.wrap(null)
-        .then(() => setUserFeatureVisibility(false))
-        .then(() => expect(getFirstFeatureVisibility()).to.be.false);
+    setUserFeatureVisibilityInCypressAndAssert(false, true);
     cy.get('#test-map-div').contains(notes).should('not.be.visible');
     // Notes is invisible even if we click on the polygon, so it's really gone.
     cy.get('#test-map-div').click();
     cy.get('#test-map-div').contains(notes).should('not.be.visible');
 
     // Check box again and verify that notes box can now be brought up.
-    cy.wrap(null)
-        .then(() => setUserFeatureVisibility(true))
-        .then(() => expect(getFirstFeatureVisibility()).to.be.true);
+    setUserFeatureVisibilityInCypressAndAssert(true, true);
     // Notes not visible yet.
     cy.get('#test-map-div').contains(notes).should('not.be.visible');
     cy.wait(500);
@@ -478,10 +476,8 @@ describe('Unit test for ShapeData', () => {
 
     // Try to hide user features in the middle of editing: will fail.
     pressPopupButton('edit').then(() => expect(alertStub).to.not.be.called);
-    cy.wrap(null).then(() => setUserFeatureVisibility(false)).then(() => {
-      expect(alertStub).to.be.calledOnce;
-      expect(getFirstFeatureVisibility()).to.be.true;
-    });
+    setUserFeatureVisibilityInCypressAndAssert(false, false)
+        .then(() => expect(alertStub).to.be.calledOnce);
     // Confirm that save is still around to be pressed.
     const newNotes = 'new notes to force save';
     cy.get('.notes').clear().type(newNotes);
@@ -489,9 +485,7 @@ describe('Unit test for ShapeData', () => {
     assertOnFirestoreAndPopup(path, withNotes(newNotes));
 
     // After a save, the hide is successful.
-    cy.wrap(null)
-        .then(() => setUserFeatureVisibility(false))
-        .then(() => expect(getFirstFeatureVisibility()).to.be.false);
+    setUserFeatureVisibilityInCypressAndAssert(false, true);
     cy.get('#test-map-div').contains(newNotes);
     cy.get('#test-map-div').contains(newNotes).should('not.be.visible');
   });
@@ -504,28 +498,27 @@ describe('Unit test for ShapeData', () => {
     cy.get('.notes').type(notes);
     pressButtonAndWaitForPromise('save');
     cy.get('#test-map-div').contains(notes).should('be.visible');
-    cy.wrap(null).then(() => setUserFeatureVisibility(false));
+    setUserFeatureVisibilityInCypressAndAssert(false, true);
     const otherPath =
         [{lng: -0.5, lat: 0.5}, {lng: -0.25, lat: 0}, {lng: -0.25, lat: 0.5}];
     drawPolygon(otherPath);
     getCurrentUpdatePromiseInCypress();
-    // cy.get('[title="Add a marker"]').click();
     cy.get('#test-map-div').click(200, 300);
     pressPopupButton('edit');
     const newNotes = 'new notes';
     cy.get('.notes').type(newNotes);
     // Try to re-check the box. It will fail because we're editing.
-    cy.wrap(null).then(() => setUserFeatureVisibility(true)).then(() => {
+    setUserFeatureVisibilityInCypressAndAssert(true, false)
+    .then(() => {
       expect(alertStub).to.be.calledOnce;
       alertStub.resetHistory();
-      const polygons = [...userRegionData.keys()];
-      expect(polygons[0].getVisible()).to.be.false;
-      expect(polygons[1].getVisible()).to.be.true;
+      expect([...userRegionData.keys()][1].getVisible()).to.be.true;
     });
 
     // Save the new notes and check the box, this time it succeeds.
     pressButtonAndWaitForPromise('save');
-    cy.wrap(null).then(() => setUserFeatureVisibility(true)).then(() => {
+    setUserFeatureVisibilityInCypressAndAssert(true, true)
+    .then(() => {
       expect(alertStub).to.not.be.called;
       for (const polygon of userRegionData.keys()) {
         expect(polygon.getVisible()).to.be.true;
@@ -539,9 +532,7 @@ describe('Unit test for ShapeData', () => {
     cy.get('#test-map-div').contains(newNotes).should('be.visible');
 
     // Now hide both polygons, and verify that they're really gone.
-    cy.wrap(null)
-        .then(() => setUserFeatureVisibility(false))
-        .then(() => expect(getFirstFeatureVisibility()).to.be.false);
+    setUserFeatureVisibilityInCypressAndAssert(false, true);
     cy.get('#test-map-div').contains(notes).should('not.be.visible');
     // Notes is invisible even if we click on the polygon, so it's really gone.
     cy.get('#test-map-div').click(200, 300);
@@ -676,6 +667,29 @@ function pressPopupButton(button) {
  */
 function getFirstUserRegionDataEntry() {
   return [...userRegionData.entries()][0];
+}
+
+/**
+ * Calls {@link setUserFeatureVisibility} in the "Cypress phase" of the test
+ * and asserts that it succeeds if expected. Also asserts that the first stored
+ * feature has the expected visibility.
+ * @param {boolean} visibility
+ * @param {boolean} expectedSuccess
+ * @returns {Cypress.Chainable}
+ */
+function setUserFeatureVisibilityInCypressAndAssert(visibility, expectedSuccess) {
+  return cy.wrap(null).then(() => {
+    const oldVisibility = expectedSuccess ? getFirstFeatureVisibility() : undefined;
+    const callExpect = expect(setUserFeatureVisibility(visibility)).to.be;
+    const visibleExpect = expect(getFirstFeatureVisibility()).to.be;
+    if (expectedSuccess) {
+      callExpect.true;
+      visibility ? visibleExpect.true : visibleExpect.false;
+    } else {
+      callExpect.false;
+      oldVisibility ? visibleExpect.true : visibleExpect.false;
+    }
+  });
 }
 
 /**
