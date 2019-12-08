@@ -508,8 +508,7 @@ describe('Unit test for ShapeData', () => {
     const newNotes = 'new notes';
     cy.get('.notes').type(newNotes);
     // Try to re-check the box. It will fail because we're editing.
-    setUserFeatureVisibilityInCypressAndAssert(true, false)
-    .then(() => {
+    setUserFeatureVisibilityInCypressAndAssert(true, false).then(() => {
       expect(alertStub).to.be.calledOnce;
       alertStub.resetHistory();
       expect([...userRegionData.keys()][1].getVisible()).to.be.true;
@@ -517,8 +516,7 @@ describe('Unit test for ShapeData', () => {
 
     // Save the new notes and check the box, this time it succeeds.
     pressButtonAndWaitForPromise('save');
-    setUserFeatureVisibilityInCypressAndAssert(true, true)
-    .then(() => {
+    setUserFeatureVisibilityInCypressAndAssert(true, true).then(() => {
       expect(alertStub).to.not.be.called;
       for (const polygon of userRegionData.keys()) {
         expect(polygon.getVisible()).to.be.true;
@@ -677,9 +675,11 @@ function getFirstUserRegionDataEntry() {
  * @param {boolean} expectedSuccess
  * @returns {Cypress.Chainable}
  */
-function setUserFeatureVisibilityInCypressAndAssert(visibility, expectedSuccess) {
+function setUserFeatureVisibilityInCypressAndAssert(
+    visibility, expectedSuccess) {
   return cy.wrap(null).then(() => {
-    const oldVisibility = expectedSuccess ? getFirstFeatureVisibility() : undefined;
+    const oldVisibility =
+        expectedSuccess ? getFirstFeatureVisibility() : undefined;
     const callExpect = expect(setUserFeatureVisibility(visibility)).to.be;
     const visibleExpect = expect(getFirstFeatureVisibility()).to.be;
     if (expectedSuccess) {
