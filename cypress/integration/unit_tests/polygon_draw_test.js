@@ -197,9 +197,12 @@ describe('Unit test for ShapeData', () => {
     assertOnFirestoreAndPopup(path, defaultData);
   });
 
-  it('Updates while update pending', () => {
+  it.only('Updates while update pending', () => {
+    cy.task('logg', 'starting test');
     let fakeCalled = false;
+    cy.task('logg', 'next up');
     drawPolygonAndClickOnIt().then(() => {
+      cy.task('logg', 'in then');
       currentUpdatePromise = null;
       const [, data] = getFirstUserRegionDataEntry();
       const realDoc = userShapes.doc(data.id);
@@ -207,6 +210,7 @@ describe('Unit test for ShapeData', () => {
       const fakeDoc = {};
       userShapes.doc = () => fakeDoc;
       fakeDoc.set = (record) => {
+        console.log('not sure how to handle this part');
         // Unfortunately Cypress can't really handle executing Cypress commands
         // inside an asynchronous callback, so we rely on jquery to modify the
         // DOM. Works out ok.
@@ -228,11 +232,15 @@ describe('Unit test for ShapeData', () => {
       cy.stub(document, 'getElementsByClassName')
           .callsFake((id) => doc.getElementsByClassName(id));
     });
+    cy.task('logg', 'about to edit');
     pressPopupButton('edit');
     cy.get('.notes').type('new notes');
-    pressButtonAndWaitForPromise('save').then(
-        () => expect(fakeCalled).to.be.true);
+    pressPopupButton('save');
+    cy.task('logg', 'pressed ');
     assertOnPopup(withNotes('racing notes'));
+    getCurrentUpdatePromiseInCypress().then(
+        () => expect(fakeCalled).to.be.true);
+    cy.task('logg', 'got racing');
     assertOnFirestoreAndPopup(path, withNotes('racing notes'));
   });
 
