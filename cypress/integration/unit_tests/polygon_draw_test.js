@@ -688,7 +688,8 @@ function setUserFeatureVisibilityInCypressAndAssert(
     const expectedVisibility =
         expectedSuccess ? visibility : getFirstFeatureVisibility();
     expect(setUserFeatureVisibility(visibility)).to.eql(expectedSuccess);
-    expect(getFirstFeatureVisibility()).to.eql(expectedSuccess ? visibility : expectedVisibility);
+    expect(getFirstFeatureVisibility())
+        .to.eql(expectedSuccess ? visibility : expectedVisibility);
   });
 }
 
