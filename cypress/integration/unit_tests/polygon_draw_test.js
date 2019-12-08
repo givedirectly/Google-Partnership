@@ -614,6 +614,7 @@ describe('Unit test for ShapeData', () => {
    * @return {Cypress.Chainable}
    */
   function assertOnPopup(expectedData) {
+    cy.task('logg', 'asserting on popup with ' + expectedData.notes);
     cy.get('#test-map-div').click();
     cy.get('#test-map-div').contains('damage count: ' + expectedData.damage);
     cy.get('#test-map-div')
@@ -621,7 +622,9 @@ describe('Unit test for ShapeData', () => {
     cy.get('#test-map-div')
         .contains(
             'approximate total households: ' + expectedData.totalHouseholds);
+    cy.task('logg', 'finish most with ' + expectedData.notes);
     if (expectedData.notes) {
+      cy.task('logg', 'returning soon with ' + expectedData.notes);
       return cy.get('#test-map-div').contains(expectedData.notes);
     } else {
       return cy.wrap(null);
