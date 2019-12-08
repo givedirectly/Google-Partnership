@@ -10,6 +10,10 @@ import {convertGoogleLatLngToObject, convertPathToLatLng, createGoogleMap} from 
 const notes = 'Sphinx of black quartz, judge my vow';
 
 const path = [{lat: 0, lng: 0}, {lat: 4, lng: 2}, {lat: 0, lng: 2}];
+/**
+ * @typedef {{damage: number, snapFraction: number, notes: string, totalHouseholds: number}} ExpectedData
+ * @type {ExpectedData}
+ */
 const defaultData = {
   damage: 1,
   snapFraction: 0.1,
@@ -275,6 +279,12 @@ describe('Unit test for ShapeData', () => {
         });
   });
 
+  /**
+   * Asserts that Firestore contains data for a marker at the expected position
+   * and with the expected notes.
+   * @param {}position
+   * @param notes
+   */
   function assertMarker(position, notes) {
     expect(StoredShapeData.pendingWriteCount).to.eql(0);
     cy.wrap(userShapes.get()).then((querySnapshot) => {
@@ -282,7 +292,7 @@ describe('Unit test for ShapeData', () => {
       const markerDoc = querySnapshot.docs[0];
       const firestoreId = markerDoc.id;
       expect(transformGeoPointArrayToLatLng(markerDoc.get('geometry'))).to.eql([
-        position
+        position,
       ]);
       expect(markerDoc.get('notes')).to.eql(notes);
       expect(userRegionData).to.have.property('size', 1);
@@ -303,14 +313,14 @@ describe('Unit test for ShapeData', () => {
                                       popupPendingCalculationSpy,
                                       popupCalculatedDataSpy,
                                       eeSpy,
-                                      firestoreSpy
+                                      firestoreSpy,
                                     } = spyResult));
     pressButtonAndWaitForPromise('save').then(() => {
       expect(popupPendingCalculationSpy).to.not.be.called;
       expect(popupCalculatedDataSpy).to.not.be.called;
       expect(eeSpy).to.not.be.called;
       expect(firestoreSpy).to.not.be.called;
-      assertOnFirestoreAndPopup(path, defaultData)
+      assertOnFirestoreAndPopup(path, defaultData);
     });
   });
 
@@ -323,7 +333,7 @@ describe('Unit test for ShapeData', () => {
                                       popupPendingCalculationSpy,
                                       popupCalculatedDataSpy,
                                       eeSpy,
-                                      firestoreSpy
+                                      firestoreSpy,
                                     } = spyResult));
     cy.get('.notes').type(notes);
     pressButtonAndWaitForPromise('save').then(() => {
@@ -348,7 +358,7 @@ describe('Unit test for ShapeData', () => {
         popupPendingCalculationSpy,
         popupCalculatedDataSpy,
         firestoreSpy,
-        eeSpy
+        eeSpy,
       } = spyResult);
       getFirstFeature().setPath(newPath);
     });
@@ -358,7 +368,7 @@ describe('Unit test for ShapeData', () => {
       expect(eeSpy).to.be.calledOnce;
       expect(firestoreSpy).to.be.calledOnce;
     });
-    assertOnFirestoreAndPopup(newPath, defaultData)
+    assertOnFirestoreAndPopup(newPath, defaultData);
   });
 
   /**
@@ -369,7 +379,7 @@ describe('Unit test for ShapeData', () => {
    * `eeSpy` returned is not actually spying on the real {@link ee#List} but
    * rather on a dummy object that shadows it, and that we call with the same
    * arguments as the real {@link ee#List}.
-   * @returns {Cypress.Chainable<{popupPendingCalculationSpy: Cypress.Agent,
+   * @return {Cypress.Chainable<{popupPendingCalculationSpy: Cypress.Agent,
    *     popupCalculatedDataSpy: Cypress.Agent, eeSpy: Cypress.Agent,
    *     firestoreSpy: Cypress.Agent}>}
    */
@@ -518,7 +528,7 @@ describe('Unit test for ShapeData', () => {
    * Draws a polygon with the given path, waits for it to save to Firestore,
    * asserts that the write succeeded and the map has the desired polygon data,
    * and clicks on the polygon.
-   * @param {Array<LatLng>} polygonPath
+   * @param {Array<LatLngLiteral>} polygonPath
    * @return {Cypress.Chainable<void>}
    */
   function drawPolygonAndClickOnIt(polygonPath = path) {
@@ -529,7 +539,7 @@ describe('Unit test for ShapeData', () => {
 
   /**
    * Triggers the creation of a polygon with the given path.
-   * @param {Array<LatLng>} polygonPath Defaults to {@link path}
+   * @param {Array<LatLngLiteral>} polygonPath Defaults to {@link path}
    */
   function drawPolygon(polygonPath = path) {
     cy.wrap(null).then(() => {
@@ -544,9 +554,8 @@ describe('Unit test for ShapeData', () => {
   /**
    * Asserts that all Firestore writes have completed, that Firestore data
    * matches expected data, and calls {@link assertOnPopup}.
-   * @param {Array<LatLng>} path
-   * @param {{damage: *, snapFraction: number, totalHouseholds: number, notes:
-   *     string}} expectedData
+   * @param {Array<LatLngLiteral>} path
+   * @param {ExpectedData} expectedData
    * @return {Cypress.Chainable}
    */
   function assertOnFirestoreAndPopup(path, expectedData) {
@@ -574,8 +583,7 @@ describe('Unit test for ShapeData', () => {
 
   /**
    * Clicks on map to bring up polygon popup and asserts on contents.
-   * @param {{damage: *, snapFraction: number, totalHouseholds: number, notes:
-   *     string}} expectedData
+   * @param {ExpectedData} expectedData
    * @return {Cypress.Chainable}
    */
   function assertOnPopup(expectedData) {
@@ -657,7 +665,7 @@ function getFirstFeatureVisibility() {
 
 /**
  * Returns the first feature stored in the {@link userRegionData} map.
- * @return {google.maps.Polygon|google.maps.Marker}
+ * @return {Feature}
  */
 function getFirstFeature() {
   return [...userRegionData.keys()][0];
@@ -666,11 +674,12 @@ function getFirstFeature() {
 /**
  * Creates an expectedData object based on {@link defaultData} with notes set.
  * @param {string} notes Expected notes
- * @return {{damage: number, snapFraction: number, totalHouseholds: number,
- *     notes: string}}
+ * @return {ExpectedData}
  */
 function withNotes(notes) {
   const newData = Object.assign({}, defaultData);
   newData.notes = notes;
   return newData;
 }
+
+/** @typedef {google.maps.Polygon|google.maps.Marker} Feature */
