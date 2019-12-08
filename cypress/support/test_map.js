@@ -1,4 +1,4 @@
-export {createGoogleMap, convertPathToLatLng, convertGoogleLatLngToObject};
+export {convertGoogleLatLngToObject, convertPathToLatLng, createGoogleMap};
 
 /**
  * Visits empty page (to empty out document), then creates and returns a Map.

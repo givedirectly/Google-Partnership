@@ -1,15 +1,11 @@
 import * as loading from '../../../docs/loading.js';
-import {transformGeoPointArrayToLatLng, initializeAndProcessUserRegions, setUpPolygonDrawing, StoredShapeData, userShapes} from '../../../docs/polygon_draw.js';
+import {initializeAndProcessUserRegions, setUpPolygonDrawing, StoredShapeData, transformGeoPointArrayToLatLng, userShapes} from '../../../docs/polygon_draw.js';
 import {setUserFeatureVisibility} from '../../../docs/popup.js';
 import * as resourceGetter from '../../../docs/resources.js';
 import {userRegionData} from '../../../docs/user_region_data.js';
 import {CallbackLatch} from '../../support/callback_latch.js';
 import {initFirebaseForUnitTest, loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
-import {
-  createGoogleMap,
-  convertGoogleLatLngToObject,
-  convertPathToLatLng
-} from "../../support/test_map.js";
+import {convertGoogleLatLngToObject, convertPathToLatLng, createGoogleMap} from '../../support/test_map.js';
 
 const notes = 'Sphinx of black quartz, judge my vow';
 
@@ -417,8 +413,7 @@ describe('Unit test for ShapeData', () => {
     cy.get('#test-map-div').contains(notes).should('be.visible');
     cy.wrap(null)
         .then(() => setUserFeatureVisibility(false))
-        .then(
-            () => expect(getFirstFeatureVisibility()).to.be.false);
+        .then(() => expect(getFirstFeatureVisibility()).to.be.false);
     cy.get('#test-map-div').contains(notes).should('not.be.visible');
     // Notes is invisible even if we click on the polygon, so it's really gone.
     cy.get('#test-map-div').click();
@@ -450,8 +445,7 @@ describe('Unit test for ShapeData', () => {
     // After a save, the hide is successful.
     cy.wrap(null)
         .then(() => setUserFeatureVisibility(false))
-        .then(
-            () => expect(getFirstFeatureVisibility()).to.be.false);
+        .then(() => expect(getFirstFeatureVisibility()).to.be.false);
     cy.get('#test-map-div').contains(newNotes);
     cy.get('#test-map-div').contains(newNotes).should('not.be.visible');
   });
@@ -501,8 +495,7 @@ describe('Unit test for ShapeData', () => {
     // Now hide both polygons, and verify that they're really gone.
     cy.wrap(null)
         .then(() => setUserFeatureVisibility(false))
-        .then(
-            () => expect(getFirstFeatureVisibility()).to.be.false);
+        .then(() => expect(getFirstFeatureVisibility()).to.be.false);
     cy.get('#test-map-div').contains(notes).should('not.be.visible');
     // Notes is invisible even if we click on the polygon, so it's really gone.
     cy.get('#test-map-div').click(200, 300);
@@ -576,9 +569,11 @@ describe('Unit test for ShapeData', () => {
   function assertOnPopup(expectedData) {
     cy.get('#test-map-div').click();
     cy.get('#test-map-div').contains('damage count: ' + expectedData.damage);
-    cy.get('#test-map-div').contains('approximate SNAP fraction: ' + expectedData.snapFraction);
-    cy.get('#test-map-div').contains(
-        'approximate total households: ' + expectedData.totalHouseholds);
+    cy.get('#test-map-div')
+        .contains('approximate SNAP fraction: ' + expectedData.snapFraction);
+    cy.get('#test-map-div')
+        .contains(
+            'approximate total households: ' + expectedData.totalHouseholds);
     if (expectedData.notes) {
       return cy.get('#test-map-div').contains(expectedData.notes);
     } else {
@@ -640,7 +635,8 @@ function getFirstUserRegionDataEntry() {
 }
 
 /**
- * Returns the visibility attribute of the first feature stored in the {@link userRegionData} map.
+ * Returns the visibility attribute of the first feature stored in the {@link
+ * userRegionData} map.
  * @return {boolean}
  */
 function getFirstFeatureVisibility() {
@@ -658,7 +654,8 @@ function getFirstFeature() {
 /**
  * Creates an expectedData object based on {@link defaultData} with notes set.
  * @param {string} notes Expected notes
- * @returns {{damage: number, snapFraction: number, totalHouseholds: number, notes: string}}
+ * @returns {{damage: number, snapFraction: number, totalHouseholds: number,
+ *     notes: string}}
  */
 function withNotes(notes) {
   const newData = Object.assign({}, defaultData);
