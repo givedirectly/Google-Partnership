@@ -306,22 +306,25 @@ describe('Unit test for ShapeData', () => {
    * @param {string} notes
    */
   function assertMarker(position, notes) {
-    cy.wrap(null).then(() => expect(StoredShapeData.pendingWriteCount).to.eql(0))
-    .then(() => userShapes.get()).then((querySnapshot) => {
-      expect(querySnapshot).to.have.property('size', 1);
-      const markerDoc = querySnapshot.docs[0];
-      const firestoreId = markerDoc.id;
-      expect(transformGeoPointArrayToLatLng(markerDoc.get('geometry'))).to.eql([
-        position,
-      ]);
-      expect(markerDoc.get('notes')).to.eql(notes);
-      expect(userRegionData).to.have.property('size', 1);
-      const [storedMarker, shapeData] = getFirstUserRegionDataEntry();
-      expect(storedMarker.getMap()).to.eql(map);
-      expect(convertGoogleLatLngToObject(storedMarker.getPosition()))
-          .to.eql(position);
-      expect(shapeData).to.have.property('id', firestoreId);
-    });
+    cy.wrap(null)
+        .then(() => expect(StoredShapeData.pendingWriteCount).to.eql(0))
+        .then(() => userShapes.get())
+        .then((querySnapshot) => {
+          expect(querySnapshot).to.have.property('size', 1);
+          const markerDoc = querySnapshot.docs[0];
+          const firestoreId = markerDoc.id;
+          expect(transformGeoPointArrayToLatLng(markerDoc.get('geometry')))
+              .to.eql([
+                position,
+              ]);
+          expect(markerDoc.get('notes')).to.eql(notes);
+          expect(userRegionData).to.have.property('size', 1);
+          const [storedMarker, shapeData] = getFirstUserRegionDataEntry();
+          expect(storedMarker.getMap()).to.eql(map);
+          expect(convertGoogleLatLngToObject(storedMarker.getPosition()))
+              .to.eql(position);
+          expect(shapeData).to.have.property('id', firestoreId);
+        });
   }
 
   it('Skips update if nothing changed', () => {
