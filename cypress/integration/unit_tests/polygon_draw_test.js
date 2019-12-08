@@ -10,6 +10,9 @@ import {convertGoogleLatLngToObject, convertPathToLatLng, createGoogleMap} from 
 const notes = 'Sphinx of black quartz, judge my vow';
 
 const path = [{lat: 0, lng: 0}, {lat: 4, lng: 2}, {lat: 0, lng: 2}];
+
+/** @typedef {google.maps.Polygon|google.maps.Marker} Feature */
+
 /**
  * @typedef {{damage: number, snapFraction: number, notes: string,
  * totalHouseholds: number}} ExpectedData
@@ -682,5 +685,3 @@ function withNotes(notes) {
   newData.notes = notes;
   return newData;
 }
-
-/** @typedef {google.maps.Polygon|google.maps.Marker} Feature */
