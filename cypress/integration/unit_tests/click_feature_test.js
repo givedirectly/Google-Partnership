@@ -10,7 +10,7 @@ import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 import {convertPathToLatLng, createGoogleMap} from '../../support/test_map.js';
 
 // Clicks on the map can sometimes happen too fast for the map to react.
-const waitBeforeClick = 100;
+const waitBeforeClick = 500;
 const feature1Corners = [0.25, 0.25, 0.75, 1];
 const feature2Corners = [0.75, 0.25, 1.5, 0.75];
 
