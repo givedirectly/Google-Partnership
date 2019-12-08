@@ -363,12 +363,15 @@ describe('Unit test for ShapeData', () => {
 
   /**
    * Draws the default polygon and clicks on it. Then returns spies to observe
-   * calculated-data-related calls made to the polygon's popup, and {@link ee#List} and
-   * {@link userShapes#doc} calls. Because EE is finicky about spying, the `eeSpy` returned
-   * is not actually spying on the real {@link ee#List} but rather on a dummy
-   * object that shadows it, and that we call with the same arguments as the
-   * real {@link ee#List}.
-   * @returns {Cypress.Chainable<{popupPendingCalculationSpy: Cypress.Agent, popupCalculatedDataSpy: Cypress.Agent, eeSpy: Cypress.Agent, firestoreSpy: Cypress.Agent}>}
+   * calculated-data-related calls made to the polygon's popup, and {@link
+   * ee#List} and
+   * {@link userShapes#doc} calls. Because EE is finicky about spying, the
+   * `eeSpy` returned is not actually spying on the real {@link ee#List} but
+   * rather on a dummy object that shadows it, and that we call with the same
+   * arguments as the real {@link ee#List}.
+   * @returns {Cypress.Chainable<{popupPendingCalculationSpy: Cypress.Agent,
+   *     popupCalculatedDataSpy: Cypress.Agent, eeSpy: Cypress.Agent,
+   *     firestoreSpy: Cypress.Agent}>}
    */
   function drawPolygonAndSetUpSpies() {
     let popupPendingCalculationSpy;
