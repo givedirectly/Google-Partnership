@@ -129,11 +129,11 @@ module.exports = (on, config) => {
      * @return {Promise<null>} Promise that completes when writes are done
      */
     populateTestFirestoreData(disastersDataAndTestRoot) {
+      const {currentTestRoot, disastersData} = disastersDataAndTestRoot;
       // We use a test app, created using normal firebase, versus a test admin
       // app, because objects like GeoPoint are not compatible across the
       // libraries. By using the same library, we're able to copy the data from
       // prod to test with no modifications.
-      const {currentTestRoot, disastersData} = disastersDataAndTestRoot;
       const testApp = firebase.initializeApp(firebaseConfigTest, 'testapp');
       const writePromises = [];
       for (const disasterData of disastersData) {

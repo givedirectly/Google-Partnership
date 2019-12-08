@@ -154,10 +154,6 @@ const testPrefix = new Date().getTime() + '-';
  */
 function addFirebaseHooks() {
   let disastersData = null;
-  const date = new Date();
-  date.setHours(0);
-  date.setSeconds(0);
-  date.setMilliseconds(0);
   before(() => {
     cy.task('initializeTestFirebase', null, {
         timeout: 10000,
@@ -166,10 +162,10 @@ function addFirebaseHooks() {
         .then((result) => disastersData = result)
         .then(() => {
           // Write a copy of the data to backup documents in case of accidental
-          // deletion.
+          // deletion. One backup per day.
           cy.task(
               'populateTestFirestoreData',
-              {disastersData, currentTestRoot: date.getTime() + '-backup'});
+              {disastersData, currentTestRoot: getTimestampRoundedToDays() + '-backup'});
         });
   });
   let currentTestRoot = null;
@@ -232,4 +228,12 @@ function waitForCallback(callback) {
   // If callback is true, return a Cypress Chainable so that we can chain work
   // off of this function.
   return cy.wait(0);
+}
+
+function getTimestampRoundedToDays() {
+  const date = new Date();
+  date.setHours(0);
+  date.setSeconds(0);
+  date.setMilliseconds(0);
+  return date.getTime();
 }
