@@ -165,7 +165,7 @@ function addFirebaseHooks() {
           // deletion. One backup per day.
           cy.task('populateTestFirestoreData', {
             disastersData,
-            currentTestRoot: getTimestampRoundedToDays() + '-backup'
+            currentTestRoot: getTimestampRoundedToDays() + '-backup',
           });
         });
   });
@@ -231,6 +231,10 @@ function waitForCallback(callback) {
   return cy.wait(0);
 }
 
+/**
+ * Returns the timestamp of the start of the current day (midnight).
+ * @returns {number}
+ */
 function getTimestampRoundedToDays() {
   const date = new Date();
   date.setHours(0);
