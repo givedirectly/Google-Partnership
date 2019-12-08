@@ -11,7 +11,10 @@ const notes = 'Sphinx of black quartz, judge my vow';
 
 const path = [{lat: 0, lng: 0}, {lat: 4, lng: 2}, {lat: 0, lng: 2}];
 
-/** @typedef {google.maps.Polygon|google.maps.Marker} Feature */
+/**
+ * @typedef {google.maps.Polygon|google.maps.Marker} Feature
+ * @typedef {Cypress.Agent<sinon.SinonSpy|sinon.SinonStub>} Spy
+ */
 
 /**
  * @typedef {{damage: number, snapFraction: number, notes: string,
@@ -22,7 +25,7 @@ const defaultData = {
   damage: 1,
   snapFraction: 0.1,
   totalHouseholds: 1,
-  notes: ''
+  notes: '',
 };
 const event = new Event('overlaycomplete');
 
@@ -73,6 +76,12 @@ describe('Unit test for ShapeData', () => {
     return setUpPage();
   });
 
+  /**
+   * Initializes the Google Map; sets up the polygon drawing manager; and sets
+   * up user feature handling. No features are expected on first call, since the
+   * test Firestore database is empty.
+   * @returns {Cypress.Chainable}
+   */
   function setUpPage() {
     return createGoogleMap()
         .then((mapResult) => map = mapResult)
@@ -82,7 +91,7 @@ describe('Unit test for ShapeData', () => {
           userRegionData.clear();
           return initializeAndProcessUserRegions(map, Promise.resolve({
             data: () => ({asset_data: {damage_asset_path: damageCollection}}),
-          }))
+          }));
         });
   }
 
@@ -124,6 +133,11 @@ describe('Unit test for ShapeData', () => {
     deletePolygon(confirmStub);
   });
 
+  /**
+   * Presses a visible 'delete' button, checks that `confirmStub` was called,
+   * and that the polygon is gone and there is no data in Firestore.
+   * @param {Spy} confirmStub
+   */
   function deletePolygon(confirmStub) {
     pressPopupButton('delete').then(() => expect(confirmStub).to.be.calledOnce);
     cy.get('#test-map-div').click();
@@ -202,7 +216,7 @@ describe('Unit test for ShapeData', () => {
         expect(StoredShapeData.pendingWriteCount).to.eql(1);
         userShapes.doc = realDocFunction;
         fakeCalled = true;
-        return realDoc.set(record)
+        return realDoc.set(record);
       };
     });
     cy.document().then((doc) => {
@@ -286,8 +300,8 @@ describe('Unit test for ShapeData', () => {
   /**
    * Asserts that Firestore contains data for a marker at the expected position
    * and with the expected notes.
-   * @param {}position
-   * @param notes
+   * @param {LatLngLiteral} position
+   * @param {string} notes
    */
   function assertMarker(position, notes) {
     expect(StoredShapeData.pendingWriteCount).to.eql(0);
@@ -383,9 +397,9 @@ describe('Unit test for ShapeData', () => {
    * `eeSpy` returned is not actually spying on the real {@link ee#List} but
    * rather on a dummy object that shadows it, and that we call with the same
    * arguments as the real {@link ee#List}.
-   * @return {Cypress.Chainable<{popupPendingCalculationSpy: Cypress.Agent,
-   *     popupCalculatedDataSpy: Cypress.Agent, eeSpy: Cypress.Agent,
-   *     firestoreSpy: Cypress.Agent}>}
+   * @return {Cypress.Chainable<{popupPendingCalculationSpy: Spy,
+   *     popupCalculatedDataSpy: Spy, eeSpy: Spy,
+   *     firestoreSpy: Spy}>}
    */
   function drawPolygonAndSetUpSpies() {
     let popupPendingCalculationSpy;
