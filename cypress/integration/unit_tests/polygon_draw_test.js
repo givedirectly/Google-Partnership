@@ -17,10 +17,11 @@ const path = [{lat: 0, lng: 0}, {lat: 4, lng: 2}, {lat: 0, lng: 2}];
 // should always be inside a Cypress .then() block.
 
 /**
+ * Expected data in Firestore/map popup.
  * @typedef {{damage: number, snapFraction: number, notes: string,
  * totalHouseholds: number}} ExpectedData
- * @type {ExpectedData}
  */
+
 const defaultData = {
   damage: 1,
   snapFraction: 0.1,
@@ -272,11 +273,12 @@ describe('Unit test for ShapeData', () => {
     cy.get('.popup-calculated-data').contains('damage count: 1');
   });
 
-  it('Draws marker, edits notes, then deletes', () => {
+  it('Draws marker, edits notes and drags, then deletes', () => {
     // Accept confirmation when it happens.
     const confirmStub = cy.stub(window, 'confirm').returns(true);
     const event = new Event('overlaycomplete');
     const position = {lat: 0, lng: 0};
+    const newPosition = {lat: 0, lng: 1};
     event.overlay = new google.maps.Marker({map: map, position: position});
     google.maps.event.trigger(drawingManager, 'overlaycomplete', event);
     getCurrentUpdatePromiseInCypress();
@@ -284,9 +286,10 @@ describe('Unit test for ShapeData', () => {
     // Found through unpleasant trial and error.
     cy.get('#test-map-div').click(310, 435);
     pressPopupButton('edit');
-    cy.get('.notes').type(notes);
+    cy.get('.notes').type(notes)
+        .then(() => getFirstFeature().setPosition(newPosition));
     pressButtonAndWaitForPromise('save');
-    assertMarker(position, notes);
+    assertMarker(newPosition, notes);
     pressButtonAndWaitForPromise('delete')
         .then(() => {
           expect(StoredShapeData.pendingWriteCount).to.eql(0);
@@ -471,7 +474,6 @@ describe('Unit test for ShapeData', () => {
     // Notes not visible yet.
     cy.get('#test-map-div').contains(notes).should('not.be.visible');
     cy.wait(500);
-    // cy.get('#test-map-div').click(600, 300);
     cy.get('#test-map-div').click();
     cy.get('#test-map-div').contains(notes).should('be.visible');
 
@@ -540,8 +542,8 @@ describe('Unit test for ShapeData', () => {
 
   /**
    * Draws a polygon with the given path, waits for it to save to Firestore,
-   * asserts that the write succeeded and the map has the desired polygon data,
-   * and clicks on the polygon.
+   * asserts that the write succeeded, clicks on the polygon, and asserts that
+   * the popup has the desired default data.
    * @param {Array<LatLngLiteral>} polygonPath
    * @return {Cypress.Chainable<void>}
    */
@@ -699,8 +701,12 @@ function getFirstFeatureVisibility() {
 }
 
 /**
- * Returns the first feature stored in the {@link userRegionData} map.
+ * A feature that the user can draw on the map.
  * @typedef {google.maps.Polygon|google.maps.Marker} Feature
+ */
+
+/**
+ * Returns the first feature stored in the {@link userRegionData} map.
  * @return {Feature}
  */
 function getFirstFeature() {

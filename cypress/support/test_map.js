@@ -22,6 +22,7 @@ function createGoogleMap() {
 }
 
 /**
+ * A literal lat-long that can be passed to Google Maps methods.
  * @typedef {Object} LatLngLiteral
  * {number} lng
  * {number} lat
