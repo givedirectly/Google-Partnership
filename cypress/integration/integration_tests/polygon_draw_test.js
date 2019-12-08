@@ -1,9 +1,12 @@
 const hackyWaitTime = 2000;
 const notes = 'Sphinx of black quartz, judge my vow';
 
+// Most tests should be added to unit_tests/polygon_draw_test.js, since it's
+// much faster.
+
 // This test doesn't wait for the page to load, since that's not necessary to
 // draw polygons.
-describe('Integration smoke tests for drawing polygons', () => {
+describe('Integration tests for drawing polygons', () => {
   it('User features checkbox works', () => {
     cy.visit('');
     drawPolygonAndClickOnIt();

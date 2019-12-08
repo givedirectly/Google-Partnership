@@ -4,7 +4,7 @@ import {setUserFeatureVisibility} from '../../../docs/popup.js';
 import * as resourceGetter from '../../../docs/resources.js';
 import {userRegionData} from '../../../docs/user_region_data.js';
 import {CallbackLatch} from '../../support/callback_latch.js';
-import {initFirebaseForUnitTest, loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
+import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 import {convertGoogleLatLngToObject, convertPathToLatLng, createGoogleMap} from '../../support/test_map.js';
 
 const notes = 'Sphinx of black quartz, judge my vow';
@@ -13,7 +13,7 @@ const path = [{lat: 0, lng: 0}, {lat: 4, lng: 2}, {lat: 0, lng: 2}];
 
 /**
  * @typedef {google.maps.Polygon|google.maps.Marker} Feature
- * @typedef {Cypress.Agent<sinon.SinonSpy|sinon.SinonStub>} Spy
+ * @typedef {sinon.SinonSpy|sinon.SinonStub} Spy
  */
 
 /**
@@ -31,12 +31,13 @@ const event = new Event('overlaycomplete');
 
 describe('Unit test for ShapeData', () => {
   loadScriptsBeforeForUnitTests('ee', 'maps', 'firebase', 'jquery');
-  initFirebaseForUnitTest();
   let damageCollection;
   before(() => {
     // Stub out loading update attempts: they pollute console with errors.
     loading.addLoadingElement = () => {};
     loading.loadingElementFinished = () => {};
+    // Wrap StoredShapeData#update so that we can access the Promise it returns.
+    // See also getCurrentUpdatePromiseInCypress.
     StoredShapeData.prototype.innerUpdate = StoredShapeData.prototype.update;
     StoredShapeData.prototype.update = function() {
       currentUpdatePromise = this.innerUpdate();
@@ -95,20 +96,20 @@ describe('Unit test for ShapeData', () => {
         });
   }
 
-  it('Add polygon', () => {
+  it('Adds polygon', () => {
     drawPolygonAndClickOnIt();
     pressPopupButton('close');
   });
 
-  it('Update notes', () => {
+  it('Updates notes', () => {
     drawPolygonAndClickOnIt();
     pressPopupButton('edit');
     cy.get('.notes').type(notes);
-    pressButtonAndWaitForPromise('save').then(
-        () => assertOnFirestoreAndPopup(path, withNotes(notes)));
+    pressButtonAndWaitForPromise('save');
+    assertOnFirestoreAndPopup(path, withNotes(notes));
   });
 
-  it('Delete polygon', () => {
+  it('Deletes polygon', () => {
     drawPolygonAndClickOnIt();
     deletePolygon(cy.stub(window, 'confirm').returns(true));
   });
@@ -121,15 +122,16 @@ describe('Unit test for ShapeData', () => {
     pressPopupButton('delete').then(() => {
       expect(confirmStub).to.be.calledOnce;
       confirmStub.resetHistory();
-      assertOnFirestoreAndPopup(path, defaultData);
     });
-    setUpPage().then(() => assertOnFirestoreAndPopup(path, defaultData));
+    assertOnFirestoreAndPopup(path, defaultData);
+    setUpPage();
+    assertOnFirestoreAndPopup(path, defaultData);
     pressPopupButton('delete').then(() => {
       expect(confirmStub).to.be.calledOnce;
-      assertOnFirestoreAndPopup(path, defaultData);
       confirmValue = true;
       confirmStub.resetHistory();
     });
+    assertOnFirestoreAndPopup(path, defaultData);
     deletePolygon(confirmStub);
   });
 
@@ -142,7 +144,7 @@ describe('Unit test for ShapeData', () => {
     pressPopupButton('delete').then(() => expect(confirmStub).to.be.calledOnce);
     cy.get('#test-map-div').click();
     cy.get('#test-map-div').should('not.contain', 'damage count');
-    getOnlyPendingUpdatePromise()
+    getCurrentUpdatePromiseInCypress()
         .then(() => userShapes.get())
         .then((querySnapshot) => {
           expect(querySnapshot).to.have.property('size', 0);
@@ -165,8 +167,8 @@ describe('Unit test for ShapeData', () => {
     pressPopupButton('close').then(() => expect(confirmStub).to.be.calledOnce);
     pressPopupButton('save');
     cy.get('#test-map-div').contains(notes).should('be.visible');
-    getOnlyPendingUpdatePromise().then(
-        () => assertOnFirestoreAndPopup(path, withNotes(notes)));
+    getCurrentUpdatePromiseInCypress();
+    assertOnFirestoreAndPopup(path, withNotes(notes));
   });
 
   it('Draws a polygon, closes while editing', () => {
@@ -195,7 +197,7 @@ describe('Unit test for ShapeData', () => {
     assertOnFirestoreAndPopup(path, defaultData);
   });
 
-  it('Update while update pending', () => {
+  it('Updates while update pending', () => {
     let fakeCalled = false;
     drawPolygonAndClickOnIt().then(() => {
       currentUpdatePromise = null;
@@ -264,7 +266,7 @@ describe('Unit test for ShapeData', () => {
         .should('have.css', 'color')
         .and('eq', 'rgb(128, 128, 128)')
         .then(() => latch.release());
-    getOnlyPendingUpdatePromise();
+    getCurrentUpdatePromiseInCypress();
     cy.get('.popup-calculated-data')
         .should('have.css', 'color')
         .and('eq', 'rgb(0, 0, 0)');
@@ -278,13 +280,13 @@ describe('Unit test for ShapeData', () => {
     const position = {lat: 0, lng: 0};
     event.overlay = new google.maps.Marker({map: map, position: position});
     google.maps.event.trigger(drawingManager, 'overlaycomplete', event);
-    getOnlyPendingUpdatePromise().then(() => assertMarker(position, ''));
+    getCurrentUpdatePromiseInCypress().then(() => assertMarker(position, ''));
     // Found through unpleasant trial and error.
     cy.get('#test-map-div').click(310, 435);
     pressPopupButton('edit');
     cy.get('.notes').type(notes);
-    pressButtonAndWaitForPromise('save').then(
-        () => assertMarker(position, notes));
+    pressButtonAndWaitForPromise('save');
+    assertMarker(position, notes);
     pressButtonAndWaitForPromise('delete')
         .then(() => {
           expect(StoredShapeData.pendingWriteCount).to.eql(0);
@@ -304,8 +306,8 @@ describe('Unit test for ShapeData', () => {
    * @param {string} notes
    */
   function assertMarker(position, notes) {
-    expect(StoredShapeData.pendingWriteCount).to.eql(0);
-    cy.wrap(userShapes.get()).then((querySnapshot) => {
+    cy.wrap(null).then(() => expect(StoredShapeData.pendingWriteCount).to.eql(0))
+    .then(() => userShapes.get()).then((querySnapshot) => {
       expect(querySnapshot).to.have.property('size', 1);
       const markerDoc = querySnapshot.docs[0];
       const firestoreId = markerDoc.id;
@@ -363,7 +365,7 @@ describe('Unit test for ShapeData', () => {
     });
   });
 
-  it('Drag polygon triggers recalculation', () => {
+  it('Dragged polygon triggers recalculation', () => {
     // Clone path and edit.
     const newPath = JSON.parse(JSON.stringify(path));
     newPath[0].lng = 0.5;
@@ -405,7 +407,7 @@ describe('Unit test for ShapeData', () => {
     let popupPendingCalculationSpy;
     let popupCalculatedDataSpy;
     let firestoreSpy;
-    const dummyObjectForSpyAssertions = {method: (args) => {}};
+    const dummyObjectForSpyAssertions = {method: () => {}};
     const eeSpy = cy.spy(dummyObjectForSpyAssertions, 'method');
     drawPolygonAndClickOnIt().then(() => {
       const [, data] = getFirstUserRegionDataEntry();
@@ -439,7 +441,7 @@ describe('Unit test for ShapeData', () => {
     drawPolygon();
     const expectedData = Object.assign({}, defaultData);
     expectedData.damage = 'unknown';
-    getOnlyPendingUpdatePromise().then(
+    getCurrentUpdatePromiseInCypress().then(
         () => assertOnFirestoreAndPopup(path, expectedData));
   });
 
@@ -502,7 +504,7 @@ describe('Unit test for ShapeData', () => {
     const otherPath =
         [{lng: -0.5, lat: 0.5}, {lng: -0.25, lat: 0}, {lng: -0.25, lat: 0.5}];
     drawPolygon(otherPath);
-    getOnlyPendingUpdatePromise();
+    getCurrentUpdatePromiseInCypress();
     // cy.get('[title="Add a marker"]').click();
     cy.get('#test-map-div').click(200, 300);
     pressPopupButton('edit');
@@ -551,7 +553,7 @@ describe('Unit test for ShapeData', () => {
    */
   function drawPolygonAndClickOnIt(polygonPath = path) {
     drawPolygon(polygonPath);
-    return getOnlyPendingUpdatePromise().then(
+    return getCurrentUpdatePromiseInCypress().then(
         () => assertOnFirestoreAndPopup(polygonPath, defaultData));
   }
 
@@ -627,7 +629,7 @@ describe('Unit test for ShapeData', () => {
    */
   function pressButtonAndWaitForPromise(button) {
     pressPopupButton(button);
-    return getOnlyPendingUpdatePromise();
+    return getCurrentUpdatePromiseInCypress();
   }
 
   /**
@@ -638,7 +640,7 @@ describe('Unit test for ShapeData', () => {
    * following code:
    *
    *   pressPopupButton('save');
-   *   getOnlyPendingUpdatePromise().then(console.log);
+   *   getCurrentUpdatePromiseInCypress().then(console.log);
    *   console.log(currentUpdatePromise);
    *
    * This will first print null (from the third line), then print a promise
@@ -649,7 +651,7 @@ describe('Unit test for ShapeData', () => {
    * will be the promise returned from {@link StoredShapeData#update}.
    * @return {Cypress.Chainable<Promise<void>>}
    */
-  function getOnlyPendingUpdatePromise() {
+  function getCurrentUpdatePromiseInCypress() {
     return cy.wait(0).then(() => currentUpdatePromise);
   }
 });
