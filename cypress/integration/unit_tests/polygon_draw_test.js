@@ -628,7 +628,7 @@ function pressPopupButton(button) {
 /**
  * Gets the first (feature, StoredShapeData) pair in the {@link userRegionData}
  * map.
- * @return {[google.maps.Polygon|google.maps.Marker, StoredShapeData]}
+ * @return {Array<google.maps.Polygon|google.maps.Marker|StoredShapeData>}
  */
 function getFirstUserRegionDataEntry() {
   return [...userRegionData.entries()][0];
