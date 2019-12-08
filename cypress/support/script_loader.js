@@ -163,9 +163,10 @@ function addFirebaseHooks() {
         .then(() => {
           // Write a copy of the data to backup documents in case of accidental
           // deletion. One backup per day.
-          cy.task(
-              'populateTestFirestoreData',
-              {disastersData, currentTestRoot: getTimestampRoundedToDays() + '-backup'});
+          cy.task('populateTestFirestoreData', {
+            disastersData,
+            currentTestRoot: getTimestampRoundedToDays() + '-backup'
+          });
         });
   });
   let currentTestRoot = null;
