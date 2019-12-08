@@ -95,49 +95,60 @@ module.exports = (on, config) => {
             reject);
       });
     },
+
     /**
-     * Recursively deletes all data under the test/currentTestRoot tree, and
-     * creates necessary data for tests to consume, pulling that data from prod
-     * Firebase. For use before a test case runs. We add a dummy field inside
-     * test/currentTestRoot so that Firestore will deign to list this document
-     * later
-     * (https://stackoverflow.com/questions/47043651/this-document-does-not-exist-and-will-not-appear-in-queries-or-snapshots-but-id)
-     * @param {string} currentTestRoot document name directly underneath test/
-     * @return {Promise<null>} Promise that resolves when deletion and data
-     * creation is complete
+     * Retrieves necessary data for tests to consume from prod Firebase. Called
+     * once at the start of all tests.
+     * @return {Promise<Object>} Promise that contains all necessary disasters
+     *     data, as an array, with each element having a disaster key and a data
+     *     key.
      */
-    clearAndPopulateTestFirestoreData(currentTestRoot) {
-      const testAdminApp = createTestFirebaseAdminApp();
+    getTestFirestoreData() {
       const prodApp = firebase.initializeApp(firebaseConfigProd, 'prodapp');
+      const readPromises = [];
+      for (const disaster of ['2017-harvey', '2018-michael']) {
+        const documentPath = 'disaster-metadata/' + disaster;
+        const prodDisasterDoc = prodApp.firestore().doc(documentPath);
+        readPromises.push(
+            prodDisasterDoc.get()
+                .then((result) => ({disaster, data: result.data()})));
+      }
+      return Promise.all(readPromises).then(async (result) => {
+        await prodApp.delete();
+        return result;
+      })
+    },
+
+    /**
+     * Writes disasters data (retrieved using {@link getTestFirestoreData} into
+     * the current test root, which lives under the root collection `test/`. We
+     * add a dummy field inside test/currentTestRoot so that Firestore will
+     * deign to list this document later
+     * (https://stackoverflow.com/questions/47043651/this-document-does-not-exist-and-will-not-appear-in-queries-or-snapshots-but-id)
+     * @param {{disaster: Object, currentTestRoot: string}} disastersDataAndTestRoot
+     * @return {Promise<null>} Promise that completes when writes are done
+     */
+    populateTestFirestoreData(disastersDataAndTestRoot) {
       // We use a test app, created using normal firebase, versus a test admin
       // app, because objects like GeoPoint are not compatible across the
       // libraries. By using the same library, we're able to copy the data from
       // prod to test with no modifications.
+      const {currentTestRoot, disastersData} = disastersDataAndTestRoot;
       const testApp = firebase.initializeApp(firebaseConfigTest, 'testapp');
-      const signinPromise =
-          testAdminApp.auth()
-              .createCustomToken('cypress-firestore-test-user')
-              .then((token) => testApp.auth().signInWithCustomToken(token));
-      const deletePromise = deleteTestData(currentTestRoot, testAdminApp);
       const writePromises = [];
-      for (const disaster of ['2017-harvey', '2018-michael']) {
-        const documentPath = 'disaster-metadata/' + disaster;
-        const prodDisasterDoc = prodApp.firestore().doc(documentPath);
-        const testDisasterDocReference = testApp.firestore().doc(
-            'test/' + currentTestRoot + '/' + documentPath);
-        writePromises.push(
-            Promise.all([prodDisasterDoc.get(), signinPromise, deletePromise])
-                .then((result) => Promise.all([
-                  testDisasterDocReference.set(result[0].data(), {merge: true}),
-                  testDisasterDocReference.set({dummy: true}, {merge: true}),
-                ])));
+      for (const disasterData of disastersData) {
+        const documentPath = 'disaster-metadata/' + disasterData.disaster;
+        const testDisasterDocReference = testApp.firestore().doc('test/' + currentTestRoot + '/' + documentPath);
+        const data = disasterData.data;
+        data.dummy = true;
+        writePromises.push(testDisasterDocReference.set(data));
       }
       return Promise.all(writePromises)
-          .then(
-              () => Promise.all(
-                  [testAdminApp.delete(), prodApp.delete(), testApp.delete()]))
-          .then(() => null);
+      .then(
+          () => testApp.delete())
+      .then(() => null);
     },
+
     /**
      * Deletes all test data under the test/currentTestRoot tree. For use after
      * a test case is completed.
@@ -190,15 +201,16 @@ function deleteTestData(currentTestRoot, app) {
       app.firestore().doc(testPrefix + currentTestRoot));
 }
 
-const millisecondsInADay = 60 * 60 * 24 * 1000;
+const millisecondsIn7Days = 7 * 60 * 60 * 24 * 1000;
 
 /**
- * Recursively deletes all test data older than 24 hours, under the assumption
- * that no test runs for that long. This prevents old unfinished tests from
- * using too much quota. Note that documents must have a field set to show up in
- * a listing of the parent collection
+ * Recursively deletes all test data older than 7 days, under the assumption
+ * that no test runs for that long, and that older data is unnecessary for
+ * backups. This prevents old unfinished tests from using too much quota. Note
+ * that documents must have a field set to show up in a listing of the parent
+ * collection
  * (https://stackoverflow.com/questions/47043651/this-document-does-not-exist-and-will-not-appear-in-queries-or-snapshots-but-id).
- * That field is set in clearAndPopulateTestFirestoreData.
+ * That field is set in {@link populateTestFirestoreData}.
  * @param {admin.app.App} app
  * @return {Promise} Promise that completes when all deletions are finished
  */
@@ -212,7 +224,7 @@ function deleteAllOldTestData(app) {
       const testRunName = ref.id;
       const dateElement = testRunName.split('-')[0];
       const date = new Date(parseInt(dateElement, 10));
-      if (currentDate - date > millisecondsInADay) {
+      if (currentDate - date >  millisecondsIn7Days) {
         promises.push(deleteDocRecursively(ref));
       }
     });

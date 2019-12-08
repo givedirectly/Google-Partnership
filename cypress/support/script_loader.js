@@ -153,17 +153,30 @@ const testPrefix = new Date().getTime() + '-';
  * the appropriate cookie.
  */
 function addFirebaseHooks() {
-  let testCookieValue = null;
-  before(() => cy.task('initializeTestFirebase', null, {
-                   timeout: 10000,
-                 }).then((token) => global.firestoreCustomToken = token));
-  beforeEach(() => {
-    testCookieValue = testPrefix + Math.random();
-    cy.task(
-        'clearAndPopulateTestFirestoreData', testCookieValue, {timeout: 15000});
-    cy.setCookie(cypressTestCookieName, testCookieValue);
+  let disastersData = null;
+  const date = new Date();
+  date.setHours(0);
+  date.setSeconds(0);
+  date.setMilliseconds(0);
+  before(() => {
+    cy.task('initializeTestFirebase', null, {
+      timeout: 10000,
+    }).then((token) => global.firestoreCustomToken = token);
+    cy.task('getTestFirestoreData', {timeout: 5000}).
+        then((result) => disastersData = result).then(() => {
+      // Write a copy of the data to backup documents in case of accidental
+      // deletion.
+      cy.task('populateTestFirestoreData', {disastersData, currentTestRoot: date.getTime() + '-backup'});
+    });
   });
-  afterEach(() => cy.task('deleteTestData', testCookieValue));
+  let currentTestRoot = null;
+  beforeEach(() => {
+    currentTestRoot = testPrefix + Math.random();
+    cy.task('populateTestFirestoreData', {disastersData,
+      currentTestRoot});
+    cy.setCookie(cypressTestCookieName, currentTestRoot);
+  });
+  afterEach(() => cy.task('deleteTestData', currentTestRoot));
 }
 
 /**
