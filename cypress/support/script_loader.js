@@ -233,7 +233,7 @@ function waitForCallback(callback) {
 
 /**
  * Returns the timestamp of the start of the current day (midnight).
- * @returns {number}
+ * @return {number}
  */
 function getTimestampRoundedToDays() {
   const date = new Date();
