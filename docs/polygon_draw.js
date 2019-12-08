@@ -54,7 +54,7 @@ class StoredShapeData {
    *
    * If there is already a pending write, this method records that another write
    * should be performed when the pending one completes and returns immediately.
-   * @return {!Promise} Promise that resolves when all writes queued when this
+   * @return {?Promise} Promise that resolves when all writes queued when this
    *     call started are complete, or null if there were already writes in
    * flight, in which case this method does not know when those writes will
    * complete.
@@ -350,8 +350,7 @@ function setUpPolygonDrawing(map, firebasePromise) {
       const popup = createPopup(feature, map, '');
       const data = new StoredShapeData(null, null, null, popup);
       userRegionData.set(feature, data);
-      // Set the promise here for use in tests.
-      event.resultPromise = data.update();
+      data.update();
     });
 
     drawingManager.setMap(map);
