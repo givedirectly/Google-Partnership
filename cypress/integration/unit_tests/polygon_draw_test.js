@@ -587,7 +587,7 @@ describe('Unit test for ShapeData', () => {
    * @param {string} button Text of button to press
    * @return {Cypress.Chainable<Promise<void>>}
    */
-  function pressButtonAndWaitForPromise(button) { 
+  function pressButtonAndWaitForPromise(button) {
     pressPopupButton(button);
     return getOnlyPendingUpdatePromise();
   }
