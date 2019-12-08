@@ -242,6 +242,7 @@ describe('Unit test for ShapeData', () => {
         () => expect(fakeCalled).to.be.true);
     cy.task('logg', 'got racing');
     assertOnFirestoreAndPopup(path, withNotes('racing notes'));
+    cy.task('logg', 'done racing');
   });
 
   it('Shows calculating before update finishes', () => {
@@ -588,6 +589,7 @@ describe('Unit test for ShapeData', () => {
         .then(() => expect(StoredShapeData.pendingWriteCount).to.eql(0))
         .then(() => userShapes.get())
         .then((querySnapshot) => {
+          cy.task('logg', 'doing basic assert with ' + expectedData);
           expect(querySnapshot).to.have.property('size', 1);
           const polygonDoc = querySnapshot.docs[0];
           const firestoreId = polygonDoc.id;
