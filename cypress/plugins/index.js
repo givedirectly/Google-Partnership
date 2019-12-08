@@ -115,7 +115,7 @@ module.exports = (on, config) => {
       return Promise.all(readPromises).then(async (result) => {
         await prodApp.delete();
         return result;
-      })
+      });
     },
 
     /**
