@@ -76,11 +76,10 @@ function getUrlUnderDocs(pathFragment) {
  * @return {string}
  */
 function getHelpUrl() {
-  if (window.location.pathname === '/') {
-    return HELP_DOC_URL;
-  } else if (window.location.pathname === '/' + MANAGE_LAYERS_PAGE) {
+  if (window.location.pathname.endsWith(MANAGE_LAYERS_PAGE)) {
     return MANAGE_LAYERS_HELP_URL;
-  } else if (window.location.pathname === '/' + MANAGE_DISASTERS_PAGE) {
+  } else if (window.location.pathname.endsWith(MANAGE_DISASTERS_PAGE)) {
     return MANAGE_DISASTERS_HELP_URL;
   }
+  return HELP_DOC_URL;
 }
