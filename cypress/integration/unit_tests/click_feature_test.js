@@ -79,7 +79,7 @@ describe('Unit tests for click_feature.js with map and table', () => {
     assertNoSelection();
   });
 
-  it('clicks on a feature on the map, then clicks on another', () => {
+  it.only('clicks on a feature on the map, then clicks on another', () => {
     setUpPage();
     clickAndVerifyBlockGroup();
     cy.wait(waitBeforeClick);

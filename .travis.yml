@@ -43,7 +43,7 @@ before_script:
 - yarn run ws --directory docs --port 8080 &
 script:
 #- yarn run cypress run --env ON_TRAVIS=1 --record --browser=chromium --config video=false
-- yarn run cypress run --env ON_TRAVIS=1 --record --browser=electron --group Unit --spec 'cypress/integration/unit_tests/*.js'
+- yarn run cypress run --env ON_TRAVIS=1 --record --browser=electron --group Unit --spec 'cypress/integration/unit_tests/click_feature_test.js'
 # Chromium video recording not currently working on xvfb
-- yarn run cypress run --env ON_TRAVIS=1 --record --browser=chromium --config video=false --group Integration --spec 'cypress/integration/integration_tests/*.js'
-- ./pre-push-hook.sh
+#- yarn run cypress run --env ON_TRAVIS=1 --record --browser=chromium --config video=false --group Integration --spec 'cypress/integration/integration_tests/*.js'
+#- ./pre-push-hook.sh
