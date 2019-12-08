@@ -14,7 +14,7 @@ const path = [{lat: 0, lng: 0}, {lat: 4, lng: 2}, {lat: 0, lng: 2}];
 // The helper functions in this test fall into two categories: those that do
 // their actual work during the "Cypress phase" of the test, and those that
 // execute right away. The latter type always return a non-Cypress value, and
-// should probably be inside a Cypress .then() block.
+// should always be inside a Cypress .then() block.
 
 /**
  * @typedef {google.maps.Polygon|google.maps.Marker} Feature
