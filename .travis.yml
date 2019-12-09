@@ -15,12 +15,15 @@ cache:
   # Don't cache yarn dependencies, just install clean.
   yarn: false
   npm: false
+  directories:
+    - ~/.cache
   # Instead of caching yarn dependencies or the Cypress binary here, we build
   # from scratch every time. Experimentally this saves ~25 seconds over
   # downloading the cache, at the cost of a message saying that this is our
   # first Cypress run. Even just caching the Cypress binary costs 10 seconds.
 env:
   global:
+    - CYPRESS_CACHE_FOLDER='~/.cypresscache'
     - GOOGLE_APPLICATION_CREDENTIALS=$TRAVIS_BUILD_DIR/service_account.json
     # Generated using
     # `travis encrypt CYPRESS_RECORD_KEY=<cypress-dashboard-record-key>`
@@ -40,7 +43,7 @@ before_install:
 before_script:
 - yarn run ws --directory docs --port 8080 &
 script:
-- yarn run cypress run --env ON_TRAVIS=1 --record --browser=electron --group Unit --spec 'cypress/integration/unit_tests/*.js'
+- yarn run cypress run --env ON_TRAVIS=1 --record --browser=electron --group Unit --spec 'cypress/integration/unit_tests/accumulator_test.js'
 # Chrome/Chromium video recording not working on xvfb with gpu acceleration
-- yarn run cypress run --env ON_TRAVIS=1 --record --browser=chrome --group Integration --config video=false --spec 'cypress/integration/integration_tests/*.js'
-- ./pre-push-hook.sh
+# - yarn run cypress run --env ON_TRAVIS=1 --record --browser=chrome --group Integration --config video=false --spec 'cypress/integration/integration_tests/*.js'
+# - ./pre-push-hook.sh
