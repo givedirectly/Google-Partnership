@@ -46,6 +46,12 @@ class StoredShapeData {
     this.state = StoredShapeData.State.SAVED;
   }
 
+  /** Decrements write count and finishes a load for {@link writeWaiterId}. */
+  noteWriteFinished() {
+    StoredShapeData.pendingWriteCount--;
+    loadingElementFinished(writeWaiterId);
+  }
+
   /**
    * Writes this shape's data to the backend, using the existing id
    * field, or adding a new document to Firestore if there is no id. New values
@@ -82,8 +88,9 @@ class StoredShapeData {
         // Because Javascript is single-threaded, during the execution of this
         // method, no additional queued writes can have accumulated. So we don't
         // need to check for them.
-        StoredShapeData.pendingWriteCount--;
+        this.noteWriteFinished();
       }
+
       return Promise.resolve();
     }
     this.featureGeoPoints = newGeometry;
@@ -201,7 +208,7 @@ class StoredShapeData {
     // unreachable and about to be GC'ed.
     return userShapes.doc(this.id)
         .delete()
-        .then(() => StoredShapeData.pendingWriteCount--)
+        .then(() => this.noteWriteFinished())
         .catch(createError('error deleting ' + this));
   }
 }

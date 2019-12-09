@@ -1,7 +1,7 @@
 import {CLIENT_ID, getFirebaseConfig} from '../../docs/authenticate';
 import {cypressTestCookieName, earthEngineTestTokenCookieName, firebaseTestTokenCookieName} from '../../docs/in_test_util';
 
-export {addFirebaseHooks, loadScriptsBeforeForUnitTests};
+export {loadScriptsBeforeForUnitTests};
 
 /**
  * Scripts that unit tests may want to load. Values have script and callback
