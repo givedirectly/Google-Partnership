@@ -1,205 +1,33 @@
 const hackyWaitTime = 2000;
 const notes = 'Sphinx of black quartz, judge my vow';
 
-// This test generally doesn't wait for the page to load, since that's not
-// necessary to draw polygons.
+// Most tests should be added to unit_tests/polygon_draw_test.js, since it's
+// much faster.
+
+// This test doesn't wait for the page to load, since that's not necessary to
+// draw polygons.
 describe('Integration tests for drawing polygons', () => {
-  it('Draws a polygon and edits its notes', () => {
+  it('User features checkbox works', () => {
     cy.visit('');
     drawPolygonAndClickOnIt();
     pressPopupButton('edit');
-    cy.get('[class="notes"]').type(notes);
-    saveAndAwait();
-    cy.get('.map').contains(notes);
-  });
-
-  it('Draws a polygon and deletes it', () => {
-    // Accept confirmation when it happens.
-    cy.on('window:confirm', () => true);
-    cy.visit('');
-    drawPolygonAndClickOnIt();
-    pressPopupButton('edit');
-    cy.get('[class="notes"]').type(notes);
-    saveAndAwait();
-
-    pressPopupButton('delete');
-    // Polygon should be gone.
-    clickOnDrawnPolygon();
-    assertExactlyPopUps(0, notes);
-  });
-
-  it('Draws a polygon and almost deletes it, then deletes', () => {
-    // Reject confirmation when first happens, then accept it later.
-    let confirmValue = false;
-    cy.on('window:confirm', () => confirmValue);
-    cy.visit('');
-    drawPolygonAndClickOnIt();
-    pressPopupButton('edit');
-    cy.get('[class="notes"]').type(notes);
-    saveAndAwait();
-    pressPopupButton('delete');
-    // Assert still exists.
-    clickOnDrawnPolygon();
-    assertExactlyPopUps(1, notes);
-    // TODO(#18): wait for a notification that all writes have completed instead
-    // of a hardcoded wait.
-    cy.wait(hackyWaitTime);
-    cy.visit('');
-    cy.awaitLoad();
-    // Polygon is still there.
-    clickOnDrawnPolygon();
-    assertExactlyPopUps(1, notes);
-
-    pressPopupButton('delete');
-    // Polygon is still there.
-    // Accept confirmation when it happens.
-    clickOnDrawnPolygon().then(() => confirmValue = true);
-    pressPopupButton('delete');
-    // Polygon should be gone.
-    clickOnDrawnPolygon();
-    assertExactlyPopUps(0, notes);
-    cy.wait(hackyWaitTime);
-    cy.visit('');
-    cy.awaitLoad();
-    // Polygon is gone.
-    clickOnDrawnPolygon();
-    assertExactlyPopUps(0, notes);
-  });
-
-  it('Draws a polygon, clicks it, closes its info box', () => {
-    cy.visit('');
-    drawPolygonAndClickOnIt();
-    pressPopupButton('edit');
-    cy.get('[class="notes"]').type(notes);
-    saveAndAwait();
-    pressPopupButton('close');
-    // element is still there, just hidden
-    assertExactlyPopUps(1, notes);
-    cy.get('.map').contains(notes).should('not.be.visible');
-  });
-
-  it('Draws a polygon, almost closes while editing', () => {
-    cy.on('window:confirm', () => false);
-
-    cy.visit('');
-    drawPolygonAndClickOnIt();
-    pressPopupButton('edit');
-    cy.get('[class="notes"]').type(notes);
-    pressPopupButton('close');
-    saveAndAwait();
-    cy.get('#mapContainer').contains(notes).should('be.visible');
-  });
-
-  it('Draws a polygon, closes while editing', () => {
-    cy.on('window:confirm', () => true);
-
-    cy.visit('');
-    drawPolygonAndClickOnIt();
-    pressPopupButton('edit');
-    cy.get('[class="notes"]').type(notes);
-    saveAndAwait();
-    pressPopupButton('edit');
-    cy.get('[class="notes"]').type('blahblahblah');
-    pressPopupButton('close');
-    // element is still there, just hidden
-    assertExactlyPopUps(1, notes);
-    cy.get('#mapContainer').contains(notes).should('not.be.visible');
-  });
-
-  it('Hides polygon, re-shows, tries to hide during edit', () => {
-    cy.visit('');
-
-    drawPolygonAndClickOnIt();
-    pressPopupButton('edit');
-    cy.get('[class="notes"]').type(notes);
-    saveAndAwait();
-    cy.get('#mapContainer').contains(notes).should('be.visible');
-    cy.get('#sidebar-toggle-datasets').click();
-    cy.get('#layer-user-features-checkbox').should('be.checked');
-    cy.get('#layer-user-features-checkbox').click();
-    cy.get('#mapContainer').contains(notes).should('not.be.visible');
-    // Notes is invisible even if we click on the polygon, so it's really gone.
-    clickOnDrawnPolygon();
-    cy.wait(100);
-    cy.get('#mapContainer').contains(notes).should('not.be.visible');
-    // Click again to get rid of selected block group.
-    clickOnDrawnPolygon();
-    cy.wait(100);
-
-    // Check box again and verify that notes box can now be brought up.
-    cy.get('#layer-user-features-checkbox').click();
-    cy.get('#layer-user-features-checkbox').should('be.checked');
-    // Wait a little bit for the layer to re-render (only needed on Electron).
-    cy.wait(100);
-    // Notes not visible yet.
-    cy.get('#mapContainer').contains(notes).should('not.be.visible');
-    clickOnDrawnPolygon();
-    cy.get('#mapContainer').contains(notes).should('be.visible');
-
-    // Try to hide user features in the middle of editing: will fail.
-    pressPopupButton('edit');
-    let alertCameUp = false;
-    cy.on('window:alert', () => alertCameUp = true);
-    cy.get('#layer-user-features-checkbox').click().then(() => {
-      expect(alertCameUp).to.be.true;
-    });
-    cy.get('#layer-user-features-checkbox').should('be.checked');
-    // Confirm that save is still around to be pressed.
-    cy.get('[class="notes"]').type('new notes to force save');
-    saveAndAwait();
-
-    // After a save, the hide is successful.
-    cy.get('#layer-user-features-checkbox').click();
-    cy.get('#layer-user-features-checkbox').should('not.be.checked');
-  });
-
-  it('Hides, draws new one, tries to hide during edit, re-shows, hides', () => {
-    cy.visit('');
-
-    drawPolygonAndClickOnIt();
-    pressPopupButton('edit');
-    cy.get('[class="notes"]').type(notes);
+    cy.get('.notes').type(notes);
     saveAndAwait();
     cy.get('#sidebar-toggle-datasets').click();
+    cy.get('#mapContainer').contains(notes).should('be.visible');
     cy.get('#layer-user-features-checkbox').click();
     cy.get('#layer-user-features-checkbox').should('not.be.checked');
-    // With the box unchecked, draw a new polygon, below the first one, and set
-    // its notes, but don't finish editing.
-    drawPolygonAndClickOnIt(100);
-    pressPopupButton('edit');
-    cy.get('[class="notes"]').type('new notes');
-    // Try to re-check the box. It will fail because we're editing.
-    let alertCameUp = false;
-    cy.on('window:alert', () => alertCameUp = true);
-    cy.get('#layer-user-features-checkbox').click().then(() => {
-      expect(alertCameUp).to.be.true;
-    });
-    cy.get('#layer-user-features-checkbox').should('not.be.checked');
-
-    // Save the new notes and check the box, this time it succeeds.
-    saveAndAwait();
+    cy.get('#mapContainer').contains(notes);
+    cy.get('#mapContainer').contains(notes).should('not.be.visible');
     cy.get('#layer-user-features-checkbox').click();
     cy.get('#layer-user-features-checkbox').should('be.checked');
-
-    // We can click on the old polygon and view its notes,
+    cy.get('#mapContainer').contains(notes).should('not.be.visible');
     clickOnDrawnPolygon();
     cy.get('#mapContainer').contains(notes).should('be.visible');
-    // And the new polygon and view its notes.
-    clickOnDrawnPolygon(100);
-    cy.get('#mapContainer').contains('new notes').should('be.visible');
-
-    // Now hide both polygons, and verify that they're really gone.
-    cy.get('#layer-user-features-checkbox').click();
-    cy.get('#layer-user-features-checkbox').should('not.be.checked');
-    cy.get('#mapContainer').contains(notes).should('not.be.visible');
-    cy.get('#mapContainer').contains('new notes').should('not.be.visible');
-    clickOnDrawnPolygon(100);
-    cy.get('#mapContainer').contains('new notes').should('not.be.visible');
   });
 
   it('Degenerate polygon with one vertex not allowed', () => {
     cy.visit('');
-
     startDrawing();
     drawPointAndPrepareForNext(400, 400);
     let alertShown = false;
@@ -218,7 +46,7 @@ describe('Integration tests for drawing polygons', () => {
  *
  * @param {number} offset Shift polygon down this many pixels
  */
-function drawPolygonAndClickOnIt(offset = 0) {
+function drawPolygonAndClickOnIt() {
   startDrawing();
   // Wait for polygon selection overlay to appear.
   // Fragile, but ensures that "clicking" layer is present.
@@ -226,40 +54,39 @@ function drawPolygonAndClickOnIt(offset = 0) {
   // divs. The [] indicate we're searching for an attribute of these elements.
   // 'style' means that we are inspecting the style attribute in particular.
   // The '*=' means we're searching for a substring, as opposed to the full
-  // attribute (contrast the 'title=' above). The remainder of the string was
-  // derived by inspecting the page after starting to draw a polygon.
+  // attribute (contrast the 'title=' in startDrawing). The remainder of the
+  // string was derived by inspecting the page after starting to draw a polygon.
   cy.get(
       'div[style*="cursor: url(\\"https://maps.gstatic.com/mapfiles/crosshair.cur\\") 7 7, crosshair;"]');
   // Without this, seeing flaky failures on Travis where first point is off map.
   cy.wait(hackyWaitTime);
-  drawPointAndPrepareForNext(150, 650 + offset);
+  drawPointAndPrepareForNext(150, 650);
   // TODO(janakr): test seems to fail reliably on command line without these
   // and pass with it. Figure out what to actually test for on the page and
   // remove these waits.
   cy.wait(hackyWaitTime);
-  drawPointAndPrepareForNext(400, 500 + offset);
+  drawPointAndPrepareForNext(400, 500);
   cy.wait(hackyWaitTime);
-  drawPointAndPrepareForNext(450, 650 + offset);
+  drawPointAndPrepareForNext(450, 650);
   cy.wait(hackyWaitTime);
-  drawPointAndPrepareForNext(425, 750 + offset);
+  drawPointAndPrepareForNext(425, 750);
   cy.wait(hackyWaitTime);
-  drawPointAndPrepareForNext(150, 650 + offset);
+  drawPointAndPrepareForNext(150, 650);
   const handButton = cy.get('[title="Stop drawing"]');
   handButton.click();
   cy.wait(hackyWaitTime);
   // click to trigger pop up.
-  clickOnDrawnPolygon(offset);
+  clickOnDrawnPolygon();
 }
 
 /**
  * Click on the map inside the test-drawn polygon to trigger a pop-up if it's
  * there. Returns the result for chaining.
  *
- * @param {number} offset Shift click down this many pixels
  * @return {Cypress.Chainable}
  */
-function clickOnDrawnPolygon(offset = 0) {
-  return cy.get('.map').click(300, 620 + offset);
+function clickOnDrawnPolygon() {
+  return cy.get('.map').click(300, 620);
 }
 
 /**
@@ -269,26 +96,6 @@ function clickOnDrawnPolygon(offset = 0) {
 function pressPopupButton(button) {
   cy.get('.main-content').scrollTo(0, 0);
   cy.get(':button:visible').contains(button).click();
-}
-
-/**
- * Asserts that a div with innerHtml notes is found exactly
- * expectedFound times. Cypress' normal #contains() function doesn't count
- * occurrences, and can't be used to assert there are no matches, and Cypress'
- * #get() function doesn't allow selecting on contents.
- *
- * @param {Number} expectedFound how many divs with notes param expected
- * @param {String} notes contents to look for
- */
-function assertExactlyPopUps(expectedFound, notes) {
-  let foundElements = 0;
-  cy.get('div')
-      .each(($elt) => {
-        if ($elt.html() === notes) {
-          expect(foundElements++).to.equal(0);
-        }
-      })
-      .then(() => expect(foundElements).to.equal(expectedFound));
 }
 
 /**

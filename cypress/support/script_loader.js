@@ -1,11 +1,7 @@
 import {CLIENT_ID, getFirebaseConfig} from '../../docs/authenticate';
 import {cypressTestCookieName, earthEngineTestTokenCookieName, firebaseTestTokenCookieName} from '../../docs/in_test_util';
 
-export {
-  addFirebaseHooks,
-  initFirebaseForUnitTest,
-  loadScriptsBeforeForUnitTests,
-};
+export {loadScriptsBeforeForUnitTests};
 
 /**
  * Scripts that unit tests may want to load. Values have script and callback
@@ -60,6 +56,14 @@ const scriptMap = new Map([
       callback: () => typeof ($) !== 'undefined',
     },
   ],
+  [
+    'charts',
+    {
+      script: 'https://www.gstatic.com/charts/loader.js',
+      callback: () => typeof (google) !== 'undefined' &&
+          typeof (google.charts) !== 'undefined',
+    },
+  ],
 ]);
 
 let earthEngineCustomToken = null;
@@ -80,6 +84,7 @@ function loadScriptsBeforeForUnitTests(...scriptKeys) {
   const scriptsSet = new Set(scriptKeys);
   const usesEe = scriptsSet.has('ee');
   const usesFirebase = scriptsSet.has('firebase');
+  const usesCharts = scriptsSet.has('charts');
   before(() => {
     const callbacks = [];
     const extraScripts = new Map();
@@ -128,12 +133,16 @@ function loadScriptsBeforeForUnitTests(...scriptKeys) {
     });
   }
   if (usesFirebase) {
-    // Some unit tests just use the Firebase library, so that's all we prepare
-    // for here. A unit test that really writes to Firestore has to call
-    // initFirebaseForUnitTest.
+    addFirebaseHooks();
     before(() => {
       firebase.initializeApp(getFirebaseConfig(/* inProduction */ false));
+      cy.wrap(firebase.auth().signInWithCustomToken(firestoreCustomToken));
     });
+  }
+  if (usesCharts) {
+    before(
+        () => cy.wrap(
+            google.charts.load('current', {packages: ['table', 'controls']})));
   }
 }
 
@@ -155,14 +164,6 @@ function addFirebaseHooks() {
     cy.setCookie(cypressTestCookieName, testCookieValue);
   });
   afterEach(() => cy.task('deleteTestData', testCookieValue));
-}
-
-/** Prepares this unit test to actually write to and read from Firestore. */
-function initFirebaseForUnitTest() {
-  addFirebaseHooks();
-  before(
-      () =>
-          cy.wrap(firebase.auth().signInWithCustomToken(firestoreCustomToken)));
 }
 
 /**
