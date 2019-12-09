@@ -7,6 +7,7 @@ describe('Integration test for clicking feature', () => {
   // are updated.
   it('click highlights correct feature even after update', () => {
     cy.visit('');
+    cy.get('#this-id-does-not-exist');
     cy.awaitLoad();
 
     clickAndVerifyBlockGroup();
