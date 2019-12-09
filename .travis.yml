@@ -18,7 +18,7 @@ cache:
   directories:
     # we also need to cache folder with Cypress binary
     - ~/.cache
-    - node_modules
+#     - node_modules
 env:
   global:
     - GOOGLE_APPLICATION_CREDENTIALS=$TRAVIS_BUILD_DIR/service_account.json
