@@ -382,6 +382,8 @@ function addLayerFromFeatures(layerDisplayData, index) {
         createStyleFunction(deckParams.colorFunctionProperties);
   }
   deckGlArray[index] = new deck.GeoJsonLayer({
+    // TODO: also add layer index to this id so we don't get duplicate ids from
+    // using the same asset for multiple layers.
     id: layerDisplayData.deckParams.deckId,
     data: layerDisplayData.data,
     pointRadiusMinPixels: 1,
@@ -453,9 +455,9 @@ function addKmlLayers(layer, map) {
   const overlays = [];
   for (let i = 0; i < layer['urls'].length; i++) {
     overlays.push(new google.maps.KmlLayer(layer['urls'][i], {
-      suppressInfoWindows: false,
       preserveViewport: true,
       map: map,
+      clickable: false,
     }));
   }
   layerDisplayData.overlay = overlays;

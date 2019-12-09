@@ -225,6 +225,7 @@ function withCheckbox(td, layer, property) {
  */
 function onDelete(row) {
   if (window.confirm('Delete layer?')) {
+    $('#color-fxn-editor').hide();
     const index = row.children('.index-td').text();
     const layers = getCurrentLayers();
     layers.splice(index, 1);

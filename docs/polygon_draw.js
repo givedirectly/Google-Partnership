@@ -116,6 +116,7 @@ class StoredShapeData {
         const calculatedData = {
           damage: list[0],
           snapFraction: list[2] > 0 ? roundToOneDecimal(list[1] / list[2]) : 0,
+          totalHouseholds: Math.round(list[2]),
         };
         this.popup.setCalculatedData(calculatedData);
 
@@ -284,13 +285,21 @@ StoredShapeData.calculateWeightedTotal =
  * @param {HTMLDivElement} parentDiv
  */
 function displayCalculatedData(calculatedData, parentDiv) {
-  const damageDiv = document.createElement('div');
-  damageDiv.innerHTML = 'damage count: ' + calculatedData.damage;
-  const snapDiv = document.createElement('div');
-  snapDiv.innerHTML =
-      'Approximate SNAP fraction: ' + calculatedData.snapFraction;
-  parentDiv.appendChild(damageDiv);
-  parentDiv.appendChild(snapDiv);
+  $(parentDiv).append([
+    divWithText('damage count: ' + calculatedData.damage),
+    divWithText('approximate SNAP fraction: ' + calculatedData.snapFraction),
+    divWithText(
+        'approximate total households: ' + calculatedData.totalHouseholds),
+  ]);
+}
+
+/**
+ * Helper function to create a new div element with the given text.
+ * @param {string} text
+ * @return {JQuery<HTMLDivElement>}
+ */
+function divWithText(text) {
+  return $(document.createElement('div')).text(text);
 }
 
 // TODO(janakr): should this be initialized somewhere better?
