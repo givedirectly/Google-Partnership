@@ -20,7 +20,6 @@ function clickFeature(lng, lat, map, featuresAsset, tableSelector) {
   const blockGroups = ee.FeatureCollection(featuresAsset).filterBounds(point);
   const selected = blockGroups.first();
   selected.evaluate((feature, failure) => {
-    console.log(feature);
     if (failure) {
       console.error(failure);
       return;
@@ -29,7 +28,6 @@ function clickFeature(lng, lat, map, featuresAsset, tableSelector) {
       return;
     }
     const geoid = feature.properties[geoidTag];
-    console.log('geoid is ', feature, geoid);
     const currentKeys = Array.from(currentFeatures.keys());
     // Allow unselecting via the map.
     if (currentKeys.length === 1 && currentKeys.includes(geoid)) {
