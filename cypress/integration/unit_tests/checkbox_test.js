@@ -512,7 +512,9 @@ describe('Unit test for toggleLayerOn', () => {
       'display-on-load': true,
       'index': 4,
     };
-    expectNoBlobImages().then(() => {addLayerPromise = addLayer(layer, map);});
+    expectNoBlobImages().then(() => {
+      addLayerPromise = addLayer(layer, map);
+    });
     expectNoBlobImages();
     cy.wait(0)
         .then(() => expect(map.overlayMapTypes.getAt(4)).to.be.undefined)
