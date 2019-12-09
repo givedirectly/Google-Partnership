@@ -15,12 +15,10 @@ cache:
   # Don't cache yarn dependencies, just install clean.
   yarn: false
   npm: false
-  # Instead of caching the Cypress binary here, we build it from scratch every
-  # time. Experimentally this saves ~25 seconds over downloading the cache, at
-  # the cost of a message saying that this is our first Cypress run.
-  directories:
-    # we also need to cache folder with Cypress binary
-    - ~/.cypresscache
+  # Instead of caching yarn dependencies or the Cypress binary here, we build
+  # from scratch every time. Experimentally this saves ~25 seconds over
+  # downloading the cache, at the cost of a message saying that this is our
+  # first Cypress run. Even just caching the Cypress binary costs 10 seconds.
 env:
   global:
     - GOOGLE_APPLICATION_CREDENTIALS=$TRAVIS_BUILD_DIR/service_account.json
