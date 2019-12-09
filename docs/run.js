@@ -83,22 +83,19 @@ function createAndDisplayJoinedData(
  * @param {string} scoreAsset EE path to score asset FeatureCollection
  */
 function drawTableAndSetUpHandlers(processedData, map, scoreAsset) {
-  drawTable(processedData, map)
-      .then((tableSelector) => {
-        loadingElementFinished(tableContainerId);
-        // every time we get a new table and data, reselect elements in the
-        // table based on {@code currentFeatures} in highlight_features.js.
-        selectHighlightedFeatures(tableSelector);
-        // TODO: handle ctrl+click situations
-        const clickFeatureHandler = (event) => clickFeature(
-            event.latLng.lng(), event.latLng.lat(), map, scoreAsset,
-            tableSelector);
-        mapSelectListener = map.addListener('click', clickFeatureHandler);
-        // map.data covers clicks to map areas underneath map.data so we need
-        // two listeners
-        featureSelectListener =
-            map.data.addListener('click', clickFeatureHandler);
-      });
+  drawTable(processedData, map).then((tableSelector) => {
+    loadingElementFinished(tableContainerId);
+    // every time we get a new table and data, reselect elements in the
+    // table based on {@code currentFeatures} in highlight_features.js.
+    selectHighlightedFeatures(tableSelector);
+    // TODO: handle ctrl+click situations
+    const clickFeatureHandler = (event) => clickFeature(
+        event.latLng.lng(), event.latLng.lat(), map, scoreAsset, tableSelector);
+    mapSelectListener = map.addListener('click', clickFeatureHandler);
+    // map.data covers clicks to map areas underneath map.data so we need
+    // two listeners
+    featureSelectListener = map.data.addListener('click', clickFeatureHandler);
+  });
 }
 
 /**

@@ -1,6 +1,6 @@
 import {createError} from './error.js';
-import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, scoreTag, snapPercentageTag, sviTag, totalPopTag} from './property_names.js';
 import {highlightFeatures} from './highlight_features';
+import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, scoreTag, snapPercentageTag, sviTag, totalPopTag} from './property_names.js';
 
 export {drawTable, tableHeadings};
 
@@ -56,8 +56,7 @@ function drawTable(scoredFeatures, map) {
         // https://developers.google.com/chart/interactive/docs/basic_load_libs#Callback
         return new Promise(
             (resolve) => google.charts.setOnLoadCallback(
-                () =>
-                    renderTable(list, features, map, resolve)));
+                () => renderTable(list, features, map, resolve)));
       })
       .catch(createError('Failure evaluating scored features'));
 }
@@ -87,7 +86,8 @@ function renderTable(list, features, map, selectorReceiver) {
 
   google.visualization.events.addListener(
       table, 'select',
-      (features) => highlightFeatures(table.getSelection().map((elt) => features[elt.row]), map, true));
+      (features) => highlightFeatures(
+          table.getSelection().map((elt) => features[elt.row]), map, true));
 
   const downloadButton = document.getElementById('downloadButton');
   // Generate content and download on click.
