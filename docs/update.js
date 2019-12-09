@@ -60,8 +60,8 @@ let hasDamageAsset = null;
  * Initializes damage-related toggle values based on whether or not we have
  * a damage asset.
  * @param {Promise<Object>} disasterMetadataPromise
+ * @param {google.map.Maps} map
  * @return {Promise<Array<number>>} returns all the toggle initial
- * values.
  */
 function setUpInitialToggleValues(disasterMetadataPromise, map) {
   const togglesSetPromise = disasterMetadataPromise.then((doc) => {
