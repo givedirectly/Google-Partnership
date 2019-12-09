@@ -1,4 +1,5 @@
 import {createError} from './error.js';
+import {highlightFeatures} from './highlight_features';
 import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, scoreTag, snapPercentageTag, sviTag, totalPopTag} from './property_names.js';
 
 export {drawTable, tableHeadings};
@@ -16,17 +17,17 @@ const tableHeadings = [
 ];
 
 /**
- * Displays a ranked table of the given features that have non-zero score.
+ * Displays a ranked table of the given features that have non-zero score. Sets
+ * up handlers for clicking on the table and highlighting features on the map.
  *
  * @param {Promise} scoredFeatures
- * @param {Function} selectTableCallback Callback to be invoked when a table row
- *     is selected by the user
+ * @param {google.maps.Map} map
  * @return {Promise<Function>} Promise for a function that takes an iterable of
  *     strings and selects rows in the table whose geoids are those strings. The
  *     function returns the row selected if there was exactly one, or null
  *     otherwise. Complete when table has finished drawing
  */
-function drawTable(scoredFeatures, selectTableCallback) {
+function drawTable(scoredFeatures, map) {
   // Create download button.
   const downloadButton = document.createElement('button');
   downloadButton.style.visibility = 'hidden';
@@ -55,24 +56,22 @@ function drawTable(scoredFeatures, selectTableCallback) {
         // https://developers.google.com/chart/interactive/docs/basic_load_libs#Callback
         return new Promise(
             (resolve) => google.charts.setOnLoadCallback(
-                () =>
-                    renderTable(list, features, selectTableCallback, resolve)));
+                () => renderTable(list, features, map, resolve)));
       })
       .catch(createError('Failure evaluating scored features'));
 }
 
 /**
- * Renders the actual table on the page and adds a callback to the map to
- * highlight rows in the table if the corresponding feature is clicked on the
- * map.
+ * Renders the actual table on the page, and adds a callback to the table to
+ * highlight features in the map if their rows are clicked on in the table.
  *
  * @param {Array} list The data to display in the chart, with headings
  * @param {Array} features The list of features corresponding to that data
- * @param {Function} selectTableCallback See {@link drawTable}
+ * @param {google.maps.Map} map
  * @param {Function} selectorReceiver receiver for the function inside the
  *     Promise returned by {@link drawTable}
  */
-function renderTable(list, features, selectTableCallback, selectorReceiver) {
+function renderTable(list, features, map, selectorReceiver) {
   const data = google.visualization.arrayToDataTable(list, false);
   const dataView = new google.visualization.DataView(data);
   // don't display geoid
@@ -87,8 +86,8 @@ function renderTable(list, features, selectTableCallback, selectorReceiver) {
 
   google.visualization.events.addListener(
       table, 'select',
-      () => selectTableCallback(
-          table.getSelection().map((elt) => features[elt.row])));
+      (features) => highlightFeatures(
+          table.getSelection().map((elt) => features[elt.row]), map, true));
 
   const downloadButton = document.getElementById('downloadButton');
   // Generate content and download on click.
