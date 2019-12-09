@@ -140,9 +140,9 @@ function loadScriptsBeforeForUnitTests(...scriptKeys) {
     });
   }
   if (usesCharts) {
-    before(() => {
-      google.charts.load('current', {packages: ['table', 'controls']});
-    });
+    before(
+        () => cy.wrap(
+            google.charts.load('current', {packages: ['table', 'controls']})));
   }
 }
 
