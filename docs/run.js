@@ -55,7 +55,8 @@ let featureSelectListener = null;
  * which the damage weight is derived).
  * @param {ee.FeatureCollection} scoreAsset
  */
-function createAndDisplayJoinedData(map, initialTogglesValuesPromise, scoreAsset) {
+function createAndDisplayJoinedData(
+    map, initialTogglesValuesPromise, scoreAsset) {
   addLoadingElement(tableContainerId);
   // clear old listeners
   google.maps.event.removeListener(mapSelectListener);

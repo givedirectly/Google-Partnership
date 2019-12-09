@@ -37,7 +37,8 @@ function update(map) {
   }
 
   removeScoreLayer();
-  createAndDisplayJoinedData(map, Promise.resolve(getValuesAsArray()), getScoreAsset());
+  createAndDisplayJoinedData(
+      map, Promise.resolve(getValuesAsArray()), getScoreAsset());
   // clear old listeners
   google.maps.event.clearListeners(map, 'click');
   google.maps.event.clearListeners(map.data, 'click');
