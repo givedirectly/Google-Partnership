@@ -32,11 +32,10 @@ Cypress.Commands.add('awaitLoad', (divIds) => {
  * actually do anything when they execute. Instead, they enqueue a command into
  * an internal Cypress "queue". After all lines have been executed, Cypress
  * knows the full queue. At that point, the "Cypress phase" starts. Cypress
- * actually executes each command in the queue. After each command completes, it will execute any `.then` blocks that
- * were chained onto it. Thus, in the following program:
- * `console.log('message 1');
- *  cy.wrap(console.log('message 2')).then(() => console.log('message 4'));
- *  console.log('message 3');
+ * actually executes each command in the queue. After each command completes, it
+ * will execute any `.then` blocks that were chained onto it. Thus, in the
+ * following program: `console.log('message 1'); cy.wrap(console.log('message
+ * 2')).then(() => console.log('message 4')); console.log('message 3');
  *  cy.get('#id').then(() => console.log('message 5'));`
  * The messages appear in the specified order.
  *
@@ -49,10 +48,10 @@ Cypress.Commands.add('awaitLoad', (divIds) => {
  * as a `.then` block after a `cy.wrap(null)` command. That will ensure that the
  * `lambda` only executes during the Cypress phase.
  *
- * As a convention in this codebase, a function that returns a {@link Cypress.Chainable} can be
- * assumed to execute its instructions during the Cypress phase. Only functions
- * that do not return a {@link Cypress.Chainable} execute during the initial
- * phase.
+ * As a convention in this codebase, a function that returns a {@link
+ * Cypress.Chainable} can be assumed to execute its instructions during the
+ * Cypress phase. Only functions that do not return a {@link Cypress.Chainable}
+ * execute during the initial phase.
  *
  * For more information, see
  * https://docs.cypress.io/guides/core-concepts/introduction-to-cypress.html#Commands-Are-Asynchronous

@@ -146,7 +146,8 @@ function loadScriptsBeforeForUnitTests(...scriptKeys) {
   }
   if (usesCharts) {
     before(
-        () => cy.wrap(google.charts.load('current', {packages: ['table', 'controls']})));
+        () => cy.wrap(
+            google.charts.load('current', {packages: ['table', 'controls']})));
   }
 }
 
