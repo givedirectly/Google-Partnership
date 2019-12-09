@@ -160,7 +160,8 @@ function addFirebaseHooks() {
       }).then((token) => global.firestoreCustomToken = token);
     // Write a copy of the data to backup documents in case of accidental
     // deletion. One backup per day.
-    cy.task('populateTestFirestoreData', getTimestampRoundedToDays() + '-backup');
+    cy.task(
+        'populateTestFirestoreData', getTimestampRoundedToDays() + '-backup');
   });
   let currentTestRoot = null;
   beforeEach(() => {

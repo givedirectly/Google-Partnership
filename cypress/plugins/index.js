@@ -71,15 +71,16 @@ module.exports = (on, config) => {
       const deleteOldPromise = deleteAllOldTestData(currentApp);
       const result =
           currentApp.auth().createCustomToken('cypress-firestore-test-user');
-      return Promise.all([result, deleteOldPromise, storeTestFirestoreData()]).then(async (list) => {
-        // Firebase really doesn't like duplicate apps lying around, so clean up
-        // immediately.
-        await currentApp.delete();
-        if (list[0]) {
-          return list[0];
-        }
-        throw new Error('No token generated');
-      });
+      return Promise.all([result, deleteOldPromise, storeTestFirestoreData()])
+          .then(async (list) => {
+            // Firebase really doesn't like duplicate apps lying around, so
+            // clean up immediately.
+            await currentApp.delete();
+            if (list[0]) {
+              return list[0];
+            }
+            throw new Error('No token generated');
+          });
     },
     /**
      * Produces an EarthEngine token that can be used by production code.
@@ -255,16 +256,17 @@ function storeTestFirestoreData() {
   for (const disaster of ['2017-harvey', '2018-michael']) {
     const documentPath = 'disaster-metadata/' + disaster;
     const prodDisasterDoc = prodApp.firestore().doc(documentPath);
-    readPromises.push(prodDisasterDoc.get().then(
-        (result) => {
-          result.data().dummy = true;
-          return {disaster, data: result.data()};
-        }));
+    readPromises.push(prodDisasterDoc.get().then((result) => {
+      result.data().dummy = true;
+      return {disaster, data: result.data()};
+    }));
   }
-  return Promise.all(readPromises).then(async (result) => {
-    perTestFirestoreData = result;
-    return prodApp.delete();
-  }).then(() => null);
+  return Promise.all(readPromises)
+      .then(async (result) => {
+        perTestFirestoreData = result;
+        return prodApp.delete();
+      })
+      .then(() => null);
 }
 
 const testPrefix = 'test/';
