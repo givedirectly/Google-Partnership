@@ -1,8 +1,9 @@
 import {writeWaiterId} from '../dom_constants.js';
 import {addLoadingElement, loadingElementFinished} from '../loading.js';
 import {getDisaster} from '../resources.js';
-import {updateDataInFirestore} from './update_firestore_disaster.js';
 import {showSnackbarMessage} from '../snackbar.js';
+
+import {updateDataInFirestore} from './update_firestore_disaster.js';
 
 export {
   clearStatus,

@@ -4,8 +4,8 @@ import {withColor} from '../../../docs/import/color_function_util.js';
 import {getStatesAssetsFromEe} from '../../../docs/import/list_ee_assets.js';
 import {createOptionFrom, createStateAssetPickers, createTd, onCheck, onDelete, onInputBlur, onListBlur, stateAssets, updateAfterSort, withCheckbox, withInput, withList, withType} from '../../../docs/import/manage_layers.js';
 import {disasterData, getCurrentLayers} from '../../../docs/import/manage_layers_lib.js';
-import * as Snackbar from '../../../docs/snackbar.js';
 import {getDisaster} from '../../../docs/resources';
+import * as Snackbar from '../../../docs/snackbar.js';
 import {createAndAppend, createTrs, setDisasterAndLayers} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
@@ -237,11 +237,12 @@ describe('Unit tests for manage_layers page', () => {
 
           expect(savingStub).to.be.calledOnce;
           expect(savedStub).to.be.calledOnce;
-      return getFirestoreRoot()
-          .collection('disaster-metadata')
-          .doc(getDisaster())
-          .get();
-    }).then((doc) => {
+          return getFirestoreRoot()
+              .collection('disaster-metadata')
+              .doc(getDisaster())
+              .get();
+        })
+        .then((doc) => {
           const layers = doc.data()['layers'];
           expect(layers[0]['initialIndex']).to.equal(1);
           expect(layers[1]['initialIndex']).to.equal(2);
@@ -273,6 +274,7 @@ describe('Unit tests for manage_layers page', () => {
               .get();
         })
         .then(
-            (doc) => expect(doc.data()['layers'][0][property]).to.eql(afterVal));
+            (doc) =>
+                expect(doc.data()['layers'][0][property]).to.eql(afterVal));
   }
 });

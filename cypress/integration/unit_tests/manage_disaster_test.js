@@ -1,15 +1,34 @@
-import {getFirestoreRoot, readDisasterDocument} from '../../../docs/firestore_document.js';
-import {assetDataTemplate, createDisasterData} from '../../../docs/import/create_disaster_lib.js';
+import {
+  getFirestoreRoot,
+  readDisasterDocument
+} from '../../../docs/firestore_document.js';
+import {
+  assetDataTemplate,
+  createDisasterData
+} from '../../../docs/import/create_disaster_lib.js';
 import {createScoreAsset} from '../../../docs/import/create_score_asset.js';
-import {assetSelectionRowPrefix, disasterData, initializeDamageSelector, initializeScoreSelectors, scoreAssetTypes, setUpScoreSelectorTable, stateAssets, validateUserFields} from '../../../docs/import/manage_disaster';
-import {addDisaster, deleteDisaster, writeNewDisaster} from '../../../docs/import/manage_disaster.js';
+import {
+  assetSelectionRowPrefix,
+  disasterData,
+  initializeDamageSelector,
+  initializeScoreSelectors,
+  scoreAssetTypes,
+  setUpScoreSelectorTable,
+  stateAssets,
+  validateUserFields
+} from '../../../docs/import/manage_disaster';
+import {
+  addDisaster,
+  deleteDisaster,
+  writeNewDisaster
+} from '../../../docs/import/manage_disaster.js';
 import {createOptionFrom} from '../../../docs/import/manage_layers.js';
 import {convertEeObjectToPromise} from '../../../docs/map_util';
 import {getDisaster} from '../../../docs/resources.js';
+import * as Snackbar from '../../../docs/snackbar.js';
 import {assertFirestoreMapBounds} from '../../support/firestore_map_bounds';
 import {createAndAppend} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
-import * as Snackbar from '../../../docs/snackbar.js';
 
 const KNOWN_STATE = 'WF';
 
@@ -26,7 +45,6 @@ describe('Unit tests for manage_disaster.js', () => {
   let exportStub;
   let createFolderStub;
   let setAclsStub;
-  let savingStub;
   let savedStub;
   beforeEach(() => {
     disasterData.clear();
@@ -64,9 +82,7 @@ describe('Unit tests for manage_disaster.js', () => {
     setAclsStub = cy.stub(ee.data, 'setAssetAcl')
                       .callsFake((asset, acls, callback) => callback());
 
-    const snackbarStub = cy.stub(Snackbar, 'showSnackbarMessage');
-    savingStub = snackbarStub.withArgs('Saving...', -1);
-    savedStub = snackbarStub.withArgs('Saved');
+    savedStub = cy.stub(Snackbar, 'showSnackbarMessage').withArgs('Saved');
 
     // Test data is reasonably real. All of the keys should be able to vary,
     // with corresponding changes to test data (but no production changes). The
@@ -274,17 +290,19 @@ describe('Unit tests for manage_disaster.js', () => {
             'have.text',
             'Missing asset(s): Poverty, and must specify either damage asset ' +
                 'or map bounds');
-    cy.get('#process-button').should('be.disabled')
+    cy.get('#process-button')
+        .should('be.disabled')
         .then(() => writePromise)
         // Validate that score data was correctly written
-        .then(readDisasterDocument).then((doc) => {
-      const assetData = doc.data()['asset_data'];
+        .then(readDisasterDocument)
+        .then((doc) => {
+          const assetData = doc.data()['asset_data'];
 
-      expect(assetData['damage_asset_path']).to.be.null;
-      expect(assetData['map_bounds_sw']).to.eql('0, 0');
-      expect(assetData['svi_asset_paths']).to.eql({'NY': 'state2'});
-      expect(assetData['snap_data']['paths']).to.eql({'NY': null});
-    });
+          expect(assetData['damage_asset_path']).to.be.null;
+          expect(assetData['map_bounds_sw']).to.eql('0, 0');
+          expect(assetData['svi_asset_paths']).to.eql({'NY': 'state2'});
+          expect(assetData['snap_data']['paths']).to.eql({'NY': null});
+        });
   });
 
   it('multistate displays properly', () => {
@@ -346,9 +364,12 @@ describe('Unit tests for manage_disaster.js', () => {
       writePromise = makePromiseThatResolvesOnCall(savedStub);
     });
     cy.get('#damage-asset-select').select('damage1');
-    cy.get('#process-button').should('have.text', allStateAssetsMissingText).then(() => writePromise)
-    // Data wasn't actually in Firestore before, but checking that it was
-    // written on a different change shows we're not silently overwriting it.
+    cy.get('#process-button')
+        .should('have.text', allStateAssetsMissingText)
+        .then(() => writePromise)
+        // Data wasn't actually in Firestore before, but checking that it was
+        // written on a different change shows we're not silently overwriting
+        // it.
         .then(readDisasterDocument)
         .then(
             (doc) => expect(doc.data().asset_data.snap_data.paths.NY)

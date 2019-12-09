@@ -26,6 +26,6 @@ google.charts.load('current', {packages: ['table', 'controls']});
 $(() => {
   initializeSidebar();
   map = createMap(disasterMetadataPromise);
-  loadNavbarWithPicker(firebaseAuthPromise, "GiveDirectly damage/poverty map");
+  loadNavbarWithPicker(firebaseAuthPromise, 'GiveDirectly damage/poverty map');
   taskAccumulator.taskCompleted();
 });

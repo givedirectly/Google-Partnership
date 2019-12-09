@@ -45,7 +45,8 @@ function enableWhenReady(firebaseDataPromise) {
   const disaster = getDisaster();
   if (disaster) {
     // Kick EE fetch off early.
-    getDisasterAssetsFromEe(disaster).then((assets) => disasterAssets.set(disaster, assets));
+    getDisasterAssetsFromEe(disaster).then(
+        (assets) => disasterAssets.set(disaster, assets));
   }
   return firebaseDataPromise.then((returnedData) => {
     setDisasterData(returnedData);
