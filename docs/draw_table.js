@@ -87,8 +87,7 @@ function renderTable(list, features, map, selectorReceiver) {
   google.visualization.events.addListener(
       table, 'select',
       () => highlightFeatures(
-          table.getSelection().map((elt) => features[elt.row]), map, true)
-  );
+          table.getSelection().map((elt) => features[elt.row]), map, true));
 
   const downloadButton = document.getElementById('downloadButton');
   // Generate content and download on click.
