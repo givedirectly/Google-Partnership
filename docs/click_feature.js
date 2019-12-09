@@ -36,15 +36,8 @@ function clickFeature(lng, lat, map, featuresAsset, tableSelector) {
       highlightFeatures([], map);
       tableSelector([]);
     } else {
-      console.log('before highlight for ', feature);
       highlightFeatures([feature], map);
-<<<<<<< HEAD
-      console.log('after highlight for ', feature);
       const rowData = tableSelector([geoid]);
-      console.log('after select for ', rowData);
-=======
-      const rowData = tableSelector([geoid]);
->>>>>>> master
       const infoWindow = new google.maps.InfoWindow();
       infoWindow.setContent(createHtmlForPopup(feature, rowData));
       const borderPoint = feature.geometry.coordinates[0][0];
