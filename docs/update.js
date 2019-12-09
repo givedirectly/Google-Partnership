@@ -7,7 +7,7 @@ export {
   damageThresholdKey,
   povertyThresholdKey,
   povertyWeightKey,
-  setUpInitialToggleValues,
+  setUpToggles,
   toggles,
 };
 
@@ -61,9 +61,9 @@ let hasDamageAsset = null;
  * a damage asset.
  * @param {Promise<Object>} disasterMetadataPromise
  * @param {google.map.Maps} map
- * @return {Promise<Array<number>>} returns all the toggle initial
+ * @return {Promise<Array<number>>} returns all the toggle initial values.
  */
-function setUpInitialToggleValues(disasterMetadataPromise, map) {
+function setUpToggles(disasterMetadataPromise, map) {
   const togglesSetPromise = disasterMetadataPromise.then((doc) => {
     hasDamageAsset = doc.data()['asset_data']['damage_asset_path'];
     if (hasDamageAsset) {
