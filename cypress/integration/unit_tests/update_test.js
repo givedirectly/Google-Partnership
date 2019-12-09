@@ -1,6 +1,7 @@
 import {disasterData, getCurrentData} from '../../../docs/import/manage_layers_lib.js';
 import * as LayerUtil from '../../../docs/layer_util.js';
 import * as Run from '../../../docs/run.js';
+import {setUpToggles} from '../../../docs/update';
 import {setUpInitialToggleValues} from '../../../docs/update.js';
 import {createToggles, toggles} from '../../../docs/update.js';
 import {initFirebaseForUnitTest, loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
@@ -60,33 +61,30 @@ describe('Unit test for updates.js', () => {
   afterEach(() => $('#form-div').empty());
 
   it('does not have a damage asset', () => {
-    createToggles({});
-    expect($('input').length).to.equal(3);
+    const nullData = {asset_data: {damage_asset_path: null}};
+    setUpToggles(Promise.resolve({data: () => nullData}), {}).then(() => {
+      expect($('input').length).to.equal(3);
 
-    document.getElementById('poverty threshold').value = .05;
-    document.getElementById('update').click();
+      document.getElementById('poverty threshold').value = .05;
+      document.getElementById('update').click();
 
-    expect(createAndDisplayJoinedDataStub).to.be.calledOnce;
+      expect(createAndDisplayJoinedDataStub).to.be.calledOnce;
 
-    expect(toggles.get('poverty weight')).to.equals(1);
-    expect(document.getElementById('error').innerHTML).to.equal('');
-    cy.wrap(createAndDisplayJoinedDataPromise).then(() => {
-      expect(lastPassedPovertyWeight).to.equals(1);
-      expect(lastPassedDamageThreshold).to.equals(0.0);
+      expect(toggles.get('poverty weight')).to.equals(1);
+      expect(document.getElementById('error').innerHTML).to.equal('');
+      cy.wrap(createAndDisplayJoinedDataPromise).then(() => {
+        expect(lastPassedPovertyWeight).to.equals(1);
+        expect(lastPassedDamageThreshold).to.equals(0.0);
+      });
     });
   });
 
   it('does have a damage asset', () => {
-    setUpDamageAsset().then(() => {
-      createToggles({});
-      expect($('input').length).to.equal(5);
-    });
+    setUpDamageAsset().then(() => expect($('input').length).to.equal(5));
   });
 
   it('updates weight labels', () => {
     setUpDamageAsset().then(() => {
-      createToggles({});
-
       const slider = document.getElementById('poverty weight');
       slider.value = 0.01;
 
@@ -101,8 +99,6 @@ describe('Unit test for updates.js', () => {
 
   it('updates toggles', () => {
     setUpDamageAsset().then(() => {
-      createToggles({});
-
       document.getElementById('poverty weight').value = 0.01;
       document.getElementById('damage threshold').value = 0.24;
 
@@ -121,8 +117,6 @@ describe('Unit test for updates.js', () => {
 
   it('updates toggles with errors', () => {
     setUpDamageAsset().then(() => {
-      createToggles({});
-
       document.getElementById('poverty threshold').value = -0.01;
       document.getElementById('update').click();
 
@@ -136,8 +130,6 @@ describe('Unit test for updates.js', () => {
 
   it('resets', () => {
     setUpDamageAsset().then(() => {
-      createToggles({});
-
       toggles.set('poverty weight', 0.77);
       toggles.set('damage threshold', 0.77);
 
@@ -166,5 +158,5 @@ function setUpDamageAsset() {
   disasterData.set(currentDisaster, {asset_data: {damage_asset_path: 'foo'}});
   window.localStorage.setItem('disaster', currentDisaster);
 
-  return setUpInitialToggleValues(Promise.resolve({data: getCurrentData}));
+  return setUpToggles(Promise.resolve({data: getCurrentData}), {});
 }
