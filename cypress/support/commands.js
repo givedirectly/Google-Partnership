@@ -35,9 +35,13 @@ Cypress.Commands.add('awaitLoad', (divIds) => {
  * knows the full queue. At that point, the "Cypress phase" starts. Cypress
  * actually executes each command in the queue. After each command completes, it
  * will execute any `.then` blocks that were chained onto it. Thus, in the
- * following program: `console.log('message 1'); cy.wrap(console.log('message
- * 2')).then(() => console.log('message 4')); console.log('message 3');
- *  cy.get('#id').then(() => console.log('message 5'));`
+ * following program:
+ * ```
+ * console.log('message 1');
+ * cy.wrap(console.log('message 2')).then(() => console.log('message 4'));
+ * console.log('message 3');
+ * cy.get('#id').then(() => console.log('message 5'));
+ * ```
  * The messages appear in the specified order.
  *
  * In the vast majority of cases, all important test instructions should be
