@@ -57,14 +57,14 @@ function getUpdatedValue(toggle) {
 let hasDamageAsset = null;
 
 /**
- * Initializes, damage-related toggle values based on whether or not we have
+ * Initializes damage-related toggle values based on whether or not we have
  * a damage asset.
  * @param {Promise<Object>} disasterMetadataPromise
  * @return {Promise<Array<number>>} returns all the toggle initial
  * values.
  */
-function setUpInitialToggleValues(disasterMetadataPromise) {
-  return disasterMetadataPromise.then((doc) => {
+function setUpInitialToggleValues(disasterMetadataPromise, map) {
+  const togglesSetPromise = disasterMetadataPromise.then((doc) => {
     hasDamageAsset = doc.data()['asset_data']['damage_asset_path'];
     if (hasDamageAsset) {
       toggles.set(damageThresholdKey, 0.5);
@@ -72,6 +72,8 @@ function setUpInitialToggleValues(disasterMetadataPromise) {
     }
     return getValuesAsArray();
   });
+  togglesSetPromise.then(() => createToggles(map));
+  return togglesSetPromise;
 }
 
 /**
@@ -158,7 +160,7 @@ function createToggles(map) {
 }
 
 /**
- * Creates an div including input and label for the given toggle.
+ * Creates a div including input and label for the given toggle.
  * @param {string} toggle
  * @return {HTMLDivElement}
  */
@@ -168,8 +170,7 @@ function createInput(toggle) {
 
   const label = document.createElement('label');
   label.for = toggle;
-  label.id = 'for-' + toggle;
-  label.innerHTML = ' ' + toggle;
+  label.innerHTML = toggle;
   thresholdInputDiv.appendChild(label);
 
   thresholdInputDiv.appendChild(document.createElement('br'));

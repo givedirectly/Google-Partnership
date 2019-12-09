@@ -20,12 +20,12 @@ joinedDataPromise.then = (lambda) => lambda({features: [feature]});
 
 describe('Unit test for processed_joined_data.js', () => {
   it('Processes an above threshold block group', () => {
-    cy.wrap(processJoinedData(
-                joinedDataPromise, 100 /* scalingFactor */, Promise.resolve([
-                  0.3 /* povertyThreshold */,
-                  0.5 /* damageThreshold */,
-                  0.5 /* povertyWeight */,
-                ])))
+    processJoinedData(
+        joinedDataPromise, 100 /* scalingFactor */, Promise.resolve([
+          0.3 /* povertyThreshold */,
+          0.5 /* damageThreshold */,
+          0.5 /* povertyWeight */,
+        ]))
         .then((result) => {
           expect(result).to.be.an('array');
           expect(result.length).to.equal(1);
@@ -46,12 +46,12 @@ describe('Unit test for processed_joined_data.js', () => {
   });
 
   it('Processes uneven weights', () => {
-    cy.wrap(processJoinedData(
-                joinedDataPromise, 100 /* scalingFactor */, Promise.resolve([
-                  0.3 /* povertyThreshold */,
-                  0.5 /* damageThreshold */,
-                  0.9 /* povertyWeight */,
-                ])))
+    processJoinedData(
+        joinedDataPromise, 100 /* scalingFactor */, Promise.resolve([
+          0.3 /* povertyThreshold */,
+          0.5 /* damageThreshold */,
+          0.9 /* povertyWeight */,
+        ]))
         .then((result) => {
           expect(result).to.be.an('array');
           expect(result.length).to.equal(1);
@@ -70,12 +70,12 @@ describe('Unit test for processed_joined_data.js', () => {
   });
 
   it('Processes a below threshold block group', () => {
-    cy.wrap(processJoinedData(
-                joinedDataPromise, 100 /* scalingFactor */, Promise.resolve([
-                  0.9 /* povertyThreshold */,
-                  0.5 /* damageThreshold */,
-                  0.9 /* povertyWeight */,
-                ])))
+    processJoinedData(
+        joinedDataPromise, 100 /* scalingFactor */, Promise.resolve([
+          0.9 /* povertyThreshold */,
+          0.5 /* damageThreshold */,
+          0.9 /* povertyWeight */,
+        ]))
         .then((result) => {
           const resultProperties = result[0].properties;
           expect(resultProperties).to.have.property('SCORE', 0);

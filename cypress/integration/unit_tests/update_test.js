@@ -77,14 +77,14 @@ describe('Unit test for updates.js', () => {
   });
 
   it('does have a damage asset', () => {
-    cy.wrap(setUpDamageAsset()).then(() => {
+    setUpDamageAsset().then(() => {
       createToggles({});
       expect($('input').length).to.equal(5);
     });
   });
 
   it('updates weight labels', () => {
-    cy.wrap(setUpDamageAsset()).then(() => {
+    setUpDamageAsset().then(() => {
       createToggles({});
 
       const slider = document.getElementById('poverty weight');
@@ -100,7 +100,7 @@ describe('Unit test for updates.js', () => {
   });
 
   it('updates toggles', () => {
-    cy.wrap(setUpDamageAsset()).then(() => {
+    setUpDamageAsset().then(() => {
       createToggles({});
 
       document.getElementById('poverty weight').value = 0.01;
@@ -120,7 +120,7 @@ describe('Unit test for updates.js', () => {
   });
 
   it('updates toggles with errors', () => {
-    cy.wrap(setUpDamageAsset()).then(() => {
+    setUpDamageAsset().then(() => {
       createToggles({});
 
       document.getElementById('poverty threshold').value = -0.01;
@@ -135,7 +135,7 @@ describe('Unit test for updates.js', () => {
   });
 
   it('resets', () => {
-    cy.wrap(setUpDamageAsset()).then(() => {
+    setUpDamageAsset().then(() => {
       createToggles({});
 
       toggles.set('poverty weight', 0.77);
