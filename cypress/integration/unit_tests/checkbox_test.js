@@ -481,7 +481,7 @@ describe('Unit test for toggleLayerOn', () => {
               'ee-name': 'tile_asset',
               'asset-type': LayerType.MAP_TILES,
               'urls': [
-                'https://storms.ngs.noaa.gov/storms/tilesd/services/tileserver.php?/20170827-rgb.json'
+                'https://storms.ngs.noaa.gov/storms/tilesd/services/tileserver.php?/20170827-rgb.json',
               ],
               'display-name': 'tiles',
               'display-on-load': true,
@@ -512,7 +512,7 @@ describe('Unit test for toggleLayerOn', () => {
       'display-on-load': true,
       'index': 4,
     };
-    expectNoBlobImages().then(() => {addLayerPromise = addLayer(layer, map)});
+    expectNoBlobImages().then(() => {addLayerPromise = addLayer(layer, map);});
     expectNoBlobImages();
     cy.wait(0)
         .then(() => expect(map.overlayMapTypes.getAt(4)).to.be.undefined)

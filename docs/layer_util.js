@@ -349,7 +349,8 @@ function addTileLayer(map, layer) {
   }
   layerDisplayData.pendingPromise = Promise.all(urlPromises).then((urls) => {
     layerDisplayData.overlay = new CompositeImageMapType({
-      tileUrls: urls,
+      // JSON urls each had an array of tile URLS, so flatten them.
+      tileUrls: urls.flat(),
       tileSize: layer['tile-size'],
       maxZoom: layer['maxZoom'],
       opacity: layer['opacity'],
@@ -360,10 +361,14 @@ function addTileLayer(map, layer) {
   return layerDisplayData.pendingPromise;
 }
 
+/**
+ * Downloads a JSON file containing tile URL info under the 'tiles' property and
+ * returns those tile URLs. See {@link addTileLayer}.
+ * @param {string} jsonUrl
+ * @returns {Promise<Array<string>>}
+ */
 function extractFromJson(jsonUrl) {
-  return Promise.resolve($.getJSON(jsonUrl, null)).then((json) => {
-    return json.tiles[0];
-  });
+  return Promise.resolve($.getJSON(jsonUrl, null)).then((json) => json.tiles);
 }
 
 /**
