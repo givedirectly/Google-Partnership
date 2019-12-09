@@ -4,7 +4,6 @@ import * as loading from '../../../docs/loading';
 import {CallbackLatch} from '../../support/callback_latch';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 import {createGoogleMap} from '../../support/test_map';
-import SettablePromise from '../../../docs/settable_promise.js';
 
 const mockData = {};
 
@@ -469,34 +468,41 @@ describe('Unit test for toggleLayerOn', () => {
 
   it('tests json url', () => {
     let map = null;
-    createGoogleMap().then((returnedMap) => map = returnedMap).then(() =>
-        map.fitBounds(new google.maps.LatLngBounds(
-            new google.maps.LatLng({lat: 26, lng: -97.4}),
-            new google.maps.LatLng({lat: 27.62, lng: -97.1}))));
+    createGoogleMap()
+        .then((returnedMap) => map = returnedMap)
+        .then(
+            () => map.fitBounds(new google.maps.LatLngBounds(
+                new google.maps.LatLng({lat: 26, lng: -97.4}),
+                new google.maps.LatLng({lat: 27.62, lng: -97.1}))));
 
-    expectNoBlobImages().then(() =>
-        addLayer({
+    expectNoBlobImages().then(
+        () => addLayer(
+            {
               'ee-name': 'tile_asset',
               'asset-type': LayerType.MAP_TILES,
-              'urls': ['https://storms.ngs.noaa.gov/storms/tilesd/services/tileserver.php?/20170827-rgb.json'],
+              'urls': [
+                'https://storms.ngs.noaa.gov/storms/tilesd/services/tileserver.php?/20170827-rgb.json'
+              ],
               'display-name': 'tiles',
               'display-on-load': true,
               'index': 4,
-            }
-            , map));
+            },
+            map));
     // Experimentally found.
     expectBlobImageCount(2);
   });
 
   it('tests slow json url with toggle off and on', () => {
     let map = null;
-    createGoogleMap().then((returnedMap) => map = returnedMap).then(() =>
-        map.fitBounds(new google.maps.LatLngBounds(
-            new google.maps.LatLng({lat: 26, lng: -97.4}),
-            new google.maps.LatLng({lat: 27.62, lng: -97.1}))));
+    createGoogleMap()
+        .then((returnedMap) => map = returnedMap)
+        .then(
+            () => map.fitBounds(new google.maps.LatLngBounds(
+                new google.maps.LatLng({lat: 26, lng: -97.4}),
+                new google.maps.LatLng({lat: 27.62, lng: -97.1}))));
     let resolveFunction = null;
     const promise = new Promise((resolve) => resolveFunction = resolve);
-    cy.stub($,'getJSON').returns(promise);
+    cy.stub($, 'getJSON').returns(promise);
     let addLayerPromise = null;
     const layer = {
       'ee-name': 'tile_asset',
@@ -506,17 +512,16 @@ describe('Unit test for toggleLayerOn', () => {
       'display-on-load': true,
       'index': 4,
     };
-    expectNoBlobImages().then(() => {
-      addLayerPromise = addLayer(layer, map)
-    });
+    expectNoBlobImages().then(() => {addLayerPromise = addLayer(layer, map)});
     expectNoBlobImages();
-    cy.wait(0).then(() => expect(map.overlayMapTypes.getAt(4)).to.be.undefined)
+    cy.wait(0)
+        .then(() => expect(map.overlayMapTypes.getAt(4)).to.be.undefined)
         .then(() => toggleLayerOff(4, map));
-    expectNoBlobImages()
-      .then(() => {
-        expect(toggleLayerOn(layer, map)).to.equal(addLayerPromise);
-        resolveFunction({tiles: ['https://stormscdn.ngs.noaa.gov/20170827-rgb/{z}/{x}/{y}']});
-        return addLayerPromise;
+    expectNoBlobImages().then(() => {
+      expect(toggleLayerOn(layer, map)).to.equal(addLayerPromise);
+      resolveFunction(
+          {tiles: ['https://stormscdn.ngs.noaa.gov/20170827-rgb/{z}/{x}/{y}']});
+      return addLayerPromise;
     });
     // Experimentally found.
     expectBlobImageCount(2);

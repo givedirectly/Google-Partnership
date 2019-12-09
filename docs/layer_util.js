@@ -69,13 +69,14 @@ let deckGlOverlay;
  * are rendered. On map pan/zoom or layer toggling, the EarthEngine computation
  * is cached, but the tile rendering triggers a "loading" status.
  * 3. Map tiles are rendered using CompositeImageMapType. They start rendering
- * once their associated .json files (if present) have downloaded, and are "loading" until
- * all the tiles have been fetched. These have null deckParams, and have a
- * pendingPromise until any .json files have downloaded.
+ * once their associated .json files (if present) have downloaded, and are
+ * "loading" until all the tiles have been fetched. These have null deckParams,
+ * and have a pendingPromise until any .json files have downloaded.
  *
  * FeatureCollections have a computation phase but no rendering phase;
  * ImageCollections have both computation and rendering phases, and
- * CompositeImageMapTypes also have both, in which "computation" is .json download.
+ * CompositeImageMapTypes also have both, in which "computation" is .json
+ * download.
  */
 class LayerDisplayData {
   /**
