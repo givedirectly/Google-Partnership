@@ -356,10 +356,8 @@ describe('Unit test for toggleLayerOn', () => {
         });
   });
 
-  // TODO(janakr): For all the composite tile tests below, we perform 4 fetches
-  //  for each tile url, but only 2 unique ones. This doesn't happen in
-  //  production, so it's not a performance issue, seemingly just something
-  //  weird about the requests Google Maps makes in tests.
+  const tilesOnMap = /* width */ 5 * /* height */ 3;
+
   it('tests composite tiles', () => {
     // Stub out HTTP fetch, so we can return a promise that waits a while.
     // Only release the promise when we've made all our assertions.
@@ -380,7 +378,7 @@ describe('Unit test for toggleLayerOn', () => {
       addLayerPromise = addLayer(mockFirebaseLayers[4], map);
       overlay = assertCompositeOverlayPresent(map);
     });
-    expectBlobImageCount(4).then(() => {
+    expectBlobImageCount(tilesOnMap).then(() => {
       // The tile-url2 requests got back waitPromise, so they haven't really
       // completed. Complete them now with an "ok" response. This will allow the
       // overall layer promise to complete, since all images from all tiles are
@@ -389,7 +387,7 @@ describe('Unit test for toggleLayerOn', () => {
       return addLayerPromise;
     });
     // All images present.
-    expectBlobImageCount(8).then(() => {
+    expectBlobImageCount(2 * tilesOnMap).then(() => {
       toggleLayerOff(4, map);
       expect(map.overlayMapTypes.getAt(4)).to.be.null;
     });
@@ -400,7 +398,7 @@ describe('Unit test for toggleLayerOn', () => {
       return togglePromise;
     });
     // All back once we toggle on.
-    expectBlobImageCount(8);
+    expectBlobImageCount(2 * tilesOnMap);
   });
 
   it('tests composite tiles with 404', () => {
@@ -421,7 +419,7 @@ describe('Unit test for toggleLayerOn', () => {
       assertCompositeOverlayPresent(map);
       return addLayerPromise;
     });
-    cy.get('img[src*="blob:"]').should('have.length', 2);
+    cy.get('img[src*="blob:"]').should('have.length', tilesOnMap);
   });
 
   it('tests composite tiles toggles off before display', () => {
@@ -448,7 +446,7 @@ describe('Unit test for toggleLayerOn', () => {
       overlay = assertCompositeOverlayPresent(map);
     });
     // 4 images show up very quickly.
-    expectBlobImageCount(4).then(() => {
+    expectBlobImageCount(tilesOnMap).then(() => {
       // Remove the layer.
       toggleLayerOff(4, map);
       expect(map.overlayMapTypes.getAt(4)).to.be.null;
@@ -463,7 +461,7 @@ describe('Unit test for toggleLayerOn', () => {
         // Same overlay as before.
         .then(() => expect(map.overlayMapTypes.getAt(4)).equals(overlay));
     // All images now shown on page.
-    expectBlobImageCount(8);
+    expectBlobImageCount(2 * tilesOnMap);
   });
 });
 

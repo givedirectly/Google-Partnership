@@ -1,67 +1,8 @@
 /**
- * This test relies on the FEMA damage data for Hurricane Michael and the
+ * This test relies on the FEMA damage data for Hurricane Harvey and the
  * starting thresholds of poverty 0.3 and damage 0.5
  */
 describe('Integration test for clicking feature', () => {
-  it('clicks a feature on the map highlights feature in list', () => {
-    cy.visit('');
-    cy.awaitLoad();
-
-    clickAndVerifyBlockGroup();
-  });
-
-  it('clicks on a feature on the map, then unclicks it', () => {
-    cy.visit('');
-    cy.awaitLoad();
-
-    clickAndVerifyBlockGroup();
-    // Not sure why this first click isn't registering but double click seems to
-    // do the job.
-    cy.get('.map').click(900, 500);
-    cy.get('.map').click(900, 500);
-    cy.get('.map').should(
-        'not.contain',
-        'Block Group 1, Census Tract 2309, Harris County, Texas');
-  });
-
-  it('clicks on a feature on the map, then clicks on another', () => {
-    cy.visit('');
-    cy.awaitLoad();
-
-    clickAndVerifyBlockGroup();
-
-    cy.get('.map').click(300, 525);
-    // show first one is closed.
-    cy.get('.map').should(
-        'not.contain',
-        'Block Group 1, Census Tract 2309, Harris County, Texas');
-    // TODO(janakr): Remove this debugging when flakiness resolved.
-    cy.get('.map')
-        .should('contain', 'Block Group')
-        .then(($elt) => cy.log($elt.text()));
-
-    cy.get('.map').should(
-        'contain', 'Block Group 1, Census Tract 5501, Harris County, Texas');
-  });
-
-  it('click highlights correct feature even after resort', () => {
-    cy.visit('');
-    cy.awaitLoad();
-
-    // Sort descending by damage percentage
-    cy.get('.google-visualization-table-tr-head > :nth-child(4)').click();
-    cy.get('.google-visualization-table-tr-head > :nth-child(4)').click();
-    clickAndVerifyBlockGroup();
-  });
-
-  it('clicks a place where there is no damage -> no feature', () => {
-    cy.visit('');
-    cy.awaitLoad();
-
-    cy.get('.map').click(200, 200);
-    cy.get('.google-visualization-table-tr-sel').should('not.exist');
-  });
-
   // Ensures that listeners are cleared when table instance and data
   // are updated.
   it('click highlights correct feature even after update', () => {
