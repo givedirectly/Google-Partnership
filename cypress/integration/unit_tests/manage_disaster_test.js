@@ -337,8 +337,11 @@ describe('Unit tests for manage_disaster.js', () => {
     // TODO(janakr): is there a way to tell all writes are finished?
     // Data wasn't actually in Firestore before, but checking that it was
     // written on a different change shows we're not silently overwriting it.
-    cy.wait(1000).then(readDisasterDocument).then((doc) => expect(
-        doc.data().asset_data.snap_data.paths.NY).to.eql(missingSnapPath));
+    cy.wait(1000)
+        .then(readDisasterDocument)
+        .then(
+            (doc) => expect(doc.data().asset_data.snap_data.paths.NY)
+                         .to.eql(missingSnapPath));
   });
 
   it('writes a new disaster to firestore', () => {
