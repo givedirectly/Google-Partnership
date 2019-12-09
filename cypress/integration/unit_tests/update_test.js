@@ -31,12 +31,12 @@ describe('Unit test for updates.js', () => {
     snackbarDiv.appendChild(snackbarText);
     document.body.appendChild(snackbarDiv);
   });
+
   // creates the form div and stubs the relevant document methods.
   beforeEach(() => {
     // function that resolves the createAndDisplayJoinedDataPromise
     let resolvePromise;
-    createAndDisplayJoinedDataPromise =
-        new Promise((resolve) => resolvePromise = () => resolve());
+    createAndDisplayJoinedDataPromise = new Promise((resolve) => resolvePromise = resolve);
     createAndDisplayJoinedDataStub =
         cy.stub(Run, 'createAndDisplayJoinedData')
             .callsFake((map, valuesPromise) => {
@@ -58,21 +58,19 @@ describe('Unit test for updates.js', () => {
 
   afterEach(() => $('#form-div').empty());
 
-  it.only('does not have a damage asset', () => {
+  it('does not have a damage asset', () => {
     createToggles({});
     expect($('input').length).to.equal(3);
-
-    createToggles();
 
     document.getElementById('poverty threshold').value = .05;
     document.getElementById('update').click();
 
     expect(createAndDisplayJoinedDataStub).to.be.calledOnce;
 
-    expect(toggles.get('poverty weight')).to.equals(0.05);
-    expect(document.getElementById('error').innerHTML).to.equals('');
+    expect(toggles.get('poverty weight')).to.equals(1);
+    expect(document.getElementById('error').innerHTML).to.equal('');
     cy.wrap(createAndDisplayJoinedDataPromise).then(() => {
-      expect(lastPassedPovertyWeight).to.equals(0.05);
+      expect(lastPassedPovertyWeight).to.equals(1);
       expect(lastPassedDamageThreshold).to.equals(0.0);
     });
   });
@@ -86,7 +84,7 @@ describe('Unit test for updates.js', () => {
 
   it('updates weight labels', () => {
     cy.wrap(setUpDamageAsset()).then(() => {
-      createToggles();
+      createToggles({});
 
       const slider = document.getElementById('poverty weight');
       slider.value = 0.01;
@@ -102,19 +100,17 @@ describe('Unit test for updates.js', () => {
 
   it('updates toggles', () => {
     cy.wrap(setUpDamageAsset()).then(() => {
-      createToggles();
+      createToggles({});
 
       document.getElementById('poverty weight').value = 0.01;
       document.getElementById('damage threshold').value = 0.24;
 
-      // Without this, tests don't currently fail, but the code in update.js
-      // silently errors out, so it's a hazard.
       document.getElementById('update').click();
       expect(createAndDisplayJoinedDataStub).to.be.calledOnce;
 
       expect(toggles.get('poverty weight')).to.equals(0.01);
       expect(toggles.get('damage threshold')).to.equals(0.24);
-      expect(document.getElementById('error').innerHTML).to.equals('');
+      expect(document.getElementById('error').innerHTML).to.equal('');
       cy.wrap(createAndDisplayJoinedDataPromise).then(() => {
         expect(lastPassedPovertyWeight).to.equals(0.01);
         expect(lastPassedDamageThreshold).to.equals(0.24);
@@ -124,7 +120,7 @@ describe('Unit test for updates.js', () => {
 
   it('updates toggles with errors', () => {
     cy.wrap(setUpDamageAsset()).then(() => {
-      createToggles();
+      createToggles({});
 
       document.getElementById('poverty threshold').value = -0.01;
       document.getElementById('update').click();
@@ -139,7 +135,7 @@ describe('Unit test for updates.js', () => {
 
   it('resets', () => {
     cy.wrap(setUpDamageAsset()).then(() => {
-      createToggles();
+      createToggles({});
 
       toggles.set('poverty weight', 0.77);
       toggles.set('damage threshold', 0.77);
