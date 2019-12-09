@@ -4,14 +4,12 @@ import {disasterData, getCurrentLayers} from '../../../docs/import/manage_layers
 import * as loading from '../../../docs/loading.js';
 import {createTrs} from '../../support/import_test_util.js';
 import {createAndAppend, setDisasterAndLayers} from '../../support/import_test_util.js';
-import {initFirebaseForUnitTest, loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
+import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
 const mockAsset = 'mockAsset';
 
 describe('Unit tests for adding layers', () => {
   loadScriptsBeforeForUnitTests('ee', 'firebase', 'jquery');
-  initFirebaseForUnitTest();
-
   beforeEach(() => {
     cy.stub(loading, 'addLoadingElement');
     cy.stub(loading, 'loadingElementFinished');
