@@ -197,6 +197,12 @@ describe('Unit tests for manage_disaster.js', () => {
     });
   });
 
+  const allStateAssetsMissingText =
+      'Missing asset(s): Poverty, Income, SVI, Census TIGER Shapefiles, ' +
+      'Microsoft Building Shapefiles';
+  const allMissingText = allStateAssetsMissingText +
+      ', and must specify either damage asset or map bounds';
+
   it('validates asset data', () => {
     setUpAssetValidationTests();
 
@@ -208,11 +214,6 @@ describe('Unit tests for manage_disaster.js', () => {
         .then(validateUserFields);
     // We haven't set much, so button is not enabled.
     cy.get('#process-button').should('be.disabled');
-    const allStateAssetsMissingText =
-        'Missing asset(s): Poverty, Income, SVI, Census TIGER Shapefiles, ' +
-        'Microsoft Building Shapefiles';
-    const allMissingText = allStateAssetsMissingText +
-        ', and must specify either damage asset or map bounds';
     cy.get('#process-button').should('have.text', allMissingText);
 
     // Confirm that entering just one corner of map doesn't help anything.
@@ -312,6 +313,33 @@ describe('Unit tests for manage_disaster.js', () => {
             'Missing asset(s): Poverty [WY], SVI [NY, WY], Census TIGER ' +
                 'Shapefiles [NY, WY], Microsoft Building Shapefiles [NY, WY],' +
                 ' and must specify either damage asset or map bounds');
+  });
+
+  it('nonexistent asset not ok', () => {
+    const missingSnapPath = 'whereisasset';
+    setUpAssetValidationTests()
+        .then(() => {
+          const data = createDisasterData(['NY']);
+          data.asset_data.damage_asset_path = 'pathnotfound';
+          data.asset_data.snap_data.paths.NY = missingSnapPath;
+          disasterData.set(getDisaster(), data);
+          initializeScoreSelectors(['NY']);
+          initializeDamageSelector(['damage1', 'damage2']);
+        })
+        .then(validateUserFields);
+    cy.get('#process-button').should('be.disabled');
+    // Everything is missing, even though we have values stored.
+    cy.get('#process-button').should('have.text', allMissingText);
+    cy.get('#damage-asset-select').select('damage1');
+    cy.get('#process-button').should('have.text', allStateAssetsMissingText);
+    // TODO(janakr): is there a way to tell all writes are finished?
+    // Data wasn't actually in Firestore before, but checking that it was
+    // written on a different change shows we're not silently overwriting it.
+    cy.wait(1000)
+        .then(readDisasterDocument)
+        .then(
+            (doc) => expect(doc.data().asset_data.snap_data.paths.NY)
+                         .to.eql(missingSnapPath));
   });
 
   it('writes a new disaster to firestore', () => {

@@ -119,6 +119,11 @@ h1 {
   width: 100%;
 }
 
+/* Help css */
+.help {
+  color: #545958;
+}
+
 /* Navbar css */
 
 .navbar {
