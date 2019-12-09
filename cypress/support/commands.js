@@ -27,7 +27,6 @@ Cypress.Commands.add('awaitLoad', (divIds) => {
   });
 });
 
-
 /**
  * Cypress tests have two phases. In the first phase, each line is executed, top
  * to bottom, as usual. However, any `cy.*` commands, like `cy.get()`, do not
