@@ -20,7 +20,7 @@ module.exports = (on, config) => {
    * are visible.
    */
   on('before:browser:launch', (browser = {}, args) => {
-    if (browser.name === 'chromium') {
+    if (browser.name === 'chromium' || browser.name === 'chrome') {
       const newArgs = args.filter((arg) => arg !== '--disable-gpu');
       newArgs.push('--ignore-gpu-blacklist');
       newArgs.push('--start-maximized');

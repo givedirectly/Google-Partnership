@@ -14,24 +14,5 @@ if [[ $(git diff --name-only HEAD) ]]; then
   exit 1
 fi
 
-# --diff-filter=dr excludes deleted and renamed files, which don't exist
-# locally anymore.
-# TODO(janakr): this is vulnerable to filenames with spaces.
-modified_js_files="$(git diff --diff-filter=d --name-only \
-    master 'docs/*.js' 'docs/import/*.js' 'cypress/integration/**/*.js' \
-      'cypress/support/*.js' 'cypress/plugins/*.js')"
-if [[ "$modified_js_files" ]]; then
-  if clang-format --style=Google -output-replacements-xml $modified_js_files \
-      | grep -c '<replacement ' >/dev/null; then
-    echo 'Found badly formatted files. Run:'
-    declare -a badfiles
-    for eachfile in $modified_js_files; do
-      clang-format --style=Google -output-replacements-xml $eachfile | grep -c '<replacement ' > /dev/null && badfiles+=($eachfile)
-    done
-    echo "clang-format -i --style=Google ${badfiles[@]}"
-    exit 1
-  fi
-  yarn run eslint $modified_js_files
-fi
+./lint.sh
 
-exit 0
