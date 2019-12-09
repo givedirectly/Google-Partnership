@@ -6,15 +6,11 @@ import {userRegionData} from '../../../docs/user_region_data.js';
 import {CallbackLatch} from '../../support/callback_latch.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 import {convertGoogleLatLngToObject, convertPathToLatLng, createGoogleMap} from '../../support/test_map.js';
+import {cyQueue} from '../../support/commands.js';
 
 const notes = 'Sphinx of black quartz, judge my vow';
 
 const path = [{lat: 0, lng: 0}, {lat: 4, lng: 2}, {lat: 0, lng: 2}];
-
-// The helper functions in this test fall into two categories: those that do
-// their actual work during the "Cypress phase" of the test, and those that
-// execute right away. The latter type always return a non-Cypress value, and
-// should always be inside a Cypress .then() block.
 
 /**
  * Expected data in Firestore/map popup.
@@ -313,8 +309,7 @@ describe('Unit test for ShapeData', () => {
    * @return {Cypress.Chainable}
    */
   function assertMarker(position, notes) {
-    return cy.wrap(null)
-        .then(() => expect(StoredShapeData.pendingWriteCount).to.eql(0))
+    return cyQueue(() => expect(StoredShapeData.pendingWriteCount).to.eql(0))
         .then(() => userShapes.get())
         .then((querySnapshot) => {
           expect(querySnapshot).to.have.property('size', 1);
@@ -562,7 +557,7 @@ describe('Unit test for ShapeData', () => {
    * @return {Cypress.Chainable<void>}
    */
   function drawPolygon(polygonPath = path) {
-    return cy.wrap(null).then(() => {
+    return cyQueue(() => {
       event.overlay = new google.maps.Polygon({
         map: map,
         paths: polygonPath,
@@ -579,8 +574,7 @@ describe('Unit test for ShapeData', () => {
    * @return {Cypress.Chainable}
    */
   function assertOnFirestoreAndPopup(path, expectedData) {
-    cy.wrap(null)
-        .then(() => expect(StoredShapeData.pendingWriteCount).to.eql(0))
+    cyQueue(() => expect(StoredShapeData.pendingWriteCount).to.eql(0))
         .then(() => userShapes.get())
         .then((querySnapshot) => {
           expect(querySnapshot).to.have.property('size', 1);
@@ -684,7 +678,7 @@ function getFirstUserRegionDataEntry() {
  */
 function setUserFeatureVisibilityInCypressAndAssert(
     visibility, expectedSuccess) {
-  return cy.wrap(null).then(() => {
+  return cyQueue(() => {
     // Visibility won't change if we expect failure.
     const expectedVisibility =
         expectedSuccess ? visibility : getFirstFeatureVisibility();
