@@ -15,12 +15,16 @@ cache:
   # Don't cache yarn dependencies, just install clean.
   yarn: false
   npm: false
-#   directories:
-#     # we also need to cache folder with Cypress binary
-#     - ~/.cache
+  # Instead of caching the Cypress binary here, we build it from scratch every
+  # time. Experimentally this saves ~25 seconds over downloading the cache, at
+  # the cost of a message saying that this is our first Cypress run.
+  directories:
+    # we also need to cache folder with Cypress binary
+    - ~/.cypresscache
 env:
   global:
     - GOOGLE_APPLICATION_CREDENTIALS=$TRAVIS_BUILD_DIR/service_account.json
+    - CYPRESS_CACHE_FOLDER='~/.cypresscache'
     # Generated using
     # `travis encrypt CYPRESS_RECORD_KEY=<cypress-dashboard-record-key>`
     - secure: "IhXbsE9f3aAM/lSIxWUHcV+C3X1QLkwmxlmnH08ErUnTzhLSMZlXNknKelyhy0QAfKGi5VBBTcrFLafNoPXmSWeDZ5cMYsv25a6rZHpzU4D83A8/OumMUODLN7Hm4oc5C8jEd337HfpBb4WEtFDt3h1Bwhyw1q0NytMaVjHOPYrDxH+gBP7bFw6iM0ruTsgDUsAz8cqedJxYeLNtsmYpnVNY2mbSpBzVKU4Xo+etTGMEK9mXNPRwCjtH9ju5tqTkVR8eKu6BQematAdlCPa2n73dytEVpLYOQzuNccC+4QKbSjyrS3asgkXXRV23VMTd3gdGb3OIUo+UuF/2BM7HBraOROH4dC6vU5UAjM60aLJD/DdT37SZuUvwzkwVgx2RTiteXx8nGzAFZDQ+cdoWNVHi6+0IchuEGNZ7H/YC6pfHX8kk8TyRdnNEK/XNhtmjJkuTnDPu8FkmecCJsqtjQrIMADQ+Jp5EJUk8Wr2xGq4vPlPblHwI9QZKXxCKZqseYKvzufB82PidIAzio1M8ZZPfinKVEO8CgF3aL8zDdzikFtGA9XUYs5WMQgOl9Q9bQfgb82PdBl+8JOmYSpQeHQaiv5PqlXuv7pURDPdwPlrtXivf2rGGWQL/7vlqcWAnaYsnzawWhOyoSmcIugZbqA+6DuN7pCCx7OuZmHRrZpk="
