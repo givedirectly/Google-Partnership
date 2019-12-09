@@ -6,6 +6,8 @@ const firebase = require('firebase');
 // https://on.cypress.io/plugins-guide
 // ***********************************************************
 
+let perTestFirestoreData;
+
 /**
  * This function is called when a project is opened or re-opened (e.g. due to
  * the project's config changing).
@@ -69,7 +71,7 @@ module.exports = (on, config) => {
       const deleteOldPromise = deleteAllOldTestData(currentApp);
       const result =
           currentApp.auth().createCustomToken('cypress-firestore-test-user');
-      return Promise.all([result, deleteOldPromise]).then(async (list) => {
+      return Promise.all([result, deleteOldPromise, storeTestFirestoreData()]).then(async (list) => {
         // Firebase really doesn't like duplicate apps lying around, so clean up
         // immediately.
         await currentApp.delete();
@@ -97,49 +99,23 @@ module.exports = (on, config) => {
     },
 
     /**
-     * Retrieves necessary data for tests to consume from prod Firebase. Called
-     * once at the start of all tests.
-     * @return {Promise<Object>} Promise that contains all necessary disasters
-     *     data, as an array, with each element having a disaster key and a data
-     *     key.
-     */
-    getTestFirestoreData() {
-      const prodApp = firebase.initializeApp(firebaseConfigProd, 'prodapp');
-      const readPromises = [];
-      for (const disaster of ['2017-harvey', '2018-michael']) {
-        const documentPath = 'disaster-metadata/' + disaster;
-        const prodDisasterDoc = prodApp.firestore().doc(documentPath);
-        readPromises.push(prodDisasterDoc.get().then(
-            (result) => ({disaster, data: result.data()})));
-      }
-      return Promise.all(readPromises).then(async (result) => {
-        await prodApp.delete();
-        return result;
-      });
-    },
-
-    /**
-     * Writes disasters data (retrieved using {@link getTestFirestoreData} into
-     * the current test root, which lives under the root collection `test/`. We
-     * add a dummy field inside test/currentTestRoot so that Firestore will
-     * deign to list this document later
-     * (https://stackoverflow.com/questions/47043651/this-document-does-not-exist-and-will-not-appear-in-queries-or-snapshots-but-id)
-     * @param {{disaster: Object, currentTestRoot: string}}
-     *     disastersDataAndTestRoot
+     * Writes disasters data (retrieved using {@link storeTestFirestoreData}
+     * into the current test root, which lives under the root collection
+     * `test/`.
+     * @param {string} currentTestRoot
      * @return {Promise<null>} Promise that completes when writes are done
      */
-    populateTestFirestoreData(disastersDataAndTestRoot) {
-      const {currentTestRoot, disastersData} = disastersDataAndTestRoot;
+    populateTestFirestoreData(currentTestRoot) {
       // We use a test app, created using normal firebase, versus a test admin
       // app, because objects like GeoPoint are not compatible across the
       // libraries. By using the same library, we're able to copy the data from
       // prod to test with no modifications.
       const testApp = firebase.initializeApp(firebaseConfigTest, 'testapp');
       const writePromises = [];
-      for (const disasterData of disastersData) {
+      for (const disasterData of perTestFirestoreData) {
         const documentPath = 'disaster-metadata/' + disasterData.disaster;
         const testDisasterDocReference = testApp.firestore().doc(
-            'test/' + currentTestRoot + '/' + documentPath);
+            testPrefix + currentTestRoot + '/' + documentPath);
         const data = disasterData.data;
         data.dummy = true;
         writePromises.push(testDisasterDocReference.set(data));
@@ -263,6 +239,32 @@ function deleteCollectionRecursively(collection) {
     queryResult.forEach((doc) => promises.push(deleteDocRecursively(doc.ref)));
     return Promise.all(promises);
   });
+}
+
+/**
+ * Stores necessary data for tests to consume from prod Firebase. Called
+ * once at the start of all tests. We
+ * add a dummy field at the top level of the document so that Firestore will
+ * deign to list this document later
+ * (https://stackoverflow.com/questions/47043651/this-document-does-not-exist-and-will-not-appear-in-queries-or-snapshots-but-id)
+ * @return {Promise<null>} Promise that completes when retrieval is done
+ */
+function storeTestFirestoreData() {
+  const prodApp = firebase.initializeApp(firebaseConfigProd, 'prodapp');
+  const readPromises = [];
+  for (const disaster of ['2017-harvey', '2018-michael']) {
+    const documentPath = 'disaster-metadata/' + disaster;
+    const prodDisasterDoc = prodApp.firestore().doc(documentPath);
+    readPromises.push(prodDisasterDoc.get().then(
+        (result) => {
+          result.data().dummy = true;
+          return {disaster, data: result.data()};
+        }));
+  }
+  return Promise.all(readPromises).then(async (result) => {
+    perTestFirestoreData = result;
+    return prodApp.delete();
+  }).then(() => null);
 }
 
 const testPrefix = 'test/';
