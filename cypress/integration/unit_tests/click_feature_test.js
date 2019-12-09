@@ -120,7 +120,7 @@ describe('Unit tests for click_feature.js with map and table', () => {
    * @return {Cypress.Chainable<Array<google.maps.Data.Feature>>}
    */
   function getDataFeatures() {
-    return cy.wrap(null).then(() => {
+    return cyQueue(() => {
       const features = [];
       map.data.forEach((feature) => features.push(feature));
       return features;
