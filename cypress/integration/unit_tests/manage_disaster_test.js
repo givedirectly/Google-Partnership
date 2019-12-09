@@ -323,10 +323,8 @@ describe('Unit tests for manage_disaster.js', () => {
           data.asset_data.damage_asset_path = 'pathnotfound';
           data.asset_data.snap_data.paths.NY = missingSnapPath;
           disasterData.set(getDisaster(), data);
-          Promise.all([
-            initializeScoreSelectors(['NY']),
-            initializeDamageSelector(['damage1', 'damage2']),
-          ]);
+          initializeScoreSelectors(['NY']);
+          initializeDamageSelector(['damage1', 'damage2']);
         })
         .then(validateUserFields);
     cy.get('#process-button').should('be.disabled');
