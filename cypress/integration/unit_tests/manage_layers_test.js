@@ -7,7 +7,7 @@ import {disasterData, getCurrentLayers} from '../../../docs/import/manage_layers
 import * as loading from '../../../docs/loading.js';
 import {getDisaster} from '../../../docs/resources';
 import {createAndAppend, createTrs, setDisasterAndLayers} from '../../support/import_test_util.js';
-import {initFirebaseForUnitTest, loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
+import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
 const KNOWN_STATE = 'WF';
 const UNKNOWN_STATE = 'DN';
@@ -18,7 +18,6 @@ let loadingFinishedStub;
 
 describe('Unit tests for manage_layers page', () => {
   loadScriptsBeforeForUnitTests('ee', 'firebase', 'jquery');
-  initFirebaseForUnitTest();
   before(() => {
     const disasterPicker = createAndAppend('select', 'disaster');
     disasterPicker.append(createOptionFrom('2003-spring'));

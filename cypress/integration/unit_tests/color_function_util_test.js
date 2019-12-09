@@ -2,7 +2,6 @@ import {populateColorFunctions, withColor} from '../../../docs/import/color_func
 import * as manageLayersLib from '../../../docs/import/manage_layers_lib.js';
 import {getCurrentLayers} from '../../../docs/import/manage_layers_lib.js';
 import {createTrs, setDisasterAndLayers} from '../../support/import_test_util.js';
-import {initFirebaseForUnitTest} from '../../support/script_loader';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
 const property = 'color-function';
@@ -10,8 +9,6 @@ let writeToFirebaseStub;
 
 describe('Unit tests for color function utility', () => {
   loadScriptsBeforeForUnitTests('ee', 'firebase', 'jquery');
-  initFirebaseForUnitTest();
-
   let colorFunctionEditor;
 
   before(() => {
