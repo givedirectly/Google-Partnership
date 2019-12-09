@@ -90,9 +90,9 @@ class CompositeImageMapType {
     }
     // Replace tile url template arguments with actual coordinates.
     const tileUrls = this.tileUrls.map(
-        (url) => url.replace('{Z}', zoom)
-                     .replace('{X}', tileCoord.x)
-                     .replace('{Y}', tileCoord.y));
+        (url) => url.replace(/{Z}/ig, zoom)
+                     .replace(/{X}/ig, tileCoord.x)
+                     .replace(/{Y}/ig, tileCoord.y));
     // Set things up to cancel all fetches if this tile is no longer needed, as
     // signaled by #releaseTile below.
     const abortController = new AbortController();

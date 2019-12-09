@@ -69,15 +69,13 @@ let deckGlOverlay;
  * are rendered. On map pan/zoom or layer toggling, the EarthEngine computation
  * is cached, but the tile rendering triggers a "loading" status.
  * 3. Map tiles are rendered using CompositeImageMapType. They start rendering
- * immediately, and are "loading" until all the tiles have been fetched. These
- * have null deckParams, and never have a pendingPromise. This is because the
- * pendingPromise is only useful for {@link toggleLayerOn}, and if {@link
- * toggleLayerOn} is called, the promise must have already completed.
+ * once their associated .json files (if present) have downloaded, and are "loading" until
+ * all the tiles have been fetched. These have null deckParams, and have a
+ * pendingPromise until any .json files have downloaded.
  *
  * FeatureCollections have a computation phase but no rendering phase;
  * ImageCollections have both computation and rendering phases, and
- * CompositeImageMapTypes have no computation phase, but do have a rendering
- * phase.
+ * CompositeImageMapTypes also have both, in which "computation" is .json download.
  */
 class LayerDisplayData {
   /**
@@ -324,6 +322,15 @@ function createTileCallback(layerDisplayData, resolve) {
  * Displays a collection of tiles (given by the 'urls' attribute of layer)
  * on the map using a CompositeImageMapType to combine all tiles for a given
  * map location into one tile.
+ *
+ * The urls can be either raw urls or .json urls in the form provided by NOAA,
+ * like
+ * https://storms.ngs.noaa.gov/storms/tilesd/services/tileserver.php?/20170827-rgb.json.
+ * In the latter case, the layerDisplayData.overlay object will only be created
+ * once all JSONs are downloaded and their corresponding tile urls are
+ * retrieved.
+ *
+ * TODO(janakr): JSON files can tell us map bounds and zoom levels.
  * @param {google.maps.Map} map
  * @param {Object} layer Data for layer coming from Firestore
  * @return {Promise} Promise that resolves when images are all downloaded
@@ -331,13 +338,31 @@ function createTileCallback(layerDisplayData, resolve) {
 function addTileLayer(map, layer) {
   const layerDisplayData = new LayerDisplayData(null, true);
   layerArray[layer['index']] = layerDisplayData;
-  layerDisplayData.overlay = new CompositeImageMapType({
-    tileUrls: layer['urls'],
-    tileSize: layer['tile-size'],
-    maxZoom: layer['maxZoom'],
-    opacity: layer['opacity'],
+  const urlPromises = [];
+  for (const url of layer['urls']) {
+    if (url.match(/{Z}/i) && url.match(/{Y}/i) && url.match(/{X}/i)) {
+      urlPromises.push(Promise.resolve(url));
+    } else {
+      urlPromises.push(extractFromJson(url));
+    }
+  }
+  layerDisplayData.pendingPromise = Promise.all(urlPromises).then((urls) => {
+    layerDisplayData.overlay = new CompositeImageMapType({
+      tileUrls: urls,
+      tileSize: layer['tile-size'],
+      maxZoom: layer['maxZoom'],
+      opacity: layer['opacity'],
+    });
+    layerDisplayData.pendingPromise = null;
+    return createCompositeTilePromise(layerDisplayData, layer['index'], map);
   });
-  return createCompositeTilePromise(layerDisplayData, layer['index'], map);
+  return layerDisplayData.pendingPromise;
+}
+
+function extractFromJson(jsonUrl) {
+  return Promise.resolve($.getJSON(jsonUrl, null)).then((json) => {
+    return json.tiles[0];
+  });
 }
 
 /**
@@ -430,7 +455,6 @@ function addLayer(layer, map) {
           convertEeObjectToPromise(
               ee.FeatureCollection(layerName).toList(maxNumFeaturesExpected)),
           DeckParams.fromLayer(layer), layer['index']);
-      break;
     case LayerType.KML:
       return addKmlLayers(layer, map);
     case LayerType.MAP_TILES:
