@@ -153,7 +153,6 @@ const testPrefix = new Date().getTime() + '-';
  * the appropriate cookie.
  */
 function addFirebaseHooks() {
-  let disastersData = null;
   before(() => {
     cy.task('initializeTestFirebase', null, {
         timeout: 10000,

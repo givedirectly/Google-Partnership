@@ -11,8 +11,6 @@ addons:
       # Needed for Cypress.
       # Ubuntu 16+ does not install this dependency by default, so we need to install it ourselves
       - libgconf-2-4
-      # Needed for Cypress's browser.
-      - chromium-browser
 cache:
   # Caches $HOME/.npm when npm ci is default script command
   # Caches node_modules in all other cases
@@ -44,5 +42,5 @@ before_script:
 script:
 - yarn run cypress run --env ON_TRAVIS=1 --record --browser=electron --group Unit --spec 'cypress/integration/unit_tests/*.js'
 # Chrome/Chromium video recording not working on xvfb with gpu acceleration
-- yarn run cypress run --env ON_TRAVIS=1 --record --browser=chromium --group Integration --config video=false --spec 'cypress/integration/integration_tests/*.js'
+- yarn run cypress run --env ON_TRAVIS=1 --record --browser=chrome --group Integration --config video=false --spec 'cypress/integration/integration_tests/*.js'
 - ./pre-push-hook.sh
