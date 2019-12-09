@@ -515,6 +515,7 @@ describe('Unit test for toggleLayerOn', () => {
     expectNoBlobImages().then(() => {
       addLayerPromise = addLayer(layer, map);
     });
+    // JSON promise hasn't completed, so nothing has happened yet.
     expectNoBlobImages();
     cy.wait(0)
         .then(() => expect(map.overlayMapTypes.getAt(4)).to.be.undefined)
