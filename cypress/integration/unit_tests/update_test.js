@@ -36,7 +36,8 @@ describe('Unit test for updates.js', () => {
   beforeEach(() => {
     // function that resolves the createAndDisplayJoinedDataPromise
     let resolvePromise;
-    createAndDisplayJoinedDataPromise = new Promise((resolve) => resolvePromise = resolve);
+    createAndDisplayJoinedDataPromise =
+        new Promise((resolve) => resolvePromise = resolve);
     createAndDisplayJoinedDataStub =
         cy.stub(Run, 'createAndDisplayJoinedData')
             .callsFake((map, valuesPromise) => {
