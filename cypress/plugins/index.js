@@ -7,10 +7,11 @@ const firebase = require('firebase');
 // ***********************************************************
 
 /**
- * When using Firestore, data that is retrieved using {@link retrieveFirestoreDataForTest} and then
- * written on each test case initialization. An array, with each element having
- * a `disaster` attribute, the name of the disaster, and a `data` attribute, the
- * Firestore data for that disaster.
+ * When using Firestore, data that is retrieved using {@link
+ * retrieveFirestoreDataForTest} and then written on each test case
+ * initialization. An array, with each element having a `disaster` attribute,
+ * the name of the disaster, and a `data` attribute, the Firestore data for that
+ * disaster.
  */
 let perTestFirestoreData;
 
@@ -77,7 +78,8 @@ module.exports = (on, config) => {
       const deleteOldPromise = deleteAllOldTestData(currentApp);
       const result =
           currentApp.auth().createCustomToken('cypress-firestore-test-user');
-      return Promise.all([result, deleteOldPromise, retrieveFirestoreDataForTest()])
+      return Promise
+          .all([result, deleteOldPromise, retrieveFirestoreDataForTest()])
           .then(async (list) => {
             // Firebase really doesn't like duplicate apps lying around, so
             // clean up immediately.
@@ -106,9 +108,9 @@ module.exports = (on, config) => {
     },
 
     /**
-     * Writes disasters data (retrieved using {@link retrieveFirestoreDataForTest}
-     * into the current test root, which lives under the root collection
-     * `test/`.
+     * Writes disasters data (retrieved using {@link
+     * retrieveFirestoreDataForTest} into the current test root, which lives
+     * under the root collection `test/`.
      *
      * Should be called at the start of each test case.
      * @param {string} currentTestRoot
