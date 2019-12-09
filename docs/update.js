@@ -29,14 +29,10 @@ const damageWeightValueId = 'damage weight value';
  * @param {google.map.Maps} map
  */
 function update(map) {
-  for (const toggle of toggles.keys()) {
-    const newValue = Number(getValue(toggle));
-    if (hasErrors(newValue, toggle)) {
-      return;
-    } else {
-      toggles.set(toggle, newValue);
-      setValue(toggle, newValue);
-    }
+  getUpdatedValue(povertyThresholdKey);
+  if (hasDamageAsset) {
+    getUpdatedValue(damageThresholdKey);
+    getUpdatedValue(povertyWeightKey);
   }
 
   removeScoreLayer();
@@ -44,6 +40,17 @@ function update(map) {
   // clear old listeners
   google.maps.event.clearListeners(map, 'click');
   google.maps.event.clearListeners(map.data, 'click');
+}
+
+/**
+ * Pulls value from input box and
+ * @param {string} toggle
+ */
+function getUpdatedValue(toggle) {
+  const newValue = Number(getValue(toggle));
+  if (!hasErrors(newValue, toggle)) {
+    toggles.set(toggle, newValue);
+  }
 }
 
 let hasDamageAsset = null;
