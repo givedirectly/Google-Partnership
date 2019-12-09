@@ -22,8 +22,8 @@ const toggles = new Map([
   [povertyWeightKey, 1.0],
 ]);
 
-const povertyWeightValueId = 'poverty weight value';
-const damageWeightValueId = 'damage weight value';
+const povertyWeightValueId = 'poverty-weight-value';
+const damageWeightValueId = 'damage-weight-value';
 
 /**
  * Updates the score layer and table based on current toggle values.
@@ -108,7 +108,7 @@ function createToggles(map) {
 
   // threshold toggles
   const thresholdTitle = document.createElement('div');
-  thresholdTitle.className = 'formTitle';
+  thresholdTitle.className = 'form-title';
   thresholdTitle.innerHTML = 'thresholds';
   form.appendChild(thresholdTitle);
   form.appendChild(createInput(povertyThresholdKey));
@@ -120,7 +120,7 @@ function createToggles(map) {
     const weightInputDiv = document.createElement('div');
     weightInputDiv.className = 'input-container';
     const weightTitle = document.createElement('div');
-    weightTitle.className = 'formTitle';
+    weightTitle.className = 'form-title';
     weightTitle.innerHTML = 'weights';
     weightInputDiv.appendChild(weightTitle);
 

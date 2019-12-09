@@ -2,7 +2,7 @@ import {disasterData, getCurrentData} from '../../../docs/import/manage_layers_l
 import * as LayerUtil from '../../../docs/layer_util.js';
 import * as Run from '../../../docs/run.js';
 import {setUpToggles, toggles} from '../../../docs/update.js';
-import {initFirebaseForUnitTest, loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
+import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
 let lastPassedPovertyThreshold;
 let lastPassedDamageThreshold;
@@ -12,7 +12,6 @@ let createAndDisplayJoinedDataPromise;
 
 describe('Unit test for updates.js', () => {
   loadScriptsBeforeForUnitTests('firebase', 'jquery');
-  initFirebaseForUnitTest();
 
   before(() => {
     global.google = {maps: {event: {clearListeners: () => {}}}};
@@ -63,13 +62,13 @@ describe('Unit test for updates.js', () => {
     setUpToggles(Promise.resolve({data: () => nullData}), {}).then(() => {
       expect($('input').length).to.equal(3);
 
-      document.getElementById('poverty threshold').value = .05;
-      document.getElementById('update').click();
+      $('[id="poverty threshold"]').val(0.05);
+      $('#update').trigger('click');
 
       expect(createAndDisplayJoinedDataStub).to.be.calledOnce;
 
       expect(toggles.get('poverty weight')).to.equals(1);
-      expect(document.getElementById('error').innerHTML).to.equal('');
+      expect(('#error').text()).to.equal('');
       cy.wrap(createAndDisplayJoinedDataPromise).then(() => {
         expect(lastPassedPovertyWeight).to.equals(1);
         expect(lastPassedDamageThreshold).to.equals(0.0);
@@ -83,29 +82,26 @@ describe('Unit test for updates.js', () => {
 
   it('updates weight labels', () => {
     setUpDamageAsset().then(() => {
-      const slider = document.getElementById('poverty weight');
-      slider.value = 0.01;
+      const povertyWeight = $('[id="poverty weight"]');
 
-      slider.oninput();
+      povertyWeight.val(0.01).trigger('input');
 
-      expect(document.getElementById('poverty weight value').innerHTML)
-          .to.equal('0.01');
-      expect(document.getElementById('damage weight value').innerHTML)
-          .to.equal('0.99');
+      expect($('#poverty-weight-value').text()).to.equal('0.01');
+      expect($('#damage-weight-value').text()).to.equal('0.99');
     });
   });
 
   it('updates toggles', () => {
     setUpDamageAsset().then(() => {
-      document.getElementById('poverty weight').value = 0.01;
-      document.getElementById('damage threshold').value = 0.24;
+      $('[id="poverty weight"]').val(0.01);
+      $('[id="damage threshold"]').val(0.24);
 
-      document.getElementById('update').click();
+      $('#update').trigger('click');
       expect(createAndDisplayJoinedDataStub).to.be.calledOnce;
 
       expect(toggles.get('poverty weight')).to.equals(0.01);
       expect(toggles.get('damage threshold')).to.equals(0.24);
-      expect(document.getElementById('error').innerHTML).to.equal('');
+      expect($('#error').text()).to.equal('');
       cy.wrap(createAndDisplayJoinedDataPromise).then(() => {
         expect(lastPassedPovertyWeight).to.equals(0.01);
         expect(lastPassedDamageThreshold).to.equals(0.24);
@@ -115,13 +111,14 @@ describe('Unit test for updates.js', () => {
 
   it('updates toggles with errors', () => {
     setUpDamageAsset().then(() => {
-      document.getElementById('poverty threshold').value = -0.01;
-      document.getElementById('update').click();
+      $('[id="poverty threshold"]').val(-0.01);
 
-      expect(document.getElementById('snackbar-text').innerHTML)
-          .to.equals('poverty threshold must be between 0.00 and 1.00');
-      expect(document.getElementById('error').innerHTML)
-          .to.equals('ERROR: poverty threshold must be between 0.00 and 1.00');
+      $('#update').trigger('click');
+
+      expect($('#snackbar-text').text())
+          .to.equal('poverty threshold must be between 0.00 and 1.00');
+      expect($('#error').text())
+          .to.equal('ERROR: poverty threshold must be between 0.00 and 1.00');
       expect(lastPassedPovertyThreshold).to.be.null;
     });
   });
@@ -131,18 +128,19 @@ describe('Unit test for updates.js', () => {
       toggles.set('poverty weight', 0.77);
       toggles.set('damage threshold', 0.77);
 
-      document.getElementById('poverty weight').value = 0.01;
-      document.getElementById('damage threshold').value = 0.24;
+      const damageThreshold = $('[id="damage threshold"]');
+      const povertyWeight = $('[id="poverty weight"]');
 
-      document.getElementById('current settings').click();
+      // test we don't get an error until we try to update.
+      povertyWeight.val(-0.01);
+      damageThreshold.val(0.24);
 
-      expect(document.getElementById('poverty weight value').innerHTML)
-          .to.equals('0.77');
-      expect(document.getElementById('damage weight value').innerHTML)
-          .to.equals('0.23');
-      expect(document.getElementById('damage threshold').value)
-          .to.equals('0.77');
-      expect(document.getElementById('poverty weight').value).to.equals('0.77');
+      $('[id="current settings"]').trigger('click');
+
+      expect($('#poverty-weight-value').text()).to.equal('0.77');
+      expect($('#damage-weight-value').text()).to.equal('0.23');
+      expect(damageThreshold.val()).to.equal('0.77');
+      expect(povertyWeight.val()).to.equals('0.77');
     });
   });
 });
