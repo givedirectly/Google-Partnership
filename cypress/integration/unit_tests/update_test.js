@@ -1,9 +1,7 @@
 import {disasterData, getCurrentData} from '../../../docs/import/manage_layers_lib.js';
 import * as LayerUtil from '../../../docs/layer_util.js';
 import * as Run from '../../../docs/run.js';
-import {setUpToggles} from '../../../docs/update';
-import {setUpInitialToggleValues} from '../../../docs/update.js';
-import {createToggles, toggles} from '../../../docs/update.js';
+import {setUpToggles, toggles} from '../../../docs/update.js';
 import {initFirebaseForUnitTest, loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
 let lastPassedPovertyThreshold;
