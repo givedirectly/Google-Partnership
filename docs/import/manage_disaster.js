@@ -51,7 +51,9 @@ function validateUserFields() {
   for (const scoreAssetType of scoreAssetTypes) {
     const missingForType = [];
     for (const state of states) {
-      if (!$('#select-' + assetSelectionRowPrefix + scoreAssetType[0] + '-' + state).val()) {
+      if (!$('#select-' + assetSelectionRowPrefix + scoreAssetType[0] + '-' +
+             state)
+               .val()) {
         missingForType.push(state);
       }
     }
@@ -415,7 +417,8 @@ function initializeScoreSelectors(states) {
       if (stateAssets.get(state)) {
         const statePropertyPath = propertyPath.concat([state]);
         row.append(createTd().append(addAssetDataChangeHandler(
-            createAssetDropdown(stateAssets.get(state), statePropertyPath).prop('id', 'select-' + id + '-' + state),
+            createAssetDropdown(stateAssets.get(state), statePropertyPath)
+                .prop('id', 'select-' + id + '-' + state),
             statePropertyPath)));
       }
     }

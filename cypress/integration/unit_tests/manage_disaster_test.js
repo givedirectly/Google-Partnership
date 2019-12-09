@@ -317,19 +317,23 @@ describe('Unit tests for manage_disaster.js', () => {
 
   it('nonexistent asset not ok', () => {
     const missingSnapPath = 'whereisasset';
-    setUpAssetValidationTests().then(() => {
-      // Overwrite disaster data with multistate disaster.
-      const data = createDisasterData(['NY']);
-      data.asset_data.damage_asset_path = 'pathnotfound';
-      data.asset_data.snap_data.paths.NY = missingSnapPath;
-      disasterData.set(getDisaster(), data);
-      Promise.all([initializeScoreSelectors(['NY']), initializeDamageSelector(['damage1', 'damage2'])]);
-    }).then(validateUserFields);
+    setUpAssetValidationTests()
+        .then(() => {
+          const data = createDisasterData(['NY']);
+          data.asset_data.damage_asset_path = 'pathnotfound';
+          data.asset_data.snap_data.paths.NY = missingSnapPath;
+          disasterData.set(getDisaster(), data);
+          Promise.all([
+            initializeScoreSelectors(['NY']),
+            initializeDamageSelector(['damage1', 'damage2'])
+          ]);
+        })
+        .then(validateUserFields);
     cy.get('#process-button').should('be.disabled');
     // Everything is missing, even though we have values stored.
-    cy.get("#process-button").should('have.text', allMissingText);
+    cy.get('#process-button').should('have.text', allMissingText);
     cy.get('#damage-asset-select').select('damage1');
-    cy.get("#process-button").should('have.text', allStateAssetsMissingText);
+    cy.get('#process-button').should('have.text', allStateAssetsMissingText);
     // TODO(janakr): is there a way to tell all writes are finished?
     cy.wait(1000).then(readDisasterDocument).then((doc) => {
       const data = doc.data();
