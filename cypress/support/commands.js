@@ -1,5 +1,7 @@
 const LOADING_TIMEOUT = 200000;
 
+export {cyQueue};
+
 /**
  * Awaits loading. If no divId is provided, then a full page load is awaited.
  *
