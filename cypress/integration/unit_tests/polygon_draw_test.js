@@ -31,7 +31,7 @@ describe('Unit test for ShapeData', () => {
   let damageCollection;
   before(() => {
     // Wrap StoredShapeData#update so that we can access the Promise it returns.
-    // See also getCurrentUpdatePromiseInCypressAndAssertWrites.
+    // See also waitForWriteToFinish.
     StoredShapeData.prototype.innerUpdate = StoredShapeData.prototype.update;
     StoredShapeData.prototype.update = function() {
       currentUpdatePromise = this.innerUpdate();
@@ -156,7 +156,7 @@ describe('Unit test for ShapeData', () => {
     pressPopupButton('delete').then(() => expect(confirmStub).to.be.calledOnce);
     cy.get('#test-map-div').click();
     cy.get('#test-map-div').should('not.contain', 'damage count');
-    getCurrentUpdatePromiseInCypressAndAssertWrites()
+    waitForWriteToFinish()
         .then(() => userShapes.get())
         .then((querySnapshot) => {
           expect(querySnapshot).to.have.property('size', 0);
@@ -179,7 +179,7 @@ describe('Unit test for ShapeData', () => {
     pressPopupButton('close').then(() => expect(confirmStub).to.be.calledOnce);
     pressPopupButton('save');
     cy.get('#test-map-div').contains(notes).should('be.visible');
-    getCurrentUpdatePromiseInCypressAndAssertWrites();
+    waitForWriteToFinish();
     assertOnFirestoreAndPopup(path, withNotes(notes));
   });
 
@@ -253,8 +253,7 @@ describe('Unit test for ShapeData', () => {
     // write.
     assertOnPopup(withNotes('racing notes'));
     pressPopupButton('close');
-    getCurrentUpdatePromiseInCypressAndAssertWrites().then(
-        () => expect(fakeCalled).to.be.true);
+    waitForWriteToFinish().then(() => expect(fakeCalled).to.be.true);
     assertOnFirestoreAndPopup(path, withNotes('racing notes'));
   });
 
@@ -288,7 +287,7 @@ describe('Unit test for ShapeData', () => {
         .should('have.css', 'color')
         .and('eq', 'rgb(128, 128, 128)')
         .then(() => latch.release());
-    getCurrentUpdatePromiseInCypressAndAssertWrites();
+    waitForWriteToFinish();
     cy.get('.popup-calculated-data')
         .should('have.css', 'color')
         .and('eq', 'rgb(0, 0, 0)');
@@ -303,7 +302,7 @@ describe('Unit test for ShapeData', () => {
     const newPosition = {lat: 0, lng: 1};
     event.overlay = new google.maps.Marker({map: map, position: position});
     google.maps.event.trigger(drawingManager, 'overlaycomplete', event);
-    getCurrentUpdatePromiseInCypressAndAssertWrites();
+    waitForWriteToFinish();
     assertMarker(position, '');
     // Found through unpleasant trial and error.
     cy.get('#test-map-div').click(310, 435);
@@ -439,7 +438,7 @@ describe('Unit test for ShapeData', () => {
     drawPolygon();
     const expectedData = Object.assign({}, defaultData);
     expectedData.damage = 'unknown';
-    getCurrentUpdatePromiseInCypressAndAssertWrites();
+    waitForWriteToFinish();
     assertOnFirestoreAndPopup(path, expectedData);
   });
 
@@ -494,7 +493,7 @@ describe('Unit test for ShapeData', () => {
     const otherPath =
         [{lng: -0.5, lat: 0.5}, {lng: -0.25, lat: 0}, {lng: -0.25, lat: 0.5}];
     drawPolygon(otherPath);
-    getCurrentUpdatePromiseInCypressAndAssertWrites();
+    waitForWriteToFinish();
     cy.get('#test-map-div').click(200, 300);
     pressPopupButton('edit');
     const newNotes = 'new notes';
@@ -538,7 +537,7 @@ describe('Unit test for ShapeData', () => {
    */
   function drawPolygonAndClickOnIt(polygonPath = path) {
     drawPolygon(polygonPath);
-    getCurrentUpdatePromiseInCypressAndAssertWrites();
+    waitForWriteToFinish();
     return assertOnFirestoreAndPopup(polygonPath);
   }
 
@@ -566,26 +565,27 @@ describe('Unit test for ShapeData', () => {
    * @return {Cypress.Chainable}
    */
   function assertOnFirestoreAndPopup(path, expectedData = defaultData) {
-    cyQueue(() => expect(StoredShapeData.pendingWriteCount).to.eql(0))
-        .then(() => userShapes.get())
-        .then((querySnapshot) => {
-          expect(querySnapshot).to.have.property('size', 1);
-          const polygonDoc = querySnapshot.docs[0];
-          const firestoreId = polygonDoc.id;
-          expect(transformGeoPointArrayToLatLng(polygonDoc.get('geometry')))
-              .to.eql(path);
-          // Calculated data doesn't have notes field, so create object without
-          // notes to do comparison with Firestore data.
-          const calculatedData = Object.assign({}, expectedData);
-          delete calculatedData.notes;
-          expect(polygonDoc.get('calculatedData')).to.eql(calculatedData);
-          expect(polygonDoc.get('notes')).to.eql(expectedData.notes);
-          expect(userRegionData).to.have.property('size', 1);
-          const [storedPolygon, shapeData] = getFirstUserRegionDataEntry();
-          expect(storedPolygon.getMap()).to.eql(map);
-          expect(convertPathToLatLng(storedPolygon.getPath())).to.eql(path);
-          expect(shapeData).to.have.property('id', firestoreId);
-        });
+    cyQueue(() => {
+      expect(StoredShapeData.pendingWriteCount).to.eql(0);
+      return userShapes.get();
+    }).then((querySnapshot) => {
+      expect(querySnapshot).to.have.property('size', 1);
+      const polygonDoc = querySnapshot.docs[0];
+      const firestoreId = polygonDoc.id;
+      expect(transformGeoPointArrayToLatLng(polygonDoc.get('geometry')))
+          .to.eql(path);
+      // Calculated data doesn't have notes field, so create object without
+      // notes to do comparison with Firestore data.
+      const calculatedData = Object.assign({}, expectedData);
+      delete calculatedData.notes;
+      expect(polygonDoc.get('calculatedData')).to.eql(calculatedData);
+      expect(polygonDoc.get('notes')).to.eql(expectedData.notes);
+      expect(userRegionData).to.have.property('size', 1);
+      const [storedPolygon, shapeData] = getFirstUserRegionDataEntry();
+      expect(storedPolygon.getMap()).to.eql(map);
+      expect(convertPathToLatLng(storedPolygon.getPath())).to.eql(path);
+      expect(shapeData).to.have.property('id', firestoreId);
+    });
     return assertOnPopup(expectedData);
   }
 
@@ -617,7 +617,7 @@ describe('Unit test for ShapeData', () => {
    */
   function pressButtonAndWaitForPromise(button) {
     pressPopupButton(button);
-    return getCurrentUpdatePromiseInCypressAndAssertWrites();
+    return waitForWriteToFinish();
   }
 
   /**
@@ -628,7 +628,7 @@ describe('Unit test for ShapeData', () => {
    * has been executed. For instance, suppose we have the following code:
    *
    *   pressPopupButton('save');
-   *   getCurrentUpdatePromiseInCypressAndAssertWrites().then(console.log);
+   *   waitForWriteToFinish().then(console.log);
    *   console.log(currentUpdatePromise);
    *
    * This will first print null (from the third line), then print a promise
@@ -639,7 +639,7 @@ describe('Unit test for ShapeData', () => {
    * which will be the promise returned from {@link StoredShapeData#update}.
    * @return {Cypress.Chainable}
    */
-  function getCurrentUpdatePromiseInCypressAndAssertWrites() {
+  function waitForWriteToFinish() {
     return cyQueue(() => {
              expect(loadingStartedStub).to.be.calledOnce;
              loadingStartedStub.resetHistory();
