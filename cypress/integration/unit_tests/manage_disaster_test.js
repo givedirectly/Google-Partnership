@@ -335,12 +335,10 @@ describe('Unit tests for manage_disaster.js', () => {
     cy.get('#damage-asset-select').select('damage1');
     cy.get('#process-button').should('have.text', allStateAssetsMissingText);
     // TODO(janakr): is there a way to tell all writes are finished?
-    cy.wait(1000).then(readDisasterDocument).then((doc) => {
-      const data = doc.data();
-      // This wasn't actually in Firestore, but checking that it was written on
-      // a different change shows we're not silently overwriting it.
-      expect(data.asset_data.snap_data.paths.NY).to.eql(missingSnapPath);
-    });
+    // Data wasn't actually in Firestore before, but checking that it was
+    // written on a different change shows we're not silently overwriting it.
+    cy.wait(1000).then(readDisasterDocument).then((doc) => expect(
+        doc.data().asset_data.snap_data.paths.NY).to.eql(missingSnapPath));
   });
 
   it('writes a new disaster to firestore', () => {
