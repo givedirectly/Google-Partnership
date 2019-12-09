@@ -53,6 +53,7 @@ function getUpdatedValue(toggle) {
   }
 }
 
+// Set in setUpInitialToggleValues.
 let hasDamageAsset = null;
 
 /**
