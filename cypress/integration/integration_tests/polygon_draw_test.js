@@ -121,6 +121,7 @@ function saveAndAwait() {
   pressPopupButton('save');
   cy.awaitLoad(['writeWaiter']);
 }
+
 /**
  * Clicks on the "Draw a shape" button on map. Waits longer than usual for it to
  * be found because it requires Firebase authentication to finish. Forces the
