@@ -120,11 +120,14 @@ module.exports = (on, config) => {
      */
     populateTestFirestoreData(currentTestRoot) {
       console.log('starting populate');
+      const currentApp = createTestFirebaseAdminApp();
+
       // We use a test app, created using normal firebase, versus a test admin
       // app, because objects like GeoPoint are not compatible across the
       // libraries. By using the same library, we're able to copy the data from
       // prod to test with no modifications.
       const testApp = firebase.initializeApp(firebaseConfigTest, 'testapp');
+      console.log(firestoreUserToken);
       const signinPromise =
           testApp.auth().signInWithCustomToken(firestoreUserToken);
       const writePromises = [];
