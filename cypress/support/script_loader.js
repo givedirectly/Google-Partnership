@@ -145,9 +145,8 @@ function loadScriptsBeforeForUnitTests(...scriptKeys) {
     });
   }
   if (usesCharts) {
-    before(() => {
-      google.charts.load('current', {packages: ['table', 'controls']});
-    });
+    before(
+        () => google.charts.load('current', {packages: ['table', 'controls']}));
   }
 }
 

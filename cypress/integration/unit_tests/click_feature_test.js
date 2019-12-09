@@ -52,6 +52,7 @@ describe('Unit tests for click_feature.js with map and table', () => {
         });
     createGoogleMap().then((mapResult) => map = mapResult);
     cy.document().then((doc) => {
+      // TODO(janakr): do this faking in a library function.
       // Lightly fake out prod document access.
       cy.stub(document, 'getElementById')
           .callsFake((id) => doc.getElementById(id));
