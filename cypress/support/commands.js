@@ -37,10 +37,20 @@ Cypress.Commands.add('awaitLoad', (divIds) => {
  * will execute any `.then` blocks that were chained onto it. Thus, in the
  * following program:
  * ```
+ * let resolveFunction = null;
+ * const promise = new Promise((resolve) => {
+ *   resolveFunction = resolve;
+ *   console.log('message 0');
+ * });
+ * promise.then(() => console.log('message 5'));
  * console.log('message 1');
- * cy.wrap(console.log('message 2')).then(() => console.log('message 4'));
+ * cy.wrap(console.log('message 2')).then(() => console.log('message 6'));
  * console.log('message 3');
- * cy.get('#id').then(() => console.log('message 5'));
+ * cy.wrap(console.log('message 4').then(resolveFunction);
+ * // Will not continue in Cypress phase until promise resolves.
+ * cy.wrap(promise).then(() => console.log('message 7'));
+ * cy.get('#id').then(() => console.log('message 8'));
+ * console.log('message 5');
  * ```
  * The messages appear in the specified order.
  *
@@ -49,9 +59,13 @@ Cypress.Commands.add('awaitLoad', (divIds) => {
  * phase. For the most part, that can be accomplished by chaining statements off
  * a previous Cypress command. However, for readability, it is nice to be able
  * to call functions directly, as opposed to having long chain blocks. For that
- * reason, we have a utility function, `queue`, that will put the given `lambda`
+ * reason, we have this utility function, that will put the given `lambda`
  * as a `.then` block after a `cy.wrap(null)` command. That will ensure that the
  * `lambda` only executes during the Cypress phase.
+ *
+ * Generally, `cyQueue` is most useful as the first thing to call in another
+ * function. If you have already called Cypress functions in your function, you
+ * can just chain off of them, instead of calling `cyQueue`.
  *
  * As a convention in this codebase, a function that returns a {@link
  * Cypress.Chainable} can be assumed to execute its instructions during the

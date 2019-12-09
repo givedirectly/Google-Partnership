@@ -3,7 +3,7 @@ import {tableHeadings} from '../../../docs/draw_table.js';
 import {currentFeatures} from '../../../docs/highlight_features';
 import * as loading from '../../../docs/loading.js';
 import {convertEeObjectToPromise} from '../../../docs/map_util.js';
-import {blockGroupTag} from '../../../docs/property_names';
+import {blockGroupTag, geoidTag} from '../../../docs/property_names';
 import {scoreTag} from '../../../docs/property_names.js';
 import {drawTableAndSetUpHandlers} from '../../../docs/run.js';
 import {cyQueue} from '../../support/commands.js';
@@ -195,6 +195,7 @@ function createFeatureFromCorners(west, south, east, north) {
   const polygonCoordinates =
       [west, south, west, north, east, north, east, south];
   let result = ee.Feature(ee.Geometry.Polygon(polygonCoordinates));
+  // Set geoid to be west coordinate, and arbitrarily assign other properties.
   for (let i = 0; i < tableHeadings.length; i++) {
     result = result.set(
         tableHeadings[i], polygonCoordinates[i % polygonCoordinates.length]);

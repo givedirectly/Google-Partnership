@@ -1,5 +1,5 @@
 import {createError} from './error.js';
-import {highlightFeatures} from './highlight_features';
+import {highlightFeatures} from './highlight_features.js';
 import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, scoreTag, snapPercentageTag, sviTag, totalPopTag} from './property_names.js';
 
 export {drawTable, tableHeadings};
@@ -86,8 +86,9 @@ function renderTable(list, features, map, selectorReceiver) {
 
   google.visualization.events.addListener(
       table, 'select',
-      (features) => highlightFeatures(
-          table.getSelection().map((elt) => features[elt.row]), map, true));
+      () => highlightFeatures(
+          table.getSelection().map((elt) => features[elt.row]), map, true)
+  );
 
   const downloadButton = document.getElementById('downloadButton');
   // Generate content and download on click.
