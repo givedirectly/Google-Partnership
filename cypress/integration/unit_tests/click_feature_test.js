@@ -6,6 +6,7 @@ import {convertEeObjectToPromise} from '../../../docs/map_util.js';
 import {blockGroupTag} from '../../../docs/property_names';
 import {scoreTag} from '../../../docs/property_names.js';
 import {drawTableAndSetUpHandlers} from '../../../docs/run.js';
+import {cyQueue} from '../../support/commands.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 import {createGoogleMap} from '../../support/test_map.js';
 
@@ -52,6 +53,7 @@ describe('Unit tests for click_feature.js with map and table', () => {
         });
     createGoogleMap().then((mapResult) => map = mapResult);
     cy.document().then((doc) => {
+      // TODO(janakr): do this faking in a library function.
       // Lightly fake out prod document access.
       cy.stub(document, 'getElementById')
           .callsFake((id) => doc.getElementById(id));
@@ -119,7 +121,7 @@ describe('Unit tests for click_feature.js with map and table', () => {
    * @return {Cypress.Chainable<Array<google.maps.Data.Feature>>}
    */
   function getDataFeatures() {
-    return cy.wrap(null).then(() => {
+    return cyQueue(() => {
       const features = [];
       map.data.forEach((feature) => features.push(feature));
       return features;
