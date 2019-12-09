@@ -3,7 +3,7 @@ import {tableHeadings} from '../../../docs/draw_table.js';
 import {currentFeatures} from '../../../docs/highlight_features';
 import * as loading from '../../../docs/loading.js';
 import {convertEeObjectToPromise} from '../../../docs/map_util.js';
-import {blockGroupTag, geoidTag} from '../../../docs/property_names';
+import {blockGroupTag} from '../../../docs/property_names';
 import {scoreTag} from '../../../docs/property_names.js';
 import {drawTableAndSetUpHandlers} from '../../../docs/run.js';
 import {cyQueue} from '../../support/commands.js';
