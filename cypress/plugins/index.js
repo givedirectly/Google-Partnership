@@ -6,6 +6,12 @@ const firebase = require('firebase');
 // https://on.cypress.io/plugins-guide
 // ***********************************************************
 
+/**
+ * When using Firestore, data that is retrieved using {@link retrieveFirestoreDataForTest} and then
+ * written on each test case initialization. An array, with each element having
+ * a `disaster` attribute, the name of the disaster, and a `data` attribute, the
+ * Firestore data for that disaster.
+ */
 let perTestFirestoreData;
 
 /**
@@ -71,7 +77,7 @@ module.exports = (on, config) => {
       const deleteOldPromise = deleteAllOldTestData(currentApp);
       const result =
           currentApp.auth().createCustomToken('cypress-firestore-test-user');
-      return Promise.all([result, deleteOldPromise, storeTestFirestoreData()])
+      return Promise.all([result, deleteOldPromise, retrieveFirestoreDataForTest()])
           .then(async (list) => {
             // Firebase really doesn't like duplicate apps lying around, so
             // clean up immediately.
@@ -100,9 +106,11 @@ module.exports = (on, config) => {
     },
 
     /**
-     * Writes disasters data (retrieved using {@link storeTestFirestoreData}
+     * Writes disasters data (retrieved using {@link retrieveFirestoreDataForTest}
      * into the current test root, which lives under the root collection
      * `test/`.
+     *
+     * Should be called at the start of each test case.
      * @param {string} currentTestRoot
      * @return {Promise<null>} Promise that completes when writes are done
      */
@@ -243,14 +251,14 @@ function deleteCollectionRecursively(collection) {
 }
 
 /**
- * Stores necessary data for tests to consume from prod Firebase. Called
- * once at the start of all tests. We
- * add a dummy field at the top level of the document so that Firestore will
- * deign to list this document later
+ * Retrieves necessary data for tests to consume from prod Firebase. Called
+ * once at the start of all tests in a single test file. We add a dummy field at
+ * the top level of the document so that Firestore will deign to list this
+ * document later
  * (https://stackoverflow.com/questions/47043651/this-document-does-not-exist-and-will-not-appear-in-queries-or-snapshots-but-id)
  * @return {Promise<null>} Promise that completes when retrieval is done
  */
-function storeTestFirestoreData() {
+function retrieveFirestoreDataForTest() {
   const prodApp = firebase.initializeApp(firebaseConfigProd, 'prodapp');
   const readPromises = [];
   for (const disaster of ['2017-harvey', '2018-michael']) {
