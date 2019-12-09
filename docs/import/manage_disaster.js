@@ -51,7 +51,7 @@ function validateUserFields() {
   for (const scoreAssetType of scoreAssetTypes) {
     const missingForType = [];
     for (const state of states) {
-      if (!getElementFromPath(scoreAssetType[1].concat([state]))) {
+      if (!$('#select-' + assetSelectionRowPrefix + scoreAssetType[0] + '-' + state).val()) {
         missingForType.push(state);
       }
     }
@@ -61,9 +61,8 @@ function validateUserFields() {
           (states.length > 1 ? ' [' + missingForType.join(', ') + ']' : ''));
     }
   }
-  const hasDamage = getElementFromPath(damagePropertyPath) ||
-      (getElementFromPath(swPropertyPath) &&
-       getElementFromPath(nePropertyPath));
+  const hasDamage = $('#damage-asset-select').val() ||
+      ($('#map-bounds-sw').val() && $('#map-bounds-ne').val());
   let message = '';
   if (missingItems.length) {
     message = 'Missing asset(s): ' + missingItems.join(', ');
@@ -416,7 +415,7 @@ function initializeScoreSelectors(states) {
       if (stateAssets.get(state)) {
         const statePropertyPath = propertyPath.concat([state]);
         row.append(createTd().append(addAssetDataChangeHandler(
-            createAssetDropdown(stateAssets.get(state), statePropertyPath),
+            createAssetDropdown(stateAssets.get(state), statePropertyPath).prop('id', 'select-' + id + '-' + state),
             statePropertyPath)));
       }
     }
