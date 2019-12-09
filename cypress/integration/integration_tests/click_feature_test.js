@@ -6,8 +6,8 @@ describe('Integration test for clicking feature', () => {
   // Ensures that listeners are cleared when table instance and data
   // are updated.
   it('click highlights correct feature even after update', () => {
-    cy.visit('');
     cy.get('#this-id-does-not-exist');
+    cy.visit('');
     cy.awaitLoad();
 
     clickAndVerifyBlockGroup();
