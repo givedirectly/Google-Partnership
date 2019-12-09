@@ -20,7 +20,8 @@ const firebaseAuthPromise = Authenticator.trackEeAndFirebase(taskAccumulator)
 const firebaseDataPromise = firebaseAuthPromise.then(getDisastersData);
 
 $(() => {
-  loadNavbarWithPicker(firebaseAuthPromise, onSetDisaster, firebaseDataPromise);
+  loadNavbarWithPicker(firebaseAuthPromise, "Manage Layers", onSetDisaster,
+      firebaseDataPromise);
   taskAccumulator.taskCompleted()
 });
 
@@ -40,4 +41,3 @@ $('#tbody').sortable({
     return helper;
   },
 });
-loadNavbarWithTitle('Manage layers');

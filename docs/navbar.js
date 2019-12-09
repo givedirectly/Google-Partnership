@@ -23,18 +23,20 @@ function loadNavbar(callback) {
   });
 }
 
+function addTitle(title) {
+  const navHeader = $('<h1></h1>');
+  navHeader.addClass('nav-header');
+  navHeader.html(title);
+  $('#nav-left').append(navHeader);
+}
+
 /**
  * Loads the navbar and sets the title.
  *
  * @param {string} title the title of the navbar
  */
 function loadNavbarWithTitle(title) {
-  $(() => loadNavbar(() => {
-      const navHeader = $('<h1></h1>');
-      navHeader.addClass('nav-header');
-      navHeader.html(title);
-      $('#nav-left').append(navHeader);
-    }));
+  $(() => loadNavbar(() => addTitle(title)));
 }
 
 /**
@@ -48,8 +50,8 @@ function loadNavbarWithTitle(title) {
  *     avoid a duplicate fetch
  */
 function loadNavbarWithPicker(
-    firebaseAuthPromise, changeDisasterHandler = null,
-    firebaseDataPromise = null) {
+    firebaseAuthPromise, title,
+    changeDisasterHandler = null, firebaseDataPromise = null) {
   if (!firebaseDataPromise) {
     firebaseDataPromise = firebaseAuthPromise.then(getDisastersData);
   };

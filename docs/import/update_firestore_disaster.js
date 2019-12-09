@@ -30,7 +30,7 @@ function updateDataInFirestore(dataSupplier, startCallback, finishCallback) {
     return null;
   }
   startWrite();
-  innerUpdate(dataSupplier);
+  return innerUpdate(dataSupplier);
 }
 
 function innerUpdate(dataSupplier) {
@@ -46,6 +46,7 @@ function innerUpdate(dataSupplier) {
         state = STATE.SAVED;
         switch (oldState) {
           case STATE.WRITING:
+            console.log('finishing up here');
             finishWrite();
             return null;
           case STATE.QUEUED_WRITE:
@@ -58,10 +59,14 @@ function innerUpdate(dataSupplier) {
 }
 
 function startWrite() {
+  // Don't allow switching disasters.
+  $('#disaster-dropdown').prop('disabled', true);
   // Keep message up as long as saving is in progress.
   showSnackbarMessage('Saving...', -1);
 }
 
 function finishWrite() {
+  // Restore switching disasters.
+  $('#disaster-dropdown').prop('disabled', false);
   showSnackbarMessage('Saved');
 }
