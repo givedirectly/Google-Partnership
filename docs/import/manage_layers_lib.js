@@ -2,6 +2,7 @@ import {writeWaiterId} from '../dom_constants.js';
 import {addLoadingElement, loadingElementFinished} from '../loading.js';
 import {getDisaster} from '../resources.js';
 import {updateDataInFirestore} from './update_firestore_disaster.js';
+import {showSnackbarMessage} from '../snackbar.js';
 
 export {
   clearStatus,
@@ -85,10 +86,7 @@ function onUpdate(event, property, fxn) {
  * queued a write and doesn't know when that will finish.
  */
 function updateLayersInFirestore() {
-  return updateDataInFirestore(
-      () => ({layers: getCurrentLayers()}),
-      () => addLoadingElement(writeWaiterId),
-      () => loadingElementFinished(writeWaiterId));
+  return updateDataInFirestore(() => ({layers: getCurrentLayers()}));
 }
 
 /**

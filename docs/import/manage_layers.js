@@ -1,11 +1,10 @@
 import {LayerType} from '../firebase_layers.js';
-import {getDisastersData} from '../firestore_document.js';
 import {getDisaster} from '../resources.js';
 
 import {processNewEeLayer, processNonEeLayer} from './add_layer.js';
 import {withColor} from './color_function_util.js';
 import {getDisasterAssetsFromEe, getStatesAssetsFromEe} from './list_ee_assets.js';
-import {disasterData, getCurrentData, getCurrentLayers, getRowIndex, ILLEGAL_STATE_ERR, onUpdate, setCurrentDisaster, setDisasterData, setStatus, updateLayersInFirestore} from './manage_layers_lib.js';
+import {getCurrentData, getCurrentLayers, getRowIndex, ILLEGAL_STATE_ERR, onUpdate, setCurrentDisaster, setDisasterData, setStatus, updateLayersInFirestore} from './manage_layers_lib.js';
 
 export {enableWhenReady, updateAfterSort};
 // Visible for testing
@@ -19,6 +18,7 @@ export {
   onDelete,
   onInputBlur,
   onListBlur,
+  onSetDisaster,
   stateAssets,
   withCheckbox,
   withInput,
@@ -41,31 +41,25 @@ const disasterAssets = new Map();
  * Populates the disaster picker with disasters from firestore.
  * @return {Promise<firebase.firestore.QuerySnapshot>}
  */
-function enableWhenReady() {
-  // populate disaster picker.
-  return getDisastersData().then((returnedData) => {
+function enableWhenReady(firebaseDataPromise) {
+  const disaster = getDisaster();
+  if (disaster) {
+    // Kick EE fetch off early.
+    getDisasterAssetsFromEe(disaster).then((assets) => disasterAssets.set(disaster, assets));
+  }
+  return firebaseDataPromise.then((returnedData) => {
     setDisasterData(returnedData);
-    const disasterPicker = $('#disaster');
-    for (const name of disasterData.keys()) {
-      disasterPicker.prepend(createOptionFrom(name));
-    }
-
-    disasterPicker.on('change', () => toggleDisaster(disasterPicker.val()));
-    disasterPicker.val(getDisaster()).trigger('change');
-    $('#pending-disaster').hide();
-    $('#disaster').show();
-
     $('#add-non-eelayer').on('click', () => addNonEELayer());
   });
 }
 
 /**
  * On change method for disaster picker.
- * @param {String} disaster
  * @return {Promise<void>} completes when we've finished filling all state
  * pickers and pulled from firebase.
  */
-function toggleDisaster(disaster) {
+function onSetDisaster() {
+  const disaster = getDisaster();
   setCurrentDisaster(disaster);
   // display layer table
   populateLayersTable();
