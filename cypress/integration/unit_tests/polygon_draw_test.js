@@ -4,9 +4,9 @@ import {setUserFeatureVisibility} from '../../../docs/popup.js';
 import * as resourceGetter from '../../../docs/resources.js';
 import {userRegionData} from '../../../docs/user_region_data.js';
 import {CallbackLatch} from '../../support/callback_latch.js';
+import {cyQueue} from '../../support/commands.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 import {convertGoogleLatLngToObject, convertPathToLatLng, createGoogleMap} from '../../support/test_map.js';
-import {cyQueue} from '../../support/commands.js';
 
 const notes = 'Sphinx of black quartz, judge my vow';
 
