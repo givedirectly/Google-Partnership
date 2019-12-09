@@ -26,7 +26,6 @@ describe('Unit tests for manage_layers page', () => {
 
   let savingStub;
   let savedStub;
-  let writeFinished;
   beforeEach(() => {
     const listAssetsStub = cy.stub(ee.data, 'listAssets');
     listAssetsStub.withArgs(legacyStateDir, {}, Cypress.sinon.match.func)
@@ -52,9 +51,7 @@ describe('Unit tests for manage_layers page', () => {
     cy.stub(ee.data, 'createFolder');
     const snackbarStub = cy.stub(Snackbar, 'showSnackbarMessage');
     savingStub = snackbarStub.withArgs('Saving...', -1);
-    let resolveFunction;
-    writeFinished = new Promise((resolve) => resolveFunction = resolve);
-    savedStub = snackbarStub.withArgs('Saved').callsFake(resolveFunction);
+    savedStub = snackbarStub.withArgs('Saved');
 
     stateAssets.clear();
     // In prod this would happen in enableWhenReady which would read from
@@ -142,7 +139,7 @@ describe('Unit tests for manage_layers page', () => {
     expect(two.text()).to.equal('IMAGE');
   });
 
-  it.only('tests list cell', () => {
+  it('tests list cell', () => {
     const chocolate = 'chocolate';
     const chai = 'chai';
     const nutmeg = 'nutmeg';
@@ -267,8 +264,6 @@ describe('Unit tests for manage_layers page', () => {
 
     cy.wrap(fxn({target: input}, property))
         .then(() => {
-          console.log('fisin');
-          expect(savingStub).to.be.calledWith('Saving...');
           expect(savingStub).to.be.calledOnce;
           expect(savedStub).to.be.calledOnce;
           expect(getCurrentLayers()[0][property]).to.eql(afterVal);

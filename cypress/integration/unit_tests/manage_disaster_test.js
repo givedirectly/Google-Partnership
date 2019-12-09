@@ -9,6 +9,7 @@ import {getDisaster} from '../../../docs/resources.js';
 import {assertFirestoreMapBounds} from '../../support/firestore_map_bounds';
 import {createAndAppend} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
+import * as Snackbar from '../../../docs/snackbar.js';
 
 const KNOWN_STATE = 'WF';
 
@@ -25,6 +26,8 @@ describe('Unit tests for manage_disaster.js', () => {
   let exportStub;
   let createFolderStub;
   let setAclsStub;
+  let savingStub;
+  let savedStub;
   beforeEach(() => {
     disasterData.clear();
 
@@ -60,6 +63,10 @@ describe('Unit tests for manage_disaster.js', () => {
             .callsFake((asset, overwrite, callback) => callback());
     setAclsStub = cy.stub(ee.data, 'setAssetAcl')
                       .callsFake((asset, acls, callback) => callback());
+
+    const snackbarStub = cy.stub(Snackbar, 'showSnackbarMessage');
+    savingStub = snackbarStub.withArgs('Saving...', -1);
+    savedStub = snackbarStub.withArgs('Saved');
 
     // Test data is reasonably real. All of the keys should be able to vary,
     // with corresponding changes to test data (but no production changes). The
@@ -171,6 +178,7 @@ describe('Unit tests for manage_disaster.js', () => {
   });
 
   it('damage asset/map-bounds elements', () => {
+    let writePromise = makePromiseThatResolvesOnCall(savedStub);
     setAssetDataAndCreateDamageInputsForScoreValidationTests();
     cy.get('#map-bounds-div')
         .should('be.visible')
@@ -183,14 +191,15 @@ describe('Unit tests for manage_disaster.js', () => {
     cy.get('#map-bounds-sw').should('have.value', '0, 1');
     cy.get('#map-bounds-ne').should('have.value', '');
     cy.get('#map-bounds-ne').type('1, 1').blur();
-    // TODO(janakr): is there a way to tell all writes are finished?
-    cy.wait(1000).then(readDisasterDocument).then((doc) => {
+    cy.wrap(writePromise).then(readDisasterDocument).then((doc) => {
       const data = doc.data();
       expect(data['asset_data']['map_bounds_ne']).to.eql('1, 1');
+      savedStub.resetHistory();
+      writePromise = makePromiseThatResolvesOnCall(savedStub);
     });
     cy.get('#damage-asset-select').select('asset2').blur();
     cy.get('#map-bounds-div').should('not.be.visible');
-    cy.wait(1000).then(readDisasterDocument).then((doc) => {
+    cy.wrap(writePromise).then(readDisasterDocument).then((doc) => {
       const data = doc.data();
       expect(data['asset_data']['damage_asset_path']).to.eql('asset2');
     });
@@ -254,7 +263,10 @@ describe('Unit tests for manage_disaster.js', () => {
     // Message is just about damage.
     cy.get('#process-button')
         .should('have.text', 'Must specify either damage asset or map bounds');
-    cy.get('#process-button').should('be.disabled');
+    let writePromise;
+    cy.get('#process-button').should('be.disabled').then(() => {
+      writePromise = makePromiseThatResolvesOnCall(savedStub);
+    });
     // Get rid of score asset.
     setFirstSelectInScoreRow(0).select('');
     cy.get('#process-button')
@@ -262,9 +274,10 @@ describe('Unit tests for manage_disaster.js', () => {
             'have.text',
             'Missing asset(s): Poverty, and must specify either damage asset ' +
                 'or map bounds');
-    cy.get('#process-button').should('be.disabled');
-    // Validate that score data was correctly written
-    cy.wait(1000).then(readDisasterDocument).then((doc) => {
+    cy.get('#process-button').should('be.disabled')
+        .then(() => writePromise)
+        // Validate that score data was correctly written
+        .then(readDisasterDocument).then((doc) => {
       const assetData = doc.data()['asset_data'];
 
       expect(assetData['damage_asset_path']).to.be.null;
@@ -328,13 +341,14 @@ describe('Unit tests for manage_disaster.js', () => {
         .then(validateUserFields);
     cy.get('#process-button').should('be.disabled');
     // Everything is missing, even though we have values stored.
-    cy.get('#process-button').should('have.text', allMissingText);
+    let writePromise;
+    cy.get('#process-button').should('have.text', allMissingText).then(() => {
+      writePromise = makePromiseThatResolvesOnCall(savedStub);
+    });
     cy.get('#damage-asset-select').select('damage1');
-    cy.get('#process-button').should('have.text', allStateAssetsMissingText);
-    // TODO(janakr): is there a way to tell all writes are finished?
+    cy.get('#process-button').should('have.text', allStateAssetsMissingText).then(() => writePromise)
     // Data wasn't actually in Firestore before, but checking that it was
     // written on a different change shows we're not silently overwriting it.
-    cy.wait(1000)
         .then(readDisasterDocument)
         .then(
             (doc) => expect(doc.data().asset_data.snap_data.paths.NY)
@@ -345,7 +359,7 @@ describe('Unit tests for manage_disaster.js', () => {
     let id = '2002-winter';
     const states = ['DN', 'WF'];
 
-    cy.wrap(writeNewDisaster(id, states))
+    writeNewDisaster(id, states)
         .then((success) => {
           expect(success).to.be.true;
           expect(createFolderStub).to.be.calledThrice;
@@ -397,7 +411,7 @@ describe('Unit tests for manage_disaster.js', () => {
     const id = '2005-summer';
     const states = [KNOWN_STATE];
 
-    cy.wrap(writeNewDisaster(id, states))
+    writeNewDisaster(id, states)
         .then((success) => {
           expect(success).to.be.true;
           return writeNewDisaster(id, states);
@@ -418,7 +432,7 @@ describe('Unit tests for manage_disaster.js', () => {
     const states = createAndAppend('input', 'states');
     const status = $('#compute-status');
 
-    cy.wrap(addDisaster())
+    addDisaster()
         .then((success) => {
           expect(success).to.be.false;
           expect(status.is(':visible')).to.be.true;
@@ -459,7 +473,7 @@ describe('Unit tests for manage_disaster.js', () => {
     const id = '2002-winter';
     const states = ['DN, WF'];
 
-    cy.wrap(writeNewDisaster(id, states))
+    writeNewDisaster(id, states)
         .then(
             () => getFirestoreRoot()
                       .collection('disaster-metadata')
@@ -676,4 +690,8 @@ function getFirstTdInScoreRow(rowNum) {
   return cy.get('#' + assetSelectionRowPrefix + scoreAssetTypes[rowNum][0])
       .find('td')
       .first();
+}
+
+function makePromiseThatResolvesOnCall(stub) {
+  return new Promise((resolve) => stub.callsFake(resolve));
 }
