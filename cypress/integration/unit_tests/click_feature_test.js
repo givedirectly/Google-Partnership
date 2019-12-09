@@ -8,6 +8,7 @@ import {scoreTag} from '../../../docs/property_names.js';
 import {drawTableAndSetUpHandlers} from '../../../docs/run.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 import {createGoogleMap} from '../../support/test_map.js';
+import {cyQueue} from '../../support/commands.js';
 
 // Clicks on the map can sometimes happen too fast for the map to react.
 const waitBeforeClick = 100;
