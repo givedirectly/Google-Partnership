@@ -194,6 +194,7 @@ function createFeatureFromCorners(west, south, east, north) {
   const polygonCoordinates =
       [west, south, west, north, east, north, east, south];
   let result = ee.Feature(ee.Geometry.Polygon(polygonCoordinates));
+  // Set geoid to be west coordinate, and arbitrarily assign other properties.
   for (let i = 0; i < tableHeadings.length; i++) {
     result = result.set(
         tableHeadings[i], polygonCoordinates[i % polygonCoordinates.length]);
