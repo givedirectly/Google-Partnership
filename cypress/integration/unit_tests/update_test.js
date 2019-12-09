@@ -89,9 +89,9 @@ describe('Unit test for updates.js', () => {
       slider.oninput();
 
       expect(document.getElementById('poverty weight value').innerHTML)
-          .to.equals('0.01');
+          .to.equal('0.01');
       expect(document.getElementById('damage weight value').innerHTML)
-          .to.equals('0.99');
+          .to.equal('0.99');
     });
   });
 
