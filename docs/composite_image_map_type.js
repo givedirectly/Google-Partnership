@@ -90,6 +90,7 @@ class CompositeImageMapType {
     }
     // Replace tile url template arguments with actual coordinates.
     const tileUrls = this.tileUrls.map(
+        // Case-insensitive match (i), replace global (g)
         (url) => url.replace(/{Z}/ig, zoom)
                      .replace(/{X}/ig, tileCoord.x)
                      .replace(/{Y}/ig, tileCoord.y));

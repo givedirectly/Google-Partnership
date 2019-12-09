@@ -500,7 +500,7 @@ describe('Unit test for toggleLayerOn', () => {
             () => map.fitBounds(new google.maps.LatLngBounds(
                 new google.maps.LatLng({lat: 26, lng: -97.4}),
                 new google.maps.LatLng({lat: 27.62, lng: -97.1}))));
-    let resolveFunction = null;
+    let resolveFunction;
     const promise = new Promise((resolve) => resolveFunction = resolve);
     cy.stub($, 'getJSON').returns(promise);
     let addLayerPromise = null;
