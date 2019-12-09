@@ -75,7 +75,6 @@ describe('Unit test for updates.js', () => {
       expect(lastPassedPovertyWeight).to.equals(0.05);
       expect(lastPassedDamageThreshold).to.equals(0.0);
     });
-
   });
 
   it('does have a damage asset', () => {
