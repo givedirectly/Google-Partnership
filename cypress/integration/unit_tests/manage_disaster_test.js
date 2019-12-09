@@ -325,7 +325,7 @@ describe('Unit tests for manage_disaster.js', () => {
           disasterData.set(getDisaster(), data);
           Promise.all([
             initializeScoreSelectors(['NY']),
-            initializeDamageSelector(['damage1', 'damage2'])
+            initializeDamageSelector(['damage1', 'damage2']),
           ]);
         })
         .then(validateUserFields);
