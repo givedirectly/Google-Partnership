@@ -363,9 +363,15 @@ function addTileLayer(map, layer) {
 
 /**
  * Downloads a JSON file containing tile URL info under the 'tiles' property and
- * returns those tile URLs. See {@link addTileLayer}.
+ * returns those tile URLs. See {@link addTileLayer}. Sample file contents:
+ * `{"profile":"mercator","tiles":[
+ * "https://stormscdn.ngs.noaa.gov/20170827-rgb/{z}/{x}/{y}"],
+ * "scale":"1","name":"20170827_RGB","format":"hybrid",
+ * "bounds":[-97.4001,25.99989979,-97.12489864,27.6251],"minzoom":0,
+ * "version":"1.0.0","maxzoom":19,"type":"overlay","description":"",
+ * "basename":"20170827-rgb","tilejson":"2.0.0","scheme":"xyz"}`
  * @param {string} jsonUrl
- * @returns {Promise<Array<string>>}
+ * @return {Promise<Array<string>>}
  */
 function extractFromJson(jsonUrl) {
   return Promise.resolve($.getJSON(jsonUrl, null)).then((json) => json.tiles);
