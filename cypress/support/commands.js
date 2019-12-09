@@ -42,15 +42,21 @@ Cypress.Commands.add('awaitLoad', (divIds) => {
  *   resolveFunction = resolve;
  *   console.log('message 0');
  * });
- * promise.then(() => console.log('message 5'));
+ * promise.then(() =>
+ *     console.log(
+ *         'message 8, not executed until resolveFunction() thread finishes'));
  * console.log('message 1');
  * cy.wrap(console.log('message 2')).then(() => console.log('message 6'));
  * console.log('message 3');
- * cy.wrap(console.log('message 4').then(resolveFunction);
+ * cy.wrap(console.log('message 4'))
+ *     .then(() => {
+ *       resolveFunction();
+ *       console.log('message 7');
+ *     });
  * // Will not continue in Cypress phase until promise resolves.
- * cy.wrap(promise).then(() => console.log('message 7'));
- * cy.get('#id').then(() => console.log('message 8'));
- * console.log('message 5');
+ * cy.wrap(promise).then(() => console.log('message 9'));
+ * cy.get('#id').then(() => console.log('message 10'));
+ * console.log('message 5, and promise still pending');
  * ```
  * The messages appear in the specified order.
  *

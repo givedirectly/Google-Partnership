@@ -20,7 +20,6 @@ function clickFeature(lng, lat, map, featuresAsset, tableSelector) {
   const blockGroups = ee.FeatureCollection(featuresAsset).filterBounds(point);
   const selected = blockGroups.first();
   selected.evaluate((feature, failure) => {
-    console.log(feature);
     if (failure) {
       console.error(failure);
       return;
@@ -29,18 +28,14 @@ function clickFeature(lng, lat, map, featuresAsset, tableSelector) {
       return;
     }
     const geoid = feature.properties[geoidTag];
-    console.log('geoid is ', feature, geoid);
     const currentKeys = Array.from(currentFeatures.keys());
     // Allow unselecting via the map.
     if (currentKeys.length === 1 && currentKeys.includes(geoid)) {
       highlightFeatures([], map);
       tableSelector([]);
     } else {
-      console.log('before highlight for ', feature);
       highlightFeatures([feature], map);
-      console.log('after highlight for ', feature);
       const rowData = tableSelector([geoid]);
-      console.log('after select for ', rowData);
       const infoWindow = new google.maps.InfoWindow();
       infoWindow.setContent(createHtmlForPopup(feature, rowData));
       const borderPoint = feature.geometry.coordinates[0][0];
