@@ -14,6 +14,7 @@ const firebase = require('firebase');
  * disaster.
  */
 let perTestFirestoreData;
+let firestoreUserToken;
 
 /**
  * This function is called when a project is opened or re-opened (e.g. due to
@@ -85,7 +86,8 @@ module.exports = (on, config) => {
             // clean up immediately.
             await currentApp.delete();
             if (list[0]) {
-              return list[0];
+              firestoreUserToken = list[0];
+              return firestoreUserToken;
             }
             throw new Error('No token generated');
           });
@@ -117,11 +119,14 @@ module.exports = (on, config) => {
      * @return {Promise<null>} Promise that completes when writes are done
      */
     populateTestFirestoreData(currentTestRoot) {
+      console.log('starting populate');
       // We use a test app, created using normal firebase, versus a test admin
       // app, because objects like GeoPoint are not compatible across the
       // libraries. By using the same library, we're able to copy the data from
       // prod to test with no modifications.
       const testApp = firebase.initializeApp(firebaseConfigTest, 'testapp');
+      const signinPromise =
+          testApp.auth().signInWithCustomToken(firestoreUserToken);
       const writePromises = [];
       for (const disasterData of perTestFirestoreData) {
         const documentPath = 'disaster-metadata/' + disasterData.disaster;
@@ -131,7 +136,8 @@ module.exports = (on, config) => {
         data.dummy = true;
         writePromises.push(testDisasterDocReference.set(data));
       }
-      return Promise.all(writePromises)
+      return signinPromise.then(() => console.log('got signin')).then(() => Promise.all(writePromises))
+          .then(() => console.log('wrote data'))
           .then(() => testApp.delete())
           .then(() => null);
     },
