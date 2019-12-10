@@ -231,16 +231,6 @@ function createScoreAsset(
   let allStatesProcessing = ee.FeatureCollection([]);
   for (const state of states) {
     const snapPath = snapPaths[state];
-    let snapCollection;
-    let snapNoErrors;
-    let sviCollection;
-    let sviNoErrors;
-    let incomeCollection;
-    let incomeNoErrors;
-    let bgCollection;
-    let bgNoErrors;
-
-    let propertyNames;
     if (!snapPath) {
       return missingAssetError('SNAP asset path for ' + state);
     } else {
@@ -255,18 +245,22 @@ function createScoreAsset(
     if (!sviPath) {
       return missingAssetError('SVI asset path for ' + state);
     } else {
-      sviCollection = ee.FeatureCollection(sviPath);
-      propertyNames = sviCollection.first().propertyNames();
-      sviNoErrors = propertyNames.containsAll(ee.List([cdcGeoidKey, sviKey]));
+      const necessaryColumns = [cdcGeoidKey, sviKey];
+      checkForColumns(sviPath, necessaryColumns).evaluate((yes) => {
+        if (yes)
+          return missingColumnsError('SVI', sviPath, state, necessaryColumns);
+      });
     }
     const incomePath = incomePaths[state];
     if (!incomePath) {
       return missingAssetError('income asset path for ' + state);
     } else {
-      incomeCollection = ee.FeatureCollection(incomePath);
-      propertyNames = incomeCollection.first().propertyNames();
-      incomeNoErrors =
-          propertyNames.containsAll(ee.List([censusGeoidKey, incomeKey]))
+      const necessaryColumns = [censusGeoidKey, incomeKey];
+      checkForColumns(sviPath, necessaryColumns).evaluate((yes) => {
+        if (yes)
+          return missingColumnsError(
+              'income', incomePath, state, necessaryColumns);
+      });
     }
     const buildingPath = buildingPaths[state];
     if (!buildingPath) {
@@ -277,9 +271,12 @@ function createScoreAsset(
       return missingAssetError(
           'Census TIGER block group shapefile for ' + state);
     } else {
-      bgCollection = ee.FeatureCollection(blockGroupPath);
-      propertyNames = bgCollection.first().propertyNames();
-      bgNoErrors = propertyNames.containsAll(ee.List([tigerGeoidKey]));
+      const necessaryColumns = [tigerGeoidKey];
+      checkForColumns(sviPath, necessaryColumns).evaluate((yes) => {
+        if (yes)
+          return missingColumnsError(
+              'TIGER', blockGroupPath, state, necessaryColumns);
+      });
     }
 
     const stateGroups =
