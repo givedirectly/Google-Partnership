@@ -134,12 +134,12 @@ module.exports = (on, config) => {
       const writePromises = [];
       for (const disasterData of perTestFirestoreData) {
         const documentPath = 'disaster-metadata/' + disasterData.disaster;
-        let documentPathFull = testPrefix + currentTestRoot + '/' + documentPath;
         const testDisasterDocReference = testApp.firestore().doc(
-            documentPathFull);
+            testPrefix + currentTestRoot + '/' + documentPath);
         const data = disasterData.data;
         data.dummy = true;
-        writePromises.push(signinPromise.then(() => testDisasterDocReference.set(data)));
+        writePromises.push(
+            signinPromise.then(() => testDisasterDocReference.set(data)));
       }
       return Promise.all(writePromises)
           .then(() => testApp.delete())

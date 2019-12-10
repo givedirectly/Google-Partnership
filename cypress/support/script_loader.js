@@ -160,7 +160,8 @@ function addFirebaseHooks() {
     // Write a copy of the data to backup documents in case of accidental
     // deletion. One backup per day.
     cy.task(
-        'populateTestFirestoreData', getTimestampRoundedToDays() + '-backup', {timeout: 10000});
+        'populateTestFirestoreData', getTimestampRoundedToDays() + '-backup',
+        {timeout: 10000});
   });
   let currentTestRoot = null;
   beforeEach(() => {
