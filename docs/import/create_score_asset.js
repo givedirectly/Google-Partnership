@@ -22,6 +22,13 @@ function countDamageAndBuildings(feature, damage, buildings) {
   const geoId = feature.get(geoidTag);
   const totalBuildings = ee.Algorithms.If(
       buildings.contains(geoId), buildings.get(geoId), ee.Number(0));
+  const rawIncomeValue = ee.String(feature.get(incomeTag));
+  const income = ee.Algorithms.If(
+      ee.Algorithms.IsEqual(rawIncomeValue, ee.String('250,000+')),
+      ee.Number(250000),
+      ee.Algorithms.If(
+          ee.Algorithms.IsEqual(rawIncomeValue, ee.String('-')), null,
+          ee.Number.parse(rawIncomeValue)));
   let properties =
       ee.Dictionary()
           .set(geoidTag, geoId)
@@ -29,9 +36,7 @@ function countDamageAndBuildings(feature, damage, buildings) {
           .set(snapPopTag, ee.Number(snapPop))
           .set(totalPopTag, ee.Number(totalPop))
           .set(snapPercentageTag, ee.Number(snapPop).divide(totalPop))
-          // These entries can't be parsed to numbers easily because have some
-          // non-number values like "-" :(
-          .set(incomeTag, feature.get(incomeTag))
+          .set(incomeTag, income)
           .set(sviTag, feature.get(sviTag))
           .set(buildingCountTag, totalBuildings);
   if (damage) {
@@ -280,19 +285,19 @@ function createScoreAsset(
   const task = ee.batch.Export.table.toAsset(
       allStatesProcessing,
       scoreAssetPath.substring(scoreAssetPath.lastIndexOf('/') + 1),
-      scoreAssetPath);
+      'users/gd/2020-julie/with-fixed-mi');
   return new Promise((resolve, reject) => {
-    ee.data.deleteAsset(scoreAssetPath, (_, err) => {
-      if (err) {
-        if (err === 'Asset not found.') {
-          console.log(
-              'Old ' + scoreAssetPath + ' not present, did not delete it');
-        } else {
-          const message = 'Error deleting: ' + err;
-          setStatus(message);
-          reject(new Error(message));
-        }
-      }
+    // ee.data.deleteAsset(scoreAssetPath, (_, err) => {
+    //   if (err) {
+    //     if (err === 'Asset not found.') {
+    //       console.log(
+    //           'Old ' + scoreAssetPath + ' not present, did not delete it');
+    //     } else {
+    //       const message = 'Error deleting: ' + err;
+    //       setStatus(message);
+    //       reject(new Error(message));
+    //     }
+    //   }
       task.start();
       $('#upload-status')
           .text(
@@ -300,7 +305,7 @@ function createScoreAsset(
               task.id);
       resolve(task);
     });
-  });
+  // });
 }
 
 const damageError = {

@@ -23,6 +23,7 @@ function computeAndSaveBounds(features) {
  * after Firestore write is complete.
  */
 function saveBounds(bounds) {
+  console.log(bounds);
   const coordinates = bounds.coordinates[0];
   const sw = coordinates[0];
   const ne = coordinates[2];
