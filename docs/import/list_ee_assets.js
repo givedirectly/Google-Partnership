@@ -31,7 +31,7 @@ const disasterAssetPromises = new Map();
  * of asset path to type for the given disaster.
  */
 function getDisasterAssetsFromEe(disaster) {
-  let maybePromise = disasterAssetPromises.get(disaster);
+  const maybePromise = disasterAssetPromises.get(disaster);
   if (maybePromise) {
     return maybePromise;
   }
