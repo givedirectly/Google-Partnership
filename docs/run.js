@@ -35,7 +35,7 @@ function run(map, firebaseAuthPromise, disasterMetadataPromise) {
   setMapToDrawLayersOn(map);
   const scoreAsset = getScoreAsset();
   snapAndDamagePromise =
-      convertEeObjectToPromise(ee.FeatureCollection(snapAndDamageAsset));
+      convertEeObjectToPromise(ee.FeatureCollection(scoreAsset));
   const initialTogglesValuesPromise =
       setUpToggles(disasterMetadataPromise, map);
   createAndDisplayJoinedData(map, initialTogglesValuesPromise, scoreAsset);
