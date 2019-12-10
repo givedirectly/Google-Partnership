@@ -5,7 +5,7 @@ import {getStatesAssetsFromEe} from '../../../docs/import/list_ee_assets.js';
 import {createOptionFrom, createStateAssetPickers, createTd, onCheck, onDelete, onInputBlur, onListBlur, stateAssets, updateAfterSort, withCheckbox, withInput, withList, withType} from '../../../docs/import/manage_layers.js';
 import {disasterData, getCurrentLayers} from '../../../docs/import/manage_layers_lib.js';
 import {getDisaster} from '../../../docs/resources';
-import * as Snackbar from '../../../docs/snackbar.js';
+import * as Toast from '../../../docs/toast.js';
 import {createAndAppend, createTrs, setDisasterAndLayers} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
@@ -49,9 +49,9 @@ describe('Unit tests for manage_layers page', () => {
           ],
         }));
     cy.stub(ee.data, 'createFolder');
-    const snackbarStub = cy.stub(Snackbar, 'showSnackbarMessage');
-    savingStub = snackbarStub.withArgs('Saving...', -1);
-    savedStub = snackbarStub.withArgs('Saved');
+    const toastStub = cy.stub(Toast, 'showToastMessage');
+    savingStub = toastStub.withArgs('Saving...', -1);
+    savedStub = toastStub.withArgs('Saved');
 
     stateAssets.clear();
     // In prod this would happen in enableWhenReady which would read from

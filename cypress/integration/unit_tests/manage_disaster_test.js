@@ -6,7 +6,7 @@ import {addDisaster, deleteDisaster, writeNewDisaster} from '../../../docs/impor
 import {createOptionFrom} from '../../../docs/import/manage_layers.js';
 import {convertEeObjectToPromise} from '../../../docs/map_util';
 import {getDisaster} from '../../../docs/resources.js';
-import * as Snackbar from '../../../docs/snackbar.js';
+import * as Toast from '../../../docs/toast.js';
 import {assertFirestoreMapBounds} from '../../support/firestore_map_bounds';
 import {createAndAppend} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
@@ -62,7 +62,7 @@ describe('Unit tests for manage_disaster.js', () => {
     setAclsStub = cy.stub(ee.data, 'setAssetAcl')
                       .callsFake((asset, acls, callback) => callback());
 
-    cy.wrap(cy.stub(Snackbar, 'showSnackbarMessage').withArgs('Saved')).as(
+    cy.wrap(cy.stub(Toast, 'showToastMessage').withArgs('Saved')).as(
         'savedStub');
 
     // Test data is reasonably real. All of the keys should be able to vary,

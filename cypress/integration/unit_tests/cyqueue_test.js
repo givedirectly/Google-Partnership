@@ -25,16 +25,19 @@ describe(
             ]));
       });
 
-      it('Tests that promise can finish first if dom element not found', () => {
+      it('Tests promise finishes first if dom element not found, chained thens',
+          () => {
         const threadOrdering = [];
         let resolveFunction;
         let doc;
-        new Promise((resolve) => resolveFunction = resolve).then(() => {
+        const promise = new Promise((resolve) => resolveFunction = resolve);
+        promise.then(() => {
           threadOrdering.push('promise');
           const div = doc.createElement('div');
           div.id = 'new-id';
           doc.body.appendChild(div);
-        });
+        }).then(() => threadOrdering.push('then after div'));
+        promise.then(() => threadOrdering.push('second then'));
         cy.document().then((returnedDoc) => {
           doc = returnedDoc;
           const div = returnedDoc.createElement('div');
@@ -47,6 +50,8 @@ describe(
             .then(() => expect(threadOrdering).to.eql([
               'resolved',
               'promise',
+              'second then',
+              'then after div',
               'get',
             ]));
       });
