@@ -137,16 +137,15 @@ h1 {
 }
 
 .nav-left {
-  display: inline-block;;
+  display: inline-block;
   float: left;
   margin: 0;
   min-width: 250px;
 }
 
 .nav-title {
-  display: inline-block;;
-  float: none;
-  position: fixed
+  display: inline-block;
+  float: left;
   margin: 0;
 }
 
