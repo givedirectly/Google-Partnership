@@ -18,7 +18,7 @@ window.onbeforeunload = () => pendingWriteCount > 0 ? true : null;
 
 /**
  * Writes the current state of a disaster's data to firestore, displaying status
- * messages in the snackbar as it does so and disabling the disaster picker
+ * messages in the toast bar as it does so and disabling the disaster picker
  * until write completes.
  * @param {Function} dataSupplier Function that returns data to be written for
  *     current disaster
