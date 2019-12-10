@@ -188,8 +188,10 @@ if (Cypress.spec.relative.startsWith('cypress/integration/integration_tests')) {
   beforeEach(() => {
     /** wide enough for sidebar */
     cy.viewport(1100, 1700);
-    window.localStorage.setItem(firebaseTestTokenPropertyName, firestoreCustomToken);
-    window.localStorage.setItem(earthEngineTestTokenCookieName, earthEngineCustomToken);
+    window.localStorage.setItem(
+        firebaseTestTokenPropertyName, firestoreCustomToken);
+    window.localStorage.setItem(
+        earthEngineTestTokenCookieName, earthEngineCustomToken);
   });
 }
 

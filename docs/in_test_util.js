@@ -2,8 +2,8 @@ export {
   cypressTestPropertyName,
   earthEngineTestTokenCookieName,
   firebaseTestTokenPropertyName,
-  getValueFromLocalStorage,
   getTestValue,
+  getValueFromLocalStorage,
   inProduction,
 };
 

@@ -165,7 +165,8 @@ Authenticator.trackEeAndFirebase = (taskAccumulator) => {
     // We're inside a test. The test setup should have tokens for us that will
     // directly authenticate with Firebase and EarthEngine.
     initializeFirebase();
-    const firebaseToken = getValueFromLocalStorage(firebaseTestTokenPropertyName);
+    const firebaseToken =
+        getValueFromLocalStorage(firebaseTestTokenPropertyName);
     if (!firebaseToken) {
       throw new Error('Did not receive Firebase token in test');
     }
