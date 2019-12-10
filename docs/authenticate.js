@@ -196,7 +196,9 @@ function initializeFirebase() {
  *     defaultErrorCallback
  */
 function initializeEE(runCallback, errorCallback = defaultErrorCallback) {
-  ee.initialize(null, null, runCallback, (err) => errorCallback('Error initializing EarthEngine: ' + err));
+  ee.initialize(
+      null, null, runCallback,
+      (err) => errorCallback('Error initializing EarthEngine: ' + err));
 }
 
 /**
