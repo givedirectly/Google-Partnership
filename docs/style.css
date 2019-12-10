@@ -150,13 +150,6 @@ h1 {
   min-width: 250px;
 }
 
-.nav-title {
-  display: inline-block;;
-  float: none;
-  position: fixed
-  margin: 0;
-}
-
 .nav-header {
   line-height: calc(var(--navbar-height) - 8px);
   padding: 4px 8px;
@@ -690,7 +683,7 @@ input[type=checkbox]:checked {
   margin: 6px auto;
 }
 
-/** Toast css */
+/** Snackbar css */
 #snackbar {
   visibility: hidden;
   min-width: 250px;
@@ -727,21 +720,20 @@ input[type=checkbox]:checked {
   animation-fill-mode: forwards;
 }
 
+/** Toast css */
 #toast-message {
   visibility: hidden;
-  min-width: 250px;
-  /*line-height: 32px;*/
+  min-width: 50px;
   margin-left: -125px;
   background-color: #fff4c4;
-  /*color: #ffffff;*/
   text-align: center;
   border-radius: 4px;
-  padding: 16px;
+  padding: 8px;
   position: fixed;
   z-index: 100;
   left: 50%;
   top: 30px;
-  height: 10px;
+  height: 14px;
   box-shadow: 0px 3px 5px -1px rgba(0,0,0,0.2),
   0px 6px 10px 0px rgba(0,0,0,0.14),
   0px 1px 18px 0px rgba(0,0,0,0.12);
@@ -749,6 +741,7 @@ input[type=checkbox]:checked {
 
 #toast-message-text {
   display: inline-block;
+  font-size: 14px;
 }
 
 #toast-message.show {
@@ -758,7 +751,7 @@ input[type=checkbox]:checked {
 
 #toast-message.hide {
   visibility: visible;
-  animation: toast-fadeout 2s;
+  animation: toast-fadeout 1s;
   animation-fill-mode: forwards;
 }
 
@@ -783,10 +776,11 @@ input[type=checkbox]:checked {
 }
 
 @keyframes toast-fadein {
-
+  from {opacity: 0;}
+  to {opacity: 1;}
 }
 
 @keyframes toast-fadeout {
-  from {top: 30px; opacity: 1;}
-  to {top: -10px; opacity: 0;}
+  from {opacity: 1;}
+  to {opacity: 0;}
 }

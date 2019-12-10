@@ -1,5 +1,4 @@
 import {getDisaster} from '../resources.js';
-
 import {updateDataInFirestore} from './update_firestore_disaster.js';
 
 export {
