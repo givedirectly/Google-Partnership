@@ -5,53 +5,94 @@ import {createAndDisplayJoinedData} from './run.js';
 
 export {
   createToggles,
-  initialDamageThreshold,
-  initialPovertyThreshold,
-  initialPovertyWeight,
+  damageThresholdKey,
+  povertyThresholdKey,
+  povertyWeightKey,
+  setUpToggles,
+  toggles,
 };
-/* @VisibleForTesting */
-export {toggles};
 
-const initialPovertyThreshold = 0.3;
-const initialDamageThreshold = 0.5;
-// The initial damage weight is 1-this value.
-const initialPovertyWeight = 0.5;
+const povertyThresholdKey = 'poverty threshold';
+const damageThresholdKey = 'damage threshold';
+const povertyWeightKey = 'poverty weight';
 
 const toggles = new Map([
-  ['poverty threshold', initialPovertyThreshold],
-  ['damage threshold', initialDamageThreshold],
-  ['poverty weight', initialPovertyWeight],
+  [povertyThresholdKey, 0.3],
+  [damageThresholdKey, 0.0],
+  [povertyWeightKey, 1.0],
 ]);
 
-const povertyWeightValueId = 'poverty weight value';
-const damageWeightValueId = 'damage weight value';
+const povertyWeightValueId = 'poverty-weight-value';
+const damageWeightValueId = 'damage-weight-value';
 
 /**
  * Updates the score layer and table based on current toggle values.
  * @param {google.map.Maps} map
  */
 function update(map) {
-  for (const toggle of toggles.keys()) {
-    const newValue = Number(getValue(toggle));
-    if (hasErrors(newValue, toggle)) {
-      return;
-    } else {
-      toggles.set(toggle, newValue);
-      setValue(toggle, newValue);
-    }
+  getUpdatedValue(povertyThresholdKey);
+  if (hasDamageAsset) {
+    getUpdatedValue(damageThresholdKey);
+    getUpdatedValue(povertyWeightKey);
   }
 
   removeScoreLayer();
   createAndDisplayJoinedData(
-      map, toggles.get('poverty threshold'), toggles.get('damage threshold'),
-      toggles.get('poverty weight'), getScoreAsset());
+      map, Promise.resolve(getToggleValues()), getScoreAsset());
   // clear old listeners
   google.maps.event.clearListeners(map, 'click');
   google.maps.event.clearListeners(map.data, 'click');
 }
 
 /**
- * Creates the form for toggling the equation.
+ * Pulls value from input box and
+ * @param {string} toggle
+ */
+function getUpdatedValue(toggle) {
+  const newValue = Number(getValue(toggle));
+  if (!hasErrors(newValue, toggle)) {
+    toggles.set(toggle, newValue);
+  }
+}
+
+// Set in setUpInitialToggleValues.
+let hasDamageAsset = null;
+
+/**
+ * Initializes damage-related toggle values based on whether or not we have
+ * a damage asset.
+ * @param {Promise<Object>} disasterMetadataPromise
+ * @param {google.map.Maps} map
+ * @return {Promise<Object>} returns all the toggle initial values.
+ */
+function setUpToggles(disasterMetadataPromise, map) {
+  return disasterMetadataPromise.then((doc) => {
+    hasDamageAsset = doc.data()['asset_data']['damage_asset_path'];
+    if (hasDamageAsset) {
+      toggles.set(damageThresholdKey, 0.5);
+      toggles.set(povertyWeightKey, 0.5);
+    }
+    createToggles(map);
+    return getToggleValues();
+  });
+}
+
+/**
+ * Gets all the toggle values as an object.
+ * @return {{povertyThreshold: number, damageThreshold: number, povertyWeight:
+ *     number}}
+ */
+function getToggleValues() {
+  return {
+    povertyThreshold: toggles.get(povertyThresholdKey),
+    damageThreshold: toggles.get(damageThresholdKey),
+    povertyWeight: toggles.get(povertyWeightKey),
+  };
+}
+
+/**
+ * Creates the form for toggling the equation. Expects to know at this point
+ * if the damage asset exists or not.
  * @param {google.maps.Map} map
  */
 function createToggles(map) {
@@ -67,75 +108,79 @@ function createToggles(map) {
 
   // threshold toggles
   const thresholdTitle = document.createElement('div');
-  thresholdTitle.className = 'formTitle';
-  thresholdTitle.innerHTML = 'thresholds';
+  thresholdTitle.className = 'form-title';
+  thresholdTitle.innerText = 'thresholds';
   form.appendChild(thresholdTitle);
-  for (const toggle of toggles.keys()) {
-    if (!toggle.endsWith('threshold')) {
-      continue;
-    }
-    const thresholdInputDiv = document.createElement('div');
-    thresholdInputDiv.className = 'input-container';
+  form.appendChild(createInput(povertyThresholdKey));
 
-    const label = document.createElement('label');
-    label.for = toggle;
-    label.id = 'for ' + toggle;
-    label.innerHTML = ' ' + toggle;
-    thresholdInputDiv.appendChild(label);
+  if (hasDamageAsset) {
+    form.appendChild(createInput(damageThresholdKey));
 
-    thresholdInputDiv.appendChild(document.createElement('br'));
+    // weight toggle
+    const weightInputDiv = document.createElement('div');
+    weightInputDiv.className = 'input-container';
+    const weightTitle = document.createElement('div');
+    weightTitle.className = 'form-title';
+    weightTitle.innerText = 'weights';
+    weightInputDiv.appendChild(weightTitle);
 
-    const input = createBasicToggleInputElement(toggle);
-    input.type = 'number';
-    thresholdInputDiv.appendChild(input);
+    const povertyWeight = document.createElement('label');
+    povertyWeight.innerText = 'poverty weight: ';
+    const povertyWeightValue = document.createElement('span');
+    povertyWeightValue.id = povertyWeightValueId;
+    povertyWeight.appendChild(povertyWeightValue);
+    weightInputDiv.appendChild(povertyWeight);
 
-    form.appendChild(thresholdInputDiv);
+    weightInputDiv.appendChild(document.createElement('br'));
+
+    const weightInput = createBasicToggleInputElement('poverty weight');
+    weightInput.type = 'range';
+    weightInput.min = '0.00';
+    weightInput.max = '1.00';
+    weightInput.oninput = updateWeights;
+    weightInputDiv.appendChild(weightInput);
+
+    weightInputDiv.appendChild(document.createElement('br'));
+
+    const damageWeight = document.createElement('label');
+    damageWeight.innerText = 'damage weight: ';
+    const damageWeightValue = document.createElement('span');
+    damageWeightValue.id = damageWeightValueId;
+    damageWeight.appendChild(damageWeightValue);
+    weightInputDiv.appendChild(damageWeight);
+
+    form.appendChild(weightInputDiv);
   }
 
-  // weight toggle
-  const weightInputDiv = document.createElement('div');
-  weightInputDiv.className = 'input-container';
-  const weightTitle = document.createElement('div');
-  weightTitle.className = 'formTitle';
-  weightTitle.innerHTML = 'weights';
-  weightInputDiv.appendChild(weightTitle);
-
-  const povertyWeight = document.createElement('label');
-  povertyWeight.innerHTML = 'poverty weight: ';
-  const povertyWeightValue = document.createElement('span');
-  povertyWeightValue.id = povertyWeightValueId;
-  povertyWeight.appendChild(povertyWeightValue);
-  weightInputDiv.appendChild(povertyWeight);
-
-  weightInputDiv.appendChild(document.createElement('br'));
-
-  const weightInput = createBasicToggleInputElement('poverty weight');
-  weightInput.type = 'range';
-  weightInput.min = '0.00';
-  weightInput.max = '1.00';
-  weightInput.oninput = updateWeights;
-  weightInputDiv.appendChild(weightInput);
-
-  weightInputDiv.appendChild(document.createElement('br'));
-
-  const damageWeight = document.createElement('label');
-  damageWeight.innerHTML = 'damage weight: ';
-  const damageWeightValue = document.createElement('span');
-  damageWeightValue.id = damageWeightValueId;
-  damageWeight.appendChild(damageWeightValue);
-  weightInputDiv.appendChild(damageWeight);
-
-  form.appendChild(weightInputDiv);
-
   // buttons
-  form.appendChild(createButton('update', () => {
-    update(map);
-  }));
+  form.appendChild(createButton('update', () => update(map)));
   form.appendChild(document.createElement('br'));
   form.appendChild(createButton('current settings', reset));
 
   document.getElementById('form-div').appendChild(form);
   updateWeights();
+}
+
+/**
+ * Creates a div including input and label for the given toggle.
+ * @param {string} toggle
+ * @return {HTMLDivElement}
+ */
+function createInput(toggle) {
+  const thresholdInputDiv = document.createElement('div');
+  thresholdInputDiv.className = 'input-container';
+
+  const label = document.createElement('label');
+  label.for = toggle;
+  label.innerText = toggle;
+  thresholdInputDiv.appendChild(label);
+
+  thresholdInputDiv.appendChild(document.createElement('br'));
+
+  const input = createBasicToggleInputElement(toggle);
+  input.type = 'number';
+  thresholdInputDiv.appendChild(input);
+  return thresholdInputDiv;
 }
 
 /**
@@ -182,6 +227,7 @@ function reset() {
 
 /** Update the displayed weights based on a new poverty weight. */
 function updateWeights() {
+  if (!hasDamageAsset) return;
   const newPovertyWeight =
       Number(document.getElementById('poverty weight').value);
   setInnerHtml(povertyWeightValueId, newPovertyWeight.toFixed(2));
@@ -218,7 +264,7 @@ function setErrorMessage(message) {
  * @param {string} message
  */
 function setInnerHtml(id, message) {
-  document.getElementById(id).innerHTML = message;
+  document.getElementById(id).innerText = message;
 }
 
 /**
