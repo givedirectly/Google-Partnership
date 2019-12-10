@@ -420,9 +420,7 @@ function addLayerFromFeatures(layerDisplayData, index) {
         createStyleFunction(deckParams.colorFunctionProperties);
   }
   deckGlArray[index] = new deck.GeoJsonLayer({
-    // TODO: also add layer index to this id so we don't get duplicate ids from
-    // using the same asset for multiple layers.
-    id: layerDisplayData.deckParams.deckId,
+    id: layerDisplayData.deckParams.deckId + '-' + index,
     data: layerDisplayData.data,
     pointRadiusMinPixels: 1,
     getRadius: 10,
