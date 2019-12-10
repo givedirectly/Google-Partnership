@@ -1,6 +1,5 @@
 import {getFirestoreRoot} from '../firestore_document.js';
 import {getDisaster} from '../resources.js';
-import {showSnackbarMessage} from '../snackbar.js';
 
 export {updateDataInFirestore};
 
@@ -16,36 +15,22 @@ let pendingWriteCount = 0;
 
 window.onbeforeunload = () => pendingWriteCount > 0 ? true : null;
 
-let i = 0;
-let queued = 0;
-
 /**
- * Writes the current state of a disaster's data to firestore, displaying status
- * messages in the snackbar as it does so.
+ * Writes the current state of a disaster's data to firestore.
  * @param {Function} dataSupplier Function that returns data to be written for
  *     current disaster
+ * @param {Function} startCallback Function that should be called before a write
+ *     starts (to indicate loading progress, for instance)
+ * @param {Function} finishCallback Function called whenever a write ends
  * @return {?Promise<void>} Returns when finished writing or null if it just
  * queued a write and doesn't know when that will finish.
  */
-function updateDataInFirestore(dataSupplier) {
+function updateDataInFirestore(dataSupplier, startCallback, finishCallback) {
   if (state !== STATE.SAVED) {
-    queued++;
-    console.log('skipping queued write during ', i);
     state = STATE.QUEUED_WRITE;
     return null;
   }
-  startWrite();
-  return innerUpdate(dataSupplier);
-}
-
-/**
- * Called "recursively" as writes complete. Separated out from
- * {@link updateDataInFirestore} so that we only notify the user that we are
- * saving once.
- * @param {Function} dataSupplier See {@link updateDataInFirestore}
- * @return {?Promise<void>} See {@link updateDataInFirestore}
- */
-function innerUpdate(dataSupplier) {
+  startCallback();
   state = STATE.WRITING;
   pendingWriteCount++;
   return getFirestoreRoot()
@@ -58,28 +43,15 @@ function innerUpdate(dataSupplier) {
         state = STATE.SAVED;
         switch (oldState) {
           case STATE.WRITING:
-            finishWrite();
+            finishCallback();
             return null;
           case STATE.QUEUED_WRITE:
-            return innerUpdate(dataSupplier);
+            finishCallback();
+            return updateDataInFirestore(
+                dataSupplier, startCallback, finishCallback);
           case STATE.SAVED:
             console.error('Unexpected write state');
             return null;
         }
       });
-}
-
-/** Notes that a write has started. Disable disaster picker and notify user. */
-function startWrite() {
-  console.log('starting write ', ++i, queued);
-  $('#disaster-dropdown').prop('disabled', true);
-  // Keep message up as long as saving is in progress.
-  showSnackbarMessage('Saving...', -1);
-}
-
-/** Notes that a write has started. Re-enable picker and notify user. */
-function finishWrite() {
-  console.log('finished write ', i, queued);
-  $('#disaster-dropdown').prop('disabled', false);
-  showSnackbarMessage('Saved');
 }

@@ -4,14 +4,17 @@ import {withColor} from '../../../docs/import/color_function_util.js';
 import {getStatesAssetsFromEe} from '../../../docs/import/list_ee_assets.js';
 import {createOptionFrom, createStateAssetPickers, createTd, onCheck, onDelete, onInputBlur, onListBlur, stateAssets, updateAfterSort, withCheckbox, withInput, withList, withType} from '../../../docs/import/manage_layers.js';
 import {disasterData, getCurrentLayers} from '../../../docs/import/manage_layers_lib.js';
+import * as loading from '../../../docs/loading.js';
 import {getDisaster} from '../../../docs/resources';
-import * as Snackbar from '../../../docs/snackbar.js';
 import {createAndAppend, createTrs, setDisasterAndLayers} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
 const KNOWN_STATE = 'WF';
 const UNKNOWN_STATE = 'DN';
 const KNOWN_STATE_ASSET = gdEeStatePrefix + KNOWN_STATE + '/snap';
+
+let loadingStartedStub;
+let loadingFinishedStub;
 
 describe('Unit tests for manage_layers page', () => {
   loadScriptsBeforeForUnitTests('ee', 'firebase', 'jquery');
@@ -24,8 +27,6 @@ describe('Unit tests for manage_layers page', () => {
     createAndAppend('div', 'status').hide();
   });
 
-  let savingStub;
-  let savedStub;
   beforeEach(() => {
     const listAssetsStub = cy.stub(ee.data, 'listAssets');
     listAssetsStub.withArgs(legacyStateDir, {}, Cypress.sinon.match.func)
@@ -49,9 +50,8 @@ describe('Unit tests for manage_layers page', () => {
           ],
         }));
     cy.stub(ee.data, 'createFolder');
-    const snackbarStub = cy.stub(Snackbar, 'showSnackbarMessage');
-    savingStub = snackbarStub.withArgs('Saving...', -1);
-    savedStub = snackbarStub.withArgs('Saved');
+    loadingStartedStub = cy.stub(loading, 'addLoadingElement');
+    loadingFinishedStub = cy.stub(loading, 'loadingElementFinished');
 
     stateAssets.clear();
     // In prod this would happen in enableWhenReady which would read from
@@ -235,8 +235,9 @@ describe('Unit tests for manage_layers page', () => {
           expect(rows[1].text()).equals('1');
           expect(rows[2].text()).equals('0');
 
-          expect(savingStub).to.be.calledOnce;
-          expect(savedStub).to.be.calledOnce;
+          expect(loadingStartedStub).to.be.calledOnce;
+          expect(loadingFinishedStub).to.be.calledOnce;
+
           return getFirestoreRoot()
               .collection('disaster-metadata')
               .doc(getDisaster())
@@ -249,32 +250,30 @@ describe('Unit tests for manage_layers page', () => {
           expect(layers[2]['initialIndex']).to.equal(0);
         });
   });
-
-
-  /**
-   * Function that tests the save method works.
-   * @param {Function} fxn save function
-   * @param {string} property
-   * @param {Object} input DOM object from which to pull new value
-   * @param {*} afterVal
-   */
-  function testSave(fxn, property, input, afterVal) {
-    const row = createTrs(1);
-    createAndAppend('tbody', 'tbody').append(row);
-    row[0].append(input);
-
-    cy.wrap(fxn({target: input}, property))
-        .then(() => {
-          expect(savingStub).to.be.calledOnce;
-          expect(savedStub).to.be.calledOnce;
-          expect(getCurrentLayers()[0][property]).to.eql(afterVal);
-          return getFirestoreRoot()
-              .collection('disaster-metadata')
-              .doc(getDisaster())
-              .get();
-        })
-        .then(
-            (doc) =>
-                expect(doc.data()['layers'][0][property]).to.eql(afterVal));
-  }
 });
+
+/**
+ * Function that tests the save method works.
+ * @param {Function} fxn save function
+ * @param {string} property
+ * @param {Object} input DOM object from which to pull new value
+ * @param {*} afterVal
+ */
+function testSave(fxn, property, input, afterVal) {
+  const row = createTrs(1);
+  createAndAppend('tbody', 'tbody').append(row);
+  row[0].append(input);
+
+  cy.wrap(fxn({target: input}, property))
+      .then(() => {
+        expect(getCurrentLayers()[0][property]).to.eql(afterVal);
+        expect(loadingStartedStub).to.be.calledOnce;
+        expect(loadingFinishedStub).to.be.calledOnce;
+        return getFirestoreRoot()
+            .collection('disaster-metadata')
+            .doc(getDisaster())
+            .get();
+      })
+      .then(
+          (doc) => expect(doc.data()['layers'][0][property]).to.eql(afterVal));
+}
