@@ -27,6 +27,7 @@ function clickAndVerifyBlockGroup() {
 
   cy.wait(4000);
   cy.get('.map').click(900, 500);
+  cy.wait(1000);
   cy.get('.map').should('contain', 'SCORE: 72');
   cy.get('.google-visualization-table-tr-sel')
       .find('[class="google-visualization-table-td"]')
