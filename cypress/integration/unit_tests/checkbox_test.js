@@ -109,7 +109,7 @@ describe('Unit test for toggleLayerOn', () => {
     expect(toggleLayerOn(mockFirebaseLayers[1])).to.be.null;
     expect(layerArray[1].displayed).to.be.true;
     const layerProps = deckGlArray[1].props;
-    expect(layerProps).to.have.property('id', 'asset1');
+    expect(layerProps).to.have.property('id', 'asset1-1');
     expect(layerProps).to.have.property('visible', true);
     expect(layerProps).to.have.property('data', mockData);
   });
@@ -128,7 +128,7 @@ describe('Unit test for toggleLayerOn', () => {
       expect(layerArray[2].displayed).to.be.true;
       expect(layerArray[2].data).to.not.be.null;
       const layerProps = deckGlArray[2].props;
-      expect(layerProps).to.have.property('id', 'asset2');
+      expect(layerProps).to.have.property('id', 'asset2-2');
       expect(layerProps).to.have.property('visible', true);
       expect(layerProps).to.have.property('data', emptyList);
     });
@@ -148,7 +148,7 @@ describe('Unit test for toggleLayerOn', () => {
       expect(layerArray[2].displayed).to.be.false;
       expect(layerArray[2].data).to.not.be.null;
       const layerProps = deckGlArray[2].props;
-      expect(layerProps).to.have.property('id', 'asset2');
+      expect(layerProps).to.have.property('id', 'asset2-2');
       expect(layerProps).to.have.property('visible', false);
       expect(layerProps).to.have.property('data', emptyList);
     });
@@ -170,7 +170,7 @@ describe('Unit test for toggleLayerOn', () => {
       expect(layerArray[2].displayed).to.be.true;
       expect(layerArray[2].data).to.not.be.null;
       const layerProps = deckGlArray[2].props;
-      expect(layerProps).to.have.property('id', 'asset2');
+      expect(layerProps).to.have.property('id', 'asset2-2');
       expect(layerProps).to.have.property('visible', true);
       expect(layerProps).to.have.property('data', emptyList);
     });
@@ -317,6 +317,7 @@ describe('Unit test for toggleLayerOn', () => {
     const promiseResult = ['a'];
     const secondPromiseResult = ['b'];
     resolveFunction(promiseResult);
+    const scoreLayerId = scoreLayerName + '-' + scoreLayerName;
 
     cy.wrap(scorePromise)
         .then(() => {
@@ -327,14 +328,14 @@ describe('Unit test for toggleLayerOn', () => {
           const props = firstLayers[2].props;
           expect(props.data).to.eql(promiseResult);
           expect(props.visible).to.be.true;
-          expect(props.id).to.eql(scoreLayerName);
+          expect(props.id).to.eql(scoreLayerId);
 
           // Test remove.
           removeScoreLayer();
           expect(overlaySpy).to.be.calledTwice;
           const secondLayers = getLatestLayer();
           expect(secondLayers).to.have.length(2);
-          expect(secondLayers[1].props.id).to.not.eql(scoreLayerName);
+          expect(secondLayers[1].props.id).to.not.eql(scoreLayerId);
 
           // Add score layer back in, with a different value.
           const secondPromise =
@@ -352,7 +353,7 @@ describe('Unit test for toggleLayerOn', () => {
           const props = thirdLayers[2].props;
           expect(props.data).to.eql(secondPromiseResult);
           expect(props.visible).to.be.true;
-          expect(props.id).to.eql(scoreLayerName);
+          expect(props.id).to.eql(scoreLayerId);
         });
   });
 
@@ -540,7 +541,7 @@ describe('Unit test for toggleLayerOff', () => {
     expect(layerArray[0].displayed).to.be.false;
     expect(layerArray[0].data).to.not.be.null;
     const layerProps = deckGlArray[0].props;
-    expect(layerProps).to.have.property('id', 'asset0');
+    expect(layerProps).to.have.property('id', 'asset0-0');
     expect(layerProps).to.have.property('visible', false);
     expect(layerProps).to.have.property('data', mockData);
   });
