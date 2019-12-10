@@ -8,10 +8,10 @@ import {scoreTag} from '../../../docs/property_names.js';
 import {drawTableAndSetUpHandlers} from '../../../docs/run.js';
 import {cyQueue} from '../../support/commands.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
-import {createGoogleMap} from '../../support/test_map.js';
+import {convertPathToLatLng, createGoogleMap} from '../../support/test_map.js';
 
 // Clicks on the map can sometimes happen too fast for the map to react.
-const waitBeforeClick = 100;
+const waitBeforeClick = 500;
 const feature1Corners = [0.25, 0.25, 0.75, 1];
 const feature2Corners = [0.75, 0.25, 1.5, 0.75];
 
@@ -157,8 +157,7 @@ describe('Unit tests for click_feature.js with map and table', () => {
       const rings = feature.getGeometry().getArray();
       expect(rings).to.have.length(1);
       // chai is bad at equality on google.maps.LatLng objects, so convert.
-      const coordinates = rings[0].getArray().map(
-          (latlng) => ({lng: latlng.lng(), lat: latlng.lat()}));
+      const coordinates = convertPathToLatLng(rings[0]);
       const expected = [
         {
           lng: expectedFeatureCorners[0],

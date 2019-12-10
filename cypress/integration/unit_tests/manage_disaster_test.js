@@ -8,13 +8,12 @@ import {convertEeObjectToPromise} from '../../../docs/map_util';
 import {getDisaster} from '../../../docs/resources.js';
 import {assertFirestoreMapBounds} from '../../support/firestore_map_bounds';
 import {createAndAppend} from '../../support/import_test_util.js';
-import {initFirebaseForUnitTest, loadScriptsBeforeForUnitTests} from '../../support/script_loader';
+import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 
 const KNOWN_STATE = 'WF';
 
 describe('Unit tests for manage_disaster.js', () => {
   loadScriptsBeforeForUnitTests('ee', 'firebase', 'jquery');
-  initFirebaseForUnitTest();
   before(() => {
     const disasterPicker = createAndAppend('select', 'disaster-dropdown');
     disasterPicker.append(createOptionFrom('2003-spring'));
