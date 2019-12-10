@@ -243,32 +243,30 @@ describe('Unit tests for manage_layers page', () => {
           expect(layers[2]['initialIndex']).to.equal(0);
         });
   });
-
-
-  /**
-   * Function that tests the save method works.
-   * @param {Function} fxn save function
-   * @param {string} property
-   * @param {Object} input DOM object from which to pull new value
-   * @param {*} afterVal
-   */
-  function testSave(fxn, property, input, afterVal) {
-    const row = createTrs(1);
-    createAndAppend('tbody', 'tbody').append(row);
-    row[0].append(input);
-
-    waitForPromiseAndAssertSaves(fxn({target: input}, property))
-        .then(() => {
-          expect(savingStub).to.be.calledOnce;
-          expect(savedStub).to.be.calledOnce;
-          expect(getCurrentLayers()[0][property]).to.eql(afterVal);
-          return getFirestoreRoot()
-              .collection('disaster-metadata')
-              .doc(getDisaster())
-              .get();
-        })
-        .then(
-            (doc) =>
-                expect(doc.data()['layers'][0][property]).to.eql(afterVal));
-  }
 });
+
+/**
+ * Function that tests the save method works.
+ * @param {Function} fxn save function
+ * @param {string} property
+ * @param {Object} input DOM object from which to pull new value
+ * @param {*} afterVal
+ */
+function testSave(fxn, property, input, afterVal) {
+  const row = createTrs(1);
+  createAndAppend('tbody', 'tbody').append(row);
+  row[0].append(input);
+
+  waitForPromiseAndAssertSaves(fxn({target: input}, property))
+      .then(() => {
+        expect(getCurrentLayers()[0][property]).to.eql(afterVal);
+        return getFirestoreRoot()
+            .collection('disaster-metadata')
+            .doc(getDisaster())
+            .get();
+      })
+      .then(
+          (doc) =>
+              expect(doc.data()['layers'][0][property]).to.eql(afterVal));
+}
+
