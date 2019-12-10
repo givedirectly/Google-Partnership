@@ -7,6 +7,21 @@ const firebase = require('firebase');
 // ***********************************************************
 
 /**
+ * When using Firestore, data that is retrieved using {@link
+ * retrieveFirestoreDataForTest} and then written on each test case
+ * initialization. An array, with each element having a `disaster` attribute,
+ * the name of the disaster, and a `data` attribute, the Firestore data for that
+ * disaster.
+ */
+let perTestFirestoreData;
+/**
+ * When using Firestore, the authentication token created by
+ * {@link initializeTestFirebase}, so that {@link populateTestFirestoreData} can
+ * write to the test database.
+ */
+let firestoreUserToken;
+
+/**
  * This function is called when a project is opened or re-opened (e.g. due to
  * the project's config changing).
  *
@@ -57,8 +72,8 @@ module.exports = (on, config) => {
     /**
      * Produces a Firebase token that can be used for our Firestore database.
      * Because the database belongs to a test-only user, this user is given free
-     * reign to do whatever it likes. Also deletes all test data older than 24
-     * hours, so there isn't indefinite build-up if tests are frequently aborted
+     * reign to do whatever it likes. Also deletes all test data older than 7
+     * days, so there isn't indefinite build-up if tests are frequently aborted
      * before they clean up.
      *
      * See https://firebase.google.com/docs/auth/admin/create-custom-tokens.
@@ -69,15 +84,11 @@ module.exports = (on, config) => {
       const deleteOldPromise = deleteAllOldTestData(currentApp);
       const result =
           currentApp.auth().createCustomToken('cypress-firestore-test-user');
-      return Promise.all([result, deleteOldPromise]).then(async (list) => {
-        // Firebase really doesn't like duplicate apps lying around, so clean up
-        // immediately.
-        await currentApp.delete();
-        if (list[0]) {
-          return list[0];
-        }
-        throw new Error('No token generated');
-      });
+      return Promise
+          .all([result, deleteOldPromise, retrieveFirestoreDataForTest()])
+          .then((list) => firestoreUserToken = list[0])
+          .then(() => currentApp.delete())
+          .then(() => firestoreUserToken);
     },
     /**
      * Produces an EarthEngine token that can be used by production code.
@@ -95,49 +106,39 @@ module.exports = (on, config) => {
             reject);
       });
     },
+
     /**
-     * Recursively deletes all data under the test/currentTestRoot tree, and
-     * creates necessary data for tests to consume, pulling that data from prod
-     * Firebase. For use before a test case runs. We add a dummy field inside
-     * test/currentTestRoot so that Firestore will deign to list this document
-     * later
-     * (https://stackoverflow.com/questions/47043651/this-document-does-not-exist-and-will-not-appear-in-queries-or-snapshots-but-id)
-     * @param {string} currentTestRoot document name directly underneath test/
-     * @return {Promise<null>} Promise that resolves when deletion and data
-     * creation is complete
+     * Writes disasters data (retrieved using {@link
+     * retrieveFirestoreDataForTest} into the current test root, which lives
+     * under the root collection `test/`.
+     *
+     * Should be called at the start of each test case.
+     * @param {string} currentTestRoot
+     * @return {Promise<null>} Promise that completes when writes are done
      */
-    clearAndPopulateTestFirestoreData(currentTestRoot) {
-      const testAdminApp = createTestFirebaseAdminApp();
-      const prodApp = firebase.initializeApp(firebaseConfigProd, 'prodapp');
+    populateTestFirestoreData(currentTestRoot) {
       // We use a test app, created using normal firebase, versus a test admin
       // app, because objects like GeoPoint are not compatible across the
       // libraries. By using the same library, we're able to copy the data from
       // prod to test with no modifications.
       const testApp = firebase.initializeApp(firebaseConfigTest, 'testapp');
       const signinPromise =
-          testAdminApp.auth()
-              .createCustomToken('cypress-firestore-test-user')
-              .then((token) => testApp.auth().signInWithCustomToken(token));
-      const deletePromise = deleteTestData(currentTestRoot, testAdminApp);
+          testApp.auth().signInWithCustomToken(firestoreUserToken);
       const writePromises = [];
-      for (const disaster of ['2017-harvey', '2018-michael']) {
-        const documentPath = 'disaster-metadata/' + disaster;
-        const prodDisasterDoc = prodApp.firestore().doc(documentPath);
+      for (const disasterData of perTestFirestoreData) {
+        const documentPath = 'disaster-metadata/' + disasterData.disaster;
         const testDisasterDocReference = testApp.firestore().doc(
-            'test/' + currentTestRoot + '/' + documentPath);
+            testPrefix + currentTestRoot + '/' + documentPath);
+        const data = disasterData.data;
+        data.dummy = true;
         writePromises.push(
-            Promise.all([prodDisasterDoc.get(), signinPromise, deletePromise])
-                .then((result) => Promise.all([
-                  testDisasterDocReference.set(result[0].data(), {merge: true}),
-                  testDisasterDocReference.set({dummy: true}, {merge: true}),
-                ])));
+            signinPromise.then(() => testDisasterDocReference.set(data)));
       }
       return Promise.all(writePromises)
-          .then(
-              () => Promise.all(
-                  [testAdminApp.delete(), prodApp.delete(), testApp.delete()]))
+          .then(() => testApp.delete())
           .then(() => null);
     },
+
     /**
      * Deletes all test data under the test/currentTestRoot tree. For use after
      * a test case is completed.
@@ -190,15 +191,16 @@ function deleteTestData(currentTestRoot, app) {
       app.firestore().doc(testPrefix + currentTestRoot));
 }
 
-const millisecondsInADay = 60 * 60 * 24 * 1000;
+const millisecondsIn7Days = 7 * 60 * 60 * 24 * 1000;
 
 /**
- * Recursively deletes all test data older than 24 hours, under the assumption
- * that no test runs for that long. This prevents old unfinished tests from
- * using too much quota. Note that documents must have a field set to show up in
- * a listing of the parent collection
+ * Recursively deletes all test data older than 7 days, under the assumption
+ * that no test runs for that long, and that older data is unnecessary for
+ * backups. This prevents old unfinished tests from using too much quota. Note
+ * that documents must have a field set to show up in a listing of the parent
+ * collection
  * (https://stackoverflow.com/questions/47043651/this-document-does-not-exist-and-will-not-appear-in-queries-or-snapshots-but-id).
- * That field is set in clearAndPopulateTestFirestoreData.
+ * That field is set in {@link populateTestFirestoreData}.
  * @param {admin.app.App} app
  * @return {Promise} Promise that completes when all deletions are finished
  */
@@ -212,7 +214,7 @@ function deleteAllOldTestData(app) {
       const testRunName = ref.id;
       const dateElement = testRunName.split('-')[0];
       const date = new Date(parseInt(dateElement, 10));
-      if (currentDate - date > millisecondsInADay) {
+      if (currentDate - date > millisecondsIn7Days) {
         promises.push(deleteDocRecursively(ref));
       }
     });
@@ -251,6 +253,31 @@ function deleteCollectionRecursively(collection) {
     queryResult.forEach((doc) => promises.push(deleteDocRecursively(doc.ref)));
     return Promise.all(promises);
   });
+}
+
+/**
+ * Retrieves necessary data for tests to consume from prod Firebase. Called
+ * once at the start of all tests in a single test file. We add a dummy field at
+ * the top level of the document so that Firestore will deign to list this
+ * document later
+ * (https://stackoverflow.com/questions/47043651/this-document-does-not-exist-and-will-not-appear-in-queries-or-snapshots-but-id)
+ * @return {Promise<null>} Promise that completes when retrieval is done
+ */
+function retrieveFirestoreDataForTest() {
+  const prodApp = firebase.initializeApp(firebaseConfigProd, 'prodapp');
+  const readPromises = [];
+  for (const disaster of ['2017-harvey', '2018-michael']) {
+    const documentPath = 'disaster-metadata/' + disaster;
+    const prodDisasterDoc = prodApp.firestore().doc(documentPath);
+    readPromises.push(prodDisasterDoc.get().then((result) => {
+      result.data().dummy = true;
+      return {disaster, data: result.data()};
+    }));
+  }
+  return Promise.all(readPromises)
+      .then((result) => perTestFirestoreData = result)
+      .then(() => prodApp.delete())
+      .then(() => null);
 }
 
 const testPrefix = 'test/';
