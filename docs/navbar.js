@@ -41,10 +41,11 @@ function loadNavbarWithPicker(
     firebaseDataPromise = firebaseAuthPromise.then(getDisastersData);
   }
   loadNavbar(() => {
-    $('#nav-left').load(
-                        getUrlUnderDocs('disaster_picker.html'),
-                        () => initializeDisasterPicker(
-                            firebaseDataPromise, changeDisasterHandler));
+    $('#nav-left')
+        .load(
+            getUrlUnderDocs('disaster_picker.html'),
+            () => initializeDisasterPicker(
+                firebaseDataPromise, changeDisasterHandler));
     $('#nav-title-header').html(title);
   });
 }
