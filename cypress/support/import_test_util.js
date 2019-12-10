@@ -77,6 +77,6 @@ function setUpSavingStubs() {
   beforeEach(() => {
     const toastStub = cy.stub(Toast, 'showToastMessage');
     cy.wrap(toastStub.withArgs('Saving...', -1)).as('savingStub');
-    cy.wrap(toastStub.withArgs('Saved')).as('saveStub');
+    cy.wrap(toastStub.withArgs('Saved')).as('savedStub');
   });
 }
