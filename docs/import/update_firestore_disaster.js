@@ -18,7 +18,8 @@ window.onbeforeunload = () => pendingWriteCount > 0 ? true : null;
 
 /**
  * Writes the current state of a disaster's data to firestore, displaying status
- * messages in the snackbar as it does so.
+ * messages in the snackbar as it does so and disabling the disaster picker
+ * until write completes.
  * @param {Function} dataSupplier Function that returns data to be written for
  *     current disaster
  * @return {?Promise<void>} Returns when finished writing or null if it just
@@ -35,8 +36,8 @@ function updateDataInFirestore(dataSupplier) {
 
 /**
  * Called "recursively" as writes complete. Separated out from
- * {@link updateDataInFirestore} so that we only notify the user that we are
- * saving once.
+ * {@link updateDataInFirestore} so that we only notify the user once that we
+ * are saving.
  * @param {Function} dataSupplier See {@link updateDataInFirestore}
  * @return {?Promise<void>} See {@link updateDataInFirestore}
  */
