@@ -16,6 +16,7 @@ if [[ "$modified_js_files" ]]; then
     declare -a badfiles
     for eachfile in $modified_js_files; do
       clang-format --style=Google -output-replacements-xml $eachfile | grep -c '<replacement ' > /dev/null && badfiles+=($eachfile)
+      clang-format --style=Google -output-replacements-xml $eachfile
     done
     echo "clang-format -i --style=Google ${badfiles[@]}"
     exit 2
