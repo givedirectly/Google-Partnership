@@ -1,6 +1,6 @@
-import {showSnackbarMessage} from './snackbar.js';
-
 export {createError, showError};
+
+const SNACKBAR_DURATION_MS = 3000;
 
 /**
  * Simple function that returns a lambda to print an error to console.
@@ -21,6 +21,13 @@ function createError(msg) {
  *     can be omitted if the message should just be the logged message).
  */
 function showError(msg, snackbarMsg) {
+  if (snackbarMsg == null) snackbarMsg = msg;
+
   console.error(msg);
-  showSnackbarMessage(snackbarMsg ? snackbarMsg : msg);
+  const snackbar = document.getElementById('snackbar');
+  snackbar.className = 'show';
+  document.getElementById('snackbar-text').innerHTML = snackbarMsg;
+  setTimeout(() => {
+    snackbar.className = snackbar.className.replace('show', '');
+  }, SNACKBAR_DURATION_MS);
 }
