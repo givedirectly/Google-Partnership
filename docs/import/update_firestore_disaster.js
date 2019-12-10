@@ -74,5 +74,5 @@ function startWrite() {
 /** Notes that a write has started. Re-enable picker and notify user. */
 function finishWrite() {
   $('#disaster-dropdown').prop('disabled', false);
- showToastMessage('Saved');
+  showToastMessage('Saved');
 }
