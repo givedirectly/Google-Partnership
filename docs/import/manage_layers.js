@@ -1,6 +1,5 @@
 import {LayerType} from '../firebase_layers.js';
 import {getDisaster} from '../resources.js';
-
 import {processNewEeLayer, processNonEeLayer} from './add_layer.js';
 import {withColor} from './color_function_util.js';
 import {getDisasterAssetsFromEe, getStatesAssetsFromEe} from './list_ee_assets.js';
@@ -45,13 +44,14 @@ const disasterAssets = new Map();
 function enableWhenReady(firebaseDataPromise) {
   const disaster = getDisaster();
   if (disaster) {
-    // Kick EE fetch off early.
-    getDisasterAssetsFromEe(disaster).then(
-        (assets) => disasterAssets.set(disaster, assets));
+    // Kick EE fetch off early. Since getDisasterAssetsFromEe caches results,
+    // this will help when we call it later.
+    getDisasterAssetsFromEe(disaster);
   }
   return firebaseDataPromise.then((returnedData) => {
     setDisasterData(returnedData);
     $('#add-non-eelayer').on('click', () => addNonEELayer());
+    return onSetDisaster();
   });
 }
 

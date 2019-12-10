@@ -8,7 +8,7 @@ import {initializeAndProcessUserRegions} from './polygon_draw.js';
 import {setUserFeatureVisibility} from './popup.js';
 import processJoinedData from './process_joined_data.js';
 import {getScoreAsset} from './resources.js';
-import {createToggles, initialDamageThreshold, initialPovertyThreshold, initialPovertyWeight} from './update.js';
+import {setUpToggles} from './update.js';
 
 export {
   createAndDisplayJoinedData,
@@ -33,13 +33,12 @@ const scalingFactor = 100;
  */
 function run(map, firebaseAuthPromise, disasterMetadataPromise) {
   setMapToDrawLayersOn(map);
-  createToggles(map);
   const scoreAsset = getScoreAsset();
   snapAndDamagePromise =
       convertEeObjectToPromise(ee.FeatureCollection(scoreAsset));
-  createAndDisplayJoinedData(
-      map, initialPovertyThreshold, initialDamageThreshold,
-      initialPovertyWeight, scoreAsset);
+  const initialTogglesValuesPromise =
+      setUpToggles(disasterMetadataPromise, map);
+  createAndDisplayJoinedData(map, initialTogglesValuesPromise, scoreAsset);
   initializeAndProcessUserRegions(map, disasterMetadataPromise);
   disasterMetadataPromise.then((doc) => addLayers(map, doc.data().layers));
 }
@@ -51,24 +50,19 @@ let featureSelectListener = null;
  * Creates the score overlay and draws the table
  *
  * @param {google.maps.Map} map main map
- * @param {number} povertyThreshold a number between 0 and 1 representing what
- *     fraction of the population must be SNAP eligible to be considered.
- * @param {number} damageThreshold a number between 0 and 1 representing what
- *     fraction of a block group's building must be damaged to be considered.
- * @param {number} povertyWeight float between 0 and 1 that describes what
- *     percentage of the score should be based on poverty (this is also a proxy
- *     for damageWeight which is 1-this value).
- * @param {ee.FeatureCollection} scoreAsset
+ * @param {Promise<Array<number>>} initialTogglesValuesPromise promise
+ * that returns the poverty and damage thresholds and the poverty weight (from
+ * which the damage weight is derived).
+ * @param {string} scoreAsset
  */
 function createAndDisplayJoinedData(
-    map, povertyThreshold, damageThreshold, povertyWeight, scoreAsset) {
+    map, initialTogglesValuesPromise, scoreAsset) {
   addLoadingElement(tableContainerId);
   // clear old listeners
   google.maps.event.removeListener(mapSelectListener);
   google.maps.event.removeListener(featureSelectListener);
   const processedData = processJoinedData(
-      snapAndDamagePromise, scalingFactor, povertyThreshold, damageThreshold,
-      povertyWeight);
+      snapAndDamagePromise, scalingFactor, initialTogglesValuesPromise);
   addScoreLayer(processedData);
   maybeCheckScoreCheckbox();
   drawTableAndSetUpHandlers(processedData, map, scoreAsset);

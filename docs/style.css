@@ -137,7 +137,14 @@ h1 {
 }
 
 .nav-left {
-  display: inline-block;;
+  display: inline-block;
+  float: left;
+  margin: 0;
+  min-width: 250px;
+}
+
+.nav-title {
+  display: inline-block;
   float: left;
   margin: 0;
   min-width: 250px;
@@ -297,7 +304,7 @@ h1 {
 
 /* Form css */
 
-.formTitle {
+.form-title {
   font-size: 24px;
   font-weight: bold;
   color: #232626;

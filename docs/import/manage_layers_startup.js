@@ -9,16 +9,9 @@ import {enableWhenReady, onSetDisaster, updateAfterSort} from './manage_layers.j
 // 2 tasks: EE authentication, page load. Firebase is taken care of by Promise,
 // but enableWhenReady can do some work even before that.
 const taskAccumulator =
-    new TaskAccumulator(3, () => enableWhenReady(firebaseDataPromise));
+    new TaskAccumulator(2, () => enableWhenReady(firebaseDataPromise));
 
-// TODO: EarthEngine processing can start even before Firebase authentication
-//  happens, based on the locally stored current disaster. The only processing
-//  we could do would be to list all assets in the disaster folder, but that
-//  seems useful. When we start doing that, we can kick that off in
-//  enableWhenReady and condition remaining work on the Firebase promise
-//  completing.
-const firebaseAuthPromise = Authenticator.trackEeAndFirebase(taskAccumulator)
-                                .then(() => taskAccumulator.taskCompleted());
+const firebaseAuthPromise = Authenticator.trackEeAndFirebase(taskAccumulator);
 const firebaseDataPromise = firebaseAuthPromise.then(getDisastersData);
 
 $(() => {
