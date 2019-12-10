@@ -1,22 +1,23 @@
 import {Authenticator} from '../authenticate.js';
-import {loadNavbarWithTitle} from '../navbar.js';
+import {getDisastersData} from '../firestore_document.js';
+import {loadNavbarWithPicker} from '../navbar.js';
 import TaskAccumulator from '../task_accumulator.js';
 import {populateColorFunctions} from './color_function_util.js';
-import {enableWhenReady, updateAfterSort} from './manage_layers.js';
+import {enableWhenReady, onSetDisaster, updateAfterSort} from './manage_layers.js';
 
-// 3 tasks: EE authentication, page load, firebase is logged in.
-const taskAccumulator = new TaskAccumulator(3, enableWhenReady);
+// 2 tasks: EE authentication, page load. Firebase is taken care of by Promise,
+// but enableWhenReady can do some work even before that.
+const taskAccumulator =
+    new TaskAccumulator(2, () => enableWhenReady(firebaseDataPromise));
 
-// TODO: EarthEngine processing can start even before Firebase authentication
-//  happens, based on the locally stored current disaster. The only processing
-//  we could do would be to list all assets in the disaster folder, but that
-//  seems useful. When we start doing that, we can kick that off in
-//  enableWhenReady and condition remaining work on the Firebase promise
-//  completing.
-Authenticator.trackEeAndFirebase(taskAccumulator)
-    .then(() => taskAccumulator.taskCompleted());
+const firebaseAuthPromise = Authenticator.trackEeAndFirebase(taskAccumulator);
+const firebaseDataPromise = firebaseAuthPromise.then(getDisastersData);
 
-$(() => taskAccumulator.taskCompleted());
+$(() => {
+  loadNavbarWithPicker(
+      firebaseAuthPromise, 'Manage Layers', onSetDisaster, firebaseDataPromise);
+  taskAccumulator.taskCompleted();
+});
 
 $(populateColorFunctions);
 
@@ -34,4 +35,3 @@ $('#tbody').sortable({
     return helper;
   },
 });
-loadNavbarWithTitle('Manage layers');
