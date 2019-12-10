@@ -140,6 +140,14 @@ h1 {
   display: inline-block;;
   float: left;
   margin: 0;
+  min-width: 250px;
+}
+
+.nav-title {
+  display: inline-block;;
+  float: none;
+  position: fixed
+  margin: 0;
 }
 
 .nav-header {

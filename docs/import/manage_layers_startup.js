@@ -1,6 +1,6 @@
 import {Authenticator} from '../authenticate.js';
 import {getDisastersData} from '../firestore_document.js';
-import {loadNavbarWithPicker, loadNavbarWithTitle} from '../navbar.js';
+import {loadNavbarWithPicker} from '../navbar.js';
 import TaskAccumulator from '../task_accumulator.js';
 
 import {populateColorFunctions} from './color_function_util.js';
@@ -24,7 +24,7 @@ const firebaseDataPromise = firebaseAuthPromise.then(getDisastersData);
 $(() => {
   loadNavbarWithPicker(
       firebaseAuthPromise, 'Manage Layers', onSetDisaster, firebaseDataPromise);
-  taskAccumulator.taskCompleted()
+  taskAccumulator.taskCompleted();
 });
 
 $(populateColorFunctions);

@@ -24,7 +24,7 @@ window.onbeforeunload = () => pendingWriteCount > 0 ? true : null;
  * @return {?Promise<void>} Returns when finished writing or null if it just
  * queued a write and doesn't know when that will finish.
  */
-function updateDataInFirestore(dataSupplier, startCallback, finishCallback) {
+function updateDataInFirestore(dataSupplier) {
   if (state !== STATE.SAVED) {
     state = STATE.QUEUED_WRITE;
     return null;
@@ -33,6 +33,13 @@ function updateDataInFirestore(dataSupplier, startCallback, finishCallback) {
   return innerUpdate(dataSupplier);
 }
 
+/**
+ * Called "recursively" as writes complete. Separated out from
+ * {@link updateDataInFirestore} so that we only notify the user that we are
+ * saving once.
+ * @param {Function} dataSupplier See {@link updateDataInFirestore}
+ * @return {?Promise<void>} See {@link updateDataInFirestore}
+ */
 function innerUpdate(dataSupplier) {
   state = STATE.WRITING;
   pendingWriteCount++;
@@ -58,15 +65,15 @@ function innerUpdate(dataSupplier) {
       });
 }
 
+/** Notes that a write has started. Disable disaster picker and notify user. */
 function startWrite() {
-  // Don't allow switching disasters.
   $('#disaster-dropdown').prop('disabled', true);
   // Keep message up as long as saving is in progress.
   showSnackbarMessage('Saving...', -1);
 }
 
+/** Notes that a write has started. Re-enable picker and notify user. */
 function finishWrite() {
-  // Restore switching disasters.
   $('#disaster-dropdown').prop('disabled', false);
   showSnackbarMessage('Saved');
 }

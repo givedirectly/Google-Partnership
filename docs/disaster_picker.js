@@ -11,6 +11,7 @@ export {initializeDisasterPicker};
  */
 function initializeDisasterPicker(firebaseDataPromise, changeDisasterHandler) {
   const disasterDropdown = $('#disaster-dropdown');
+  disasterDropdown.css('min-width', '250px');
   firebaseDataPromise.then((allDisasters) => {
     const currentDisaster = getDisaster();
     for (const disaster of allDisasters.keys()) {

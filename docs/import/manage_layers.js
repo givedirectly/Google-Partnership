@@ -39,6 +39,7 @@ const disasterAssets = new Map();
 
 /**
  * Populates the disaster picker with disasters from firestore.
+ * @param {Promise<Object>} firebaseDataPromise Promise with data from Firestore
  * @return {Promise<firebase.firestore.QuerySnapshot>}
  */
 function enableWhenReady(firebaseDataPromise) {

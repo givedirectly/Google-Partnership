@@ -2,7 +2,7 @@ import {initializeDisasterPicker} from './disaster_picker.js';
 import {getDisastersData} from './firestore_document.js';
 import {HELP_DOC_URL, MANAGE_DISASTERS_HELP_URL, MANAGE_LAYERS_HELP_URL} from './help.js';
 
-export {loadNavbarWithPicker, loadNavbarWithTitle};
+export {loadNavbarWithPicker};
 
 const MANAGE_LAYERS_PAGE = 'import/manage_layers.html';
 const MANAGE_DISASTERS_PAGE = 'import/manage_disaster.html';
@@ -23,26 +23,11 @@ function loadNavbar(callback) {
   });
 }
 
-function addTitle(title) {
-  const navHeader = $('<h1></h1>');
-  navHeader.addClass('nav-header');
-  navHeader.html(title);
-  $('#nav-left').append(navHeader);
-}
-
-/**
- * Loads the navbar and sets the title.
- *
- * @param {string} title the title of the navbar
- */
-function loadNavbarWithTitle(title) {
-  $(() => loadNavbar(() => addTitle(title)));
-}
-
 /**
  * Loads the navbar with a disaster picker.
  * @param {Promise} firebaseAuthPromise Promise that completes when Firebase
  *     login is done
+ * @param {string} title Title of page
  * @param {?Function} changeDisasterHandler Function invoked when disaster is
  *     changed. If not specified, reloads page
  * @param {?Promise<Map<string, Object>>} firebaseDataPromise If caller has
@@ -54,13 +39,16 @@ function loadNavbarWithPicker(
     firebaseDataPromise = null) {
   if (!firebaseDataPromise) {
     firebaseDataPromise = firebaseAuthPromise.then(getDisastersData);
-  };
-  loadNavbar(
-      () => $('#nav-left')
-                .load(
-                    getUrlUnderDocs('disaster_picker.html'),
-                    () => initializeDisasterPicker(
-                        firebaseDataPromise, changeDisasterHandler)));
+  }
+  loadNavbar(() => {
+    $('#nav-left')
+        .append($(document.createElement('div'))
+                    .load(
+                        getUrlUnderDocs('disaster_picker.html'),
+                        () => initializeDisasterPicker(
+                            firebaseDataPromise, changeDisasterHandler)));
+    $('#nav-title-header').html(title);
+  });
 }
 
 /**

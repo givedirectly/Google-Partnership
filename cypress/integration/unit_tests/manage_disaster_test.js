@@ -1,27 +1,8 @@
-import {
-  getFirestoreRoot,
-  readDisasterDocument
-} from '../../../docs/firestore_document.js';
-import {
-  assetDataTemplate,
-  createDisasterData
-} from '../../../docs/import/create_disaster_lib.js';
+import {getFirestoreRoot, readDisasterDocument} from '../../../docs/firestore_document.js';
+import {assetDataTemplate, createDisasterData} from '../../../docs/import/create_disaster_lib.js';
 import {createScoreAsset} from '../../../docs/import/create_score_asset.js';
-import {
-  assetSelectionRowPrefix,
-  disasterData,
-  initializeDamageSelector,
-  initializeScoreSelectors,
-  scoreAssetTypes,
-  setUpScoreSelectorTable,
-  stateAssets,
-  validateUserFields
-} from '../../../docs/import/manage_disaster';
-import {
-  addDisaster,
-  deleteDisaster,
-  writeNewDisaster
-} from '../../../docs/import/manage_disaster.js';
+import {assetSelectionRowPrefix, disasterData, initializeDamageSelector, initializeScoreSelectors, scoreAssetTypes, setUpScoreSelectorTable, stateAssets, validateUserFields} from '../../../docs/import/manage_disaster';
+import {addDisaster, deleteDisaster, writeNewDisaster} from '../../../docs/import/manage_disaster.js';
 import {createOptionFrom} from '../../../docs/import/manage_layers.js';
 import {convertEeObjectToPromise} from '../../../docs/map_util';
 import {getDisaster} from '../../../docs/resources.js';
@@ -713,6 +694,11 @@ function getFirstTdInScoreRow(rowNum) {
       .first();
 }
 
+/**
+ * Makes a {@link Promise} that resolves when `stub` is called.
+ * @param {sinon.SinonStub} stub
+ * @return {Promise}
+ */
 function makePromiseThatResolvesOnCall(stub) {
   return new Promise((resolve) => stub.callsFake(resolve));
 }
