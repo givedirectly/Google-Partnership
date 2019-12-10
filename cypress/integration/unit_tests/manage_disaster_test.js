@@ -7,7 +7,7 @@ import {createOptionFrom} from '../../../docs/import/manage_layers.js';
 import {convertEeObjectToPromise} from '../../../docs/map_util';
 import {getDisaster} from '../../../docs/resources.js';
 import {assertFirestoreMapBounds} from '../../support/firestore_map_bounds';
-import {createAndAppend} from '../../support/import_test_util.js';
+import {createAndAppend, setUpSavingStubs} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 
 const KNOWN_STATE = 'WF';
@@ -21,6 +21,8 @@ describe('Unit tests for manage_disaster.js', () => {
     disasterPicker.val('2003-spring');
     createAndAppend('div', 'compute-status');
   });
+
+  setUpSavingStubs();
   let testData;
   let exportStub;
   let createFolderStub;
@@ -183,17 +185,14 @@ describe('Unit tests for manage_disaster.js', () => {
     cy.get('#map-bounds-sw').should('have.value', '0, 1');
     cy.get('#map-bounds-ne').should('have.value', '');
     cy.get('#map-bounds-ne').type('1, 1').blur();
-    // TODO(janakr): is there a way to tell all writes are finished?
-    cy.wait(1000).then(readDisasterDocument).then((doc) => {
-      const data = doc.data();
-      expect(data['asset_data']['map_bounds_ne']).to.eql('1, 1');
-    });
+    readFirestoreAfterWritesFinish().then(
+        (doc) =>
+            expect(doc.data()['asset_data']['map_bounds_ne']).to.eql('1, 1'));
     cy.get('#damage-asset-select').select('asset2').blur();
     cy.get('#map-bounds-div').should('not.be.visible');
-    cy.wait(1000).then(readDisasterDocument).then((doc) => {
-      const data = doc.data();
-      expect(data['asset_data']['damage_asset_path']).to.eql('asset2');
-    });
+    readFirestoreAfterWritesFinish().then(
+        (doc) => expect(doc.data()['asset_data']['damage_asset_path'])
+                     .to.eql('asset2'));
   });
 
   const allStateAssetsMissingText =
@@ -264,7 +263,7 @@ describe('Unit tests for manage_disaster.js', () => {
                 'or map bounds');
     cy.get('#process-button').should('be.disabled');
     // Validate that score data was correctly written
-    cy.wait(1000).then(readDisasterDocument).then((doc) => {
+    readFirestoreAfterWritesFinish().then((doc) => {
       const assetData = doc.data()['asset_data'];
 
       expect(assetData['damage_asset_path']).to.be.null;
@@ -331,21 +330,18 @@ describe('Unit tests for manage_disaster.js', () => {
     cy.get('#process-button').should('have.text', allMissingText);
     cy.get('#damage-asset-select').select('damage1');
     cy.get('#process-button').should('have.text', allStateAssetsMissingText);
-    // TODO(janakr): is there a way to tell all writes are finished?
     // Data wasn't actually in Firestore before, but checking that it was
     // written on a different change shows we're not silently overwriting it.
-    cy.wait(1000)
-        .then(readDisasterDocument)
-        .then(
-            (doc) => expect(doc.data().asset_data.snap_data.paths.NY)
-                         .to.eql(missingSnapPath));
+    readFirestoreAfterWritesFinish().then(
+        (doc) => expect(doc.data().asset_data.snap_data.paths.NY)
+                     .to.eql(missingSnapPath));
   });
 
   it('writes a new disaster to firestore', () => {
     let id = '2002-winter';
     const states = ['DN', 'WF'];
 
-    cy.wrap(writeNewDisaster(id, states))
+    writeNewDisaster(id, states)
         .then((success) => {
           expect(success).to.be.true;
           expect(createFolderStub).to.be.calledThrice;
@@ -397,7 +393,7 @@ describe('Unit tests for manage_disaster.js', () => {
     const id = '2005-summer';
     const states = [KNOWN_STATE];
 
-    cy.wrap(writeNewDisaster(id, states))
+    writeNewDisaster(id, states)
         .then((success) => {
           expect(success).to.be.true;
           return writeNewDisaster(id, states);
@@ -418,7 +414,7 @@ describe('Unit tests for manage_disaster.js', () => {
     const states = createAndAppend('input', 'states');
     const status = $('#compute-status');
 
-    cy.wrap(addDisaster())
+    addDisaster()
         .then((success) => {
           expect(success).to.be.false;
           expect(status.is(':visible')).to.be.true;
@@ -459,7 +455,7 @@ describe('Unit tests for manage_disaster.js', () => {
     const id = '2002-winter';
     const states = ['DN, WF'];
 
-    cy.wrap(writeNewDisaster(id, states))
+    writeNewDisaster(id, states)
         .then(
             () => getFirestoreRoot()
                       .collection('disaster-metadata')
@@ -537,6 +533,30 @@ describe('Unit tests for manage_disaster.js', () => {
           initializeDamageSelector(['asset1', 'asset2']);
           initializeScoreSelectors(['NY']);
         });
+  }
+
+  /**
+   * Waits for writes to finish, as tracked by `savedStub`, and then returns
+   * Firestore document for current disaster.
+   *
+   * It might seem like there is the potential for a race here, in case the
+   * Firestore write completes before we tell the stub to resolve the Promise.
+   * However, Cypress will not give up control to another thread until something
+   * happens, like a DOM element not being found or a call to `cy.wait` (these
+   * are the primary cases, see cyqueue_test.js). So this function can be called
+   * after the write has triggered, but the write will not be allowed to
+   * complete until after it executes, assuming no `cy.wait` or
+   * difficult-to-find element accesses were executed in the meantime.
+   *
+   * @return {Cypress.Chainable<Object>} Contents of Firestore document
+   */
+  function readFirestoreAfterWritesFinish() {
+    return cy.get('@savedStub')
+        .then(
+            (savedStub) =>
+                new Promise((resolve) => savedStub.callsFake(resolve))
+                    .then(() => savedStub.resetHistory()))
+        .then(readDisasterDocument);
   }
 });
 
