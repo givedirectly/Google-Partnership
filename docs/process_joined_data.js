@@ -52,7 +52,7 @@ function colorAndRate(
  * @param {number} scalingFactor multiplies the raw score, it can be
  *     adjusted to make sure that the values span the desired range of ~0 to
  *     ~100.
- * @param {Promise<Array<number>>} initialTogglesValuesPromise promise
+ * @param {Promise<Object>} initialTogglesValuesPromise promise
  * that returns the poverty and damage thresholds and the poverty weight (from
  * which the damage weight is derived).
  * @return {Promise}
@@ -61,11 +61,11 @@ function processJoinedData(
     dataPromise, scalingFactor, initialTogglesValuesPromise) {
   return Promise.all([dataPromise, initialTogglesValuesPromise])
       .then((results) => {
-        const [featureCollection, [
+        const [featureCollection, {
           povertyThreshold,
           damageThreshold,
           povertyWeight,
-        ]] = results;
+        }] = results;
         for (const feature of featureCollection.features) {
           colorAndRate(
               feature, scalingFactor, povertyThreshold, damageThreshold,

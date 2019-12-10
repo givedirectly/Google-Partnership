@@ -53,7 +53,7 @@ let featureSelectListener = null;
  * @param {Promise<Array<number>>} initialTogglesValuesPromise promise
  * that returns the poverty and damage thresholds and the poverty weight (from
  * which the damage weight is derived).
- * @param {ee.FeatureCollection} scoreAsset
+ * @param {string} scoreAsset
  */
 function createAndDisplayJoinedData(
     map, initialTogglesValuesPromise, scoreAsset) {

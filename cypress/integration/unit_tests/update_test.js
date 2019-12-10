@@ -38,11 +38,11 @@ describe('Unit test for updates.js', () => {
         new Promise((resolve) => resolvePromise = resolve);
     createAndDisplayJoinedDataStub =
         cy.stub(Run, 'createAndDisplayJoinedData')
-            .callsFake((map, valuesPromise) => {
+            .callsFake((_, valuesPromise) => {
               valuesPromise.then((toggles) => {
-                lastPassedPovertyThreshold = toggles[0];
-                lastPassedDamageThreshold = toggles[1];
-                lastPassedPovertyWeight = toggles[2];
+                lastPassedPovertyThreshold = toggles.povertyThreshold;
+                lastPassedDamageThreshold = toggles.damageThreshold;
+                lastPassedPovertyWeight = toggles.povertyWeight;
                 resolvePromise();
               });
             });
@@ -68,7 +68,7 @@ describe('Unit test for updates.js', () => {
       expect(createAndDisplayJoinedDataStub).to.be.calledOnce;
 
       expect(toggles.get('poverty weight')).to.equals(1);
-      expect(('#error').text()).to.equal('');
+      expect($('#error').text()).to.equal('');
       cy.wrap(createAndDisplayJoinedDataPromise).then(() => {
         expect(lastPassedPovertyWeight).to.equals(1);
         expect(lastPassedDamageThreshold).to.equals(0.0);

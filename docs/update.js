@@ -38,7 +38,7 @@ function update(map) {
 
   removeScoreLayer();
   createAndDisplayJoinedData(
-      map, Promise.resolve(getValuesAsArray()), getScoreAsset());
+      map, Promise.resolve(getToggleValues()), getScoreAsset());
   // clear old listeners
   google.maps.event.clearListeners(map, 'click');
   google.maps.event.clearListeners(map.data, 'click');
@@ -63,31 +63,30 @@ let hasDamageAsset = null;
  * a damage asset.
  * @param {Promise<Object>} disasterMetadataPromise
  * @param {google.map.Maps} map
- * @return {Promise<Array<number>>} returns all the toggle initial values.
+ * @return {Promise<Object>} returns all the toggle initial values.
  */
 function setUpToggles(disasterMetadataPromise, map) {
-  const togglesSetPromise = disasterMetadataPromise.then((doc) => {
+  return disasterMetadataPromise.then((doc) => {
     hasDamageAsset = doc.data()['asset_data']['damage_asset_path'];
     if (hasDamageAsset) {
       toggles.set(damageThresholdKey, 0.5);
       toggles.set(povertyWeightKey, 0.5);
     }
-    return getValuesAsArray();
+    createToggles(map);
+    return getToggleValues();
   });
-  togglesSetPromise.then(() => createToggles(map));
-  return togglesSetPromise;
 }
 
 /**
- * Gets all the toggle values as an array.
- * @return {[number, number, number]}
+ * Gets all the toggle values as an object.
+ * @return {{povertyThreshold: number, damageThreshold: number, povertyWeight: number}}
  */
-function getValuesAsArray() {
-  return [
-    toggles.get(povertyThresholdKey),
-    toggles.get(damageThresholdKey),
-    toggles.get(povertyWeightKey),
-  ];
+function getToggleValues() {
+  return {
+    povertyThreshold: toggles.get(povertyThresholdKey),
+    damageThreshold: toggles.get(damageThresholdKey),
+    povertyWeight: toggles.get(povertyWeightKey),
+  };
 }
 
 /**
