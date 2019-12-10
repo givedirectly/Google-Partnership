@@ -29,10 +29,10 @@ function clickBlockGroup() {
   cy.get('.map').click(900, 500);
   // TODO: deflake and renable. This passes consistently locally but with PR
   // #297 fails regularly at line below on travis.
-  // cy.get('.map').should('contain', 'SCORE: 72');
   cy.get('.google-visualization-table-tr-sel')
       .find('[class="google-visualization-table-td"]')
       .should(
           'have.text',
           'Block Group 4, Census Tract 2415, Harris County, Texas21681');
+  cy.get('.map').should('contain', 'SCORE: 72');
 }
