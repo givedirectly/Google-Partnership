@@ -76,9 +76,9 @@ describe('Unit test for updates.js', () => {
     });
   });
 
-  it('does have a damage asset',
-     () => {
-         setUpDamageAsset().then(() => expect($('input').length).to.equal(5))});
+  it('does have a damage asset', () => {
+    setUpDamageAsset().then(() => expect($('input').length).to.equal(5));
+  });
 
   it('updates weight labels', () => {
     setUpDamageAsset().then(() => {
