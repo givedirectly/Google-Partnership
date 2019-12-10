@@ -14,6 +14,11 @@ const firebase = require('firebase');
  * disaster.
  */
 let perTestFirestoreData;
+/**
+ * When using Firestore, the authentication token created by
+ * {@link initializeTestFirebase}, so that {@link populateTestFirestoreData} can
+ * write to the test database.
+ */
 let firestoreUserToken;
 
 /**
@@ -119,28 +124,24 @@ module.exports = (on, config) => {
      * @return {Promise<null>} Promise that completes when writes are done
      */
     populateTestFirestoreData(currentTestRoot) {
-      console.log('starting populate');
-      const currentApp = createTestFirebaseAdminApp();
-
       // We use a test app, created using normal firebase, versus a test admin
       // app, because objects like GeoPoint are not compatible across the
       // libraries. By using the same library, we're able to copy the data from
       // prod to test with no modifications.
       const testApp = firebase.initializeApp(firebaseConfigTest, 'testapp');
-      console.log(firestoreUserToken);
       const signinPromise =
           testApp.auth().signInWithCustomToken(firestoreUserToken);
       const writePromises = [];
       for (const disasterData of perTestFirestoreData) {
         const documentPath = 'disaster-metadata/' + disasterData.disaster;
+        let documentPathFull = testPrefix + currentTestRoot + '/' + documentPath;
         const testDisasterDocReference = testApp.firestore().doc(
-            testPrefix + currentTestRoot + '/' + documentPath);
+            documentPathFull);
         const data = disasterData.data;
         data.dummy = true;
-        writePromises.push(testDisasterDocReference.set(data));
+        writePromises.push(signinPromise.then(() => testDisasterDocReference.set(data)));
       }
-      return signinPromise.then(() => console.log('got signin')).then(() => Promise.all(writePromises))
-          .then(() => console.log('wrote data'))
+      return Promise.all(writePromises)
           .then(() => testApp.delete())
           .then(() => null);
     },
