@@ -15,7 +15,7 @@ function showToastMessage(message, duration = TOAST_DURATION_MS) {
   const toast = document.getElementById('toast-message');
   toast.className = 'show';
   document.getElementById('toast-message-text').innerText = message;
-  let currentShow = ++showNumber;
+  const currentShow = ++showNumber;
   if (duration > 0) {
     setTimeout(() => {
       if (currentShow === showNumber) {
