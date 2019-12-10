@@ -16,6 +16,9 @@ let pendingWriteCount = 0;
 
 window.onbeforeunload = () => pendingWriteCount > 0 ? true : null;
 
+let i = 0;
+let queued = 0;
+
 /**
  * Writes the current state of a disaster's data to firestore, displaying status
  * messages in the snackbar as it does so.
@@ -26,6 +29,8 @@ window.onbeforeunload = () => pendingWriteCount > 0 ? true : null;
  */
 function updateDataInFirestore(dataSupplier) {
   if (state !== STATE.SAVED) {
+    queued++;
+    console.log('skipping queued write during ', i);
     state = STATE.QUEUED_WRITE;
     return null;
   }
@@ -53,7 +58,6 @@ function innerUpdate(dataSupplier) {
         state = STATE.SAVED;
         switch (oldState) {
           case STATE.WRITING:
-            console.log('finishing up here');
             finishWrite();
             return null;
           case STATE.QUEUED_WRITE:
@@ -67,6 +71,7 @@ function innerUpdate(dataSupplier) {
 
 /** Notes that a write has started. Disable disaster picker and notify user. */
 function startWrite() {
+  console.log('starting write ', ++i, queued);
   $('#disaster-dropdown').prop('disabled', true);
   // Keep message up as long as saving is in progress.
   showSnackbarMessage('Saving...', -1);
@@ -74,6 +79,7 @@ function startWrite() {
 
 /** Notes that a write has started. Re-enable picker and notify user. */
 function finishWrite() {
+  console.log('finished write ', i, queued);
   $('#disaster-dropdown').prop('disabled', false);
   showSnackbarMessage('Saved');
 }

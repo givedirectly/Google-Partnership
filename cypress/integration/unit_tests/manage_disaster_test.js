@@ -26,7 +26,6 @@ describe('Unit tests for manage_disaster.js', () => {
   let exportStub;
   let createFolderStub;
   let setAclsStub;
-  let savedStub;
   beforeEach(() => {
     disasterData.clear();
 
@@ -63,7 +62,8 @@ describe('Unit tests for manage_disaster.js', () => {
     setAclsStub = cy.stub(ee.data, 'setAssetAcl')
                       .callsFake((asset, acls, callback) => callback());
 
-    savedStub = cy.stub(Snackbar, 'showSnackbarMessage').withArgs('Saved');
+    cy.wrap(cy.stub(Snackbar, 'showSnackbarMessage').withArgs('Saved')).as(
+        'savedStub');
 
     // Test data is reasonably real. All of the keys should be able to vary,
     // with corresponding changes to test data (but no production changes). The
@@ -175,7 +175,6 @@ describe('Unit tests for manage_disaster.js', () => {
   });
 
   it('damage asset/map-bounds elements', () => {
-    let writePromise = makePromiseThatResolvesOnCall(savedStub);
     setAssetDataAndCreateDamageInputsForScoreValidationTests();
     cy.get('#map-bounds-div')
         .should('be.visible')
@@ -188,18 +187,16 @@ describe('Unit tests for manage_disaster.js', () => {
     cy.get('#map-bounds-sw').should('have.value', '0, 1');
     cy.get('#map-bounds-ne').should('have.value', '');
     cy.get('#map-bounds-ne').type('1, 1').blur();
-    cy.wrap(writePromise).then(readDisasterDocument).then((doc) => {
-      const data = doc.data();
-      expect(data['asset_data']['map_bounds_ne']).to.eql('1, 1');
-      savedStub.resetHistory();
-      writePromise = makePromiseThatResolvesOnCall(savedStub);
-    });
+    cy.log('here i am');
+    cy.get('@savedStub');
+    readFirestoreAfterWritesFinish().then(
+        (doc) =>
+            expect(doc.data()['asset_data']['map_bounds_ne']).to.eql('1, 1'));
     cy.get('#damage-asset-select').select('asset2').blur();
     cy.get('#map-bounds-div').should('not.be.visible');
-    cy.wrap(writePromise).then(readDisasterDocument).then((doc) => {
-      const data = doc.data();
-      expect(data['asset_data']['damage_asset_path']).to.eql('asset2');
-    });
+    readFirestoreAfterWritesFinish().then(
+        (doc) => expect(doc.data()['asset_data']['damage_asset_path'])
+                     .to.eql('asset2'));
   });
 
   const allStateAssetsMissingText =
@@ -260,10 +257,7 @@ describe('Unit tests for manage_disaster.js', () => {
     // Message is just about damage.
     cy.get('#process-button')
         .should('have.text', 'Must specify either damage asset or map bounds');
-    let writePromise;
-    cy.get('#process-button').should('be.disabled').then(() => {
-      writePromise = makePromiseThatResolvesOnCall(savedStub);
-    });
+    cy.get('#process-button').should('be.disabled');
     // Get rid of score asset.
     setFirstSelectInScoreRow(0).select('');
     cy.get('#process-button')
@@ -271,19 +265,16 @@ describe('Unit tests for manage_disaster.js', () => {
             'have.text',
             'Missing asset(s): Poverty, and must specify either damage asset ' +
                 'or map bounds');
-    cy.get('#process-button')
-        .should('be.disabled')
-        .then(() => writePromise)
-        // Validate that score data was correctly written
-        .then(readDisasterDocument)
-        .then((doc) => {
-          const assetData = doc.data()['asset_data'];
+    cy.get('#process-button').should('be.disabled');
+    // Validate that score data was correctly written
+    readFirestoreAfterWritesFinish().then((doc) => {
+      const assetData = doc.data()['asset_data'];
 
-          expect(assetData['damage_asset_path']).to.be.null;
-          expect(assetData['map_bounds_sw']).to.eql('0, 0');
-          expect(assetData['svi_asset_paths']).to.eql({'NY': 'state2'});
-          expect(assetData['snap_data']['paths']).to.eql({'NY': null});
-        });
+      expect(assetData['damage_asset_path']).to.be.null;
+      expect(assetData['map_bounds_sw']).to.eql('0, 0');
+      expect(assetData['svi_asset_paths']).to.eql({'NY': 'state2'});
+      expect(assetData['snap_data']['paths']).to.eql({'NY': null});
+    });
   });
 
   it('multistate displays properly', () => {
@@ -340,21 +331,15 @@ describe('Unit tests for manage_disaster.js', () => {
         .then(validateUserFields);
     cy.get('#process-button').should('be.disabled');
     // Everything is missing, even though we have values stored.
-    let writePromise;
-    cy.get('#process-button').should('have.text', allMissingText).then(() => {
-      writePromise = makePromiseThatResolvesOnCall(savedStub);
-    });
+    cy.get('#process-button').should('have.text', allMissingText);
     cy.get('#damage-asset-select').select('damage1');
-    cy.get('#process-button')
-        .should('have.text', allStateAssetsMissingText)
-        .then(() => writePromise)
-        // Data wasn't actually in Firestore before, but checking that it was
-        // written on a different change shows we're not silently overwriting
-        // it.
-        .then(readDisasterDocument)
-        .then(
-            (doc) => expect(doc.data().asset_data.snap_data.paths.NY)
-                         .to.eql(missingSnapPath));
+    cy.get('#process-button').should('have.text', allStateAssetsMissingText);
+    // Data wasn't actually in Firestore before, but checking that it was
+    // written on a different change shows we're not silently overwriting
+    // it.
+    readFirestoreAfterWritesFinish().then(
+        (doc) => expect(doc.data().asset_data.snap_data.paths.NY)
+                     .to.eql(missingSnapPath));
   });
 
   it('writes a new disaster to firestore', () => {
@@ -554,6 +539,30 @@ describe('Unit tests for manage_disaster.js', () => {
           initializeScoreSelectors(['NY']);
         });
   }
+
+  /**
+   * Waits for writes to finish, as tracked by `savedStub`, and then returns
+   * Firestore document for current disaster.
+   *
+   * It might seem like there is the potential for a race here, in case the
+   * Firestore write completes before we tell the stub to resolve the Promise.
+   * However, Cypress will not give up control to another thread until either a
+   * DOM element is not found or `cy.wait` is called (these are the primary
+   * cases). So this function can be called after the write has triggered, but
+   * the write will not be allowed to complete until after it executes, assuming
+   * no `cy.wait` or difficult-to-find element accesses were executed in the
+   * meantime.
+   *
+   * @return {Cypress.Chainable<Object>}
+   */
+  function readFirestoreAfterWritesFinish() {
+    return cy.get('@savedStub')
+        .then(
+            (savedStub) =>
+                new Promise((resolve) => savedStub.callsFake(resolve))
+                    .then(() => savedStub.resetHistory()))
+        .then(readDisasterDocument);
+  }
 });
 
 // Make sure that our block groups aren't so big they escape the 1 km damage
@@ -692,13 +701,4 @@ function getFirstTdInScoreRow(rowNum) {
   return cy.get('#' + assetSelectionRowPrefix + scoreAssetTypes[rowNum][0])
       .find('td')
       .first();
-}
-
-/**
- * Makes a {@link Promise} that resolves when `stub` is called.
- * @param {sinon.SinonStub} stub
- * @return {Promise}
- */
-function makePromiseThatResolvesOnCall(stub) {
-  return new Promise((resolve) => stub.callsFake(resolve));
 }
