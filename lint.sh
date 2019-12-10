@@ -9,8 +9,7 @@ set -e
 modified_js_files="$(git diff --diff-filter=d --name-only \
     master 'docs/*.js' 'docs/import/*.js' 'cypress/integration/**/*.js' \
       'cypress/support/*.js' 'cypress/plugins/*.js')"
-cat docs/authenticate.js
-clang-format --style=Google docs/authenticate.js
+clang-format --version
 if [[ "$modified_js_files" ]]; then
   if clang-format --style=Google -output-replacements-xml $modified_js_files \
       | grep -c '<replacement ' >/dev/null; then
