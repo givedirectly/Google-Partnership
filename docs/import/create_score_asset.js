@@ -124,6 +124,13 @@ function missingAssetError(str) {
   return null;
 }
 
+function missingColumnsError(type, asset, state, columns) {
+  setStatus(
+      'Error! ' + type + ' asset ' + asset + 'for ' + state +
+      'does not have all necessary columns: ' + columns);
+  return null;
+}
+
 /**
  * Displays status message to user.
  * @param {string} str message
@@ -224,16 +231,42 @@ function createScoreAsset(
   let allStatesProcessing = ee.FeatureCollection([]);
   for (const state of states) {
     const snapPath = snapPaths[state];
+    let snapCollection;
+    let snapNoErrors;
+    let sviCollection;
+    let sviNoErrors;
+    let incomeCollection;
+    let incomeNoErrors;
+    let bgCollection;
+    let bgNoErrors;
+
+    let propertyNames;
     if (!snapPath) {
       return missingAssetError('SNAP asset path for ' + state);
+    } else {
+      const necessaryColumns =
+          [censusGeoidKey, censusBlockGroupKey, snapKey, totalKey];
+      checkForColumns(snapPath, necessaryColumns).evaluate((yes) => {
+        if (yes)
+          return missingColumnsError('SNAP', snapPath, state, necessaryColumns);
+      });
     }
     const sviPath = sviPaths[state];
     if (!sviPath) {
       return missingAssetError('SVI asset path for ' + state);
+    } else {
+      sviCollection = ee.FeatureCollection(sviPath);
+      propertyNames = sviCollection.first().propertyNames();
+      sviNoErrors = propertyNames.containsAll(ee.List([cdcGeoidKey, sviKey]));
     }
     const incomePath = incomePaths[state];
     if (!incomePath) {
       return missingAssetError('income asset path for ' + state);
+    } else {
+      incomeCollection = ee.FeatureCollection(incomePath);
+      propertyNames = incomeCollection.first().propertyNames();
+      incomeNoErrors =
+          propertyNames.containsAll(ee.List([censusGeoidKey, incomeKey]))
     }
     const buildingPath = buildingPaths[state];
     if (!buildingPath) {
@@ -243,12 +276,16 @@ function createScoreAsset(
     if (!blockGroupPath) {
       return missingAssetError(
           'Census TIGER block group shapefile for ' + state);
+    } else {
+      bgCollection = ee.FeatureCollection(blockGroupPath);
+      propertyNames = bgCollection.first().propertyNames();
+      bgNoErrors = propertyNames.containsAll(ee.List([tigerGeoidKey]));
     }
 
     const stateGroups =
         ee.FeatureCollection(blockGroupPath).filterBounds(damageEnvelope);
 
-    let processing = ee.FeatureCollection(snapPath).map(stringifyGeoid);
+    let processing = snapCollection.map(stringifyGeoid);
 
     // Join snap stats to block group geometries.
     processing =
@@ -276,31 +313,38 @@ function createScoreAsset(
     allStatesProcessing = allStatesProcessing.merge(processing);
   }
 
-  const scoreAssetPath = getScoreAsset();
-  const task = ee.batch.Export.table.toAsset(
-      allStatesProcessing,
-      scoreAssetPath.substring(scoreAssetPath.lastIndexOf('/') + 1),
-      scoreAssetPath);
-  return new Promise((resolve, reject) => {
-    ee.data.deleteAsset(scoreAssetPath, (_, err) => {
-      if (err) {
-        if (err === 'Asset not found.') {
-          console.log(
-              'Old ' + scoreAssetPath + ' not present, did not delete it');
-        } else {
-          const message = 'Error deleting: ' + err;
-          setStatus(message);
-          reject(new Error(message));
-        }
-      }
-      task.start();
-      $('#upload-status')
-          .text(
-              'Check Code Editor console for upload progress. Task: ' +
-              task.id);
-      resolve(task);
-    });
-  });
+  // const scoreAssetPath = getScoreAsset();
+  // const task = ee.batch.Export.table.toAsset(
+  //     allStatesProcessing,
+  //     scoreAssetPath.substring(scoreAssetPath.lastIndexOf('/') + 1),
+  //     scoreAssetPath);
+  // return new Promise((resolve, reject) => {
+  //   ee.data.deleteAsset(scoreAssetPath, (_, err) => {
+  //     if (err) {
+  //       if (err === 'Asset not found.') {
+  //         console.log(
+  //             'Old ' + scoreAssetPath + ' not present, did not delete it');
+  //       } else {
+  //         const message = 'Error deleting: ' + err;
+  //         setStatus(message);
+  //         reject(new Error(message));
+  //       }
+  //     }
+  //     task.start();
+  //     $('#upload-status')
+  //         .text(
+  //             'Check Code Editor console for upload progress. Task: ' +
+  //             task.id);
+  //     resolve(task);
+  //   });
+  // });
+}
+
+function checkForColumns(asset, columns) {
+  return ee.Algorithms.If(
+      ee.FeatureCollection(asset).first().propertyNames().containsAll(
+          ee.List(columns)),
+      0, 1);
 }
 
 const damageError = {
