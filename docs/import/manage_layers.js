@@ -45,11 +45,9 @@ const disasterAssets = new Map();
 function enableWhenReady(firebaseDataPromise) {
   const disaster = getDisaster();
   if (disaster) {
-    // Kick EE fetch off early. If Firestore returns before this finishes and
-    // triggers onSetDisaster, we'll have two fetches going, but that's ok, the
-    // results should be the same.
-    getDisasterAssetsFromEe(disaster).then(
-        (assets) => disasterAssets.set(disaster, assets));
+    // Kick EE fetch off early. Since getDisasterAssetsFromEe caches results,
+    // this will help when we call it later.
+    getDisasterAssetsFromEe(disaster);
   }
   return firebaseDataPromise.then((returnedData) => {
     setDisasterData(returnedData);
