@@ -72,8 +72,8 @@ module.exports = (on, config) => {
     /**
      * Produces a Firebase token that can be used for our Firestore database.
      * Because the database belongs to a test-only user, this user is given free
-     * reign to do whatever it likes. Also deletes all test data older than 24
-     * hours, so there isn't indefinite build-up if tests are frequently aborted
+     * reign to do whatever it likes. Also deletes all test data older than 7
+     * days, so there isn't indefinite build-up if tests are frequently aborted
      * before they clean up.
      *
      * See https://firebase.google.com/docs/auth/admin/create-custom-tokens.
@@ -86,16 +86,9 @@ module.exports = (on, config) => {
           currentApp.auth().createCustomToken('cypress-firestore-test-user');
       return Promise
           .all([result, deleteOldPromise, retrieveFirestoreDataForTest()])
-          .then(async (list) => {
-            // Firebase really doesn't like duplicate apps lying around, so
-            // clean up immediately.
-            await currentApp.delete();
-            if (list[0]) {
-              firestoreUserToken = list[0];
-              return firestoreUserToken;
-            }
-            throw new Error('No token generated');
-          });
+          .then((list) => firestoreUserToken = list[0])
+          .then(() => currentApp.delete())
+          .then(() => firestoreUserToken);
     },
     /**
      * Produces an EarthEngine token that can be used by production code.
@@ -282,10 +275,8 @@ function retrieveFirestoreDataForTest() {
     }));
   }
   return Promise.all(readPromises)
-      .then(async (result) => {
-        perTestFirestoreData = result;
-        return prodApp.delete();
-      })
+      .then((result) => perTestFirestoreData = result)
+      .then(() => prodApp.delete())
       .then(() => null);
 }
 
