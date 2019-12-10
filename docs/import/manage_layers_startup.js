@@ -9,10 +9,9 @@ import {enableWhenReady, onSetDisaster, updateAfterSort} from './manage_layers.j
 // 2 tasks: EE authentication, page load. Firebase is taken care of by Promise,
 // but enableWhenReady can do some work even before that.
 const taskAccumulator =
-    new TaskAccumulator(3, () => enableWhenReady(firebaseDataPromise));
+    new TaskAccumulator(2, () => enableWhenReady(firebaseDataPromise));
 
-const firebaseAuthPromise = Authenticator.trackEeAndFirebase(taskAccumulator)
-                                .then(() => taskAccumulator.taskCompleted());
+const firebaseAuthPromise = Authenticator.trackEeAndFirebase(taskAccumulator);
 const firebaseDataPromise = firebaseAuthPromise.then(getDisastersData);
 
 $(() => {

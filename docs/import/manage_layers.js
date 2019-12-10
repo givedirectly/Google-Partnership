@@ -47,11 +47,12 @@ function enableWhenReady(firebaseDataPromise) {
   if (disaster) {
     // Kick EE fetch off early. Since getDisasterAssetsFromEe caches results,
     // this will help when we call it later.
-    getDisasterAssetsFromEe(disaster);
+    getDisasterAssetsFromEe(disaster).catch((err) => console.log(err));
   }
   return firebaseDataPromise.then((returnedData) => {
     setDisasterData(returnedData);
     $('#add-non-eelayer').on('click', () => addNonEELayer());
+    onSetDisaster();
   });
 }
 
