@@ -40,6 +40,17 @@ function initializeMap() {
 
   drawingManager.addListener('overlaycomplete', (event) => {
     const feature = event.overlay;
+    feature.addListener('dragend', () => console.log('dragged'));
+    const path = polygon.getPath();
+    google.maps.event.addListener(path, 'insert_at', () => );
+
+    google.maps.event.addListener(path, 'remove_at', function(){
+      // Point was removed
+    });
+
+    google.maps.event.addListener(path, 'set_at', function(){
+      // Point was moved
+    });
     drawingManager.setMap(null);
   });
 
