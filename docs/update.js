@@ -79,7 +79,8 @@ function setUpToggles(disasterMetadataPromise, map) {
 
 /**
  * Gets all the toggle values as an object.
- * @return {{povertyThreshold: number, damageThreshold: number, povertyWeight: number}}
+ * @return {{povertyThreshold: number, damageThreshold: number, povertyWeight:
+ *     number}}
  */
 function getToggleValues() {
   return {
