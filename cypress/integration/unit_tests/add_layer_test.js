@@ -105,7 +105,8 @@ describe('Unit tests for adding layers', () => {
     createAndAppend('tbody', 'tbody');
 
     waitForPromiseAndAssertSaves(processNonEeLayer(LayerType.KML, [
-      'fake-url1', 'fake-url2',
+      'fake-url1',
+      'fake-url2',
     ])).then(() => {
       const layers = getCurrentLayers();
       expect(layers.length).to.equal(1);
