@@ -26,7 +26,8 @@ describe('Unit tests for adding layers', () => {
     const tbody = createAndAppend('tbody', 'tbody');
     tbody.append(rows);
 
-    waitForPromiseAndAssertSaves(processNewEeLayer(mockAsset, LayerType.FEATURE_COLLECTION))
+    waitForPromiseAndAssertSaves(
+        processNewEeLayer(mockAsset, LayerType.FEATURE_COLLECTION))
         .then(() => {
           const layers = getCurrentLayers();
           expect(layers.length).to.equal(3);
@@ -51,7 +52,8 @@ describe('Unit tests for adding layers', () => {
     setDisasterAndLayers([]);
     createAndAppend('tbody', 'tbody');
 
-    waitForPromiseAndAssertSaves(processNewEeLayer(mockAsset, LayerType.FEATURE_COLLECTION))
+    waitForPromiseAndAssertSaves(
+        processNewEeLayer(mockAsset, LayerType.FEATURE_COLLECTION))
         .then(() => {
           const layers = getCurrentLayers();
           expect(layers.length).to.equal(1);
@@ -74,7 +76,8 @@ describe('Unit tests for adding layers', () => {
         .withArgs(mockAsset)
         .returns(featureCollection);
 
-    waitForPromiseAndAssertSaves(processNewEeLayer(mockAsset, LayerType.FEATURE_COLLECTION))
+    waitForPromiseAndAssertSaves(
+        processNewEeLayer(mockAsset, LayerType.FEATURE_COLLECTION))
         .then(() => {
           const layer = getCurrentLayers()[0];
           expect(layer['color-function']['columns']['flavor']['values'])
@@ -86,7 +89,8 @@ describe('Unit tests for adding layers', () => {
     setDisasterAndLayers([]);
     createAndAppend('tbody', 'tbody');
 
-    waitForPromiseAndAssertSaves(processNewEeLayer(mockAsset, LayerType.IMAGE_COLLECTION))
+    waitForPromiseAndAssertSaves(
+        processNewEeLayer(mockAsset, LayerType.IMAGE_COLLECTION))
         .then(() => {
           const layers = getCurrentLayers();
           expect(layers.length).to.equal(1);
@@ -100,15 +104,16 @@ describe('Unit tests for adding layers', () => {
     setDisasterAndLayers([]);
     createAndAppend('tbody', 'tbody');
 
-    waitForPromiseAndAssertSaves(processNonEeLayer(LayerType.KML, ['fake-url1', 'fake-url2']))
-        .then(() => {
-          const layers = getCurrentLayers();
-          expect(layers.length).to.equal(1);
-          const layer = layers[0];
-          expect(layer['asset-type']).to.equal(LayerType.KML);
-          expect(layer['color-function']).to.be.undefined;
-          expect(layer['urls'].length).to.equal(2);
-        });
+    waitForPromiseAndAssertSaves(processNonEeLayer(LayerType.KML, [
+      'fake-url1', 'fake-url2'
+    ])).then(() => {
+      const layers = getCurrentLayers();
+      expect(layers.length).to.equal(1);
+      const layer = layers[0];
+      expect(layer['asset-type']).to.equal(LayerType.KML);
+      expect(layer['color-function']).to.be.undefined;
+      expect(layer['urls'].length).to.equal(2);
+    });
   });
 });
 
