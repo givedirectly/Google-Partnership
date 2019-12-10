@@ -41,12 +41,10 @@ function loadNavbarWithPicker(
     firebaseDataPromise = firebaseAuthPromise.then(getDisastersData);
   }
   loadNavbar(() => {
-    $('#nav-left')
-        .append($(document.createElement('div'))
-                    .load(
+    $('#nav-left').load(
                         getUrlUnderDocs('disaster_picker.html'),
                         () => initializeDisasterPicker(
-                            firebaseDataPromise, changeDisasterHandler)));
+                            firebaseDataPromise, changeDisasterHandler));
     $('#nav-title-header').html(title);
   });
 }

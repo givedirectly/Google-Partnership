@@ -12,8 +12,8 @@ export {initializeDisasterPicker};
 function initializeDisasterPicker(firebaseDataPromise, changeDisasterHandler) {
   const disasterDropdown = $('#disaster-dropdown');
   firebaseDataPromise.then((allDisasters) => {
-    $('#pending-disaster').prop('hidden', true);
-    disasterDropdown.prop('hidden', false);
+    $('#pending-disaster').hide();
+    disasterDropdown.show();
     const currentDisaster = getDisaster();
     for (const disaster of allDisasters.keys()) {
       const disasterItem = $(document.createElement('option')).text(disaster);

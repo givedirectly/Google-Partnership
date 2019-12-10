@@ -1,6 +1,5 @@
 import {LayerType} from '../firebase_layers.js';
 import {getDisaster} from '../resources.js';
-
 import {processNewEeLayer, processNonEeLayer} from './add_layer.js';
 import {withColor} from './color_function_util.js';
 import {getDisasterAssetsFromEe, getStatesAssetsFromEe} from './list_ee_assets.js';
@@ -52,7 +51,7 @@ function enableWhenReady(firebaseDataPromise) {
   return firebaseDataPromise.then((returnedData) => {
     setDisasterData(returnedData);
     $('#add-non-eelayer').on('click', () => addNonEELayer());
-    onSetDisaster();
+    return onSetDisaster();
   });
 }
 
