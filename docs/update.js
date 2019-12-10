@@ -109,7 +109,7 @@ function createToggles(map) {
   // threshold toggles
   const thresholdTitle = document.createElement('div');
   thresholdTitle.className = 'form-title';
-  thresholdTitle.innerHTML = 'thresholds';
+  thresholdTitle.innerText = 'thresholds';
   form.appendChild(thresholdTitle);
   form.appendChild(createInput(povertyThresholdKey));
 
@@ -121,11 +121,11 @@ function createToggles(map) {
     weightInputDiv.className = 'input-container';
     const weightTitle = document.createElement('div');
     weightTitle.className = 'form-title';
-    weightTitle.innerHTML = 'weights';
+    weightTitle.innerText = 'weights';
     weightInputDiv.appendChild(weightTitle);
 
     const povertyWeight = document.createElement('label');
-    povertyWeight.innerHTML = 'poverty weight: ';
+    povertyWeight.innerText = 'poverty weight: ';
     const povertyWeightValue = document.createElement('span');
     povertyWeightValue.id = povertyWeightValueId;
     povertyWeight.appendChild(povertyWeightValue);
@@ -143,7 +143,7 @@ function createToggles(map) {
     weightInputDiv.appendChild(document.createElement('br'));
 
     const damageWeight = document.createElement('label');
-    damageWeight.innerHTML = 'damage weight: ';
+    damageWeight.innerText = 'damage weight: ';
     const damageWeightValue = document.createElement('span');
     damageWeightValue.id = damageWeightValueId;
     damageWeight.appendChild(damageWeightValue);
@@ -172,7 +172,7 @@ function createInput(toggle) {
 
   const label = document.createElement('label');
   label.for = toggle;
-  label.innerHTML = toggle;
+  label.innerText = toggle;
   thresholdInputDiv.appendChild(label);
 
   thresholdInputDiv.appendChild(document.createElement('br'));
@@ -264,7 +264,7 @@ function setErrorMessage(message) {
  * @param {string} message
  */
 function setInnerHtml(id, message) {
-  document.getElementById(id).innerHTML = message;
+  document.getElementById(id).innerText = message;
 }
 
 /**
