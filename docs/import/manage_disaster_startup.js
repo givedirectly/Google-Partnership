@@ -39,21 +39,30 @@ function initializeMap() {
   });
 
   drawingManager.addListener('overlaycomplete', (event) => {
-    const feature = event.overlay;
-    feature.addListener('dragend', () => console.log('dragged'));
-    const path = polygon.getPath();
-    google.maps.event.addListener(path, 'insert_at', () => );
-
-    google.maps.event.addListener(path, 'remove_at', function(){
-      // Point was removed
-    });
-
-    google.maps.event.addListener(path, 'set_at', function(){
-      // Point was moved
-    });
+    callbackOnPolygonChange(event.overlay);
     drawingManager.setMap(null);
   });
 
   drawingManager.setMap(map);
   return drawingManager;
+}
+
+function callbackOnPolygonChange(polygon) {
+  const callback = () => console.log('here');
+  const listeners = addListenersToPolygon(polygon, callback);
+  polygon.addListener('dragend', () => {
+    listeners.push(...addListenersToPolygon(polygon, callback));
+    callback();
+  });
+  polygon.addListener('dragstart', () => {
+    listeners.forEach((listener) => google.maps.event.removeListener(listener));
+    listeners.length = 0;
+  });
+}
+
+const polygonPathEventTypes = ['insert_at', 'remove_at', 'set_at'];
+
+function addListenersToPolygon(polygon, callback) {
+  const path = polygon.getPath();
+  return polygonPathEventTypes.map((eventType) => google.maps.event.addListener(path, eventType, callback));
 }
