@@ -1,4 +1,6 @@
 <div>
-  <span id="pending-disaster">Pending...</span>
-  <select id="disaster-dropdown" class="dropdown"></select>
+  <!-- This select is only shown until disasters are retrieved -->
+  <select id="pending-disaster" class="dropdown" disabled><option>Pending...</option></select>
+  <!-- Shown once disasters retrieved. -->
+  <select id="disaster-dropdown" class="dropdown" hidden></select>
 </div>

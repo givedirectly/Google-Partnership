@@ -267,6 +267,7 @@ h1 {
   padding: 0 8px;
   -webkit-transition: var(--background-color-transition);
   transition: var(--background-color-transition);
+  min-width: 250px
 }
 
 .dropdown:hover {

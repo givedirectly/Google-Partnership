@@ -187,8 +187,6 @@ describe('Unit tests for manage_disaster.js', () => {
     cy.get('#map-bounds-sw').should('have.value', '0, 1');
     cy.get('#map-bounds-ne').should('have.value', '');
     cy.get('#map-bounds-ne').type('1, 1').blur();
-    cy.log('here i am');
-    cy.get('@savedStub');
     readFirestoreAfterWritesFinish().then(
         (doc) =>
             expect(doc.data()['asset_data']['map_bounds_ne']).to.eql('1, 1'));
@@ -335,8 +333,7 @@ describe('Unit tests for manage_disaster.js', () => {
     cy.get('#damage-asset-select').select('damage1');
     cy.get('#process-button').should('have.text', allStateAssetsMissingText);
     // Data wasn't actually in Firestore before, but checking that it was
-    // written on a different change shows we're not silently overwriting
-    // it.
+    // written on a different change shows we're not silently overwriting it.
     readFirestoreAfterWritesFinish().then(
         (doc) => expect(doc.data().asset_data.snap_data.paths.NY)
                      .to.eql(missingSnapPath));
@@ -546,14 +543,14 @@ describe('Unit tests for manage_disaster.js', () => {
    *
    * It might seem like there is the potential for a race here, in case the
    * Firestore write completes before we tell the stub to resolve the Promise.
-   * However, Cypress will not give up control to another thread until either a
-   * DOM element is not found or `cy.wait` is called (these are the primary
-   * cases). So this function can be called after the write has triggered, but
-   * the write will not be allowed to complete until after it executes, assuming
-   * no `cy.wait` or difficult-to-find element accesses were executed in the
-   * meantime.
+   * However, Cypress will not give up control to another thread until something
+   * happens like a DOM element not being found or a call to `cy.wait` (these
+   * are the primary cases). So this function can be called after the write has
+   * triggered, but the write will not be allowed to complete until after it
+   * executes, assuming no `cy.wait` or difficult-to-find element accesses were
+   * executed in the meantime.
    *
-   * @return {Cypress.Chainable<Object>}
+   * @return {Cypress.Chainable<Object>} Contents of Firestore document
    */
   function readFirestoreAfterWritesFinish() {
     return cy.get('@savedStub')
