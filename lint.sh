@@ -9,6 +9,8 @@ set -e
 modified_js_files="$(git diff --diff-filter=d --name-only \
     master 'docs/*.js' 'docs/import/*.js' 'cypress/integration/**/*.js' \
       'cypress/support/*.js' 'cypress/plugins/*.js')"
+cat docs/authenticate.js
+clang-format --style=Google docs/authenticate.js
 if [[ "$modified_js_files" ]]; then
   if clang-format --style=Google -output-replacements-xml $modified_js_files \
       | grep -c '<replacement ' >/dev/null; then
@@ -16,8 +18,6 @@ if [[ "$modified_js_files" ]]; then
     declare -a badfiles
     for eachfile in $modified_js_files; do
       clang-format --style=Google -output-replacements-xml $eachfile | grep -c '<replacement ' > /dev/null && badfiles+=($eachfile)
-      cat $eachfile
-      clang-format --style=Google $eachfile
     done
     echo "clang-format -i --style=Google ${badfiles[@]}"
     exit 2
