@@ -6,12 +6,8 @@ import {addDisaster, deleteDisaster, writeNewDisaster} from '../../../docs/impor
 import {createOptionFrom} from '../../../docs/import/manage_layers.js';
 import {convertEeObjectToPromise} from '../../../docs/map_util';
 import {getDisaster} from '../../../docs/resources.js';
-import * as Toast from '../../../docs/toast.js';
 import {assertFirestoreMapBounds} from '../../support/firestore_map_bounds';
-import {
-  createAndAppend,
-  setUpSavingStubs
-} from '../../support/import_test_util.js';
+import {createAndAppend, setUpSavingStubs} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 
 const KNOWN_STATE = 'WF';

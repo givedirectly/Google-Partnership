@@ -1,11 +1,7 @@
 import {ColorStyle, LayerType} from '../../../docs/firebase_layers.js';
 import {processNewEeLayer, processNonEeLayer} from '../../../docs/import/add_layer.js';
 import {disasterData, getCurrentLayers} from '../../../docs/import/manage_layers_lib.js';
-import * as Toast from '../../../docs/toast.js';
-import {
-  createTrs, setUpSavingStubs,
-  waitForPromiseAndAssertSaves
-} from '../../support/import_test_util.js';
+import {createTrs, setUpSavingStubs, waitForPromiseAndAssertSaves} from '../../support/import_test_util.js';
 import {createAndAppend, setDisasterAndLayers} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 

@@ -5,13 +5,7 @@ import {getStatesAssetsFromEe} from '../../../docs/import/list_ee_assets.js';
 import {createOptionFrom, createStateAssetPickers, createTd, onCheck, onDelete, onInputBlur, onListBlur, stateAssets, updateAfterSort, withCheckbox, withInput, withList, withType} from '../../../docs/import/manage_layers.js';
 import {disasterData, getCurrentLayers} from '../../../docs/import/manage_layers_lib.js';
 import {getDisaster} from '../../../docs/resources';
-import * as Toast from '../../../docs/toast.js';
-import {
-  createAndAppend,
-  createTrs,
-  setDisasterAndLayers, setUpSavingStubs,
-  waitForPromiseAndAssertSaves
-} from '../../support/import_test_util.js';
+import {createAndAppend, createTrs, setDisasterAndLayers, setUpSavingStubs, waitForPromiseAndAssertSaves} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
 const KNOWN_STATE = 'WF';
