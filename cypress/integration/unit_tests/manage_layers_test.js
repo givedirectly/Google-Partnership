@@ -6,7 +6,12 @@ import {createOptionFrom, createStateAssetPickers, createTd, onCheck, onDelete, 
 import {disasterData, getCurrentLayers} from '../../../docs/import/manage_layers_lib.js';
 import {getDisaster} from '../../../docs/resources';
 import * as Toast from '../../../docs/toast.js';
-import {createAndAppend, createTrs, setDisasterAndLayers} from '../../support/import_test_util.js';
+import {
+  createAndAppend,
+  createTrs,
+  setDisasterAndLayers, setUpSavingStubs,
+  waitForPromiseAndAssertSaves
+} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
 const KNOWN_STATE = 'WF';
@@ -24,8 +29,8 @@ describe('Unit tests for manage_layers page', () => {
     createAndAppend('div', 'status').hide();
   });
 
-  let savingStub;
-  let savedStub;
+  setUpSavingStubs();
+
   beforeEach(() => {
     const listAssetsStub = cy.stub(ee.data, 'listAssets');
     listAssetsStub.withArgs(legacyStateDir, {}, Cypress.sinon.match.func)
@@ -49,9 +54,6 @@ describe('Unit tests for manage_layers page', () => {
           ],
         }));
     cy.stub(ee.data, 'createFolder');
-    const toastStub = cy.stub(Toast, 'showToastMessage');
-    savingStub = toastStub.withArgs('Saving...', -1);
-    savedStub = toastStub.withArgs('Saved');
 
     stateAssets.clear();
     // In prod this would happen in enableWhenReady which would read from
@@ -200,7 +202,7 @@ describe('Unit tests for manage_layers page', () => {
     const colorEditor = createAndAppend('div', 'color-fxn-editor').show();
 
     cy.stub(window, 'confirm').returns(true);
-    cy.wrap(onDelete(rows[0])).then(() => {
+    waitForPromiseAndAssertSaves(onDelete(rows[0])).then(() => {
       expect(colorEditor.is(':visible')).to.be.false;
       expect(tbody.children('tr').length).to.equal(1);
       // ensure reindex
@@ -224,7 +226,7 @@ describe('Unit tests for manage_layers page', () => {
     rows[1].children('td').first().text(2);
     rows[2].children('td').first().text(1);
 
-    cy.wrap(updateAfterSort({item: rows[0]}))
+    waitForPromiseAndAssertSaves(updateAfterSort({item: rows[0]}))
         .then(() => {
           const postSortLayers = getCurrentLayers();
           expect(postSortLayers[0]['initialIndex']).equals(1);
@@ -235,8 +237,6 @@ describe('Unit tests for manage_layers page', () => {
           expect(rows[1].text()).equals('1');
           expect(rows[2].text()).equals('0');
 
-          expect(savingStub).to.be.calledOnce;
-          expect(savedStub).to.be.calledOnce;
           return getFirestoreRoot()
               .collection('disaster-metadata')
               .doc(getDisaster())
@@ -263,7 +263,7 @@ describe('Unit tests for manage_layers page', () => {
     createAndAppend('tbody', 'tbody').append(row);
     row[0].append(input);
 
-    cy.wrap(fxn({target: input}, property))
+    waitForPromiseAndAssertSaves(fxn({target: input}, property))
         .then(() => {
           expect(savingStub).to.be.calledOnce;
           expect(savedStub).to.be.calledOnce;

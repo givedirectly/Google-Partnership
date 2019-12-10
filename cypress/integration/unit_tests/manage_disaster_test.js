@@ -8,7 +8,10 @@ import {convertEeObjectToPromise} from '../../../docs/map_util';
 import {getDisaster} from '../../../docs/resources.js';
 import * as Toast from '../../../docs/toast.js';
 import {assertFirestoreMapBounds} from '../../support/firestore_map_bounds';
-import {createAndAppend} from '../../support/import_test_util.js';
+import {
+  createAndAppend,
+  setUpSavingStubs
+} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 
 const KNOWN_STATE = 'WF';
@@ -22,6 +25,8 @@ describe('Unit tests for manage_disaster.js', () => {
     disasterPicker.val('2003-spring');
     createAndAppend('div', 'compute-status');
   });
+
+  setUpSavingStubs();
   let testData;
   let exportStub;
   let createFolderStub;
@@ -61,9 +66,6 @@ describe('Unit tests for manage_disaster.js', () => {
             .callsFake((asset, overwrite, callback) => callback());
     setAclsStub = cy.stub(ee.data, 'setAssetAcl')
                       .callsFake((asset, acls, callback) => callback());
-
-    cy.wrap(cy.stub(Toast, 'showToastMessage').withArgs('Saved')).as(
-        'savedStub');
 
     // Test data is reasonably real. All of the keys should be able to vary,
     // with corresponding changes to test data (but no production changes). The
@@ -544,11 +546,11 @@ describe('Unit tests for manage_disaster.js', () => {
    * It might seem like there is the potential for a race here, in case the
    * Firestore write completes before we tell the stub to resolve the Promise.
    * However, Cypress will not give up control to another thread until something
-   * happens like a DOM element not being found or a call to `cy.wait` (these
-   * are the primary cases). So this function can be called after the write has
-   * triggered, but the write will not be allowed to complete until after it
-   * executes, assuming no `cy.wait` or difficult-to-find element accesses were
-   * executed in the meantime.
+   * happens, like a DOM element not being found or a call to `cy.wait` (these
+   * are the primary cases, see cyqueue_test.js). So this function can be called
+   * after the write has triggered, but the write will not be allowed to
+   * complete until after it executes, assuming no `cy.wait` or
+   * difficult-to-find element accesses were executed in the meantime.
    *
    * @return {Cypress.Chainable<Object>} Contents of Firestore document
    */
