@@ -1,5 +1,5 @@
 import {showError} from './error.js';
-import {earthEngineTestTokenCookieName, firebaseTestTokenCookieName, getCookieValue, inProduction} from './in_test_util.js';
+import {earthEngineTestTokenCookieName, firebaseTestTokenPropertyName, getValueFromLocalStorage, inProduction} from './in_test_util.js';
 import SettablePromise from './settable_promise.js';
 
 export {
@@ -165,11 +165,11 @@ Authenticator.trackEeAndFirebase = (taskAccumulator) => {
     // We're inside a test. The test setup should have tokens for us that will
     // directly authenticate with Firebase and EarthEngine.
     initializeFirebase();
-    const firebaseToken = getCookieValue(firebaseTestTokenCookieName);
+    const firebaseToken = getValueFromLocalStorage(firebaseTestTokenPropertyName);
     if (!firebaseToken) {
       throw new Error('Did not receive Firebase token in test');
     }
-    const eeToken = getCookieValue(earthEngineTestTokenCookieName);
+    const eeToken = getValueFromLocalStorage(earthEngineTestTokenCookieName);
     if (!eeToken) {
       throw new Error('Did not receive EarthEngine token in test');
     }

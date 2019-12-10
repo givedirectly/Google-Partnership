@@ -1,5 +1,5 @@
 import {CLIENT_ID, getFirebaseConfig} from '../../docs/authenticate';
-import {cypressTestCookieName, earthEngineTestTokenCookieName, firebaseTestTokenCookieName} from '../../docs/in_test_util';
+import {cypressTestPropertyName, earthEngineTestTokenCookieName, firebaseTestTokenPropertyName} from '../../docs/in_test_util';
 
 export {loadScriptsBeforeForUnitTests};
 
@@ -150,7 +150,7 @@ const testPrefix = new Date().getTime() + '-';
 /**
  * Adds all necessary hooks to set up Firebase, for either unit or integration
  * tests. Populates test Firestore database. Integration tests need to also set
- * the appropriate cookie.
+ * the appropriate values in `window.localStorage`.
  */
 function addFirebaseHooks() {
   before(() => {
@@ -166,7 +166,7 @@ function addFirebaseHooks() {
   beforeEach(() => {
     currentTestRoot = testPrefix + Math.random();
     cy.task('populateTestFirestoreData', currentTestRoot);
-    cy.setCookie(cypressTestCookieName, currentTestRoot);
+    window.localStorage.setItem(cypressTestPropertyName, currentTestRoot);
   });
   afterEach(() => cy.task('deleteTestData', currentTestRoot));
 }
@@ -188,8 +188,8 @@ if (Cypress.spec.relative.startsWith('cypress/integration/integration_tests')) {
   beforeEach(() => {
     /** wide enough for sidebar */
     cy.viewport(1100, 1700);
-    cy.setCookie(firebaseTestTokenCookieName, firestoreCustomToken);
-    cy.setCookie(earthEngineTestTokenCookieName, earthEngineCustomToken);
+    window.localStorage.setItem(firebaseTestTokenPropertyName, firestoreCustomToken);
+    window.localStorage.setItem(earthEngineTestTokenCookieName, earthEngineCustomToken);
   });
 }
 
