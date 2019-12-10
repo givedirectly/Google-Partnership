@@ -17,3 +17,8 @@ table {
 #process-button {
   text-transform: none
 }
+
+.map {
+  width: 600px;
+  height: 400px;
+}

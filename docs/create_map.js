@@ -1,7 +1,7 @@
 import {POLYGON_HELP_URL} from './help.js';
-import mapStyles from './map_styles.js';
 import {geoPointToLatLng} from './map_util.js';
 import {setUpPolygonDrawing} from './polygon_draw.js';
+import {createBasicMap} from './basic_map.js';
 
 export {createMap as default};
 
@@ -24,9 +24,7 @@ function createMap(firebasePromise) {
   // Temporarily center on the center of the continental 48 states.
   // In practice, the firebase promise finishes so fast we don't actually
   // see this happen.
-  const map = new google.maps.Map(
-      $('.map').get(0),
-      {center: {lat: 39.8283, lng: -98.5795}, styles: mapStyles});
+  const {map, searchBox} = createBasicMap(document.getElementById('map'));
 
   firebasePromise.then((doc) => {
     const mapBounds = doc.data()['map-bounds'];
@@ -53,19 +51,8 @@ function createMap(firebasePromise) {
   // Search box code roughly taken from
   // https://developers.google.com/maps/documentation/javascript/examples/places-searchbox.
 
-  // Create the search box.
-  // Normally we would just steal this element from the html, but the map does
-  // weird grabby things with it, which don't seem worth working around.
-  const input = document.createElement('INPUT');
-  input.setAttribute('type', 'text');
-  input.setAttribute('placeholder', 'Search');
-  const searchBox = new google.maps.places.SearchBox(input);
-  map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
-
   // Bias the SearchBox results towards current map's viewport.
-  map.addListener('bounds_changed', function() {
-    searchBox.setBounds(map.getBounds());
-  });
+  map.addListener('bounds_changed', () => searchBox.setBounds(map.getBounds()));
 
   let markers = [];
   // Listen for the event fired when the user selects a prediction and retrieve
