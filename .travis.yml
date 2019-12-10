@@ -41,7 +41,7 @@ before_install:
 before_script:
 - yarn run ws --directory docs --port 8080 &
 script:
-- yarn run cypress run --env ON_TRAVIS=1 --record --browser=chrome --group Unit --spec 'cypress/integration/integration_tests/click_feature_test.js'
+- yarn run cypress run --env ON_TRAVIS=1 --record --browser=electron --group Unit --spec 'cypress/integration/unit_tests/*.js'
 # Chrome/Chromium video recording not working on xvfb with gpu acceleration
-#- yarn run cypress run --env ON_TRAVIS=1 --record --browser=chrome --group Integration --config video=false --spec 'cypress/integration/integration_tests/*.js'
-#- ./lint.sh
+- yarn run cypress run --env ON_TRAVIS=1 --record --browser=chrome --group Integration --config video=false --spec 'cypress/integration/integration_tests/*.js'
+- ./lint.sh
