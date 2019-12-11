@@ -3,7 +3,6 @@ import {LayerType} from '../firebase_layers.js';
 import {disasterCollectionReference} from '../firestore_document.js';
 import {convertEeObjectToPromise} from '../map_util.js';
 import {getDisaster} from '../resources.js';
-
 import {createDisasterData, incomeKey, snapKey, sviKey, totalKey} from './create_disaster_lib.js';
 import {createScoreAsset, setStatus} from './create_score_asset.js';
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
@@ -423,23 +422,23 @@ function initializeScoreSelectors(states) {
 
   // For each asset type, add select for all assets for each state.
   for (const scoreAssetType of scoreAssetTypes) {
-    const id = assetSelectionRowPrefix + scoreAssetType[0];
+    const type = scoreAssetType[0];
+    const id = assetSelectionRowPrefix + type;
     const propertyPath = scoreAssetType[1];
+    const expectedColumns = scoreAssetType[3];
     const row = $('#' + id);
     removeAllButFirstFromRow(row);
     for (const state of states) {
       if (stateAssets.get(state)) {
         const statePropertyPath = propertyPath.concat([state]);
         const select =
-            createAssetDropdown(stateAssets.get(state), statePropertyPath);
+            createAssetDropdown(stateAssets.get(state), statePropertyPath)
+                .prop('id', 'select-' + id + '-' + state);
         row.append(
             createTd().append(addNonDamageAssetDataChangeHandler(
-                select.prop('id', 'select-' + id + '-' + state),
-                statePropertyPath, scoreAssetType[3], scoreAssetType[0],
-                state)),
+                select, statePropertyPath, expectedColumns, type, state)),
             createTd().prop('id', id + '-status'));
-        checkForMissingColumns(
-            select.val(), scoreAssetType[0], state, scoreAssetType[3]);
+        checkForMissingColumns(select.val(), type, state, expectedColumns);
       }
     }
   }
@@ -552,6 +551,9 @@ function addNonDamageAssetDataChangeHandler(
   });
 }
 
+// Map of asset picker (in the form of a string '<type>-<state>' e.g.
+// poverty-WA) to the most recent value of the picker. This helps us ensure that
+// we're only updating the status box for the most recently selected value.
 const currentlyCheckingAsset = new Map();
 
 /**
@@ -563,7 +565,6 @@ const currentlyCheckingAsset = new Map();
  */
 function checkForMissingColumns(asset, type, state, expectedColumns) {
   const statusTd = $('#' + assetSelectionRowPrefix + type + '-status');
-  console.log(expectedColumns);
   if (expectedColumns.length === 0) {
     statusTd.text('No expected columns');
     return;
@@ -590,7 +591,7 @@ function checkForMissingColumns(asset, type, state, expectedColumns) {
  * @param {string} type
  * @param {Array<string>} expectedColumns
  * @param {string} state
- * @return {?ee.String} null if there was no error, or else an error message.
+ * @return {ee.String} status from column check
  */
 function getColumnsStatus(asset, type, expectedColumns, state) {
   return ee.Algorithms.If(

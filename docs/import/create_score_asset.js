@@ -394,8 +394,8 @@ function makeGeoJsonRectangle(sw, ne) {
  * building counts.
  *
  * Joins the buildings to block groups using a "saveFirst" join, since each
- * building should be in only one block group, then constructs a histogram
- * based on the appended block group features.
+ * building should be in only one block group, then constructs a histogram based
+ * on the appended block group features.
  *
  * This method will go away or be greatly changed if we're using CrowdAI data
  * instead of previously computed building data.
