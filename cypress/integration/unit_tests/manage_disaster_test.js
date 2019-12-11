@@ -1,178 +1,52 @@
 import {getFirestoreRoot, readDisasterDocument} from '../../../docs/firestore_document.js';
 import {assetDataTemplate, createDisasterData} from '../../../docs/import/create_disaster_lib.js';
-import {createScoreAsset} from '../../../docs/import/create_score_asset.js';
-import {assetSelectionRowPrefix, disasterData, initializeDamageSelector, initializeScoreSelectors, scoreAssetTypes, setUpScoreSelectorTable, stateAssets, validateUserFields} from '../../../docs/import/manage_disaster';
+import {
+  assetSelectionRowPrefix,
+  disasterData,
+  initializeDamageSelector,
+  initializeScoreSelectors,
+  scoreAssetTypes, scoreBoundsMap,
+  ScoreBoundsMap,
+  setUpScoreSelectorTable,
+  stateAssets,
+  validateUserFields
+} from '../../../docs/import/manage_disaster';
 import {addDisaster, deleteDisaster, writeNewDisaster} from '../../../docs/import/manage_disaster.js';
 import {createOptionFrom} from '../../../docs/import/manage_layers.js';
-import {convertEeObjectToPromise} from '../../../docs/map_util';
 import {getDisaster} from '../../../docs/resources.js';
-import {assertFirestoreMapBounds} from '../../support/firestore_map_bounds';
-import {createAndAppend, setUpSavingStubs} from '../../support/import_test_util.js';
+import {
+  createAndAppend, createGeoPoint,
+  setUpSavingStubs
+} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
+import {addPolygonWithPath} from '../../../docs/basic_map.js';
 
 const KNOWN_STATE = 'WF';
 
 describe('Unit tests for manage_disaster.js', () => {
-  loadScriptsBeforeForUnitTests('ee', 'firebase', 'jquery');
+  loadScriptsBeforeForUnitTests('ee', 'firebase', 'jquery', 'maps');
   before(() => {
     const disasterPicker = createAndAppend('select', 'disaster-dropdown');
     disasterPicker.append(createOptionFrom('2003-spring'));
     disasterPicker.append(createOptionFrom('2001-summer'));
     disasterPicker.val('2003-spring');
     createAndAppend('div', 'compute-status');
+    cy.wrap([createGeoPoint(-95, 30), createGeoPoint(-90, 50), createGeoPoint(-90, 30)]).as('scoreBoundsCoordinates');
   });
 
   setUpSavingStubs();
-  let testData;
-  let exportStub;
   let createFolderStub;
   let setAclsStub;
   beforeEach(() => {
     disasterData.clear();
-
-    // Create a pretty trivial world: 2 block groups, each a 1x2 vertical
-    // stripe. Under the covers, we scale all dimensions down because
-    // production code creates an "envelope" 1 km wide around damage, and that
-    // envelope is assumed to fully contain any block group that has any damage.
-    const tigerBlockGroups = ee.FeatureCollection(
-        [makeCensusBlockGroup(0), makeCensusBlockGroup(1)]);
-    // Three damage points, one of them outside the block groups, just for fun,
-    // and one of them in a block group with no SNAP info.
-    const damageData = ee.FeatureCollection(
-        [makePoint(0.4, 0.5), makePoint(1.5, .5), makePoint(10, 12)]);
-    // Only one SNAP block group, in the west.
-    const snapData = ee.FeatureCollection([makeSnapGroup('361', 10, 15)]);
-    // One SVI tract, encompassing the whole state.
-    const sviData = ee.FeatureCollection([makeSviTract(0.5)]);
-    // One income block group, also in the west.
-    const incomeData = ee.FeatureCollection([makeIncomeGroup('361', 37)]);
-    // Four buildings, three of which are in our block group.
-    const buildingsCollection = ee.FeatureCollection([
-      makePoint(0.1, 0.9),
-      makePoint(1.2, 0.5),
-      makePoint(1.4, 0.7),
-      makePoint(1.5, 0.5),
-    ]);
-    // Stub out delete and export. We'll assert on what was exported, below.
-    cy.stub(ee.data, 'deleteAsset').callsFake((_, callback) => callback());
-    exportStub = cy.stub(ee.batch.Export.table, 'toAsset')
-                     .returns({start: () => {}, id: 'FAKE_ID'});
     createFolderStub =
         cy.stub(ee.data, 'createFolder')
             .callsFake((asset, overwrite, callback) => callback());
     setAclsStub = cy.stub(ee.data, 'setAssetAcl')
                       .callsFake((asset, acls, callback) => callback());
-
-    // Test data is reasonably real. All of the keys should be able to vary,
-    // with corresponding changes to test data (but no production changes). The
-    // state must be real.
-    testData = {
-      states: ['NY'],
-      asset_data: {
-        damage_asset_path: damageData,
-        map_bounds_sw: null,
-        map_bounds_ne: null,
-        block_group_asset_paths: {
-          NY: tigerBlockGroups,
-        },
-        snap_data: {
-          paths: {
-            NY: snapData,
-          },
-          snap_key: 'test_snap_key',
-          total_key: 'test_total_key',
-        },
-        svi_asset_paths: {
-          NY: sviData,
-        },
-        svi_key: 'test_svi_key',
-        income_asset_paths: {
-          NY: incomeData,
-        },
-        income_key: 'testIncomeKey',
-        building_asset_paths: {
-          NY: buildingsCollection,
-        },
-      },
-    };
   });
 
-  it('Basic test', () => {
-    const {boundsPromise, mapBoundsCallback} =
-        makeCallbackForTextAndPromise('Found bounds');
-    const promise = createScoreAsset(testData, mapBoundsCallback);
-    expect(promise).to.not.be.null;
-    cy.wrap(promise)
-        .then(() => {
-          expect(exportStub).to.be.calledOnce;
-          return convertEeObjectToPromise(exportStub.firstCall.args[0]);
-        })
-        .then((result) => {
-          const features = result.features;
-          expect(features).to.have.length(1);
-          const feature = features[0];
-          expect(feature.properties).to.eql({
-            'BLOCK GROUP': 'Some state, group 361',
-            'BUILDING COUNT': 3,
-            'DAMAGE PERCENTAGE': 0.3333333333333333,
-            'GEOID': '361',
-            'MEDIAN INCOME': 37,
-            'SNAP HOUSEHOLDS': 10,
-            'SNAP PERCENTAGE': 0.6666666666666666,
-            'SVI': 0.5,
-            'TOTAL HOUSEHOLDS': 15,
-          });
-        });
-    cy.wrap(boundsPromise);
-    assertFirestoreMapBounds(
-        scaleObject({sw: {lng: 0.4, lat: 0.5}, ne: {lng: 10, lat: 12}}));
-  });
-
-  it('Test with no damage asset', () => {
-    testData.asset_data.damage_asset_path = null;
-    const expectedLatLngBounds =
-        scaleObject({sw: {lng: 0.39, lat: 0.49}, ne: {lng: 13, lat: 11}});
-    testData.asset_data.map_bounds_sw =
-        expectedLatLngBounds.sw.lat + ', ' + expectedLatLngBounds.sw.lng;
-    testData.asset_data.map_bounds_ne =
-        expectedLatLngBounds.ne.lat + ', ' + expectedLatLngBounds.ne.lng;
-
-    const {boundsPromise, mapBoundsCallback} =
-        makeCallbackForTextAndPromise('Wrote bounds');
-    const promise = createScoreAsset(testData, mapBoundsCallback);
-    expect(promise).to.not.be.null;
-    cy.wrap(promise)
-        .then(() => {
-          expect(exportStub).to.be.calledOnce;
-          return convertEeObjectToPromise(exportStub.firstCall.args[0]);
-        })
-        .then((result) => {
-          const features = result.features;
-          expect(features).to.have.length(1);
-          const feature = features[0];
-          expect(feature.properties).to.eql({
-            'BLOCK GROUP': 'Some state, group 361',
-            'BUILDING COUNT': 3,
-            'DAMAGE PERCENTAGE': 0,
-            'GEOID': '361',
-            'MEDIAN INCOME': 37,
-            'SNAP HOUSEHOLDS': 10,
-            'SNAP PERCENTAGE': 0.6666666666666666,
-            'SVI': 0.5,
-            'TOTAL HOUSEHOLDS': 15,
-          });
-        });
-    cy.wrap(boundsPromise);
-    assertFirestoreMapBounds(expectedLatLngBounds);
-  });
-
-  it('Test missing data', () => {
-    testData.asset_data = null;
-    expect(createScoreAsset(testData)).to.be.null;
-    expect(exportStub).to.not.be.called;
-  });
-
-  it('damage asset/map-bounds elements', () => {
+it('damage asset/map-bounds elements', () => {
     setAssetDataAndCreateDamageInputsForScoreValidationTests();
     cy.get('#map-bounds-div')
         .should('be.visible')
@@ -203,7 +77,6 @@ describe('Unit tests for manage_disaster.js', () => {
 
   it('validates asset data', () => {
     setUpAssetValidationTests();
-
     // Check table is properly initialized, then do validation.
     cy.get('#asset-selection-table-body')
         .find('tr')
@@ -335,6 +208,75 @@ describe('Unit tests for manage_disaster.js', () => {
     readFirestoreAfterWritesFinish().then(
         (doc) => expect(doc.data().asset_data.snap_data.paths.NY)
                      .to.eql(missingSnapPath));
+  });
+
+  it.only('tests ScoreBoundsMap class', () => {
+    const deleteConfirmStub = cy.stub(window, 'confirm').returns(true);
+    const newPolygonCoordinates = [createGeoPoint(-110, 40), createGeoPoint(-90, 50), createGeoPoint(-90, 40)];
+    cy.visit('test_utils/empty.html');
+    let scoreBoundsMap;
+    setAssetDataAndCreateDamageInputsForScoreValidationTests()
+        .then(() => {
+          // Set up page for ScoreBoundsMap and create one. Default data has a
+          // polygon.
+      const div = createAndAppend('div', 'score-bounds-map');
+      div.css('width', '100%');
+      div.css('height', '80%');
+      scoreBoundsMap = new ScoreBoundsMap();
+      scoreBoundsMap.initialize();
+      expect($('.score-bounds-delete-button').is(':hidden')).to.be.false;
+      expect(scoreBoundsMap.polygon).to.not.be.null;
+      expect(scoreBoundsMap.polygon.getMap()).to.eql(scoreBoundsMap.map);
+      expect(scoreBoundsMap.drawingManager.getMap()).to.be.null;
+      // Modify polygon.
+      scoreBoundsMap.polygon.getPath().setAt(0, new google.maps.LatLng({lng: -100, lat: 30}));
+    });
+    // cy.get('button');//.should('be.visible');
+    // cy.get('button').contains('Delete').should('be.visible');
+    readFirestoreAfterWritesFinish()
+    // ;
+    // // The delete button
+    // let writePromise = null;
+    // cy.get('@savedStub')
+    //     .then(
+    //         (savedStub) => {
+    //             writePromise = new Promise((resolve) => savedStub.callsFake(resolve))
+    //                 .then(() => savedStub.resetHistory())});
+    // cy.wrap(writePromise)
+        .then(readDisasterDocument).then(
+        (doc) => cy.get('@scoreBoundsCoordinates').then((scoreBoundsCoordinates) => expect(
+            doc.data().asset_data.score_bounds_coordinates).to.eql(
+            [createGeoPoint(-100, 30), ...scoreBoundsCoordinates.slice(1)]))
+    );
+    cy.get('button').contains('Delete').should('be.visible').then(() => {
+      // Switch to "new" disaster that has no polygon.
+      disasterData.get(
+          getDisaster()).asset_data.score_bounds_coordinates = null;
+      scoreBoundsMap.initialize();
+      expect(scoreBoundsMap.polygon).to.be.null;
+      expect(scoreBoundsMap.drawingManager.getMap()).to.eql(scoreBoundsMap.map);
+    });
+    cy.get('button').contains('Delete').should('not.be.visible').then(() => {
+      // Simulate drawing a polygon.
+      addPolygonWithPath(scoreBoundsMap.createPolygonOptions(newPolygonCoordinates), scoreBoundsMap.drawingManager);
+      expect(scoreBoundsMap.polygon).to.not.be.null;
+      expect(scoreBoundsMap.polygon.getMap()).to.eql(scoreBoundsMap.map);
+      expect(scoreBoundsMap.drawingManager.getMap()).to.be.null;
+    });
+    cy.get('button').contains('Delete').should('be.visible');
+    readFirestoreAfterWritesFinish().then(
+        (doc) => expect(
+            doc.data().asset_data.score_bounds_coordinates).to.eql(newPolygonCoordinates)
+    );
+    // Delete the polygon and verify it's gone everywhere.
+    cy.get('button').contains('Delete').click().then(() => {
+      expect(deleteConfirmStub).to.be.calledOnce;
+      expect(scoreBoundsMap.polygon).to.be.null;
+      expect(scoreBoundsMap.drawingManager.getMap()).to.eql(scoreBoundsMap.map);
+    });
+    readFirestoreAfterWritesFinish().then(
+        (doc) => expect(
+            doc.data().asset_data.score_bounds_coordinates).to.be.null);
   });
 
   it('writes a new disaster to firestore', () => {
@@ -482,13 +424,11 @@ describe('Unit tests for manage_disaster.js', () => {
    */
   function setAssetDataAndCreateDamageInputsForScoreValidationTests() {
     const currentData = createDisasterData(['NY']);
-    currentData['asset_data']['map_bounds_sw'] = '0, 1';
-    disasterData.set(getDisaster(), currentData);
-    return cy.document().then((doc) => {
-      // Lightly fake out jQuery so that we can use Cypress selectors. Might not
-      // work if manage_disaster.js starts doing fancier jQuery operations.
-      cy.stub(document, 'getElementById')
-          .callsFake((id) => doc.getElementById(id));
+    cy.get('@scoreBoundsCoordinates').then((scoreBoundsCoordinates) => {
+      currentData['asset_data']['score_bounds_coordinates'] = scoreBoundsCoordinates;
+      disasterData.set(getDisaster(), currentData);
+    });
+    return cy.stubDocument().then((doc) => {
       const damageSelect = doc.createElement('select');
       damageSelect.id = 'damage-asset-select';
       doc.body.appendChild(damageSelect);
@@ -514,8 +454,6 @@ describe('Unit tests for manage_disaster.js', () => {
     cy.visit('test_utils/empty.html');
     return setAssetDataAndCreateDamageInputsForScoreValidationTests().then(
         (doc) => {
-          cy.stub(document, 'createElement')
-              .callsFake((tag) => doc.createElement(tag));
           const tbody = doc.createElement('tbody');
           tbody.id = 'asset-selection-table-body';
           doc.body.appendChild(tbody);
@@ -559,117 +497,6 @@ describe('Unit tests for manage_disaster.js', () => {
         .then(readDisasterDocument);
   }
 });
-
-// Make sure that our block groups aren't so big they escape the 1 km damage
-// envelope. 1 degree of longitude is 111 km at the equator, so this should be
-// plenty.
-const distanceScalingFactor = 0.0001;
-
-/**
- * Makes a NY Census block group that is a 1x2 rectangle, with southwest corner
- * (swLng, 0), and block group id given by swLng. Note that the group's geometry
- * is scaled.
- * @param {number} swLng
- * @return {ee.Feature}
- */
-function makeCensusBlockGroup(swLng) {
-  return ee.Feature(
-      ee.Geometry.Rectangle(scaleArray([swLng, 0, swLng + 1, 2])),
-      {GEOID: '36' + swLng});
-}
-
-/**
- * Makes a feature with a single point.
- * @param {number} lng
- * @param {number} lat
- * @return {ee.Feature}
- */
-function makePoint(lng, lat) {
-  return ee.Feature(ee.Geometry.Point(scaleArray([lng, lat])));
-}
-
-/**
- * Makes a fake Census block group with SNAP data.
- * @param {string} id Block group geoid
- * @param {number} snap Number of SNAP households
- * @param {number} total Total number of households
- * @return {ee.Feature}
- */
-function makeSnapGroup(id, snap, total) {
-  return ee.Feature(null, {
-    'test_snap_key': snap,
-    'test_total_key': total,
-    'GEOdisplay-label': 'Some state, group ' + id,
-    'GEOid2': id,
-  });
-}
-
-/**
- * Makes a fake Census tract for the SVI FeatureCollection. The tract
- * encompasses the full state.
- * @param {number} svi SVI of tract
- * @return {ee.Feature}
- */
-function makeSviTract(svi) {
-  return ee.Feature(null, {'test_svi_key': svi, 'FIPS': '36'});
-}
-
-/**
- * Makes a fake Census block group for the income FeatureCollection.
- * @param {string} id Block group geoid
- * @param {number} income Average income of group
- * @return {ee.Feature}
- */
-function makeIncomeGroup(id, income) {
-  return ee.Feature(null, {testIncomeKey: income, GEOid2: id});
-}
-
-/**
- * Scales the given coordinate array by {@link distanceScalingFactor}.
- * @param {Array<number>} array
- * @return {Array<number>} The scaled array
- */
-function scaleArray(array) {
-  return array.map((num) => num * distanceScalingFactor);
-}
-
-/**
- * Scales the given object's numerical entries by {@link distanceScalingFactor}.
- * @param {Object} object LatLngBounds or a sub-object of that. Nothing complex!
- * @return {Object} The scaled object
- */
-function scaleObject(object) {
-  if (typeof (object) === 'number') {
-    return object * distanceScalingFactor;
-  }
-  if (Array.isArray(object)) {
-    return scaleArray(object);
-  }
-  const newObject = {};
-  for (const key of Object.keys(object)) {
-    newObject[key] = scaleObject(object[key]);
-  }
-  return newObject;
-}
-
-/**
- * Creates a callback for use with {@link createScoreAsset} so that we will be
- * informed when the Firestore write has completed. Returns a Promise that can
- * be waited on for that write to complete.
- * @param {string} expectedText Text contained in message when Firestore write
- *     is complete
- * @return {{boundsPromise: Promise, mapBoundsCallback: Function}}
- */
-function makeCallbackForTextAndPromise(expectedText) {
-  let resolveFunction = null;
-  const boundsPromise = new Promise((resolve) => resolveFunction = resolve);
-  const mapBoundsCallback = (message) => {
-    if (message.includes(expectedText)) {
-      resolveFunction();
-    }
-  };
-  return {boundsPromise, mapBoundsCallback};
-}
 
 /**
  * Utility function to set the first select in the given score asset row. See

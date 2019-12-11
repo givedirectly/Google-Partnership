@@ -325,49 +325,34 @@ const damageBuffer = 1000;
  */
 function calculateDamage(assetData, setMapBoundsInfo) {
   const damagePath = assetData['damage_asset_path'];
+  let geometry;
+  let damage = null;
+  let damageEnvelope;
   if (damagePath) {
-    const damage = ee.FeatureCollection(damagePath);
+    damage = ee.FeatureCollection(damagePath);
     // Uncomment to test with a restricted damage set (14 block groups' worth).
     // damage = damage.filterBounds(
     //     ee.FeatureCollection('users/gd/2017-harvey/data-ms-as-nod')
     //         .filterMetadata('GEOID', 'starts_with', '482015417002'));
-    setMapBoundsInfo('Computing and storing bounds of map: ');
-    computeAndSaveBounds(damage)
-        .then(displayGeoNumbers)
-        .then((bounds) => setMapBoundsInfo('Found bounds ' + bounds))
-        .catch(setMapBoundsInfo);
-    return {damage, damageEnvelope: damage.geometry().buffer(damageBuffer)};
+    geometry = damage.geometry();
+    damageEnvelope = damage.geometry().buffer(damageBuffer);
+  } else {
+    const scoreBounds = assetData['score_bounds_coordinates'];
+    if (!scoreBounds) {
+      missingAssetError('specify damage asset or draw bounds on map');
+      return damageError;
+    }
+    const coordinates = [];
+    scoreBounds.forEach((geopoint) => coordinates.push(geopoint.longitude, geopoint.latitude));
+    damageEnvelope = ee.Geometry.Polygon(coordinates);
+    geometry = damageEnvelope;
   }
-  // TODO(janakr): in the no-damage case, we're storing a rectangle, but
-  //  experiments show that, at least for Harvey, the page is very slow when we
-  //  load the entire rectangle around the damage. Maybe allow users to select a
-  //  polygon so they can draw a tighter area?
-  setMapBoundsInfo('Storing bounds of map: ');
-  const damageSw = assetData['map_bounds_sw'];
-  if (!damageSw) {
-    missingAssetError(
-        'damage asset or map bounds must be specified (southwest corner ' +
-        'missing');
-    return damageError;
-  }
-  const damageNe = assetData['map_bounds_ne'];
-  if (!damageNe) {
-    missingAssetError(
-        'damage asset or map bounds must be specified (northeast corner ' +
-        'missing)');
-    return damageError;
-  }
-  const sw = makeLatLngFromString(damageSw);
-  const ne = makeLatLngFromString(damageNe);
-  const damageEnvelope =
-      ee.Geometry.Rectangle([sw.lng, sw.lat, ne.lng, ne.lat]);
-  saveBounds(makeGeoJsonRectangle(sw, ne))
-      .then(() => setMapBoundsInfo('Wrote bounds'))
+  setMapBoundsInfo('Computing and storing bounds of map: ');
+  computeAndSaveBounds(geometry)
+      .then(displayGeoNumbers)
+      .then((bounds) => setMapBoundsInfo('Found bounds ' + bounds))
       .catch(setMapBoundsInfo);
-  return {
-    damage: null,
-    damageEnvelope: damageEnvelope,
-  };
+  return {damage, damageEnvelope};
 }
 
 /**

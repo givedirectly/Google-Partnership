@@ -28,6 +28,27 @@ Cypress.Commands.add('awaitLoad', (divIds) => {
 });
 
 /**
+ * Lightly fakes out prod document access for jquery and our methods, so that we
+ * can view and access the Cypress inner document as normal.
+ * @return {Cypress.Chainable<HTMLDocument>} Cypress document
+ */
+Cypress.Commands.add('stubDocument', () => {
+  return cy.document().then((doc) => {
+    // cy.stub(document, 'getElementsByTagName')
+    //     .callsFake((tagName) => doc.getElementsByTagName(tagName));
+    cy.stub(document, 'getElementsByClassName')
+        .callsFake((className) => doc.getElementsByClassName(className));
+    cy.stub(document, 'getElementById')
+        .callsFake((id) => doc.getElementById(id));
+    cy.stub(document, 'createElement')
+        .callsFake((tag) => doc.createElement(tag));
+    cy.stub(document.body, 'appendChild')
+        .callsFake((child) => doc.body.appendChild(child));
+    return doc;
+  });
+});
+
+/**
  * Cypress tests have two phases. In the first phase, each line is executed, top
  * to bottom, as usual. However, any `cy.*` commands, like `cy.get()`, do not
  * actually do anything when they execute. Instead, they enqueue a command into

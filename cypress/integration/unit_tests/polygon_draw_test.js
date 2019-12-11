@@ -240,13 +240,7 @@ describe('Unit test for ShapeData', () => {
         return realDoc.set(record);
       };
     });
-    cy.document().then((doc) => {
-      // Lightly fake out prod document access for jquery.
-      cy.stub(document, 'getElementsByTagName')
-          .callsFake((id) => doc.getElementsByTagName(id));
-      cy.stub(document, 'getElementsByClassName')
-          .callsFake((id) => doc.getElementsByClassName(id));
-    });
+    cy.stubDocument();
     pressPopupButton('edit');
     cy.get('.notes').type('new notes');
     pressPopupButton('save');

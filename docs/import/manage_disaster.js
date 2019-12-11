@@ -16,6 +16,7 @@ import {updateDataInFirestore} from './update_firestore_disaster.js';
 export {enableWhenReady, onSetDisaster, setUpScoreSelectorTable, toggleState};
 /** @VisibleForTesting */
 export {
+  ScoreBoundsMap,
   addDisaster,
   assetSelectionRowPrefix,
   createScoreAsset,
@@ -24,6 +25,7 @@ export {
   initializeDamageSelector,
   initializeScoreSelectors,
   scoreAssetTypes,
+    scoreBoundsMap,
   stateAssets,
   validateUserFields,
   writeNewDisaster,
@@ -43,6 +45,11 @@ const disasterAssets = new Map();
 
 // Map of state to list of known assets
 const stateAssets = new Map();
+
+/**
+ * Effectively constant {@link ScoreBoundsMap} initialized in {@link enableWhenReady}.
+ */
+let scoreBoundsMap;
 
 /**
  * Checks that all fields that can be entered by the user have a non-empty
@@ -100,6 +107,7 @@ function enableWhenReady(allDisastersData) {
   if (currentDisaster) {
     maybeFetchDisasterAssets(currentDisaster);
   }
+  scoreBoundsMap = new ScoreBoundsMap();
   allDisastersData.then(enableWhenFirestoreReady);
 }
 
@@ -116,7 +124,6 @@ function enableWhenFirestoreReady(allDisastersData) {
   for (const disaster of disasterData.keys()) {
     maybeFetchDisasterAssets(disaster);
   }
-  initializeBoundsMap();
   // enable add disaster button.
   const addDisasterButton = $('#add-disaster-button');
   addDisasterButton.prop('disabled', false);
@@ -147,58 +154,58 @@ function onSetDisaster() {
   processedCurrentDisasterStateAssets = false;
   processedCurrentDisasterSelfAssets = false;
   const currentDisaster = getDisaster();
-  if (currentDisaster) {
-    const states = disasterData.get(currentDisaster).states;
-    const neededStates = [];
-    // TODO: eagerly fetch all states assets.
-    for (const state of states) {
-      if (!stateAssets.has(state)) {
-        neededStates.push(state);
-      }
+  if (!currentDisaster) {
+    return;
+  }
+  scoreBoundsMap.initialize();
+  const states = disasterData.get(currentDisaster).states;
+  const neededStates = [];
+  for (const state of states) {
+    if (!stateAssets.has(state)) {
+      neededStates.push(state);
     }
-    let promise = Promise.resolve();
-    if (neededStates) {
-      promise = getStatesAssetsFromEe(neededStates).then((result) => {
-        for (const stateItem of result) {
-          const features = [];
-          stateItem[1].forEach((val, key) => {
-            if (val === LayerType.FEATURE_COLLECTION) {
-              features.push(key);
-            }
-          });
-          stateAssets.set(stateItem[0], features);
-        }
-      });
-    }
-    const scorePromise = promise.then(() => {
-      if (getDisaster() === currentDisaster &&
-          !processedCurrentDisasterStateAssets) {
-        // Don't do anything unless this is still the right disaster.
-        initializeScoreSelectors(states);
-        processedCurrentDisasterStateAssets = true;
+  }
+  let promise = Promise.resolve();
+  if (neededStates) {
+    promise = getStatesAssetsFromEe(neededStates).then((result) => {
+      for (const stateItem of result) {
+        const features = [];
+        stateItem[1].forEach((val, key) => {
+          if (val === LayerType.FEATURE_COLLECTION) {
+            features.push(key);
+          }
+        });
+        stateAssets.set(stateItem[0], features);
       }
     });
-    const disasterLambda = (assets) => {
-      if (getDisaster() === currentDisaster &&
-          !processedCurrentDisasterSelfAssets) {
-        // Don't do anything unless this is still the right disaster.
-        initializeDamageSelector(assets);
-        processedCurrentDisasterSelfAssets = true;
-      }
-    };
-    // Handle errors in disaster asset retrieval by just emptying out.
-    const damagePromise =
-        disasterAssets.get(currentDisaster).then(disasterLambda, (err) => {
-          if (err &&
-              err !==
-                  'Asset "' + eeLegacyPathPrefix + currentDisaster +
-                      '" not found.') {
-            setStatus(err);
-          }
-          disasterLambda([]);
-        });
-    Promise.all([scorePromise, damagePromise]).then(validateUserFields);
   }
+  const scorePromise = promise.then(() => {
+    if (getDisaster() === currentDisaster &&
+        !processedCurrentDisasterStateAssets) {
+      // Don't do anything unless this is still the right disaster.
+      initializeScoreSelectors(states);
+      processedCurrentDisasterStateAssets = true;
+    }
+  });
+  const disasterLambda = (assets) => {
+    if (getDisaster() === currentDisaster &&
+        !processedCurrentDisasterSelfAssets) {
+      // Don't do anything unless this is still the right disaster.
+      initializeDamageSelector(assets);
+      processedCurrentDisasterSelfAssets = true;
+    }
+  };
+  const damagePromise =
+      disasterAssets.get(currentDisaster).then(disasterLambda, (err) => {
+        if (err &&
+            err !==
+            'Asset "' + eeLegacyPathPrefix + currentDisaster +
+            '" not found.') {
+          setStatus(err);
+        }
+        disasterLambda([]);
+      });
+  Promise.all([scorePromise, damagePromise]).then(validateUserFields);
 }
 
 /**
@@ -532,7 +539,7 @@ function addAssetDataChangeHandler(elt, propertyPath) {
 }
 /**
  * Handles the user entering a value into score-related input
- * @param {*} val Value of input. empty strings are treated like null (ugh)
+ * @param {?*} val Value of input. empty strings are treated like null (ugh)
  * @param {Array<string>} propertyPath path to property inside asset data. We
  *     set this value by setting the parent's attribute to the target's value
  */
@@ -557,50 +564,79 @@ function createOptionFrom(text) {
   return $(document.createElement('option')).text(text);
 }
 
-function initializeBoundsMap() {
-  const propertyPath = ['map_bounds_coordinates'];
-  const {map} = createBasicMap(document.getElementById('map-bounds-map'), {streetViewControl: false});
-  const polygonCoordinates = getElementFromPath(propertyPath);
-  const drawingManager = new google.maps.drawing.DrawingManager({
-    drawingControl: true,
-    drawingControlOptions: {drawingModes: ['polygon']},
-    polygonOptions: {editable: true, draggable: true},
-  });
-
-  const deleteButton = $(document.createElement('button'));
-  let polygon;
-  const callback = () => handleAssetDataChange(pathToGeoPointArray(polygon), propertyPath);
-  drawingManager.addListener('overlaycomplete', (event) => {
-    polygon = event.overlay;
-    callbackOnPolygonChange(polygon, callback);
-    // If there is already polygon data, we must just be showing it to the user.
-    if (!getElementFromPath(propertyPath)) {
-      callback();
-    }
-    drawingManager.setMap(null);
-    deleteButton.show();
-  });
-
-  drawingManager.setMap(map);
-  deleteButton.text('Delete');
-  deleteButton.hide();
-  deleteButton.on('click', () => {
-    polygon.setMap(null);
-    polygon.removeAllChangeListeners();
-    polygon = null;
-    handleAssetDataChange(null, propertyPath);
-    drawingManager.setMap(map);
-    // Seems to reappear in drawing mode, maybe because it didn't gracefully
-    // exit above.
-    drawingManager.setDrawingMode(null);
-    deleteButton.hide();
-  });
-  map.controls[google.maps.ControlPosition.TOP_LEFT].insertAt(0, deleteButton[0]);
-  if (polygonCoordinates) {
-    addPolygonWithPath({paths: transformGeoPointArrayToLatLng(polygonCoordinates), map, draggable: true, editable: true}, drawingManager);
+class ScoreBoundsMap {
+  constructor() {
+    this.polygon = null;
+    /** @const */
+    this.map =
+        createBasicMap(document.getElementById('score-bounds-map'), {streetViewControl: false}).map;
+    /** @const */
+    this.drawingManager = new google.maps.drawing.DrawingManager({
+      drawingControl: true,
+      drawingControlOptions: {drawingModes: ['polygon']},
+      polygonOptions: {editable: true, draggable: true},
+    });
+    /** const */
+    this.saveData = (data) => handleAssetDataChange(data, ScoreBoundsMap.propertyPath);
+    this.setUpDeleteButton();
+    const callback = () => this.saveData(pathToGeoPointArray(this.polygon));
+    this.drawingManager.addListener('overlaycomplete', (event) => {
+      this.polygon = event.overlay;
+      callbackOnPolygonChange(this.polygon, callback);
+      // If there is already polygon data, user can't be drawing a new polygon.
+      // In that case, we're just showing initial data to the user, no need to
+      // write back to Firestore.
+      if (!getElementFromPath(ScoreBoundsMap.propertyPath)) {
+        callback();
+      }
+      this.drawingManager.setMap(null);
+      this.deleteButton.show();
+    });
+    this.drawingManager.setMap(this.map);
   }
-  return {map, drawingManager};
+
+  setUpDeleteButton() {
+    /** @const */
+    this.deleteButton = $(document.createElement('button'));
+    this.deleteButton.addClass('score-bounds-delete-button');
+    this.deleteButton.text('Delete');
+    this.deleteButton.on('click', () => {
+      if (confirm('Delete existing bounds?')) {
+        this.removePolygon();
+        this.saveData(null);
+      }
+    });
+    this.deleteButton.hide();
+    this.map.controls[google.maps.ControlPosition.TOP_LEFT].insertAt(0, this.deleteButton[0]);
+  }
+
+  removePolygon() {
+    this.polygon.setMap(null);
+    this.polygon.removeAllChangeListeners();
+    this.polygon = null;
+    this.drawingManager.setMap(this.map);
+    // Without this, reappears in drawing mode, maybe because it didn't
+    // gracefully exit last time when map was set to null.
+    this.drawingManager.setDrawingMode(null);
+    this.deleteButton.hide();
+  }
+
+  initialize() {
+    if (this.polygon) {
+      this.removePolygon();
+    }
+    const polygonCoordinates = getElementFromPath(ScoreBoundsMap.propertyPath);
+    if (polygonCoordinates) {
+      addPolygonWithPath(this.createPolygonOptions(polygonCoordinates), this.drawingManager);
+    }
+  }
+
+  createPolygonOptions(polygonCoordinates) {
+    return {paths: transformGeoPointArrayToLatLng(polygonCoordinates), map: this.map, draggable: true, editable: true};
+  }
 }
+
+ScoreBoundsMap.propertyPath = Object.freeze(['score_bounds_coordinates']);
 
 /**
  * Sets up `polygon` to call `callback` whenever the polygon changes. Normal

@@ -52,13 +52,7 @@ describe('Unit tests for click_feature.js with map and table', () => {
           if (id === tableContainerId) resolve();
         });
     createGoogleMap().then((mapResult) => map = mapResult);
-    cy.document().then((doc) => {
-      // TODO(janakr): do this faking in a library function.
-      // Lightly fake out prod document access.
-      cy.stub(document, 'getElementById')
-          .callsFake((id) => doc.getElementById(id));
-      cy.stub(document, 'createElement')
-          .callsFake((tag) => doc.createElement(tag));
+    cy.stubDocument().then((doc) => {
       const containerDiv = doc.createElement('div');
       containerDiv.id = 'tableContainer';
       doc.body.appendChild(containerDiv);

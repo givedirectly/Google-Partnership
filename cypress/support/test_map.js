@@ -22,13 +22,6 @@ function createGoogleMap() {
 }
 
 /**
- * A literal lat-long that can be passed to Google Maps methods.
- * @typedef {Object} LatLngLiteral
- * {number} lng
- * {number} lat
- */
-
-/**
  * Converts a Google LatLng object to a LatLng literal.
  * @param {google.maps.LatLng} latlng
  * @return {LatLngLiteral}
