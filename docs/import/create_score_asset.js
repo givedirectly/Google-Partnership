@@ -239,8 +239,8 @@ function createScoreAsset(
     if (!sviPath) {
       return missingAssetError('SVI asset path for ' + state);
     } else {
-      columnCheckPromises.push(convertEeObjectToPromise(
-          checkForMissingColumns(sviPath, [cdcGeoidKey, sviKey], 'SVI', state)));
+      columnCheckPromises.push(convertEeObjectToPromise(checkForMissingColumns(
+          sviPath, [cdcGeoidKey, sviKey], 'SVI', state)));
     }
     const incomePath = incomePaths[state];
     if (!incomePath) {
