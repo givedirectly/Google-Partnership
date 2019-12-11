@@ -1,6 +1,5 @@
 import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, snapPercentageTag, snapPopTag, sviTag, totalPopTag, tractTag} from '../property_names.js';
 import {getScoreAsset} from '../resources.js';
-
 import {computeAndSaveBounds, saveBounds} from './center.js';
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
 
@@ -108,10 +107,10 @@ function combineWithSnap(feature, snapKey, totalKey) {
  * @return {ee.Feature}
  */
 function combineWithAsset(feature, tag, key) {
-  const incomeFeature = ee.Feature(feature.get('secondary'));
+  const featureWithNewData = ee.Feature(feature.get('secondary'));
   return ee.Feature(feature.get('primary')).set(ee.Dictionary([
     tag,
-    convertToNumber(incomeFeature.get(key)),
+    convertToNumber(featureWithNewData.get(key)),
   ]));
 }
 

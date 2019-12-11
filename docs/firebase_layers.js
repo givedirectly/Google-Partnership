@@ -90,7 +90,7 @@ function createContinuousFunction(field, minVal, maxVal, color) {
 function createDiscreteFunction(field, colors) {
   return (feature) => {
     const value = feature['properties'][field];
-    if (!value) return [0, 0, 0, 0];
+    if (!value) return transparent;
     const rgba = colorMap.get(colors[value]);
     rgba.push(opacity);
     return rgba;
