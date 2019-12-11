@@ -62,7 +62,7 @@ function createContinuousFunction(field, minVal, maxVal, color) {
   const range = maxVal - minVal;
   return (feature) => {
     let value = feature['properties'][field];
-    if (!value) return transparent;
+    if (value === null) return transparent;
     if (value > maxVal) {
       value = maxVal;
     } else if (value < minVal) {
@@ -90,7 +90,7 @@ function createContinuousFunction(field, minVal, maxVal, color) {
 function createDiscreteFunction(field, colors) {
   return (feature) => {
     const value = feature['properties'][field];
-    if (!value) return transparent;
+    if (value === null) return transparent;
     const rgba = colorMap.get(colors[value]);
     rgba.push(opacity);
     return rgba;

@@ -39,8 +39,12 @@ function countDamageAndBuildings(feature, damage, buildings) {
   } else {
     properties = properties.set(damageTag, 0);
   }
-  const snapPop = ee.Number(feature.get(snapPopTag)).long();
-  const totalPop = ee.Number(feature.get(totalPopTag)).long();
+  const snapPop = feature.get(snapPopTag);
+  const totalPop = feature.get(totalPopTag);
+  // unfortunately, just using .contains(null) here throws an error.
+  const snapPercentage = ee.Algorithms.If(
+      ee.List([snapPop, totalPop]).containsAll([null]), null,
+      ee.Number(snapPop).long().divide(ee.Number(totalPop).long()));
   // The following properties may have null values (as a result of {@code
   // convertToNumber} so must be set directly on feature, not in dictionary.
   return ee.Feature(geometry, properties)
@@ -48,21 +52,23 @@ function countDamageAndBuildings(feature, damage, buildings) {
       .set(sviTag, feature.get(sviTag))
       .set(snapPopTag, snapPop)
       .set(totalPopTag, totalPop)
-      .set(snapPercentageTag, snapPop.divide(totalPop));
+      .set(snapPercentageTag, snapPercentage);
 }
 
 // Permissive number regexp: matches optional +/- followed by 0 or more digits
 // followed by optional period with 0 or more digits. Corresponds to valid
-// inputs to ee.Number.parse.
+// inputs to ee.Number.parse. As with ee.Number.parse, the empty string is not
+// allowed.
 const numberRegexp = '^[+-]?(([0-9]*)?[0-9](\.[0-9]*)?|\.[0-9]+)$';
 
 // Regexp that matches any string that ends in a '+' or '-'.
-const endsWithPlusMinusRegexp = '.*[+-]$';
+const endsWithPlusMinusRegexp = '[+-]$';
 
 /**
  * First strips out all ',' and whitespace. Then strips any trailing '-' or '+'
- * (for threshold values like '250,000+'). Then checks if the result is parsable
- * by earth engine as a number. If it is return parsed number else return null;
+ * (for threshold values like '250,000+'). Then checks if the result is matches
+ * our regexp for valid EE numbers. If it does, parse and return number, else
+ * return null.
  * @param {string} value
  * @return {?ee.Number}
  */
