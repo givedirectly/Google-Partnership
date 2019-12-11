@@ -1,7 +1,6 @@
 import {convertEeObjectToPromise} from '../map_util.js';
 import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, snapPercentageTag, snapPopTag, sviTag, totalPopTag, tractTag} from '../property_names.js';
 import {getScoreAsset} from '../resources.js';
-
 import {computeAndSaveBounds, saveBounds} from './center.js';
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
 
@@ -131,7 +130,6 @@ function missingAssetError(str) {
  * @param {string} str message
  */
 function setStatus(str) {
-  console.log(str);
   $('#compute-status').html(str);
 }
 
