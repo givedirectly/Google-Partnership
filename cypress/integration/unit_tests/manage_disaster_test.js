@@ -348,15 +348,18 @@ describe('Unit tests for manage_disaster.js', () => {
         [makeSnapGroup('360', 10, 15), makeSnapGroup('361', 10, 15)]);
     const promise = createScoreAsset(testData);
     expect(promise).to.not.be.null;
-    cy.wrap(promise).then(() => {
-      expect(exportStub).to.be.calledOnce;
-      return convertEeObjectToPromise(exportStub.firstCall.args[0].sort('GEOID'));
-    }).then((result) => {
-      const features = result.features;
-      expect(features).to.have.length(2);
-      expect(features[0]['properties']['MEDIAN INCOME']).to.equal(250000);
-      expect(features[1]['properties']['MEDIAN INCOME']).to.be.undefined;
-    });
+    cy.wrap(promise)
+        .then(() => {
+          expect(exportStub).to.be.calledOnce;
+          return convertEeObjectToPromise(
+              exportStub.firstCall.args[0].sort('GEOID'));
+        })
+        .then((result) => {
+          const features = result.features;
+          expect(features).to.have.length(2);
+          expect(features[0]['properties']['MEDIAN INCOME']).to.equal(250000);
+          expect(features[1]['properties']['MEDIAN INCOME']).to.be.undefined;
+        });
   });
 
 
