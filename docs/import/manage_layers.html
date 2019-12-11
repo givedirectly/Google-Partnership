@@ -30,17 +30,11 @@
 <body>
 
 <div id="navbar"></div>
+<div id="toast-message"><span id="toast-message-text"></span></div>
 
 <br><br><br>  <!-- TODO(ramvellanki): switch to using a margin above the main content of this page -->
 
 <div style="margin-left: 10px">
-  <div id="disaster-picker">
-    <label for="disaster">Disaster: </label>
-    <select id="disaster" style="width: 160px" hidden></select>
-    <select id="pending-disaster" style="width: 160px" disabled="true">
-      <option value="pending" id="pending">...</option>
-    </select>
-  </div><br>
   <div id="status"></div>
   <div id="selected-disaster">
     <table id="layer-manager" class="table table-bordered pagin-table">
@@ -56,9 +50,6 @@
         </tr>
       </thead>
       <tbody id="tbody"></tbody>
-      <div id="writeWaiter">
-        <div id="writeWaiter-loader"></div>
-      </div>
     </table>
     <br>
     <div id="color-fxn-editor" class="editor" hidden="true">

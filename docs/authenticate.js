@@ -178,7 +178,10 @@ Authenticator.trackEeAndFirebase = (taskAccumulator) => {
         // Expires in 3600 is a lie, but no need to tell the truth.
         /* expiresIn */ 3600, /* extraScopes */[],
         /* callback */
-        () => initializeEE(() => taskAccumulator.taskCompleted()),
+        () => initializeEE(() => {
+          ee.data.setCloudApiEnabled(true);
+          taskAccumulator.taskCompleted();
+        }),
         /* updateAuthLibrary */ false);
     return firebase.auth().signInWithCustomToken(firebaseToken);
   }

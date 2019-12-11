@@ -1,6 +1,13 @@
 import {disasterData} from '../../docs/import/manage_layers_lib';
+import * as Toast from '../../docs/toast.js';
 
-export {createAndAppend, createTrs, setDisasterAndLayers};
+export {
+  createAndAppend,
+  createTrs,
+  setDisasterAndLayers,
+  setUpSavingStubs,
+  waitForPromiseAndAssertSaves,
+};
 
 /**
  * Creates some amount of table rows with a .index-td td.
@@ -39,4 +46,37 @@ function createAndAppend(tag, id) {
   const element = document.createElement(tag);
   document.body.appendChild(element);
   return $(element).attr('id', id);
+}
+
+/**
+ * @param {Promise<any>} promise
+ * @return {Cypress.Chainable<void>}
+ */
+function waitForPromiseAndAssertSaves(promise) {
+  cy.wrap(promise);
+  expectStubCalledOnce('savingStub');
+  return expectStubCalledOnce('savedStub');
+}
+
+/**
+ * @param {string} stubName Name of stub, stored as Cypress alias
+ * @return {Cypress.Chainable<void>}
+ */
+function expectStubCalledOnce(stubName) {
+  return cy.get('@' + stubName).then((/** Sinon.SinonSpy */ stub) => {
+    expect(stub).to.be.calledOnce;
+    stub.resetHistory();
+  });
+}
+
+/**
+ * Adds {@link beforeEach} hook to stub out 'Saving'/'Saved' toasts and gives
+ * those stubs Cypress aliases of `@savingStub` and `@savedStub` respectively.
+ */
+function setUpSavingStubs() {
+  beforeEach(() => {
+    const toastStub = cy.stub(Toast, 'showToastMessage');
+    cy.wrap(toastStub.withArgs('Saving...', -1)).as('savingStub');
+    cy.wrap(toastStub.withArgs('Saved')).as('savedStub');
+  });
 }
