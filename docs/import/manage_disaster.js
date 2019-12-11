@@ -556,6 +556,10 @@ function addNonDamageAssetDataChangeHandler(
 // we're only updating the status box for the most recently selected value.
 const currentlyCheckingAsset = new Map();
 
+/********************
+ * WHAT IF YOU HAVE TWO STATES, DUMMY??
+ */
+
 /**
  * Checks the given asset for the given columns and prints a result message.
  * @param {string} asset
