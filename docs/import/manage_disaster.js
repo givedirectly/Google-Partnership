@@ -374,14 +374,18 @@ function toggleState(known) {
 
 const scoreAssetTypes = [
   [
-    'poverty', ['snap_data', 'paths'], 'Poverty',
-    [censusGeoidKey, censusBlockGroupKey, snapKey, totalKey]
+    'poverty',
+    ['snap_data', 'paths'],
+    'Poverty',
+    [censusGeoidKey, censusBlockGroupKey, snapKey, totalKey],
   ],
   ['income', ['income_asset_paths'], 'Income', [censusGeoidKey, incomeKey]],
   ['svi', ['svi_asset_paths'], 'SVI', [cdcGeoidKey, sviKey]],
   [
-    'tiger', ['block_group_asset_paths'], 'Census TIGER Shapefiles',
-    [tigerGeoidKey]
+    'tiger',
+    ['block_group_asset_paths'],
+    'Census TIGER Shapefiles',
+    [tigerGeoidKey],
   ],
   ['buildings', ['building_asset_paths'], 'Microsoft Building Shapefiles', []],
 ];
@@ -426,14 +430,16 @@ function initializeScoreSelectors(states) {
     for (const state of states) {
       if (stateAssets.get(state)) {
         const statePropertyPath = propertyPath.concat([state]);
-        const select = createAssetDropdown(stateAssets.get(state), statePropertyPath);
+        const select =
+            createAssetDropdown(stateAssets.get(state), statePropertyPath);
         row.append(
             createTd().append(addNonDamageAssetDataChangeHandler(
                 select.prop('id', 'select-' + id + '-' + state),
                 statePropertyPath, scoreAssetType[3], scoreAssetType[0],
                 state)),
             createTd().prop('id', id + '-status'));
-        checkForMissingColumns(select.val(), scoreAssetType[0], state, scoreAssetType[3]);
+        checkForMissingColumns(
+            select.val(), scoreAssetType[0], state, scoreAssetType[3]);
       }
     }
   }
@@ -526,8 +532,17 @@ function createAssetDropdown(
   return select;
 }
 
-const scoreAssetErrorChecks = new Map();
-
+/**
+ * Adds a handler that sets off a column verification check and data write.
+ * @param {JQuery<HTMLSelectElement>} elt
+ * @param {Array<string>} propertyPath List of attributes to follow to get
+ *     value. If that value is found in options, it will be selected. Otherwise,
+ *     no option will be selected
+ * @param {Array<string>} expectedColumns
+ * @param {string} type
+ * @param {string} state
+ * @return {JQuery<HTMLSelectElement>}
+ */
 function addNonDamageAssetDataChangeHandler(
     elt, propertyPath, expectedColumns, type, state) {
   return elt.on('change', (event) => {
@@ -537,6 +552,15 @@ function addNonDamageAssetDataChangeHandler(
   });
 }
 
+const currentlyCheckingAsset = new Map();
+
+/**
+ * Checks the given asset for the given columns and prints a result message.
+ * @param {string} asset
+ * @param {string} type
+ * @param {string} state
+ * @param {Array<string>} expectedColumns
+ */
 function checkForMissingColumns(asset, type, state, expectedColumns) {
   const statusTd = $('#' + assetSelectionRowPrefix + type + '-status');
   console.log(expectedColumns);
@@ -546,7 +570,7 @@ function checkForMissingColumns(asset, type, state, expectedColumns) {
   }
   statusTd.text('Checking columns...');
   const tdId = type + '-' + state;
-  scoreAssetErrorChecks.set(tdId, asset);
+  currentlyCheckingAsset.set(tdId, asset);
   if (asset === '') {
     statusTd.text('');
   } else {
@@ -561,13 +585,14 @@ function checkForMissingColumns(asset, type, state, expectedColumns) {
 }
 
 /**
+ * Does the actual contains check and returns the appropriate status.
  * @param {string} asset
- * @param {Array<string>} expectedColumns
  * @param {string} type
+ * @param {Array<string>} expectedColumns
  * @param {string} state
  * @return {?ee.String} null if there was no error, or else an error message.
  */
-function getColumnsStatus(asset, expectedColumns, type, state) {
+function getColumnsStatus(asset, type, expectedColumns, state) {
   return ee.Algorithms.If(
       ee.FeatureCollection(asset).first().propertyNames().containsAll(
           ee.List(expectedColumns)),

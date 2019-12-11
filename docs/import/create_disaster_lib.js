@@ -1,6 +1,5 @@
 export {createDisasterData};
-export {snapKey, totalKey, sviKey, incomeKey};
-
+export {incomeKey, snapKey, sviKey, totalKey};
 // For testing
 export {assetDataTemplate};
 
