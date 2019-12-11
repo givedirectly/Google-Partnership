@@ -97,27 +97,68 @@ function drawTableAndSetUpHandlers(processedData, map, scoreAsset) {
  * @param {number|string} index checkbox index, basis for id
  * @param {String} displayName checkbox display name
  * @param {div} parentDiv div to attach checkbox to
+ * @param {Object} colorFunction color data from the layer
  * @return {HTMLInputElement} the checkbox
  */
-function createNewCheckbox(index, displayName, parentDiv) {
+function createNewCheckbox(index, displayName, parentDiv, colorFunction) {
   const newRow = document.createElement('div');
   newRow.className = 'checkbox-row';
+
   const newBox = document.createElement('input');
   newBox.type = 'checkbox';
   newBox.id = getCheckBoxId(index);
   newBox.className = 'checkbox';
   newBox.checked = true;
   newRow.appendChild(newBox);
+
   const newMark = document.createElement('span');
   newMark.className = 'checkmark';
   newRow.appendChild(newMark);
+
   const label = document.createElement('label');
   label.className = 'checkbox-label';
   label.htmlFor = newBox.id;
   label.innerHTML = displayName;
   newRow.appendChild(label);
+
+  const legend = document.createElement('span');
+  legend.className = 'checkbox-legend';
+  legend.style.backgroundImage = getLinearGradient(colorFunction);
+  newRow.appendChild(legend);
+
   parentDiv.appendChild(newRow);
   return newBox;
+}
+
+/**
+ * Gets the linear gradient of the colors for the legend.
+ *
+ * @param {Object} colorFunction color data from the layer
+ * @return {string} the linear gradient
+ */
+function getLinearGradient(colorFunction) {
+  if (!colorFunction) {
+    return '';
+  }
+  const colors = [];
+  const currentStyle = colorFunction['current-style'];
+  switch (currentStyle) {
+    case 0:
+      colors.push('white', colorFunction['color']);
+      break;
+    case 1:
+      colors.push(...(new Set(Object.values(colorFunction['colors']))));
+      break;
+    case 2:
+      colors.push(colorFunction['color'], colorFunction['color']);
+      break;
+  }
+
+  let gradientString = 'linear-gradient(to right';
+  for (const c of colors) {
+    gradientString += ', ' + c;
+  }
+  return gradientString + ')';
 }
 
 /**
@@ -130,7 +171,8 @@ function createNewCheckbox(index, displayName, parentDiv) {
  */
 function createNewCheckboxForLayer(layer, parentDiv, map) {
   const index = layer['index'];
-  const newBox = createNewCheckbox(index, layer['display-name'], parentDiv);
+  const newBox = createNewCheckbox(
+      index, layer['display-name'], parentDiv, layer['color-function']);
   if (!layer['display-on-load']) {
     newBox.checked = false;
   }
@@ -149,7 +191,9 @@ function createNewCheckboxForLayer(layer, parentDiv, map) {
  * @param {div} parentDiv div to attach checkbox to
  */
 function createCheckboxForUserFeatures(parentDiv) {
-  const newBox = createNewCheckbox('user-features', 'user features', parentDiv);
+  const newBox = createNewCheckbox(
+      'user-features', 'user features', parentDiv,
+      {color: '#4CEF64', 'current-style': 2});
   newBox.checked = true;
   newBox.onclick = () => setUserFeatureVisibility(newBox.checked);
 }
@@ -181,6 +225,7 @@ function addLayers(map, firebaseLayers) {
         'display-name': scoreLayerName,
         'index': scoreLayerName,
         'display-on-load': true,
+        'color-function': {color: 'pink', 'current-style': 0},
       },
       sidebarDiv, map);
 }

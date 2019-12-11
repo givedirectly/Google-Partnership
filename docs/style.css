@@ -423,8 +423,17 @@ input.file-chooser {
 /* Checkbox css */
 
 .checkbox-row {
+  height: 25px;
   white-space: nowrap;
   margin: 8px 0;
+}
+
+.checkbox-legend {
+  border-radius: 4px;
+  box-shadow: 0 0 1px 1px #FAFAFA inset;
+  float: right;
+  height: 100%;
+  width: 12%;
 }
 
 input[type=checkbox] {
