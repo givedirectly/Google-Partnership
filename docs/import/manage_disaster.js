@@ -1,3 +1,4 @@
+import {createBasicMap} from '../basic_map.js';
 import {eeLegacyPathPrefix, legacyStateDir} from '../ee_paths.js';
 import {LayerType} from '../firebase_layers.js';
 import {disasterCollectionReference} from '../firestore_document.js';
@@ -111,6 +112,7 @@ function enableWhenFirestoreReady(allDisastersData) {
   for (const disaster of disasterData.keys()) {
     maybeFetchDisasterAssets(disaster);
   }
+  initializeMap();
   // enable add disaster button.
   const addDisasterButton = $('#add-disaster-button');
   addDisasterButton.prop('disabled', false);
@@ -550,4 +552,64 @@ function handleAssetDataChange(val, propertyPath) {
  */
 function createOptionFrom(text) {
   return $(document.createElement('option')).text(text);
+}
+
+function initializeMap() {
+  const {map} = createBasicMap(document.getElementById('map-bounds-map'), {streetViewControl: false});
+  const drawingManager = new google.maps.drawing.DrawingManager({
+    drawingControl: true,
+    drawingControlOptions: {drawingModes: ['polygon']},
+    polygonOptions: {editable: true, draggable: true},
+  });
+
+  const deleteButton = $(document.createElement('button'));
+  let polygon;
+  drawingManager.addListener('overlaycomplete', (event) => {
+    polygon = event.overlay;
+    callbackOnPolygonChange(polygon, () => handleAssetDataChange(convertPolygonPathToList(polygon), 'map-bounds-coordinates'));
+    drawingManager.setMap(null);
+    deleteButton.show();
+  });
+
+  drawingManager.setMap(map);
+  deleteButton.text('Delete');
+  deleteButton.hide();
+  deleteButton.on('click', () => {
+    polygon.setMap(null);
+    polygon.removeAllChangeListeners();
+    polygon = null;
+    drawingManager.setMap(map);
+    // Seems to reappear in drawing mode, maybe because it didn't gracefully
+    // exit above.
+    drawingManager.setDrawingMode(null);
+    deleteButton.hide();
+  });
+  map.controls[google.maps.ControlPosition.TOP_LEFT].insertAt(0, deleteButton[0]);
+  return {map, drawingManager};
+}
+
+function callbackOnPolygonChange(polygon, callback) {
+  const listeners = addListenersToPolygon(polygon, callback);
+  polygon.addListener('dragend', () => {
+    listeners.push(...addListenersToPolygon(polygon, callback));
+    callback();
+  });
+  polygon.removeAllChangeListeners = ()=>  {
+    listeners.forEach((listener) => google.maps.event.removeListener(listener));
+    listeners.length = 0;
+  };
+  polygon.addListener('dragstart', () => polygon.removeAllChangeListeners());
+}
+
+const polygonPathEventTypes = ['insert_at', 'remove_at', 'set_at'];
+
+function addListenersToPolygon(polygon, callback) {
+  const path = polygon.getPath();
+  return polygonPathEventTypes.map((eventType) => google.maps.event.addListener(path, eventType, callback));
+}
+
+function convertPolygonPathToList(polygon) {
+  const result = [];
+  polygon.getPath().forEach((elt) => result.push(elt.lng(), elt.lat()))
+  return result;
 }
