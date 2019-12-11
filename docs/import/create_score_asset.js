@@ -1,5 +1,7 @@
+import {convertEeObjectToPromise} from '../map_util.js';
 import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, snapPercentageTag, snapPopTag, sviTag, totalPopTag, tractTag} from '../property_names.js';
 import {getScoreAsset} from '../resources.js';
+
 import {computeAndSaveBounds, saveBounds} from './center.js';
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
 
@@ -124,19 +126,13 @@ function missingAssetError(str) {
   return null;
 }
 
-function missingColumnsError(type, asset, state, columns) {
-  setStatus(
-      'Error! ' + type + ' asset ' + asset + 'for ' + state +
-      'does not have all necessary columns: ' + columns);
-  return null;
-}
-
 /**
  * Displays status message to user.
  * @param {string} str message
  */
 function setStatus(str) {
-  $('#compute-status').text(str);
+  console.log(str);
+  $('#compute-status').html(str);
 }
 
 /**
@@ -167,7 +163,7 @@ function setMapBoundsInfo(message) {
  * @param {Function} setMapBoundsInfoFunction Function to be called when map
  *     bounds-related operations are complete. First called with a message about
  *     the task, then called with the results
- * @return {?Promise<ee.batch.ExportTask>} Promise for task of asset write.
+ * @return {?Promise<?ee.batch.ExportTask>} Promise for task of asset write.
  */
 function createScoreAsset(
     disasterData, setMapBoundsInfoFunction = setMapBoundsInfo) {
@@ -229,38 +225,29 @@ function createScoreAsset(
   }
 
   let allStatesProcessing = ee.FeatureCollection([]);
+  const columnCheckPromises = [];
   for (const state of states) {
     const snapPath = snapPaths[state];
     if (!snapPath) {
       return missingAssetError('SNAP asset path for ' + state);
     } else {
-      const necessaryColumns =
-          [censusGeoidKey, censusBlockGroupKey, snapKey, totalKey];
-      checkForColumns(snapPath, necessaryColumns).evaluate((yes) => {
-        if (yes)
-          return missingColumnsError('SNAP', snapPath, state, necessaryColumns);
-      });
+      columnCheckPromises.push(convertEeObjectToPromise(checkForMissingColumns(
+          snapPath, [censusGeoidKey, censusBlockGroupKey, snapKey, totalKey],
+          'SNAP', state)));
     }
     const sviPath = sviPaths[state];
     if (!sviPath) {
       return missingAssetError('SVI asset path for ' + state);
     } else {
-      const necessaryColumns = [cdcGeoidKey, sviKey];
-      checkForColumns(sviPath, necessaryColumns).evaluate((yes) => {
-        if (yes)
-          return missingColumnsError('SVI', sviPath, state, necessaryColumns);
-      });
+      columnCheckPromises.push(convertEeObjectToPromise(
+          checkForMissingColumns(sviPath, [cdcGeoidKey, sviKey], 'SVI', state)))
     }
     const incomePath = incomePaths[state];
     if (!incomePath) {
       return missingAssetError('income asset path for ' + state);
     } else {
-      const necessaryColumns = [censusGeoidKey, incomeKey];
-      checkForColumns(sviPath, necessaryColumns).evaluate((yes) => {
-        if (yes)
-          return missingColumnsError(
-              'income', incomePath, state, necessaryColumns);
-      });
+      columnCheckPromises.push(convertEeObjectToPromise(checkForMissingColumns(
+          incomePath, [censusGeoidKey, incomeKey], 'Median Income', state)))
     }
     const buildingPath = buildingPaths[state];
     if (!buildingPath) {
@@ -271,18 +258,14 @@ function createScoreAsset(
       return missingAssetError(
           'Census TIGER block group shapefile for ' + state);
     } else {
-      const necessaryColumns = [tigerGeoidKey];
-      checkForColumns(sviPath, necessaryColumns).evaluate((yes) => {
-        if (yes)
-          return missingColumnsError(
-              'TIGER', blockGroupPath, state, necessaryColumns);
-      });
+      columnCheckPromises.push(convertEeObjectToPromise(checkForMissingColumns(
+          blockGroupPath, [tigerGeoidKey], 'TIGER', state)))
     }
 
     const stateGroups =
         ee.FeatureCollection(blockGroupPath).filterBounds(damageEnvelope);
 
-    let processing = snapCollection.map(stringifyGeoid);
+    let processing = ee.FeatureCollection(snapPath).map(stringifyGeoid);
 
     // Join snap stats to block group geometries.
     processing =
@@ -309,39 +292,61 @@ function createScoreAsset(
         (f) => countDamageAndBuildings(f, damage, buildingsHisto));
     allStatesProcessing = allStatesProcessing.merge(processing);
   }
+  return Promise.all(columnCheckPromises).then((result) => {
+    let status = '';
+    for (const errorMessage of result) {
+      if (errorMessage !== '') {
+        status = status.concat(errorMessage).concat('<br>');
+      }
+    }
+    if (status !== '') {
+      setStatus(status);
+      return null;
+    }
 
-  // const scoreAssetPath = getScoreAsset();
-  // const task = ee.batch.Export.table.toAsset(
-  //     allStatesProcessing,
-  //     scoreAssetPath.substring(scoreAssetPath.lastIndexOf('/') + 1),
-  //     scoreAssetPath);
-  // return new Promise((resolve, reject) => {
-  //   ee.data.deleteAsset(scoreAssetPath, (_, err) => {
-  //     if (err) {
-  //       if (err === 'Asset not found.') {
-  //         console.log(
-  //             'Old ' + scoreAssetPath + ' not present, did not delete it');
-  //       } else {
-  //         const message = 'Error deleting: ' + err;
-  //         setStatus(message);
-  //         reject(new Error(message));
-  //       }
-  //     }
-  //     task.start();
-  //     $('#upload-status')
-  //         .text(
-  //             'Check Code Editor console for upload progress. Task: ' +
-  //             task.id);
-  //     resolve(task);
-  //   });
-  // });
+    const scoreAssetPath = getScoreAsset();
+    const task = ee.batch.Export.table.toAsset(
+        allStatesProcessing,
+        scoreAssetPath.substring(scoreAssetPath.lastIndexOf('/') + 1),
+        scoreAssetPath);
+    return new Promise((resolve, reject) => {
+      ee.data.deleteAsset(scoreAssetPath, (_, err) => {
+        if (err) {
+          if (err === 'Asset not found.') {
+            console.log(
+                'Old ' + scoreAssetPath + ' not present, did not delete it');
+          } else {
+            const message = 'Error deleting: ' + err;
+            setStatus(message);
+            reject(new Error(message));
+          }
+        }
+        task.start();
+        $('#upload-status')
+            .text(
+                'Check Code Editor console for upload progress. Task: ' +
+                task.id);
+        resolve(task);
+      });
+    });
+  });
 }
 
-function checkForColumns(asset, columns) {
+/**
+ * @param asset
+ * @param expectedColumns
+ * @param type
+ * @param state
+ * @return {*}
+ */
+function checkForMissingColumns(asset, expectedColumns, type, state) {
   return ee.Algorithms.If(
       ee.FeatureCollection(asset).first().propertyNames().containsAll(
-          ee.List(columns)),
-      0, 1);
+          ee.List(expectedColumns)),
+      ee.String(''),
+      ee.String(
+          'Error! ' + type + ' asset ' + asset + ' for ' + state +
+          ' does not have all expected columns: ' + expectedColumns));
 }
 
 const damageError = {
@@ -435,8 +440,8 @@ function makeGeoJsonRectangle(sw, ne) {
  * building counts.
  *
  * Joins the buildings to block groups using a "saveFirst" join, since each
- * building should be in only one block group, then constructs a histogram based
- * on the appended block group features.
+ * building should be in only one block group, then constructs a histogram
+ * based on the appended block group features.
  *
  * This method will go away or be greatly changed if we're using CrowdAI data
  * instead of previously computed building data.
