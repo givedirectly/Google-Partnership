@@ -57,7 +57,7 @@ function countDamageAndBuildings(feature, damage, buildings) {
 
 // Permissive number regexp: matches optional +/- followed by 0 or more digits
 // followed by optional period with 0 or more digits. Corresponds to valid
-// inputs to ee.Number.parse. As with ee.Number.parse, the empty string is not
+// inputs to ee.Number.parse. Like ee.Number.parse, the empty string is not
 // allowed.
 const numberRegexp = '^[+-]?(([0-9]*)?[0-9](\.[0-9]*)?|\.[0-9]+)$';
 
@@ -66,7 +66,7 @@ const endsWithPlusMinusRegexp = '[+-]$';
 
 /**
  * First strips out all ',' and whitespace. Then strips any trailing '-' or '+'
- * (for threshold values like '250,000+'). Then checks if the result is matches
+ * (for threshold values like '250,000+'). Then checks if the result matches
  * our regexp for valid EE numbers. If it does, parse and return number, else
  * return null.
  * @param {string} value
