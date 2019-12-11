@@ -416,8 +416,7 @@ function initializeScoreSelectors(states) {
   // Initialize headers.
   removeAllButFirstFromRow(headerRow);
   for (const state of states) {
-    headerRow.append(
-        createTd().text(state + ' Assets'), createTd().text('Status'));
+    headerRow.append(createTd().text(state + ' Assets'));
   }
 
   // For each asset type, add select for all assets for each state.
@@ -435,9 +434,12 @@ function initializeScoreSelectors(states) {
             createAssetDropdown(stateAssets.get(state), statePropertyPath)
                 .prop('id', 'select-' + id + '-' + state);
         row.append(
-            createTd().append(addNonDamageAssetDataChangeHandler(
-                select, statePropertyPath, expectedColumns, type, state)),
-            createTd().prop('id', id + '-status'));
+            createTd().append($(document.createElement('span'))
+                                  .prop('id', type + '-' + state + '-hover')
+                                  .append(addNonDamageAssetDataChangeHandler(
+                                              select, statePropertyPath,
+                                              expectedColumns, type, state)
+                                              .prop('style', 'border:2px'))));
         checkForMissingColumns(select.val(), type, state, expectedColumns);
       }
     }
@@ -568,25 +570,36 @@ const currentlyCheckingAsset = new Map();
  * @param {Array<string>} expectedColumns
  */
 function checkForMissingColumns(asset, type, state, expectedColumns) {
-  const statusTd = $('#' + assetSelectionRowPrefix + type + '-status');
+  const tdId = type + '-' + state;
+  const span = $('#' + tdId + '-hover');
+  const select = span.children('select');
   if (expectedColumns.length === 0) {
-    statusTd.text('No expected columns');
+    updateColorAndHover(select, 'green', span,'No expected columns');
     return;
   }
-  statusTd.text('Checking columns...');
-  const tdId = type + '-' + state;
+  updateColorAndHover(select, 'yellow', span,'Checking columns...');
   currentlyCheckingAsset.set(tdId, asset);
   if (asset === '') {
-    statusTd.text('');
+    updateColorAndHover(select, 'white');
   } else {
-    convertEeObjectToPromise(
-        getColumnsStatus(asset, expectedColumns, type, state))
+    convertEeObjectToPromise(getColumnsStatus(asset, expectedColumns))
         .then((error) => {
-          if (scoreAssetErrorChecks.get(tdId) === asset) {
-            statusTd.text(error);
+          if (currentlyCheckingAsset.get(tdId) === asset) {
+            if (error) {
+              updateColorAndHover(select, 'red',span,
+                  'Error! asset does not have all expected columns: ' +
+                      expectedColumns);
+            } else {
+              updateColorAndHover(select, 'green', span, 'Success! asset has all expected columns.');
+            }
           }
         });
   }
+}
+
+function updateColorAndHover(select, color, span, title) {
+  select.prop('style', 'border:2px solid ' + color);
+  if (span) span.prop('title', title);
 }
 
 /**
@@ -597,14 +610,11 @@ function checkForMissingColumns(asset, type, state, expectedColumns) {
  * @param {string} state
  * @return {ee.String} status from column check
  */
-function getColumnsStatus(asset, type, expectedColumns, state) {
+function getColumnsStatus(asset, expectedColumns) {
   return ee.Algorithms.If(
       ee.FeatureCollection(asset).first().propertyNames().containsAll(
           ee.List(expectedColumns)),
-      ee.String('Success! asset has all expected columns'),
-      ee.String(
-          'Error! asset does not have all expected columns: ' +
-          expectedColumns));
+      ee.Number(0), ee.Number(1));
 }
 
 /**
