@@ -36,7 +36,6 @@ function countDamageAndBuildings(feature, damage, buildings) {
           .set(snapPopTag, ee.Number(snapPop))
           .set(totalPopTag, ee.Number(totalPop))
           .set(snapPercentageTag, ee.Number(snapPop).divide(totalPop))
-          .set(incomeTag, income)
           .set(sviTag, feature.get(sviTag))
           .set(buildingCountTag, totalBuildings);
   if (damage) {
@@ -54,7 +53,9 @@ function countDamageAndBuildings(feature, damage, buildings) {
   } else {
     properties = properties.set(damageTag, 0);
   }
-  return ee.Feature(geometry, properties);
+  // This value might be null. Can set a property value to null, cannot set a
+  // dictionary value to null.
+  return ee.Feature(geometry, properties).set(incomeTag, income);
 }
 
 /**
@@ -285,19 +286,19 @@ function createScoreAsset(
   const task = ee.batch.Export.table.toAsset(
       allStatesProcessing,
       scoreAssetPath.substring(scoreAssetPath.lastIndexOf('/') + 1),
-      'users/gd/2020-julie/with-fixed-mi');
+      scoreAssetPath);
   return new Promise((resolve, reject) => {
-    // ee.data.deleteAsset(scoreAssetPath, (_, err) => {
-    //   if (err) {
-    //     if (err === 'Asset not found.') {
-    //       console.log(
-    //           'Old ' + scoreAssetPath + ' not present, did not delete it');
-    //     } else {
-    //       const message = 'Error deleting: ' + err;
-    //       setStatus(message);
-    //       reject(new Error(message));
-    //     }
-    //   }
+    ee.data.deleteAsset(scoreAssetPath, (_, err) => {
+      if (err) {
+        if (err === 'Asset not found.') {
+          console.log(
+              'Old ' + scoreAssetPath + ' not present, did not delete it');
+        } else {
+          const message = 'Error deleting: ' + err;
+          setStatus(message);
+          reject(new Error(message));
+        }
+      }
       task.start();
       $('#upload-status')
           .text(
@@ -305,7 +306,7 @@ function createScoreAsset(
               task.id);
       resolve(task);
     });
-  // });
+  });
 }
 
 const damageError = {
