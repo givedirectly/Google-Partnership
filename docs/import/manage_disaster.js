@@ -1,9 +1,12 @@
 import {eeLegacyPathPrefix, legacyStateDir} from '../ee_paths.js';
 import {LayerType} from '../firebase_layers.js';
 import {disasterCollectionReference} from '../firestore_document.js';
+import {convertEeObjectToPromise} from '../map_util.js';
 import {getDisaster} from '../resources.js';
-import {createDisasterData} from './create_disaster_lib.js';
+
+import {createDisasterData, incomeKey, snapKey, sviKey, totalKey} from './create_disaster_lib.js';
 import {createScoreAsset, setStatus} from './create_score_asset.js';
+import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
 import {getDisasterAssetsFromEe, getStatesAssetsFromEe} from './list_ee_assets.js';
 import {clearStatus} from './manage_layers_lib.js';
 import {updateDataInFirestore} from './update_firestore_disaster.js';
@@ -370,11 +373,17 @@ function toggleState(known) {
 }
 
 const scoreAssetTypes = [
-  ['poverty', ['snap_data', 'paths'], 'Poverty'],
-  ['income', ['income_asset_paths'], 'Income'],
-  ['svi', ['svi_asset_paths'], 'SVI'],
-  ['tiger', ['block_group_asset_paths'], 'Census TIGER Shapefiles'],
-  ['buildings', ['building_asset_paths'], 'Microsoft Building Shapefiles'],
+  [
+    'poverty', ['snap_data', 'paths'], 'Poverty',
+    [censusGeoidKey, censusBlockGroupKey, snapKey, totalKey]
+  ],
+  ['income', ['income_asset_paths'], 'Income', [censusGeoidKey, incomeKey]],
+  ['svi', ['svi_asset_paths'], 'SVI', [cdcGeoidKey, sviKey]],
+  [
+    'tiger', ['block_group_asset_paths'], 'Census TIGER Shapefiles',
+    [tigerGeoidKey]
+  ],
+  ['buildings', ['building_asset_paths'], 'Microsoft Building Shapefiles', []],
 ];
 Object.freeze(scoreAssetTypes);
 
@@ -404,7 +413,8 @@ function initializeScoreSelectors(states) {
   // Initialize headers.
   removeAllButFirstFromRow(headerRow);
   for (const state of states) {
-    headerRow.append(createTd().html(state + ' Assets'));
+    headerRow.append(
+        createTd().text(state + ' Assets'), createTd().text('Status'));
   }
 
   // For each asset type, add select for all assets for each state.
@@ -416,10 +426,14 @@ function initializeScoreSelectors(states) {
     for (const state of states) {
       if (stateAssets.get(state)) {
         const statePropertyPath = propertyPath.concat([state]);
-        row.append(createTd().append(addAssetDataChangeHandler(
-            createAssetDropdown(stateAssets.get(state), statePropertyPath)
-                .prop('id', 'select-' + id + '-' + state),
-            statePropertyPath)));
+        const select = createAssetDropdown(stateAssets.get(state), statePropertyPath);
+        row.append(
+            createTd().append(addNonDamageAssetDataChangeHandler(
+                select.prop('id', 'select-' + id + '-' + state),
+                statePropertyPath, scoreAssetType[3], scoreAssetType[0],
+                state)),
+            createTd().prop('id', id + '-status'));
+        checkForMissingColumns(select.val(), scoreAssetType[0], state, scoreAssetType[3]);
       }
     }
   }
@@ -510,6 +524,57 @@ function createAssetDropdown(
   }
 
   return select;
+}
+
+const scoreAssetErrorChecks = new Map();
+
+function addNonDamageAssetDataChangeHandler(
+    elt, propertyPath, expectedColumns, type, state) {
+  return elt.on('change', (event) => {
+    const newAsset = $(event.target).val();
+    checkForMissingColumns(newAsset, type, state, expectedColumns);
+    handleAssetDataChange(newAsset, propertyPath);
+  });
+}
+
+function checkForMissingColumns(asset, type, state, expectedColumns) {
+  const statusTd = $('#' + assetSelectionRowPrefix + type + '-status');
+  console.log(expectedColumns);
+  if (expectedColumns.length === 0) {
+    statusTd.text('No expected columns');
+    return;
+  }
+  statusTd.text('Checking columns...');
+  const tdId = type + '-' + state;
+  scoreAssetErrorChecks.set(tdId, asset);
+  if (asset === '') {
+    statusTd.text('');
+  } else {
+    convertEeObjectToPromise(
+        getColumnsStatus(asset, expectedColumns, type, state))
+        .then((error) => {
+          if (scoreAssetErrorChecks.get(tdId) === asset) {
+            statusTd.text(error);
+          }
+        });
+  }
+}
+
+/**
+ * @param {string} asset
+ * @param {Array<string>} expectedColumns
+ * @param {string} type
+ * @param {string} state
+ * @return {?ee.String} null if there was no error, or else an error message.
+ */
+function getColumnsStatus(asset, expectedColumns, type, state) {
+  return ee.Algorithms.If(
+      ee.FeatureCollection(asset).first().propertyNames().containsAll(
+          ee.List(expectedColumns)),
+      ee.String('Success! asset has all expected columns'),
+      ee.String(
+          'Error! asset does not have all expected columns: ' +
+          expectedColumns));
 }
 
 /**

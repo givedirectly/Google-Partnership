@@ -1,4 +1,3 @@
-import {convertEeObjectToPromise} from '../map_util.js';
 import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, snapPercentageTag, snapPopTag, sviTag, totalPopTag, tractTag} from '../property_names.js';
 import {getScoreAsset} from '../resources.js';
 import {computeAndSaveBounds, saveBounds} from './center.js';
@@ -130,7 +129,7 @@ function missingAssetError(str) {
  * @param {string} str message
  */
 function setStatus(str) {
-  $('#compute-status').html(str);
+  $('#compute-status').text(str);
 }
 
 /**
@@ -161,7 +160,7 @@ function setMapBoundsInfo(message) {
  * @param {Function} setMapBoundsInfoFunction Function to be called when map
  *     bounds-related operations are complete. First called with a message about
  *     the task, then called with the results
- * @return {?Promise<?ee.batch.ExportTask>} Promise for task of asset write.
+ * @return {?Promise<ee.batch.ExportTask>} Promise for task of asset write.
  */
 function createScoreAsset(
     disasterData, setMapBoundsInfoFunction = setMapBoundsInfo) {
@@ -223,29 +222,18 @@ function createScoreAsset(
   }
 
   let allStatesProcessing = ee.FeatureCollection([]);
-  const columnCheckPromises = [];
   for (const state of states) {
     const snapPath = snapPaths[state];
     if (!snapPath) {
       return missingAssetError('SNAP asset path for ' + state);
-    } else {
-      columnCheckPromises.push(convertEeObjectToPromise(checkForMissingColumns(
-          snapPath, [censusGeoidKey, censusBlockGroupKey, snapKey, totalKey],
-          'SNAP', state)));
     }
     const sviPath = sviPaths[state];
     if (!sviPath) {
       return missingAssetError('SVI asset path for ' + state);
-    } else {
-      columnCheckPromises.push(convertEeObjectToPromise(checkForMissingColumns(
-          sviPath, [cdcGeoidKey, sviKey], 'SVI', state)));
     }
     const incomePath = incomePaths[state];
     if (!incomePath) {
       return missingAssetError('income asset path for ' + state);
-    } else {
-      columnCheckPromises.push(convertEeObjectToPromise(checkForMissingColumns(
-          incomePath, [censusGeoidKey, incomeKey], 'Median Income', state)));
     }
     const buildingPath = buildingPaths[state];
     if (!buildingPath) {
@@ -255,9 +243,6 @@ function createScoreAsset(
     if (!blockGroupPath) {
       return missingAssetError(
           'Census TIGER block group shapefile for ' + state);
-    } else {
-      columnCheckPromises.push(convertEeObjectToPromise(checkForMissingColumns(
-          blockGroupPath, [tigerGeoidKey], 'TIGER', state)));
     }
 
     const stateGroups =
@@ -290,61 +275,32 @@ function createScoreAsset(
         (f) => countDamageAndBuildings(f, damage, buildingsHisto));
     allStatesProcessing = allStatesProcessing.merge(processing);
   }
-  return Promise.all(columnCheckPromises).then((result) => {
-    let status = '';
-    for (const errorMessage of result) {
-      if (errorMessage !== '') {
-        status = status.concat(errorMessage).concat('<br>');
-      }
-    }
-    if (status !== '') {
-      setStatus(status);
-      return null;
-    }
 
-    const scoreAssetPath = getScoreAsset();
-    const task = ee.batch.Export.table.toAsset(
-        allStatesProcessing,
-        scoreAssetPath.substring(scoreAssetPath.lastIndexOf('/') + 1),
-        scoreAssetPath);
-    return new Promise((resolve, reject) => {
-      ee.data.deleteAsset(scoreAssetPath, (_, err) => {
-        if (err) {
-          if (err === 'Asset not found.') {
-            console.log(
-                'Old ' + scoreAssetPath + ' not present, did not delete it');
-          } else {
-            const message = 'Error deleting: ' + err;
-            setStatus(message);
-            reject(new Error(message));
-          }
+  const scoreAssetPath = getScoreAsset();
+  const task = ee.batch.Export.table.toAsset(
+      allStatesProcessing,
+      scoreAssetPath.substring(scoreAssetPath.lastIndexOf('/') + 1),
+      scoreAssetPath);
+  return new Promise((resolve, reject) => {
+    ee.data.deleteAsset(scoreAssetPath, (_, err) => {
+      if (err) {
+        if (err === 'Asset not found.') {
+          console.log(
+              'Old ' + scoreAssetPath + ' not present, did not delete it');
+        } else {
+          const message = 'Error deleting: ' + err;
+          setStatus(message);
+          reject(new Error(message));
         }
-        task.start();
-        $('#upload-status')
-            .text(
-                'Check Code Editor console for upload progress. Task: ' +
-                task.id);
-        resolve(task);
-      });
+      }
+      task.start();
+      $('#upload-status')
+          .text(
+              'Check Code Editor console for upload progress. Task: ' +
+              task.id);
+      resolve(task);
     });
   });
-}
-
-/**
- * @param {string} asset
- * @param {Array<string>} expectedColumns
- * @param {string} type
- * @param {string} state
- * @return {ee.String} Empty if there was no error, or else an error message.
- */
-function checkForMissingColumns(asset, expectedColumns, type, state) {
-  return ee.Algorithms.If(
-      ee.FeatureCollection(asset).first().propertyNames().containsAll(
-          ee.List(expectedColumns)),
-      ee.String(''),
-      ee.String(
-          'Error! ' + type + ' asset ' + asset + ' for ' + state +
-          ' does not have all expected columns: ' + expectedColumns));
 }
 
 const damageError = {
