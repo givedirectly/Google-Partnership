@@ -362,7 +362,6 @@ describe('Unit tests for manage_disaster.js', () => {
         });
   });
 
-
   it('writes a new disaster to firestore', () => {
     let id = '2002-winter';
     const states = ['DN', 'WF'];
