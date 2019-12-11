@@ -240,14 +240,14 @@ function createScoreAsset(
       return missingAssetError('SVI asset path for ' + state);
     } else {
       columnCheckPromises.push(convertEeObjectToPromise(
-          checkForMissingColumns(sviPath, [cdcGeoidKey, sviKey], 'SVI', state)))
+          checkForMissingColumns(sviPath, [cdcGeoidKey, sviKey], 'SVI', state)));
     }
     const incomePath = incomePaths[state];
     if (!incomePath) {
       return missingAssetError('income asset path for ' + state);
     } else {
       columnCheckPromises.push(convertEeObjectToPromise(checkForMissingColumns(
-          incomePath, [censusGeoidKey, incomeKey], 'Median Income', state)))
+          incomePath, [censusGeoidKey, incomeKey], 'Median Income', state)));
     }
     const buildingPath = buildingPaths[state];
     if (!buildingPath) {
@@ -259,7 +259,7 @@ function createScoreAsset(
           'Census TIGER block group shapefile for ' + state);
     } else {
       columnCheckPromises.push(convertEeObjectToPromise(checkForMissingColumns(
-          blockGroupPath, [tigerGeoidKey], 'TIGER', state)))
+          blockGroupPath, [tigerGeoidKey], 'TIGER', state)));
     }
 
     const stateGroups =
@@ -333,11 +333,11 @@ function createScoreAsset(
 }
 
 /**
- * @param asset
- * @param expectedColumns
- * @param type
- * @param state
- * @return {*}
+ * @param {string} asset
+ * @param {Array<string>} expectedColumns
+ * @param {string} type
+ * @param {string} state
+ * @return {ee.String} Empty if there was no error, or else an error message.
  */
 function checkForMissingColumns(asset, expectedColumns, type, state) {
   return ee.Algorithms.If(
