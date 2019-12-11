@@ -574,10 +574,10 @@ function checkForMissingColumns(asset, type, state, expectedColumns) {
   const span = $('#' + tdId + '-hover');
   const select = span.children('select');
   if (expectedColumns.length === 0) {
-    updateColorAndHover(select, 'green', span,'No expected columns');
+    updateColorAndHover(select, 'green', span, 'No expected columns');
     return;
   }
-  updateColorAndHover(select, 'yellow', span,'Checking columns...');
+  updateColorAndHover(select, 'yellow', span, 'Checking columns...');
   currentlyCheckingAsset.set(tdId, asset);
   if (asset === '') {
     updateColorAndHover(select, 'white');
@@ -586,11 +586,14 @@ function checkForMissingColumns(asset, type, state, expectedColumns) {
         .then((error) => {
           if (currentlyCheckingAsset.get(tdId) === asset) {
             if (error) {
-              updateColorAndHover(select, 'red',span,
+              updateColorAndHover(
+                  select, 'red', span,
                   'Error! asset does not have all expected columns: ' +
                       expectedColumns);
             } else {
-              updateColorAndHover(select, 'green', span, 'Success! asset has all expected columns.');
+              updateColorAndHover(
+                  select, 'green', span,
+                  'Success! asset has all expected columns.');
             }
           }
         });
