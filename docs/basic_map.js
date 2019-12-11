@@ -1,6 +1,6 @@
 import mapStyles from './map_styles.js';
 
-export {createBasicMap};
+export {createBasicMap, addPolygonWithPath};
 
 function createBasicMap(div, additionalOptions = {}) {
   // Create the base Google Map. Takes ~7 ms to execute this step.
@@ -44,4 +44,10 @@ function createBasicMap(div, additionalOptions = {}) {
     map.fitBounds(bounds);
   });
   return {map, searchBox};
+}
+
+function addPolygonWithPath(polygonOptions, drawingManager, map) {
+  const event = new Event('overlaycomplete');
+  event.overlay = new google.maps.Polygon(polygonOptions);
+  google.maps.event.trigger(drawingManager, 'overlaycomplete', event);
 }

@@ -1,7 +1,11 @@
-import {createBasicMap} from '../basic_map.js';
+import {addPolygonWithPath, createBasicMap} from '../basic_map.js';
 import {eeLegacyPathPrefix, legacyStateDir} from '../ee_paths.js';
 import {LayerType} from '../firebase_layers.js';
 import {disasterCollectionReference} from '../firestore_document.js';
+import {
+  pathToGeoPointArray,
+  transformGeoPointArrayToLatLng,
+} from '../map_util.js';
 import {getDisaster} from '../resources.js';
 import {createDisasterData} from './create_disaster_lib.js';
 import {createScoreAsset, setStatus} from './create_score_asset.js';
@@ -112,7 +116,7 @@ function enableWhenFirestoreReady(allDisastersData) {
   for (const disaster of disasterData.keys()) {
     maybeFetchDisasterAssets(disaster);
   }
-  initializeMap();
+  initializeBoundsMap();
   // enable add disaster button.
   const addDisasterButton = $('#add-disaster-button');
   addDisasterButton.prop('disabled', false);
@@ -528,7 +532,7 @@ function addAssetDataChangeHandler(elt, propertyPath) {
 }
 /**
  * Handles the user entering a value into score-related input
- * @param {string} val Value of input. empty strings are treated like null (ugh)
+ * @param {*} val Value of input. empty strings are treated like null (ugh)
  * @param {Array<string>} propertyPath path to property inside asset data. We
  *     set this value by setting the parent's attribute to the target's value
  */
@@ -553,8 +557,10 @@ function createOptionFrom(text) {
   return $(document.createElement('option')).text(text);
 }
 
-function initializeMap() {
+function initializeBoundsMap() {
+  const propertyPath = ['map_bounds_coordinates'];
   const {map} = createBasicMap(document.getElementById('map-bounds-map'), {streetViewControl: false});
+  const polygonCoordinates = getElementFromPath(propertyPath);
   const drawingManager = new google.maps.drawing.DrawingManager({
     drawingControl: true,
     drawingControlOptions: {drawingModes: ['polygon']},
@@ -563,9 +569,14 @@ function initializeMap() {
 
   const deleteButton = $(document.createElement('button'));
   let polygon;
+  const callback = () => handleAssetDataChange(pathToGeoPointArray(polygon), propertyPath);
   drawingManager.addListener('overlaycomplete', (event) => {
     polygon = event.overlay;
-    callbackOnPolygonChange(polygon, () => handleAssetDataChange(convertPolygonPathToList(polygon), 'map-bounds-coordinates'));
+    callbackOnPolygonChange(polygon, callback);
+    // If there is already polygon data, we must just be showing it to the user.
+    if (!getElementFromPath(propertyPath)) {
+      callback();
+    }
     drawingManager.setMap(null);
     deleteButton.show();
   });
@@ -577,6 +588,7 @@ function initializeMap() {
     polygon.setMap(null);
     polygon.removeAllChangeListeners();
     polygon = null;
+    handleAssetDataChange(null, propertyPath);
     drawingManager.setMap(map);
     // Seems to reappear in drawing mode, maybe because it didn't gracefully
     // exit above.
@@ -584,9 +596,25 @@ function initializeMap() {
     deleteButton.hide();
   });
   map.controls[google.maps.ControlPosition.TOP_LEFT].insertAt(0, deleteButton[0]);
+  if (polygonCoordinates) {
+    addPolygonWithPath({paths: transformGeoPointArrayToLatLng(polygonCoordinates), map, draggable: true, editable: true}, drawingManager);
+  }
   return {map, drawingManager};
 }
 
+/**
+ * Sets up `polygon` to call `callback` whenever the polygon changes. Normal
+ * shape changes are handled by the listeners registered by {@link addListenersToPolygon},
+ * while drag events are handled separately. Since drag events generate so many
+ * individual change events, we remove those events on drag start and add them
+ * back on drag end.
+ *
+ * We also register a `removeAllChangeListeners` method on the polygon so that
+ * the caller can easily deregister all listeners if the polygon is being
+ * deleted.
+ * @param {google.maps.Polygon} polygon
+ * @param {Function} callback Function invoked whenever polygon path changes
+ */
 function callbackOnPolygonChange(polygon, callback) {
   const listeners = addListenersToPolygon(polygon, callback);
   polygon.addListener('dragend', () => {
@@ -602,13 +630,16 @@ function callbackOnPolygonChange(polygon, callback) {
 
 const polygonPathEventTypes = ['insert_at', 'remove_at', 'set_at'];
 
+/**
+ * Adds listeners to the polygon's {@link google.maps.MVCArray<google.maps.LatLng>}
+ * path so that any change is detected. These listeners will fire continuously
+ * on drag events, so they should be removed before a drag starts. See
+ * https://stackoverflow.com/questions/12515748/event-after-modifying-polygon-in-google-maps-api-v3/20682154
+ * @param {google.maps.Polygon} polygon
+ * @param {Function} callback Called whenever polygon's path changes
+ * @returns {Array<google.maps.MapsEventListener>} Listeners added
+ */
 function addListenersToPolygon(polygon, callback) {
   const path = polygon.getPath();
   return polygonPathEventTypes.map((eventType) => google.maps.event.addListener(path, eventType, callback));
-}
-
-function convertPolygonPathToList(polygon) {
-  const result = [];
-  polygon.getPath().forEach((elt) => result.push(elt.lng(), elt.lat()))
-  return result;
 }

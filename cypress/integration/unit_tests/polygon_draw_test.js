@@ -1,3 +1,4 @@
+import {addPolygonWithPath} from '../../../docs/basic_map.js';
 import {mapContainerId, writeWaiterId} from '../../../docs/dom_constants.js';
 import * as loading from '../../../docs/loading.js';
 import {initializeAndProcessUserRegions, setUpPolygonDrawing, StoredShapeData, transformGeoPointArrayToLatLng, userShapes} from '../../../docs/polygon_draw.js';
@@ -547,14 +548,7 @@ describe('Unit test for ShapeData', () => {
    * @return {Cypress.Chainable<void>}
    */
   function drawPolygon(polygonPath = path) {
-    return cyQueue(() => {
-      const event = new Event('overlaycomplete');
-      event.overlay = new google.maps.Polygon({
-        map: map,
-        paths: polygonPath,
-      });
-      google.maps.event.trigger(drawingManager, 'overlaycomplete', event);
-    });
+    return cyQueue(() => addPolygonWithPath({paths: polygonPath, map}, drawingManager));
   }
 
   /**

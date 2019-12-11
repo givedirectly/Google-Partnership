@@ -2,6 +2,8 @@ export {
   convertEeObjectToPromise,
   geoPointToLatLng,
   latLngToGeoPoint,
+    pathToGeoPointArray,
+    transformGeoPointArrayToLatLng,
 };
 
 /**
@@ -22,6 +24,21 @@ function geoPointToLatLng(geopoint) {
  */
 function latLngToGeoPoint(latLng) {
   return new firebase.firestore.GeoPoint(latLng.lat(), latLng.lng());
+}
+
+function pathToGeoPointArray(polygon) {
+  return polygon.getPath().getArray().map(latLngToGeoPoint);
+}
+
+/**
+ * Transforms GeoPoint array to LatLng array.
+ * @param {Array<firebase.firestore.GeoPoint>} geopoints
+ * @return {Array<LatLng>} Array is actually just lat-lng pairs, but good enough
+ */
+function transformGeoPointArrayToLatLng(geopoints) {
+  const coordinates = [];
+  geopoints.forEach((geopoint) => coordinates.push(geoPointToLatLng(geopoint)));
+  return coordinates;
 }
 
 /**
