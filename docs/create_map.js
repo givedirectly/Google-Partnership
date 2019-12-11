@@ -1,7 +1,7 @@
 import {POLYGON_HELP_URL} from './help.js';
 import {geoPointToLatLng} from './map_util.js';
 import {setUpPolygonDrawing} from './polygon_draw.js';
-import {calculatePlacesBounds, createBasicMap} from './basic_map.js';
+import {createBasicMap} from './basic_map.js';
 
 export {createMap as default};
 
@@ -46,7 +46,7 @@ function createMap(firebasePromise) {
   helpIcon.setAttribute('aria-hidden', 'true');
   helpLink.appendChild(helpIcon);
   helpContainer.appendChild(helpLink);
-  map.controls[google.maps.ControlPosition.TOP_LEFT].push(helpContainer);
+  map.controls[google.maps.ControlPosition.TOP_LEFT].insertAt(0, helpContainer);
 
   // Search box code roughly taken from
   // https://developers.google.com/maps/documentation/javascript/examples/places-searchbox.

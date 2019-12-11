@@ -38,13 +38,26 @@ function initializeMap() {
     polygonOptions: {editable: true, draggable: true},
   });
 
+  const deleteButton = $(document.createElement('button'));
+  let polygon;
   drawingManager.addListener('overlaycomplete', (event) => {
-    callbackOnPolygonChange(event.overlay);
+    polygon = event.overlay;
+    callbackOnPolygonChange(polygon);
     drawingManager.setMap(null);
+    deleteButton.show();
   });
 
   drawingManager.setMap(map);
-  return drawingManager;
+  deleteButton.text('Delete');
+  deleteButton.hide();
+  deleteButton.on('click', () => {
+    polygon.setMap(null);
+    drawingManager.setMap(map);
+    drawingManager.setDrawingMode(null);
+    deleteButton.hide();
+  });
+  map.controls[google.maps.ControlPosition.TOP_LEFT].insertAt(0, deleteButton[0]);
+  return {map, drawingManager};
 }
 
 function callbackOnPolygonChange(polygon) {
