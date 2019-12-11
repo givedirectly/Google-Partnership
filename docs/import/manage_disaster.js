@@ -558,10 +558,6 @@ function addNonDamageAssetDataChangeHandler(
 // we're only updating the status box for the most recently selected value.
 const currentlyCheckingAsset = new Map();
 
-/********************
- * WHAT IF YOU HAVE TWO STATES, DUMMY??
- */
-
 /**
  * Checks the given asset for the given columns and prints a result message.
  * @param {string} asset
@@ -600,6 +596,13 @@ function checkForMissingColumns(asset, type, state, expectedColumns) {
   }
 }
 
+/**
+ * Updates the border of the select and the hover text of the span.
+ * @param {JQuery<HTMLSelectElement>} select
+ * @param {string} color
+ * @param {JQuery<HTMLSpanElement>} span
+ * @param {string} title
+ */
 function updateColorAndHover(select, color, span, title) {
   select.prop('style', 'border:2px solid ' + color);
   if (span) span.prop('title', title);
@@ -608,9 +611,7 @@ function updateColorAndHover(select, color, span, title) {
 /**
  * Does the actual contains check and returns the appropriate status.
  * @param {string} asset
- * @param {string} type
  * @param {Array<string>} expectedColumns
- * @param {string} state
  * @return {ee.String} status from column check
  */
 function getColumnsStatus(asset, expectedColumns) {
