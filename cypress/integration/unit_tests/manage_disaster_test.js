@@ -344,7 +344,7 @@ describe('Unit tests for manage_disaster.js', () => {
     checkHoverText(
         '#poverty-NY-hover',
         'Error! asset does not have all expected columns: ' +
-        'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
+            'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
 
     // set back to None
     setFirstSelectInScoreRowTo(0, 'None');
@@ -788,9 +788,5 @@ function checkHoverText(selector, text) {
 }
 
 function setFirstSelectInScoreRowTo(rowNum, text) {
-  return getFirstTdInScoreRow(rowNum)
-      .next()
-      .find('select')
-      .select(text)
-      .blur();
+  return getFirstTdInScoreRow(rowNum).next().find('select').select(text).blur();
 }
