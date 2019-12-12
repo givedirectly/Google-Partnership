@@ -3,6 +3,7 @@ export {
   geoPointToLatLng,
   latLngToGeoPoint,
   pathToGeoPointArray,
+  polygonToGeoPointArray,
   transformGeoPointArrayToLatLng,
 };
 
@@ -38,8 +39,17 @@ function latLngToGeoPoint(latLng) {
  * @param {google.maps.Polygon} polygon
  * @return {Array<firebase.firestore.GeoPoint>}
  */
-function pathToGeoPointArray(polygon) {
-  return polygon.getPath().getArray().map(latLngToGeoPoint);
+function polygonToGeoPointArray(polygon) {
+  return pathToGeoPointArray(polygon);
+}
+
+/**
+ * Converts `path` to a Firestore GeoPoint array.
+ * @param {google.maps.MVCArray<google.maps.LatLng>} path
+ * @return {Array<firebase.firestore.GeoPoint>}
+ */
+function pathToGeoPointArray(path) {
+  return path.getArray().map(latLngToGeoPoint);
 }
 
 /**

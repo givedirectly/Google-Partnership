@@ -1,18 +1,15 @@
-import {
-  addPolygonWithPath,
-  applyMinimumBounds,
-  createBasicMap,
-  defaultMapCenter, defaultZoomLevel
-} from '../basic_map.js';
 import {eeLegacyPathPrefix, legacyStateDir} from '../ee_paths.js';
 import {LayerType} from '../firebase_layers.js';
 import {disasterCollectionReference} from '../firestore_document.js';
 import {pathToGeoPointArray, transformGeoPointArrayToLatLng} from '../map_util.js';
 import {getDisaster} from '../resources.js';
+
 import {createDisasterData} from './create_disaster_lib.js';
 import {createScoreAsset, setStatus} from './create_score_asset.js';
 import {getDisasterAssetsFromEe, getStatesAssetsFromEe} from './list_ee_assets.js';
 import {clearStatus} from './manage_layers_lib.js';
+import {ScoreBoundsMap} from './score_bounds_map.js';
+import {scoreCoordinatesAttribute} from './score_path_lib.js';
 import {updateDataInFirestore} from './update_firestore_disaster.js';
 
 export {enableWhenReady, onSetDisaster, setUpScoreSelectorTable, toggleState};
@@ -26,7 +23,6 @@ export {
   initializeDamageSelector,
   initializeScoreSelectors,
   scoreAssetTypes,
-  ScoreBoundsMap,
   scoreBoundsMap,
   stateAssets,
   validateUserFields,
@@ -54,6 +50,8 @@ const stateAssets = new Map();
  */
 let scoreBoundsMap;
 
+const scoreCoordinatesPath = Object.freeze([scoreCoordinatesAttribute]);
+
 /**
  * Checks that all fields that can be entered by the user have a non-empty
  * value. Does not check that assets actually exist, are of valid type, etc. If
@@ -79,7 +77,7 @@ function validateUserFields() {
     }
   }
   const hasDamage = $('#damage-asset-select').val() ||
-      getElementFromPath(ScoreBoundsMap.propertyPath);
+      getElementFromPath(scoreCoordinatesPath);
   let message = '';
   if (missingItems.length) {
     message = 'Missing asset(s): ' + missingItems.join(', ');
@@ -110,7 +108,9 @@ function enableWhenReady(allDisastersData) {
   if (currentDisaster) {
     maybeFetchDisasterAssets(currentDisaster);
   }
-  scoreBoundsMap = new ScoreBoundsMap();
+  scoreBoundsMap = new ScoreBoundsMap(
+      (polygonPath) => handleAssetDataChange(
+          pathToGeoPointArray(polygonPath), scoreCoordinatesPath));
   allDisastersData.then(enableWhenFirestoreReady);
 }
 
@@ -160,7 +160,16 @@ function onSetDisaster() {
   if (!currentDisaster) {
     return;
   }
-  scoreBoundsMap.initialize();
+  const boundsDiv = $('#map-bounds-div');
+  const boundsDivHidden = boundsDiv.is(':hidden');
+  if (boundsDivHidden) {
+    boundsDiv.show();
+  }
+  scoreBoundsMap.initialize(
+      transformGeoPointArrayToLatLng(getElementFromPath(scoreCoordinatesPath)));
+  if (boundsDivHidden) {
+    boundsDiv.hide();
+  }
   const states = disasterData.get(currentDisaster).states;
   const neededStates = [];
   for (const state of states) {
@@ -468,7 +477,6 @@ function setMapBoundsDiv(hide) {
     mapBoundsDiv.hide();
   } else {
     mapBoundsDiv.show();
-    scoreBoundsMap.onShow();
   }
 }
 /**
@@ -571,187 +579,3 @@ function handleAssetDataChange(val, propertyPath) {
 function createOptionFrom(text) {
   return $(document.createElement('option')).text(text);
 }
-
-/**
- * Helper class to create and attach map for score-bounds selection to the page.
- * We keep a single map (and drawing manager and delete button) across the
- * lifetime of the page. {@link initialize} should be called every time a
- * disaster is loaded to set up the appropriate data, and {@link onShow}
- * when the map's div becomes visible for this disaster.
- *
- * Saves the new polygon coordinates whenever the polygon is edited or deleted.
- */
-class ScoreBoundsMap {
-  /** @constructor */
-  constructor() {
-    this.polygon = null;
-    /** @const */
-    this.map = createBasicMap(document.getElementById('score-bounds-map'), {
-                 streetViewControl: false,
-               }).map;
-    /** @const */
-    this.drawingManager = new google.maps.drawing.DrawingManager({
-      drawingControl: true,
-      drawingControlOptions: {drawingModes: ['polygon']},
-      polygonOptions: {editable: true, draggable: true},
-    });
-    this._setUpDeleteButton();
-    const callback = () =>
-        ScoreBoundsMap._saveData(pathToGeoPointArray(this.polygon));
-    this.drawingManager.addListener('overlaycomplete', (event) => {
-      this.polygon = event.overlay;
-      ScoreBoundsMap._callbackOnPolygonChange(this.polygon, callback);
-      // If there is already polygon data, user can't be drawing a new polygon.
-      // In that case, we're just showing initial data to the user, no need to
-      // write back to Firestore.
-      if (!getElementFromPath(ScoreBoundsMap.propertyPath)) {
-        callback();
-      }
-      this.drawingManager.setMap(null);
-      this.deleteButton.show();
-    });
-    this.drawingManager.setMap(this.map);
-  }
-
-  /** @private Creates {@link this.deleteButton} and attaches it to the map. */
-  _setUpDeleteButton() {
-    /** @const */
-    this.deleteButton = $(document.createElement('button'));
-    this.deleteButton.addClass('score-bounds-delete-button');
-    this.deleteButton.text('Delete');
-    this.deleteButton.on('click', () => {
-      if (confirm('Delete existing bounds?')) {
-        this._removePolygon();
-        ScoreBoundsMap._saveData(null);
-      }
-    });
-    this.deleteButton.hide();
-    this.map.controls[google.maps.ControlPosition.TOP_LEFT].insertAt(
-        0, this.deleteButton[0]);
-    // document.body.appendChild(this.deleteButton[0]);
-  }
-
-  /**
-   * Removes the currently drawn polygon from the map, and sets the map up to
-   * draw a new polygon. Does not save anything to Firestore.
-   * @private
-   */
-  _removePolygon() {
-    this.polygon.setMap(null);
-    this.polygon.removeAllChangeListeners();
-    this.polygon = null;
-    this.drawingManager.setMap(this.map);
-    // Without this, reappears in drawing mode, maybe because it didn't
-    // gracefully exit last time when map was set to null.
-    this.drawingManager.setDrawingMode(null);
-    this.deleteButton.hide();
-  }
-
-  /**
-   * Called when the page's disaster is set: Clears the map, reads the existing
-   * polygon coordinates (if any) and draws it on the map.
-   */
-  initialize() {
-    if (this.polygon) {
-      this._removePolygon();
-    }
-    const polygonCoordinates = getElementFromPath(ScoreBoundsMap.propertyPath);
-    if (polygonCoordinates) {
-      const polygonOptions = this.createPolygonOptions(polygonCoordinates);
-      addPolygonWithPath(polygonOptions, this.drawingManager);
-    }
-    this.needsBoundsFit = true;
-  }
-
-  /**
-   * Called when the map div becomes visible, and fits map bounds around
-   * polygon, if one exists. We delay this fitting because map bounds are not
-   * honored if map is not visible when they are applied.
-   * https://developers.google.com/maps/documentation/javascript/reference/map#Map.fitBounds
-   */
-  onShow() {
-    if (!this.needsBoundsFit) {
-      return;
-    }
-    this.needsBoundsFit = false;
-    if (this.polygon) {
-      // Fit map around existing polygon.
-      const bounds = new google.maps.LatLngBounds();
-      this.polygon.getPath().forEach((latlng) => bounds.extend(latlng));
-      applyMinimumBounds(bounds, this.map);
-    } else {
-      this.map.setCenter(defaultMapCenter);
-      this.map.setZoom(defaultZoomLevel);
-    }
-  }
-
-  /**
-   * Creates a {@link google.maps.PolygonOptions} object with the given path, so
-   * that the polygon is editable and draggable. Visible for testing.
-   * @param {Array<firebase.firestore.GeoPoint>} polygonCoordinates
-   * @return {google.maps.PolygonOptions}
-   */
-  createPolygonOptions(polygonCoordinates) {
-    return {
-      paths: transformGeoPointArrayToLatLng(polygonCoordinates),
-      map: this.map,
-      draggable: true,
-      editable: true,
-    };
-  }
-}
-
-ScoreBoundsMap.propertyPath = Object.freeze(['score_bounds_coordinates']);
-
-/**
- * Saves the given data to local storage and Firestore.
- * @private
- * @param {Array<firebase.firestore.GeoPoint>} data
- * @return {Promise<void>} Promise that completes when Firestore writes are done
- */
-ScoreBoundsMap._saveData = (data) =>
-    handleAssetDataChange(data, ScoreBoundsMap.propertyPath);
-
-/**
- * Sets up `polygon` to call `callback` whenever the polygon changes. Normal
- * shape changes are handled by the listeners registered by {@link
- * addListenersToPolygon}, while drag events are handled separately. Since drag
- * events generate so many individual change events, we remove those events on
- * drag start and add them back on drag end.
- *
- * We also register a `removeAllChangeListeners` method on the polygon so that
- * the caller can easily deregister all listeners if the polygon is being
- * deleted.
- * @param {google.maps.Polygon} polygon
- * @param {Function} callback Function invoked whenever polygon path changes
- */
-ScoreBoundsMap._callbackOnPolygonChange = (polygon, callback) => {
-  const listeners = ScoreBoundsMap._addListenersToPolygon(polygon, callback);
-  polygon.addListener('dragend', () => {
-    listeners.push(...addListenersToPolygon(polygon, callback));
-    callback();
-  });
-  polygon.removeAllChangeListeners = () => {
-    listeners.forEach((listener) => google.maps.event.removeListener(listener));
-    listeners.length = 0;
-  };
-  polygon.addListener('dragstart', () => polygon.removeAllChangeListeners());
-};
-
-const polygonPathEventTypes = ['insert_at', 'remove_at', 'set_at'];
-
-/**
- * Adds listeners to the polygon's {@link
- * google.maps.MVCArray<google.maps.LatLng>} path so that any change is
- * detected. These listeners will fire continuously on drag events, so they
- * should be removed before a drag starts. See
- * https://stackoverflow.com/questions/12515748/event-after-modifying-polygon-in-google-maps-api-v3/20682154
- * @param {google.maps.Polygon} polygon
- * @param {Function} callback Called whenever polygon's path changes
- * @return {Array<google.maps.MapsEventListener>} Listeners added
- */
-ScoreBoundsMap._addListenersToPolygon = (polygon, callback) => {
-  const path = polygon.getPath();
-  return polygonPathEventTypes.map(
-      (eventType) => google.maps.event.addListener(path, eventType, callback));
-};

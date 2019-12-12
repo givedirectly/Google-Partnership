@@ -1,8 +1,18 @@
 import mapStyles from './map_styles.js';
 
-export {addPolygonWithPath, applyMinimumBounds, createBasicMap, defaultMapCenter, defaultZoomLevel};
+export {
+  addPolygonWithPath,
+  applyMinimumBounds,
+  createBasicMap,
+  defaultMapCenter,
+  defaultZoomLevel,
+};
 
-const defaultMapCenter = {lat: 29.8283, lng: -98.5795};
+// Contiguous United States.
+const defaultMapCenter = {
+  lat: 29.8283,
+  lng: -98.5795,
+};
 const defaultZoomLevel = 4;
 
 /**

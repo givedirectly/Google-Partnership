@@ -2,7 +2,7 @@ import {mapContainerId, writeWaiterId} from './dom_constants.js';
 import {createError} from './error.js';
 import {getFirestoreRoot} from './firestore_document.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
-import {latLngToGeoPoint, pathToGeoPointArray, transformGeoPointArrayToLatLng} from './map_util.js';
+import {latLngToGeoPoint, polygonToGeoPointArray, transformGeoPointArrayToLatLng} from './map_util.js';
 import {createPopup, isMarker, setUpPopup} from './popup.js';
 import {snapPopTag, totalPopTag} from './property_names.js';
 import {getScoreAsset} from './resources.js';
@@ -232,7 +232,7 @@ StoredShapeData.pendingWriteCount = 0;
 
 StoredShapeData.featureGeoPoints = (feature) => isMarker(feature) ?
     [latLngToGeoPoint(feature.getPosition())] :
-    pathToGeoPointArray(feature);
+    polygonToGeoPointArray(feature);
 
 StoredShapeData.compareGeoPointArrays = (array1, array2) => {
   // Catch if one argument is null/undefined.
