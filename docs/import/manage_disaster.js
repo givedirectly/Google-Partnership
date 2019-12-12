@@ -47,6 +47,7 @@ const stateAssets = new Map();
 /**
  * Effectively constant {@link ScoreBoundsMap} initialized in {@link
  * enableWhenReady}.
+ * @type {ScoreBoundsMap}
  */
 let scoreBoundsMap;
 
