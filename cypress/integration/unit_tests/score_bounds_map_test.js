@@ -39,7 +39,7 @@ describe('Unit tests for ScoreBoundsMap class', () => {
       doc.body.appendChild(div[0]);
 
       // Create and show map. Done in before block because can only be done once
-      // safely per test.
+      // safely per test, since Google Maps Javascript object is very finicky.
       underTest = new ScoreBoundsMap(
           div[0],
           (data) =>
