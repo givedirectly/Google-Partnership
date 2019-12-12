@@ -174,7 +174,7 @@ function onSetDisaster() {
   processedCurrentDisasterSelfAssets = false;
   const currentDisaster = getDisaster();
   if (!currentDisaster) {
-    return;
+    return Promise.resolve();
   }
   const scoreBoundsPath = getElementFromPath(scoreCoordinatesPath);
   scoreBoundsMap.initialize(
