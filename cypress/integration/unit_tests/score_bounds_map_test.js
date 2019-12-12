@@ -26,31 +26,33 @@ const newNe = {
 describe('Unit tests for ScoreBoundsMap class', () => {
   loadScriptsBeforeForUnitTests('jquery', 'maps');
 
-  it('tests ScoreBoundsMap class', () => {
-    const deleteConfirmStub = cy.stub(window, 'confirm').returns(true);
-    let underTest;
-    const storedSaves = [];
+  let underTest;
+  const storedSaves = [];
+  before(() => {
+    storedSaves.length = 0;
     cy.visit('test_utils/empty.html');
     cy.document().then((doc) => {
-      cy.stub(document, 'getElementById')
-          .callsFake((id) => doc.getElementById(id));
       const div = $(doc.createElement('div'));
       div.css('width', '100%');
       div.css('height', '80%');
       div.prop('id', 'score-bounds-map');
       doc.body.appendChild(div[0]);
 
-      // Create and show map, with a polygon.
+      // Create and show map.
       underTest = new ScoreBoundsMap(
           div[0],
           (data) =>
               storedSaves.push(data ? data.map((ll) => ll.toJSON()) : data));
-      underTest.initialize(scoreBoundsCoordinates);
-      expect(underTest.polygon).to.not.be.null;
-      expect(underTest.polygon.getMap()).to.eql(underTest.map);
-      expect(underTest.drawingManager.getMap()).to.be.null;
-      expect(storedSaves).to.be.empty;
     });
+  });
+
+  it('tests ScoreBoundsMap class', () => {
+    const deleteConfirmStub = cy.stub(window, 'confirm').returns(true);
+    underTest.initialize(scoreBoundsCoordinates);
+    expect(underTest.polygon).to.not.be.null;
+    expect(underTest.polygon.getMap()).to.eql(underTest.map);
+    expect(underTest.drawingManager.getMap()).to.be.null;
+    expect(storedSaves).to.be.empty;
     cy.get('[title="Draw a shape"').should('not.exist');
     cy.get('.score-bounds-delete-button').should('be.visible').then(() => {
       // Bounds have not yet been set.
