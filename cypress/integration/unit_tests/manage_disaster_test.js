@@ -337,6 +337,27 @@ describe('Unit tests for manage_disaster.js', () => {
                      .to.eql(missingSnapPath));
   });
 
+  it('handles non-numeric median income valuess', () => {
+    testData.asset_data.income_asset_paths.NY = ee.FeatureCollection(
+        [makeIncomeGroup('360', '250,000+'), makeIncomeGroup('361', '-')]);
+    testData.asset_data.snap_data.paths.NY = ee.FeatureCollection(
+        [makeSnapGroup('360', 10, 15), makeSnapGroup('361', 10, 15)]);
+    const promise = createScoreAsset(testData);
+    expect(promise).to.not.be.null;
+    cy.wrap(promise)
+        .then(() => {
+          expect(exportStub).to.be.calledOnce;
+          return convertEeObjectToPromise(
+              exportStub.firstCall.args[0].sort('GEOID'));
+        })
+        .then((result) => {
+          const features = result.features;
+          expect(features).to.have.length(2);
+          expect(features[0]['properties']['MEDIAN INCOME']).to.equal(250000);
+          expect(features[1]['properties']['MEDIAN INCOME']).to.be.undefined;
+        });
+  });
+
   it('writes a new disaster to firestore', () => {
     let id = '2002-winter';
     const states = ['DN', 'WF'];
