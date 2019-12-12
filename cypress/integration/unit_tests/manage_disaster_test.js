@@ -71,18 +71,16 @@ describe('Unit tests for manage_disaster.js', () => {
         .its('length')
         .should('eq', 5);
     cy.wait(50);
-    cy.get('@scoreBoundsCoordinates')
-        .then(
-            (scoreBoundsCoordinates) => {
-              // Check that map bounds have adjusted to include the polygon we
-              // drew, which extends north of the US into Canada.
-              // TODO(janakr): This passes even without the show/hide dance in
-              //  manage_disaster#onSetDisaster, but without that it fails in
-              //  production. Make test more faithful to prod somehow.
-              const bounds = scoreBoundsMap.map.getBounds();
-              transformGeoPointArrayToLatLng(scoreBoundsCoordinates).forEach(
-                  (point) => expect(bounds.contains(point)).to.be.true);
-            });
+    cy.get('@scoreBoundsCoordinates').then((scoreBoundsCoordinates) => {
+      // Check that map bounds have adjusted to include the polygon we
+      // drew, which extends north of the US into Canada.
+      // TODO(janakr): This passes even without the show/hide dance in
+      //  manage_disaster#onSetDisaster, but without that it fails in
+      //  production. Make test more faithful to prod somehow.
+      const bounds = scoreBoundsMap.map.getBounds();
+      transformGeoPointArrayToLatLng(scoreBoundsCoordinates)
+          .forEach((point) => expect(bounds.contains(point)).to.be.true);
+    });
     // Delete polygon to start.
     cy.stub(window, 'confirm').returns(true);
 
@@ -410,7 +408,7 @@ describe('Unit tests for manage_disaster.js', () => {
       doc.body.appendChild(button);
       stateAssets.set('NY', ['state0', 'state1', 'state2', 'state3', 'state4']);
     });
-    cy.get('@scoreBoundsCoordinates').then((scoreBoundsCoordinates) => {
+    return cy.get('@scoreBoundsCoordinates').then((scoreBoundsCoordinates) => {
       scoreBoundsMap.initialize(
           transformGeoPointArrayToLatLng(scoreBoundsCoordinates));
       // Use production code to prime score asset table, get damage set up.
