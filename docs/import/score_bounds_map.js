@@ -13,15 +13,16 @@ export {ScoreBoundsMap};
 class ScoreBoundsMap {
   /**
    * @constructor
+   * @param {HTMLDivElement} div to attach map to
    * @param {Function} saveData Called on changes to polygon with the path of
-   *     the polygon (as an `Array<LatLng>` object).
+   *     the polygon (as an `Array<LatLng>` object)
    */
-  constructor(saveData) {
+  constructor(div, saveData) {
     this.polygon = null;
     this.saveData = () =>
         saveData(this.polygon ? this.polygon.getPath().getArray() : null);
     /** @const */
-    this.map = createBasicMap(document.getElementById('score-bounds-map'), {
+    this.map = createBasicMap(div, {
                  streetViewControl: false,
                }).map;
     /** @const */
@@ -93,12 +94,28 @@ class ScoreBoundsMap {
     if (this.polygon) {
       this._removePolygon();
     }
+    this.needsBoundsFit = true;
     if (polygonCoordinates) {
       this._addPolygon(new google.maps.Polygon(
           this._createPolygonOptions(polygonCoordinates)));
+    }
+  }
+
+  /**
+   * Called whenever the map becomes visible. Sets the bounds of the map if they
+   * have not yet been set for the current data. Bounds cannot be set earlier
+   * because {@link google.maps.Map} does not like having its bounds set when it
+   * is not visible.
+   */
+  onShow() {
+    if (!this.needsBoundsFit) {
+      return;
+    }
+    this.needsBoundsFit = false;
+    if (this.polygon) {
       // Fit map around existing polygon.
       const bounds = new google.maps.LatLngBounds();
-      polygonCoordinates.forEach((latlng) => bounds.extend(latlng));
+      this.polygon.getPath().forEach((latlng) => bounds.extend(latlng));
       applyMinimumBounds(bounds, this.map);
     } else {
       this.map.setCenter(defaultMapCenter);

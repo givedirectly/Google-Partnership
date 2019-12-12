@@ -12,7 +12,13 @@ import {ScoreBoundsMap} from './score_bounds_map.js';
 import {scoreCoordinatesAttribute} from './score_path_lib.js';
 import {updateDataInFirestore} from './update_firestore_disaster.js';
 
-export {enableWhenReady, onSetDisaster, setUpScoreSelectorTable, toggleState};
+export {
+  enableWhenReady,
+  onSetDisaster,
+  setUpScoreBoundsMap,
+  setUpScoreSelectorTable,
+  toggleState,
+};
 /** @VisibleForTesting */
 export {
   addDisaster,
@@ -20,6 +26,7 @@ export {
   createScoreAsset,
   deleteDisaster,
   disasterData,
+  enableWhenFirestoreReady,
   initializeDamageSelector,
   initializeScoreSelectors,
   scoreAssetTypes,
@@ -98,10 +105,19 @@ function validateUserFields() {
   }
 }
 
+/** @param {HTMLDivElement} div Div to attach score bounds map to */
+function setUpScoreBoundsMap(div) {
+  scoreBoundsMap = new ScoreBoundsMap(
+      div,
+      (polygonPath) => handleAssetDataChange(
+          polygonPath ? polygonPath.map(latLngToGeoPoint) : null,
+          scoreCoordinatesPath));
+}
 /**
  * Enables page functionality.
  * @param {Promise<Map<string, Object>>} allDisastersData Promise with contents
  *     of Firestore for all disasters
+ * @return {Promise<void>}
  */
 function enableWhenReady(allDisastersData) {
   // Eagerly kick off current disaster asset listing before Firestore finishes.
@@ -109,11 +125,7 @@ function enableWhenReady(allDisastersData) {
   if (currentDisaster) {
     maybeFetchDisasterAssets(currentDisaster);
   }
-  scoreBoundsMap = new ScoreBoundsMap(
-      (polygonPath) => handleAssetDataChange(
-          polygonPath ? polygonPath.map(latLngToGeoPoint) : null,
-          scoreCoordinatesPath));
-  allDisastersData.then(enableWhenFirestoreReady);
+  return allDisastersData.then(enableWhenFirestoreReady);
 }
 
 /**
@@ -121,10 +133,10 @@ function enableWhenReady(allDisastersData) {
  * @param {Map<string, Object>} allDisastersData Contents of
  *     Firestore for all disasters, the current disaster's data is used when
  *     calculating
+ * @return {Promise<void>} Promise that completes when all setting is done
  */
 function enableWhenFirestoreReady(allDisastersData) {
   disasterData = allDisastersData;
-  onSetDisaster();
   // Kick off all EE asset fetches.
   for (const disaster of disasterData.keys()) {
     maybeFetchDisasterAssets(disaster);
@@ -146,6 +158,7 @@ function enableWhenFirestoreReady(allDisastersData) {
     processButton.prop('disabled', true);
     createScoreAsset(disasterData.get(getDisaster()));
   });
+  return onSetDisaster();
 }
 
 let processedCurrentDisasterStateAssets = false;
@@ -154,6 +167,7 @@ let processedCurrentDisasterSelfAssets = false;
 /**
  * Function called when current disaster changes. Responsible for displaying the
  * score selectors and enabling/disabling the kick-off button.
+ * @return {Promise<void>} Promise that completes when all setting is done
  */
 function onSetDisaster() {
   processedCurrentDisasterStateAssets = false;
@@ -162,18 +176,9 @@ function onSetDisaster() {
   if (!currentDisaster) {
     return;
   }
-  // Map's bounds cannot be set if it is hidden, so temporarily show it and then
-  // immediately hide it again.
-  const boundsDiv = $('#map-bounds-div');
-  const boundsDivHidden = boundsDiv.is(':hidden');
-  if (boundsDivHidden) {
-    boundsDiv.show();
-  }
+  const scoreBoundsPath = getElementFromPath(scoreCoordinatesPath);
   scoreBoundsMap.initialize(
-      transformGeoPointArrayToLatLng(getElementFromPath(scoreCoordinatesPath)));
-  if (boundsDivHidden) {
-    boundsDiv.hide();
-  }
+      scoreBoundsPath ? transformGeoPointArrayToLatLng(scoreBoundsPath) : null);
   const states = disasterData.get(currentDisaster).states;
   const neededStates = [];
   for (const state of states) {
@@ -221,7 +226,7 @@ function onSetDisaster() {
         }
         disasterLambda([]);
       });
-  Promise.all([scorePromise, damagePromise]).then(validateUserFields);
+  return Promise.all([scorePromise, damagePromise]).then(validateUserFields);
 }
 
 /**
@@ -477,7 +482,12 @@ function initializeDamageSelector(assets) {
  */
 function setMapBoundsDiv(hide) {
   const mapBoundsDiv = $('#map-bounds-div');
-  hide ? mapBoundsDiv.hide() : mapBoundsDiv.show();
+  if (hide) {
+    mapBoundsDiv.hide();
+  } else {
+    mapBoundsDiv.show();
+    scoreBoundsMap.onShow();
+  }
 }
 
 /**

@@ -42,6 +42,7 @@ describe('Unit tests for ScoreBoundsMap class', () => {
 
       // Create and show map, with a polygon.
       underTest = new ScoreBoundsMap(
+          div[0],
           (data) =>
               storedSaves.push(data ? data.map((ll) => ll.toJSON()) : data));
       underTest.initialize(scoreBoundsCoordinates);
@@ -52,6 +53,11 @@ describe('Unit tests for ScoreBoundsMap class', () => {
     });
     cy.get('[title="Draw a shape"').should('not.exist');
     cy.get('.score-bounds-delete-button').should('be.visible').then(() => {
+      // Bounds have not yet been set.
+      expect(underTest.map.getBounds().contains(scoreBoundsCoordinates[1]))
+          .to.be.false;
+      // Now they're set.
+      underTest.onShow();
       // TODO(janakr): Bounds are not available immediately after map
       //  initialization. Putting it here, after a few cy.get() operations,
       //  appears to be enough, but might have to add a wait if flaky.
@@ -79,6 +85,7 @@ describe('Unit tests for ScoreBoundsMap class', () => {
       expect(underTest.polygon).to.be.null;
       expect(underTest.drawingManager.getMap()).to.eql(underTest.map);
       expect(storedSaves).to.be.empty;
+      underTest.onShow();
       // Bounds were reset.
       expect(underTest.map.getBounds().contains(newSw)).to.be.false;
       expect(underTest.map.getBounds().contains(newNe)).to.be.false;
