@@ -539,8 +539,7 @@ function handleAssetDataChange(val, propertyPath) {
   parentProperty[propertyPath[propertyPath.length - 1]] =
       val !== '' ? val : null;
   validateUserFields();
-  updateDataInFirestore(
-      () => disasterData.get(getDisaster()), () => {}, () => {});
+  updateDataInFirestore(() => disasterData.get(getDisaster()));
 }
 
 /**

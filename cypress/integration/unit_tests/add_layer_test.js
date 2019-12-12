@@ -1,8 +1,7 @@
 import {ColorStyle, LayerType} from '../../../docs/firebase_layers.js';
 import {processNewEeLayer, processNonEeLayer} from '../../../docs/import/add_layer.js';
 import {disasterData, getCurrentLayers} from '../../../docs/import/manage_layers_lib.js';
-import * as loading from '../../../docs/loading.js';
-import {createTrs} from '../../support/import_test_util.js';
+import {createTrs, setUpSavingStubs, waitForPromiseAndAssertSaves} from '../../support/import_test_util.js';
 import {createAndAppend, setDisasterAndLayers} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
@@ -10,11 +9,8 @@ const mockAsset = 'mockAsset';
 
 describe('Unit tests for adding layers', () => {
   loadScriptsBeforeForUnitTests('ee', 'firebase', 'jquery');
-  beforeEach(() => {
-    cy.stub(loading, 'addLoadingElement');
-    cy.stub(loading, 'loadingElementFinished');
-    disasterData.clear();
-  });
+  setUpSavingStubs();
+  beforeEach(() => disasterData.clear());
 
   afterEach(() => disasterData.clear());
 
@@ -25,7 +21,8 @@ describe('Unit tests for adding layers', () => {
     const tbody = createAndAppend('tbody', 'tbody');
     tbody.append(rows);
 
-    cy.wrap(processNewEeLayer(mockAsset, LayerType.FEATURE_COLLECTION))
+    waitForPromiseAndAssertSaves(
+        processNewEeLayer(mockAsset, LayerType.FEATURE_COLLECTION))
         .then(() => {
           const layers = getCurrentLayers();
           expect(layers.length).to.equal(3);
@@ -50,7 +47,8 @@ describe('Unit tests for adding layers', () => {
     setDisasterAndLayers([]);
     createAndAppend('tbody', 'tbody');
 
-    cy.wrap(processNewEeLayer(mockAsset, LayerType.FEATURE_COLLECTION))
+    waitForPromiseAndAssertSaves(
+        processNewEeLayer(mockAsset, LayerType.FEATURE_COLLECTION))
         .then(() => {
           const layers = getCurrentLayers();
           expect(layers.length).to.equal(1);
@@ -73,7 +71,8 @@ describe('Unit tests for adding layers', () => {
         .withArgs(mockAsset)
         .returns(featureCollection);
 
-    cy.wrap(processNewEeLayer(mockAsset, LayerType.FEATURE_COLLECTION))
+    waitForPromiseAndAssertSaves(
+        processNewEeLayer(mockAsset, LayerType.FEATURE_COLLECTION))
         .then(() => {
           const layer = getCurrentLayers()[0];
           expect(layer['color-function']['columns']['flavor']['values'])
@@ -85,7 +84,8 @@ describe('Unit tests for adding layers', () => {
     setDisasterAndLayers([]);
     createAndAppend('tbody', 'tbody');
 
-    cy.wrap(processNewEeLayer(mockAsset, LayerType.IMAGE_COLLECTION))
+    waitForPromiseAndAssertSaves(
+        processNewEeLayer(mockAsset, LayerType.IMAGE_COLLECTION))
         .then(() => {
           const layers = getCurrentLayers();
           expect(layers.length).to.equal(1);
@@ -99,15 +99,17 @@ describe('Unit tests for adding layers', () => {
     setDisasterAndLayers([]);
     createAndAppend('tbody', 'tbody');
 
-    cy.wrap(processNonEeLayer(LayerType.KML, ['fake-url1', 'fake-url2']))
-        .then(() => {
-          const layers = getCurrentLayers();
-          expect(layers.length).to.equal(1);
-          const layer = layers[0];
-          expect(layer['asset-type']).to.equal(LayerType.KML);
-          expect(layer['color-function']).to.be.undefined;
-          expect(layer['urls'].length).to.equal(2);
-        });
+    waitForPromiseAndAssertSaves(processNonEeLayer(LayerType.KML, [
+      'fake-url1',
+      'fake-url2',
+    ])).then(() => {
+      const layers = getCurrentLayers();
+      expect(layers.length).to.equal(1);
+      const layer = layers[0];
+      expect(layer['asset-type']).to.equal(LayerType.KML);
+      expect(layer['color-function']).to.be.undefined;
+      expect(layer['urls'].length).to.equal(2);
+    });
   });
 });
 

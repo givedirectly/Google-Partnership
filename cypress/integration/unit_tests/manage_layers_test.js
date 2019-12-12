@@ -4,17 +4,13 @@ import {withColor} from '../../../docs/import/color_function_util.js';
 import {getStatesAssetsFromEe} from '../../../docs/import/list_ee_assets.js';
 import {createOptionFrom, createStateAssetPickers, createTd, onCheck, onDelete, onInputBlur, onListBlur, stateAssets, updateAfterSort, withCheckbox, withInput, withList, withType} from '../../../docs/import/manage_layers.js';
 import {disasterData, getCurrentLayers} from '../../../docs/import/manage_layers_lib.js';
-import * as loading from '../../../docs/loading.js';
 import {getDisaster} from '../../../docs/resources';
-import {createAndAppend, createTrs, setDisasterAndLayers} from '../../support/import_test_util.js';
+import {createAndAppend, createTrs, setDisasterAndLayers, setUpSavingStubs, waitForPromiseAndAssertSaves} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
 const KNOWN_STATE = 'WF';
 const UNKNOWN_STATE = 'DN';
 const KNOWN_STATE_ASSET = gdEeStatePrefix + KNOWN_STATE + '/snap';
-
-let loadingStartedStub;
-let loadingFinishedStub;
 
 describe('Unit tests for manage_layers page', () => {
   loadScriptsBeforeForUnitTests('ee', 'firebase', 'jquery');
@@ -26,6 +22,8 @@ describe('Unit tests for manage_layers page', () => {
 
     createAndAppend('div', 'status').hide();
   });
+
+  setUpSavingStubs();
 
   beforeEach(() => {
     const listAssetsStub = cy.stub(ee.data, 'listAssets');
@@ -50,8 +48,6 @@ describe('Unit tests for manage_layers page', () => {
           ],
         }));
     cy.stub(ee.data, 'createFolder');
-    loadingStartedStub = cy.stub(loading, 'addLoadingElement');
-    loadingFinishedStub = cy.stub(loading, 'loadingElementFinished');
 
     stateAssets.clear();
     // In prod this would happen in enableWhenReady which would read from
@@ -200,7 +196,7 @@ describe('Unit tests for manage_layers page', () => {
     const colorEditor = createAndAppend('div', 'color-fxn-editor').show();
 
     cy.stub(window, 'confirm').returns(true);
-    cy.wrap(onDelete(rows[0])).then(() => {
+    waitForPromiseAndAssertSaves(onDelete(rows[0])).then(() => {
       expect(colorEditor.is(':visible')).to.be.false;
       expect(tbody.children('tr').length).to.equal(1);
       // ensure reindex
@@ -224,7 +220,7 @@ describe('Unit tests for manage_layers page', () => {
     rows[1].children('td').first().text(2);
     rows[2].children('td').first().text(1);
 
-    cy.wrap(updateAfterSort({item: rows[0]}))
+    waitForPromiseAndAssertSaves(updateAfterSort({item: rows[0]}))
         .then(() => {
           const postSortLayers = getCurrentLayers();
           expect(postSortLayers[0]['initialIndex']).equals(1);
@@ -234,9 +230,6 @@ describe('Unit tests for manage_layers page', () => {
           expect(rows[0].text()).equals('2');
           expect(rows[1].text()).equals('1');
           expect(rows[2].text()).equals('0');
-
-          expect(loadingStartedStub).to.be.calledOnce;
-          expect(loadingFinishedStub).to.be.calledOnce;
 
           return getFirestoreRoot()
               .collection('disaster-metadata')
@@ -264,11 +257,9 @@ function testSave(fxn, property, input, afterVal) {
   createAndAppend('tbody', 'tbody').append(row);
   row[0].append(input);
 
-  cy.wrap(fxn({target: input}, property))
+  waitForPromiseAndAssertSaves(fxn({target: input}, property))
       .then(() => {
         expect(getCurrentLayers()[0][property]).to.eql(afterVal);
-        expect(loadingStartedStub).to.be.calledOnce;
-        expect(loadingFinishedStub).to.be.calledOnce;
         return getFirestoreRoot()
             .collection('disaster-metadata')
             .doc(getDisaster())
