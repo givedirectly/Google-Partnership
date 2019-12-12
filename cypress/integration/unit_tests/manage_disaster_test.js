@@ -198,75 +198,94 @@ describe('Unit tests for manage_disaster.js', () => {
                      .to.eql(missingSnapPath));
   });
 
-  it('tests ScoreBoundsMap class', () => {
+  it.only('tests ScoreBoundsMap class', () => {
     const deleteConfirmStub = cy.stub(window, 'confirm').returns(true);
     const newPolygonCoordinates = [
       createGeoPoint(-110, 40),
       createGeoPoint(-90, 50),
       createGeoPoint(-90, 40),
     ];
+    const newSw = {lng: -50, lat: 20};
+    const newNe = {lng: -40, lat: 30};
     cy.visit('test_utils/empty.html');
-    let scoreBoundsMap;
+    let underTest;
     setAssetDataAndCreateDamageInputsForScoreValidationTests().then(() => {
-      // Set up page for ScoreBoundsMap and create one. Default data has a
-      // polygon.
+      // Make map nice and big.
       const div = $('#score-bounds-map');
       div.css('width', '100%');
       div.css('height', '80%');
-      scoreBoundsMap = new ScoreBoundsMap();
-      scoreBoundsMap.initialize();
-      scoreBoundsMap.onShow();
-      expect(scoreBoundsMap.polygon).to.not.be.null;
-      expect(scoreBoundsMap.polygon.getMap()).to.eql(scoreBoundsMap.map);
-      expect(scoreBoundsMap.drawingManager.getMap()).to.be.null;
+
+      // Create and show map, our default data has a polygon.
+      underTest = new ScoreBoundsMap();
+      underTest.initialize();
+      underTest.onShow();
+      expect(underTest.polygon).to.not.be.null;
+      expect(underTest.polygon.getMap()).to.eql(underTest.map);
+      expect(underTest.drawingManager.getMap()).to.be.null;
     });
+    // TODO(janakr); check that drawing manager not visible.
     // Sadly, the map doesn't store its bounds immediately: give it a few ticks.
     cy.wait(50);
+    // Check that map bounds have adjusted to include the polygon we drew, which
+    // extends north of the US into Canada.
     cy.get('@scoreBoundsCoordinates').then((scoreBoundsCoordinates) => {
-      const bounds = scoreBoundsMap.map.getBounds();
+      const bounds = underTest.map.getBounds();
       for (const point of transformGeoPointArrayToLatLng(
                scoreBoundsCoordinates)) {
         expect(bounds.contains(point)).to.be.true;
       }
+      // Now pan the map way over and check that repeating #onShow does not
+      // re-center the map.
+      expect(underTest.map.getBounds().contains(newSw)).to.be.false;
+      expect(underTest.map.getBounds().contains(newNe)).to.be.false;
+      underTest.map.fitBounds(new google.maps.LatLngBounds(newSw, newNe));
+      underTest.onShow();
+      expect(underTest.map.getBounds().contains(newSw)).to.be.true;
+      expect(underTest.map.getBounds().contains(newNe)).to.be.true;
     });
     // Subtle note about this delete button: because it is attached to the map,
     // not the whole document, it takes Cypress a while to find it (and jquery
     // never finds it). Therefore the timing claims in
     // readFirestoreAfterWritesFinish are incorrect, and we cannot look for the
     // delete button in between triggering a write and waiting for it to finish.
+
     // Delete button is there. Now modify polygon.
     cy.get('.score-bounds-delete-button')
         .should('be.visible')
         .then(
-            () => scoreBoundsMap.polygon.getPath().setAt(
+            () => underTest.polygon.getPath().setAt(
                 0, new google.maps.LatLng({lng: -100, lat: 30})));
+    // Check that we have the expected data in Firestore.
     readFirestoreAfterWritesFinish().then(
-        (doc) =>
-            cy.get('@scoreBoundsCoordinates')
-                .then(
-                    (scoreBoundsCoordinates) =>
-                        expect(doc.data().asset_data.score_bounds_coordinates)
-                            .to.eql([
-                              createGeoPoint(-100, 30),
-                              ...scoreBoundsCoordinates.slice(1),
-                            ])));
-    cy.get('.score-bounds-delete-button').should('be.visible').then(() => {
-      // Switch to "new" disaster that has no polygon.
-      disasterData.get(getDisaster()).asset_data.score_bounds_coordinates =
-          null;
-      scoreBoundsMap.initialize();
-      expect(scoreBoundsMap.polygon).to.be.null;
-      expect(scoreBoundsMap.drawingManager.getMap()).to.eql(scoreBoundsMap.map);
-    });
-    cy.get('.score-bounds-delete-button').should('not.be.visible').then(() => {
+        (doc) => {
+          cy.get('@scoreBoundsCoordinates')
+              .then(
+                  (scoreBoundsCoordinates) =>
+                      expect(doc.data().asset_data.score_bounds_coordinates)
+                          .to.eql([
+                        createGeoPoint(-100, 30),
+                        ...scoreBoundsCoordinates.slice(1),
+                      ]));
+          // Switch to "new" disaster that has no polygon.
+          disasterData.get(getDisaster()).asset_data.score_bounds_coordinates =
+              null;
+          underTest.initialize();
+          expect(underTest.polygon).to.be.null;
+          expect(underTest.drawingManager.getMap()).to.eql(underTest.map);
+        });
+
+    // No polygon, so no delete, and drawing manager visible.
+    cy.get('.score-bounds-delete-button').should('not.be.visible');
+    cy.get('[title="Draw a shape"]').then(() => {
       // Simulate drawing a polygon.
       addPolygonWithPath(
-          scoreBoundsMap.createPolygonOptions(newPolygonCoordinates),
-          scoreBoundsMap.drawingManager);
-      expect(scoreBoundsMap.polygon).to.not.be.null;
-      expect(scoreBoundsMap.polygon.getMap()).to.eql(scoreBoundsMap.map);
-      expect(scoreBoundsMap.drawingManager.getMap()).to.be.null;
+          underTest.createPolygonOptions(newPolygonCoordinates),
+          underTest.drawingManager);
+      expect(underTest.polygon).to.not.be.null;
+      expect(underTest.polygon.getMap()).to.eql(underTest.map);
+      expect(underTest.drawingManager.getMap()).to.be.null;
     });
+    // Now we have a delete button.
     cy.get('.score-bounds-delete-button').should('be.visible');
     readFirestoreAfterWritesFinish().then(
         (doc) => expect(doc.data().asset_data.score_bounds_coordinates)
@@ -274,12 +293,21 @@ describe('Unit tests for manage_disaster.js', () => {
     // Delete the polygon and verify it's gone everywhere.
     cy.get('.score-bounds-delete-button').click().then(() => {
       expect(deleteConfirmStub).to.be.calledOnce;
-      expect(scoreBoundsMap.polygon).to.be.null;
-      expect(scoreBoundsMap.drawingManager.getMap()).to.eql(scoreBoundsMap.map);
+      expect(underTest.polygon).to.be.null;
+      expect(underTest.drawingManager.getMap()).to.eql(underTest.map);
     });
     readFirestoreAfterWritesFinish().then(
-        (doc) =>
-            expect(doc.data().asset_data.score_bounds_coordinates).to.be.null);
+        (doc) => {
+          expect(doc.data().asset_data.score_bounds_coordinates).to.be.null;
+          underTest.initialize();
+          // Bounds are still screwed up from before.
+          expect(underTest.map.getBounds().contains(newSw)).to.be.true;
+          expect(underTest.map.getBounds().contains(newNe)).to.be.true;
+          // Back to defaults.
+          underTest.onShow();
+          expect(underTest.map.getBounds().contains(newSw)).to.be.false;
+          expect(underTest.map.getBounds().contains(newNe)).to.be.false;
+        });
   });
 
   it('writes a new disaster to firestore', () => {

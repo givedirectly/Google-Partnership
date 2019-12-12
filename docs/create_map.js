@@ -20,10 +20,6 @@ const placeIconParams = {
  * @return {google.maps.Map}
  */
 function createMap(firebasePromise) {
-  // Create the base Google Map. Takes ~7 ms to execute this step.
-  // Temporarily center on the center of the continental 48 states.
-  // In practice, the firebase promise finishes so fast we don't actually
-  // see this happen.
   const {map, searchBox} = createBasicMap(document.getElementById('map'));
 
   firebasePromise.then((doc) => {

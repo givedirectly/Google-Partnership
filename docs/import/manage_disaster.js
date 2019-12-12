@@ -1,4 +1,9 @@
-import {addPolygonWithPath, applyMinimumBounds, createBasicMap} from '../basic_map.js';
+import {
+  addPolygonWithPath,
+  applyMinimumBounds,
+  createBasicMap,
+  defaultMapCenter, defaultZoomLevel
+} from '../basic_map.js';
 import {eeLegacyPathPrefix, legacyStateDir} from '../ee_paths.js';
 import {LayerType} from '../firebase_layers.js';
 import {disasterCollectionReference} from '../firestore_document.js';
@@ -454,7 +459,7 @@ function initializeDamageSelector(assets) {
 }
 
 /**
- * Puts the map bounds div the desired state.
+ * Puts the map bounds div in the desired state.
  * @param {boolean} hide If true, hide the div
  */
 function setMapBoundsDiv(hide) {
@@ -571,7 +576,8 @@ function createOptionFrom(text) {
  * Helper class to create and attach map for score-bounds selection to the page.
  * We keep a single map (and drawing manager and delete button) across the
  * lifetime of the page. {@link initialize} should be called every time a
- * disaster is loaded to set up the appropriate data.
+ * disaster is loaded to set up the appropriate data, and {@link onShow}
+ * when the map's div becomes visible for this disaster.
  *
  * Saves the new polygon coordinates whenever the polygon is edited or deleted.
  */
@@ -654,6 +660,7 @@ class ScoreBoundsMap {
       const polygonOptions = this.createPolygonOptions(polygonCoordinates);
       addPolygonWithPath(polygonOptions, this.drawingManager);
     }
+    this.needsBoundsFit = true;
   }
 
   /**
@@ -663,11 +670,18 @@ class ScoreBoundsMap {
    * https://developers.google.com/maps/documentation/javascript/reference/map#Map.fitBounds
    */
   onShow() {
+    if (!this.needsBoundsFit) {
+      return;
+    }
+    this.needsBoundsFit = false;
     if (this.polygon) {
       // Fit map around existing polygon.
       const bounds = new google.maps.LatLngBounds();
       this.polygon.getPath().forEach((latlng) => bounds.extend(latlng));
       applyMinimumBounds(bounds, this.map);
+    } else {
+      this.map.setCenter(defaultMapCenter);
+      this.map.setZoom(defaultZoomLevel);
     }
   }
 
