@@ -1,6 +1,7 @@
 import {getFirestoreRoot, readDisasterDocument} from '../../../docs/firestore_document.js';
 import {assetDataTemplate, createDisasterData} from '../../../docs/import/create_disaster_lib.js';
 import {createScoreAsset} from '../../../docs/import/create_score_asset.js';
+import {censusGeoidKey} from '../../../docs/import/import_data_keys.js';
 import {assetSelectionRowPrefix, disasterData, initializeDamageSelector, initializeScoreSelectors, scoreAssetTypes, setUpScoreSelectorTable, stateAssets, validateUserFields} from '../../../docs/import/manage_disaster';
 import {addDisaster, deleteDisaster, writeNewDisaster} from '../../../docs/import/manage_disaster.js';
 import {createOptionFrom} from '../../../docs/import/manage_layers.js';
@@ -195,14 +196,71 @@ describe('Unit tests for manage_disaster.js', () => {
                      .to.eql('asset2'));
   });
 
+  it('does column verification', () => {
+    setUpAssetValidationTests();
+    const badSnapFeature =
+        ee.FeatureCollection([ee.Feature(null, {'a property': 0})]);
+    const goodIncomeFeature = ee.FeatureCollection(
+        [ee.Feature(null, {'GEOid2': 'blah', 'HD01_VD01': 'otherBlah'})]);
+
+    const featureCollectionStub = cy.stub(ee, 'FeatureCollection');
+
+    // bad columns
+    featureCollectionStub.withArgs('state0').callsFake(() => {
+      expect($('#poverty-NY-hover').prop('title'))
+          .to.equal('Checking columns...');
+      expect($('#select-asset-selection-row-poverty-NY').prop('style').cssText)
+          .to.contain('border: 2px solid yellow;');
+      return badSnapFeature;
+    });
+    setFirstSelectInScoreRow(0);
+    checkSelectBorder(
+        '#select-asset-selection-row-poverty-NY', 'rgb(255, 0, 0)');
+    checkHoverText(
+        '#poverty-NY-hover',
+        'Error! asset does not have all expected columns: ' +
+            'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
+
+    // set back to None
+    setFirstSelectInScoreRowTo(0, 'None');
+    checkSelectBorder(
+        '#select-asset-selection-row-poverty-NY', 'rgb(255, 255, 255)');
+    checkHoverText('#poverty-NY-hover', '');
+    // good columns
+    featureCollectionStub.withArgs('state1').callsFake(() => {
+      expect($('#income-NY-hover').prop('title'))
+          .to.equal('Checking columns...');
+      expect($('#select-asset-selection-row-income-NY').prop('style').cssText)
+          .to.contain('border: 2px solid yellow;');
+      return goodIncomeFeature;
+    });
+    setFirstSelectInScoreRow(1);
+    checkSelectBorder(
+        '#select-asset-selection-row-income-NY', 'rgb(0, 128, 0)');
+    checkHoverText(
+        '#income-NY-hover', 'Success! asset has all expected columns');
+    // No expected rows
+    setFirstSelectInScoreRow(4);
+    checkSelectBorder(
+        '#select-asset-selection-row-buildings-NY', 'rgb(0, 128, 0)');
+    checkHoverText('#buildings-NY-hover', 'No expected columns');
+    setFirstSelectInScoreRowTo(4, 'None');
+    checkSelectBorder(
+        '#select-asset-selection-row-buildings-NY', 'rgb(255, 255, 255)');
+    checkHoverText('#buildings-NY-hover', '');
+  });
+
   const allStateAssetsMissingText =
       'Missing asset(s): Poverty, Income, SVI, Census TIGER Shapefiles, ' +
       'Microsoft Building Shapefiles';
   const allMissingText = allStateAssetsMissingText +
       ', and must specify either damage asset or map bounds';
 
-  it('validates asset data', () => {
+  it.only('validates asset data', () => {
     setUpAssetValidationTests();
+
+    // For {@link getColumnStatus}
+    cy.stub(ee.Algorithms, 'If').returns(ee.Number(0));
 
     // Check table is properly initialized, then do validation.
     cy.get('#asset-selection-table-body')
@@ -266,6 +324,7 @@ describe('Unit tests for manage_disaster.js', () => {
     readFirestoreAfterWritesFinish().then((doc) => {
       const assetData = doc.data()['asset_data'];
 
+      console.log(assetData);
       expect(assetData['damage_asset_path']).to.be.null;
       expect(assetData['map_bounds_sw']).to.eql('0, 0');
       expect(assetData['svi_asset_paths']).to.eql({'NY': 'state2'});
@@ -280,6 +339,10 @@ describe('Unit tests for manage_disaster.js', () => {
       stateAssets.set('WY', ['wy0', 'wy1', 'wy2', 'wy3', 'wy4']);
       initializeScoreSelectors(['NY', 'WY']);
     });
+
+    // For {@link getColumnStatus}
+    cy.stub(ee.Algorithms, 'If').returns(ee.Number(0));
+
     // Check table is properly initialized, then validate.
     cy.get('#asset-selection-table-body')
         .find('tr')
@@ -699,11 +762,7 @@ function makeCallbackForTextAndPromise(expectedText) {
  * @return {Cypress.Chainable} Cypress promise of the select
  */
 function setFirstSelectInScoreRow(rowNum) {
-  return getFirstTdInScoreRow(rowNum)
-      .next()
-      .find('select')
-      .select('state' + rowNum)
-      .blur();
+  return setFirstSelectInScoreRowTo(rowNum, 'state' + rowNum);
 }
 
 /**
@@ -717,4 +776,22 @@ function getFirstTdInScoreRow(rowNum) {
   return cy.get('#' + assetSelectionRowPrefix + scoreAssetTypes[rowNum][0])
       .find('td')
       .first();
+}
+
+function checkSelectBorder(selector, rgbString) {
+  cy.get(selector, {timeout: 5000})
+      .should('have.css', 'border')
+      .and('eq', '2px solid ' + rgbString);
+}
+
+function checkHoverText(selector, text) {
+  cy.get(selector).invoke('attr', 'title').should('eq', text);
+}
+
+function setFirstSelectInScoreRowTo(rowNum, text) {
+  return getFirstTdInScoreRow(rowNum)
+      .next()
+      .find('select')
+      .select(text)
+      .blur();
 }

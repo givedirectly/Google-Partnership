@@ -3,6 +3,7 @@ import {LayerType} from '../firebase_layers.js';
 import {disasterCollectionReference} from '../firestore_document.js';
 import {convertEeObjectToPromise} from '../map_util.js';
 import {getDisaster} from '../resources.js';
+
 import {createDisasterData, incomeKey, snapKey, sviKey, totalKey} from './create_disaster_lib.js';
 import {createScoreAsset, setStatus} from './create_score_asset.js';
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
@@ -15,6 +16,7 @@ export {enableWhenReady, onSetDisaster, setUpScoreSelectorTable, toggleState};
 export {
   addDisaster,
   assetSelectionRowPrefix,
+  checkForMissingColumns,
   createScoreAsset,
   deleteDisaster,
   disasterData,
@@ -432,14 +434,15 @@ function initializeScoreSelectors(states) {
         const statePropertyPath = propertyPath.concat([state]);
         const select =
             createAssetDropdown(stateAssets.get(state), statePropertyPath)
-                .prop('id', 'select-' + id + '-' + state);
+                .prop('id', 'select-' + id + '-' + state)
+                .on('change',
+                    (event) => onNonDamageAssetSelect(
+                        event, propertyPath, expectedColumns, type, state))
+                .prop('style', 'border:2px');
         row.append(
             createTd().append($(document.createElement('span'))
                                   .prop('id', type + '-' + state + '-hover')
-                                  .append(addNonDamageAssetDataChangeHandler(
-                                              select, statePropertyPath,
-                                              expectedColumns, type, state)
-                                              .prop('style', 'border:2px'))));
+                                  .append(select)));
         checkForMissingColumns(select.val(), type, state, expectedColumns);
       }
     }
@@ -534,53 +537,51 @@ function createAssetDropdown(
 }
 
 /**
- * Adds a handler that sets off a column verification check and data write.
- * @param {JQuery<HTMLSelectElement>} elt
+ * Sets off a column verification check and data write.
+ * @param event selector change event
  * @param {Array<string>} propertyPath List of attributes to follow to get
  *     value. If that value is found in options, it will be selected. Otherwise,
  *     no option will be selected
  * @param {Array<string>} expectedColumns
  * @param {string} type
  * @param {string} state
- * @return {JQuery<HTMLSelectElement>}
+ * @return {?Promise<unknown>}
  */
-function addNonDamageAssetDataChangeHandler(
-    elt, propertyPath, expectedColumns, type, state) {
-  return elt.on('change', (event) => {
-    const newAsset = $(event.target).val();
-    checkForMissingColumns(newAsset, type, state, expectedColumns);
-    handleAssetDataChange(newAsset, propertyPath);
-  });
+function onNonDamageAssetSelect(
+    event, propertyPath, expectedColumns, type, state) {
+  const newAsset = $(event.target).val();
+  handleAssetDataChange(newAsset, propertyPath);
+  return checkForMissingColumns(newAsset, type, state, expectedColumns);
 }
 
-// Map of asset picker (in the form of a string '<type>-<state>' e.g.
-// poverty-WA) to the most recent value of the picker. This helps us ensure that
-// we're only updating the status box for the most recently selected value.
-const currentlyCheckingAsset = new Map();
+// Map of asset picker (represented by a string '<type>-<state>' e.g.
+// 'poverty-WA') to the most recent value of the picker. This helps us ensure
+// that we're only updating the status box for the most recently selected value.
+const lastSelectedAsset = new Map();
 
 /**
  * Checks the given asset for the given columns and prints a result message.
  * @param {string} asset
- * @param {string} type
- * @param {string} state
+ * @param {string} type values from the first index of each entry in {@code
+ *     scoreAssetTypes}
+ * @param {string} state e.g. 'WA'
  * @param {Array<string>} expectedColumns
+ * @return {?Promise<unknown>}
  */
 function checkForMissingColumns(asset, type, state, expectedColumns) {
   const tdId = type + '-' + state;
   const span = $('#' + tdId + '-hover');
   const select = span.children('select');
-  if (expectedColumns.length === 0) {
-    updateColorAndHover(select, 'green', span, 'No expected columns');
-    return;
-  }
-  updateColorAndHover(select, 'yellow', span, 'Checking columns...');
-  currentlyCheckingAsset.set(tdId, asset);
+  lastSelectedAsset.set(tdId, asset);
   if (asset === '') {
-    updateColorAndHover(select, 'white');
+    return updateColorAndHover(select, 'white', span, '');
+  } else if (expectedColumns.length === 0) {
+    return updateColorAndHover(select, 'green', span, 'No expected columns');
   } else {
-    convertEeObjectToPromise(getColumnsStatus(asset, expectedColumns))
+    updateColorAndHover(select, 'yellow', span, 'Checking columns...');
+    return convertEeObjectToPromise(getColumnsStatus(asset, expectedColumns))
         .then((error) => {
-          if (currentlyCheckingAsset.get(tdId) === asset) {
+          if (lastSelectedAsset.get(tdId) === asset) {
             if (error) {
               updateColorAndHover(
                   select, 'red', span,
@@ -589,7 +590,7 @@ function checkForMissingColumns(asset, type, state, expectedColumns) {
             } else {
               updateColorAndHover(
                   select, 'green', span,
-                  'Success! asset has all expected columns.');
+                  'Success! asset has all expected columns');
             }
           }
         });
@@ -606,13 +607,15 @@ function checkForMissingColumns(asset, type, state, expectedColumns) {
 function updateColorAndHover(select, color, span, title) {
   select.prop('style', 'border:2px solid ' + color);
   if (span) span.prop('title', title);
+  return null;
 }
 
 /**
  * Does the actual contains check and returns the appropriate status.
  * @param {string} asset
  * @param {Array<string>} expectedColumns
- * @return {ee.String} status from column check
+ * @return {ee.String} status from column check, 0 if contained all columns, 1
+ * if there was an error.
  */
 function getColumnsStatus(asset, expectedColumns) {
   return ee.Algorithms.If(
