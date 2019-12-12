@@ -6,10 +6,9 @@ import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from '.
 export {createScoreAsset, setStatus};
 
 /**
- * Given a feature from the SNAP census data, returns a new
- * feature with GEOID, SNAP #, total pop #, total building count, building
- * counts for all damage categories, and SNAP percentage and damage percentage.
- *
+ * For the given feature representing a block group, add properties for
+ * total # buildings in the block group and # damaged buildings in the block
+ * group.
  * @param {ee.Feature} feature
  * @param {ee.FeatureCollection} damage
  * @param {ee.Dictionary} buildings geoid -> # buildings
