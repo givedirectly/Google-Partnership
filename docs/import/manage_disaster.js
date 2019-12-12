@@ -538,7 +538,7 @@ function createAssetDropdown(
 
 /**
  * Sets off a column verification check and data write.
- * @param event selector change event
+ * @param {Object} event selector change event
  * @param {Array<string>} propertyPath List of attributes to follow to get
  *     value. If that value is found in options, it will be selected. Otherwise,
  *     no option will be selected
@@ -566,7 +566,9 @@ const lastSelectedAsset = new Map();
  *     scoreAssetTypes}
  * @param {string} state e.g. 'WA'
  * @param {Array<string>} expectedColumns
- * @return {?Promise<unknown>}
+ * @return {?Promise<unknown>} returns null if column checking wasn't needed.
+ * Otherwise returns a promise that resolves when column checking is finished
+ * and select border color is updates.
  */
 function checkForMissingColumns(asset, type, state, expectedColumns) {
   const tdId = type + '-' + state;
@@ -603,6 +605,7 @@ function checkForMissingColumns(asset, type, state, expectedColumns) {
  * @param {string} color
  * @param {JQuery<HTMLSpanElement>} span
  * @param {string} title
+ * @return {null}
  */
 function updateColorAndHover(select, color, span, title) {
   select.prop('style', 'border:2px solid ' + color);

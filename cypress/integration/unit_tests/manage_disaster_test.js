@@ -1,7 +1,6 @@
 import {getFirestoreRoot, readDisasterDocument} from '../../../docs/firestore_document.js';
 import {assetDataTemplate, createDisasterData} from '../../../docs/import/create_disaster_lib.js';
 import {createScoreAsset} from '../../../docs/import/create_score_asset.js';
-import {censusGeoidKey} from '../../../docs/import/import_data_keys.js';
 import {assetSelectionRowPrefix, disasterData, initializeDamageSelector, initializeScoreSelectors, scoreAssetTypes, setUpScoreSelectorTable, stateAssets, validateUserFields} from '../../../docs/import/manage_disaster';
 import {addDisaster, deleteDisaster, writeNewDisaster} from '../../../docs/import/manage_disaster.js';
 import {createOptionFrom} from '../../../docs/import/manage_layers.js';
@@ -777,16 +776,33 @@ function getFirstTdInScoreRow(rowNum) {
       .first();
 }
 
+/**
+ * Asserts that the border around the given selector has the correct color
+ * @param {string} selector cypress selector for a select element
+ * @param {string} rgbString e.g. 'rgb(0, 0, 0)'
+ */
 function checkSelectBorder(selector, rgbString) {
   cy.get(selector, {timeout: 5000})
       .should('have.css', 'border')
       .and('eq', '2px solid ' + rgbString);
 }
 
+/**
+ * Asserts on the hover text for the given span.
+ * @param {string} selector cypress selector for a span element
+ * @param {string} text
+ */
 function checkHoverText(selector, text) {
   cy.get(selector).invoke('attr', 'title').should('eq', text);
 }
 
+/**
+ * Utility function to set the first select in the given row to the option
+ * that matches the given text.
+ * @param {number} rowNum
+ * @param {string} text
+ * @return {Cypress.Chainable} Cypress promise of the select
+ */
 function setFirstSelectInScoreRowTo(rowNum, text) {
   return getFirstTdInScoreRow(rowNum).next().find('select').select(text).blur();
 }
