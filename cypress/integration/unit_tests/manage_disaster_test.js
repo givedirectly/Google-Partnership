@@ -342,8 +342,8 @@ describe('Unit tests for manage_disaster.js', () => {
         '#select-asset-selection-row-poverty-NY', 'rgb(255, 0, 0)');
     checkHoverText(
         '#poverty-NY-hover',
-        'Error! asset does not have all expected columns: '
-        + 'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
+        'Error! asset does not have all expected columns: ' +
+            'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
 
     // set back to None
     setFirstSelectInScoreRowTo(1, 'None');
