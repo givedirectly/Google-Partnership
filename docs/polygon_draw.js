@@ -323,6 +323,8 @@ const appearance = {
   fillColor: '#4CEF64',
   strokeColor: '#4CEF64',
   editable: false,
+  // Default stroke weight looks to be about 3.
+  strokeWeight: 5,
 };
 
 /**
