@@ -2,23 +2,12 @@ import {addPolygonWithPath} from '../../../docs/basic_map.js';
 import {readDisasterDocument} from '../../../docs/firestore_document.js';
 import {createDisasterData} from '../../../docs/import/create_disaster_lib.js';
 import * as ListEeAssets from '../../../docs/import/list_ee_assets.js';
-import {
-  assetSelectionRowPrefix,
-  disasterData,
-  scoreAssetTypes,
-  scoreBoundsMap, setUpScoreBoundsMap,
-  setUpScoreSelectorTable,
-  stateAssets,
-  validateUserFields
-} from '../../../docs/import/manage_disaster';
-import {
-  enableWhenFirestoreReady,
-  enableWhenReady,
-} from '../../../docs/import/manage_disaster.js';
+import {assetSelectionRowPrefix, disasterData, scoreAssetTypes, scoreBoundsMap, setUpScoreBoundsMap, setUpScoreSelectorTable, stateAssets, validateUserFields} from '../../../docs/import/manage_disaster';
+import {enableWhenFirestoreReady} from '../../../docs/import/manage_disaster.js';
 import {getDisaster} from '../../../docs/resources.js';
+import {cyQueue} from '../../support/commands.js';
 import {setUpSavingStubs} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
-import {cyQueue} from '../../support/commands.js';
 
 // Triangle goes up into Canada, past default map of basic_map.js.
 const scoreBoundsCoordinates = [
@@ -40,15 +29,15 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
   let firstTest = true;
   beforeEach(() => {
     cy.document().then((doc) => {
-        cy.stub(document, 'getElementById')
-            .callsFake((id) => doc.getElementById(id));
-    if (firstTest) {
-      // setUpScoreSelectorTable gets elements by id, so we have to stub first,
-      // which is harder in a before() hook (since stubs should be set in
-      // beforeEach() hooks) but we only want to run it once in this file.
-      setUpScoreSelectorTable();
-      firstTest = false;
-    }
+      cy.stub(document, 'getElementById')
+          .callsFake((id) => doc.getElementById(id));
+      if (firstTest) {
+        // setUpScoreSelectorTable gets elements by id, so we have to stub
+        // first, which is harder in a before() hook (since stubs should be set
+        // in beforeEach() hooks) but we only want to run it once in this file.
+        setUpScoreSelectorTable();
+        firstTest = false;
+      }
     });
     disasterData.clear();
   });
@@ -62,7 +51,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     cy.get('#map-bounds-div').should('not.be.visible');
     readFirestoreAfterWritesFinish().then(
         (doc) => expect(doc.data()['asset_data']['damage_asset_path'])
-            .to.eql('asset2'));
+                     .to.eql('asset2'));
   });
 
   it('no map coordinates to start', () => {
@@ -76,7 +65,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     cy.get('#map-bounds-div').should('not.be.visible');
     readFirestoreAfterWritesFinish().then(
         (doc) => expect(doc.data()['asset_data']['damage_asset_path'])
-            .to.eql('asset2'));
+                     .to.eql('asset2'));
   });
 
   const allStateAssetsMissingText =
@@ -86,12 +75,14 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
       ', and must specify either damage asset or map bounds';
 
   it.only('validates asset data', () => {
-    const boundsChanged = new Promise((resolve) => {
-      const listener = scoreBoundsMap.map.addListener('bounds_changed', () => {
-        google.maps.event.removeListener(listener);
-        resolve();
-      })
-    });
+    const boundsChanged = new Promise(
+        (resolve) => {
+            const listener =
+                scoreBoundsMap.map.addListener('bounds_changed', () => {
+                  google.maps.event.removeListener(listener);
+                  resolve();
+                });
+        });
     callEnableWhenReady(setUpDefaultData());
     // Check table is properly initialized, then do validation.
     cy.get('#asset-selection-table-body')
@@ -136,7 +127,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
         .should(
             'have.text',
             'Missing asset(s): Income, SVI, Census TIGER Shapefiles, ' +
-            'Microsoft Building Shapefiles');
+                'Microsoft Building Shapefiles');
     cy.get('#process-button').should('be.disabled');
     // Clear that select: back where we started.
     setFirstSelectInScoreRow(0).select('').blur();
@@ -161,7 +152,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
         .should(
             'have.text',
             'Missing asset(s): Poverty, and must specify either damage asset ' +
-            'or map bounds');
+                'or map bounds');
     cy.get('#process-button').should('be.disabled');
     // Validate that score data was correctly written
     readFirestoreAfterWritesFinish().then((doc) => {
@@ -195,9 +186,9 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
         .should(
             'have.text',
             'Missing asset(s): Poverty [WY], Income [NY, WY], SVI [NY, WY], ' +
-            'Census TIGER Shapefiles [NY, WY], Microsoft Building ' +
-            'Shapefiles [NY, WY], and must specify either damage asset ' +
-            'or map bounds');
+                'Census TIGER Shapefiles [NY, WY], Microsoft Building ' +
+                'Shapefiles [NY, WY], and must specify either damage asset ' +
+                'or map bounds');
     // Specifying assets for income, both states, one type, gets rid of income
     // from message.
     setFirstSelectInScoreRow(1);
@@ -206,8 +197,8 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
         .should(
             'have.text',
             'Missing asset(s): Poverty [WY], SVI [NY, WY], Census TIGER ' +
-            'Shapefiles [NY, WY], Microsoft Building Shapefiles [NY, WY],' +
-            ' and must specify either damage asset or map bounds');
+                'Shapefiles [NY, WY], Microsoft Building Shapefiles [NY, WY],' +
+                ' and must specify either damage asset or map bounds');
   });
 
   it('nonexistent asset not ok', () => {
@@ -226,7 +217,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     // written on a different change shows we're not silently overwriting it.
     readFirestoreAfterWritesFinish().then(
         (doc) => expect(doc.data().asset_data.snap_data.paths.NY)
-            .to.eql(missingSnapPath));
+                     .to.eql(missingSnapPath));
   });
 
   /**
@@ -273,9 +264,11 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     cy.stub(ListEeAssets, 'getDisasterAssetsFromEe')
         .returns(Promise.resolve(new Map([['asset1', 1], ['asset2', 1]])));
     const currentData = createDisasterData(['NY']);
-    currentData.asset_data.score_bounds_coordinates = scoreBoundsCoordinates.map((latlng) => new firebase.firestore.GeoPoint(latlng.lat, latlng.lng));
-    stateAssets.set(
-        'NY', ['state0', 'state1', 'state2', 'state3', 'state4']);
+    currentData.asset_data.score_bounds_coordinates =
+        scoreBoundsCoordinates.map(
+            (latlng) =>
+                new firebase.firestore.GeoPoint(latlng.lat, latlng.lng));
+    stateAssets.set('NY', ['state0', 'state1', 'state2', 'state3', 'state4']);
     return currentData;
   }
 
@@ -286,7 +279,9 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
    * @return {Cypress.Chainable<void>}
    */
   function callEnableWhenReady(currentData) {
-    return cyQueue(() => enableWhenFirestoreReady(new Map([[getDisaster(), currentData]])));
+    return cyQueue(
+        () =>
+            enableWhenFirestoreReady(new Map([[getDisaster(), currentData]])));
   }
 
   /**
@@ -332,7 +327,7 @@ function setFirstSelectInScoreRow(rowNum) {
  * Utility function to get the first cell in a "score asset" row, like the
  * Poverty/SVI/Income/Buildings row.
  * @param {number} rowNum index of row, corresponding to its index in {@link
-    *     scoreAssetTypes}
+ *     scoreAssetTypes}
  * @return {Cypress.Chainable} Cypress promise of the td
  */
 function getFirstTdInScoreRow(rowNum) {

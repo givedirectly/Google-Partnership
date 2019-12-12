@@ -7,8 +7,6 @@ describe('Unit tests for create_score_asset.js', () => {
   loadScriptsBeforeForUnitTests('ee', 'firebase', 'jquery');
   let testData;
   let exportStub;
-  let createFolderStub;
-  let setAclsStub;
   beforeEach(() => {
     // Create a pretty trivial world: 2 block groups, each a 1x2 vertical
     // stripe. Under the covers, we scale all dimensions down because
@@ -36,12 +34,7 @@ describe('Unit tests for create_score_asset.js', () => {
     // Stub out delete and export. We'll assert on what was exported, below.
     cy.stub(ee.data, 'deleteAsset').callsFake((_, callback) => callback());
     exportStub = cy.stub(ee.batch.Export.table, 'toAsset')
-        .returns({start: () => {}, id: 'FAKE_ID'});
-    createFolderStub =
-        cy.stub(ee.data, 'createFolder')
-            .callsFake((asset, overwrite, callback) => callback());
-    setAclsStub = cy.stub(ee.data, 'setAssetAcl')
-        .callsFake((asset, acls, callback) => callback());
+                     .returns({start: () => {}, id: 'FAKE_ID'});
 
     // Test data is reasonably real. All of the keys should be able to vary,
     // with corresponding changes to test data (but no production changes). The
@@ -113,10 +106,10 @@ describe('Unit tests for create_score_asset.js', () => {
     const expectedLatLngBounds =
         scaleObject({sw: {lng: 0.39, lat: 0.49}, ne: {lng: 13, lat: 11}});
     testData.asset_data.score_bounds_coordinates = [
-        createScaledGeoPoint(0.39, 0.49),
-        createScaledGeoPoint(13, 0.49),
-        createScaledGeoPoint(13, 11),
-        createScaledGeoPoint(0.39, 11),
+      createScaledGeoPoint(0.39, 0.49),
+      createScaledGeoPoint(13, 0.49),
+      createScaledGeoPoint(13, 11),
+      createScaledGeoPoint(0.39, 11),
     ];
 
     const {boundsPromise, mapBoundsCallback} =
@@ -274,7 +267,8 @@ function scaleObject(object) {
  * @return {firebase.firestore.GeoPoint}
  */
 function createScaledGeoPoint(lng, lat) {
-  return new firebase.firestore.GeoPoint(lat * distanceScalingFactor, lng * distanceScalingFactor);
+  return new firebase.firestore.GeoPoint(
+      lat * distanceScalingFactor, lng * distanceScalingFactor);
 }
 
 /**

@@ -1,13 +1,7 @@
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
 import {assetDataTemplate} from '../../../docs/import/create_disaster_lib.js';
-import {
-  disasterData,
-} from '../../../docs/import/manage_disaster';
-import {
-  addDisaster,
-  deleteDisaster,
-  writeNewDisaster
-} from '../../../docs/import/manage_disaster.js';
+import {disasterData} from '../../../docs/import/manage_disaster';
+import {addDisaster, deleteDisaster, writeNewDisaster} from '../../../docs/import/manage_disaster.js';
 import {createOptionFrom} from '../../../docs/import/manage_layers.js';
 import {createAndAppend} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
@@ -154,14 +148,13 @@ describe('Add/delete-related tests for manage_disaster.js', () => {
     const states = ['DN, WF'];
 
     cy.wrap(writeNewDisaster(id, states))
-        .then(
-            (success) => {
-              expect(success).to.be.true;
-              return getFirestoreRoot()
-                  .collection('disaster-metadata')
-                  .doc(id)
-                  .get();
-            })
+        .then((success) => {
+          expect(success).to.be.true;
+          return getFirestoreRoot()
+              .collection('disaster-metadata')
+              .doc(id)
+              .get();
+        })
         .then((doc) => {
           expect(doc.exists).to.be.true;
           const deletePromise = deleteDisaster();
@@ -175,5 +168,4 @@ describe('Add/delete-related tests for manage_disaster.js', () => {
                       .get())
         .then((doc) => expect(doc.exists).to.be.false);
   });
-
 });
