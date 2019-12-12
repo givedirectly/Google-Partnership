@@ -1,7 +1,11 @@
 import {eeLegacyPathPrefix, legacyStateDir} from '../ee_paths.js';
 import {LayerType} from '../firebase_layers.js';
 import {disasterCollectionReference} from '../firestore_document.js';
-import {pathToGeoPointArray, transformGeoPointArrayToLatLng} from '../map_util.js';
+import {
+  latLngToGeoPoint,
+  pathToGeoPointArray,
+  transformGeoPointArrayToLatLng
+} from '../map_util.js';
 import {getDisaster} from '../resources.js';
 
 import {createDisasterData} from './create_disaster_lib.js';
@@ -110,7 +114,7 @@ function enableWhenReady(allDisastersData) {
   }
   scoreBoundsMap = new ScoreBoundsMap(
       (polygonPath) => handleAssetDataChange(
-          pathToGeoPointArray(polygonPath), scoreCoordinatesPath));
+          polygonPath ? polygonPath.map(latLngToGeoPoint) : null, scoreCoordinatesPath));
   allDisastersData.then(enableWhenFirestoreReady);
 }
 

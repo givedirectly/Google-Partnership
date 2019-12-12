@@ -34,7 +34,7 @@ describe('Unit tests for ScoreBoundsMap class', () => {
 
       // Create and show map, with a polygon.
       underTest = new ScoreBoundsMap(
-          (data) => storedSaves.push(data ? convertPathToLatLng(data) : data));
+          (data) => storedSaves.push(data ? data.map((ll) => ll.toJSON()) : data));
       underTest.initialize(scoreBoundsCoordinates);
       expect(underTest.polygon).to.not.be.null;
       expect(underTest.polygon.getMap()).to.eql(underTest.map);

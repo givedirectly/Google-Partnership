@@ -8,6 +8,7 @@ import {createOptionFrom} from '../../../docs/import/manage_layers.js';
 import {getDisaster} from '../../../docs/resources.js';
 import {createAndAppend, createGeoPoint, setUpSavingStubs} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
+import {transformGeoPointArrayToLatLng} from '../../../docs/map_util.js';
 
 const KNOWN_STATE = 'WF';
 
@@ -79,7 +80,7 @@ describe('Unit tests for manage_disaster.js', () => {
     cy.get('@scoreBoundsCoordinates')
         .then(
             (scoreBoundsCoordinates) => addPolygonWithPath(
-                scoreBoundsMap._createPolygonOptions(scoreBoundsCoordinates),
+                scoreBoundsMap._createPolygonOptions(transformGeoPointArrayToLatLng(scoreBoundsCoordinates)),
                 scoreBoundsMap.drawingManager));
 
     cy.get('#process-button').should('have.text', allStateAssetsMissingText);
@@ -368,6 +369,8 @@ describe('Unit tests for manage_disaster.js', () => {
       jMapDiv.css('width', '20%');
       jMapDiv.css('height', '20%');
       jMapDiv.prop('id', 'score-bounds-map');
+      // TODO(janakr): can probably refactor this to call enableWhenReady with
+      //  actual data, and test full flow.
       // Make sure scoreBoundsMap is created.
       enableWhenReady(new Promise(() => {}));
       return doc;
@@ -392,7 +395,7 @@ describe('Unit tests for manage_disaster.js', () => {
       stateAssets.set('NY', ['state0', 'state1', 'state2', 'state3', 'state4']);
     });
     return cy.get('@scoreBoundsCoordinates').then((scoreBoundsCoordinates) => {
-      scoreBoundsMap.initialize(scoreBoundsCoordinates);
+      scoreBoundsMap.initialize(transformGeoPointArrayToLatLng(scoreBoundsCoordinates));
       // Use production code to prime score asset table, get damage set up.
       setUpScoreSelectorTable();
       initializeDamageSelector(['asset1', 'asset2']);

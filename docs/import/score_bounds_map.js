@@ -14,12 +14,12 @@ class ScoreBoundsMap {
   /**
    * @constructor
    * @param {Function} saveData Called on changes to polygon with the path of
-   *     the polygon (as an `MVCArray<LatLng>` object).
+   *     the polygon (as an `Array<LatLng>` object).
    */
   constructor(saveData) {
     this.polygon = null;
     this.saveData = () =>
-        saveData(this.polygon ? this.polygon.getPath() : null);
+        saveData(this.polygon ? this.polygon.getPath().getArray() : null);
     /** @const */
     this.map = createBasicMap(document.getElementById('score-bounds-map'), {
                  streetViewControl: false,
