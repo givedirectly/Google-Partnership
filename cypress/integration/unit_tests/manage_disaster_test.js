@@ -43,9 +43,6 @@ describe('Unit tests for manage_disaster.js', () => {
   it('damage asset/map-bounds elements', () => {
     setAssetDataAndCreateDamageInputsForScoreValidationTests();
     cy.get('#map-bounds-div')
-        .should('be.visible')
-        .then(() => $('#map-bounds-div').hide());
-    cy.get('#map-bounds-div')
         .should('not.be.visible')
         .then(() => initializeDamageSelector(['asset1', 'asset2']));
     cy.get('#damage-asset-select').should('have.value', '');
