@@ -53,12 +53,11 @@ class ScoreBoundsMap {
     this.deleteButton.hide();
     this.map.controls[google.maps.ControlPosition.TOP_LEFT].insertAt(
         0, this.deleteButton[0]);
-    // document.body.appendChild(this.deleteButton[0]);
   }
 
   /**
    * Removes the currently drawn polygon from the map, and sets the map up to
-   * draw a new polygon. Does not save anything to Firestore.
+   * draw a new polygon. Does not call {@link this.saveData}.
    * @private
    */
   _removePolygon() {
@@ -112,6 +111,7 @@ class ScoreBoundsMap {
    * that the polygon is editable and draggable.
    * @param {Array<LatLngLiteral>} polygonCoordinates
    * @return {google.maps.PolygonOptions}
+   * @private
    */
   _createPolygonOptions(polygonCoordinates) {
     return {

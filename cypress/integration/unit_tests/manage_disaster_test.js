@@ -70,6 +70,7 @@ describe('Unit tests for manage_disaster.js', () => {
         .find('tr')
         .its('length')
         .should('eq', 5);
+    // Bounds not available immediately after map initialization. Wait a tick.
     cy.wait(50).then(() => {
       // Check that map bounds have adjusted to include the polygon we
       // drew, which extends north of the US into Canada.
@@ -373,8 +374,8 @@ describe('Unit tests for manage_disaster.js', () => {
       const mapDiv = doc.createElement('div');
       boundsDiv.append(mapDiv);
       const jMapDiv = $(mapDiv);
-      jMapDiv.css('width', '100%');
-      jMapDiv.css('height', '80%');
+      jMapDiv.css('width', '20%');
+      jMapDiv.css('height', '20%');
       jMapDiv.prop('id', 'score-bounds-map');
       // TODO(janakr): can probably refactor this to call enableWhenReady with
       //  actual data, and test full flow.

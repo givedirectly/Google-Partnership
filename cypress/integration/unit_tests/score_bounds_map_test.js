@@ -66,7 +66,7 @@ describe('Unit tests for ScoreBoundsMap class', () => {
       underTest.map.fitBounds(new google.maps.LatLngBounds(newSw, newNe));
       expect(underTest.map.getBounds().contains(newSw)).to.be.true;
       expect(underTest.map.getBounds().contains(newNe)).to.be.true;
-      // Modify polygon, check that new bounds were saved.
+      // Modify polygon, check that new path was saved.
       underTest.polygon.getPath().setAt(
           0, new google.maps.LatLng({lng: -100, lat: 30}));
       expect(storedSaves).to.eql([[
