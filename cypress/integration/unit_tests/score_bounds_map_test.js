@@ -4,8 +4,7 @@ import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 import {convertPathToLatLng} from '../../support/test_map.js';
 
 describe('Unit tests for ScoreBoundsMap class', () => {
-  // TODO(janakr): does not actually write to Firebase, just needs classes.
-  loadScriptsBeforeForUnitTests('firebase', 'jquery', 'maps');
+  loadScriptsBeforeForUnitTests('jquery', 'maps');
 
   it('tests ScoreBoundsMap class', () => {
     const deleteConfirmStub = cy.stub(window, 'confirm').returns(true);
