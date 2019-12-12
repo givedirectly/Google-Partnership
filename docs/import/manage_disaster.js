@@ -161,6 +161,8 @@ function onSetDisaster() {
   if (!currentDisaster) {
     return;
   }
+  // Map's bounds cannot be set if it is hidden, so temporarily show it and then
+  // immediately hide it again.
   const boundsDiv = $('#map-bounds-div');
   const boundsDivHidden = boundsDiv.is(':hidden');
   if (boundsDivHidden) {
