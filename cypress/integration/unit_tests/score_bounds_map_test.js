@@ -1,7 +1,6 @@
 import {addPolygonWithPath} from '../../../docs/basic_map.js';
 import {ScoreBoundsMap} from '../../../docs/import/score_bounds_map.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
-import {convertPathToLatLng} from '../../support/test_map.js';
 
 describe('Unit tests for ScoreBoundsMap class', () => {
   loadScriptsBeforeForUnitTests('jquery', 'maps');
@@ -34,7 +33,8 @@ describe('Unit tests for ScoreBoundsMap class', () => {
 
       // Create and show map, with a polygon.
       underTest = new ScoreBoundsMap(
-          (data) => storedSaves.push(data ? data.map((ll) => ll.toJSON()) : data));
+          (data) =>
+              storedSaves.push(data ? data.map((ll) => ll.toJSON()) : data));
       underTest.initialize(scoreBoundsCoordinates);
       expect(underTest.polygon).to.not.be.null;
       expect(underTest.polygon.getMap()).to.eql(underTest.map);

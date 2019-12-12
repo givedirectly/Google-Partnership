@@ -5,10 +5,10 @@ import * as ListEeAssets from '../../../docs/import/list_ee_assets.js';
 import {assetSelectionRowPrefix, disasterData, initializeDamageSelector, initializeScoreSelectors, scoreAssetTypes, scoreBoundsMap, setUpScoreSelectorTable, stateAssets, validateUserFields} from '../../../docs/import/manage_disaster';
 import {addDisaster, deleteDisaster, enableWhenReady, writeNewDisaster} from '../../../docs/import/manage_disaster.js';
 import {createOptionFrom} from '../../../docs/import/manage_layers.js';
+import {transformGeoPointArrayToLatLng} from '../../../docs/map_util.js';
 import {getDisaster} from '../../../docs/resources.js';
 import {createAndAppend, createGeoPoint, setUpSavingStubs} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
-import {transformGeoPointArrayToLatLng} from '../../../docs/map_util.js';
 
 const KNOWN_STATE = 'WF';
 
@@ -80,7 +80,8 @@ describe('Unit tests for manage_disaster.js', () => {
     cy.get('@scoreBoundsCoordinates')
         .then(
             (scoreBoundsCoordinates) => addPolygonWithPath(
-                scoreBoundsMap._createPolygonOptions(transformGeoPointArrayToLatLng(scoreBoundsCoordinates)),
+                scoreBoundsMap._createPolygonOptions(
+                    transformGeoPointArrayToLatLng(scoreBoundsCoordinates)),
                 scoreBoundsMap.drawingManager));
 
     cy.get('#process-button').should('have.text', allStateAssetsMissingText);
@@ -395,7 +396,8 @@ describe('Unit tests for manage_disaster.js', () => {
       stateAssets.set('NY', ['state0', 'state1', 'state2', 'state3', 'state4']);
     });
     return cy.get('@scoreBoundsCoordinates').then((scoreBoundsCoordinates) => {
-      scoreBoundsMap.initialize(transformGeoPointArrayToLatLng(scoreBoundsCoordinates));
+      scoreBoundsMap.initialize(
+          transformGeoPointArrayToLatLng(scoreBoundsCoordinates));
       // Use production code to prime score asset table, get damage set up.
       setUpScoreSelectorTable();
       initializeDamageSelector(['asset1', 'asset2']);
