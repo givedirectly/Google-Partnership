@@ -2,23 +2,32 @@ import {addPolygonWithPath} from '../../../docs/basic_map.js';
 import {ScoreBoundsMap} from '../../../docs/import/score_bounds_map.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 
+const scoreBoundsCoordinates = [
+  {lng: -95, lat: 30},
+  {lng: -90, lat: 50},
+  {lng: -90, lat: 30},
+];
+
+const newPolygonCoordinates = [
+  {lng: -110, lat: 40},
+  {lng: -90, lat: 50},
+  {lng: -90, lat: 40},
+];
+
+const newSw = {
+  lng: -50,
+  lat: 20,
+};
+const newNe = {
+  lng: -40,
+  lat: 30,
+};
+
 describe('Unit tests for ScoreBoundsMap class', () => {
   loadScriptsBeforeForUnitTests('jquery', 'maps');
 
   it('tests ScoreBoundsMap class', () => {
     const deleteConfirmStub = cy.stub(window, 'confirm').returns(true);
-    const scoreBoundsCoordinates = [
-      {lng: -95, lat: 30},
-      {lng: -90, lat: 50},
-      {lng: -90, lat: 30},
-    ];
-    const newPolygonCoordinates = [
-      {lng: -110, lat: 40},
-      {lng: -90, lat: 50},
-      {lng: -90, lat: 40},
-    ];
-    const newSw = {lng: -50, lat: 20};
-    const newNe = {lng: -40, lat: 30};
     let underTest;
     const storedSaves = [];
     cy.visit('test_utils/empty.html');

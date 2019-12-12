@@ -5,12 +5,17 @@ import * as ListEeAssets from '../../../docs/import/list_ee_assets.js';
 import {assetSelectionRowPrefix, disasterData, initializeDamageSelector, initializeScoreSelectors, scoreAssetTypes, scoreBoundsMap, setUpScoreSelectorTable, stateAssets, validateUserFields} from '../../../docs/import/manage_disaster';
 import {addDisaster, deleteDisaster, enableWhenReady, writeNewDisaster} from '../../../docs/import/manage_disaster.js';
 import {createOptionFrom} from '../../../docs/import/manage_layers.js';
-import {transformGeoPointArrayToLatLng} from '../../../docs/map_util.js';
 import {getDisaster} from '../../../docs/resources.js';
-import {createAndAppend, createGeoPoint, setUpSavingStubs} from '../../support/import_test_util.js';
+import {createAndAppend, setUpSavingStubs} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 
 const KNOWN_STATE = 'WF';
+
+const scoreBoundsCoordinates = [
+  {lng: -95, lat: 30},
+  {lng: -90, lat: 50},
+  {lng: -90, lat: 30},
+];
 
 describe('Unit tests for manage_disaster.js', () => {
   loadScriptsBeforeForUnitTests('ee', 'firebase', 'jquery', 'maps');
@@ -33,11 +38,6 @@ describe('Unit tests for manage_disaster.js', () => {
     setAclsStub = cy.stub(ee.data, 'setAssetAcl')
                       .callsFake((asset, acls, callback) => callback());
     // Triangle goes up into Canada, past default map of basic_map.js.
-    cy.wrap([
-        createGeoPoint(-95, 30),
-        createGeoPoint(-90, 50),
-        createGeoPoint(-90, 30),
-      ]).as('scoreBoundsCoordinates');
   });
 
   it('damage asset/map-bounds elements', () => {
@@ -63,23 +63,22 @@ describe('Unit tests for manage_disaster.js', () => {
   const allMissingText = allStateAssetsMissingText +
       ', and must specify either damage asset or map bounds';
 
-  it('validates asset data', function() {
+  it('validates asset data', () => {
     setUpAssetValidationTests();
     // Check table is properly initialized, then do validation.
     cy.get('#asset-selection-table-body')
         .find('tr')
         .its('length')
         .should('eq', 5);
-    cy.wait(50);
-    cy.get('@scoreBoundsCoordinates').then((scoreBoundsCoordinates) => {
+    cy.wait(50).then(() => {
       // Check that map bounds have adjusted to include the polygon we
       // drew, which extends north of the US into Canada.
       // TODO(janakr): This passes even without the show/hide dance in
       //  manage_disaster#onSetDisaster, but without that it fails in
       //  production. Make test more faithful to prod somehow.
       const bounds = scoreBoundsMap.map.getBounds();
-      transformGeoPointArrayToLatLng(scoreBoundsCoordinates)
-          .forEach((point) => expect(bounds.contains(point)).to.be.true);
+      scoreBoundsCoordinates.forEach(
+          (point) => expect(bounds.contains(point)).to.be.true);
     });
     // Delete polygon to start.
     cy.stub(window, 'confirm').returns(true);
@@ -87,13 +86,11 @@ describe('Unit tests for manage_disaster.js', () => {
     cy.get('.score-bounds-delete-button').click().then(validateUserFields);
     // We haven't set much, so button is not enabled.
     cy.get('#process-button').should('be.disabled');
-    cy.get('#process-button').should('have.text', allMissingText);
-
-    cy.get('@scoreBoundsCoordinates')
+    cy.get('#process-button')
+        .should('have.text', allMissingText)
         .then(
-            (scoreBoundsCoordinates) => addPolygonWithPath(
-                scoreBoundsMap._createPolygonOptions(
-                    transformGeoPointArrayToLatLng(scoreBoundsCoordinates)),
+            () => addPolygonWithPath(
+                scoreBoundsMap._createPolygonOptions(scoreBoundsCoordinates),
                 scoreBoundsMap.drawingManager));
 
     cy.get('#process-button').should('have.text', allStateAssetsMissingText);
@@ -360,11 +357,7 @@ describe('Unit tests for manage_disaster.js', () => {
     cy.stub(ListEeAssets, 'getDisasterAssetsFromEe')
         .returns(Promise.resolve([]));
     const currentData = createDisasterData(['NY']);
-    cy.get('@scoreBoundsCoordinates').then((scoreBoundsCoordinates) => {
-      currentData['asset_data']['score_bounds_coordinates'] =
-          scoreBoundsCoordinates;
-      disasterData.set(getDisaster(), currentData);
-    });
+    disasterData.set(getDisaster(), currentData);
     return cy.document().then((doc) => {
       // Lightly fake out jQuery so that we can use Cypress selectors. Might not
       // work if manage_disaster.js starts doing fancier jQuery operations.
@@ -396,26 +389,25 @@ describe('Unit tests for manage_disaster.js', () => {
    * @return {Cypress.Chainable<void>}
    */
   function setUpAssetValidationTests() {
-    setAssetDataAndCreateDamageInputsForScoreValidationTests().then((doc) => {
-      const tbody = doc.createElement('tbody');
-      tbody.id = 'asset-selection-table-body';
-      doc.body.appendChild(tbody);
+    return setAssetDataAndCreateDamageInputsForScoreValidationTests().then(
+        (doc) => {
+          const tbody = doc.createElement('tbody');
+          tbody.id = 'asset-selection-table-body';
+          doc.body.appendChild(tbody);
 
-      const button = doc.createElement('button');
-      button.id = 'process-button';
-      button.disabled = true;
-      button.hidden = true;
-      doc.body.appendChild(button);
-      stateAssets.set('NY', ['state0', 'state1', 'state2', 'state3', 'state4']);
-    });
-    return cy.get('@scoreBoundsCoordinates').then((scoreBoundsCoordinates) => {
-      scoreBoundsMap.initialize(
-          transformGeoPointArrayToLatLng(scoreBoundsCoordinates));
-      // Use production code to prime score asset table, get damage set up.
-      setUpScoreSelectorTable();
-      initializeDamageSelector(['asset1', 'asset2']);
-      initializeScoreSelectors(['NY']);
-    });
+          const button = doc.createElement('button');
+          button.id = 'process-button';
+          button.disabled = true;
+          button.hidden = true;
+          doc.body.appendChild(button);
+          stateAssets.set(
+              'NY', ['state0', 'state1', 'state2', 'state3', 'state4']);
+          scoreBoundsMap.initialize(scoreBoundsCoordinates);
+          // Use production code to prime score asset table, get damage set up.
+          setUpScoreSelectorTable();
+          initializeDamageSelector(['asset1', 'asset2']);
+          initializeScoreSelectors(['NY']);
+        });
   }
 
   /**
