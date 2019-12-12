@@ -38,7 +38,8 @@ describe('Unit tests for ScoreBoundsMap class', () => {
       div.prop('id', 'score-bounds-map');
       doc.body.appendChild(div[0]);
 
-      // Create and show map.
+      // Create and show map. Done in before block because can only be done once
+      // safely per test.
       underTest = new ScoreBoundsMap(
           div[0],
           (data) =>
