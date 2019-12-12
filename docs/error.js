@@ -26,8 +26,7 @@ function showError(msg, snackbarMsg) {
   if (snackbarMsg == null) snackbarMsg = msg;
   console.error(msg);
   showSnackbar(
-      snackbarMsg,
-      (snackbar) => snackbar.style.backgroundColor = ERROR_COLOR,
+      snackbarMsg, (snackbar) => snackbar.style.backgroundColor = ERROR_COLOR,
       (icon) => {
         icon.classList.add('fa');
         icon.classList.add('fa-exclamation-circle');

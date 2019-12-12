@@ -53,5 +53,5 @@ function showSnackbar(
   }
 }
 
-$(() => $('#snackbar').load(
-    import.meta.url.replace(/snackbar\.js$/, 'snackbar.html')));
+$(() => $('#snackbar')
+            .load(import.meta.url.replace(/snackbar\.js$/, 'snackbar.html')));
