@@ -5,12 +5,6 @@ import {loadNavbarWithPicker} from '../navbar.js';
 import TaskAccumulator from '../task_accumulator.js';
 
 import {enableWhenReady, onSetDisaster, setUpScoreSelectorTable, toggleState} from './manage_disaster.js';
-import {
-  createBasicMap,
-} from '../basic_map.js';
-import {createPopup, isMarker} from '../popup.js';
-import {userRegionData} from '../user_region_data.js';
-import {StoredShapeData} from '../polygon_draw.js';
 
 // Two tasks: EE and page load. Firebase is taken care of in the promise.
 const taskAccumulator =

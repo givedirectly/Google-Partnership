@@ -1,6 +1,6 @@
 import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, snapPercentageTag, snapPopTag, sviTag, totalPopTag, tractTag} from '../property_names.js';
 import {getScoreAsset} from '../resources.js';
-import {computeAndSaveBounds, saveBounds} from './center.js';
+import {computeAndSaveBounds} from './center.js';
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
 
 export {createScoreAsset, setStatus};
@@ -343,7 +343,8 @@ function calculateDamage(assetData, setMapBoundsInfo) {
       return damageError;
     }
     const coordinates = [];
-    scoreBounds.forEach((geopoint) => coordinates.push(geopoint.longitude, geopoint.latitude));
+    scoreBounds.forEach(
+        (geopoint) => coordinates.push(geopoint.longitude, geopoint.latitude));
     damageEnvelope = ee.Geometry.Polygon(coordinates);
     geometry = damageEnvelope;
   }
@@ -353,25 +354,6 @@ function calculateDamage(assetData, setMapBoundsInfo) {
       .then((bounds) => setMapBoundsInfo('Found bounds ' + bounds))
       .catch(setMapBoundsInfo);
   return {damage, damageEnvelope};
-}
-
-/**
- * Creates a GeoJson-style rectangle from the southwest and northeast corners.
- * @param {{lat: number, lng: number}} sw
- * @param {{lat: number, lng: number}} ne
- * @return {Object} GeoJson Polygon
- */
-function makeGeoJsonRectangle(sw, ne) {
-  return {
-    type: 'Polygon',
-    coordinates: [[
-      [sw.lng, sw.lat],
-      [ne.lng, sw.lat],
-      [ne.lng, ne.lat],
-      [sw.lng, ne.lat],
-      [sw.lng, sw.lat],
-    ]],
-  };
 }
 
 /**
@@ -400,17 +382,6 @@ function computeBuildingsHisto(damageEnvelope, buildingPath, stateGroups) {
               ee.Filter.intersects({leftField: '.geo', rightField: '.geo'}))
           .map((f) => f.set(geoidTag, ee.Feature(f.get(field)).get(geoidTag)));
   return ee.Dictionary(withBlockGroup.aggregate_histogram(geoidTag));
-}
-
-/**
- * Makes a LatLng-style object from the given string.
- * @param {string} str Comma-separated string of the form "lat, lng", which is
- *     what Google Maps provides pretty easily
- * @return {{lng: *, lat: *}}
- */
-function makeLatLngFromString(str) {
-  const elts = str.split(/ *, */).map(Number);
-  return {lat: elts[0], lng: elts[1]};
 }
 
 /**

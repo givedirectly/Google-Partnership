@@ -240,7 +240,14 @@ describe('Unit test for ShapeData', () => {
         return realDoc.set(record);
       };
     });
-    cy.stubDocument();
+
+    cy.document().then((doc) => {
+      // Lightly fake out prod document access for jquery.
+      cy.stub(document, 'getElementsByTagName')
+          .callsFake((id) => doc.getElementsByTagName(id));
+      cy.stub(document, 'getElementsByClassName')
+          .callsFake((id) => doc.getElementsByClassName(id));
+    });
     pressPopupButton('edit');
     cy.get('.notes').type('new notes');
     pressPopupButton('save');
@@ -542,7 +549,8 @@ describe('Unit test for ShapeData', () => {
    * @return {Cypress.Chainable<void>}
    */
   function drawPolygon(polygonPath = path) {
-    return cyQueue(() => addPolygonWithPath({paths: polygonPath, map}, drawingManager));
+    return cyQueue(
+        () => addPolygonWithPath({paths: polygonPath, map}, drawingManager));
   }
 
   /**

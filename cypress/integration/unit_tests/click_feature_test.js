@@ -52,7 +52,12 @@ describe('Unit tests for click_feature.js with map and table', () => {
           if (id === tableContainerId) resolve();
         });
     createGoogleMap().then((mapResult) => map = mapResult);
-    cy.stubDocument().then((doc) => {
+    cy.document().then((doc) => {
+      // Lightly fake out prod document access.
+      cy.stub(document, 'getElementById')
+          .callsFake((id) => doc.getElementById(id));
+      cy.stub(document, 'createElement')
+          .callsFake((tag) => doc.createElement(tag));
       const containerDiv = doc.createElement('div');
       containerDiv.id = 'tableContainer';
       doc.body.appendChild(containerDiv);

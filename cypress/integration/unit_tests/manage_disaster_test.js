@@ -1,25 +1,14 @@
+import {addPolygonWithPath} from '../../../docs/basic_map.js';
 import {getFirestoreRoot, readDisasterDocument} from '../../../docs/firestore_document.js';
 import {assetDataTemplate, createDisasterData} from '../../../docs/import/create_disaster_lib.js';
-import {
-  assetSelectionRowPrefix,
-  disasterData,
-  initializeDamageSelector,
-  initializeScoreSelectors,
-  scoreAssetTypes, scoreBoundsMap,
-  ScoreBoundsMap,
-  setUpScoreSelectorTable,
-  stateAssets,
-  validateUserFields
-} from '../../../docs/import/manage_disaster';
-import {addDisaster, deleteDisaster, writeNewDisaster} from '../../../docs/import/manage_disaster.js';
+import * as ListEeAssets from '../../../docs/import/list_ee_assets.js';
+import {assetSelectionRowPrefix, disasterData, initializeDamageSelector, initializeScoreSelectors, scoreAssetTypes, scoreBoundsMap, ScoreBoundsMap, setUpScoreSelectorTable, stateAssets, validateUserFields} from '../../../docs/import/manage_disaster';
+import {addDisaster, deleteDisaster, enableWhenReady, writeNewDisaster} from '../../../docs/import/manage_disaster.js';
 import {createOptionFrom} from '../../../docs/import/manage_layers.js';
+import {transformGeoPointArrayToLatLng} from '../../../docs/map_util.js';
 import {getDisaster} from '../../../docs/resources.js';
-import {
-  createAndAppend, createGeoPoint,
-  setUpSavingStubs
-} from '../../support/import_test_util.js';
+import {createAndAppend, createGeoPoint, setUpSavingStubs} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
-import {addPolygonWithPath} from '../../../docs/basic_map.js';
 
 const KNOWN_STATE = 'WF';
 
@@ -31,7 +20,6 @@ describe('Unit tests for manage_disaster.js', () => {
     disasterPicker.append(createOptionFrom('2001-summer'));
     disasterPicker.val('2003-spring');
     createAndAppend('div', 'compute-status');
-    cy.wrap([createGeoPoint(-95, 30), createGeoPoint(-90, 50), createGeoPoint(-90, 30)]).as('scoreBoundsCoordinates');
   });
 
   setUpSavingStubs();
@@ -44,9 +32,15 @@ describe('Unit tests for manage_disaster.js', () => {
             .callsFake((asset, overwrite, callback) => callback());
     setAclsStub = cy.stub(ee.data, 'setAssetAcl')
                       .callsFake((asset, acls, callback) => callback());
+    // Triangle goes up into Canada, past default map of basic_map.js.
+    cy.wrap([
+        createGeoPoint(-95, 30),
+        createGeoPoint(-90, 50),
+        createGeoPoint(-90, 30),
+      ]).as('scoreBoundsCoordinates');
   });
 
-it('damage asset/map-bounds elements', () => {
+  it('damage asset/map-bounds elements', () => {
     setAssetDataAndCreateDamageInputsForScoreValidationTests();
     cy.get('#map-bounds-div')
         .should('be.visible')
@@ -56,12 +50,6 @@ it('damage asset/map-bounds elements', () => {
         .then(() => initializeDamageSelector(['asset1', 'asset2']));
     cy.get('#damage-asset-select').should('have.value', '');
     cy.get('#map-bounds-div').should('be.visible');
-    cy.get('#map-bounds-sw').should('have.value', '0, 1');
-    cy.get('#map-bounds-ne').should('have.value', '');
-    cy.get('#map-bounds-ne').type('1, 1').blur();
-    readFirestoreAfterWritesFinish().then(
-        (doc) =>
-            expect(doc.data()['asset_data']['map_bounds_ne']).to.eql('1, 1'));
     cy.get('#damage-asset-select').select('asset2').blur();
     cy.get('#map-bounds-div').should('not.be.visible');
     readFirestoreAfterWritesFinish().then(
@@ -75,27 +63,28 @@ it('damage asset/map-bounds elements', () => {
   const allMissingText = allStateAssetsMissingText +
       ', and must specify either damage asset or map bounds';
 
-  it('validates asset data', () => {
+  it('validates asset data', function() {
     setUpAssetValidationTests();
     // Check table is properly initialized, then do validation.
     cy.get('#asset-selection-table-body')
         .find('tr')
         .its('length')
-        .should('eq', 5)
-        .then(validateUserFields);
+        .should('eq', 5);
+    // Delete polygon to start.
+    cy.stub(window, 'confirm').returns(true);
+    cy.get('.score-bounds-delete-button').click().then(validateUserFields);
     // We haven't set much, so button is not enabled.
     cy.get('#process-button').should('be.disabled');
     cy.get('#process-button').should('have.text', allMissingText);
 
-    // Confirm that entering just one corner of map doesn't help anything.
-    cy.get('#map-bounds-sw').clear().type('0, 0').blur();
-    cy.get('#process-button').should('have.text', allMissingText);
-    // Adding the second corner gets rid of the "damage/bounds" missing part.
-    cy.get('#map-bounds-ne').type('1, 1').blur();
-    cy.get('#process-button').should('have.text', allStateAssetsMissingText);
+    cy.get('@scoreBoundsCoordinates')
+        .then(
+            (scoreBoundsCoordinates) => addPolygonWithPath(
+                scoreBoundsMap.createPolygonOptions(scoreBoundsCoordinates),
+                scoreBoundsMap.drawingManager));
 
-    // Clearing puts us back where we started.
-    cy.get('#map-bounds-ne').clear().blur();
+    cy.get('#process-button').should('have.text', allStateAssetsMissingText);
+    cy.get('.score-bounds-delete-button').click();
     cy.get('#process-button').should('have.text', allMissingText);
 
     // Specifying the damage asset works too.
@@ -140,7 +129,6 @@ it('damage asset/map-bounds elements', () => {
       const assetData = doc.data()['asset_data'];
 
       expect(assetData['damage_asset_path']).to.be.null;
-      expect(assetData['map_bounds_sw']).to.eql('0, 0');
       expect(assetData['svi_asset_paths']).to.eql({'NY': 'state2'});
       expect(assetData['snap_data']['paths']).to.eql({'NY': null});
     });
@@ -210,73 +198,88 @@ it('damage asset/map-bounds elements', () => {
                      .to.eql(missingSnapPath));
   });
 
-  it.only('tests ScoreBoundsMap class', () => {
+  it('tests ScoreBoundsMap class', () => {
     const deleteConfirmStub = cy.stub(window, 'confirm').returns(true);
-    const newPolygonCoordinates = [createGeoPoint(-110, 40), createGeoPoint(-90, 50), createGeoPoint(-90, 40)];
+    const newPolygonCoordinates = [
+      createGeoPoint(-110, 40),
+      createGeoPoint(-90, 50),
+      createGeoPoint(-90, 40),
+    ];
     cy.visit('test_utils/empty.html');
     let scoreBoundsMap;
-    setAssetDataAndCreateDamageInputsForScoreValidationTests()
-        .then(() => {
-          // Set up page for ScoreBoundsMap and create one. Default data has a
-          // polygon.
-      const div = createAndAppend('div', 'score-bounds-map');
+    setAssetDataAndCreateDamageInputsForScoreValidationTests().then(() => {
+      // Set up page for ScoreBoundsMap and create one. Default data has a
+      // polygon.
+      const div = $('#score-bounds-map');
       div.css('width', '100%');
       div.css('height', '80%');
       scoreBoundsMap = new ScoreBoundsMap();
       scoreBoundsMap.initialize();
-      expect($('.score-bounds-delete-button').is(':hidden')).to.be.false;
+      scoreBoundsMap.onShow();
       expect(scoreBoundsMap.polygon).to.not.be.null;
       expect(scoreBoundsMap.polygon.getMap()).to.eql(scoreBoundsMap.map);
       expect(scoreBoundsMap.drawingManager.getMap()).to.be.null;
-      // Modify polygon.
-      scoreBoundsMap.polygon.getPath().setAt(0, new google.maps.LatLng({lng: -100, lat: 30}));
     });
-    // cy.get('button');//.should('be.visible');
-    // cy.get('button').contains('Delete').should('be.visible');
-    readFirestoreAfterWritesFinish()
-    // ;
-    // // The delete button
-    // let writePromise = null;
-    // cy.get('@savedStub')
-    //     .then(
-    //         (savedStub) => {
-    //             writePromise = new Promise((resolve) => savedStub.callsFake(resolve))
-    //                 .then(() => savedStub.resetHistory())});
-    // cy.wrap(writePromise)
-        .then(readDisasterDocument).then(
-        (doc) => cy.get('@scoreBoundsCoordinates').then((scoreBoundsCoordinates) => expect(
-            doc.data().asset_data.score_bounds_coordinates).to.eql(
-            [createGeoPoint(-100, 30), ...scoreBoundsCoordinates.slice(1)]))
-    );
-    cy.get('button').contains('Delete').should('be.visible').then(() => {
+    // Sadly, the map doesn't store its bounds immediately: give it a few ticks.
+    cy.wait(50);
+    cy.get('@scoreBoundsCoordinates').then((scoreBoundsCoordinates) => {
+      const bounds = scoreBoundsMap.map.getBounds();
+      for (const point of transformGeoPointArrayToLatLng(
+               scoreBoundsCoordinates)) {
+        expect(bounds.contains(point)).to.be.true;
+      }
+    });
+    // Subtle note about this delete button: because it is attached to the map,
+    // not the whole document, it takes Cypress a while to find it (and jquery
+    // never finds it). Therefore the timing claims in
+    // readFirestoreAfterWritesFinish are incorrect, and we cannot look for the
+    // delete button in between triggering a write and waiting for it to finish.
+    // Delete button is there. Now modify polygon.
+    cy.get('.score-bounds-delete-button')
+        .should('be.visible')
+        .then(
+            () => scoreBoundsMap.polygon.getPath().setAt(
+                0, new google.maps.LatLng({lng: -100, lat: 30})));
+    readFirestoreAfterWritesFinish().then(
+        (doc) =>
+            cy.get('@scoreBoundsCoordinates')
+                .then(
+                    (scoreBoundsCoordinates) =>
+                        expect(doc.data().asset_data.score_bounds_coordinates)
+                            .to.eql([
+                              createGeoPoint(-100, 30),
+                              ...scoreBoundsCoordinates.slice(1),
+                            ])));
+    cy.get('.score-bounds-delete-button').should('be.visible').then(() => {
       // Switch to "new" disaster that has no polygon.
-      disasterData.get(
-          getDisaster()).asset_data.score_bounds_coordinates = null;
+      disasterData.get(getDisaster()).asset_data.score_bounds_coordinates =
+          null;
       scoreBoundsMap.initialize();
       expect(scoreBoundsMap.polygon).to.be.null;
       expect(scoreBoundsMap.drawingManager.getMap()).to.eql(scoreBoundsMap.map);
     });
-    cy.get('button').contains('Delete').should('not.be.visible').then(() => {
+    cy.get('.score-bounds-delete-button').should('not.be.visible').then(() => {
       // Simulate drawing a polygon.
-      addPolygonWithPath(scoreBoundsMap.createPolygonOptions(newPolygonCoordinates), scoreBoundsMap.drawingManager);
+      addPolygonWithPath(
+          scoreBoundsMap.createPolygonOptions(newPolygonCoordinates),
+          scoreBoundsMap.drawingManager);
       expect(scoreBoundsMap.polygon).to.not.be.null;
       expect(scoreBoundsMap.polygon.getMap()).to.eql(scoreBoundsMap.map);
       expect(scoreBoundsMap.drawingManager.getMap()).to.be.null;
     });
-    cy.get('button').contains('Delete').should('be.visible');
+    cy.get('.score-bounds-delete-button').should('be.visible');
     readFirestoreAfterWritesFinish().then(
-        (doc) => expect(
-            doc.data().asset_data.score_bounds_coordinates).to.eql(newPolygonCoordinates)
-    );
+        (doc) => expect(doc.data().asset_data.score_bounds_coordinates)
+                     .to.eql(newPolygonCoordinates));
     // Delete the polygon and verify it's gone everywhere.
-    cy.get('button').contains('Delete').click().then(() => {
+    cy.get('.score-bounds-delete-button').click().then(() => {
       expect(deleteConfirmStub).to.be.calledOnce;
       expect(scoreBoundsMap.polygon).to.be.null;
       expect(scoreBoundsMap.drawingManager.getMap()).to.eql(scoreBoundsMap.map);
     });
     readFirestoreAfterWritesFinish().then(
-        (doc) => expect(
-            doc.data().asset_data.score_bounds_coordinates).to.be.null);
+        (doc) =>
+            expect(doc.data().asset_data.score_bounds_coordinates).to.be.null);
   });
 
   it('writes a new disaster to firestore', () => {
@@ -423,24 +426,35 @@ it('damage asset/map-bounds elements', () => {
    * @return {Cypress.Chainable<Document>}
    */
   function setAssetDataAndCreateDamageInputsForScoreValidationTests() {
+    // Clear out any modifications we've done to the document.
+    cy.visit('test_utils/empty.html');
+    cy.stub(ListEeAssets, 'getDisasterAssetsFromEe')
+        .returns(Promise.resolve([]));
     const currentData = createDisasterData(['NY']);
     cy.get('@scoreBoundsCoordinates').then((scoreBoundsCoordinates) => {
-      currentData['asset_data']['score_bounds_coordinates'] = scoreBoundsCoordinates;
+      currentData['asset_data']['score_bounds_coordinates'] =
+          scoreBoundsCoordinates;
       disasterData.set(getDisaster(), currentData);
     });
-    return cy.stubDocument().then((doc) => {
+    return cy.document().then((doc) => {
+      // Lightly fake out jQuery so that we can use Cypress selectors. Might not
+      // work if manage_disaster.js starts doing fancier jQuery operations.
+      cy.stub(document, 'getElementById')
+          .callsFake((id) => doc.getElementById(id));
       const damageSelect = doc.createElement('select');
       damageSelect.id = 'damage-asset-select';
       doc.body.appendChild(damageSelect);
       const boundsDiv = doc.createElement('div');
       boundsDiv.id = 'map-bounds-div';
       doc.body.appendChild(boundsDiv);
-      const swInput = doc.createElement('input');
-      swInput.id = 'map-bounds-sw';
-      boundsDiv.appendChild(swInput);
-      const neInput = doc.createElement('input');
-      neInput.id = 'map-bounds-ne';
-      boundsDiv.appendChild(neInput);
+      const mapDiv = doc.createElement('div');
+      boundsDiv.append(mapDiv);
+      const jMapDiv = $(mapDiv);
+      jMapDiv.css('width', '20%');
+      jMapDiv.css('height', '20%');
+      jMapDiv.prop('id', 'score-bounds-map');
+      // Make sure scoreBoundsMap is created.
+      enableWhenReady(new Promise(() => {}));
       return doc;
     });
   }
@@ -450,8 +464,6 @@ it('damage asset/map-bounds elements', () => {
    * @return {Cypress.Chainable}
    */
   function setUpAssetValidationTests() {
-    // Clear out any modifications we've done to the document.
-    cy.visit('test_utils/empty.html');
     return setAssetDataAndCreateDamageInputsForScoreValidationTests().then(
         (doc) => {
           const tbody = doc.createElement('tbody');
@@ -466,6 +478,7 @@ it('damage asset/map-bounds elements', () => {
           stateAssets.set(
               'NY', ['state0', 'state1', 'state2', 'state3', 'state4']);
 
+          scoreBoundsMap.initialize();
           // Use production code to prime score asset table, get damage set up.
           setUpScoreSelectorTable();
           initializeDamageSelector(['asset1', 'asset2']);

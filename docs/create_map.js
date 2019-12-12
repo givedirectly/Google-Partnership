@@ -1,7 +1,7 @@
+import {createBasicMap} from './basic_map.js';
 import {POLYGON_HELP_URL} from './help.js';
 import {geoPointToLatLng} from './map_util.js';
 import {setUpPolygonDrawing} from './polygon_draw.js';
-import {createBasicMap} from './basic_map.js';
 
 export {createMap as default};
 

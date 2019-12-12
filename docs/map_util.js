@@ -2,8 +2,8 @@ export {
   convertEeObjectToPromise,
   geoPointToLatLng,
   latLngToGeoPoint,
-    pathToGeoPointArray,
-    transformGeoPointArrayToLatLng,
+  pathToGeoPointArray,
+  transformGeoPointArrayToLatLng,
 };
 
 /**
@@ -33,6 +33,11 @@ function latLngToGeoPoint(latLng) {
   return new firebase.firestore.GeoPoint(latLng.lat(), latLng.lng());
 }
 
+/**
+ * Converts first path of a Google Maps Polygon to Firestore GeoPoints.
+ * @param {google.maps.Polygon} polygon
+ * @return {Array<firebase.firestore.GeoPoint>}
+ */
 function pathToGeoPointArray(polygon) {
   return polygon.getPath().getArray().map(latLngToGeoPoint);
 }

@@ -2,11 +2,7 @@ import {mapContainerId, writeWaiterId} from './dom_constants.js';
 import {createError} from './error.js';
 import {getFirestoreRoot} from './firestore_document.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
-import {
-  geoPointToLatLng,
-  latLngToGeoPoint,
-  pathToGeoPointArray, transformGeoPointArrayToLatLng,
-} from './map_util.js';
+import {latLngToGeoPoint, pathToGeoPointArray, transformGeoPointArrayToLatLng} from './map_util.js';
 import {createPopup, isMarker, setUpPopup} from './popup.js';
 import {snapPopTag, totalPopTag} from './property_names.js';
 import {getScoreAsset} from './resources.js';

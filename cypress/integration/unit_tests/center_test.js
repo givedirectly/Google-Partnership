@@ -15,7 +15,7 @@ describe('Unit test for center.js', () => {
       sw: {lat: 2.5, lng: 1.5},
       ne: {lat: 60, lng: 50},
     };
-    cy.wrap(computeAndSaveBounds(damageCollection))
+    cy.wrap(computeAndSaveBounds(damageCollection.geometry()))
         .then(makeLatLngBoundsFromGeoJsonPoints)
         .then(
             (bounds) => expectLatLngBoundsWithin(bounds, expectedLatLngBounds));

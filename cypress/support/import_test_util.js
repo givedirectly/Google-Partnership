@@ -3,7 +3,7 @@ import * as Toast from '../../docs/toast.js';
 
 export {
   createAndAppend,
-    createGeoPoint,
+  createGeoPoint,
   createTrs,
   setDisasterAndLayers,
   setUpSavingStubs,
@@ -82,6 +82,11 @@ function setUpSavingStubs() {
   });
 }
 
+/**
+ * @param {number} lng
+ * @param {number} lat
+ * @return {firebase.firestore.GeoPoint}
+ */
 function createGeoPoint(lng, lat) {
   return new firebase.firestore.GeoPoint(lat, lng);
 }
