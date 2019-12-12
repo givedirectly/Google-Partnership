@@ -8,7 +8,7 @@ export {
   defaultZoomLevel,
 };
 
-// Contiguous United States.
+// Center of the contiguous United States (lower 48).
 const defaultMapCenter = {
   lat: 29.8283,
   lng: -98.5795,
@@ -26,7 +26,7 @@ const defaultZoomLevel = 4;
  */
 function createBasicMap(div, additionalOptions = {}) {
   // Create the base Google Map. Takes ~7 ms to execute this step.
-  // Temporarily center on the center of the continental 48 states.
+  // Temporarily center on the center of the contiguous 48 states.
   // In practice, the firebase promise that normally determines the bounds
   // finishes so fast we don't actually see this happen unless there are no
   // bounds yet.

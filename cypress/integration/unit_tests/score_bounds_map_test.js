@@ -57,7 +57,7 @@ describe('Unit tests for ScoreBoundsMap class', () => {
       underTest.map.fitBounds(new google.maps.LatLngBounds(newSw, newNe));
       expect(underTest.map.getBounds().contains(newSw)).to.be.true;
       expect(underTest.map.getBounds().contains(newNe)).to.be.true;
-      // Modify polygon.
+      // Modify polygon, check that new bounds were saved.
       underTest.polygon.getPath().setAt(
           0, new google.maps.LatLng({lng: -100, lat: 30}));
       expect(storedSaves).to.eql([[
@@ -70,6 +70,7 @@ describe('Unit tests for ScoreBoundsMap class', () => {
       expect(underTest.polygon).to.be.null;
       expect(underTest.drawingManager.getMap()).to.eql(underTest.map);
       expect(storedSaves).to.be.empty;
+      // Bounds were reset.
       expect(underTest.map.getBounds().contains(newSw)).to.be.false;
       expect(underTest.map.getBounds().contains(newNe)).to.be.false;
     });
@@ -81,14 +82,13 @@ describe('Unit tests for ScoreBoundsMap class', () => {
       addPolygonWithPath(
           underTest._createPolygonOptions(newPolygonCoordinates),
           underTest.drawingManager);
+      // Polygon appears as expected, and data was saved.
       expect(underTest.polygon).to.not.be.null;
       expect(underTest.polygon.getMap()).to.eql(underTest.map);
       expect(underTest.drawingManager.getMap()).to.be.null;
       expect(storedSaves).to.eql([newPolygonCoordinates]);
       storedSaves.length = 0;
     });
-    // Now we have a delete button.
-    cy.get('.score-bounds-delete-button').should('be.visible');
     cy.get('[title="Draw a shape"]').should('not.exist');
     // Delete the polygon and verify it's gone everywhere.
     cy.get('.score-bounds-delete-button').click().then(() => {

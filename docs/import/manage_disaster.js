@@ -473,12 +473,9 @@ function initializeDamageSelector(assets) {
  */
 function setMapBoundsDiv(hide) {
   const mapBoundsDiv = $('#map-bounds-div');
-  if (hide) {
-    mapBoundsDiv.hide();
-  } else {
-    mapBoundsDiv.show();
-  }
+  hide ? mapBoundsDiv.hide() : mapBoundsDiv.show();
 }
+
 /**
  * Retrieves the object inside the current disaster's asset_data, given by the
  * "path" of {@code propertyPath}
