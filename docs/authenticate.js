@@ -178,7 +178,10 @@ Authenticator.trackEeAndFirebase = (taskAccumulator) => {
         // Expires in 3600 is a lie, but no need to tell the truth.
         /* expiresIn */ 3600, /* extraScopes */[],
         /* callback */
-        () => initializeEE(() => taskAccumulator.taskCompleted()),
+        () => initializeEE(() => {
+          ee.data.setCloudApiEnabled(true);
+          taskAccumulator.taskCompleted();
+        }),
         /* updateAuthLibrary */ false);
     return firebase.auth().signInWithCustomToken(firebaseToken);
   }
@@ -197,7 +200,7 @@ function initializeFirebase() {
  */
 function initializeEE(runCallback, errorCallback = defaultErrorCallback) {
   ee.initialize(
-      /* opt_baseurl=*/ null, /* opt_tileurl=*/ null, runCallback,
+      /** opt_baseurl */ null, /** opt_tileurl */ null, runCallback,
       (err) => errorCallback('Error initializing EarthEngine: ' + err));
 }
 

@@ -63,7 +63,7 @@ const mockFirebaseLayers = [
 ];
 
 describe('Unit test for toggleLayerOn', () => {
-  loadScriptsBeforeForUnitTests('ee', 'deck', 'maps');
+  loadScriptsBeforeForUnitTests('ee', 'deck', 'jquery', 'maps');
   before(() => {
     // Stub out loading update attempts: they pollute console with errors.
     loading.addLoadingElement = () => {};
@@ -109,7 +109,7 @@ describe('Unit test for toggleLayerOn', () => {
     expect(toggleLayerOn(mockFirebaseLayers[1])).to.be.null;
     expect(layerArray[1].displayed).to.be.true;
     const layerProps = deckGlArray[1].props;
-    expect(layerProps).to.have.property('id', 'asset1');
+    expect(layerProps).to.have.property('id', 'asset1-1');
     expect(layerProps).to.have.property('visible', true);
     expect(layerProps).to.have.property('data', mockData);
   });
@@ -128,7 +128,7 @@ describe('Unit test for toggleLayerOn', () => {
       expect(layerArray[2].displayed).to.be.true;
       expect(layerArray[2].data).to.not.be.null;
       const layerProps = deckGlArray[2].props;
-      expect(layerProps).to.have.property('id', 'asset2');
+      expect(layerProps).to.have.property('id', 'asset2-2');
       expect(layerProps).to.have.property('visible', true);
       expect(layerProps).to.have.property('data', emptyList);
     });
@@ -148,7 +148,7 @@ describe('Unit test for toggleLayerOn', () => {
       expect(layerArray[2].displayed).to.be.false;
       expect(layerArray[2].data).to.not.be.null;
       const layerProps = deckGlArray[2].props;
-      expect(layerProps).to.have.property('id', 'asset2');
+      expect(layerProps).to.have.property('id', 'asset2-2');
       expect(layerProps).to.have.property('visible', false);
       expect(layerProps).to.have.property('data', emptyList);
     });
@@ -170,7 +170,7 @@ describe('Unit test for toggleLayerOn', () => {
       expect(layerArray[2].displayed).to.be.true;
       expect(layerArray[2].data).to.not.be.null;
       const layerProps = deckGlArray[2].props;
-      expect(layerProps).to.have.property('id', 'asset2');
+      expect(layerProps).to.have.property('id', 'asset2-2');
       expect(layerProps).to.have.property('visible', true);
       expect(layerProps).to.have.property('data', emptyList);
     });
@@ -317,6 +317,7 @@ describe('Unit test for toggleLayerOn', () => {
     const promiseResult = ['a'];
     const secondPromiseResult = ['b'];
     resolveFunction(promiseResult);
+    const scoreLayerId = scoreLayerName + '-' + scoreLayerName;
 
     cy.wrap(scorePromise)
         .then(() => {
@@ -327,14 +328,14 @@ describe('Unit test for toggleLayerOn', () => {
           const props = firstLayers[2].props;
           expect(props.data).to.eql(promiseResult);
           expect(props.visible).to.be.true;
-          expect(props.id).to.eql(scoreLayerName);
+          expect(props.id).to.eql(scoreLayerId);
 
           // Test remove.
           removeScoreLayer();
           expect(overlaySpy).to.be.calledTwice;
           const secondLayers = getLatestLayer();
           expect(secondLayers).to.have.length(2);
-          expect(secondLayers[1].props.id).to.not.eql(scoreLayerName);
+          expect(secondLayers[1].props.id).to.not.eql(scoreLayerId);
 
           // Add score layer back in, with a different value.
           const secondPromise =
@@ -352,7 +353,7 @@ describe('Unit test for toggleLayerOn', () => {
           const props = thirdLayers[2].props;
           expect(props.data).to.eql(secondPromiseResult);
           expect(props.visible).to.be.true;
-          expect(props.id).to.eql(scoreLayerName);
+          expect(props.id).to.eql(scoreLayerId);
         });
   });
 
@@ -376,8 +377,9 @@ describe('Unit test for toggleLayerOn', () => {
     expectNoBlobImages().then(() => {
       // Add the layer. 4 will render quickly, 4 will hang.
       addLayerPromise = addLayer(mockFirebaseLayers[4], map);
-      overlay = assertCompositeOverlayPresent(map);
     });
+    // Give initial promise a chance to complete.
+    cy.wait(0).then(() => overlay = assertCompositeOverlayPresent(map));
     expectBlobImageCount(tilesOnMap).then(() => {
       // The tile-url2 requests got back waitPromise, so they haven't really
       // completed. Complete them now with an "ok" response. This will allow the
@@ -412,13 +414,14 @@ describe('Unit test for toggleLayerOn', () => {
     });
     let map = null;
     createGoogleMap().then((returnedMap) => map = returnedMap);
+    let addLayerPromise;
     expectNoBlobImages().then(() => {
       // Add the layer. 2 images will render quickly (tile-url1), 6 are not
       // found.
-      const addLayerPromise = addLayer(mockFirebaseLayers[4], map);
-      assertCompositeOverlayPresent(map);
-      return addLayerPromise;
+      addLayerPromise = addLayer(mockFirebaseLayers[4], map);
     });
+    cy.wait(0).then(() => assertCompositeOverlayPresent(map));
+    cy.wrap(addLayerPromise);
     cy.get('img[src*="blob:"]').should('have.length', tilesOnMap);
   });
 
@@ -443,8 +446,8 @@ describe('Unit test for toggleLayerOn', () => {
       // Add the layer. 4 images will render quickly (tile-url1), but 4 will
       // hang.
       addLayerPromise = addLayer(mockFirebaseLayers[4], map);
-      overlay = assertCompositeOverlayPresent(map);
     });
+    cy.wait(0).then(() => overlay = assertCompositeOverlayPresent(map));
     // 4 images show up very quickly.
     expectBlobImageCount(tilesOnMap).then(() => {
       // Remove the layer.
@@ -463,6 +466,70 @@ describe('Unit test for toggleLayerOn', () => {
     // All images now shown on page.
     expectBlobImageCount(2 * tilesOnMap);
   });
+
+  it('tests json url', () => {
+    let map = null;
+    createGoogleMap()
+        .then((returnedMap) => map = returnedMap)
+        .then(
+            () => map.fitBounds(new google.maps.LatLngBounds(
+                new google.maps.LatLng({lat: 26, lng: -97.4}),
+                new google.maps.LatLng({lat: 27.62, lng: -97.1}))));
+
+    expectNoBlobImages().then(
+        () => addLayer(
+            {
+              'ee-name': 'tile_asset',
+              'asset-type': LayerType.MAP_TILES,
+              'urls': [
+                'https://storms.ngs.noaa.gov/storms/tilesd/services/tileserver.php?/20170827-rgb.json',
+              ],
+              'display-name': 'tiles',
+              'display-on-load': true,
+              'index': 4,
+            },
+            map));
+    // Experimentally found.
+    expectBlobImageCount(2);
+  });
+
+  it('tests slow json url with toggle off and on', () => {
+    let map = null;
+    createGoogleMap()
+        .then((returnedMap) => map = returnedMap)
+        .then(
+            () => map.fitBounds(new google.maps.LatLngBounds(
+                new google.maps.LatLng({lat: 26, lng: -97.4}),
+                new google.maps.LatLng({lat: 27.62, lng: -97.1}))));
+    let resolveFunction;
+    const promise = new Promise((resolve) => resolveFunction = resolve);
+    cy.stub($, 'getJSON').returns(promise);
+    let addLayerPromise = null;
+    const layer = {
+      'ee-name': 'tile_asset',
+      'asset-type': LayerType.MAP_TILES,
+      'urls': ['dummy_url'],
+      'display-name': 'tiles',
+      'display-on-load': true,
+      'index': 4,
+    };
+    expectNoBlobImages().then(() => {
+      addLayerPromise = addLayer(layer, map);
+    });
+    // JSON promise hasn't completed, so nothing has happened yet.
+    expectNoBlobImages();
+    cy.wait(0)
+        .then(() => expect(map.overlayMapTypes.getAt(4)).to.be.undefined)
+        .then(() => toggleLayerOff(4, map));
+    expectNoBlobImages().then(() => {
+      expect(toggleLayerOn(layer, map)).to.equal(addLayerPromise);
+      resolveFunction(
+          {tiles: ['https://stormscdn.ngs.noaa.gov/20170827-rgb/{z}/{x}/{y}']});
+      return addLayerPromise;
+    });
+    // Experimentally found.
+    expectBlobImageCount(2);
+  });
 });
 
 describe('Unit test for toggleLayerOff', () => {
@@ -474,7 +541,7 @@ describe('Unit test for toggleLayerOff', () => {
     expect(layerArray[0].displayed).to.be.false;
     expect(layerArray[0].data).to.not.be.null;
     const layerProps = deckGlArray[0].props;
-    expect(layerProps).to.have.property('id', 'asset0');
+    expect(layerProps).to.have.property('id', 'asset0-0');
     expect(layerProps).to.have.property('visible', false);
     expect(layerProps).to.have.property('data', mockData);
   });

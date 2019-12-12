@@ -153,17 +153,22 @@ const testPrefix = new Date().getTime() + '-';
  * the appropriate cookie.
  */
 function addFirebaseHooks() {
-  let testCookieValue = null;
-  before(() => cy.task('initializeTestFirebase', null, {
-                   timeout: 10000,
-                 }).then((token) => global.firestoreCustomToken = token));
-  beforeEach(() => {
-    testCookieValue = testPrefix + Math.random();
+  before(() => {
+    cy.task('initializeTestFirebase', null, {
+        timeout: 10000,
+      }).then((token) => global.firestoreCustomToken = token);
+    // Write a copy of the data to backup documents in case of accidental
+    // deletion. One backup per day.
     cy.task(
-        'clearAndPopulateTestFirestoreData', testCookieValue, {timeout: 15000});
-    cy.setCookie(cypressTestCookieName, testCookieValue);
+        'populateTestFirestoreData', getTimestampRoundedToDays() + '-backup');
   });
-  afterEach(() => cy.task('deleteTestData', testCookieValue));
+  let currentTestRoot = null;
+  beforeEach(() => {
+    currentTestRoot = testPrefix + Math.random();
+    cy.task('populateTestFirestoreData', currentTestRoot);
+    cy.setCookie(cypressTestCookieName, currentTestRoot);
+  });
+  afterEach(() => cy.task('deleteTestData', currentTestRoot));
 }
 
 /**
@@ -217,4 +222,17 @@ function waitForCallback(callback) {
   // If callback is true, return a Cypress Chainable so that we can chain work
   // off of this function.
   return cy.wait(0);
+}
+
+/**
+ * Returns the timestamp of the start of the current day (midnight).
+ * @return {number}
+ */
+function getTimestampRoundedToDays() {
+  const date = new Date();
+  date.setHours(0);
+  date.setMinutes(0);
+  date.setSeconds(0);
+  date.setMilliseconds(0);
+  return date.getTime();
 }

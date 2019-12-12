@@ -18,15 +18,26 @@ function getStatesAssetsFromEe(states) {
   return Promise.all(promises);
 }
 
+const disasterAssetPromises = new Map();
+
 /**
  * Gets all assets for the given disaster. Assumes an ee folder has already
  * been created for this disaster.
+ *
+ * Deduplicates requests, so retrying before a fetch completes won't start a new
+ * fetch.
  * @param {string} disaster disaster in the form name-year
  * @return {Promise<Map<string, string>>} Returns a promise containing the map
  * of asset path to type for the given disaster.
  */
 function getDisasterAssetsFromEe(disaster) {
-  return listEeAssets(eeLegacyPathPrefix + disaster);
+  const maybePromise = disasterAssetPromises.get(disaster);
+  if (maybePromise) {
+    return maybePromise;
+  }
+  const result = listEeAssets(eeLegacyPathPrefix + disaster);
+  disasterAssetPromises.set(disaster, result);
+  return result;
 }
 
 /**
