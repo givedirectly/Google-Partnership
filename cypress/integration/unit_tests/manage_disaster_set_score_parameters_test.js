@@ -75,14 +75,12 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
       ', and must specify either damage asset or map bounds';
 
   it.only('validates asset data', () => {
-    const boundsChanged = new Promise(
-        (resolve) => {
-            const listener =
-                scoreBoundsMap.map.addListener('bounds_changed', () => {
-                  google.maps.event.removeListener(listener);
-                  resolve();
-                });
-        });
+    const boundsChanged = new Promise((resolve) => {
+      const listener = scoreBoundsMap.map.addListener('bounds_changed', () => {
+        google.maps.event.removeListener(listener);
+        resolve();
+      });
+    });
     callEnableWhenReady(setUpDefaultData());
     // Check table is properly initialized, then do validation.
     cy.get('#asset-selection-table-body')
