@@ -322,19 +322,17 @@ describe('Unit tests for manage_disaster.js', () => {
 
   it.only('does column verification', () => {
     setUpAssetValidationTests();
-    const badPovertyFeature =
-        ee.FeatureCollection([ee.Feature(null, {'a property': 'blah'})]);
+    const badPovertyFeature = ee.FeatureCollection([ee.Feature(null, {})]);
     const goodIncomeFeature = ee.FeatureCollection(
         [ee.Feature(null, {'GEOid2': 'blah', 'HD01_VD01': 'otherBlah'})]);
+    const goodPovertyFeature = ee.FeatureCollection([ee.Feature(
+        null,
+        {'GEOid2': 0, 'GEOdisplay-label': 0, 'HD01_VD01': 0, 'HD01_VD02': 0})]);
 
     const featureCollectionStub = cy.stub(ee, 'FeatureCollection');
-
     // bad columns
     featureCollectionStub.withArgs('state0').callsFake(() => {
-      expect($('#poverty-NY-hover').prop('title'))
-          .to.equal('Checking columns...');
-      expect($('#select-asset-selection-row-poverty-NY').prop('style').cssText)
-          .to.contain('border: 2px solid yellow;');
+      expectChecking('poverty-NY');
       return badPovertyFeature;
     });
     setFirstSelectInScoreRow(0);
@@ -345,17 +343,26 @@ describe('Unit tests for manage_disaster.js', () => {
         'Error! asset does not have all expected columns: ' +
             'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
 
+    // good columns
+    featureCollectionStub.withArgs('state2').callsFake(() => {
+      expectChecking('poverty-NY');
+      return goodPovertyFeature;
+    });
+    setFirstSelectInScoreRowTo(0, 'state2');
+    checkSelectBorder(
+        '#select-asset-selection-row-poverty-NY', 'rgb(0, 128, 0)');
+    checkHoverText(
+        '#poverty-NY-hover', 'Success! asset has all expected columns');
+
     // set back to None
     setFirstSelectInScoreRowTo(1, 'None');
     checkSelectBorder(
         '#select-asset-selection-row-income-NY', 'rgb(255, 255, 255)');
     checkHoverText('#income-NY-hover', '');
-    // good columns
+
+    // None -> good columns
     featureCollectionStub.withArgs('state1').callsFake(() => {
-      expect($('#income-NY-hover').prop('title'))
-          .to.equal('Checking columns...');
-      expect($('#select-asset-selection-row-income-NY').prop('style').cssText)
-          .to.contain('border: 2px solid yellow;');
+      expectChecking('income-NY');
       return goodIncomeFeature;
     });
     setFirstSelectInScoreRow(1);
@@ -363,6 +370,7 @@ describe('Unit tests for manage_disaster.js', () => {
         '#select-asset-selection-row-income-NY', 'rgb(0, 128, 0)');
     checkHoverText(
         '#income-NY-hover', 'Success! asset has all expected columns');
+
     // No expected rows
     setFirstSelectInScoreRow(4);
     checkSelectBorder(
@@ -777,6 +785,29 @@ function getFirstTdInScoreRow(rowNum) {
 }
 
 /**
+ * Utility function to set the first select in the given row to the option
+ * that matches the given text.
+ * @param {number} rowNum
+ * @param {string} text
+ * @return {Cypress.Chainable} Cypress promise of the select
+ */
+function setFirstSelectInScoreRowTo(rowNum, text) {
+  return getFirstTdInScoreRow(rowNum).next().find('select').select(text).blur();
+}
+
+/**
+ * Checks for the state expected during column checking.
+ * @param {string} selector part of the selector that represents the td e.g.
+ *     'poverty-NY'.
+ */
+function expectChecking(selector) {
+  expect($('#' + selector + '-hover').prop('title'))
+      .to.equal('Checking columns...');
+  expect($('#select-asset-selection-row-' + selector).prop('style').cssText)
+      .to.contain('border: 2px solid yellow;');
+}
+
+/**
  * Asserts that the border around the given selector has the correct color
  * @param {string} selector cypress selector for a select element
  * @param {string} rgbString e.g. 'rgb(0, 0, 0)'
@@ -794,15 +825,4 @@ function checkSelectBorder(selector, rgbString) {
  */
 function checkHoverText(selector, text) {
   cy.get(selector).invoke('attr', 'title').should('eq', text);
-}
-
-/**
- * Utility function to set the first select in the given row to the option
- * that matches the given text.
- * @param {number} rowNum
- * @param {string} text
- * @return {Cypress.Chainable} Cypress promise of the select
- */
-function setFirstSelectInScoreRowTo(rowNum, text) {
-  return getFirstTdInScoreRow(rowNum).next().find('select').select(text).blur();
 }
