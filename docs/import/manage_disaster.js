@@ -3,7 +3,6 @@ import {LayerType} from '../firebase_layers.js';
 import {disasterCollectionReference} from '../firestore_document.js';
 import {convertEeObjectToPromise} from '../map_util.js';
 import {getDisaster} from '../resources.js';
-
 import {createDisasterData, incomeKey, snapKey, sviKey, totalKey} from './create_disaster_lib.js';
 import {createScoreAsset, setStatus} from './create_score_asset.js';
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
@@ -545,7 +544,7 @@ function createAssetDropdown(
  * @param {Array<string>} expectedColumns
  * @param {string} type
  * @param {string} state
- * @return {?Promise<unknown>}
+ * @return {?Promise<unknown>} see {@link checkForMissingColumns}
  */
 function onNonDamageAssetSelect(
     event, propertyPath, expectedColumns, type, state) {

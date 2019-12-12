@@ -320,10 +320,10 @@ describe('Unit tests for manage_disaster.js', () => {
                 ' and must specify either damage asset or map bounds');
   });
 
-  it('does column verification', () => {
+  it.only('does column verification', () => {
     setUpAssetValidationTests();
-    const badSnapFeature =
-        ee.FeatureCollection([ee.Feature(null, {'a property': 0})]);
+    const badPovertyFeature =
+        ee.FeatureCollection([ee.Feature(null, {'a property': 'blah'})]);
     const goodIncomeFeature = ee.FeatureCollection(
         [ee.Feature(null, {'GEOid2': 'blah', 'HD01_VD01': 'otherBlah'})]);
 
@@ -335,21 +335,21 @@ describe('Unit tests for manage_disaster.js', () => {
           .to.equal('Checking columns...');
       expect($('#select-asset-selection-row-poverty-NY').prop('style').cssText)
           .to.contain('border: 2px solid yellow;');
-      return badSnapFeature;
+      return badPovertyFeature;
     });
     setFirstSelectInScoreRow(0);
     checkSelectBorder(
         '#select-asset-selection-row-poverty-NY', 'rgb(255, 0, 0)');
     checkHoverText(
         '#poverty-NY-hover',
-        'Error! asset does not have all expected columns: ' +
-            'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
+        'Error! asset does not have all expected columns: '
+        + 'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
 
     // set back to None
-    setFirstSelectInScoreRowTo(0, 'None');
+    setFirstSelectInScoreRowTo(1, 'None');
     checkSelectBorder(
-        '#select-asset-selection-row-poverty-NY', 'rgb(255, 255, 255)');
-    checkHoverText('#poverty-NY-hover', '');
+        '#select-asset-selection-row-income-NY', 'rgb(255, 255, 255)');
+    checkHoverText('#income-NY-hover', '');
     // good columns
     featureCollectionStub.withArgs('state1').callsFake(() => {
       expect($('#income-NY-hover').prop('title'))
