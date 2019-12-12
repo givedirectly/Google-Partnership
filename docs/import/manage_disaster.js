@@ -437,7 +437,7 @@ function initializeScoreSelectors(states) {
                 .prop('id', 'select-' + id + '-' + state)
                 .on('change',
                     (event) => onNonDamageAssetSelect(
-                        event, propertyPath, expectedColumns, type, state))
+                        event, statePropertyPath, expectedColumns, type, state))
                 .prop('style', 'border:2px');
         row.append(
             createTd().append($(document.createElement('span'))

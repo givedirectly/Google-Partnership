@@ -196,67 +196,13 @@ describe('Unit tests for manage_disaster.js', () => {
                      .to.eql('asset2'));
   });
 
-  it('does column verification', () => {
-    setUpAssetValidationTests();
-    const badSnapFeature =
-        ee.FeatureCollection([ee.Feature(null, {'a property': 0})]);
-    const goodIncomeFeature = ee.FeatureCollection(
-        [ee.Feature(null, {'GEOid2': 'blah', 'HD01_VD01': 'otherBlah'})]);
-
-    const featureCollectionStub = cy.stub(ee, 'FeatureCollection');
-
-    // bad columns
-    featureCollectionStub.withArgs('state0').callsFake(() => {
-      expect($('#poverty-NY-hover').prop('title'))
-          .to.equal('Checking columns...');
-      expect($('#select-asset-selection-row-poverty-NY').prop('style').cssText)
-          .to.contain('border: 2px solid yellow;');
-      return badSnapFeature;
-    });
-    setFirstSelectInScoreRow(0);
-    checkSelectBorder(
-        '#select-asset-selection-row-poverty-NY', 'rgb(255, 0, 0)');
-    checkHoverText(
-        '#poverty-NY-hover',
-        'Error! asset does not have all expected columns: ' +
-            'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
-
-    // set back to None
-    setFirstSelectInScoreRowTo(0, 'None');
-    checkSelectBorder(
-        '#select-asset-selection-row-poverty-NY', 'rgb(255, 255, 255)');
-    checkHoverText('#poverty-NY-hover', '');
-    // good columns
-    featureCollectionStub.withArgs('state1').callsFake(() => {
-      expect($('#income-NY-hover').prop('title'))
-          .to.equal('Checking columns...');
-      expect($('#select-asset-selection-row-income-NY').prop('style').cssText)
-          .to.contain('border: 2px solid yellow;');
-      return goodIncomeFeature;
-    });
-    setFirstSelectInScoreRow(1);
-    checkSelectBorder(
-        '#select-asset-selection-row-income-NY', 'rgb(0, 128, 0)');
-    checkHoverText(
-        '#income-NY-hover', 'Success! asset has all expected columns');
-    // No expected rows
-    setFirstSelectInScoreRow(4);
-    checkSelectBorder(
-        '#select-asset-selection-row-buildings-NY', 'rgb(0, 128, 0)');
-    checkHoverText('#buildings-NY-hover', 'No expected columns');
-    setFirstSelectInScoreRowTo(4, 'None');
-    checkSelectBorder(
-        '#select-asset-selection-row-buildings-NY', 'rgb(255, 255, 255)');
-    checkHoverText('#buildings-NY-hover', '');
-  });
-
   const allStateAssetsMissingText =
       'Missing asset(s): Poverty, Income, SVI, Census TIGER Shapefiles, ' +
       'Microsoft Building Shapefiles';
   const allMissingText = allStateAssetsMissingText +
       ', and must specify either damage asset or map bounds';
 
-  it.only('validates asset data', () => {
+  it('validates asset data', () => {
     setUpAssetValidationTests();
 
     // For {@link getColumnStatus}
@@ -324,7 +270,6 @@ describe('Unit tests for manage_disaster.js', () => {
     readFirestoreAfterWritesFinish().then((doc) => {
       const assetData = doc.data()['asset_data'];
 
-      console.log(assetData);
       expect(assetData['damage_asset_path']).to.be.null;
       expect(assetData['map_bounds_sw']).to.eql('0, 0');
       expect(assetData['svi_asset_paths']).to.eql({'NY': 'state2'});
@@ -374,6 +319,60 @@ describe('Unit tests for manage_disaster.js', () => {
             'Missing asset(s): Poverty [WY], SVI [NY, WY], Census TIGER ' +
                 'Shapefiles [NY, WY], Microsoft Building Shapefiles [NY, WY],' +
                 ' and must specify either damage asset or map bounds');
+  });
+
+  it('does column verification', () => {
+    setUpAssetValidationTests();
+    const badSnapFeature =
+        ee.FeatureCollection([ee.Feature(null, {'a property': 0})]);
+    const goodIncomeFeature = ee.FeatureCollection(
+        [ee.Feature(null, {'GEOid2': 'blah', 'HD01_VD01': 'otherBlah'})]);
+
+    const featureCollectionStub = cy.stub(ee, 'FeatureCollection');
+
+    // bad columns
+    featureCollectionStub.withArgs('state0').callsFake(() => {
+      expect($('#poverty-NY-hover').prop('title'))
+          .to.equal('Checking columns...');
+      expect($('#select-asset-selection-row-poverty-NY').prop('style').cssText)
+          .to.contain('border: 2px solid yellow;');
+      return badSnapFeature;
+    });
+    setFirstSelectInScoreRow(0);
+    checkSelectBorder(
+        '#select-asset-selection-row-poverty-NY', 'rgb(255, 0, 0)');
+    checkHoverText(
+        '#poverty-NY-hover',
+        'Error! asset does not have all expected columns: ' +
+        'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
+
+    // set back to None
+    setFirstSelectInScoreRowTo(0, 'None');
+    checkSelectBorder(
+        '#select-asset-selection-row-poverty-NY', 'rgb(255, 255, 255)');
+    checkHoverText('#poverty-NY-hover', '');
+    // good columns
+    featureCollectionStub.withArgs('state1').callsFake(() => {
+      expect($('#income-NY-hover').prop('title'))
+          .to.equal('Checking columns...');
+      expect($('#select-asset-selection-row-income-NY').prop('style').cssText)
+          .to.contain('border: 2px solid yellow;');
+      return goodIncomeFeature;
+    });
+    setFirstSelectInScoreRow(1);
+    checkSelectBorder(
+        '#select-asset-selection-row-income-NY', 'rgb(0, 128, 0)');
+    checkHoverText(
+        '#income-NY-hover', 'Success! asset has all expected columns');
+    // No expected rows
+    setFirstSelectInScoreRow(4);
+    checkSelectBorder(
+        '#select-asset-selection-row-buildings-NY', 'rgb(0, 128, 0)');
+    checkHoverText('#buildings-NY-hover', 'No expected columns');
+    setFirstSelectInScoreRowTo(4, 'None');
+    checkSelectBorder(
+        '#select-asset-selection-row-buildings-NY', 'rgb(255, 255, 255)');
+    checkHoverText('#buildings-NY-hover', '');
   });
 
   it('nonexistent asset not ok', () => {
