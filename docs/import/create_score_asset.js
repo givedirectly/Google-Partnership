@@ -48,9 +48,9 @@ function countDamageAndBuildings(feature, damage, buildings, additionalTags) {
   // The following properties may have null values (as a result of {@code
   // convertToNumber} so must be set directly on feature, not in dictionary.
   let result = ee.Feature(geometry, properties)
-      .set(snapPopTag, snapPop)
-      .set(totalPopTag, totalPop)
-      .set(snapPercentageTag, snapPercentage);
+                   .set(snapPopTag, snapPop)
+                   .set(totalPopTag, totalPop)
+                   .set(snapPercentageTag, snapPercentage);
   additionalTags.forEach((tag) => result = result.set(tag, feature.get(tag)));
   return result;
 }
@@ -295,7 +295,8 @@ function createScoreAsset(
     if (incomePath) additionalTags.push(incomeTag);
     if (sviPath) additionalTags.push(sviTag);
     processing = processing.map(
-        (f) => countDamageAndBuildings(f, damage, buildingsHisto, additionalTags));
+        (f) =>
+            countDamageAndBuildings(f, damage, buildingsHisto, additionalTags));
     allStatesProcessing = allStatesProcessing.merge(processing);
   }
 
