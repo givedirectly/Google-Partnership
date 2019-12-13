@@ -2,14 +2,12 @@ import {getFirestoreRoot, readDisasterDocument} from '../../../docs/firestore_do
 import {assetDataTemplate, createDisasterData} from '../../../docs/import/create_disaster_lib.js';
 import {createScoreAsset} from '../../../docs/import/create_score_asset.js';
 import {assetSelectionRowPrefix, disasterData, initializeDamageSelector, initializeScoreSelectors, scoreAssetTypes, setUpScoreSelectorTable, stateAssets, validateUserFields} from '../../../docs/import/manage_disaster';
-import * as ManageDisaster from '../../../docs/import/manage_disaster.js';
 import {addDisaster, deleteDisaster, writeNewDisaster} from '../../../docs/import/manage_disaster.js';
 import {createOptionFrom} from '../../../docs/import/manage_layers.js';
 import {convertEeObjectToPromise} from '../../../docs/map_util';
 import * as MapUtil from '../../../docs/map_util.js';
 import {getDisaster} from '../../../docs/resources.js';
 import {CallbackLatch} from '../../support/callback_latch';
-import {cyQueue} from '../../support/commands';
 import {assertFirestoreMapBounds} from '../../support/firestore_map_bounds';
 import {createAndAppend, setUpSavingStubs} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
@@ -921,6 +919,7 @@ function checkHoverText(selector, text) {
 
 /**
  * Returns a latch that controls the logic of {@link convertEeObjectToPromise}.
+ * @return {CallbackLatch}
  */
 function getConvertEeObjectToPromiseLatch() {
   const latch = new CallbackLatch();
