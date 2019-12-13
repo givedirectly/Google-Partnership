@@ -573,7 +573,7 @@ function verifyAsset(asset, type, state, expectedColumns) {
       updateColorAndHover(select, 'red', 'Error! asset could not be found.');
     } else {
       console.error(err);
-      updateColorAndHover(select, 'red', 'Unknown error.')
+      updateColorAndHover(select, 'red', 'Unknown error.');
     }
   };
   if (asset === '') {
