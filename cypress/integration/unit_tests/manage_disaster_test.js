@@ -5,10 +5,14 @@ import {assetSelectionRowPrefix, disasterData, initializeDamageSelector, initial
 import {addDisaster, deleteDisaster, writeNewDisaster} from '../../../docs/import/manage_disaster.js';
 import {createOptionFrom} from '../../../docs/import/manage_layers.js';
 import {convertEeObjectToPromise} from '../../../docs/map_util';
+import * as MapUtil from '../../../docs/map_util.js';
 import {getDisaster} from '../../../docs/resources.js';
+import {CallbackLatch} from '../../support/callback_latch';
 import {assertFirestoreMapBounds} from '../../support/firestore_map_bounds';
 import {createAndAppend, setUpSavingStubs} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
+import * as ManageDisaster from '../../../docs/import/manage_disaster.js';
+import {cyQueue} from '../../support/commands';
 
 const KNOWN_STATE = 'WF';
 
@@ -105,7 +109,7 @@ describe('Unit tests for manage_disaster.js', () => {
     cy.wrap(promise)
         .then(() => {
           expect(exportStub).to.be.calledOnce;
-          return convertEeObjectToPromise(exportStub.firstCall.args[0]);
+          return MapUtil.convertEeObjectToPromise(exportStub.firstCall.args[0]);
         })
         .then((result) => {
           const features = result.features;
@@ -144,7 +148,7 @@ describe('Unit tests for manage_disaster.js', () => {
     cy.wrap(promise)
         .then(() => {
           expect(exportStub).to.be.calledOnce;
-          return convertEeObjectToPromise(exportStub.firstCall.args[0]);
+          return MapUtil.convertEeObjectToPromise(exportStub.firstCall.args[0]);
         })
         .then((result) => {
           const features = result.features;
@@ -320,34 +324,27 @@ describe('Unit tests for manage_disaster.js', () => {
                 ' and must specify either damage asset or map bounds');
   });
 
-  it.only('does column verification', () => {
+  it('does column verification', () => {
     setUpAssetValidationTests();
-    const badPovertyFeature = ee.FeatureCollection(
-        [ee.Feature(null, {'GEOid2': 'blah', 'HD01_VD01': 'otherBlah'})]);
+
     const goodIncomeBadPovertyFeature = ee.FeatureCollection(
+        [ee.Feature(null, {'GEOid2': 'blah', 'HD01_VD01': 'otherBlah'})]);
+    const otherGoodIncomeBadPovertyFeature = ee.FeatureCollection(
         [ee.Feature(null, {'GEOid2': 'blah', 'HD01_VD01': 'otherBlah'})]);
     const goodPovertyFeature = ee.FeatureCollection([ee.Feature(
         null,
         {'GEOid2': 0, 'GEOdisplay-label': 0, 'HD01_VD01': 0, 'HD01_VD02': 0})]);
 
     const featureCollectionStub = cy.stub(ee, 'FeatureCollection');
-    featureCollectionStub.withArgs('state0').callsFake(() => {
-      expectChecking('poverty-NY');
-      return badPovertyFeature;
-    });
-    featureCollectionStub.withArgs('state1').callsFake(
+    featureCollectionStub.withArgs('state0').callsFake(
         () => goodIncomeBadPovertyFeature);
-    featureCollectionStub.withArgs('state2').callsFake(() => {
-      expectChecking('poverty-NY');
-      return goodPovertyFeature;
-    });
-    featureCollectionStub.withArgs('state3').callsFake(() => {
-      expectChecking('income-NY');
-      return goodIncomeBadPovertyFeature;
-    });
+    featureCollectionStub.withArgs('state1').callsFake(
+        () => otherGoodIncomeBadPovertyFeature);
+    featureCollectionStub.withArgs('state2').callsFake(
+        () => goodPovertyFeature);
 
     // None -> bad
-    setFirstSelectInScoreRowTo(0, 'state0');
+    setSelectWithLatch(0, 'state0', 'poverty-NY');
     checkSelectBorder(
         '#select-asset-selection-row-poverty-NY', 'rgb(255, 0, 0)');
     checkHoverText(
@@ -356,7 +353,7 @@ describe('Unit tests for manage_disaster.js', () => {
             'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
 
     // bad -> bad
-    setFirstSelectInScoreRowTo(0, 'state1');
+    setSelectWithLatch(0, 'state1', 'poverty-NY');
     checkSelectBorder(
         '#select-asset-selection-row-poverty-NY', 'rgb(255, 0, 0)');
     checkHoverText(
@@ -365,7 +362,7 @@ describe('Unit tests for manage_disaster.js', () => {
             'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
 
     // bad -> good
-    setFirstSelectInScoreRowTo(0, 'state2');
+    setSelectWithLatch(0, 'state2', 'poverty-NY');
     checkSelectBorder(
         '#select-asset-selection-row-poverty-NY', 'rgb(0, 128, 0)');
     checkHoverText(
@@ -373,7 +370,7 @@ describe('Unit tests for manage_disaster.js', () => {
         'Success! asset has all expected columns');
 
     // good -> bad
-    setFirstSelectInScoreRowTo(0, 'state0');
+    setSelectWithLatch(0, 'state0', 'poverty-NY');
     checkSelectBorder(
         '#select-asset-selection-row-poverty-NY', 'rgb(255, 0, 0)');
     checkHoverText(
@@ -382,7 +379,7 @@ describe('Unit tests for manage_disaster.js', () => {
             'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
 
     // None -> good columns
-    setFirstSelectInScoreRowTo(1, 'state1');
+    setSelectWithLatch(1, 'state1', 'income-NY');
     checkSelectBorder(
         '#select-asset-selection-row-income-NY', 'rgb(0, 128, 0)');
     checkHoverText(
@@ -390,7 +387,7 @@ describe('Unit tests for manage_disaster.js', () => {
         'Success! asset has all expected columns');
 
     // good -> good
-    setFirstSelectInScoreRowTo(1, 'state3');
+    setSelectWithLatch(1, 'state0', 'income-NY');
     checkSelectBorder(
         '#select-asset-selection-row-income-NY', 'rgb(0, 128, 0)');
     checkHoverText(
@@ -398,17 +395,17 @@ describe('Unit tests for manage_disaster.js', () => {
         'Success! asset has all expected columns');
 
     // good -> None
+    // should return immediately, no latch needed.
     setFirstSelectInScoreRowTo(1, 'None');
+
     checkSelectBorder(
         '#select-asset-selection-row-income-NY', 'rgb(255, 255, 255)');
     checkHoverText('#select-asset-selection-row-income-NY', '');
 
     // No expected rows
-    featureCollectionStub.withArgs('state4').callsFake(() => {
-      expectChecking('buildings-NY');
-      return goodIncomeBadPovertyFeature;
-    });
-    setFirstSelectInScoreRow(4);
+    featureCollectionStub.withArgs('state4').callsFake(
+        () => goodIncomeBadPovertyFeature);
+    setSelectWithLatch(4, 'state0', 'buildings-NY');
     checkSelectBorder(
         '#select-asset-selection-row-buildings-NY', 'rgb(0, 128, 0)');
     checkHoverText(
@@ -421,12 +418,72 @@ describe('Unit tests for manage_disaster.js', () => {
 
   it('tries to set set a missing asset', () => {
     setUpAssetValidationTests();
-    setFirstSelectInScoreRow(0);
+    setSelectWithLatch(0, 'state0', 'poverty-NY');
     checkSelectBorder(
         '#select-asset-selection-row-poverty-NY', 'rgb(255, 0, 0)');
     checkHoverText(
         '#select-asset-selection-row-poverty-NY',
         'Error! asset could not be found.');
+  });
+
+  it('sets a score select again before first set is finished', () => {
+    setUpAssetValidationTests();
+
+    const goodPovertyFeature = ee.FeatureCollection([ee.Feature(
+        null,
+        {'GEOid2': 0, 'GEOdisplay-label': 0, 'HD01_VD01': 0, 'HD01_VD02': 0})]);
+    const otherGoodIncomeBadPovertyFeature = ee.FeatureCollection(
+        [ee.Feature(null, {'GEOid2': 'blah', 'HD01_VD01': 'otherBlah'})]);
+
+    const featureCollectionStub = cy.stub(ee, 'FeatureCollection');
+    featureCollectionStub.withArgs('state0').callsFake(
+        () => goodPovertyFeature);
+    featureCollectionStub.withArgs('state1').callsFake(
+        () => otherGoodIncomeBadPovertyFeature);
+
+    let firstLatch = getConvertEeObjectToPromiseLatch();
+    setFirstSelectInScoreRowTo(0, 'state0');
+
+    let secondLatch = getConvertEeObjectToPromiseLatch();
+    setFirstSelectInScoreRowTo(0, 'state1');
+
+    // release first latch but column still looks pending
+    firstLatch.release();
+    checkSelectBorder(
+        '#select-asset-selection-row-poverty-NY', 'rgb(255, 255, 0)');
+    checkHoverText(
+        '#select-asset-selection-row-poverty-NY', 'Checking columns...');
+    //release second latch and column finishes with results from second.
+    secondLatch.release();
+    checkSelectBorder(
+        '#select-asset-selection-row-poverty-NY', 'rgb(255, 0, 0)');
+    checkHoverText(
+        '#select-asset-selection-row-poverty-NY',
+        'Error! asset does not have all expected columns: ' +
+        'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
+
+    // now do opposite order
+    firstLatch = getConvertEeObjectToPromiseLatch();
+    setFirstSelectInScoreRowTo(0, 'state0');
+
+    secondLatch = getConvertEeObjectToPromiseLatch();
+    setFirstSelectInScoreRowTo(0, 'state1');
+
+    secondLatch.release();
+    checkSelectBorder(
+        '#select-asset-selection-row-poverty-NY', 'rgb(255, 0, 0)');
+    checkHoverText(
+        '#select-asset-selection-row-poverty-NY',
+        'Error! asset does not have all expected columns: ' +
+        'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
+
+    firstLatch.release();
+    checkSelectBorder(
+        '#select-asset-selection-row-poverty-NY', 'rgb(255, 0, 0)');
+    checkHoverText(
+        '#select-asset-selection-row-poverty-NY',
+        'Error! asset does not have all expected columns: ' +
+        'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
   });
 
   it('nonexistent asset not ok', () => {
@@ -463,7 +520,7 @@ describe('Unit tests for manage_disaster.js', () => {
     cy.wrap(promise)
         .then(() => {
           expect(exportStub).to.be.calledOnce;
-          return convertEeObjectToPromise(
+          return MapUtil.convertEeObjectToPromise(
               exportStub.firstCall.args[0].sort('GEOID'));
         })
         .then((result) => {
@@ -847,11 +904,7 @@ function setFirstSelectInScoreRowTo(rowNum, text) {
  * @param {string} selector part of the selector that represents the td e.g.
  *     'poverty-NY'.
  */
-function expectChecking(selector) {
-  const select = $('#select-asset-selection-row-' + selector);
-  expect(select.prop('title')).to.equal('Checking columns...');
-  expect(select.prop('style').cssText).to.contain('border: 2px solid yellow;');
-}
+
 
 /**
  * Asserts that the border around the given selector has the correct color
@@ -872,3 +925,24 @@ function checkSelectBorder(selector, rgbString) {
 function checkHoverText(selector, text) {
   cy.get(selector).invoke('attr', 'title').should('eq', text);
 }
+
+function getConvertEeObjectToPromiseLatch() {
+  const latch = new CallbackLatch();
+  const oldConvert = MapUtil.convertEeObjectToPromise;
+  MapUtil.convertEeObjectToPromise = (eeObject) => {
+    MapUtil.convertEeObjectToPromise = oldConvert;
+    return latch.delayedCallback(() => convertEeObjectToPromise(eeObject))();
+  };
+  return latch;
+}
+
+function setSelectWithLatch(rowNum, text, tdId) {
+  const latch = getConvertEeObjectToPromiseLatch();
+  setFirstSelectInScoreRowTo(rowNum, text);
+  checkSelectBorder(
+      '#select-asset-selection-row-' + tdId, 'rgb(255, 255, 0)');
+  checkHoverText(
+      '#select-asset-selection-row-' + tdId, 'Checking columns...');
+  latch.release();
+}
+

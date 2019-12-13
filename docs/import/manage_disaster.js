@@ -22,6 +22,7 @@ export {
   initializeScoreSelectors,
   scoreAssetTypes,
   stateAssets,
+  updateColorAndHover,
   validateUserFields,
   writeNewDisaster,
 };
