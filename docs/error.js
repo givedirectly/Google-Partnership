@@ -2,8 +2,6 @@ import {showSnackbar} from './snackbar.js';
 
 export {createError, showError};
 
-const ERROR_COLOR = '#F44336';
-
 /**
  * Simple function that returns a lambda to print an error to console.
  *
@@ -25,11 +23,8 @@ function createError(msg) {
 function showError(msg, snackbarMsg) {
   if (snackbarMsg == null) snackbarMsg = msg;
   console.error(msg);
-  showSnackbar(
-      snackbarMsg, (snackbar) => snackbar.style.backgroundColor = ERROR_COLOR,
-      (icon) => {
-        icon.classList.add('fa');
-        icon.classList.add('fa-exclamation-circle');
-        icon.classList.add('fa-2x');
-      });
+  showSnackbar(snackbarMsg, ['snackbar-error'],
+      ['fa', 'fa-exclamation-circle', 'fa-2x']);
 }
+
+$(() => setTimeout(() => showError('test'), 5000));

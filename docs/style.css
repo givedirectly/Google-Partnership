@@ -689,7 +689,6 @@ input[type=checkbox]:checked {
   min-width: 250px;
   line-height: 32px;
   margin-left: -125px;
-  color: #ffffff;
   text-align: center;
   border-radius: 4px;
   padding: 16px;
@@ -710,4 +709,14 @@ input[type=checkbox]:checked {
 
 #snackbar-text {
   display: inline-block;
+}
+
+.snackbar-error {
+  background-color: var(--error-color);
+  color: #ffffff;
+}
+
+.snackbar-toast {
+  background-color: #F4FBFA;
+  color: #000000;
 }

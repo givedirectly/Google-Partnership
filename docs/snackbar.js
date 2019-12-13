@@ -7,26 +7,29 @@ const SNACKBAR_DURATION_MS = 3000;
 let showNumber = 0;
 
 let snackbarOriginalClassName;
-let snackbarOriginalStyle;
 let iconOriginalClassName;
-let iconOriginalStyle;
 
 /**
  * Shows a snackbar notification.
  *
  * @param {string} msg the message to be shown
- * @param {function} snackbarStyler applies styles to the snackbar div
- * @param {function} iconStyler applies styles to the icon div
+ * @param {string[]} snackbarClasses classes to be added to the snackbar
+ * @param {string[]} iconClasses classes to be added to the icon
  * @param {number} duration Number of milliseconds to show the message. If
  *     non-positive, message stays up until this method is called again.
  */
 function showSnackbar(
-    msg, snackbarStyler, iconStyler, duration = SNACKBAR_DURATION_MS) {
+    msg, snackbarClasses, iconClasses, duration = SNACKBAR_DURATION_MS) {
   const snackbar = document.getElementById('snackbar');
-  if (snackbarStyler) snackbarStyler(snackbar);
+  if (snackbarClasses) {
+    snackbarClasses.forEach(
+        (snackbarClass) => snackbar.classList.add(snackbarClass));
+  }
 
   const icon = document.getElementById('snackbar-icon');
-  if (iconStyler) iconStyler(icon);
+  if (iconClasses) {
+    iconClasses.forEach((iconClass) =>  icon.classList.add(iconClass));
+  }
 
   document.getElementById('snackbar-text').innerText = msg;
 
@@ -45,9 +48,7 @@ function showSnackbar(
           if (showNumber > 0) return;
 
           snackbar.className = snackbarOriginalClassName;
-          snackbar.style = snackbarOriginalStyle;
           icon.className = iconOriginalClassName;
-          icon.style = iconOriginalStyle;
         });
       }
     }, duration);
@@ -59,9 +60,7 @@ $(() => {
       .load(import.meta.url.replace(/snackbar\.js$/, 'snackbar.html'), () => {
         const snackbar = document.getElementById('snackbar');
         snackbarOriginalClassName = snackbar.className;
-        snackbarOriginalStyle = snackbar.style;
         const icon = document.getElementById('snackbar-icon');
         iconOriginalClassName = icon.className;
-        iconOriginalStyle = icon.style;
       });
 });

@@ -12,16 +12,6 @@ const TOAST_DURATION_MS = 2000;
  *     non-positive, message stays up until this method is called again.
  */
 function showToastMessage(message, duration = TOAST_DURATION_MS) {
-  showSnackbar(
-      message,
-      (snackbar) => {
-        snackbar.style.backgroundColor = TOAST_COLOR;
-        snackbar.style.color = '#000';
-      },
-      (icon) => {
-        icon.classList.add('fa');
-        icon.classList.add('fa-check');
-        icon.classList.add('fa-2x');
-      },
+  showSnackbar(message, ['snackbar-toast'], ['fa', 'fa-check', 'fa-2x'],
       duration);
 }
