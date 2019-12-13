@@ -26,5 +26,3 @@ function showError(msg, snackbarMsg) {
   showSnackbar(snackbarMsg, ['snackbar-error'],
       ['fa', 'fa-exclamation-circle', 'fa-2x']);
 }
-
-$(() => setTimeout(() => showError('test'), 5000));
