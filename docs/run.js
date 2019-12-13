@@ -164,9 +164,7 @@ function createNewCheckboxForLayer(layer, parentDiv, map) {
   const index = layer['index'];
   const newBox = createNewCheckbox(index, layer['display-name'], parentDiv);
   const linearGradient = getLinearGradient(layer['color-function']);
-  if (!layer['display-on-load']) {
-    newBox.checked = false;
-  }
+  newBox.checked = layer['display-on-load'];
   updateCheckboxBackground(newBox, linearGradient);
 
   newBox.onclick = () => {

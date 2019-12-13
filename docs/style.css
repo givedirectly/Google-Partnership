@@ -459,6 +459,8 @@ input[type=checkbox]:checked {
 .checkbox.layer-checkbox {
   width: 20px;
   height: 20px;
+  -webkit-transition: background-image 0.2s ease-in-out;
+  transition: background-image 0.2s ease-in-out;
 }
 
 /* Loading indicator css */
