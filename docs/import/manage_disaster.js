@@ -117,7 +117,7 @@ function setUpScoreBoundsMap(div) {
  * Enables page functionality.
  * @param {Promise<Map<string, Object>>} allDisastersData Promise with contents
  *     of Firestore for all disasters
- * @return {Promise<void>}
+ * @return {Promise<void>} See {@link enableWhenFirestoreReady}
  */
 function enableWhenReady(allDisastersData) {
   // Eagerly kick off current disaster asset listing before Firestore finishes.
@@ -133,7 +133,7 @@ function enableWhenReady(allDisastersData) {
  * @param {Map<string, Object>} allDisastersData Contents of
  *     Firestore for all disasters, the current disaster's data is used when
  *     calculating
- * @return {Promise<void>} Promise that completes when all setting is done
+ * @return {Promise<void>} See {@link onSetDisaster}
  */
 function enableWhenFirestoreReady(allDisastersData) {
   disasterData = allDisastersData;
@@ -167,13 +167,16 @@ let processedCurrentDisasterSelfAssets = false;
 /**
  * Function called when current disaster changes. Responsible for displaying the
  * score selectors and enabling/disabling the kick-off button.
- * @return {Promise<void>} Promise that completes when all setting is done
+ * @return {Promise<void>} Promise that completes when all score parameter
+ *     display is done (user can interact with page)
  */
 function onSetDisaster() {
   processedCurrentDisasterStateAssets = false;
   processedCurrentDisasterSelfAssets = false;
   const currentDisaster = getDisaster();
   if (!currentDisaster) {
+    // We don't expect this to happen, because a disaster should always be
+    // returned by getDisaster(), but tolerate.
     return Promise.resolve();
   }
   const scoreBoundsPath = getElementFromPath(scoreCoordinatesPath);

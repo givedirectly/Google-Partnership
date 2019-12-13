@@ -22,9 +22,7 @@ class ScoreBoundsMap {
     this.saveData = () =>
         saveData(this.polygon ? this.polygon.getPath().getArray() : null);
     /** @const */
-    this.map = createBasicMap(div, {
-                 streetViewControl: false,
-               }).map;
+    this.map = createBasicMap(div, {streetViewControl: false}).map;
     /** @const */
     this.drawingManager = new google.maps.drawing.DrawingManager({
       drawingControl: true,
@@ -118,6 +116,7 @@ class ScoreBoundsMap {
       this.polygon.getPath().forEach((latlng) => bounds.extend(latlng));
       applyMinimumBounds(bounds, this.map);
     } else {
+      // TODO(janakr): center around states for disaster.
       this.map.setCenter(defaultMapCenter);
       this.map.setZoom(defaultZoomLevel);
     }

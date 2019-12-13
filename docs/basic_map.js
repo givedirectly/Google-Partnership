@@ -43,23 +43,17 @@ function createBasicMap(div, additionalOptions = {}) {
   const searchBox = new google.maps.places.SearchBox(input);
   map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
   searchBox.addListener('places_changed', () => {
-    const places = searchBox.getPlaces();
-    if (!places.length) {
-      return;
-    }
-
     const bounds = new google.maps.LatLngBounds();
-    places.forEach((place) => {
-      if (!place.geometry) {
-        console.log('Returned place contains no geometry');
-        return;
-      }
-
-      if (place.geometry.viewport) {
-        // Only geocodes have viewport.
-        bounds.union(place.geometry.viewport);
+    searchBox.getPlaces().forEach((place) => {
+      if (place.geometry) {
+        if (place.geometry.viewport) {
+          // Only geocodes have viewport.
+          bounds.union(place.geometry.viewport);
+        } else {
+          bounds.extend(place.geometry.location);
+        }
       } else {
-        bounds.extend(place.geometry.location);
+        console.log('Returned place contains no geometry');
       }
     });
     map.fitBounds(bounds);
@@ -82,8 +76,8 @@ function addPolygonWithPath(polygonOptions, drawingManager) {
 }
 
 /**
- * Gives `map` the given `bounds`, except that if `bounds` are too small,
- * extends them so that they cover at least a 0.2 x 0.2 degree square.
+ * Gives `map` the given `bounds`, but extends `bounds` if necessary to cover at
+ * least a 0.2 x 0.2 degree square.
  * @param {google.maps.LatLngBounds} bounds
  * @param {google.maps.Map} map
  */

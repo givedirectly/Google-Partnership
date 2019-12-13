@@ -52,7 +52,8 @@ function createMap(firebasePromise) {
 
   let markers = [];
   // Listen for the event fired when the user selects a prediction and retrieve
-  // more details for that place.
+  // more details for that place. This will fire along with the default handler
+  // added in createBasicMap.
   searchBox.addListener('places_changed', () => {
     const places = searchBox.getPlaces();
 
@@ -66,19 +67,16 @@ function createMap(firebasePromise) {
 
     // For each place, get the icon, name and location.
     places.forEach((place) => {
-      if (!place.geometry) {
-        console.log('Returned place contains no geometry');
-        return;
+      if (place.geometry && place.geometry.location) {
+        // Create a marker for each place.
+        markers.push(new google.maps.Marker({
+          map: map,
+          // Take the default params and add in the place-specific icon.
+          icon: Object.assign({url: place.icon}, placeIconParams),
+          title: place.name,
+          position: place.geometry.location,
+        }));
       }
-
-      // Create a marker for each place.
-      markers.push(new google.maps.Marker({
-        map: map,
-        // Take the default params and add in the place-specific icon.
-        icon: Object.assign({url: place.icon}, placeIconParams),
-        title: place.name,
-        position: place.geometry.location,
-      }));
     });
   });
   return map;
