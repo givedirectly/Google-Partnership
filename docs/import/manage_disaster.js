@@ -437,7 +437,7 @@ function initializeScoreSelectors(states) {
                 .on('change',
                     (event) => onNonDamageAssetSelect(
                         event, statePropertyPath, expectedColumns, type, state))
-                .prop('style', 'border:2px');
+                .prop('style', 'border:2px solid');
         row.append(createTd().append(select));
         verifyAsset(select.val(), type, state, expectedColumns);
       }
@@ -560,12 +560,12 @@ const lastSelectedAsset = new Map();
  *     scoreAssetTypes}
  * @param {string} state e.g. 'WA'
  * @param {Array<string>} expectedColumns
- * @return {Promise<void>} returns null if column checking wasn't needed.
- * Otherwise returns a promise that resolves when column checking is finished
- * and select border color is updated.
+ * @return {Promise<void>} returns null if there was no asset to check.
+ * Otherwise returns a promise that resolves when existence and column checking
+ * are finished and select border color is updated.
  */
 function verifyAsset(asset, type, state, expectedColumns) {
-  // TODO: disable kick off button until all green?
+  // TODO: disable or discourage kick off until all green?
   const tdId = type + '-' + state;
   const select = $('#select-' + assetSelectionRowPrefix + type + '-' + state);
   lastSelectedAsset.set(tdId, asset);
@@ -574,7 +574,7 @@ function verifyAsset(asset, type, state, expectedColumns) {
       updateColorAndHover(select, 'red', 'Error! asset could not be found.');
     } else {
       console.error(err);
-      updateColorAndHover(select, 'red', 'Unknown error.');
+      updateColorAndHover(select, 'red', 'Unknown error: ' + err);
     }
   };
   if (asset === '') {
@@ -606,13 +606,13 @@ function verifyAsset(asset, type, state, expectedColumns) {
 }
 
 /**
- * Updates the border of the select and the hover text of the span.
+ * Updates the border and hover text of the select.
  * @param {JQuery<HTMLSelectElement>} select
  * @param {string} color
  * @param {string} title
  */
 function updateColorAndHover(select, color, title) {
-  select.prop('style', 'border:2px solid ' + color).prop('title', title);
+  select.css('border-color', color).prop('title', title);
 }
 
 /**

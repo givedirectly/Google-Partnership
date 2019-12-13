@@ -334,12 +334,11 @@ describe('Unit tests for manage_disaster.js', () => {
         {'GEOid2': 0, 'GEOdisplay-label': 0, 'HD01_VD01': 0, 'HD01_VD02': 0})]);
 
     const featureCollectionStub = cy.stub(ee, 'FeatureCollection');
-    featureCollectionStub.withArgs('state0').callsFake(
-        () => goodIncomeBadPovertyFeature);
-    featureCollectionStub.withArgs('state1').callsFake(
-        () => otherGoodIncomeBadPovertyFeature);
-    featureCollectionStub.withArgs('state2').callsFake(
-        () => goodPovertyFeature);
+    featureCollectionStub.withArgs('state0').returns(
+        goodIncomeBadPovertyFeature);
+    featureCollectionStub.withArgs('state1').returns(
+        otherGoodIncomeBadPovertyFeature);
+    featureCollectionStub.withArgs('state2').returns(goodPovertyFeature);
 
     // None -> bad
     setSelectWithLatch(0, 'state0', 'poverty-NY');
@@ -395,7 +394,6 @@ describe('Unit tests for manage_disaster.js', () => {
     // good -> None
     // should return immediately, no latch needed.
     setFirstSelectInScoreRowTo(1, 'None');
-
     checkSelectBorder(
         '#select-asset-selection-row-income-NY', 'rgb(255, 255, 255)');
     checkHoverText('#select-asset-selection-row-income-NY', '');
@@ -414,7 +412,7 @@ describe('Unit tests for manage_disaster.js', () => {
     checkHoverText('#select-asset-selection-row-buildings-NY', '');
   });
 
-  it('tries to set set a missing asset', () => {
+  it('tries to set a missing asset', () => {
     setUpAssetValidationTests();
     setSelectWithLatch(0, 'state0', 'poverty-NY');
     checkSelectBorder(
@@ -424,20 +422,18 @@ describe('Unit tests for manage_disaster.js', () => {
         'Error! asset could not be found.');
   });
 
-  it('sets a score select again before first set is finished', () => {
+  it('has two racing sets on same selector', () => {
     setUpAssetValidationTests();
 
     const goodPovertyFeature = ee.FeatureCollection([ee.Feature(
         null,
         {'GEOid2': 0, 'GEOdisplay-label': 0, 'HD01_VD01': 0, 'HD01_VD02': 0})]);
-    const otherGoodIncomeBadPovertyFeature = ee.FeatureCollection(
+    const badPovertyFeature = ee.FeatureCollection(
         [ee.Feature(null, {'GEOid2': 'blah', 'HD01_VD01': 'otherBlah'})]);
 
     const featureCollectionStub = cy.stub(ee, 'FeatureCollection');
-    featureCollectionStub.withArgs('state0').callsFake(
-        () => goodPovertyFeature);
-    featureCollectionStub.withArgs('state1').callsFake(
-        () => otherGoodIncomeBadPovertyFeature);
+    featureCollectionStub.withArgs('state0').returns(goodPovertyFeature);
+    featureCollectionStub.withArgs('state1').returns(badPovertyFeature);
 
     let firstLatch = getConvertEeObjectToPromiseLatch();
     setFirstSelectInScoreRowTo(0, 'state0');
