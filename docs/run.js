@@ -100,31 +100,22 @@ function drawTableAndSetUpHandlers(processedData, map, scoreAsset) {
  * @param {Object} colorFunction color data from the layer
  * @return {HTMLInputElement} the checkbox
  */
-function createNewCheckbox(index, displayName, parentDiv, colorFunction) {
+function createNewCheckbox(index, displayName, parentDiv) {
   const newRow = document.createElement('div');
   newRow.className = 'checkbox-row';
 
   const newBox = document.createElement('input');
   newBox.type = 'checkbox';
   newBox.id = getCheckBoxId(index);
-  newBox.className = 'checkbox';
+  newBox.className = 'checkbox layer-checkbox';
   newBox.checked = true;
   newRow.appendChild(newBox);
-
-  const newMark = document.createElement('span');
-  newMark.className = 'checkmark';
-  newRow.appendChild(newMark);
 
   const label = document.createElement('label');
   label.className = 'checkbox-label';
   label.htmlFor = newBox.id;
   label.innerHTML = displayName;
   newRow.appendChild(label);
-
-  const legend = document.createElement('span');
-  legend.className = 'checkbox-legend';
-  legend.style.backgroundImage = getLinearGradient(colorFunction);
-  newRow.appendChild(legend);
 
   parentDiv.appendChild(newRow);
   return newBox;
@@ -171,18 +162,40 @@ function getLinearGradient(colorFunction) {
  */
 function createNewCheckboxForLayer(layer, parentDiv, map) {
   const index = layer['index'];
-  const newBox = createNewCheckbox(
-      index, layer['display-name'], parentDiv, layer['color-function']);
+  const newBox = createNewCheckbox(index, layer['display-name'], parentDiv);
+  const linearGradient = getLinearGradient(layer['color-function']);
   if (!layer['display-on-load']) {
     newBox.checked = false;
   }
+  updateCheckboxBackground(newBox, linearGradient);
+
   newBox.onclick = () => {
+    updateCheckboxBackground(newBox, linearGradient);
     if (newBox.checked) {
       toggleLayerOn(layer, map);
     } else {
       toggleLayerOff(index, map);
     }
   };
+}
+
+/**
+ * Sets the checkbox background with a linear gradient to help users identify
+ * layers.
+ *
+ * @param {Element} checkgox
+ * @param {string} gradient the linear gradient for the checkbox background
+ */
+function updateCheckboxBackground(checkbox, gradient) {
+  if (checkbox.checked) {
+    if (gradient) {
+      checkbox.style.backgroundImage = gradient;
+    }
+  } else {
+    if (gradient) {
+      checkbox.style.backgroundImage = '';
+    }
+  }
 }
 
 /**
