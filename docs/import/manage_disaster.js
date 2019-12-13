@@ -571,6 +571,9 @@ function verifyAsset(asset, type, state, expectedColumns) {
   const assetMissingErrorFunction = (err) => {
     if (err.includes('\'' + asset + '\' not found.')) {
       updateColorAndHover(select, 'red', 'Error! asset could not be found.');
+    } else {
+      console.error(err);
+      updateColorAndHover(select, 'red', 'Unknown error.')
     }
   };
   if (asset === '') {
@@ -584,7 +587,7 @@ function verifyAsset(asset, type, state, expectedColumns) {
   } else {
     updateColorAndHover(select, 'yellow', 'Checking columns...');
     return convertEeObjectToPromise(getColumnsStatus(asset, expectedColumns))
-        .then((error, second) => {
+        .then((error) => {
           if (lastSelectedAsset.get(tdId) === asset) {
             if (error) {
               updateColorAndHover(

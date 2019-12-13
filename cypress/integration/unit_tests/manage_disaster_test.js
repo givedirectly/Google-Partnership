@@ -320,7 +320,7 @@ describe('Unit tests for manage_disaster.js', () => {
                 ' and must specify either damage asset or map bounds');
   });
 
-  it('does column verification', () => {
+  it.only('does column verification', () => {
     setUpAssetValidationTests();
     const badPovertyFeature = ee.FeatureCollection(
         [ee.Feature(null, {'GEOid2': 'blah', 'HD01_VD01': 'otherBlah'})]);
@@ -405,7 +405,7 @@ describe('Unit tests for manage_disaster.js', () => {
 
     // No expected rows
     featureCollectionStub.withArgs('state4').callsFake(() => {
-      // just need to return something.
+      expectChecking('buildings-NY');
       return goodIncomeBadPovertyFeature;
     });
     setFirstSelectInScoreRow(4);
@@ -419,7 +419,7 @@ describe('Unit tests for manage_disaster.js', () => {
     checkHoverText('#select-asset-selection-row-buildings-NY', '');
   });
 
-  it.only('tries to set set a missing asset', () => {
+  it('tries to set set a missing asset', () => {
     setUpAssetValidationTests();
     setFirstSelectInScoreRow(0);
     checkSelectBorder(
