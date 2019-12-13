@@ -37,7 +37,11 @@ describe('Unit tests for click_feature.js with map and table', () => {
         createFeatureWithOnlyGeoid(...missingPropertiesCorners)
             .set(blockGroupTag, 'missing properties group');
     features = ee.FeatureCollection([
-      feature1, feature2, offMapFeature, zeroFeature, missingPropertiesFeature,
+      feature1,
+      feature2,
+      offMapFeature,
+      zeroFeature,
+      missingPropertiesFeature,
     ]);
     scoredFeatures = ee.FeatureCollection([
       feature1.set(scoreTag, 1),
