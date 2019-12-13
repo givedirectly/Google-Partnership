@@ -3,7 +3,7 @@ import {tableHeadings} from '../../../docs/draw_table.js';
 import {currentFeatures} from '../../../docs/highlight_features';
 import * as loading from '../../../docs/loading.js';
 import {convertEeObjectToPromise} from '../../../docs/map_util.js';
-import {blockGroupTag} from '../../../docs/property_names';
+import {blockGroupTag, geoidTag} from '../../../docs/property_names';
 import {scoreTag} from '../../../docs/property_names.js';
 import {drawTableAndSetUpHandlers} from '../../../docs/run.js';
 import {cyQueue} from '../../support/commands.js';
@@ -14,7 +14,9 @@ import {convertPathToLatLng, createGoogleMap} from '../../support/test_map.js';
 const waitBeforeClick = 500;
 const feature1Corners = [0.25, 0.25, 0.75, 1];
 const feature2Corners = [0.75, 0.25, 1.5, 0.75];
-const zeroScoreFeature = [0, 0, 0.25, 0.25];
+const zeroScoreCorners = [0, 0, 0.25, 0.25];
+const missingPropertiesCorners = [-0.25, -0.25, 0, 0];
+
 
 describe('Unit tests for click_feature.js with map and table', () => {
   loadScriptsBeforeForUnitTests('ee', 'charts', 'maps');
@@ -29,15 +31,20 @@ describe('Unit tests for click_feature.js with map and table', () => {
     const feature2 = createFeatureFromCorners(...feature2Corners)
                          .set(blockGroupTag, 'another group');
     const offMapFeature = createFeatureFromCorners(10, 10, 20, 20);
-    const zeroFeature = createFeatureFromCorners(...zeroScoreFeature)
+    const zeroFeature = createFeatureFromCorners(...zeroScoreCorners)
                             .set(blockGroupTag, 'zero group');
-    features =
-        ee.FeatureCollection([feature1, feature2, offMapFeature, zeroFeature]);
+    const missingPropertiesFeature =
+        createFeatureWithOnlyGeoid(...missingPropertiesCorners)
+            .set(blockGroupTag, 'missing properties group');
+    features = ee.FeatureCollection([
+      feature1, feature2, offMapFeature, zeroFeature, missingPropertiesFeature,
+    ]);
     scoredFeatures = ee.FeatureCollection([
       feature1.set(scoreTag, 1),
       feature2.set(scoreTag, 3),
       offMapFeature.set(scoreTag, 2),
       zeroFeature.set(scoreTag, 0),
+      missingPropertiesFeature.set(scoreTag, 4),
     ]);
   });
 
@@ -108,10 +115,23 @@ describe('Unit tests for click_feature.js with map and table', () => {
   it('clicks on a feature not in the list', () => {
     cy.wait(waitBeforeClick);
     cy.get('#test-map-div').click(350, 400);
-    assertFeatureShownOnMap(zeroScoreFeature);
     cy.get('.google-visualization-table-tr-sel').should('not.exist');
     cy.get('#test-map-div').should('contain', 'SCORE: 0');
     cy.get('#test-map-div').should('contain', 'zero group');
+    assertFeatureShownOnMap(zeroScoreCorners);
+  });
+
+  it('clicks on a feature with missing properties', () => {
+    cy.wait(waitBeforeClick);
+    cy.get('#test-map-div').click(250, 500);
+    cy.get('.google-visualization-table-tr-sel')
+        .find('[class="google-visualization-table-td"]')
+        .should('have.text', 'missing properties group');
+    assertFeatureShownOnMap(missingPropertiesCorners);
+    cy.get('#test-map-div').should('contain', 'SCORE: 4');
+    cy.get('#test-map-div').should('contain', 'missing properties group');
+    cy.get('#test-map-div').should('contain', 'SVI: undefined');
+    cy.get('#test-map-div').should('contain', 'MEDIAN INCOME: undefined');
   });
 
   /**
@@ -191,8 +211,22 @@ describe('Unit tests for click_feature.js with map and table', () => {
 });
 
 /**
- * Creates a rectangular test feature, with properties filled in from the
- * given coordinates.
+ * Creates a rectangular test feature, with only the geoid filled in.
+ * @param {number} west West-most (smallest longitude) coordinate of feature
+ * @param {number} south South-most (smallest latitude) coordinate of feature
+ * @param {number} east East-most (largest longitude) coordinate of feature
+ * @param {number} north North-most (largest latitude) coordinate of feature
+ * @return {ee.Feature}
+ */
+function createFeatureWithOnlyGeoid(west, south, east, north) {
+  return ee
+      .Feature(ee.Geometry.Polygon(
+          [west, south, west, north, east, north, east, south]))
+      .set(geoidTag, west);
+}
+
+/**
+ * Creates a rectangular test feature, with fixed properties filled in.
  * @param {number} west West-most (smallest longitude) coordinate of feature
  * @param {number} south South-most (smallest latitude) coordinate of feature
  * @param {number} east East-most (largest longitude) coordinate of feature
@@ -200,13 +234,9 @@ describe('Unit tests for click_feature.js with map and table', () => {
  * @return {ee.Feature}
  */
 function createFeatureFromCorners(west, south, east, north) {
-  const polygonCoordinates =
-      [west, south, west, north, east, north, east, south];
-  let result = ee.Feature(ee.Geometry.Polygon(polygonCoordinates));
-  // Set geoid to be west coordinate, and arbitrarily assign other properties.
-  for (let i = 0; i < tableHeadings.length; i++) {
-    result = result.set(
-        tableHeadings[i], polygonCoordinates[i % polygonCoordinates.length]);
+  let result = createFeatureWithOnlyGeoid(west, south, east, north);
+  for (let i = 1; i < tableHeadings.length; i++) {
+    result = result.set(tableHeadings[i], 100 * i);
   }
   return result;
 }
