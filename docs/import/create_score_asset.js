@@ -379,8 +379,9 @@ function calculateDamage(assetData, setMapBoundsInfo) {
   }
   setMapBoundsInfo('Computing and storing bounds of map: ');
   computeAndSaveBounds(geometry)
-  .then((bounds) => setMapBoundsInfo(
-      'Found bounds ' + displayGeoNumbers(bounds)))
+      .then(
+          (bounds) =>
+              setMapBoundsInfo('Found bounds ' + displayGeoNumbers(bounds)))
       .catch(setMapBoundsInfo);
   return {damage, damageEnvelope};
 }

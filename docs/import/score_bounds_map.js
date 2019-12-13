@@ -40,16 +40,17 @@ class ScoreBoundsMap {
   /** @private Creates {@link this.deleteButton} and attaches it to the map. */
   _setUpDeleteButton() {
     /** @const */
-    this.deleteButton = $(document.createElement('button'));
-    this.deleteButton.addClass('score-bounds-delete-button');
-    this.deleteButton.text('Delete');
-    this.deleteButton.on('click', () => {
-      if (confirm('Delete existing bounds?')) {
-        this._removePolygon();
-        this.saveData();
-      }
-    });
-    this.deleteButton.hide();
+    this.deleteButton = $(document.createElement('button'))
+                            .addClass('score-bounds-delete-button')
+                            .text('Delete')
+                            .on('click',
+                                () => {
+                                  if (confirm('Delete existing bounds?')) {
+                                    this._removePolygon();
+                                    this.saveData();
+                                  }
+                                })
+                            .hide();
     this.map.controls[google.maps.ControlPosition.TOP_LEFT].insertAt(
         0, this.deleteButton[0]);
   }
@@ -141,10 +142,12 @@ class ScoreBoundsMap {
 
 /**
  * Sets up `polygon` to call `callback` whenever the polygon changes. Normal
- * shape changes are handled by the listeners registered by {@link
- * addListenersToPolygon}, while drag events are handled separately. Since drag
- * events generate so many individual change events, we remove those events on
- * drag start and add them back on drag end.
+ * shape changes (dragging a corner, dragging the middle of an edge point) are
+ * handled by the listeners registered by {@link
+ * ScoreBoundsMap._addListenersToPolygon}, while moving the whole polygon (via
+ * clicking the center and dragging it) are handled separately. Since such drags
+ * generate so many individual change events, we remove those events on drag
+ * start and add them back on drag end.
  *
  * We also register a `removeAllChangeListeners` method on the polygon so that
  * the caller can easily deregister all listeners if the polygon is being
@@ -165,14 +168,21 @@ ScoreBoundsMap._callbackOnPolygonChange = (polygon, callback) => {
   polygon.addListener('dragstart', () => polygon.removeAllChangeListeners());
 };
 
+/**
+ * Polygon path event types:
+ * - insert_at: drag the middle of an edge, to create a new corner
+ * - remove_at: undo an insert_at
+ * - set_at: move a corner
+ * @type {ReadonlyArray<string>}
+ */
 const polygonPathEventTypes =
     Object.freeze(['insert_at', 'remove_at', 'set_at']);
 
 /**
  * Adds listeners to the polygon's {@link
  * google.maps.MVCArray<google.maps.LatLng>} path so that any change is
- * detected. These listeners will fire continuously on drag events, so they
- * should be removed before a drag starts. See
+ * detected. These listeners will fire continuously on whole-polygon drag
+ * events, so they should be removed before a drag starts. See
  * https://stackoverflow.com/questions/12515748/event-after-modifying-polygon-in-google-maps-api-v3/20682154
  * @param {google.maps.Polygon} polygon
  * @param {Function} callback Called whenever polygon's path changes

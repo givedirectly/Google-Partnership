@@ -161,6 +161,16 @@ function enableWhenFirestoreReady(allDisastersData) {
   return onSetDisaster();
 }
 
+/**
+ * We track whether or not we've already completed the EE asset-fetching
+ * promises for the current disaster. This ensures we don't re-initialize if the
+ * user switches back and forth to this disaster while still loading: the second
+ * set of promises to complete will do nothing.
+ *
+ * We don't just use a generation counter (cf. snackbar/toast.js) because when
+ * switching from disaster A to B back to A, the first set of promises for A is
+ * still valid if they return after we switch back to A.
+ */
 let processedCurrentDisasterStateAssets = false;
 let processedCurrentDisasterSelfAssets = false;
 
@@ -171,14 +181,14 @@ let processedCurrentDisasterSelfAssets = false;
  *     display is done (user can interact with page)
  */
 function onSetDisaster() {
-  processedCurrentDisasterStateAssets = false;
-  processedCurrentDisasterSelfAssets = false;
   const currentDisaster = getDisaster();
   if (!currentDisaster) {
     // We don't expect this to happen, because a disaster should always be
     // returned by getDisaster(), but tolerate.
     return Promise.resolve();
   }
+  processedCurrentDisasterStateAssets = false;
+  processedCurrentDisasterSelfAssets = false;
   const scoreBoundsPath = getElementFromPath(scoreCoordinatesPath);
   scoreBoundsMap.initialize(
       scoreBoundsPath ? transformGeoPointArrayToLatLng(scoreBoundsPath) : null);
