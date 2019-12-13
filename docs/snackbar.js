@@ -55,9 +55,8 @@ function showSnackbar(
 }
 
 $(() => {
-  $('#snackbar').load(
-      import.meta.url.replace(/snackbar\.js$/, 'snackbar.html'),
-      () => {
+  $('#snackbar')
+      .load(import.meta.url.replace(/snackbar\.js$/, 'snackbar.html'), () => {
         const snackbar = document.getElementById('snackbar');
         snackbarOriginalClassName = snackbar.className;
         snackbarOriginalStyle = snackbar.style;
