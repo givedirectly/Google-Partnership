@@ -369,7 +369,8 @@ describe('Unit tests for manage_disaster.js', () => {
     checkSelectBorder(
         '#select-asset-selection-row-poverty-NY', 'rgb(0, 128, 0)');
     checkHoverText(
-        '#select-asset-selection-row-poverty-NY', 'Success! asset has all expected columns');
+        '#select-asset-selection-row-poverty-NY',
+        'Success! asset has all expected columns');
 
     // good -> bad
     setFirstSelectInScoreRowTo(0, 'state0');
@@ -385,14 +386,16 @@ describe('Unit tests for manage_disaster.js', () => {
     checkSelectBorder(
         '#select-asset-selection-row-income-NY', 'rgb(0, 128, 0)');
     checkHoverText(
-        '#select-asset-selection-row-income-NY', 'Success! asset has all expected columns');
+        '#select-asset-selection-row-income-NY',
+        'Success! asset has all expected columns');
 
     // good -> good
     setFirstSelectInScoreRowTo(1, 'state3');
     checkSelectBorder(
         '#select-asset-selection-row-income-NY', 'rgb(0, 128, 0)');
     checkHoverText(
-        '#select-asset-selection-row-income-NY', 'Success! asset has all expected columns');
+        '#select-asset-selection-row-income-NY',
+        'Success! asset has all expected columns');
 
     // good -> None
     setFirstSelectInScoreRowTo(1, 'None');
@@ -408,7 +411,8 @@ describe('Unit tests for manage_disaster.js', () => {
     setFirstSelectInScoreRow(4);
     checkSelectBorder(
         '#select-asset-selection-row-buildings-NY', 'rgb(0, 128, 0)');
-    checkHoverText('#select-asset-selection-row-buildings-NY', 'No expected columns');
+    checkHoverText(
+        '#select-asset-selection-row-buildings-NY', 'No expected columns');
     setFirstSelectInScoreRowTo(4, 'None');
     checkSelectBorder(
         '#select-asset-selection-row-buildings-NY', 'rgb(255, 255, 255)');
@@ -845,10 +849,8 @@ function setFirstSelectInScoreRowTo(rowNum, text) {
  */
 function expectChecking(selector) {
   const select = $('#select-asset-selection-row-' + selector);
-  expect(select.prop('title'))
-      .to.equal('Checking columns...');
-  expect(select.prop('style').cssText)
-      .to.contain('border: 2px solid yellow;');
+  expect(select.prop('title')).to.equal('Checking columns...');
+  expect(select.prop('style').cssText).to.contain('border: 2px solid yellow;');
 }
 
 /**

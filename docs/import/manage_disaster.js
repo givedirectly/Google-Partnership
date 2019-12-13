@@ -569,8 +569,9 @@ function verifyAsset(asset, type, state, expectedColumns) {
   const select = $('#select-' + assetSelectionRowPrefix + type + '-' + state);
   lastSelectedAsset.set(tdId, asset);
   const assetMissingErrorFunction = (err) => {
-    if (err.includes('\'' + asset + '\' not found.'))
-      updateColorAndHover(select, 'red', 'Error! asset could not be found.')
+    if (err.includes('\'' + asset + '\' not found.')) {
+      updateColorAndHover(select, 'red', 'Error! asset could not be found.');
+    }
   };
   if (asset === '') {
     updateColorAndHover(select, 'white', '');
