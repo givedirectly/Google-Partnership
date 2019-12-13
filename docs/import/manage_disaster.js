@@ -98,7 +98,7 @@ function validateUserFields() {
   processButton.show();
   if (message) {
     processButton.text(message);
-    // processButton.attr('disabled', true);
+    processButton.attr('disabled', true);
   } else {
     processButton.text('Kick off Data Processing (will take a while!)');
     processButton.attr('disabled', false);

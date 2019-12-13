@@ -151,7 +151,8 @@ describe('Unit tests for create_score_asset.js', () => {
     cy.wrap(promise)
         .then(() => {
           expect(exportStub).to.be.calledOnce;
-          return convertEeObjectToPromise(exportStub.firstCall.args[0]);
+          return convertEeObjectToPromise(
+              exportStub.firstCall.args[0].sort('GEOID'));
         })
         .then((result) => {
           const features = result.features;
@@ -161,17 +162,16 @@ describe('Unit tests for create_score_asset.js', () => {
         });
   });
 
-  it.only('handles no svi/income assets', () => {
+  it('handles no svi/income assets', () => {
     testData.asset_data.income_asset_paths = {};
-    // Won't actually get no SVI paths at all, but fine to tolerate it.
+    // Won't actually get null for SVI path dict, but fine to tolerate it.
     testData.asset_data.svi_asset_paths = null;
     const promise = createScoreAsset(testData);
     expect(promise).to.not.be.null;
     cy.wrap(promise)
         .then(() => {
           expect(exportStub).to.be.calledOnce;
-          return convertEeObjectToPromise(
-              exportStub.firstCall.args[0].sort('GEOID'));
+          return convertEeObjectToPromise(exportStub.firstCall.args[0]);
         })
         .then((result) => {
           const features = result.features;
