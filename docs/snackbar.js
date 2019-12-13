@@ -6,6 +6,11 @@ const SNACKBAR_DURATION_MS = 3000;
 // Track number of messages shown so we don't accidentally hide a later message.
 let showNumber = 0;
 
+let snackbarOriginalClassName;
+let snackbarOriginalStyle;
+let iconOriginalClassName;
+let iconOriginalStyle;
+
 /**
  * Shows a snackbar notification.
  *
@@ -18,16 +23,12 @@ let showNumber = 0;
 function showSnackbar(
     msg, snackbarStyler, iconStyler, duration = SNACKBAR_DURATION_MS) {
   const snackbar = document.getElementById('snackbar');
-  const snackbarOriginalClasses = snackbar.className;
-  const snackbarOriginalStyle = snackbar.style;
   if (snackbarStyler) snackbarStyler(snackbar);
 
   const icon = document.getElementById('snackbar-icon');
-  const iconOriginalClasses = icon.className;
-  const iconOriginalStyle = icon.style;
   if (iconStyler) iconStyler(icon);
 
-  document.getElementById('snackbar-text').innerHTML = msg;
+  document.getElementById('snackbar-text').innerText = msg;
 
   $('#snackbar').fadeIn(ANIMATION_DURATION_MS);
 
@@ -43,9 +44,9 @@ function showSnackbar(
           // want to reset the styles.
           if (showNumber > 0) return;
 
-          snackbar.className = snackbarOriginalClasses;
+          snackbar.className = snackbarOriginalClassName;
           snackbar.style = snackbarOriginalStyle;
-          icon.className = iconOriginalClasses;
+          icon.className = iconOriginalClassName;
           icon.style = iconOriginalStyle;
         });
       }
@@ -53,5 +54,15 @@ function showSnackbar(
   }
 }
 
-$(() => $('#snackbar')
-            .load(import.meta.url.replace(/snackbar\.js$/, 'snackbar.html')));
+$(() => {
+  $('#snackbar').load(
+      import.meta.url.replace(/snackbar\.js$/, 'snackbar.html'),
+      () => {
+        const snackbar = document.getElementById('snackbar');
+        snackbarOriginalClassName = snackbar.className;
+        snackbarOriginalStyle = snackbar.style;
+        const icon = document.getElementById('snackbar-icon');
+        iconOriginalClassName = icon.className;
+        iconOriginalStyle = icon.style;
+      });
+});
