@@ -117,7 +117,7 @@ function setUpScoreBoundsMap(div) {
  * Enables page functionality.
  * @param {Promise<Map<string, Object>>} allDisastersData Promise with contents
  *     of Firestore for all disasters
- * @return {Promise<void>}
+ * @return {Promise<void>} See {@link enableWhenFirestoreReady}
  */
 function enableWhenReady(allDisastersData) {
   // Eagerly kick off current disaster asset listing before Firestore finishes.
@@ -133,7 +133,7 @@ function enableWhenReady(allDisastersData) {
  * @param {Map<string, Object>} allDisastersData Contents of
  *     Firestore for all disasters, the current disaster's data is used when
  *     calculating
- * @return {Promise<void>} Promise that completes when all setting is done
+ * @return {Promise<void>} See {@link onSetDisaster}
  */
 function enableWhenFirestoreReady(allDisastersData) {
   disasterData = allDisastersData;
@@ -161,21 +161,34 @@ function enableWhenFirestoreReady(allDisastersData) {
   return onSetDisaster();
 }
 
+/**
+ * We track whether or not we've already completed the EE asset-fetching
+ * promises for the current disaster. This ensures we don't re-initialize if the
+ * user switches back and forth to this disaster while still loading: the second
+ * set of promises to complete will do nothing.
+ *
+ * We don't just use a generation counter (cf. snackbar/toast.js) because when
+ * switching from disaster A to B back to A, the first set of promises for A is
+ * still valid if they return after we switch back to A.
+ */
 let processedCurrentDisasterStateAssets = false;
 let processedCurrentDisasterSelfAssets = false;
 
 /**
  * Function called when current disaster changes. Responsible for displaying the
  * score selectors and enabling/disabling the kick-off button.
- * @return {Promise<void>} Promise that completes when all setting is done
+ * @return {Promise<void>} Promise that completes when all score parameter
+ *     display is done (user can interact with page)
  */
 function onSetDisaster() {
-  processedCurrentDisasterStateAssets = false;
-  processedCurrentDisasterSelfAssets = false;
   const currentDisaster = getDisaster();
   if (!currentDisaster) {
+    // We don't expect this to happen, because a disaster should always be
+    // returned by getDisaster(), but tolerate.
     return Promise.resolve();
   }
+  processedCurrentDisasterStateAssets = false;
+  processedCurrentDisasterSelfAssets = false;
   const scoreBoundsPath = getElementFromPath(scoreCoordinatesPath);
   scoreBoundsMap.initialize(
       scoreBoundsPath ? transformGeoPointArrayToLatLng(scoreBoundsPath) : null);

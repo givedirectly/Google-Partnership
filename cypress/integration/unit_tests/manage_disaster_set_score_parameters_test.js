@@ -74,7 +74,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
   const allMissingText = allStateAssetsMissingText +
       ', and must specify either damage asset or map bounds';
 
-  it.only('validates asset data', () => {
+  it('validates asset data', () => {
     const boundsChanged = new Promise((resolve) => {
       const listener = scoreBoundsMap.map.addListener('bounds_changed', () => {
         google.maps.event.removeListener(listener);
@@ -102,7 +102,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     cy.stub(window, 'confirm').returns(true);
 
     cy.get('.score-bounds-delete-button').click();
-    // We haven't set much, so button is not enabled.
+    // We've only set the score region, so the button is not enabled.
     cy.get('#process-button').should('be.disabled');
     cy.get('#process-button')
         .should('have.text', allMissingText)
@@ -219,8 +219,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
   });
 
   /**
-   * Sets up fake page. Stubs out document.getElementById, but note that this is
-   * called in a `before()` hook, so the stub won't last past the first test.
+   * Sets up fake page. Called only once for this whole test file.
    * @return {Cypress.Chainable<Document>}
    */
   function preparePage() {
