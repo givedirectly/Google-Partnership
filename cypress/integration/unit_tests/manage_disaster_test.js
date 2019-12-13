@@ -2,17 +2,17 @@ import {getFirestoreRoot, readDisasterDocument} from '../../../docs/firestore_do
 import {assetDataTemplate, createDisasterData} from '../../../docs/import/create_disaster_lib.js';
 import {createScoreAsset} from '../../../docs/import/create_score_asset.js';
 import {assetSelectionRowPrefix, disasterData, initializeDamageSelector, initializeScoreSelectors, scoreAssetTypes, setUpScoreSelectorTable, stateAssets, validateUserFields} from '../../../docs/import/manage_disaster';
+import * as ManageDisaster from '../../../docs/import/manage_disaster.js';
 import {addDisaster, deleteDisaster, writeNewDisaster} from '../../../docs/import/manage_disaster.js';
 import {createOptionFrom} from '../../../docs/import/manage_layers.js';
 import {convertEeObjectToPromise} from '../../../docs/map_util';
 import * as MapUtil from '../../../docs/map_util.js';
 import {getDisaster} from '../../../docs/resources.js';
 import {CallbackLatch} from '../../support/callback_latch';
+import {cyQueue} from '../../support/commands';
 import {assertFirestoreMapBounds} from '../../support/firestore_map_bounds';
 import {createAndAppend, setUpSavingStubs} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
-import * as ManageDisaster from '../../../docs/import/manage_disaster.js';
-import {cyQueue} from '../../support/commands';
 
 const KNOWN_STATE = 'WF';
 
@@ -453,14 +453,14 @@ describe('Unit tests for manage_disaster.js', () => {
         '#select-asset-selection-row-poverty-NY', 'rgb(255, 255, 0)');
     checkHoverText(
         '#select-asset-selection-row-poverty-NY', 'Checking columns...');
-    //release second latch and column finishes with results from second.
+    // release second latch and column finishes with results from second.
     secondLatch.release();
     checkSelectBorder(
         '#select-asset-selection-row-poverty-NY', 'rgb(255, 0, 0)');
     checkHoverText(
         '#select-asset-selection-row-poverty-NY',
         'Error! asset does not have all expected columns: ' +
-        'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
+            'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
 
     // now do opposite order
     firstLatch = getConvertEeObjectToPromiseLatch();
@@ -475,7 +475,7 @@ describe('Unit tests for manage_disaster.js', () => {
     checkHoverText(
         '#select-asset-selection-row-poverty-NY',
         'Error! asset does not have all expected columns: ' +
-        'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
+            'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
 
     firstLatch.release();
     checkSelectBorder(
@@ -483,7 +483,7 @@ describe('Unit tests for manage_disaster.js', () => {
     checkHoverText(
         '#select-asset-selection-row-poverty-NY',
         'Error! asset does not have all expected columns: ' +
-        'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
+            'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
   });
 
   it('nonexistent asset not ok', () => {
@@ -900,13 +900,6 @@ function setFirstSelectInScoreRowTo(rowNum, text) {
 }
 
 /**
- * Checks for the state expected during column checking.
- * @param {string} selector part of the selector that represents the td e.g.
- *     'poverty-NY'.
- */
-
-
-/**
  * Asserts that the border around the given selector has the correct color
  * @param {string} selector cypress selector for a select element
  * @param {string} rgbString e.g. 'rgb(0, 0, 0)'
@@ -926,6 +919,9 @@ function checkHoverText(selector, text) {
   cy.get(selector).invoke('attr', 'title').should('eq', text);
 }
 
+/**
+ * Returns a latch that controls the logic of {@link convertEeObjectToPromise}.
+ */
 function getConvertEeObjectToPromiseLatch() {
   const latch = new CallbackLatch();
   const oldConvert = MapUtil.convertEeObjectToPromise;
@@ -936,13 +932,17 @@ function getConvertEeObjectToPromiseLatch() {
   return latch;
 }
 
+/**
+ * Sets a select and checks that correct state exists during checking.
+ * @param {number} rowNum row number of score asset selector table.
+ * @param {string} text text of an option in the select identified by {@code
+ *     tdId}
+ * @param {string} tdId e.g. 'poverty-NY'
+ */
 function setSelectWithLatch(rowNum, text, tdId) {
   const latch = getConvertEeObjectToPromiseLatch();
   setFirstSelectInScoreRowTo(rowNum, text);
-  checkSelectBorder(
-      '#select-asset-selection-row-' + tdId, 'rgb(255, 255, 0)');
-  checkHoverText(
-      '#select-asset-selection-row-' + tdId, 'Checking columns...');
+  checkSelectBorder('#select-asset-selection-row-' + tdId, 'rgb(255, 255, 0)');
+  checkHoverText('#select-asset-selection-row-' + tdId, 'Checking columns...');
   latch.release();
 }
-
