@@ -15,7 +15,6 @@ export {enableWhenReady, onSetDisaster, setUpScoreSelectorTable, toggleState};
 export {
   addDisaster,
   assetSelectionRowPrefix,
-  checkForMissingColumns,
   createScoreAsset,
   deleteDisaster,
   disasterData,
@@ -438,11 +437,8 @@ function initializeScoreSelectors(states) {
                     (event) => onNonDamageAssetSelect(
                         event, statePropertyPath, expectedColumns, type, state))
                 .prop('style', 'border:2px');
-        row.append(
-            createTd().append($(document.createElement('span'))
-                                  .prop('id', type + '-' + state + '-hover')
-                                  .append(select)));
-        checkForMissingColumns(select.val(), type, state, expectedColumns);
+        row.append(createTd().append(select));
+        verifyAsset(select.val(), type, state, expectedColumns);
       }
     }
   }
@@ -510,8 +506,7 @@ function removeAllButFirstFromRow(row) {
  * Initializes a dropdown with assets and the appropriate change handler.
  * @param {Array<string>} assets List of assets to add to dropdown
  * @param {Array<string>} propertyPath List of attributes to follow to get
- *     value. If that value is found in options, it will be selected. Otherwise,
- *     no option will be selected
+ *     value.
  * @param {jQuery<HTMLSelectElement>} select Select element, will be created if
  *     not given
  * @return {JQuery<HTMLSelectElement>}
@@ -539,18 +534,17 @@ function createAssetDropdown(
  * Sets off a column verification check and data write.
  * @param {Object} event selector change event
  * @param {Array<string>} propertyPath List of attributes to follow to get
- *     value. If that value is found in options, it will be selected. Otherwise,
- *     no option will be selected
+ *     value.
  * @param {Array<string>} expectedColumns
  * @param {string} type
  * @param {string} state
- * @return {?Promise<unknown>} see {@link checkForMissingColumns}
+ * @return {Promise<void>} see {@link verifyAsset}
  */
 function onNonDamageAssetSelect(
     event, propertyPath, expectedColumns, type, state) {
   const newAsset = $(event.target).val();
   handleAssetDataChange(newAsset, propertyPath);
-  return checkForMissingColumns(newAsset, type, state, expectedColumns);
+  return verifyAsset(newAsset, type, state, expectedColumns);
 }
 
 // Map of asset picker (represented by a string '<type>-<state>' e.g.
@@ -559,42 +553,50 @@ function onNonDamageAssetSelect(
 const lastSelectedAsset = new Map();
 
 /**
- * Checks the given asset for the given columns and prints a result message.
+ * Verifies an asset exists and has the expected columns.
  * @param {string} asset
  * @param {string} type values from the first index of each entry in {@code
  *     scoreAssetTypes}
  * @param {string} state e.g. 'WA'
  * @param {Array<string>} expectedColumns
- * @return {?Promise<unknown>} returns null if column checking wasn't needed.
+ * @return {Promise<void>} returns null if column checking wasn't needed.
  * Otherwise returns a promise that resolves when column checking is finished
- * and select border color is updates.
+ * and select border color is updated.
  */
-function checkForMissingColumns(asset, type, state, expectedColumns) {
+function verifyAsset(asset, type, state, expectedColumns) {
+  // TODO: disable kick off button until all green?
   const tdId = type + '-' + state;
-  const span = $('#' + tdId + '-hover');
-  const select = span.children('select');
+  const select = $('#select-' + assetSelectionRowPrefix + type + '-' + state);
   lastSelectedAsset.set(tdId, asset);
+  const assetMissingErrorFunction = (err) => {
+    if (err.includes('\'' + asset + '\' not found.'))
+      updateColorAndHover(select, 'red', 'Error! asset could not be found.')
+  };
   if (asset === '') {
-    return updateColorAndHover(select, 'white', span, '');
+    updateColorAndHover(select, 'white', '');
   } else if (expectedColumns.length === 0) {
-    return updateColorAndHover(select, 'green', span, 'No expected columns');
+    updateColorAndHover(select, 'yellow', 'Checking columns...');
+    // TODO: is there a better way to evaluate feature collection existence?
+    convertEeObjectToPromise(ee.FeatureCollection(asset).first())
+        .then(() => updateColorAndHover(select, 'green', 'No expected columns'))
+        .catch(assetMissingErrorFunction);
   } else {
-    updateColorAndHover(select, 'yellow', span, 'Checking columns...');
+    updateColorAndHover(select, 'yellow', 'Checking columns...');
     return convertEeObjectToPromise(getColumnsStatus(asset, expectedColumns))
-        .then((error) => {
+        .then((error, second) => {
           if (lastSelectedAsset.get(tdId) === asset) {
             if (error) {
               updateColorAndHover(
-                  select, 'red', span,
+                  select, 'red',
                   'Error! asset does not have all expected columns: ' +
                       expectedColumns);
             } else {
               updateColorAndHover(
-                  select, 'green', span,
-                  'Success! asset has all expected columns');
+                  select, 'green', 'Success! asset has all expected columns');
             }
           }
-        });
+        })
+        .catch(assetMissingErrorFunction);
   }
 }
 
@@ -602,14 +604,10 @@ function checkForMissingColumns(asset, type, state, expectedColumns) {
  * Updates the border of the select and the hover text of the span.
  * @param {JQuery<HTMLSelectElement>} select
  * @param {string} color
- * @param {JQuery<HTMLSpanElement>} span
  * @param {string} title
- * @return {null}
  */
-function updateColorAndHover(select, color, span, title) {
-  select.prop('style', 'border:2px solid ' + color);
-  if (span) span.prop('title', title);
-  return null;
+function updateColorAndHover(select, color, title) {
+  select.prop('style', 'border:2px solid ' + color).prop('title', title);
 }
 
 /**
