@@ -1,6 +1,5 @@
 {
   "devDependencies": {
-    "@babel/plugin-syntax-import-meta": "^7.7.4",
     "@google/earthengine": "^0.1.203",
     "babel-eslint": "^10.0.3",
     "cypress": "^3.6.1",
