@@ -51,8 +51,7 @@ function showSnackbar(
         $('#snackbar').fadeOut(ANIMATION_DURATION_MS, () => {
           // In case another snackbar is already being shown again, we don't
           // want to reset the styles.
-          if (showNumber > 0) return;
-          showNumber = 0;
+          if (currentShow !== showNumber) return;
 
           snackbar.className = snackbarOriginalClassName;
           icon.className = iconOriginalClassName;
