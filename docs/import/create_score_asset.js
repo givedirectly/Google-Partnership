@@ -224,11 +224,17 @@ function createScoreAsset(
     return missingAssetError('column name for total population in SNAP table');
   }
   const sviPaths = assetData['svi_asset_paths'];
+  if (!sviPaths) {
+    return missingAssetError('SVI table asset paths');
+  }
   const sviKey = assetData['svi_key'];
   if (!sviKey) {
     return missingAssetError('column name for SVI table');
   }
   const incomePaths = assetData['income_asset_paths'];
+  if (!incomePaths) {
+    return missingAssetError('income table asset paths');
+  }
   const incomeKey = assetData['income_key'];
   if (!incomeKey) {
     return missingAssetError('column name for income table');
@@ -251,8 +257,8 @@ function createScoreAsset(
     if (!snapPath) {
       return missingAssetError('SNAP asset path for ' + state);
     }
-    const sviPath = sviPaths ? sviPaths[state] : null;
-    const incomePath = incomePaths ? incomePaths[state] : null;
+    const sviPath = sviPaths[state];
+    const incomePath = incomePaths[state];
     const buildingPath = buildingPaths[state];
     if (!buildingPath) {
       return missingAssetError('building asset path for ' + state);
