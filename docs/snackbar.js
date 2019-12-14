@@ -56,11 +56,15 @@ function showSnackbar(
 }
 
 $(() => {
-  $('#snackbar')
-      .load(import.meta.url.replace(/snackbar\.js$/, 'snackbar.html'), () => {
-        const snackbar = document.getElementById('snackbar');
-        snackbarOriginalClassName = snackbar.className;
-        const icon = document.getElementById('snackbar-icon');
-        iconOriginalClassName = icon.className;
-      });
+  const icon = $('<i id="snackbar-icon"></i>')
+      .addClass('snackbar-icon')
+      .attr('aria-hidden', 'true');
+  const snackbarText = $('<span id="snackbar-text"></span>');
+  const snackbar = $('<div id="snackbar"></div>')
+      .append(icon)
+      .append(snackbarText);
+  $('body').append(snackbar);
+
+  snackbarOriginalClassName = snackbar.attr('class');
+  iconOriginalClassName = icon.attr('class');
 });
