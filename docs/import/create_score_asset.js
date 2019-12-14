@@ -268,6 +268,10 @@ function createScoreAsset(
     const incomePath = incomePaths[state];
     const buildingPath = buildingPaths[state];
     if (damage && !buildingPath) {
+      // TODO(janakr): We could allow buildings asset to be absent even when
+      //  damage is present and calculate damage percentage based on household
+      //  count. But does GD want that? We'd have to warn on score kick-off so
+      //  users knew they were getting a less accurate damage percentage count.
       return missingAssetError(
           'buildings must be specified for ' + state +
           ' if damage asset is present');
