@@ -898,8 +898,8 @@ function setFirstSelectInScoreRowTo(rowNum, text) {
  */
 function checkSelectBorder(selector, rgbString) {
   cy.get(selector, {timeout: 5000})
-      .should('have.css', 'border')
-      .and('eq', '2px solid ' + rgbString);
+      .should('have.css', 'border-color')
+      .and('eq', rgbString);
 }
 
 /**
