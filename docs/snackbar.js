@@ -52,8 +52,7 @@ function showSnackbar(
           // In case another snackbar is already being shown again, we don't
           // want to reset the styles.
           if (showNumber > 0) return;
-
-          showNumber = 0;  // reset the counter to prevent overflow
+          showNumber = 0;
 
           snackbar.className = snackbarOriginalClassName;
           icon.className = iconOriginalClassName;
