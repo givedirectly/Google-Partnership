@@ -48,7 +48,6 @@ function showSnackbar(
     setTimeout(() => {
       // Only clear the snackbar if the current shown snackbar is the latest.
       if (currentShow === showNumber) {
-        showNumber = 0;  // reset the counter to prevent overflow
         $('#snackbar').fadeOut(ANIMATION_DURATION_MS, () => {
           // In case another snackbar is already being shown again, we don't
           // want to reset the styles.
