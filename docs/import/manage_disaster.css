@@ -21,3 +21,8 @@ table {
 .with-status-border {
    border: 2px solid;
 }
+
+.map {
+  width: 600px;
+  height: 400px;
+}

@@ -1,6 +1,6 @@
 import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, snapPercentageTag, snapPopTag, sviTag, totalPopTag, tractTag} from '../property_names.js';
 import {getScoreAsset} from '../resources.js';
-import {computeAndSaveBounds, saveBounds} from './center.js';
+import {computeAndSaveBounds} from './center.js';
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
 
 export {createScoreAsset, setStatus};
@@ -354,68 +354,36 @@ const damageBuffer = 1000;
  */
 function calculateDamage(assetData, setMapBoundsInfo) {
   const damagePath = assetData['damage_asset_path'];
+  let geometry;
+  let damage = null;
+  let damageEnvelope;
   if (damagePath) {
-    const damage = ee.FeatureCollection(damagePath);
+    damage = ee.FeatureCollection(damagePath);
     // Uncomment to test with a restricted damage set (14 block groups' worth).
     // damage = damage.filterBounds(
     //     ee.FeatureCollection('users/gd/2017-harvey/data-ms-as-nod')
     //         .filterMetadata('GEOID', 'starts_with', '482015417002'));
-    setMapBoundsInfo('Computing and storing bounds of map: ');
-    computeAndSaveBounds(damage)
-        .then(displayGeoNumbers)
-        .then((bounds) => setMapBoundsInfo('Found bounds ' + bounds))
-        .catch(setMapBoundsInfo);
-    return {damage, damageEnvelope: damage.geometry().buffer(damageBuffer)};
+    geometry = damage.geometry();
+    damageEnvelope = damage.geometry().buffer(damageBuffer);
+  } else {
+    const scoreBounds = assetData['score_bounds_coordinates'];
+    if (!scoreBounds) {
+      missingAssetError('specify damage asset or draw bounds on map');
+      return damageError;
+    }
+    const coordinates = [];
+    scoreBounds.forEach(
+        (geopoint) => coordinates.push(geopoint.longitude, geopoint.latitude));
+    damageEnvelope = ee.Geometry.Polygon(coordinates);
+    geometry = damageEnvelope;
   }
-  // TODO(janakr): in the no-damage case, we're storing a rectangle, but
-  //  experiments show that, at least for Harvey, the page is very slow when we
-  //  load the entire rectangle around the damage. Maybe allow users to select a
-  //  polygon so they can draw a tighter area?
-  setMapBoundsInfo('Storing bounds of map: ');
-  const damageSw = assetData['map_bounds_sw'];
-  if (!damageSw) {
-    missingAssetError(
-        'damage asset or map bounds must be specified (southwest corner ' +
-        'missing');
-    return damageError;
-  }
-  const damageNe = assetData['map_bounds_ne'];
-  if (!damageNe) {
-    missingAssetError(
-        'damage asset or map bounds must be specified (northeast corner ' +
-        'missing)');
-    return damageError;
-  }
-  const sw = makeLatLngFromString(damageSw);
-  const ne = makeLatLngFromString(damageNe);
-  const damageEnvelope =
-      ee.Geometry.Rectangle([sw.lng, sw.lat, ne.lng, ne.lat]);
-  saveBounds(makeGeoJsonRectangle(sw, ne))
-      .then(() => setMapBoundsInfo('Wrote bounds'))
+  setMapBoundsInfo('Computing and storing bounds of map: ');
+  computeAndSaveBounds(geometry)
+      .then(
+          (bounds) =>
+              setMapBoundsInfo('Found bounds ' + displayGeoNumbers(bounds)))
       .catch(setMapBoundsInfo);
-  return {
-    damage: null,
-    damageEnvelope: damageEnvelope,
-  };
-}
-
-/**
- * Creates a GeoJson-style rectangle from the southwest and northeast corners.
- * @param {{lat: number, lng: number}} sw
- * @param {{lat: number, lng: number}} ne
- * @return {Object} GeoJson Polygon
- */
-function makeGeoJsonRectangle(sw, ne) {
-  return {
-    type: 'Polygon',
-    coordinates: [[
-      [sw.lng, sw.lat],
-      [ne.lng, sw.lat],
-      [ne.lng, ne.lat],
-      [sw.lng, ne.lat],
-      [sw.lng, sw.lat],
-    ]],
-  };
+  return {damage, damageEnvelope};
 }
 
 /**
@@ -444,17 +412,6 @@ function computeBuildingsHisto(damageEnvelope, buildingPath, stateGroups) {
               ee.Filter.intersects({leftField: '.geo', rightField: '.geo'}))
           .map((f) => f.set(geoidTag, ee.Feature(f.get(field)).get(geoidTag)));
   return ee.Dictionary(withBlockGroup.aggregate_histogram(geoidTag));
-}
-
-/**
- * Makes a LatLng-style object from the given string.
- * @param {string} str Comma-separated string of the form "lat, lng", which is
- *     what Google Maps provides pretty easily
- * @return {{lng: *, lat: *}}
- */
-function makeLatLngFromString(str) {
-  const elts = str.split(/ *, */).map(Number);
-  return {lat: elts[0], lng: elts[1]};
 }
 
 /**

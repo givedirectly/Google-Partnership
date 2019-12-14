@@ -17,8 +17,7 @@ const incomeKey = 'HD01_VD01';
 //  Firestore?
 const assetDataTemplate = {
   damage_asset_path: null,
-  map_bounds_sw: null,
-  map_bounds_ne: null,
+  score_bounds_coordinates: null,
   block_group_asset_paths: {},
   snap_data: {
     paths: {},
