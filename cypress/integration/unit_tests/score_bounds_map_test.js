@@ -29,7 +29,6 @@ describe('Unit tests for ScoreBoundsMap class', () => {
   let underTest;
   const storedSaves = [];
   before(() => {
-    storedSaves.length = 0;
     cy.visit('test_utils/empty.html');
     cy.document().then((doc) => {
       const div = $(doc.createElement('div'));
@@ -45,6 +44,7 @@ describe('Unit tests for ScoreBoundsMap class', () => {
           (data) =>
               storedSaves.push(data ? data.map((ll) => ll.toJSON()) : data));
     });
+    beforeEach(() => storedSaves.length = 0);
   });
 
   it('tests ScoreBoundsMap class', () => {
@@ -116,5 +116,21 @@ describe('Unit tests for ScoreBoundsMap class', () => {
       expect(underTest.drawingManager.getMap()).to.eql(underTest.map);
       expect(storedSaves).to.eql([null]);
     });
+  });
+
+  it('Tests callbacks for ScoreBoundsMap after drag', () => {
+    underTest.initialize(scoreBoundsCoordinates);
+    underTest.onShow();
+    google.maps.event.trigger(underTest.polygon, 'dragstart');
+    google.maps.event.trigger(underTest.polygon, 'dragend');
+    expect(storedSaves).to.eql([scoreBoundsCoordinates]);
+    storedSaves.length = 0;
+    // Modify polygon, check that new path was saved.
+    underTest.polygon.getPath().setAt(
+        0, new google.maps.LatLng({lng: -100, lat: 30}));
+    expect(storedSaves).to.eql([[
+      {lng: -100, lat: 30},
+      ...scoreBoundsCoordinates.slice(1),
+    ]]);
   });
 });
