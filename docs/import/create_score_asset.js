@@ -10,20 +10,19 @@ export {createScoreAsset, setStatus};
  * total # buildings in the block group and # damaged buildings in the block
  * group.
  * @param {ee.Feature} feature
- * @param {ee.FeatureCollection} damage
- * @param {ee.Dictionary} buildings geoid -> # buildings
+ * @param {?ee.FeatureCollection} damage Damage asset, or null if damage not known
+ * @param {?ee.Dictionary} buildings geoid -> # buildings or null if buildings asset not present. If damage present, this must be too
  * @param {Array<string>} additionalTags
  * @return {ee.Feature}
  */
 function countDamageAndBuildings(feature, damage, buildings, additionalTags) {
   const geometry = feature.geometry();
   const geoId = feature.get(geoidTag);
-  const totalBuildings = ee.Algorithms.If(
-      buildings.contains(geoId), buildings.get(geoId), ee.Number(0));
+  const totalBuildings = buildings ? ee.Algorithms.If(
+      buildings.contains(geoId), buildings.get(geoId), ee.Number(0)) : null;
   let properties = ee.Dictionary()
                        .set(geoidTag, geoId)
-                       .set(blockGroupTag, feature.get(blockGroupTag))
-                       .set(buildingCountTag, totalBuildings);
+                       .set(blockGroupTag, feature.get(blockGroupTag));
   if (damage) {
     const damagedBuildings =
         ee.FeatureCollection(damage).filterBounds(geometry).size();
@@ -46,11 +45,13 @@ function countDamageAndBuildings(feature, damage, buildings, additionalTags) {
       ee.List([snapPop, totalPop]).containsAll([null]), null,
       ee.Number(snapPop).long().divide(ee.Number(totalPop).long()));
   // The following properties may have null values (as a result of {@code
-  // convertToNumber} so must be set directly on feature, not in dictionary.
+  // convertToNumber or absent assets} so must be set directly on feature, not
+  // in dictionary.
   let result = ee.Feature(geometry, properties)
                    .set(snapPopTag, snapPop)
                    .set(totalPopTag, totalPop)
-                   .set(snapPercentageTag, snapPercentage);
+                   .set(snapPercentageTag, snapPercentage)
+  .set(buildingCountTag, totalBuildings);
   additionalTags.forEach((tag) => result = result.set(tag, feature.get(tag)));
   return result;
 }
@@ -235,16 +236,15 @@ function createScoreAsset(
   }
   // If we switch to CrowdAI data, this will change.
   const buildingPaths = assetData['building_asset_paths'];
-  if (!buildingPaths) {
-    return missingAssetError('building data asset paths');
-  }
   const {damage, damageEnvelope} =
       calculateDamage(assetData, setMapBoundsInfoFunction);
   if (!damageEnvelope) {
     // Must have been an error.
     return null;
   }
-
+  if (damage && !buildingPaths) {
+    return missingAssetError('buildings must be specified if damage asset is present');
+  }
   let allStatesProcessing = ee.FeatureCollection([]);
   for (const state of states) {
     const snapPath = snapPaths[state];
@@ -253,9 +253,9 @@ function createScoreAsset(
     }
     const sviPath = sviPaths ? sviPaths[state] : null;
     const incomePath = incomePaths ? incomePaths[state] : null;
-    const buildingPath = buildingPaths[state];
-    if (!buildingPath) {
-      return missingAssetError('building asset path for ' + state);
+    const buildingPath = buildingPaths ? buildingPaths[state] : null;
+    if (damage && !buildingPath) {
+      return missingAssetError('buildings must be specified for ' + state + ' if damage asset is present');
     }
     const blockGroupPath = blockGroupPaths[state];
     if (!blockGroupPath) {
@@ -287,8 +287,8 @@ function createScoreAsset(
     }
 
     // Get building count by block group.
-    const buildingsHisto =
-        computeBuildingsHisto(damageEnvelope, buildingPath, stateGroups);
+    const buildingsHisto = buildingPath ?
+        computeBuildingsHisto(damageEnvelope, buildingPath, stateGroups) : null;
 
     // Create final feature collection.
     const additionalTags = [];
