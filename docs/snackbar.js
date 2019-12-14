@@ -20,7 +20,14 @@ let iconOriginalClassName;
  */
 function showSnackbar(
     msg, snackbarClasses, iconClasses, duration = SNACKBAR_DURATION_MS) {
-  const snackbar = document.getElementById('snackbar');
+  let snackbar = document.getElementById('snackbar');
+
+  // Lazily initialize the snackbar.
+  if (!snackbar) {
+    initializeSnackbar();
+    snackbar = document.getElementById('snackbar');
+  }
+
   if (snackbarClasses) {
     snackbarClasses.forEach(
         (snackbarClass) => snackbar.classList.add(snackbarClass));
@@ -55,7 +62,8 @@ function showSnackbar(
   }
 }
 
-$(() => {
+/** Creates the snackbar element and initializes original class lists. */
+function initializeSnackbar() {
   const icon = $('<i id="snackbar-icon"></i>')
                    .addClass('snackbar-icon')
                    .attr('aria-hidden', 'true');
@@ -66,4 +74,4 @@ $(() => {
 
   snackbarOriginalClassName = snackbar.attr('class');
   iconOriginalClassName = icon.attr('class');
-});
+}
