@@ -162,6 +162,24 @@ describe('Unit tests for create_score_asset.js', () => {
         });
   });
 
+  it('handles no svi/income assets', () => {
+    testData.asset_data.income_asset_paths = {};
+    testData.asset_data.svi_asset_paths = {};
+    const promise = createScoreAsset(testData);
+    expect(promise).to.not.be.null;
+    cy.wrap(promise)
+        .then(() => {
+          expect(exportStub).to.be.calledOnce;
+          return convertEeObjectToPromise(exportStub.firstCall.args[0]);
+        })
+        .then((result) => {
+          const features = result.features;
+          expect(features).to.have.length(1);
+          expect(features[0]['properties']['MEDIAN INCOME']).to.be.undefined;
+          expect(features[0]['properties']['SVI']).to.be.undefined;
+        });
+  });
+
   it('Test missing data', () => {
     testData.asset_data = null;
     expect(createScoreAsset(testData)).to.be.null;

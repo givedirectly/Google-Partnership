@@ -12,9 +12,10 @@ export {createScoreAsset, setStatus};
  * @param {ee.Feature} feature
  * @param {ee.FeatureCollection} damage
  * @param {ee.Dictionary} buildings geoid -> # buildings
+ * @param {Array<string>} additionalTags
  * @return {ee.Feature}
  */
-function countDamageAndBuildings(feature, damage, buildings) {
+function countDamageAndBuildings(feature, damage, buildings, additionalTags) {
   const geometry = feature.geometry();
   const geoId = feature.get(geoidTag);
   const totalBuildings = ee.Algorithms.If(
@@ -46,12 +47,12 @@ function countDamageAndBuildings(feature, damage, buildings) {
       ee.Number(snapPop).long().divide(ee.Number(totalPop).long()));
   // The following properties may have null values (as a result of {@code
   // convertToNumber} so must be set directly on feature, not in dictionary.
-  return ee.Feature(geometry, properties)
-      .set(incomeTag, feature.get(incomeTag))
-      .set(sviTag, feature.get(sviTag))
-      .set(snapPopTag, snapPop)
-      .set(totalPopTag, totalPop)
-      .set(snapPercentageTag, snapPercentage);
+  let result = ee.Feature(geometry, properties)
+                   .set(snapPopTag, snapPop)
+                   .set(totalPopTag, totalPop)
+                   .set(snapPercentageTag, snapPercentage);
+  additionalTags.forEach((tag) => result = result.set(tag, feature.get(tag)));
+  return result;
 }
 
 // Permissive number regexp: matches optional +/- followed by 0 or more digits
@@ -257,13 +258,7 @@ function createScoreAsset(
       return missingAssetError('SNAP asset path for ' + state);
     }
     const sviPath = sviPaths[state];
-    if (!sviPath) {
-      return missingAssetError('SVI asset path for ' + state);
-    }
     const incomePath = incomePaths[state];
-    if (!incomePath) {
-      return missingAssetError('income asset path for ' + state);
-    }
     const buildingPath = buildingPaths[state];
     if (!buildingPath) {
       return missingAssetError('building asset path for ' + state);
@@ -283,25 +278,31 @@ function createScoreAsset(
     processing =
         innerJoin(processing, stateGroups, censusGeoidKey, tigerGeoidKey);
     processing = processing.map((f) => combineWithSnap(f, snapKey, totalKey));
-    // Join with income.
-    // TODO: make income formatting prettier so it looks like a currency value.
-    //  Not trivial because it has some non-valid values like '-'.
-    processing = innerJoin(processing, incomePath, geoidTag, censusGeoidKey);
-    processing =
-        processing.map((f) => combineWithAsset(f, incomeTag, incomeKey));
-    // Join with SVI (data is at the tract level).
-    processing = processing.map(addTractInfo);
+    if (incomePath) {
+      // Join with income.
+      processing = innerJoin(processing, incomePath, geoidTag, censusGeoidKey);
+      processing =
+          processing.map((f) => combineWithAsset(f, incomeTag, incomeKey));
+    }
+    if (sviPath) {
+      // Join with SVI (data is at the tract level).
+      processing = processing.map(addTractInfo);
 
-    processing = innerJoin(processing, sviPath, tractTag, cdcGeoidKey);
-    processing = processing.map((f) => combineWithAsset(f, sviTag, sviKey));
+      processing = innerJoin(processing, sviPath, tractTag, cdcGeoidKey);
+      processing = processing.map((f) => combineWithAsset(f, sviTag, sviKey));
+    }
 
     // Get building count by block group.
     const buildingsHisto =
         computeBuildingsHisto(damageEnvelope, buildingPath, stateGroups);
 
     // Create final feature collection.
+    const additionalTags = [];
+    if (incomePath) additionalTags.push(incomeTag);
+    if (sviPath) additionalTags.push(sviTag);
     processing = processing.map(
-        (f) => countDamageAndBuildings(f, damage, buildingsHisto));
+        (f) =>
+            countDamageAndBuildings(f, damage, buildingsHisto, additionalTags));
     allStatesProcessing = allStatesProcessing.merge(processing);
   }
 
