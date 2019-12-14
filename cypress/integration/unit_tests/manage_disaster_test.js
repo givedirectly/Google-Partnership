@@ -4,7 +4,6 @@ import {createScoreAsset} from '../../../docs/import/create_score_asset.js';
 import {assetSelectionRowPrefix, disasterData, initializeDamageSelector, initializeScoreSelectors, scoreAssetTypes, setUpScoreSelectorTable, stateAssets, validateUserFields} from '../../../docs/import/manage_disaster';
 import {addDisaster, deleteDisaster, writeNewDisaster} from '../../../docs/import/manage_disaster.js';
 import {createOptionFrom} from '../../../docs/import/manage_layers.js';
-import {convertEeObjectToPromise} from '../../../docs/map_util';
 import * as MapUtil from '../../../docs/map_util.js';
 import {getDisaster} from '../../../docs/resources.js';
 import {assertFirestoreMapBounds} from '../../support/firestore_map_bounds';
