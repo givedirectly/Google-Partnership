@@ -108,10 +108,10 @@ describe('Unit tests for click_feature.js with map and table', () => {
   it('clicks on a feature not in the list', () => {
     cy.wait(waitBeforeClick);
     cy.get('#test-map-div').click(350, 400);
-    assertFeatureShownOnMap(zeroScoreFeature);
     cy.get('.google-visualization-table-tr-sel').should('not.exist');
     cy.get('#test-map-div').should('contain', 'SCORE: 0');
     cy.get('#test-map-div').should('contain', 'zero group');
+    assertFeatureShownOnMap(zeroScoreFeature);
   });
 
   /**

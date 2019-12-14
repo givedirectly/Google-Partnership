@@ -15,7 +15,11 @@ table {
 
 /* Kick-off button */
 #process-button {
-  text-transform: none
+  text-transform: none;
+}
+
+.with-status-border {
+   border: 2px solid;
 }
 
 .map {

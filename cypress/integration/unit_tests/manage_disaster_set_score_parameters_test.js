@@ -4,6 +4,7 @@ import {createDisasterData} from '../../../docs/import/create_disaster_lib.js';
 import * as ListEeAssets from '../../../docs/import/list_ee_assets.js';
 import {assetSelectionRowPrefix, disasterData, scoreAssetTypes, scoreBoundsMap, setUpScoreBoundsMap, setUpScoreSelectorTable, stateAssets, validateUserFields} from '../../../docs/import/manage_disaster';
 import {enableWhenFirestoreReady} from '../../../docs/import/manage_disaster.js';
+import * as MapUtil from '../../../docs/map_util.js';
 import {getDisaster} from '../../../docs/resources.js';
 import {cyQueue} from '../../support/commands.js';
 import {setUpSavingStubs} from '../../support/import_test_util.js';
@@ -218,6 +219,164 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
                      .to.eql(missingSnapPath));
   });
 
+  it('does column verification', () => {
+    setUpAssetValidationTests();
+
+    const goodIncomeBadPovertyFeature = ee.FeatureCollection(
+        [ee.Feature(null, {'GEOid2': 'blah', 'HD01_VD01': 'otherBlah'})]);
+    const otherGoodIncomeBadPovertyFeature = ee.FeatureCollection(
+        [ee.Feature(null, {'GEOid2': 'blah', 'HD01_VD01': 'otherBlah'})]);
+    const goodPovertyFeature = ee.FeatureCollection([ee.Feature(
+        null,
+        {'GEOid2': 0, 'GEOdisplay-label': 0, 'HD01_VD01': 0, 'HD01_VD02': 0})]);
+
+    const featureCollectionStub = cy.stub(ee, 'FeatureCollection');
+    featureCollectionStub.withArgs('state0').returns(
+        goodIncomeBadPovertyFeature);
+    featureCollectionStub.withArgs('state1').returns(
+        otherGoodIncomeBadPovertyFeature);
+    featureCollectionStub.withArgs('state2').returns(goodPovertyFeature);
+
+    // None -> bad
+    setSelectWithDelayedEvaluate(0, 'state0', 'poverty-NY');
+    checkSelectBorder(
+        '#select-asset-selection-row-poverty-NY', 'rgb(255, 0, 0)');
+    checkHoverText(
+        '#select-asset-selection-row-poverty-NY',
+        'Error! asset does not have all expected columns: ' +
+            'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
+
+    // bad -> bad
+    setSelectWithDelayedEvaluate(0, 'state1', 'poverty-NY');
+    checkSelectBorder(
+        '#select-asset-selection-row-poverty-NY', 'rgb(255, 0, 0)');
+    checkHoverText(
+        '#select-asset-selection-row-poverty-NY',
+        'Error! asset does not have all expected columns: ' +
+            'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
+
+    // bad -> good
+    setSelectWithDelayedEvaluate(0, 'state2', 'poverty-NY');
+    checkSelectBorder(
+        '#select-asset-selection-row-poverty-NY', 'rgb(0, 128, 0)');
+    checkHoverText(
+        '#select-asset-selection-row-poverty-NY',
+        'Success! asset has all expected columns');
+
+    // good -> bad
+    setSelectWithDelayedEvaluate(0, 'state0', 'poverty-NY');
+    checkSelectBorder(
+        '#select-asset-selection-row-poverty-NY', 'rgb(255, 0, 0)');
+    checkHoverText(
+        '#select-asset-selection-row-poverty-NY',
+        'Error! asset does not have all expected columns: ' +
+            'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
+
+    // None -> good columns
+    setSelectWithDelayedEvaluate(1, 'state1', 'income-NY');
+    checkSelectBorder(
+        '#select-asset-selection-row-income-NY', 'rgb(0, 128, 0)');
+    checkHoverText(
+        '#select-asset-selection-row-income-NY',
+        'Success! asset has all expected columns');
+
+    // good -> good
+    setSelectWithDelayedEvaluate(1, 'state0', 'income-NY');
+    checkSelectBorder(
+        '#select-asset-selection-row-income-NY', 'rgb(0, 128, 0)');
+    checkHoverText(
+        '#select-asset-selection-row-income-NY',
+        'Success! asset has all expected columns');
+
+    // good -> None
+    // should return immediately, no release needed.
+    setFirstSelectInScoreRowTo(1, 'None');
+    checkSelectBorder(
+        '#select-asset-selection-row-income-NY', 'rgb(255, 255, 255)');
+    checkHoverText('#select-asset-selection-row-income-NY', '');
+
+    // No expected rows
+    featureCollectionStub.withArgs('state4').callsFake(
+        () => goodIncomeBadPovertyFeature);
+    setSelectWithDelayedEvaluate(4, 'state0', 'buildings-NY');
+    checkSelectBorder(
+        '#select-asset-selection-row-buildings-NY', 'rgb(0, 128, 0)');
+    checkHoverText(
+        '#select-asset-selection-row-buildings-NY', 'No expected columns');
+    setFirstSelectInScoreRowTo(4, 'None');
+    checkSelectBorder(
+        '#select-asset-selection-row-buildings-NY', 'rgb(255, 255, 255)');
+    checkHoverText('#select-asset-selection-row-buildings-NY', '');
+  });
+
+  it('tries to set a missing asset', () => {
+    setUpAssetValidationTests();
+    setSelectWithDelayedEvaluate(0, 'state0', 'poverty-NY');
+    checkSelectBorder(
+        '#select-asset-selection-row-poverty-NY', 'rgb(255, 0, 0)');
+    checkHoverText(
+        '#select-asset-selection-row-poverty-NY',
+        'Error! asset could not be found.');
+  });
+
+  it('has two racing sets on same selector', () => {
+    setUpAssetValidationTests();
+
+    const goodPovertyFeature = ee.FeatureCollection([ee.Feature(
+        null,
+        {'GEOid2': 0, 'GEOdisplay-label': 0, 'HD01_VD01': 0, 'HD01_VD02': 0})]);
+    const badPovertyFeature = ee.FeatureCollection(
+        [ee.Feature(null, {'GEOid2': 'blah', 'HD01_VD01': 'otherBlah'})]);
+
+    const featureCollectionStub = cy.stub(ee, 'FeatureCollection');
+    featureCollectionStub.withArgs('state0').returns(goodPovertyFeature);
+    featureCollectionStub.withArgs('state1').returns(badPovertyFeature);
+
+    let firstRelease = getConvertEeObjectToPromiseRelease();
+    setFirstSelectInScoreRowTo(0, 'state0');
+
+    let secondRelease = getConvertEeObjectToPromiseRelease();
+    setFirstSelectInScoreRowTo(0, 'state1');
+
+    // release first evaluate but column still looks pending
+    firstRelease();
+    checkSelectBorder(
+        '#select-asset-selection-row-poverty-NY', 'rgb(255, 255, 0)');
+    checkHoverText(
+        '#select-asset-selection-row-poverty-NY', 'Checking columns...');
+    // release second evaluate and column finishes with results from second.
+    secondRelease();
+    checkSelectBorder(
+        '#select-asset-selection-row-poverty-NY', 'rgb(255, 0, 0)');
+    checkHoverText(
+        '#select-asset-selection-row-poverty-NY',
+        'Error! asset does not have all expected columns: ' +
+            'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
+
+    // now do opposite order
+    firstRelease = getConvertEeObjectToPromiseRelease();
+    setFirstSelectInScoreRowTo(0, 'state0');
+
+    secondRelease = getConvertEeObjectToPromiseRelease();
+    setFirstSelectInScoreRowTo(0, 'state1');
+
+    secondRelease();
+    checkSelectBorder(
+        '#select-asset-selection-row-poverty-NY', 'rgb(255, 0, 0)');
+    checkHoverText(
+        '#select-asset-selection-row-poverty-NY',
+        'Error! asset does not have all expected columns: ' +
+            'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
+
+    firstRelease();
+    checkSelectBorder(
+        '#select-asset-selection-row-poverty-NY', 'rgb(255, 0, 0)');
+    checkHoverText(
+        '#select-asset-selection-row-poverty-NY',
+        'Error! asset does not have all expected columns: ' +
+            'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
+  });
+
   /**
    * Sets up fake page. Called only once for this whole test file.
    * @return {Cypress.Chainable<Document>}
@@ -306,6 +465,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
   }
 });
 
+
 /**
  * Utility function to set the first select in the given score asset row. See
  * {@link getFirstTdInScoreRow}.
@@ -313,11 +473,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
  * @return {Cypress.Chainable} Cypress promise of the select
  */
 function setFirstSelectInScoreRow(rowNum) {
-  return getFirstTdInScoreRow(rowNum)
-      .next()
-      .find('select')
-      .select('state' + rowNum)
-      .blur();
+  return setFirstSelectInScoreRowTo(rowNum, 'state' + rowNum);
 }
 
 /**
@@ -331,4 +487,69 @@ function getFirstTdInScoreRow(rowNum) {
   return cy.get('#' + assetSelectionRowPrefix + scoreAssetTypes[rowNum][0])
       .find('td')
       .first();
+}
+
+/**
+ * Utility function to set the first select in the given row to the option
+ * that matches the given text.
+ * @param {number} rowNum
+ * @param {string} text
+ * @return {Cypress.Chainable} Cypress promise of the select
+ */
+function setFirstSelectInScoreRowTo(rowNum, text) {
+  return getFirstTdInScoreRow(rowNum).next().find('select').select(text).blur();
+}
+
+/**
+ * Asserts that the border around the given selector has the correct color
+ * @param {string} selector cypress selector for a select element
+ * @param {string} rgbString e.g. 'rgb(0, 0, 0)'
+ */
+function checkSelectBorder(selector, rgbString) {
+  cy.get(selector, {timeout: 5000})
+      .should('have.css', 'border-color')
+      .and('eq', rgbString);
+}
+
+/**
+ * Asserts on the hover text for the given span.
+ * @param {string} selector cypress selector for a span element
+ * @param {string} text
+ */
+function checkHoverText(selector, text) {
+  cy.get(selector).invoke('attr', 'title').should('eq', text);
+}
+
+/**
+ * A wrapper for {@link convertEeObjectToPromise} that returns a resolve
+ * function for releasing the result.
+ * @return {Function}
+ */
+function getConvertEeObjectToPromiseRelease() {
+  let resolveFunction = null;
+  const promise = new Promise((resolve) => resolveFunction = resolve);
+  const oldConvert = MapUtil.convertEeObjectToPromise;
+  MapUtil.convertEeObjectToPromise = (eeObject) => {
+    MapUtil.convertEeObjectToPromise = oldConvert;
+    return MapUtil.convertEeObjectToPromise(eeObject).then(async (result) => {
+      await promise;
+      return result;
+    });
+  };
+  return resolveFunction;
+}
+
+/**
+ * Sets a select and checks that correct state exists during checking.
+ * @param {number} rowNum row number of score asset selector table.
+ * @param {string} text text of an option in the select identified by {@code
+ *     tdId}
+ * @param {string} tdId e.g. 'poverty-NY'
+ */
+function setSelectWithDelayedEvaluate(rowNum, text, tdId) {
+  const release = getConvertEeObjectToPromiseRelease();
+  setFirstSelectInScoreRowTo(rowNum, text);
+  checkSelectBorder('#select-asset-selection-row-' + tdId, 'rgb(255, 255, 0)');
+  checkHoverText('#select-asset-selection-row-' + tdId, 'Checking columns...');
+  release();
 }
