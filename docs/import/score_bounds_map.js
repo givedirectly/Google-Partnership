@@ -158,7 +158,7 @@ class ScoreBoundsMap {
 ScoreBoundsMap._callbackOnPolygonChange = (polygon, callback) => {
   const listeners = ScoreBoundsMap._addListenersToPolygon(polygon, callback);
   polygon.addListener('dragend', () => {
-    listeners.push(...addListenersToPolygon(polygon, callback));
+    listeners.push(...ScoreBoundsMap._addListenersToPolygon(polygon, callback));
     callback();
   });
   polygon.removeAllChangeListeners = () => {
