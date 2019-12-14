@@ -23,6 +23,7 @@ function createError(msg) {
 function showError(msg, snackbarMsg) {
   if (snackbarMsg == null) snackbarMsg = msg;
   console.error(msg);
-  showSnackbar(snackbarMsg, ['snackbar-error'],
+  showSnackbar(
+      snackbarMsg, ['snackbar-error'],
       ['fa', 'fa-exclamation-circle', 'fa-2x']);
 }

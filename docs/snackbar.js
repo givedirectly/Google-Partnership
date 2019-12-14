@@ -28,7 +28,7 @@ function showSnackbar(
 
   const icon = document.getElementById('snackbar-icon');
   if (iconClasses) {
-    iconClasses.forEach((iconClass) =>  icon.classList.add(iconClass));
+    iconClasses.forEach((iconClass) => icon.classList.add(iconClass));
   }
 
   document.getElementById('snackbar-text').innerText = msg;
@@ -57,12 +57,11 @@ function showSnackbar(
 
 $(() => {
   const icon = $('<i id="snackbar-icon"></i>')
-      .addClass('snackbar-icon')
-      .attr('aria-hidden', 'true');
+                   .addClass('snackbar-icon')
+                   .attr('aria-hidden', 'true');
   const snackbarText = $('<span id="snackbar-text"></span>');
-  const snackbar = $('<div id="snackbar"></div>')
-      .append(icon)
-      .append(snackbarText);
+  const snackbar =
+      $('<div id="snackbar"></div>').append(icon).append(snackbarText);
   $('body').append(snackbar);
 
   snackbarOriginalClassName = snackbar.attr('class');

@@ -2,7 +2,6 @@ import {showSnackbar} from './snackbar.js';
 
 export {showToastMessage};
 
-const TOAST_COLOR = '#F4FBFA';
 const TOAST_DURATION_MS = 2000;
 
 /**
@@ -12,6 +11,6 @@ const TOAST_DURATION_MS = 2000;
  *     non-positive, message stays up until this method is called again.
  */
 function showToastMessage(message, duration = TOAST_DURATION_MS) {
-  showSnackbar(message, ['snackbar-toast'], ['fa', 'fa-check', 'fa-2x'],
-      duration);
+  showSnackbar(
+      message, ['snackbar-toast'], ['fa', 'fa-check', 'fa-2x'], duration);
 }
