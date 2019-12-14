@@ -220,6 +220,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
   });
 
   it('does column verification', () => {
+    callEnableWhenReady(setUpDefaultData());
     const goodIncomeBadPovertyFeature = ee.FeatureCollection(
         [ee.Feature(null, {'GEOid2': 'blah', 'HD01_VD01': 'otherBlah'})]);
     const otherGoodIncomeBadPovertyFeature = ee.FeatureCollection(
@@ -308,6 +309,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
   });
 
   it('tries to set a missing asset', () => {
+    callEnableWhenReady(setUpDefaultData());
     setSelectWithDelayedEvaluate(0, 'state0', 'poverty-NY');
     checkSelectBorder(
         '#select-asset-selection-row-poverty-NY', 'rgb(255, 0, 0)');
@@ -317,6 +319,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
   });
 
   it('has two racing sets on same selector', () => {
+    callEnableWhenReady(setUpDefaultData());
     const goodPovertyFeature = ee.FeatureCollection([ee.Feature(
         null,
         {'GEOid2': 0, 'GEOdisplay-label': 0, 'HD01_VD01': 0, 'HD01_VD02': 0})]);
