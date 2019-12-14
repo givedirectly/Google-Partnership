@@ -18,8 +18,11 @@ export {createScoreAsset, setStatus};
 function countDamageAndBuildings(feature, damage, buildings, additionalTags) {
   const geometry = feature.geometry();
   const geoId = feature.get(geoidTag);
-  const totalBuildings = buildings ? ee.Algorithms.If(
-      buildings.contains(geoId), buildings.get(geoId), ee.Number(0)) : null;
+  let totalBuildings;
+  if (buildings) {
+    totalBuildings = ee.Algorithms.If(
+        buildings.contains(geoId), buildings.get(geoId), ee.Number(0));
+  }
   let properties = ee.Dictionary()
                        .set(geoidTag, geoId)
                        .set(blockGroupTag, feature.get(blockGroupTag));
@@ -50,8 +53,10 @@ function countDamageAndBuildings(feature, damage, buildings, additionalTags) {
   let result = ee.Feature(geometry, properties)
                    .set(snapPopTag, snapPop)
                    .set(totalPopTag, totalPop)
-                   .set(snapPercentageTag, snapPercentage)
-  .set(buildingCountTag, totalBuildings);
+                   .set(snapPercentageTag, snapPercentage);
+  if (buildings) {
+    result = result.set(buildingCountTag, totalBuildings);
+  }
   additionalTags.forEach((tag) => result = result.set(tag, feature.get(tag)));
   return result;
 }

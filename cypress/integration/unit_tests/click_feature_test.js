@@ -136,6 +136,7 @@ describe('Unit tests for click_feature.js with map and table', () => {
     cy.get('#test-map-div').should('contain', 'missing properties group');
     cy.get('#test-map-div').should('contain', 'SVI: undefined');
     cy.get('#test-map-div').should('contain', 'MEDIAN INCOME: undefined');
+    cy.get('#test-map-div').should('contain', 'BUILDING COUNT: undefined');
   });
 
   /**
