@@ -125,7 +125,7 @@ describe('Unit tests for click_feature.js with map and table', () => {
     assertFeatureShownOnMap(zeroScoreCorners);
   });
 
-  it('clicks on a feature with missing properties', () => {
+  it.only('clicks on a feature with missing properties', () => {
     cy.wait(waitBeforeClick);
     cy.get('#test-map-div').click(250, 500);
     cy.get('.google-visualization-table-tr-sel')
