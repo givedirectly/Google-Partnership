@@ -1,9 +1,11 @@
 import {eeLegacyPathPrefix, legacyStateDir} from '../ee_paths.js';
 import {LayerType} from '../firebase_layers.js';
 import {disasterCollectionReference} from '../firestore_document.js';
+import {convertEeObjectToPromise} from '../map_util.js';
 import {getDisaster} from '../resources.js';
-import {createDisasterData} from './create_disaster_lib.js';
+import {createDisasterData, incomeKey, snapKey, sviKey, totalKey} from './create_disaster_lib.js';
 import {createScoreAsset, setStatus} from './create_score_asset.js';
+import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
 import {getDisasterAssetsFromEe, getStatesAssetsFromEe} from './list_ee_assets.js';
 import {clearStatus} from './manage_layers_lib.js';
 import {updateDataInFirestore} from './update_firestore_disaster.js';
@@ -20,6 +22,7 @@ export {
   initializeScoreSelectors,
   scoreAssetTypes,
   stateAssets,
+  updateColorAndHover,
   validateUserFields,
   writeNewDisaster,
 };
@@ -370,11 +373,21 @@ function toggleState(known) {
 }
 
 const scoreAssetTypes = [
-  ['poverty', ['snap_data', 'paths'], 'Poverty'],
-  ['income', ['income_asset_paths'], 'Income'],
-  ['svi', ['svi_asset_paths'], 'SVI'],
-  ['tiger', ['block_group_asset_paths'], 'Census TIGER Shapefiles'],
-  ['buildings', ['building_asset_paths'], 'Microsoft Building Shapefiles'],
+  [
+    'poverty',
+    ['snap_data', 'paths'],
+    'Poverty',
+    [censusGeoidKey, censusBlockGroupKey, snapKey, totalKey],
+  ],
+  ['income', ['income_asset_paths'], 'Income', [censusGeoidKey, incomeKey]],
+  ['svi', ['svi_asset_paths'], 'SVI', [cdcGeoidKey, sviKey]],
+  [
+    'tiger',
+    ['block_group_asset_paths'],
+    'Census TIGER Shapefiles',
+    [tigerGeoidKey],
+  ],
+  ['buildings', ['building_asset_paths'], 'Microsoft Building Shapefiles', []],
 ];
 Object.freeze(scoreAssetTypes);
 
@@ -404,22 +417,29 @@ function initializeScoreSelectors(states) {
   // Initialize headers.
   removeAllButFirstFromRow(headerRow);
   for (const state of states) {
-    headerRow.append(createTd().html(state + ' Assets'));
+    headerRow.append(createTd().text(state + ' Assets'));
   }
 
   // For each asset type, add select for all assets for each state.
   for (const scoreAssetType of scoreAssetTypes) {
-    const id = assetSelectionRowPrefix + scoreAssetType[0];
+    const type = scoreAssetType[0];
+    const id = assetSelectionRowPrefix + type;
     const propertyPath = scoreAssetType[1];
+    const expectedColumns = scoreAssetType[3];
     const row = $('#' + id);
     removeAllButFirstFromRow(row);
     for (const state of states) {
       if (stateAssets.get(state)) {
         const statePropertyPath = propertyPath.concat([state]);
-        row.append(createTd().append(addAssetDataChangeHandler(
+        const select =
             createAssetDropdown(stateAssets.get(state), statePropertyPath)
-                .prop('id', 'select-' + id + '-' + state),
-            statePropertyPath)));
+                .prop('id', 'select-' + id + '-' + state)
+                .on('change',
+                    (event) => onNonDamageAssetSelect(
+                        event, statePropertyPath, expectedColumns, type, state))
+                .addClass('with-status-border');
+        row.append(createTd().append(select));
+        verifyAsset(select.val(), type, state, expectedColumns);
       }
     }
   }
@@ -487,8 +507,7 @@ function removeAllButFirstFromRow(row) {
  * Initializes a dropdown with assets and the appropriate change handler.
  * @param {Array<string>} assets List of assets to add to dropdown
  * @param {Array<string>} propertyPath List of attributes to follow to get
- *     value. If that value is found in options, it will be selected. Otherwise,
- *     no option will be selected
+ *     value.
  * @param {jQuery<HTMLSelectElement>} select Select element, will be created if
  *     not given
  * @return {JQuery<HTMLSelectElement>}
@@ -510,6 +529,104 @@ function createAssetDropdown(
   }
 
   return select;
+}
+
+/**
+ * Sets off a column verification check and data write.
+ * @param {Object} event selector change event
+ * @param {Array<string>} propertyPath List of attributes to follow to get
+ *     value.
+ * @param {Array<string>} expectedColumns
+ * @param {string} type
+ * @param {string} state
+ * @return {Promise<void>} see {@link verifyAsset}
+ */
+function onNonDamageAssetSelect(
+    event, propertyPath, expectedColumns, type, state) {
+  const newAsset = $(event.target).val();
+  handleAssetDataChange(newAsset, propertyPath);
+  return verifyAsset(newAsset, type, state, expectedColumns);
+}
+
+// Map of asset picker (represented by a string '<type>-<state>' e.g.
+// 'poverty-WA') to the most recent value of the picker. This helps us ensure
+// that we're only updating the status box for the most recently selected value.
+const lastSelectedAsset = new Map();
+
+/**
+ * Verifies an asset exists and has the expected columns.
+ * @param {string} asset
+ * @param {string} type values from the first index of each entry in {@code
+ *     scoreAssetTypes}
+ * @param {string} state e.g. 'WA'
+ * @param {Array<string>} expectedColumns
+ * @return {Promise<void>} returns null if there was no asset to check.
+ *     Otherwise returns a promise that resolves when existence and column
+ *     checking are finished and select border color is updated.
+ */
+function verifyAsset(asset, type, state, expectedColumns) {
+  // TODO: disable or discourage kick off until all green?
+  const tdId = type + '-' + state;
+  const select = $('#select-' + assetSelectionRowPrefix + type + '-' + state);
+  lastSelectedAsset.set(tdId, asset);
+  const assetMissingErrorFunction = (err) => {
+    if (err.includes('\'' + asset + '\' not found.')) {
+      updateColorAndHover(select, 'red', 'Error! asset could not be found.');
+    } else {
+      console.error(err);
+      updateColorAndHover(select, 'red', 'Unknown error: ' + err);
+    }
+  };
+  if (asset === '') {
+    updateColorAndHover(select, 'white', '');
+  } else if (expectedColumns.length === 0) {
+    updateColorAndHover(select, 'yellow', 'Checking columns...');
+    // TODO: is there a better way to evaluate feature collection existence?
+    convertEeObjectToPromise(ee.FeatureCollection(asset).first())
+        .then(() => updateColorAndHover(select, 'green', 'No expected columns'))
+        .catch(assetMissingErrorFunction);
+  } else {
+    updateColorAndHover(select, 'yellow', 'Checking columns...');
+    return convertEeObjectToPromise(getColumnsStatus(asset, expectedColumns))
+        .then((error) => {
+          if (lastSelectedAsset.get(tdId) === asset) {
+            if (error) {
+              updateColorAndHover(
+                  select, 'red',
+                  'Error! asset does not have all expected columns: ' +
+                      expectedColumns);
+            } else {
+              updateColorAndHover(
+                  select, 'green', 'Success! asset has all expected columns');
+            }
+          }
+        })
+        .catch(assetMissingErrorFunction);
+  }
+}
+
+/**
+ * Updates the border and hover text of the select.
+ * @param {JQuery<HTMLSelectElement>} select
+ * @param {string} color
+ * @param {string} title
+ */
+function updateColorAndHover(select, color, title) {
+  select.css('border-color', color).prop('title', title);
+}
+
+/**
+ * Does the actual contains check and returns the appropriate status.
+ * @param {string} asset
+ * @param {Array<string>} expectedColumns
+ * @return {ee.String} status from column check, 0 if contained all columns, 1
+ * if there was an error.
+ */
+function getColumnsStatus(asset, expectedColumns) {
+  return ee.Algorithms.If(
+      ee.FeatureCollection(asset).first().propertyNames().containsAll(
+          ee.List(expectedColumns)),
+      ee.Number(0), ee.Number(1));
 }
 
 /**
