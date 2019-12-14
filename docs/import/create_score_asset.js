@@ -6,10 +6,9 @@ import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from '.
 export {createScoreAsset, setStatus};
 
 /**
- * Given a feature from the SNAP census data, returns a new
- * feature with GEOID, SNAP #, total pop #, total building count, building
- * counts for all damage categories, and SNAP percentage and damage percentage.
- *
+ * For the given feature representing a block group, add properties for
+ * total # buildings in the block group and # damaged buildings in the block
+ * group.
  * @param {ee.Feature} feature
  * @param {ee.FeatureCollection} damage
  * @param {ee.Dictionary} buildings geoid -> # buildings
@@ -17,23 +16,13 @@ export {createScoreAsset, setStatus};
  */
 function countDamageAndBuildings(feature, damage, buildings) {
   const geometry = feature.geometry();
-  const snapPop = ee.Number.parse(feature.get(snapPopTag)).long();
-  const totalPop = ee.Number.parse(feature.get(totalPopTag)).long();
   const geoId = feature.get(geoidTag);
   const totalBuildings = ee.Algorithms.If(
       buildings.contains(geoId), buildings.get(geoId), ee.Number(0));
-  let properties =
-      ee.Dictionary()
-          .set(geoidTag, geoId)
-          .set(blockGroupTag, feature.get(blockGroupTag))
-          .set(snapPopTag, ee.Number(snapPop))
-          .set(totalPopTag, ee.Number(totalPop))
-          .set(snapPercentageTag, ee.Number(snapPop).divide(totalPop))
-          // These entries can't be parsed to numbers easily because have some
-          // non-number values like "-" :(
-          .set(incomeTag, feature.get(incomeTag))
-          .set(sviTag, feature.get(sviTag))
-          .set(buildingCountTag, totalBuildings);
+  let properties = ee.Dictionary()
+                       .set(geoidTag, geoId)
+                       .set(blockGroupTag, feature.get(blockGroupTag))
+                       .set(buildingCountTag, totalBuildings);
   if (damage) {
     const damagedBuildings =
         ee.FeatureCollection(damage).filterBounds(geometry).size();
@@ -49,7 +38,47 @@ function countDamageAndBuildings(feature, damage, buildings) {
   } else {
     properties = properties.set(damageTag, 0);
   }
-  return ee.Feature(geometry, properties);
+  const snapPop = feature.get(snapPopTag);
+  const totalPop = feature.get(totalPopTag);
+  // unfortunately, just using .contains(null) here throws an error.
+  const snapPercentage = ee.Algorithms.If(
+      ee.List([snapPop, totalPop]).containsAll([null]), null,
+      ee.Number(snapPop).long().divide(ee.Number(totalPop).long()));
+  // The following properties may have null values (as a result of {@code
+  // convertToNumber} so must be set directly on feature, not in dictionary.
+  return ee.Feature(geometry, properties)
+      .set(incomeTag, feature.get(incomeTag))
+      .set(sviTag, feature.get(sviTag))
+      .set(snapPopTag, snapPop)
+      .set(totalPopTag, totalPop)
+      .set(snapPercentageTag, snapPercentage);
+}
+
+// Permissive number regexp: matches optional +/- followed by 0 or more digits
+// followed by optional period with 0 or more digits. Corresponds to valid
+// inputs to ee.Number.parse. Like ee.Number.parse, the empty string is not
+// allowed.
+const numberRegexp = '^[+-]?(([0-9]*)?[0-9](\.[0-9]*)?|\.[0-9]+)$';
+
+// Regexp that matches any string that ends in a '+' or '-'.
+const endsWithPlusMinusRegexp = '[+-]$';
+
+/**
+ * First strips out all ',' and whitespace. Then strips any trailing '-' or '+'
+ * (for threshold values like '250,000+'). Then checks if the result matches
+ * our regexp for valid EE numbers. If it does, parse and return number, else
+ * return null.
+ * @param {string} value
+ * @return {?ee.Number}
+ */
+function convertToNumber(value) {
+  value = ee.String(value).trim().replace(',', '', 'g');
+  value = ee.String(ee.Algorithms.If(
+      value.match(endsWithPlusMinusRegexp), ee.String(value.slice(0, -1)),
+      ee.String(value)));
+  return ee.Algorithms.If(
+      ee.String(value).length().and(value.match(numberRegexp).length()),
+      ee.Number.parse(value), null);
 }
 
 /**
@@ -69,9 +98,9 @@ function combineWithSnap(feature, snapKey, totalKey) {
         blockGroupTag,
         snapFeature.get(censusBlockGroupKey),
         snapPopTag,
-        ee.Number.parse(snapFeature.get(snapKey)),
+        convertToNumber(snapFeature.get(snapKey)),
         totalPopTag,
-        ee.Number.parse(snapFeature.get(totalKey)),
+        convertToNumber(ee.Number.parse(snapFeature.get(totalKey))),
       ]));
 }
 
@@ -83,10 +112,10 @@ function combineWithSnap(feature, snapKey, totalKey) {
  * @return {ee.Feature}
  */
 function combineWithAsset(feature, tag, key) {
-  const incomeFeature = ee.Feature(feature.get('secondary'));
+  const featureWithNewData = ee.Feature(feature.get('secondary'));
   return ee.Feature(feature.get('primary')).set(ee.Dictionary([
     tag,
-    incomeFeature.get(key),
+    convertToNumber(featureWithNewData.get(key)),
   ]));
 }
 

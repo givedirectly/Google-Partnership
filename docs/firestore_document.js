@@ -1,4 +1,4 @@
-import {getTestCookie, inProduction} from './in_test_util.js';
+import {getTestValue, inProduction} from './in_test_util.js';
 import {getDisaster} from './resources.js';
 
 export {
@@ -17,7 +17,7 @@ export {
  */
 function getFirestoreRoot() {
   return inProduction() ? firebase.firestore() :
-                          firebase.firestore().doc('test/' + getTestCookie());
+                          firebase.firestore().doc('test/' + getTestValue());
 }
 
 /**
