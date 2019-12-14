@@ -7,7 +7,6 @@ import {createOptionFrom} from '../../../docs/import/manage_layers.js';
 import {convertEeObjectToPromise} from '../../../docs/map_util';
 import * as MapUtil from '../../../docs/map_util.js';
 import {getDisaster} from '../../../docs/resources.js';
-import {CallbackLatch} from '../../support/callback_latch';
 import {assertFirestoreMapBounds} from '../../support/firestore_map_bounds';
 import {createAndAppend, setUpSavingStubs} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
@@ -341,7 +340,7 @@ describe('Unit tests for manage_disaster.js', () => {
     featureCollectionStub.withArgs('state2').returns(goodPovertyFeature);
 
     // None -> bad
-    setSelectWithLatch(0, 'state0', 'poverty-NY');
+    setSelectWithDelayedEvaluate(0, 'state0', 'poverty-NY');
     checkSelectBorder(
         '#select-asset-selection-row-poverty-NY', 'rgb(255, 0, 0)');
     checkHoverText(
@@ -350,7 +349,7 @@ describe('Unit tests for manage_disaster.js', () => {
             'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
 
     // bad -> bad
-    setSelectWithLatch(0, 'state1', 'poverty-NY');
+    setSelectWithDelayedEvaluate(0, 'state1', 'poverty-NY');
     checkSelectBorder(
         '#select-asset-selection-row-poverty-NY', 'rgb(255, 0, 0)');
     checkHoverText(
@@ -359,7 +358,7 @@ describe('Unit tests for manage_disaster.js', () => {
             'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
 
     // bad -> good
-    setSelectWithLatch(0, 'state2', 'poverty-NY');
+    setSelectWithDelayedEvaluate(0, 'state2', 'poverty-NY');
     checkSelectBorder(
         '#select-asset-selection-row-poverty-NY', 'rgb(0, 128, 0)');
     checkHoverText(
@@ -367,7 +366,7 @@ describe('Unit tests for manage_disaster.js', () => {
         'Success! asset has all expected columns');
 
     // good -> bad
-    setSelectWithLatch(0, 'state0', 'poverty-NY');
+    setSelectWithDelayedEvaluate(0, 'state0', 'poverty-NY');
     checkSelectBorder(
         '#select-asset-selection-row-poverty-NY', 'rgb(255, 0, 0)');
     checkHoverText(
@@ -376,7 +375,7 @@ describe('Unit tests for manage_disaster.js', () => {
             'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
 
     // None -> good columns
-    setSelectWithLatch(1, 'state1', 'income-NY');
+    setSelectWithDelayedEvaluate(1, 'state1', 'income-NY');
     checkSelectBorder(
         '#select-asset-selection-row-income-NY', 'rgb(0, 128, 0)');
     checkHoverText(
@@ -384,7 +383,7 @@ describe('Unit tests for manage_disaster.js', () => {
         'Success! asset has all expected columns');
 
     // good -> good
-    setSelectWithLatch(1, 'state0', 'income-NY');
+    setSelectWithDelayedEvaluate(1, 'state0', 'income-NY');
     checkSelectBorder(
         '#select-asset-selection-row-income-NY', 'rgb(0, 128, 0)');
     checkHoverText(
@@ -392,7 +391,7 @@ describe('Unit tests for manage_disaster.js', () => {
         'Success! asset has all expected columns');
 
     // good -> None
-    // should return immediately, no latch needed.
+    // should return immediately, no release needed.
     setFirstSelectInScoreRowTo(1, 'None');
     checkSelectBorder(
         '#select-asset-selection-row-income-NY', 'rgb(255, 255, 255)');
@@ -401,7 +400,7 @@ describe('Unit tests for manage_disaster.js', () => {
     // No expected rows
     featureCollectionStub.withArgs('state4').callsFake(
         () => goodIncomeBadPovertyFeature);
-    setSelectWithLatch(4, 'state0', 'buildings-NY');
+    setSelectWithDelayedEvaluate(4, 'state0', 'buildings-NY');
     checkSelectBorder(
         '#select-asset-selection-row-buildings-NY', 'rgb(0, 128, 0)');
     checkHoverText(
@@ -414,7 +413,7 @@ describe('Unit tests for manage_disaster.js', () => {
 
   it('tries to set a missing asset', () => {
     setUpAssetValidationTests();
-    setSelectWithLatch(0, 'state0', 'poverty-NY');
+    setSelectWithDelayedEvaluate(0, 'state0', 'poverty-NY');
     checkSelectBorder(
         '#select-asset-selection-row-poverty-NY', 'rgb(255, 0, 0)');
     checkHoverText(
@@ -435,20 +434,20 @@ describe('Unit tests for manage_disaster.js', () => {
     featureCollectionStub.withArgs('state0').returns(goodPovertyFeature);
     featureCollectionStub.withArgs('state1').returns(badPovertyFeature);
 
-    let firstLatch = getConvertEeObjectToPromiseLatch();
+    let firstRelease = getConvertEeObjectToPromiseRelease();
     setFirstSelectInScoreRowTo(0, 'state0');
 
-    let secondLatch = getConvertEeObjectToPromiseLatch();
+    let secondRelease = getConvertEeObjectToPromiseRelease();
     setFirstSelectInScoreRowTo(0, 'state1');
 
-    // release first latch but column still looks pending
-    firstLatch.release();
+    // release first evaluate but column still looks pending
+    firstRelease();
     checkSelectBorder(
         '#select-asset-selection-row-poverty-NY', 'rgb(255, 255, 0)');
     checkHoverText(
         '#select-asset-selection-row-poverty-NY', 'Checking columns...');
-    // release second latch and column finishes with results from second.
-    secondLatch.release();
+    // release second evaluate and column finishes with results from second.
+    secondRelease();
     checkSelectBorder(
         '#select-asset-selection-row-poverty-NY', 'rgb(255, 0, 0)');
     checkHoverText(
@@ -457,13 +456,13 @@ describe('Unit tests for manage_disaster.js', () => {
             'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
 
     // now do opposite order
-    firstLatch = getConvertEeObjectToPromiseLatch();
+    firstRelease = getConvertEeObjectToPromiseRelease();
     setFirstSelectInScoreRowTo(0, 'state0');
 
-    secondLatch = getConvertEeObjectToPromiseLatch();
+    secondRelease = getConvertEeObjectToPromiseRelease();
     setFirstSelectInScoreRowTo(0, 'state1');
 
-    secondLatch.release();
+    secondRelease();
     checkSelectBorder(
         '#select-asset-selection-row-poverty-NY', 'rgb(255, 0, 0)');
     checkHoverText(
@@ -471,7 +470,7 @@ describe('Unit tests for manage_disaster.js', () => {
         'Error! asset does not have all expected columns: ' +
             'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
 
-    firstLatch.release();
+    firstRelease();
     checkSelectBorder(
         '#select-asset-selection-row-poverty-NY', 'rgb(255, 0, 0)');
     checkHoverText(
@@ -914,17 +913,22 @@ function checkHoverText(selector, text) {
 }
 
 /**
- * Returns a latch that controls the logic of {@link convertEeObjectToPromise}.
- * @return {CallbackLatch}
+ * A wrapper for {@link convertEeObjectToPromise} that returns a resolve
+ * function for releasing the result.
+ * @return {Function}
  */
-function getConvertEeObjectToPromiseLatch() {
-  const latch = new CallbackLatch();
+function getConvertEeObjectToPromiseRelease() {
+  let resolveFunction = null;
+  const promise = new Promise((resolve) => resolveFunction = resolve);
   const oldConvert = MapUtil.convertEeObjectToPromise;
   MapUtil.convertEeObjectToPromise = (eeObject) => {
     MapUtil.convertEeObjectToPromise = oldConvert;
-    return latch.delayedCallback(() => convertEeObjectToPromise(eeObject))();
+    return MapUtil.convertEeObjectToPromise(eeObject).then(async (result) => {
+      await promise;
+      return result;
+    });
   };
-  return latch;
+  return resolveFunction;
 }
 
 /**
@@ -934,10 +938,10 @@ function getConvertEeObjectToPromiseLatch() {
  *     tdId}
  * @param {string} tdId e.g. 'poverty-NY'
  */
-function setSelectWithLatch(rowNum, text, tdId) {
-  const latch = getConvertEeObjectToPromiseLatch();
+function setSelectWithDelayedEvaluate(rowNum, text, tdId) {
+  const release = getConvertEeObjectToPromiseRelease();
   setFirstSelectInScoreRowTo(rowNum, text);
   checkSelectBorder('#select-asset-selection-row-' + tdId, 'rgb(255, 255, 0)');
   checkHoverText('#select-asset-selection-row-' + tdId, 'Checking columns...');
-  latch.release();
+  release();
 }

@@ -437,7 +437,7 @@ function initializeScoreSelectors(states) {
                 .on('change',
                     (event) => onNonDamageAssetSelect(
                         event, statePropertyPath, expectedColumns, type, state))
-                .prop('style', 'border:2px solid');
+                .addClass('with-status-border');
         row.append(createTd().append(select));
         verifyAsset(select.val(), type, state, expectedColumns);
       }
@@ -561,8 +561,8 @@ const lastSelectedAsset = new Map();
  * @param {string} state e.g. 'WA'
  * @param {Array<string>} expectedColumns
  * @return {Promise<void>} returns null if there was no asset to check.
- * Otherwise returns a promise that resolves when existence and column checking
- * are finished and select border color is updated.
+ *     Otherwise returns a promise that resolves when existence and column
+ *     checking are finished and select border color is updated.
  */
 function verifyAsset(asset, type, state, expectedColumns) {
   // TODO: disable or discourage kick off until all green?
