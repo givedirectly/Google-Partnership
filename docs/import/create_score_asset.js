@@ -10,8 +10,10 @@ export {createScoreAsset, setStatus};
  * total # buildings in the block group and # damaged buildings in the block
  * group.
  * @param {ee.Feature} feature
- * @param {?ee.FeatureCollection} damage Damage asset, or null if damage not known
- * @param {?ee.Dictionary} buildings geoid -> # buildings or null if buildings asset not present. If damage present, this must be too
+ * @param {?ee.FeatureCollection} damage Damage asset, or null if damage not
+ *     known
+ * @param {?ee.Dictionary} buildings geoid -> # buildings or null if buildings
+ *     asset not present. If damage present, this must be too
  * @param {Array<string>} additionalTags
  * @return {ee.Feature}
  */
@@ -266,7 +268,9 @@ function createScoreAsset(
     const incomePath = incomePaths[state];
     const buildingPath = buildingPaths[state];
     if (damage && !buildingPath) {
-      return missingAssetError('buildings must be specified for ' + state + ' if damage asset is present');
+      return missingAssetError(
+          'buildings must be specified for ' + state +
+          ' if damage asset is present');
     }
     const blockGroupPath = blockGroupPaths[state];
     if (!blockGroupPath) {
@@ -299,7 +303,8 @@ function createScoreAsset(
 
     // Get building count by block group.
     const buildingsHisto = buildingPath ?
-        computeBuildingsHisto(damageEnvelope, buildingPath, stateGroups) : null;
+        computeBuildingsHisto(damageEnvelope, buildingPath, stateGroups) :
+        null;
 
     // Create final feature collection.
     const additionalTags = [];

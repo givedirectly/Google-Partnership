@@ -182,15 +182,15 @@ describe('Unit tests for create_score_asset.js', () => {
     const promise = createScoreAsset(testData);
     expect(promise).to.not.be.null;
     cy.wrap(promise)
-    .then(() => {
-      expect(exportStub).to.be.calledOnce;
-      return convertEeObjectToPromise(exportStub.firstCall.args[0]);
-    })
-    .then((result) => {
-      const features = result.features;
-      expect(features).to.have.length(1);
-      expect(features[0]['properties']['BUILDING COUNT']).to.be.undefined;
-    });
+        .then(() => {
+          expect(exportStub).to.be.calledOnce;
+          return convertEeObjectToPromise(exportStub.firstCall.args[0]);
+        })
+        .then((result) => {
+          const features = result.features;
+          expect(features).to.have.length(1);
+          expect(features[0]['properties']['BUILDING COUNT']).to.be.undefined;
+        });
   });
 
 
@@ -206,6 +206,7 @@ describe('Unit tests for create_score_asset.js', () => {
     expect(exportStub).to.not.be.called;
   });
 
+  /** Sets `asset_data.score_bounds_coordinates` to a square. */
   function setScoreBoundsCoordinates() {
     testData.asset_data.score_bounds_coordinates = [
       createScaledGeoPoint(0.39, 0.49),
