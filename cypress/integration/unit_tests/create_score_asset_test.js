@@ -181,6 +181,10 @@ describe('Unit tests for create_score_asset.js', () => {
         });
   });
 
+  it('handles no buildings asset when damage missing', () => {
+    testData.asset_data.
+  });
+
   it('Test missing data', () => {
     testData.asset_data = null;
     expect(createScoreAsset(testData)).to.be.null;
