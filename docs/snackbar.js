@@ -53,6 +53,8 @@ function showSnackbar(
           // want to reset the styles.
           if (showNumber > 0) return;
 
+          showNumber = 0;  // reset the counter to prevent overflow
+
           snackbar.className = snackbarOriginalClassName;
           icon.className = iconOriginalClassName;
         });
