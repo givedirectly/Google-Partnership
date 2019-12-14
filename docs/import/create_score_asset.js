@@ -225,25 +225,31 @@ function createScoreAsset(
     return missingAssetError('column name for total population in SNAP table');
   }
   const sviPaths = assetData['svi_asset_paths'];
+  if (!sviPaths) {
+    return missingAssetError('SVI table asset paths');
+  }
   const sviKey = assetData['svi_key'];
   if (!sviKey) {
     return missingAssetError('column name for SVI table');
   }
   const incomePaths = assetData['income_asset_paths'];
+  if (!incomePaths) {
+    return missingAssetError('income table asset paths');
+  }
   const incomeKey = assetData['income_key'];
   if (!incomeKey) {
     return missingAssetError('column name for income table');
   }
   // If we switch to CrowdAI data, this will change.
   const buildingPaths = assetData['building_asset_paths'];
+  if (!buildingPaths) {
+    return missingAssetError('building data asset paths');
+  }
   const {damage, damageEnvelope} =
       calculateDamage(assetData, setMapBoundsInfoFunction);
   if (!damageEnvelope) {
     // Must have been an error.
     return null;
-  }
-  if (damage && !buildingPaths) {
-    return missingAssetError('buildings must be specified if damage asset is present');
   }
   let allStatesProcessing = ee.FeatureCollection([]);
   for (const state of states) {
@@ -251,9 +257,9 @@ function createScoreAsset(
     if (!snapPath) {
       return missingAssetError('SNAP asset path for ' + state);
     }
-    const sviPath = sviPaths ? sviPaths[state] : null;
-    const incomePath = incomePaths ? incomePaths[state] : null;
-    const buildingPath = buildingPaths ? buildingPaths[state] : null;
+    const sviPath = sviPaths[state];
+    const incomePath = incomePaths[state];
+    const buildingPath = buildingPaths[state];
     if (damage && !buildingPath) {
       return missingAssetError('buildings must be specified for ' + state + ' if damage asset is present');
     }

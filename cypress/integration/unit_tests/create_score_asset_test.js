@@ -164,8 +164,7 @@ describe('Unit tests for create_score_asset.js', () => {
 
   it('handles no svi/income assets', () => {
     testData.asset_data.income_asset_paths = {};
-    // Won't actually get null for SVI path dict, but fine to tolerate it.
-    testData.asset_data.svi_asset_paths = null;
+    testData.asset_data.svi_asset_paths = {};
     const promise = createScoreAsset(testData);
     expect(promise).to.not.be.null;
     cy.wrap(promise)
