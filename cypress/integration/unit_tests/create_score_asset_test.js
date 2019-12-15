@@ -105,12 +105,7 @@ describe('Unit tests for create_score_asset.js', () => {
     testData.asset_data.damage_asset_path = null;
     const expectedLatLngBounds =
         scaleObject({sw: {lng: 0.39, lat: 0.49}, ne: {lng: 13, lat: 11}});
-    testData.asset_data.score_bounds_coordinates = [
-      createScaledGeoPoint(0.39, 0.49),
-      createScaledGeoPoint(13, 0.49),
-      createScaledGeoPoint(13, 11),
-      createScaledGeoPoint(0.39, 11),
-    ];
+    setScoreBoundsCoordinates();
 
     const {boundsPromise, mapBoundsCallback} =
         makeCallbackForTextAndPromise('Found bounds');
@@ -180,11 +175,46 @@ describe('Unit tests for create_score_asset.js', () => {
         });
   });
 
+  it('handles no buildings asset when damage missing', () => {
+    testData.asset_data.building_asset_paths = {};
+    testData.asset_data.damage_asset_path = null;
+    setScoreBoundsCoordinates();
+    const promise = createScoreAsset(testData);
+    expect(promise).to.not.be.null;
+    cy.wrap(promise)
+        .then(() => {
+          expect(exportStub).to.be.calledOnce;
+          return convertEeObjectToPromise(exportStub.firstCall.args[0]);
+        })
+        .then((result) => {
+          const features = result.features;
+          expect(features).to.have.length(1);
+          expect(features[0]['properties']['BUILDING COUNT']).to.be.undefined;
+        });
+  });
+
+
+  it('errors on no buildings asset when damage present', () => {
+    testData.asset_data.building_asset_paths = {};
+    expect(createScoreAsset(testData)).to.be.null;
+    expect(exportStub).to.not.be.called;
+  });
+
   it('Test missing data', () => {
     testData.asset_data = null;
     expect(createScoreAsset(testData)).to.be.null;
     expect(exportStub).to.not.be.called;
   });
+
+  /** Sets `asset_data.score_bounds_coordinates` to a square. */
+  function setScoreBoundsCoordinates() {
+    testData.asset_data.score_bounds_coordinates = [
+      createScaledGeoPoint(0.39, 0.49),
+      createScaledGeoPoint(13, 0.49),
+      createScaledGeoPoint(13, 11),
+      createScaledGeoPoint(0.39, 11),
+    ];
+  }
 });
 
 // Make sure that our block groups aren't so big they escape the 1 km damage

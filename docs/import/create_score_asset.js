@@ -10,20 +10,24 @@ export {createScoreAsset, setStatus};
  * total # buildings in the block group and # damaged buildings in the block
  * group.
  * @param {ee.Feature} feature
- * @param {ee.FeatureCollection} damage
- * @param {ee.Dictionary} buildings geoid -> # buildings
+ * @param {?ee.FeatureCollection} damage Damage asset, or null if damage not
+ *     known
+ * @param {?ee.Dictionary} buildings geoid -> # buildings or null if buildings
+ *     asset not present. If damage present, this must be too
  * @param {Array<string>} additionalTags
  * @return {ee.Feature}
  */
 function countDamageAndBuildings(feature, damage, buildings, additionalTags) {
   const geometry = feature.geometry();
   const geoId = feature.get(geoidTag);
-  const totalBuildings = ee.Algorithms.If(
-      buildings.contains(geoId), buildings.get(geoId), ee.Number(0));
+  let totalBuildings;
+  if (buildings) {
+    totalBuildings = ee.Algorithms.If(
+        buildings.contains(geoId), buildings.get(geoId), ee.Number(0));
+  }
   let properties = ee.Dictionary()
                        .set(geoidTag, geoId)
-                       .set(blockGroupTag, feature.get(blockGroupTag))
-                       .set(buildingCountTag, totalBuildings);
+                       .set(blockGroupTag, feature.get(blockGroupTag));
   if (damage) {
     const damagedBuildings =
         ee.FeatureCollection(damage).filterBounds(geometry).size();
@@ -46,11 +50,15 @@ function countDamageAndBuildings(feature, damage, buildings, additionalTags) {
       ee.List([snapPop, totalPop]).containsAll([null]), null,
       ee.Number(snapPop).long().divide(ee.Number(totalPop).long()));
   // The following properties may have null values (as a result of {@code
-  // convertToNumber} so must be set directly on feature, not in dictionary.
+  // convertToNumber or absent assets} so must be set directly on feature, not
+  // in dictionary.
   let result = ee.Feature(geometry, properties)
                    .set(snapPopTag, snapPop)
                    .set(totalPopTag, totalPop)
                    .set(snapPercentageTag, snapPercentage);
+  if (buildings) {
+    result = result.set(buildingCountTag, totalBuildings);
+  }
   additionalTags.forEach((tag) => result = result.set(tag, feature.get(tag)));
   return result;
 }
@@ -250,7 +258,6 @@ function createScoreAsset(
     // Must have been an error.
     return null;
   }
-
   let allStatesProcessing = ee.FeatureCollection([]);
   for (const state of states) {
     const snapPath = snapPaths[state];
@@ -260,8 +267,14 @@ function createScoreAsset(
     const sviPath = sviPaths[state];
     const incomePath = incomePaths[state];
     const buildingPath = buildingPaths[state];
-    if (!buildingPath) {
-      return missingAssetError('building asset path for ' + state);
+    if (damage && !buildingPath) {
+      // TODO(janakr): We could allow buildings asset to be absent even when
+      //  damage is present and calculate damage percentage based on household
+      //  count. But does GD want that? We'd have to warn on score kick-off so
+      //  users knew they were getting a less accurate damage percentage count.
+      return missingAssetError(
+          'buildings must be specified for ' + state +
+          ' if damage asset is present');
     }
     const blockGroupPath = blockGroupPaths[state];
     if (!blockGroupPath) {
@@ -293,8 +306,9 @@ function createScoreAsset(
     }
 
     // Get building count by block group.
-    const buildingsHisto =
-        computeBuildingsHisto(damageEnvelope, buildingPath, stateGroups);
+    const buildingsHisto = buildingPath ?
+        computeBuildingsHisto(damageEnvelope, buildingPath, stateGroups) :
+        null;
 
     // Create final feature collection.
     const additionalTags = [];
