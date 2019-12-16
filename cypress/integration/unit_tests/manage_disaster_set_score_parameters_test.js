@@ -80,7 +80,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
       ', and must specify either damage asset or map bounds' +
       allOptionalMissing;
 
-  it('validates asset data', () => {
+  it.only('validates asset data', () => {
     const boundsChanged = new Promise((resolve) => {
       const listener = scoreBoundsMap.map.addListener('bounds_changed', () => {
         google.maps.event.removeListener(listener);
@@ -149,7 +149,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     cy.get('#process-button')
         .should('be.enabled')
         .should('have.css', 'background-color')
-        .and('eq', 'rgb(255, 255, 255)');
+        .and('eq', 'rgb(0, 128, 0)');
     // Getting rid of income keeps enabled, but warns
     setFirstSelectInScoreRow(1).select('').blur();
     cy.get('#process-button')
@@ -168,7 +168,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     cy.get('#process-button')
         .should('be.enabled')
         .should('have.css', 'background-color')
-        .and('eq', 'rgb(255, 255, 255)');
+        .and('eq', 'rgb(0, 128, 0)');
     // Get rid of damage: not ready anymore.
     cy.get('#damage-asset-select').select('').blur();
     // Message is just about damage.
@@ -417,6 +417,9 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
   function preparePage() {
     cy.visit('test_utils/empty.html');
     return cy.document().then((doc) => {
+      const buttonCss = doc.createElement('style');
+      buttonCss.innerHTML = 'button {background-color: green;} ' + 'button:disabled {background-color: grey}';
+      doc.head.appendChild(buttonCss);
       const tbody = doc.createElement('tbody');
       tbody.id = 'asset-selection-table-body';
       doc.body.appendChild(tbody);
