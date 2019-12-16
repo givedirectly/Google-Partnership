@@ -4,16 +4,14 @@ import {convertEeObjectToPromise} from '../map_util.js';
 export {computeAndSaveBounds, saveBounds};
 
 /**
- * Stores an approximate bounds around a given feature collection.
+ * Stores an approximate bounds around a given {@link ee.Geometry}.
  *
- * @param {ee.FeatureCollection} features the featureCollection around which you
- * want to orient the map
+ * @param {ee.Geometry} geometry Geometry around which to center the map
  * @return {Promise<Array<number>>} Promise that completes with array of bounds
  * after Firestore write is complete.
  */
-function computeAndSaveBounds(features) {
-  return convertEeObjectToPromise(features.geometry().bounds())
-      .then(saveBounds);
+function computeAndSaveBounds(geometry) {
+  return convertEeObjectToPromise(geometry.bounds()).then(saveBounds);
 }
 
 /**

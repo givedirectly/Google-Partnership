@@ -1,6 +1,6 @@
 import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, snapPercentageTag, snapPopTag, sviTag, totalPopTag, tractTag} from '../property_names.js';
 import {getScoreAsset} from '../resources.js';
-import {computeAndSaveBounds, saveBounds} from './center.js';
+import {computeAndSaveBounds} from './center.js';
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
 
 export {createScoreAsset, setStatus};
@@ -10,19 +10,24 @@ export {createScoreAsset, setStatus};
  * total # buildings in the block group and # damaged buildings in the block
  * group.
  * @param {ee.Feature} feature
- * @param {ee.FeatureCollection} damage
- * @param {ee.Dictionary} buildings geoid -> # buildings
+ * @param {?ee.FeatureCollection} damage Damage asset, or null if damage not
+ *     known
+ * @param {?ee.Dictionary} buildings geoid -> # buildings or null if buildings
+ *     asset not present. If damage present, this must be too
+ * @param {Array<string>} additionalTags
  * @return {ee.Feature}
  */
-function countDamageAndBuildings(feature, damage, buildings) {
+function countDamageAndBuildings(feature, damage, buildings, additionalTags) {
   const geometry = feature.geometry();
   const geoId = feature.get(geoidTag);
-  const totalBuildings = ee.Algorithms.If(
-      buildings.contains(geoId), buildings.get(geoId), ee.Number(0));
+  let totalBuildings;
+  if (buildings) {
+    totalBuildings = ee.Algorithms.If(
+        buildings.contains(geoId), buildings.get(geoId), ee.Number(0));
+  }
   let properties = ee.Dictionary()
                        .set(geoidTag, geoId)
-                       .set(blockGroupTag, feature.get(blockGroupTag))
-                       .set(buildingCountTag, totalBuildings);
+                       .set(blockGroupTag, feature.get(blockGroupTag));
   if (damage) {
     const damagedBuildings =
         ee.FeatureCollection(damage).filterBounds(geometry).size();
@@ -45,13 +50,17 @@ function countDamageAndBuildings(feature, damage, buildings) {
       ee.List([snapPop, totalPop]).containsAll([null]), null,
       ee.Number(snapPop).long().divide(ee.Number(totalPop).long()));
   // The following properties may have null values (as a result of {@code
-  // convertToNumber} so must be set directly on feature, not in dictionary.
-  return ee.Feature(geometry, properties)
-      .set(incomeTag, feature.get(incomeTag))
-      .set(sviTag, feature.get(sviTag))
-      .set(snapPopTag, snapPop)
-      .set(totalPopTag, totalPop)
-      .set(snapPercentageTag, snapPercentage);
+  // convertToNumber or absent assets} so must be set directly on feature, not
+  // in dictionary.
+  let result = ee.Feature(geometry, properties)
+                   .set(snapPopTag, snapPop)
+                   .set(totalPopTag, totalPop)
+                   .set(snapPercentageTag, snapPercentage);
+  if (buildings) {
+    result = result.set(buildingCountTag, totalBuildings);
+  }
+  additionalTags.forEach((tag) => result = result.set(tag, feature.get(tag)));
+  return result;
 }
 
 // Permissive number regexp: matches optional +/- followed by 0 or more digits
@@ -249,7 +258,6 @@ function createScoreAsset(
     // Must have been an error.
     return null;
   }
-
   let allStatesProcessing = ee.FeatureCollection([]);
   for (const state of states) {
     const snapPath = snapPaths[state];
@@ -257,16 +265,16 @@ function createScoreAsset(
       return missingAssetError('SNAP asset path for ' + state);
     }
     const sviPath = sviPaths[state];
-    if (!sviPath) {
-      return missingAssetError('SVI asset path for ' + state);
-    }
     const incomePath = incomePaths[state];
-    if (!incomePath) {
-      return missingAssetError('income asset path for ' + state);
-    }
     const buildingPath = buildingPaths[state];
-    if (!buildingPath) {
-      return missingAssetError('building asset path for ' + state);
+    if (damage && !buildingPath) {
+      // TODO(janakr): We could allow buildings asset to be absent even when
+      //  damage is present and calculate damage percentage based on household
+      //  count. But does GD want that? We'd have to warn on score kick-off so
+      //  users knew they were getting a less accurate damage percentage count.
+      return missingAssetError(
+          'buildings must be specified for ' + state +
+          ' if damage asset is present');
     }
     const blockGroupPath = blockGroupPaths[state];
     if (!blockGroupPath) {
@@ -283,25 +291,32 @@ function createScoreAsset(
     processing =
         innerJoin(processing, stateGroups, censusGeoidKey, tigerGeoidKey);
     processing = processing.map((f) => combineWithSnap(f, snapKey, totalKey));
-    // Join with income.
-    // TODO: make income formatting prettier so it looks like a currency value.
-    //  Not trivial because it has some non-valid values like '-'.
-    processing = innerJoin(processing, incomePath, geoidTag, censusGeoidKey);
-    processing =
-        processing.map((f) => combineWithAsset(f, incomeTag, incomeKey));
-    // Join with SVI (data is at the tract level).
-    processing = processing.map(addTractInfo);
+    if (incomePath) {
+      // Join with income.
+      processing = innerJoin(processing, incomePath, geoidTag, censusGeoidKey);
+      processing =
+          processing.map((f) => combineWithAsset(f, incomeTag, incomeKey));
+    }
+    if (sviPath) {
+      // Join with SVI (data is at the tract level).
+      processing = processing.map(addTractInfo);
 
-    processing = innerJoin(processing, sviPath, tractTag, cdcGeoidKey);
-    processing = processing.map((f) => combineWithAsset(f, sviTag, sviKey));
+      processing = innerJoin(processing, sviPath, tractTag, cdcGeoidKey);
+      processing = processing.map((f) => combineWithAsset(f, sviTag, sviKey));
+    }
 
     // Get building count by block group.
-    const buildingsHisto =
-        computeBuildingsHisto(damageEnvelope, buildingPath, stateGroups);
+    const buildingsHisto = buildingPath ?
+        computeBuildingsHisto(damageEnvelope, buildingPath, stateGroups) :
+        null;
 
     // Create final feature collection.
+    const additionalTags = [];
+    if (incomePath) additionalTags.push(incomeTag);
+    if (sviPath) additionalTags.push(sviTag);
     processing = processing.map(
-        (f) => countDamageAndBuildings(f, damage, buildingsHisto));
+        (f) =>
+            countDamageAndBuildings(f, damage, buildingsHisto, additionalTags));
     allStatesProcessing = allStatesProcessing.merge(processing);
   }
 
@@ -354,68 +369,36 @@ const damageBuffer = 1000;
  */
 function calculateDamage(assetData, setMapBoundsInfo) {
   const damagePath = assetData['damage_asset_path'];
+  let geometry;
+  let damage = null;
+  let damageEnvelope;
   if (damagePath) {
-    const damage = ee.FeatureCollection(damagePath);
+    damage = ee.FeatureCollection(damagePath);
     // Uncomment to test with a restricted damage set (14 block groups' worth).
     // damage = damage.filterBounds(
     //     ee.FeatureCollection('users/gd/2017-harvey/data-ms-as-nod')
     //         .filterMetadata('GEOID', 'starts_with', '482015417002'));
-    setMapBoundsInfo('Computing and storing bounds of map: ');
-    computeAndSaveBounds(damage)
-        .then(displayGeoNumbers)
-        .then((bounds) => setMapBoundsInfo('Found bounds ' + bounds))
-        .catch(setMapBoundsInfo);
-    return {damage, damageEnvelope: damage.geometry().buffer(damageBuffer)};
+    geometry = damage.geometry();
+    damageEnvelope = damage.geometry().buffer(damageBuffer);
+  } else {
+    const scoreBounds = assetData['score_bounds_coordinates'];
+    if (!scoreBounds) {
+      missingAssetError('specify damage asset or draw bounds on map');
+      return damageError;
+    }
+    const coordinates = [];
+    scoreBounds.forEach(
+        (geopoint) => coordinates.push(geopoint.longitude, geopoint.latitude));
+    damageEnvelope = ee.Geometry.Polygon(coordinates);
+    geometry = damageEnvelope;
   }
-  // TODO(janakr): in the no-damage case, we're storing a rectangle, but
-  //  experiments show that, at least for Harvey, the page is very slow when we
-  //  load the entire rectangle around the damage. Maybe allow users to select a
-  //  polygon so they can draw a tighter area?
-  setMapBoundsInfo('Storing bounds of map: ');
-  const damageSw = assetData['map_bounds_sw'];
-  if (!damageSw) {
-    missingAssetError(
-        'damage asset or map bounds must be specified (southwest corner ' +
-        'missing');
-    return damageError;
-  }
-  const damageNe = assetData['map_bounds_ne'];
-  if (!damageNe) {
-    missingAssetError(
-        'damage asset or map bounds must be specified (northeast corner ' +
-        'missing)');
-    return damageError;
-  }
-  const sw = makeLatLngFromString(damageSw);
-  const ne = makeLatLngFromString(damageNe);
-  const damageEnvelope =
-      ee.Geometry.Rectangle([sw.lng, sw.lat, ne.lng, ne.lat]);
-  saveBounds(makeGeoJsonRectangle(sw, ne))
-      .then(() => setMapBoundsInfo('Wrote bounds'))
+  setMapBoundsInfo('Computing and storing bounds of map: ');
+  computeAndSaveBounds(geometry)
+      .then(
+          (bounds) =>
+              setMapBoundsInfo('Found bounds ' + displayGeoNumbers(bounds)))
       .catch(setMapBoundsInfo);
-  return {
-    damage: null,
-    damageEnvelope: damageEnvelope,
-  };
-}
-
-/**
- * Creates a GeoJson-style rectangle from the southwest and northeast corners.
- * @param {{lat: number, lng: number}} sw
- * @param {{lat: number, lng: number}} ne
- * @return {Object} GeoJson Polygon
- */
-function makeGeoJsonRectangle(sw, ne) {
-  return {
-    type: 'Polygon',
-    coordinates: [[
-      [sw.lng, sw.lat],
-      [ne.lng, sw.lat],
-      [ne.lng, ne.lat],
-      [sw.lng, ne.lat],
-      [sw.lng, sw.lat],
-    ]],
-  };
+  return {damage, damageEnvelope};
 }
 
 /**
@@ -444,17 +427,6 @@ function computeBuildingsHisto(damageEnvelope, buildingPath, stateGroups) {
               ee.Filter.intersects({leftField: '.geo', rightField: '.geo'}))
           .map((f) => f.set(geoidTag, ee.Feature(f.get(field)).get(geoidTag)));
   return ee.Dictionary(withBlockGroup.aggregate_histogram(geoidTag));
-}
-
-/**
- * Makes a LatLng-style object from the given string.
- * @param {string} str Comma-separated string of the form "lat, lng", which is
- *     what Google Maps provides pretty easily
- * @return {{lng: *, lat: *}}
- */
-function makeLatLngFromString(str) {
-  const elts = str.split(/ *, */).map(Number);
-  return {lat: elts[0], lng: elts[1]};
 }
 
 /**

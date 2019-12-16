@@ -1,14 +1,24 @@
 import {eeLegacyPathPrefix, legacyStateDir} from '../ee_paths.js';
 import {LayerType} from '../firebase_layers.js';
 import {disasterCollectionReference} from '../firestore_document.js';
+import {convertEeObjectToPromise, latLngToGeoPoint, transformGeoPointArrayToLatLng} from '../map_util.js';
 import {getDisaster} from '../resources.js';
-import {createDisasterData} from './create_disaster_lib.js';
+import {createDisasterData, incomeKey, snapKey, sviKey, totalKey} from './create_disaster_lib.js';
 import {createScoreAsset, setStatus} from './create_score_asset.js';
+import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
 import {getDisasterAssetsFromEe, getStatesAssetsFromEe} from './list_ee_assets.js';
 import {clearStatus} from './manage_layers_lib.js';
+import {ScoreBoundsMap} from './score_bounds_map.js';
+import {scoreCoordinatesAttribute} from './score_path_lib.js';
 import {updateDataInFirestore} from './update_firestore_disaster.js';
 
-export {enableWhenReady, onSetDisaster, setUpScoreSelectorTable, toggleState};
+export {
+  enableWhenReady,
+  onSetDisaster,
+  setUpScoreBoundsMap,
+  setUpScoreSelectorTable,
+  toggleState,
+};
 /** @VisibleForTesting */
 export {
   addDisaster,
@@ -16,10 +26,13 @@ export {
   createScoreAsset,
   deleteDisaster,
   disasterData,
+  enableWhenFirestoreReady,
   initializeDamageSelector,
   initializeScoreSelectors,
   scoreAssetTypes,
+  scoreBoundsMap,
   stateAssets,
+  updateColorAndHover,
   validateUserFields,
   writeNewDisaster,
 };
@@ -38,6 +51,15 @@ const disasterAssets = new Map();
 
 // Map of state to list of known assets
 const stateAssets = new Map();
+
+/**
+ * Effectively constant {@link ScoreBoundsMap} initialized in {@link
+ * enableWhenReady}.
+ * @type {ScoreBoundsMap}
+ */
+let scoreBoundsMap;
+
+const scoreCoordinatesPath = Object.freeze([scoreCoordinatesAttribute]);
 
 /**
  * Checks that all fields that can be entered by the user have a non-empty
@@ -64,7 +86,7 @@ function validateUserFields() {
     }
   }
   const hasDamage = $('#damage-asset-select').val() ||
-      ($('#map-bounds-sw').val() && $('#map-bounds-ne').val());
+      getElementFromPath(scoreCoordinatesPath);
   let message = '';
   if (missingItems.length) {
     message = 'Missing asset(s): ' + missingItems.join(', ');
@@ -84,10 +106,19 @@ function validateUserFields() {
   }
 }
 
+/** @param {HTMLDivElement} div Div to attach score bounds map to */
+function setUpScoreBoundsMap(div) {
+  scoreBoundsMap = new ScoreBoundsMap(
+      div,
+      (polygonPath) => handleAssetDataChange(
+          polygonPath ? polygonPath.map(latLngToGeoPoint) : null,
+          scoreCoordinatesPath));
+}
 /**
  * Enables page functionality.
  * @param {Promise<Map<string, Object>>} allDisastersData Promise with contents
  *     of Firestore for all disasters
+ * @return {Promise<void>} See {@link enableWhenFirestoreReady}
  */
 function enableWhenReady(allDisastersData) {
   // Eagerly kick off current disaster asset listing before Firestore finishes.
@@ -95,7 +126,7 @@ function enableWhenReady(allDisastersData) {
   if (currentDisaster) {
     maybeFetchDisasterAssets(currentDisaster);
   }
-  allDisastersData.then(enableWhenFirestoreReady);
+  return allDisastersData.then(enableWhenFirestoreReady);
 }
 
 /**
@@ -103,10 +134,10 @@ function enableWhenReady(allDisastersData) {
  * @param {Map<string, Object>} allDisastersData Contents of
  *     Firestore for all disasters, the current disaster's data is used when
  *     calculating
+ * @return {Promise<void>} See {@link onSetDisaster}
  */
 function enableWhenFirestoreReady(allDisastersData) {
   disasterData = allDisastersData;
-  onSetDisaster();
   // Kick off all EE asset fetches.
   for (const disaster of disasterData.keys()) {
     maybeFetchDisasterAssets(disaster);
@@ -128,71 +159,88 @@ function enableWhenFirestoreReady(allDisastersData) {
     processButton.prop('disabled', true);
     createScoreAsset(disasterData.get(getDisaster()));
   });
+  return onSetDisaster();
 }
 
+/**
+ * We track whether or not we've already completed the EE asset-fetching
+ * promises for the current disaster. This ensures we don't re-initialize if the
+ * user switches back and forth to this disaster while still loading: the second
+ * set of promises to complete will do nothing.
+ *
+ * We don't just use a generation counter (cf. snackbar/toast.js) because when
+ * switching from disaster A to B back to A, the first set of promises for A is
+ * still valid if they return after we switch back to A.
+ */
 let processedCurrentDisasterStateAssets = false;
 let processedCurrentDisasterSelfAssets = false;
 
 /**
  * Function called when current disaster changes. Responsible for displaying the
  * score selectors and enabling/disabling the kick-off button.
+ * @return {Promise<void>} Promise that completes when all score parameter
+ *     display is done (user can interact with page)
  */
 function onSetDisaster() {
+  const currentDisaster = getDisaster();
+  if (!currentDisaster) {
+    // We don't expect this to happen, because a disaster should always be
+    // returned by getDisaster(), but tolerate.
+    return Promise.resolve();
+  }
   processedCurrentDisasterStateAssets = false;
   processedCurrentDisasterSelfAssets = false;
-  const currentDisaster = getDisaster();
-  if (currentDisaster) {
-    const states = disasterData.get(currentDisaster).states;
-    const neededStates = [];
-    // TODO: eagerly fetch all states assets.
-    for (const state of states) {
-      if (!stateAssets.has(state)) {
-        neededStates.push(state);
-      }
+  const scoreBoundsPath = getElementFromPath(scoreCoordinatesPath);
+  scoreBoundsMap.initialize(
+      scoreBoundsPath ? transformGeoPointArrayToLatLng(scoreBoundsPath) : null);
+  const states = disasterData.get(currentDisaster).states;
+  const neededStates = [];
+  for (const state of states) {
+    if (!stateAssets.has(state)) {
+      neededStates.push(state);
     }
-    let promise = Promise.resolve();
-    if (neededStates) {
-      promise = getStatesAssetsFromEe(neededStates).then((result) => {
-        for (const stateItem of result) {
-          const features = [];
-          stateItem[1].forEach((val, key) => {
-            if (val === LayerType.FEATURE_COLLECTION) {
-              features.push(key);
-            }
-          });
-          stateAssets.set(stateItem[0], features);
-        }
-      });
-    }
-    const scorePromise = promise.then(() => {
-      if (getDisaster() === currentDisaster &&
-          !processedCurrentDisasterStateAssets) {
-        // Don't do anything unless this is still the right disaster.
-        initializeScoreSelectors(states);
-        processedCurrentDisasterStateAssets = true;
+  }
+  let promise = Promise.resolve();
+  if (neededStates) {
+    promise = getStatesAssetsFromEe(neededStates).then((result) => {
+      for (const stateItem of result) {
+        const features = [];
+        stateItem[1].forEach((val, key) => {
+          if (val === LayerType.FEATURE_COLLECTION) {
+            features.push(key);
+          }
+        });
+        stateAssets.set(stateItem[0], features);
       }
     });
-    const disasterLambda = (assets) => {
-      if (getDisaster() === currentDisaster &&
-          !processedCurrentDisasterSelfAssets) {
-        // Don't do anything unless this is still the right disaster.
-        initializeDamageSelector(assets);
-        processedCurrentDisasterSelfAssets = true;
-      }
-    };
-    // Handle errors in disaster asset retrieval by just emptying out.
-    const damagePromise =
-        disasterAssets.get(currentDisaster).then(disasterLambda, (err) => {
-          if (err &&
-              err !==
-                  'Asset "' + eeLegacyPathPrefix + currentDisaster +
-                      '" not found.') {
-            setStatus(err);
-          }
-          disasterLambda([]);
-        });
-    Promise.all([scorePromise, damagePromise]).then(validateUserFields);
   }
+  const scorePromise = promise.then(() => {
+    if (getDisaster() === currentDisaster &&
+        !processedCurrentDisasterStateAssets) {
+      // Don't do anything unless this is still the right disaster.
+      initializeScoreSelectors(states);
+      processedCurrentDisasterStateAssets = true;
+    }
+  });
+  const disasterLambda = (assets) => {
+    if (getDisaster() === currentDisaster &&
+        !processedCurrentDisasterSelfAssets) {
+      // Don't do anything unless this is still the right disaster.
+      initializeDamageSelector(assets);
+      processedCurrentDisasterSelfAssets = true;
+    }
+  };
+  const damagePromise =
+      disasterAssets.get(currentDisaster).then(disasterLambda, (err) => {
+        if (err &&
+            err !==
+                'Asset "' + eeLegacyPathPrefix + currentDisaster +
+                    '" not found.') {
+          setStatus(err);
+        }
+        disasterLambda([]);
+      });
+  return Promise.all([scorePromise, damagePromise]).then(validateUserFields);
 }
 
 /**
@@ -370,11 +418,21 @@ function toggleState(known) {
 }
 
 const scoreAssetTypes = [
-  ['poverty', ['snap_data', 'paths'], 'Poverty'],
-  ['income', ['income_asset_paths'], 'Income'],
-  ['svi', ['svi_asset_paths'], 'SVI'],
-  ['tiger', ['block_group_asset_paths'], 'Census TIGER Shapefiles'],
-  ['buildings', ['building_asset_paths'], 'Microsoft Building Shapefiles'],
+  [
+    'poverty',
+    ['snap_data', 'paths'],
+    'Poverty',
+    [censusGeoidKey, censusBlockGroupKey, snapKey, totalKey],
+  ],
+  ['income', ['income_asset_paths'], 'Income', [censusGeoidKey, incomeKey]],
+  ['svi', ['svi_asset_paths'], 'SVI', [cdcGeoidKey, sviKey]],
+  [
+    'tiger',
+    ['block_group_asset_paths'],
+    'Census TIGER Shapefiles',
+    [tigerGeoidKey],
+  ],
+  ['buildings', ['building_asset_paths'], 'Microsoft Building Shapefiles', []],
 ];
 Object.freeze(scoreAssetTypes);
 
@@ -404,51 +462,63 @@ function initializeScoreSelectors(states) {
   // Initialize headers.
   removeAllButFirstFromRow(headerRow);
   for (const state of states) {
-    headerRow.append(createTd().html(state + ' Assets'));
+    headerRow.append(createTd().text(state + ' Assets'));
   }
 
   // For each asset type, add select for all assets for each state.
   for (const scoreAssetType of scoreAssetTypes) {
-    const id = assetSelectionRowPrefix + scoreAssetType[0];
+    const type = scoreAssetType[0];
+    const id = assetSelectionRowPrefix + type;
     const propertyPath = scoreAssetType[1];
+    const expectedColumns = scoreAssetType[3];
     const row = $('#' + id);
     removeAllButFirstFromRow(row);
     for (const state of states) {
       if (stateAssets.get(state)) {
         const statePropertyPath = propertyPath.concat([state]);
-        row.append(createTd().append(addAssetDataChangeHandler(
+        const select =
             createAssetDropdown(stateAssets.get(state), statePropertyPath)
-                .prop('id', 'select-' + id + '-' + state),
-            statePropertyPath)));
+                .prop('id', 'select-' + id + '-' + state)
+                .on('change',
+                    (event) => onNonDamageAssetSelect(
+                        event, statePropertyPath, expectedColumns, type, state))
+                .addClass('with-status-border');
+        row.append(createTd().append(select));
+        verifyAsset(select.val(), type, state, expectedColumns);
       }
     }
   }
 }
 
 const damagePropertyPath = Object.freeze(['damage_asset_path']);
-const swPropertyPath = Object.freeze(['map_bounds_sw']);
-const nePropertyPath = Object.freeze(['map_bounds_ne']);
 
 /**
  * Initializes the damage selector, given the provided assets.
  * @param {Array<string>} assets List of assets in the disaster folder
  */
 function initializeDamageSelector(assets) {
-  const mapBoundsDiv = $('#map-bounds-div');
   const select = createAssetDropdown(
       assets, damagePropertyPath, $('#damage-asset-select').empty());
   select.on('change', (event) => {
     const val = $(event.target).val();
-    val ? mapBoundsDiv.hide() : mapBoundsDiv.show();
+    setMapBoundsDiv(val);
     handleAssetDataChange(val, damagePropertyPath);
   });
-  const swInput = $('#map-bounds-sw');
-  swInput.val(getElementFromPath(swPropertyPath));
-  addAssetDataChangeHandler(swInput, swPropertyPath);
-  const neInput = $('#map-bounds-ne');
-  neInput.val(getElementFromPath(nePropertyPath));
-  addAssetDataChangeHandler(neInput, nePropertyPath);
-  select.val() ? mapBoundsDiv.hide() : mapBoundsDiv.show();
+  setMapBoundsDiv(select.val());
+}
+
+/**
+ * Puts the map bounds div in the desired state.
+ * @param {boolean} hide If true, hide the div
+ */
+function setMapBoundsDiv(hide) {
+  const mapBoundsDiv = $('#map-bounds-div');
+  if (hide) {
+    mapBoundsDiv.hide();
+  } else {
+    mapBoundsDiv.show();
+    scoreBoundsMap.onShow();
+  }
 }
 
 /**
@@ -487,8 +557,7 @@ function removeAllButFirstFromRow(row) {
  * Initializes a dropdown with assets and the appropriate change handler.
  * @param {Array<string>} assets List of assets to add to dropdown
  * @param {Array<string>} propertyPath List of attributes to follow to get
- *     value. If that value is found in options, it will be selected. Otherwise,
- *     no option will be selected
+ *     value.
  * @param {jQuery<HTMLSelectElement>} select Select element, will be created if
  *     not given
  * @return {JQuery<HTMLSelectElement>}
@@ -513,22 +582,109 @@ function createAssetDropdown(
 }
 
 /**
- * Adds the default change handler, which updates our internal data (and
- * Firestore) when this element changes.
- * @param {JQuery<HTMLElement>} elt
- * @param {Array<string>} propertyPath The path to the value of this element
- * @return {JQuery<HTMLElement>} The passed-in element, for chaining
+ * Sets off a column verification check and data write.
+ * @param {Object} event selector change event
+ * @param {Array<string>} propertyPath List of attributes to follow to get
+ *     value.
+ * @param {Array<string>} expectedColumns
+ * @param {string} type
+ * @param {string} state
+ * @return {Promise<void>} see {@link verifyAsset}
  */
-function addAssetDataChangeHandler(elt, propertyPath) {
-  return elt.on(
-      'change',
-      (event) => handleAssetDataChange($(event.target).val(), propertyPath));
+function onNonDamageAssetSelect(
+    event, propertyPath, expectedColumns, type, state) {
+  const newAsset = $(event.target).val();
+  handleAssetDataChange(newAsset, propertyPath);
+  return verifyAsset(newAsset, type, state, expectedColumns);
 }
+
+// Map of asset picker (represented by a string '<type>-<state>' e.g.
+// 'poverty-WA') to the most recent value of the picker. This helps us ensure
+// that we're only updating the status box for the most recently selected value.
+const lastSelectedAsset = new Map();
+
+/**
+ * Verifies an asset exists and has the expected columns.
+ * @param {string} asset
+ * @param {string} type values from the first index of each entry in {@code
+ *     scoreAssetTypes}
+ * @param {string} state e.g. 'WA'
+ * @param {Array<string>} expectedColumns
+ * @return {Promise<void>} returns null if there was no asset to check.
+ *     Otherwise returns a promise that resolves when existence and column
+ *     checking are finished and select border color is updated.
+ */
+function verifyAsset(asset, type, state, expectedColumns) {
+  // TODO: disable or discourage kick off until all green?
+  const tdId = type + '-' + state;
+  const select = $('#select-' + assetSelectionRowPrefix + type + '-' + state);
+  lastSelectedAsset.set(tdId, asset);
+  const assetMissingErrorFunction = (err) => {
+    if (err.includes('\'' + asset + '\' not found.')) {
+      updateColorAndHover(select, 'red', 'Error! asset could not be found.');
+    } else {
+      console.error(err);
+      updateColorAndHover(select, 'red', 'Unknown error: ' + err);
+    }
+  };
+  if (asset === '') {
+    updateColorAndHover(select, 'white', '');
+  } else if (expectedColumns.length === 0) {
+    updateColorAndHover(select, 'yellow', 'Checking columns...');
+    // TODO: is there a better way to evaluate feature collection existence?
+    convertEeObjectToPromise(ee.FeatureCollection(asset).first())
+        .then(() => updateColorAndHover(select, 'green', 'No expected columns'))
+        .catch(assetMissingErrorFunction);
+  } else {
+    updateColorAndHover(select, 'yellow', 'Checking columns...');
+    return convertEeObjectToPromise(getColumnsStatus(asset, expectedColumns))
+        .then((error) => {
+          if (lastSelectedAsset.get(tdId) === asset) {
+            if (error) {
+              updateColorAndHover(
+                  select, 'red',
+                  'Error! asset does not have all expected columns: ' +
+                      expectedColumns);
+            } else {
+              updateColorAndHover(
+                  select, 'green', 'Success! asset has all expected columns');
+            }
+          }
+        })
+        .catch(assetMissingErrorFunction);
+  }
+}
+
+/**
+ * Updates the border and hover text of the select.
+ * @param {JQuery<HTMLSelectElement>} select
+ * @param {string} color
+ * @param {string} title
+ */
+function updateColorAndHover(select, color, title) {
+  select.css('border-color', color).prop('title', title);
+}
+
+/**
+ * Does the actual contains check and returns the appropriate status.
+ * @param {string} asset
+ * @param {Array<string>} expectedColumns
+ * @return {ee.String} status from column check, 0 if contained all columns, 1
+ * if there was an error.
+ */
+function getColumnsStatus(asset, expectedColumns) {
+  return ee.Algorithms.If(
+      ee.FeatureCollection(asset).first().propertyNames().containsAll(
+          ee.List(expectedColumns)),
+      ee.Number(0), ee.Number(1));
+}
+
 /**
  * Handles the user entering a value into score-related input
- * @param {string} val Value of input. empty strings are treated like null (ugh)
+ * @param {?*} val Value of input. empty strings are treated like null (ugh)
  * @param {Array<string>} propertyPath path to property inside asset data. We
  *     set this value by setting the parent's attribute to the target's value
+ * @return {Promise<void>} Promise that completes when Firestore writes are done
  */
 function handleAssetDataChange(val, propertyPath) {
   // We want to change the value, which means we have to write an expression
@@ -539,7 +695,7 @@ function handleAssetDataChange(val, propertyPath) {
   parentProperty[propertyPath[propertyPath.length - 1]] =
       val !== '' ? val : null;
   validateUserFields();
-  updateDataInFirestore(() => disasterData.get(getDisaster()));
+  return updateDataInFirestore(() => disasterData.get(getDisaster()));
 }
 
 /**
