@@ -65,10 +65,16 @@ const kickOffText = 'Kick off Data Processing (will take a while!)';
 const optionalWarningPrefix = '; warning: created asset will be missing ';
 
 /**
- * Checks that all fields that can be entered by the user have a non-empty
- * value. Does not check that assets actually exist, are of valid type, etc. If
- * all validation succeeds, enables kick-off button, otherwise disables and
- * changes button text to say what is missing.
+ * Checks that all mandatory fields that can be entered by the user have
+ * non-empty values. Does not check that assets actually exist, are of valid
+ * type, etc. If all validation succeeds, enables kick-off button, otherwise
+ * disables and changes button text to say what is missing.
+ *
+ * Some fields (Income, SVI) are optional. If they are missing, a separate
+ * message is displayed on the button, but it can still be enabled. If it is
+ * enabled, it is yellowed a bit to indicate the missing optional assets.
+ * The buildings asset is optional if the damage asset is not present, but is
+ * required if the damage asset is present.
  */
 function validateUserFields() {
   const states = disasterData.get(getDisaster()).states;
@@ -102,6 +108,10 @@ function validateUserFields() {
           !damageAssetPresent;
       const optional = missingItem[0] === 'Income' ||
           missingItem[0] === 'SVI' || optionalBuildings;
+      // Construct string to append to message: display name + missing states,
+      // if any. Buildings is special because we don't actually display
+      // "Microsoft Building Shapefiles" on the map, only building counts, so we
+      // tell the user that's what they're missing.
       const itemString = optionalBuildings ?
           ('Building counts' +
            (missingItem.length > 1 ? ' ' + missingItem[1] : '')) :
