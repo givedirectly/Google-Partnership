@@ -418,7 +418,8 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     cy.visit('test_utils/empty.html');
     return cy.document().then((doc) => {
       const buttonCss = doc.createElement('style');
-      buttonCss.innerHTML = 'button {background-color: green;} ' + 'button:disabled {background-color: grey}';
+      buttonCss.innerHTML = 'button {background-color: green;} ' +
+          'button:disabled {background-color: grey}';
       doc.head.appendChild(buttonCss);
       const tbody = doc.createElement('tbody');
       tbody.id = 'asset-selection-table-body';
