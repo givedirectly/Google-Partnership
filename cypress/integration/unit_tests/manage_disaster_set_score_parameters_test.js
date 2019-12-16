@@ -76,8 +76,6 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
   const allOptionalMissing = alwaysOptionalMissing + ', Building counts';
   const allStateAssetsMissingWithDamageAssetText = allMandatoryMissingText +
       ', Microsoft Building Shapefiles' + alwaysOptionalMissing;
-  const allStateAssetsMissingWithScoreBoundsText =
-      allMandatoryMissingText + allOptionalMissing;
   const allMissingText = allMandatoryMissingText +
       ', and must specify either damage asset or map bounds' +
       allOptionalMissing;
@@ -119,7 +117,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
                 scoreBoundsMap.drawingManager));
 
     cy.get('#process-button')
-        .should('have.text', allStateAssetsMissingWithScoreBoundsText);
+        .should('have.text', allMandatoryMissingText + allOptionalMissing);
     cy.get('.score-bounds-delete-button').click();
     cy.get('#process-button').should('have.text', allMissingText);
 
