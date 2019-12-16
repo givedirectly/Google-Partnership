@@ -26,7 +26,7 @@ function assertFirestoreMapBounds(expectedLatLngBounds) {
 
 /**
  * Asserts that actualBounds is equal to expectedBounds, up to tolerance because
- * of floating-point errors.
+ * of floating-point errors and EarthEngine imprecision.
  * @param {{sw: {lng: number, lat: number}, ne: {lng: number, lat: number}}}
  *     actualBounds
  * @param {{sw: {lng: number, lat: number}, ne: {lng: number, lat: number}}}
@@ -47,17 +47,18 @@ function expectLatLngWithin(actual, expected) {
   expectWithin(actual.lng, expected.lng);
 }
 
-const floatingError = 0.000001;
-
 /**
- * Utility function to compare two numbers within a tolerance of floatingError.
+ * Utility function to compare two numbers within a tolerance. The tolerance is
+ * proportional to the max of the numbers' magnitudes, because EarthEngine can
+ * be a bit sloppy when computing bounds.
  * @param {number} actualNumber
  * @param {number} expectedNumber
  */
 function expectWithin(actualNumber, expectedNumber) {
+  const errorBase = Math.max(Math.abs(actualNumber), Math.abs(expectedNumber));
+  const maxError = .006 * errorBase;
   expect(actualNumber)
-      .to.be.within(
-          expectedNumber - floatingError, expectedNumber + floatingError);
+      .to.be.within(expectedNumber - maxError, expectedNumber + maxError);
 }
 
 /**
