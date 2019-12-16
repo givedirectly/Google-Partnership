@@ -147,10 +147,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     }
     // Yay! We're ready to go.
     cy.get('#process-button')
-        .should(
-            'have.text',
-            'Kick off Data Processing (will ' +
-                'take a while!)');
+        .should('have.text', 'Kick off Data Processing (will take a while!)');
     cy.get('#process-button')
         .should('be.enabled')
         .should('have.css', 'background-color')
