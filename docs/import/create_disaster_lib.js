@@ -1,7 +1,12 @@
 export {createDisasterData};
-
+export {incomeKey, snapKey, sviKey, totalKey};
 // For testing
 export {assetDataTemplate};
+
+const snapKey = 'HD01_VD02';
+const totalKey = 'HD01_VD01';
+const sviKey = 'RPL_THEMES';
+const incomeKey = 'HD01_VD01';
 
 // Has all the basic fields needed for the score asset to be created: SNAP, SVI,
 // and income together with the columns of each, and optional damage asset path.
@@ -12,18 +17,17 @@ export {assetDataTemplate};
 //  Firestore?
 const assetDataTemplate = {
   damage_asset_path: null,
-  map_bounds_sw: null,
-  map_bounds_ne: null,
+  score_bounds_coordinates: null,
   block_group_asset_paths: {},
   snap_data: {
     paths: {},
-    snap_key: 'HD01_VD02',
-    total_key: 'HD01_VD01',
+    snap_key: snapKey,
+    total_key: totalKey,
   },
   svi_asset_paths: {},
-  svi_key: 'RPL_THEMES',
+  svi_key: sviKey,
   income_asset_paths: {},
-  income_key: 'HD01_VD01',
+  income_key: incomeKey,
   building_asset_paths: {},
 };
 Object.freeze(assetDataTemplate);

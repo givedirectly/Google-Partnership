@@ -2,7 +2,7 @@ import {mapContainerId, writeWaiterId} from './dom_constants.js';
 import {createError} from './error.js';
 import {getFirestoreRoot} from './firestore_document.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
-import {geoPointToLatLng, latLngToGeoPoint} from './map_util.js';
+import {latLngToGeoPoint, polygonToGeoPointArray, transformGeoPointArrayToLatLng} from './map_util.js';
 import {createPopup, isMarker, setUpPopup} from './popup.js';
 import {snapPopTag, totalPopTag} from './property_names.js';
 import {getScoreAsset} from './resources.js';
@@ -230,16 +230,9 @@ Object.freeze(StoredShapeData.State);
 // Tracks global pending writes so that we can warn if user leaves page early.
 StoredShapeData.pendingWriteCount = 0;
 
-StoredShapeData.featureGeoPoints = (feature) => {
-  const geometry = [];
-  StoredShapeData.featureLatLng(feature).forEach(
-      (elt) => geometry.push(latLngToGeoPoint(elt)));
-  return geometry;
-};
-
-StoredShapeData.featureLatLng = (feature) => {
-  return isMarker(feature) ? [feature.getPosition()] : feature.getPath();
-};
+StoredShapeData.featureGeoPoints = (feature) => isMarker(feature) ?
+    [latLngToGeoPoint(feature.getPosition())] :
+    polygonToGeoPointArray(feature);
 
 StoredShapeData.compareGeoPointArrays = (array1, array2) => {
   // Catch if one argument is null/undefined.
@@ -323,6 +316,8 @@ const appearance = {
   fillColor: '#4CEF64',
   strokeColor: '#4CEF64',
   editable: false,
+  // Default stroke weight looks to be about 3.
+  strokeWeight: 5,
 };
 
 /**
@@ -424,17 +419,6 @@ function drawRegionsFromFirestoreQuery(querySnapshot, map) {
     feature.setMap(map);
   });
   loadingElementFinished(mapContainerId);
-}
-
-/**
- * Transforms GeoPoint array to LatLng array.
- * @param {Array<firebase.firestore.GeoPoint>} geopoints
- * @return {Array<LatLng>} Array is actually just lat-lng pairs, but good enough
- */
-function transformGeoPointArrayToLatLng(geopoints) {
-  const coordinates = [];
-  geopoints.forEach((geopoint) => coordinates.push(geoPointToLatLng(geopoint)));
-  return coordinates;
 }
 
 /**

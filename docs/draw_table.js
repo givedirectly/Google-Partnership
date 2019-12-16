@@ -140,8 +140,9 @@ class TableSelector {
     const selection = [];
     for (const geoid of geoids) {
       const row = this.findRowNumber(geoid);
-      // underlying data does not include headings row.
-      selection.push({row: row - 1, column: null});
+      if (row !== null) {
+        selection.push({row: row, column: null});
+      }
     }
     // TODO: flip to page of the list the selected area is on if not current
     //  page.
@@ -154,14 +155,16 @@ class TableSelector {
 
   /**
    * Given a geoid string, searches for it in this.tableData's 0th columns.
+   * Returns the index of the row, with the initial data row being row 0.
    *
    * @param {string} geoid
-   * @return {number|null} the 1-indexed row, or null if not found
+   * @return {null|number} the 0-indexed row, or null if not found
    */
   findRowNumber(geoid) {
     for (let i = 1; i < this.tableData.length; i++) {
       if (this.tableData[i][0] === geoid) {
-        return i;
+        // Underlying data does not include headings row.
+        return i - 1;
       }
     }
     return null;

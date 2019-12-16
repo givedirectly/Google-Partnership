@@ -2,6 +2,9 @@
 <html>
 <head>
   <title>Manage disaster</title>
+  <!-- Load the Google Maps API. -->
+  <script
+      src="https://maps.google.com/maps/api/js?libraries=drawing,places&key=AIzaSyBAQkh-kRrYitkPafxVLoZx3E5aYM-auXM"></script>
   <!-- Load the Roboto font. -->
   <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet" type="text/css">
 
@@ -34,7 +37,6 @@
 </head>
 <body>
 <div id="navbar"></div>
-<div id="toast-message"><span id="toast-message-text"></span></div>
 <div class="wrapper">
 <div class="main-content">
   <div>
@@ -115,9 +117,12 @@
           <tbody id="asset-selection-table-body"></tbody>
         </table>
       </div>
-      <div><label for="damage-asset-select">Damage asset <a href="https://docs.google.com/document/d/1WnjHIexMnlVkn5lqnzYlBVg4aWxh2wVDZI2DBAu-TGI/edit?ts=5de7cd32#bookmark=id.ppvphy5dof7n" target="_blank"><i class="help fa fa-question-circle" aria-hidden="true"></i></a>: </label><select id="damage-asset-select"></select>
+      <!-- TODO: Make "Damage asset"" a label again? Style it properly if so -->
+      <div>Damage asset: <a href="https://docs.google.com/document/d/1WnjHIexMnlVkn5lqnzYlBVg4aWxh2wVDZI2DBAu-TGI/edit?ts=5de7cd32#bookmark=id.ppvphy5dof7n" target="_blank"><i class="help fa fa-question-circle" aria-hidden="true"></i></a>: </label><select id="damage-asset-select"></select>
         <div id="map-bounds-div" hidden>
-         OR (before damage asset available)<br/><label for="map-bounds-sw">Southwest damage bounds, in "lat, lng" format, ex: 39.4, -40.1 <a href="https://docs.google.com/document/d/1WnjHIexMnlVkn5lqnzYlBVg4aWxh2wVDZI2DBAu-TGI/edit?ts=5de7cd32#bookmark=id.pmr206t53gos" target="_blank"><i class="help fa fa-question-circle" aria-hidden="true"></i></a>: </label><input id="map-bounds-sw"><br/><label for="map-bounds-sw">Northeast damage bounds, in "lat, lng" format: </label><input id="map-bounds-ne"></div>
+         OR (before damage asset available) draw a region<a href="https://docs.google.com/document/d/1WnjHIexMnlVkn5lqnzYlBVg4aWxh2wVDZI2DBAu-TGI/edit?ts=5de7cd32#bookmark=id.pmr206t53gos" target="_blank"><i class="help fa fa-question-circle" aria-hidden="true"></i></a>:
+          <div id="score-bounds-map" class="map"></div>
+        </div>
     </div>
 
     <button disabled hidden id="process-button"></button>

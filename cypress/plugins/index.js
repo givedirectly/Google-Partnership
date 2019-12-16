@@ -66,7 +66,7 @@ module.exports = (on, config) => {
      * Node, are actually browserified, and the above modules don't work there.
      * Thus, we use genuine Node modules, and then pass the created tokens back
      * out to the test, where it can use them (in the case of Firebase) and also
-     * set cookies for the production code to use.
+     * set values for the production code to use.
      */
 
     /**
