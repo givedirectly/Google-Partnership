@@ -144,6 +144,7 @@ class ScoreBoundsMap {
         const coordinates = resolvedBounds.coordinates[0];
         bounds.extend(latLngLiteralFromArray(coordinates[0]));
         bounds.extend(latLngLiteralFromArray(coordinates[2]));
+        console.log('changed bounds inside');
         applyMinimumBounds(bounds, this.map);
       });
     }

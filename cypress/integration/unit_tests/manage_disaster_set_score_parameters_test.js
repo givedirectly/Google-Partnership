@@ -6,7 +6,7 @@ import {assetSelectionRowPrefix, disasterData, scoreAssetTypes, scoreBoundsMap, 
 import {enableWhenFirestoreReady} from '../../../docs/import/manage_disaster.js';
 import {getDisaster} from '../../../docs/resources.js';
 import {cyQueue} from '../../support/commands.js';
-import {setUpSavingStubs} from '../../support/import_test_util.js';
+import {getConvertEeObjectToPromiseRelease, setUpSavingStubs} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 
 // Triangle goes up into Canada, past default map of basic_map.js.
@@ -61,6 +61,20 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     cy.get('#damage-asset-select').should('have.value', '');
     cy.get('#map-bounds-div').should('be.visible');
     cy.get('.score-bounds-delete-button').should('not.be.visible');
+    // Has NY in view after EE promise finishes and zoom happens.
+    cy.wrap(scoreBoundsMap.stateBoundsPromise).then(() => {
+      new Promise(
+          (resolve) => google.maps.event.addListenerOnce(
+              scoreBoundsMap.map, 'zoom_changed', () => {
+                expect(scoreBoundsMap.map.getBounds().contains({
+                  lng: -74,
+                  lat: 41.7,
+                })).to.be.true;
+                expect(underTest.map.getBounds().contains({lng: -100, lat: 32}))
+                    .to.be.false;
+                resolve();
+              }));
+    });
     cy.get('#damage-asset-select').select('asset2').blur();
     cy.get('#map-bounds-div').should('not.be.visible');
     readFirestoreAfterWritesFinish().then(
