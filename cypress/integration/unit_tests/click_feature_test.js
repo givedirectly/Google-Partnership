@@ -106,8 +106,8 @@ describe('Unit tests for click_feature.js with map and table', () => {
 
   it('click highlights correct feature even after resort', () => {
     // Sort descending by damage percentage
-    cy.get('.header-cell > :nth-child(4)').click();
-    cy.get('.header-cell > :nth-child(4)').click();
+    cy.get('.table-header > :nth-child(4)').click();
+    cy.get('.table-header > :nth-child(4)').click();
     clickAndVerifyBlockGroup();
   });
 
