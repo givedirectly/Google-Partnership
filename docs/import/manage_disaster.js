@@ -61,6 +61,9 @@ let scoreBoundsMap;
 
 const scoreCoordinatesPath = Object.freeze([scoreCoordinatesAttribute]);
 
+const kickOffText = 'Kick off Data Processing (will take a while!)';
+const optionalWarningPrefix = '; warning: created asset will be missing ';
+
 /**
  * Checks that all fields that can be entered by the user have a non-empty
  * value. Does not check that assets actually exist, are of valid type, etc. If
@@ -75,8 +78,7 @@ function validateUserFields() {
   for (const {idStem, displayName} of scoreAssetTypes) {
     const missingForType = [];
     for (const state of states) {
-      if (!$('#select-' + assetSelectionRowPrefix + idStem + '-' +
-             state)
+      if (!$('#select-' + assetSelectionRowPrefix + idStem + '-' + state)
                .val()) {
         missingForType.push(state);
       }
@@ -89,24 +91,25 @@ function validateUserFields() {
       missingItems.push(missingItem);
     }
   }
-  const hasDamage = damageAssetPresent ||
-      getElementFromPath(scoreCoordinatesPath);
+  const hasDamage =
+      damageAssetPresent || getElementFromPath(scoreCoordinatesPath);
   let message = '';
   let optionalMessage = '';
   if (missingItems.length) {
     for (const missingItem of missingItems) {
       const optionalBuildings =
-          missingItem[0] === 'Microsoft Building Shapefiles'
-          && !damageAssetPresent;
-      let optional = missingItem[0] === 'Income'
-          || missingItem[0] === 'SVI'
-          || optionalBuildings;
-      const itemString = (optionalBuildings
-          ? ['Building counts', missingItem[1]] : missingItem).join(' ');
+          missingItem[0] === 'Microsoft Building Shapefiles' &&
+          !damageAssetPresent;
+      const optional = missingItem[0] === 'Income' ||
+          missingItem[0] === 'SVI' || optionalBuildings;
+      const itemString = optionalBuildings ?
+          ('Building counts' +
+           (missingItem.length > 1 ? ' ' + missingItem[1] : '')) :
+          missingItem.join(' ');
       if (optional) {
-        optionalMessage += (optionalMessage ? ', ': '') + itemString;
+        optionalMessage += (optionalMessage ? ', ' : '') + itemString;
       } else {
-        message += (message ? ', ': '') + itemString;
+        message += (message ? ', ' : '') + itemString;
       }
     }
   }
@@ -117,8 +120,8 @@ function validateUserFields() {
     message += (message ? ', and m' : 'M') +
         'ust specify either damage asset or map bounds';
   }
-  if (optionalMessage) {
-    setStatus('Warning: created asset will be missing ' + optionalMessage);
+  if (message && optionalMessage) {
+    message += optionalWarningPrefix + optionalMessage;
   }
   const processButton = $('#process-button');
   processButton.show();
@@ -126,8 +129,12 @@ function validateUserFields() {
     processButton.text(message);
     processButton.attr('disabled', true);
   } else {
-    processButton.text('Kick off Data Processing (will take a while!)');
+    processButton.text(
+        kickOffText +
+        (optionalMessage ? optionalWarningPrefix + optionalMessage : ''));
     processButton.attr('disabled', false);
+    processButton.css(
+        'background-color', optionalMessage ? 'rgb(150, 150, 0)' : '');
   }
 }
 
@@ -443,23 +450,36 @@ function toggleState(known) {
 }
 
 const scoreAssetTypes = [
-      {
-        idStem: 'poverty',
-        propertyPath: ['snap_data', 'paths'],
+  {
+    idStem: 'poverty',
+    propertyPath: ['snap_data', 'paths'],
     displayName: 'Poverty',
     expectedColumns: [censusGeoidKey, censusBlockGroupKey, snapKey, totalKey],
-    },
-    {idStem: 'income', propertyPath: ['income_asset_paths'], displayName: 'Income',
-      expectedColumns: [censusGeoidKey, incomeKey]},
-  {idStem: 'svi', propertyPath: ['svi_asset_paths'], displayName: 'SVI', expectedColumns: [cdcGeoidKey, sviKey]},
-{
-  idStem: 'tiger',
-      propertyPath: ['block_group_asset_paths'],
+  },
+  {
+    idStem: 'income',
+    propertyPath: ['income_asset_paths'],
+    displayName: 'Income',
+    expectedColumns: [censusGeoidKey, incomeKey],
+  },
+  {
+    idStem: 'svi',
+    propertyPath: ['svi_asset_paths'],
+    displayName: 'SVI',
+    expectedColumns: [cdcGeoidKey, sviKey],
+  },
+  {
+    idStem: 'tiger',
+    propertyPath: ['block_group_asset_paths'],
     displayName: 'Census TIGER Shapefiles',
-  expectedColumns: [tigerGeoidKey],
-},
-{idStem: 'buildings', propertyPath: ['building_asset_paths'], displayName: 'Microsoft Building Shapefiles',
-  expectedColumns: []},
+    expectedColumns: [tigerGeoidKey],
+  },
+  {
+    idStem: 'buildings',
+    propertyPath: ['building_asset_paths'],
+    displayName: 'Microsoft Building Shapefiles',
+    expectedColumns: [],
+  },
 ];
 Object.freeze(scoreAssetTypes);
 
@@ -505,7 +525,8 @@ function initializeScoreSelectors(states) {
                 .prop('id', 'select-' + id + '-' + state)
                 .on('change',
                     (event) => onNonDamageAssetSelect(
-                        event, statePropertyPath, expectedColumns, idStem, state))
+                        event, statePropertyPath, expectedColumns, idStem,
+                        state))
                 .addClass('with-status-border');
         row.append(createTd().append(select));
         verifyAsset(select.val(), idStem, state, expectedColumns);
