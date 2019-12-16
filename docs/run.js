@@ -9,6 +9,7 @@ import {setUserFeatureVisibility} from './popup.js';
 import processJoinedData from './process_joined_data.js';
 import {getScoreAsset} from './resources.js';
 import {setUpToggles} from './update.js';
+import SettablePromise from './settable_promise.js';
 
 export {
   createAndDisplayJoinedData,
@@ -20,6 +21,8 @@ export {
 // it from EarthEngine again.
 let snapAndDamagePromise;
 const scalingFactor = 100;
+
+const resolvedScoreAsset = new SettablePromise();
 
 /**
  * Main function that processes the known layers (damage, SNAP) and
@@ -35,7 +38,12 @@ function run(map, firebaseAuthPromise, disasterMetadataPromise) {
   setMapToDrawLayersOn(map);
   const scoreAsset = getScoreAsset();
   snapAndDamagePromise =
-      convertEeObjectToPromise(ee.FeatureCollection(scoreAsset));
+      convertEeObjectToPromise(ee.FeatureCollection(scoreAsset))
+          .catch((err) => {
+            
+      });
+  resolvedScoreAsset.setPromise(
+      snapAndDamagePromise.then(() => scoreAsset);
   const initialTogglesValuesPromise =
       setUpToggles(disasterMetadataPromise, map);
   createAndDisplayJoinedData(map, initialTogglesValuesPromise, scoreAsset);
