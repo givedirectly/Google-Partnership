@@ -70,30 +70,55 @@ const scoreCoordinatesPath = Object.freeze([scoreCoordinatesAttribute]);
 function validateUserFields() {
   const states = disasterData.get(getDisaster()).states;
   const missingItems = [];
-  for (const scoreAssetType of scoreAssetTypes) {
+  const damageAssetPresent = !!$('#damage-asset-select').val();
+
+  for (const {idStem, displayName} of scoreAssetTypes) {
     const missingForType = [];
     for (const state of states) {
-      if (!$('#select-' + assetSelectionRowPrefix + scoreAssetType[0] + '-' +
+      if (!$('#select-' + assetSelectionRowPrefix + idStem + '-' +
              state)
                .val()) {
         missingForType.push(state);
       }
     }
     if (missingForType.length) {
-      missingItems.push(
-          scoreAssetType[2] +
-          (states.length > 1 ? ' [' + missingForType.join(', ') + ']' : ''));
+      const missingItem = [displayName];
+      if (states.length > 1) {
+        missingItem.push('[' + missingForType.join(', ') + ']');
+      }
+      missingItems.push(missingItem);
     }
   }
-  const hasDamage = $('#damage-asset-select').val() ||
+  const hasDamage = damageAssetPresent ||
       getElementFromPath(scoreCoordinatesPath);
   let message = '';
+  let optionalMessage = '';
   if (missingItems.length) {
-    message = 'Missing asset(s): ' + missingItems.join(', ');
+    for (const missingItem of missingItems) {
+      const optionalBuildings =
+          missingItem[0] === 'Microsoft Building Shapefiles'
+          && !damageAssetPresent;
+      let optional = missingItem[0] === 'Income'
+          || missingItem[0] === 'SVI'
+          || optionalBuildings;
+      const itemString = (optionalBuildings
+          ? ['Building counts', missingItem[1]] : missingItem).join(' ');
+      if (optional) {
+        optionalMessage += (optionalMessage ? ', ': '') + itemString;
+      } else {
+        message += (message ? ', ': '') + itemString;
+      }
+    }
+  }
+  if (message) {
+    message = 'Missing asset(s): ' + message;
   }
   if (!hasDamage) {
     message += (message ? ', and m' : 'M') +
         'ust specify either damage asset or map bounds';
+  }
+  if (optionalMessage) {
+    setStatus('Warning: created asset will be missing ' + optionalMessage);
   }
   const processButton = $('#process-button');
   processButton.show();
@@ -418,21 +443,23 @@ function toggleState(known) {
 }
 
 const scoreAssetTypes = [
-  [
-    'poverty',
-    ['snap_data', 'paths'],
-    'Poverty',
-    [censusGeoidKey, censusBlockGroupKey, snapKey, totalKey],
-  ],
-  ['income', ['income_asset_paths'], 'Income', [censusGeoidKey, incomeKey]],
-  ['svi', ['svi_asset_paths'], 'SVI', [cdcGeoidKey, sviKey]],
-  [
-    'tiger',
-    ['block_group_asset_paths'],
-    'Census TIGER Shapefiles',
-    [tigerGeoidKey],
-  ],
-  ['buildings', ['building_asset_paths'], 'Microsoft Building Shapefiles', []],
+      {
+        idStem: 'poverty',
+        propertyPath: ['snap_data', 'paths'],
+    displayName: 'Poverty',
+    expectedColumns: [censusGeoidKey, censusBlockGroupKey, snapKey, totalKey],
+    },
+    {idStem: 'income', propertyPath: ['income_asset_paths'], displayName: 'Income',
+      expectedColumns: [censusGeoidKey, incomeKey]},
+  {idStem: 'svi', propertyPath: ['svi_asset_paths'], displayName: 'SVI', expectedColumns: [cdcGeoidKey, sviKey]},
+{
+  idStem: 'tiger',
+      propertyPath: ['block_group_asset_paths'],
+    displayName: 'Census TIGER Shapefiles',
+  expectedColumns: [tigerGeoidKey],
+},
+{idStem: 'buildings', propertyPath: ['building_asset_paths'], displayName: 'Microsoft Building Shapefiles',
+  expectedColumns: []},
 ];
 Object.freeze(scoreAssetTypes);
 
@@ -444,10 +471,10 @@ const assetSelectionRowPrefix = 'asset-selection-row-';
  */
 function setUpScoreSelectorTable() {
   const tbody = $('#asset-selection-table-body');
-  for (const scoreAssetType of scoreAssetTypes) {
+  for (const {idStem, displayName} of scoreAssetTypes) {
     const row = $(document.createElement('tr'));
-    row.append(createTd().text(scoreAssetType[2]));
-    row.prop('id', assetSelectionRowPrefix + scoreAssetType[0]);
+    row.append(createTd().text(displayName));
+    row.prop('id', assetSelectionRowPrefix + idStem);
     tbody.append(row);
   }
 }
@@ -466,11 +493,8 @@ function initializeScoreSelectors(states) {
   }
 
   // For each asset type, add select for all assets for each state.
-  for (const scoreAssetType of scoreAssetTypes) {
-    const type = scoreAssetType[0];
-    const id = assetSelectionRowPrefix + type;
-    const propertyPath = scoreAssetType[1];
-    const expectedColumns = scoreAssetType[3];
+  for (const {idStem, propertyPath, expectedColumns} of scoreAssetTypes) {
+    const id = assetSelectionRowPrefix + idStem;
     const row = $('#' + id);
     removeAllButFirstFromRow(row);
     for (const state of states) {
@@ -481,10 +505,10 @@ function initializeScoreSelectors(states) {
                 .prop('id', 'select-' + id + '-' + state)
                 .on('change',
                     (event) => onNonDamageAssetSelect(
-                        event, statePropertyPath, expectedColumns, type, state))
+                        event, statePropertyPath, expectedColumns, idStem, state))
                 .addClass('with-status-border');
         row.append(createTd().append(select));
-        verifyAsset(select.val(), type, state, expectedColumns);
+        verifyAsset(select.val(), idStem, state, expectedColumns);
       }
     }
   }

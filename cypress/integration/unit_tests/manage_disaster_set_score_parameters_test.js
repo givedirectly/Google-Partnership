@@ -9,6 +9,7 @@ import {getDisaster} from '../../../docs/resources.js';
 import {cyQueue} from '../../support/commands.js';
 import {setUpSavingStubs} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
+import * as CreateScoreAsset from '../../../docs/import/create_score_asset.js';
 
 // Triangle goes up into Canada, past default map of basic_map.js.
 const scoreBoundsCoordinates = [
@@ -27,8 +28,10 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
   before(preparePage);
 
   setUpSavingStubs();
+  let statusStub;
   let firstTest = true;
   beforeEach(() => {
+    statusStub = cy.stub(CreateScoreAsset, 'setStatus');
     cy.document().then((doc) => {
       cy.stub(document, 'getElementById')
           .callsFake((id) => doc.getElementById(id));
@@ -70,12 +73,12 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
   });
 
   const allStateAssetsMissingText =
-      'Missing asset(s): Poverty, Income, SVI, Census TIGER Shapefiles, ' +
-      'Microsoft Building Shapefiles';
+      'Missing asset(s): Poverty, Census TIGER Shapefiles';
   const allMissingText = allStateAssetsMissingText +
       ', and must specify either damage asset or map bounds';
+  const allOptionalMissing = 'Warning: created asset will be missing Income, SVI, Microsoft Building Shapefiles';
 
-  it('validates asset data', () => {
+  it.only('validates asset data', () => {
     const boundsChanged = new Promise((resolve) => {
       const listener = scoreBoundsMap.map.addListener('bounds_changed', () => {
         google.maps.event.removeListener(listener);
@@ -98,6 +101,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
       const bounds = scoreBoundsMap.map.getBounds();
       scoreBoundsCoordinates.forEach(
           (point) => expect(bounds.contains(point)).to.be.true);
+      expectStatusStubCalledWithAllOptionalMissing();
     });
     // Delete polygon to start.
     cy.stub(window, 'confirm').returns(true);
@@ -108,17 +112,22 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     cy.get('#process-button')
         .should('have.text', allMissingText)
         .then(
-            () => addPolygonWithPath(
-                scoreBoundsMap._createPolygonOptions(scoreBoundsCoordinates),
-                scoreBoundsMap.drawingManager));
+            () => {
+              expectStatusStubCalledWithAllOptionalMissing();
+              addPolygonWithPath(
+                  scoreBoundsMap._createPolygonOptions(scoreBoundsCoordinates),
+                  scoreBoundsMap.drawingManager);
+            });
 
-    cy.get('#process-button').should('have.text', allStateAssetsMissingText);
+    cy.get('#process-button').should('have.text', allStateAssetsMissingText)
+        .then(expectStatusStubCalledWithAllOptionalMissing);
     cy.get('.score-bounds-delete-button').click();
-    cy.get('#process-button').should('have.text', allMissingText);
+    cy.get('#process-button').should('have.text', allMissingText).then(expectStatusStubCalledWithAllOptionalMissing);
 
     // Specifying the damage asset works too.
     cy.get('#damage-asset-select').select('asset2').blur();
-    cy.get('#process-button').should('have.text', allStateAssetsMissingText);
+    cy.get('#process-button').should('have.text', allStateAssetsMissingText)
+        .then*(expectStatusStubCalledWithAllOptionalMissing);
 
     // Setting one asset has the expected effect.
     setFirstSelectInScoreRow(0);
@@ -461,6 +470,16 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
                     .then(() => savedStub.resetHistory()))
         .then(readDisasterDocument);
   }
+
+  function expectStatusStubCalledWithAllOptionalMissing() {
+    expectStatusStubCalled(allOptionalMissing);
+  }
+
+  function expectStatusStubCalled(message) {
+    expect(statusStub).to.be.calledOnce;
+    expect(statusStub).to.be.calledWith(message);
+    statusStub.resetHistory();
+  }
 });
 
 
@@ -482,7 +501,7 @@ function setFirstSelectInScoreRow(rowNum) {
  * @return {Cypress.Chainable} Cypress promise of the td
  */
 function getFirstTdInScoreRow(rowNum) {
-  return cy.get('#' + assetSelectionRowPrefix + scoreAssetTypes[rowNum][0])
+  return cy.get('#' + assetSelectionRowPrefix + scoreAssetTypes[rowNum].idStem)
       .find('td')
       .first();
 }
