@@ -76,7 +76,6 @@ function renderTable(list, features, map, selectorReceiver) {
   const dataView = new google.visualization.DataView(data);
   // don't display geoid
   dataView.hideColumns([0]);
-  //'headerRow': 'italic-darkblue-font large-font bold-font',
   const table =
       new google.visualization.Table(document.getElementById('table'));
   const classNames = {
@@ -88,7 +87,7 @@ function renderTable(list, features, map, selectorReceiver) {
     pageSize: 25,
     sortColumn: 1,
     sortAscending: false,
-    cssClassNames: classNames
+    cssClassNames: classNames,
   });
   const tableSelector = new TableSelector(table, list);
   selectorReceiver((geoids) => tableSelector.selectRowsFor(geoids));
