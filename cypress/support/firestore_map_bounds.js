@@ -50,12 +50,13 @@ function expectLatLngWithin(actual, expected) {
 /**
  * Utility function to compare two numbers within a tolerance. The tolerance is
  * proportional to the max of the numbers' magnitudes, because EarthEngine can
- * be a bit sloppy when computing bounds.
+ * be a bit imprecise when computing bounds.
  * @param {number} actualNumber
  * @param {number} expectedNumber
  */
 function expectWithin(actualNumber, expectedNumber) {
   const errorBase = Math.max(Math.abs(actualNumber), Math.abs(expectedNumber));
+  // Experimentally found to work for current tests and EE precision.
   const maxError = .006 * errorBase;
   expect(actualNumber)
       .to.be.within(expectedNumber - maxError, expectedNumber + maxError);
