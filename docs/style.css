@@ -548,7 +548,7 @@ input[type=checkbox]:checked {
 }
 
 .content-container {
-  padding-bottom: 20px;
+  margin-bottom: 20px;
 }
 
 /** Sidebar styling */
