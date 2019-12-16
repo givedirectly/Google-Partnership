@@ -206,11 +206,13 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
         .should('eq', 5)
         .then(validateUserFields);
     cy.get('#process-button').should('be.disabled');
-    const allStateAssetsMissingText = 'Missing asset(s): Poverty [NY, WY], ' +
-        'Census TIGER Shapefiles [NY, WY], and must specify either damage ' +
-        'asset or map bounds; warning: created asset will be missing Income ' +
-        '[NY, WY], SVI [NY, WY], Building counts [NY, WY]';
-    cy.get('#process-button').should('have.text', allStateAssetsMissingText);
+    cy.get('#process-button')
+        .should(
+            'have.text',
+            'Missing asset(s): Poverty [NY, WY], Census TIGER ' +
+                'Shapefiles [NY, WY], and must specify either damage asset ' +
+                'or map bounds; warning: created asset will be missing Income' +
+                ' [NY, WY], SVI [NY, WY], Building counts [NY, WY]');
     // Specifying one state has desired effect.
     setFirstSelectInScoreRow(0);
     cy.get('#process-button')
