@@ -80,7 +80,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
       ', and must specify either damage asset or map bounds' +
       allOptionalMissing;
 
-  it.only('validates asset data', () => {
+  it('validates asset data', () => {
     const boundsChanged = new Promise((resolve) => {
       const listener = scoreBoundsMap.map.addListener('bounds_changed', () => {
         google.maps.event.removeListener(listener);
@@ -161,6 +161,14 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     cy.get('#process-button')
         .should('have.css', 'background-color')
         .and('eq', 'rgb(150, 150, 0)');
+    // Get rid of score asset.
+    setFirstSelectInScoreRow(0).select('').blur();
+    cy.get('#process-button')
+        .should('be.disabled')
+        .should('have.css', 'background-color')
+        .and('eq', 'rgb(128, 128, 128)');
+    // Put score asset back.
+    setFirstSelectInScoreRow(0);
     // Put income back.
     setFirstSelectInScoreRow(1);
     cy.get('#process-button')
@@ -176,7 +184,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
         .should('have.text', 'Must specify either damage asset or map bounds');
     cy.get('#process-button').should('be.disabled');
     // Get rid of score asset.
-    setFirstSelectInScoreRow(0).select('');
+    setFirstSelectInScoreRow(0).select('').blur();
     cy.get('#process-button')
         .should(
             'have.text',

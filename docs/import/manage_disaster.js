@@ -78,7 +78,13 @@ const optionalWarningPrefix = '; warning: created asset will be missing ';
  */
 function validateUserFields() {
   const states = disasterData.get(getDisaster()).states;
+  /**
+   * Holds missing assets, as arrays. Each array has the display name of the
+   * asset type, and, if this is a multistate disaster, a string indicating
+   * which states are missing for this type.
+   */
   const missingItems = [];
+  const multistate = states.length > 1;
   const damageAssetPresent = !!$('#damage-asset-select').val();
 
   for (const {idStem, displayName} of scoreAssetTypes) {
@@ -91,7 +97,7 @@ function validateUserFields() {
     }
     if (missingForType.length) {
       const missingItem = [displayName];
-      if (states.length > 1) {
+      if (multistate) {
         missingItem.push('[' + missingForType.join(', ') + ']');
       }
       missingItems.push(missingItem);
@@ -138,6 +144,7 @@ function validateUserFields() {
   if (message) {
     processButton.text(message);
     processButton.attr('disabled', true);
+    processButton.css('background-color', '');
   } else {
     processButton.text(
         kickOffText +
