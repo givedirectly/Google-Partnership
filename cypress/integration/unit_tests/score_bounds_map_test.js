@@ -56,9 +56,7 @@ describe('Unit tests for ScoreBoundsMap class', () => {
     expect(underTest.drawingManager.getMap()).to.be.null;
     expect(storedSaves).to.be.empty;
     cy.get('[title="Draw a shape"').should('not.exist');
-    cy.get('.score-bounds-delete-button')
-        .should('be.visible')
-        .then(() => {
+    cy.get('.score-bounds-delete-button').should('be.visible').then(() => {
           // Bounds have not yet been set.
           expect(underTest.map.getBounds().contains(scoreBoundsCoordinates[1]))
               .to.be.false;
