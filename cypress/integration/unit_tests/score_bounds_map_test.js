@@ -146,6 +146,7 @@ describe('Unit tests for ScoreBoundsMap class', () => {
       expect(zoomedBounds.contains({lng: -100, lat: 41})).to.be.false;
       releasePromise();
     });
+    // We didn't zoom to selected states, because "user" already zoomed.
     cy.wrap(promise).then(() => expect(map.getBounds()).to.eql(zoomedBounds));
   });
 
