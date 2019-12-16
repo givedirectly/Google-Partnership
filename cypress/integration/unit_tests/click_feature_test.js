@@ -82,7 +82,7 @@ describe('Unit tests for click_feature.js with map and table', () => {
       containerDiv.appendChild(tableDiv);
       drawTableAndSetUpHandlers(
           convertEeObjectToPromise(scoredFeatures).then((fc) => fc.features),
-          map, features);
+          map);
     });
     cy.wrap(loadingFinishedPromise);
     return assertNoSelection();

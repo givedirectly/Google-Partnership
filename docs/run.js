@@ -6,16 +6,12 @@ import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {convertEeObjectToPromise} from './map_util.js';
 import {initializeAndProcessUserRegions} from './polygon_draw.js';
 import {setUserFeatureVisibility} from './popup.js';
-import processJoinedData from './process_joined_data.js';
-import {getScoreAsset} from './resources.js';
+import {processJoinedData} from './process_joined_data.js';
+import {getBackupScoreAsset, getScoreAsset} from './resources.js';
 import {setUpToggles} from './update.js';
 import SettablePromise from './settable_promise.js';
 
-export {
-  createAndDisplayJoinedData,
-  drawTableAndSetUpHandlers,
-  run as default,
-};
+export {createAndDisplayJoinedData, drawTableAndSetUpHandlers, run};
 
 // Promise for score asset. After it's first resolved, we never need to download
 // it from EarthEngine again.
@@ -36,17 +32,20 @@ const resolvedScoreAsset = new SettablePromise();
  */
 function run(map, firebaseAuthPromise, disasterMetadataPromise) {
   setMapToDrawLayersOn(map);
-  const scoreAsset = getScoreAsset();
   snapAndDamagePromise =
-      convertEeObjectToPromise(ee.FeatureCollection(scoreAsset))
+      convertEeObjectToPromise(ee.FeatureCollection(getScoreAsset()))
           .catch((err) => {
-            
+            if (err.endsWith('not found.')) {
+              return convertEeObjectToPromise(ee.FeatureCollection(getBackupScoreAsset()));
+            } else {
+              throw err;
+            }
       });
   resolvedScoreAsset.setPromise(
-      snapAndDamagePromise.then(() => scoreAsset);
+      snapAndDamagePromise.then((collection) => collection.id));
   const initialTogglesValuesPromise =
       setUpToggles(disasterMetadataPromise, map);
-  createAndDisplayJoinedData(map, initialTogglesValuesPromise, scoreAsset);
+  createAndDisplayJoinedData(map, initialTogglesValuesPromise);
   initializeAndProcessUserRegions(map, disasterMetadataPromise);
   disasterMetadataPromise.then((doc) => addLayers(map, doc.data().layers));
 }
@@ -58,13 +57,11 @@ let featureSelectListener = null;
  * Creates the score overlay and draws the table
  *
  * @param {google.maps.Map} map main map
- * @param {Promise<Array<number>>} initialTogglesValuesPromise promise
- * that returns the poverty and damage thresholds and the poverty weight (from
- * which the damage weight is derived).
- * @param {string} scoreAsset
+ * @param {Promise<Array<number>>} initialTogglesValuesPromise promise that
+ *     returns the poverty and damage thresholds and the poverty weight (from
+ *     which the damage weight is derived).
  */
-function createAndDisplayJoinedData(
-    map, initialTogglesValuesPromise, scoreAsset) {
+function createAndDisplayJoinedData(map, initialTogglesValuesPromise) {
   addLoadingElement(tableContainerId);
   // clear old listeners
   google.maps.event.removeListener(mapSelectListener);
@@ -73,7 +70,7 @@ function createAndDisplayJoinedData(
       snapAndDamagePromise, scalingFactor, initialTogglesValuesPromise);
   addScoreLayer(processedData);
   maybeCheckScoreCheckbox();
-  drawTableAndSetUpHandlers(processedData, map, scoreAsset);
+  drawTableAndSetUpHandlers(processedData, map);
 }
 
 /**
@@ -81,10 +78,9 @@ function createAndDisplayJoinedData(
  * handlers for the map.
  * @param {Promise<Array<GeoJson.Feature>>} processedData
  * @param {google.maps.Map} map
- * @param {string} scoreAsset EE path to score asset FeatureCollection
  */
-function drawTableAndSetUpHandlers(processedData, map, scoreAsset) {
-  drawTable(processedData, map).then((tableSelector) => {
+function drawTableAndSetUpHandlers(processedData, map) {
+  Promise.all([resolvedScoreAsset.getPromise(), drawTable(processedData, map)]).then(([scoreAsset, tableSelector]) => {
     loadingElementFinished(tableContainerId);
     // every time we get a new table and data, reselect elements in the
     // table based on {@code currentFeatures} in highlight_features.js.
