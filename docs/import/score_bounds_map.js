@@ -1,4 +1,5 @@
-import {applyMinimumBounds, createBasicMap, defaultMapCenter, defaultZoomLevel} from '../basic_map.js';
+import {applyMinimumBounds, createBasicMap} from '../basic_map.js';
+import {convertEeObjectToPromise} from '../map_util.js';
 
 export {ScoreBoundsMap};
 
@@ -88,8 +89,10 @@ class ScoreBoundsMap {
    * Called when the page's disaster is set: Clears the map and draws the given
    * `polygonCoordinates` on the map.
    * @param {?Array<LatLngLiteral>} polygonCoordinates
+   * @param {Array<string>} states Two-letter abbreviations for affected states/
+   *     territories. Only used if polygon not given, to center/zoom map
    */
-  initialize(polygonCoordinates) {
+  initialize(polygonCoordinates, states) {
     if (this.polygon) {
       this._removePolygon();
     }
@@ -97,6 +100,12 @@ class ScoreBoundsMap {
     if (polygonCoordinates) {
       this._addPolygon(new google.maps.Polygon(
           this._createPolygonOptions(polygonCoordinates)));
+    } else {
+      const stateBounds = ee.FeatureCollection('TIGER/2018/States')
+                              .filter(ScoreBoundsMap._createStateFilter(states))
+                              .geometry()
+                              .bounds();
+      this.stateBoundsPromise = convertEeObjectToPromise(stateBounds);
     }
   }
 
@@ -105,21 +114,38 @@ class ScoreBoundsMap {
    * have not yet been set for the current data. Bounds cannot be set earlier
    * because {@link google.maps.Map} does not like having its bounds set when it
    * is not visible.
+   *
+   * If there is no polygon and {@link this.stateBoundsPromise} is not yet set,
+   * will set bounds asynchronously when it is, if user has not already zoomed.
+   * @return {?Promise<void>} Promise that completes when bounds are set (or
+   *     Promise to calculate bounds is complete but user zoomed map in
+   *     meantime), or null if bounds-setting was done synchronously or not
+   *     needed.
    */
   onShow() {
     if (!this.needsBoundsFit) {
-      return;
+      return null;
     }
     this.needsBoundsFit = false;
+    // Fit map around existing polygon.
+    const bounds = new google.maps.LatLngBounds();
     if (this.polygon) {
-      // Fit map around existing polygon.
-      const bounds = new google.maps.LatLngBounds();
       this.polygon.getPath().forEach((latlng) => bounds.extend(latlng));
       applyMinimumBounds(bounds, this.map);
+      return null;
     } else {
-      // TODO(janakr): center around states for disaster.
-      this.map.setCenter(defaultMapCenter);
-      this.map.setZoom(defaultZoomLevel);
+      let zoomChangedByUser = false;
+      google.maps.event.addListenerOnce(
+          this.map, 'zoom_changed', () => zoomChangedByUser = true);
+      return this.stateBoundsPromise.then((resolvedBounds) => {
+        if (zoomChangedByUser) {
+          return;
+        }
+        const coordinates = resolvedBounds.coordinates[0];
+        bounds.extend(latLngLiteralFromArray(coordinates[0]));
+        bounds.extend(latLngLiteralFromArray(coordinates[2]));
+        applyMinimumBounds(bounds, this.map);
+      });
     }
   }
 
@@ -193,3 +219,19 @@ ScoreBoundsMap._addListenersToPolygon = (polygon, callback) => {
   return polygonPathEventTypes.map(
       (eventType) => google.maps.event.addListener(path, eventType, callback));
 };
+
+ScoreBoundsMap._createStateFilter = (states) => {
+  const filters = [];
+  for (const state of states) {
+    filters.push(ee.Filter.eq('STUSPS', state));
+  }
+  return ee.Filter.or(...filters);
+};
+
+/**
+ * @param {Array<number>} array longitude and latitude
+ * @return {LatLngLiteral}
+ */
+function latLngLiteralFromArray(array) {
+  return {lng: array[0], lat: array[1]};
+}

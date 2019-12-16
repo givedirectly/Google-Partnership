@@ -4,7 +4,6 @@ import {createDisasterData} from '../../../docs/import/create_disaster_lib.js';
 import * as ListEeAssets from '../../../docs/import/list_ee_assets.js';
 import {assetSelectionRowPrefix, disasterData, scoreAssetTypes, scoreBoundsMap, setUpScoreBoundsMap, setUpScoreSelectorTable, stateAssets, validateUserFields} from '../../../docs/import/manage_disaster';
 import {enableWhenFirestoreReady} from '../../../docs/import/manage_disaster.js';
-import * as MapUtil from '../../../docs/map_util.js';
 import {getDisaster} from '../../../docs/resources.js';
 import {cyQueue} from '../../support/commands.js';
 import {setUpSavingStubs} from '../../support/import_test_util.js';
@@ -516,25 +515,6 @@ function checkSelectBorder(selector, rgbString) {
  */
 function checkHoverText(selector, text) {
   cy.get(selector).invoke('attr', 'title').should('eq', text);
-}
-
-/**
- * A wrapper for {@link convertEeObjectToPromise} that returns a resolve
- * function for releasing the result.
- * @return {Function}
- */
-function getConvertEeObjectToPromiseRelease() {
-  let resolveFunction = null;
-  const promise = new Promise((resolve) => resolveFunction = resolve);
-  const oldConvert = MapUtil.convertEeObjectToPromise;
-  MapUtil.convertEeObjectToPromise = (eeObject) => {
-    MapUtil.convertEeObjectToPromise = oldConvert;
-    return MapUtil.convertEeObjectToPromise(eeObject).then(async (result) => {
-      await promise;
-      return result;
-    });
-  };
-  return resolveFunction;
 }
 
 /**

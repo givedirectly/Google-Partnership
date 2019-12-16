@@ -4,9 +4,10 @@ export {
   addPolygonWithPath,
   applyMinimumBounds,
   createBasicMap,
-  defaultMapCenter,
-  defaultZoomLevel,
 };
+
+// For testing.
+export {defaultMapCenter, defaultZoomLevel};
 
 // Center of the contiguous United States (lower 48).
 const defaultMapCenter = {

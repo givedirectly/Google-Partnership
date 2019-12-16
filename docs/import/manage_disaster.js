@@ -191,9 +191,10 @@ function onSetDisaster() {
   processedCurrentDisasterStateAssets = false;
   processedCurrentDisasterSelfAssets = false;
   const scoreBoundsPath = getElementFromPath(scoreCoordinatesPath);
-  scoreBoundsMap.initialize(
-      scoreBoundsPath ? transformGeoPointArrayToLatLng(scoreBoundsPath) : null);
   const states = disasterData.get(currentDisaster).states;
+  scoreBoundsMap.initialize(
+      scoreBoundsPath ? transformGeoPointArrayToLatLng(scoreBoundsPath) : null,
+      states);
   const neededStates = [];
   for (const state of states) {
     if (!stateAssets.has(state)) {
