@@ -158,8 +158,12 @@ function withText(td, layer, property) {
  * @return {?Promise<void>} See updateLayersInFirestore doc
  */
 function onListBlur(event, property) {
-  return onUpdate(event, property, (textarea) => textarea.val()
-  .split('\n').map((str) => str.trim()).filter((val) => val.length));
+  return onUpdate(
+      event, property,
+      (textarea) => textarea.val()
+                        .split('\n')
+                        .map((str) => str.trim())
+                        .filter((val) => val.length));
 }
 
 /**
