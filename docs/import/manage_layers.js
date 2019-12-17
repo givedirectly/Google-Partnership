@@ -331,12 +331,12 @@ function createStateAssetPickers(states) {
  */
 function createDisasterPicker(disaster) {
   const div = $('#disaster-asset-picker').empty();
-  const assetPicker = $(document.createElement('select'))
-      .width(200);
+  const assetPicker = $(document.createElement('select')).width(200);
   assetPicker.append(createOptionFrom('pending...')).attr('disabled', true);
   const assetPickerLabel = $(document.createElement('label'))
-      .text('Add layer from ' + disaster + ': ').attr('id',
-          disaster + 'adder-label').append(assetPicker);
+                               .text('Add layer from ' + disaster + ': ')
+                               .attr('id', disaster + 'adder-label')
+                               .append(assetPicker);
   div.append(assetPickerLabel);
   div.append(document.createElement('br'));
 }
@@ -349,8 +349,8 @@ function populateDisasterAssetPicker(disaster) {
   const assetPickerLabel = $('#' + disaster + 'adder-label');
   assetPickerLabel.children('select').remove();
   const assetPicker = $(document.createElement('select'))
-      .attr('id', disaster + '-adder')
-      .width(200);
+                          .attr('id', disaster + '-adder')
+                          .width(200);
   if (disasterAssets.get(disaster)) {
     for (const asset of disasterAssets.get(disaster)) {
       const type = layerTypeStrings.get(asset[1]);

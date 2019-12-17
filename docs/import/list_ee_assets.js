@@ -36,29 +36,36 @@ function getDisasterAssetsFromEe(disaster) {
   if (maybePromise) {
     return maybePromise;
   }
-  const result = listEeAssets(eeLegacyPathPrefix + disaster).then((result) => {
-    const nullGeometryPromises = [];
-    result.forEach((type, asset) => {
-      if (type !== LayerType.FEATURE_COLLECTION) return;
-      // assuming that if the first feature's geometry in a collection is null,
-      // they're all null
-      const promise = convertEeObjectToPromise(
-          ee.FeatureCollection(asset).first().geometry().coordinates()).then(
-          (coords) => {
-            if (coords.length !== 0) return [asset, type];
-          });
-      nullGeometryPromises.push(promise);
-    });
-    return Promise.all(nullGeometryPromises);
-  }).then((results) => {
-    const toReturn = new Map();
-    for (const result of results) {
-      if (result) {
-        toReturn.set(result[0], result[1]);
-      }
-    }
-    return toReturn;
-  });
+  const result = listEeAssets(eeLegacyPathPrefix + disaster)
+                     .then((result) => {
+                       const nullGeometryPromises = [];
+                       result.forEach((type, asset) => {
+                         if (type !== LayerType.FEATURE_COLLECTION) return;
+                         // assuming that if the first feature's geometry in a
+                         // collection is null, they're all null
+                         const promise = convertEeObjectToPromise(
+                                             ee.FeatureCollection(asset)
+                                                 .first()
+                                                 .geometry()
+                                                 .coordinates())
+                                             .then((coords) => {
+                                               if (coords.length !== 0) {
+                                                 return [asset, type];
+                                               }
+                                             });
+                         nullGeometryPromises.push(promise);
+                       });
+                       return Promise.all(nullGeometryPromises);
+                     })
+                     .then((results) => {
+                       const toReturn = new Map();
+                       for (const result of results) {
+                         if (result) {
+                           toReturn.set(result[0], result[1]);
+                         }
+                       }
+                       return toReturn;
+                     });
   disasterAssetPromises.set(disaster, result);
   return result;
 }
@@ -76,7 +83,8 @@ function listEeAssets(dir) {
 /**
  * Turns a listAssets call result into a map of asset -> type.
  * @param {Object} listAssetsResult result of call to ee.data.listAssets
- * @return {Map<string, string>} asset-path -> type e.g. 'users/gd/my-asset' -> 'IMAGE'
+ * @return {Map<string, string>} asset-path -> type e.g. 'users/gd/my-asset' ->
+ *     'IMAGE'
  */
 function getIds(listAssetsResult) {
   const assets = new Map();
