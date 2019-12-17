@@ -3,7 +3,7 @@ import * as Resources from '../../../docs/resources.js';
 import {setScorePromises} from '../../../docs/run.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
-const waitForPromiseToResolve = 4000;
+const waitForPromiseToResolve = 6000;
 
 describe('Unit test for run.js', () => {
   loadScriptsBeforeForUnitTests('ee');
