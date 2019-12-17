@@ -492,8 +492,12 @@ function addKmlLayers(layer, map) {
   const layerDisplayData = new LayerDisplayData(null, true, true);
   layerArray[layer['index']] = layerDisplayData;
   const overlays = [];
-  for (let i = 0; i < layer['urls'].length; i++) {
-    overlays.push(new google.maps.KmlLayer(layer['urls'][i], {
+  for (const url of layer['urls']) {
+    if (!url) {
+      // Ignore blank lines: KmlLayer seems ok with it, but don't risk it.
+      continue;
+    }
+    overlays.push(new google.maps.KmlLayer(url, {
       preserveViewport: true,
       map: map,
       clickable: false,
