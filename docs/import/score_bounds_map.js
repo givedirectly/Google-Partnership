@@ -1,11 +1,5 @@
 import {applyMinimumBounds, createBasicMap} from '../basic_map.js';
-import {sidebarDatasetsId} from '../dom_constants.js';
-import {
-  addLayer,
-  addNullLayer,
-  scoreLayerName,
-  setMapToDrawLayersOn,
-} from '../layer_util.js';
+import {addLayer, addNullLayer, setMapToDrawLayersOn} from '../layer_util.js';
 import {convertEeObjectToPromise} from '../map_util.js';
 
 export {ScoreBoundsMap};
@@ -99,6 +93,7 @@ class ScoreBoundsMap {
    * @param {?Array<LatLngLiteral>} polygonCoordinates
    * @param {Array<string>} states Two-letter abbreviations for affected states/
    *     territories. Only used if polygon not given, to center/zoom map
+   * @param {Object} mapLayers Layers data for current disaster
    */
   initialize(polygonCoordinates, states, mapLayers) {
     if (this.polygon) {
@@ -248,10 +243,10 @@ function latLngLiteralFromArray(array) {
   return {lng: array[0], lat: array[1]};
 }
 
-
+// TODO(janakr): share code with run.js after #309 is merged.
 /**
  * Runs through layers list. For those that we auto-display on page load,
- * creates overlays and displays. Also creates checkboxes.
+ * creates overlays and displays.
  *
  * @param {google.maps.Map} map main map
  * @param {Array<Object>} firebaseLayers layer metadata retrieved from
@@ -259,6 +254,7 @@ function latLngLiteralFromArray(array) {
  *     indices are displayed over lower ones)
  */
 function addLayers(map, firebaseLayers) {
+  // TODO(janakr): create appropriate div.
   // const sidebarDiv = document.getElementById(sidebarDatasetsId);
   for (let i = 0; i < firebaseLayers.length; i++) {
     const properties = firebaseLayers[i];
@@ -268,6 +264,7 @@ function addLayers(map, firebaseLayers) {
     } else {
       addNullLayer(properties);
     }
+    // TODO(janakr): enable when codepaths are unified.
     // createNewCheckboxForLayer(properties, sidebarDiv, map);
   }
 }
