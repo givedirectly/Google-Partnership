@@ -89,11 +89,12 @@ class ScoreBoundsMap {
 
   /**
    * Called when the page's disaster is set: Clears the map and draws the given
-   * `polygonCoordinates` on the map.
+   * `polygonCoordinates` on the map. Also displays any layers on the map that
+   * have been added for the current disaster and are shown by default.
    * @param {?Array<LatLngLiteral>} polygonCoordinates
    * @param {Array<string>} states Two-letter abbreviations for affected states/
    *     territories. Only used if polygon not given, to center/zoom map
-   * @param {Object} mapLayers Layers data for current disaster
+   * @param {Array<Object>} mapLayers Layers data for current disaster
    */
   initialize(polygonCoordinates, states, mapLayers) {
     if (this.polygon) {
@@ -261,9 +262,11 @@ function addLayers(map, firebaseLayers) {
     properties['index'] = i;
     if (properties['display-on-load']) {
       addLayer(properties, map);
-    } else {
-      addNullLayer(properties);
     }
+    // TODO(janakr): add null layer if not initially displayed.
+    // else {
+    //   addNullLayer(properties);
+    // }
     // TODO(janakr): enable when codepaths are unified.
     // createNewCheckboxForLayer(properties, sidebarDiv, map);
   }

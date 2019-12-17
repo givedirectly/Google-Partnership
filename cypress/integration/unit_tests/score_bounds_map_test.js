@@ -50,7 +50,7 @@ describe('Unit tests for ScoreBoundsMap class', () => {
 
   it('tests ScoreBoundsMap class', () => {
     const deleteConfirmStub = cy.stub(window, 'confirm').returns(true);
-    underTest.initialize(scoreBoundsCoordinates, ['TX', 'LA']);
+    underTest.initialize(scoreBoundsCoordinates, ['TX', 'LA'], []);
     expect(underTest.polygon).to.not.be.null;
     expect(underTest.polygon.getMap()).to.eql(underTest.map);
     expect(underTest.drawingManager.getMap()).to.be.null;
@@ -87,7 +87,7 @@ describe('Unit tests for ScoreBoundsMap class', () => {
           ]]);
           storedSaves.length = 0;
           // Switch to "new" disaster that has no polygon.
-          underTest.initialize(null, ['TX', 'LA']);
+          underTest.initialize(null, ['TX', 'LA'], []);
           expect(underTest.polygon).to.be.null;
           expect(underTest.drawingManager.getMap()).to.eql(underTest.map);
           expect(storedSaves).to.be.empty;
@@ -134,7 +134,7 @@ describe('Unit tests for ScoreBoundsMap class', () => {
     underTest.map.setCenter(defaultMapCenter);
     underTest.map.setZoom(defaultZoomLevel);
     const releasePromise = getConvertEeObjectToPromiseRelease();
-    underTest.initialize(null, ['TX', 'LA']);
+    underTest.initialize(null, ['TX', 'LA'], []);
     const promise = underTest.onShow();
     expect(promise).to.not.be.null;
     cy.wait(50).then(
@@ -151,7 +151,7 @@ describe('Unit tests for ScoreBoundsMap class', () => {
   });
 
   it('Tests callbacks for ScoreBoundsMap after drag', () => {
-    underTest.initialize(scoreBoundsCoordinates, ['TX', 'LA']);
+    underTest.initialize(scoreBoundsCoordinates, ['TX', 'LA'], []);
     underTest.onShow();
     google.maps.event.trigger(underTest.polygon, 'dragstart');
     google.maps.event.trigger(underTest.polygon, 'dragend');
