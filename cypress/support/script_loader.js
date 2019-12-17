@@ -177,7 +177,7 @@ function addFirebaseHooks() {
  * @return {Cypress.Chainable<any>}
  */
 function doServerEeSetup() {
-  return cy.task('getEarthEngineToken')
+  return cy.task('getEarthEngineToken', {timeout: 20000})
       .then((token) => earthEngineCustomToken = token);
 }
 

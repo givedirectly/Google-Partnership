@@ -5,7 +5,10 @@ import * as loading from '../../../docs/loading.js';
 import {convertEeObjectToPromise} from '../../../docs/map_util.js';
 import {blockGroupTag, geoidTag} from '../../../docs/property_names';
 import {scoreTag} from '../../../docs/property_names.js';
-import {drawTableAndSetUpHandlers} from '../../../docs/run.js';
+import {
+  createScorePromise,
+  drawTableAndSetUpHandlers,
+} from '../../../docs/run.js';
 import {cyQueue} from '../../support/commands.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 import {convertPathToLatLng, createGoogleMap} from '../../support/test_map.js';
@@ -68,6 +71,8 @@ describe('Unit tests for click_feature.js with map and table', () => {
           if (id === tableContainerId) resolve();
         });
     createGoogleMap().then((mapResult) => map = mapResult);
+    // Make sure score asset name is known.
+    createScorePromise();
     cy.document().then((doc) => {
       // Lightly fake out prod document access.
       cy.stub(document, 'getElementById')

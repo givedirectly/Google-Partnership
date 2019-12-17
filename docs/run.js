@@ -11,7 +11,10 @@ import {getBackupScoreAsset, getScoreAsset} from './resources.js';
 import {setUpToggles} from './update.js';
 import SettablePromise from './settable_promise.js';
 
-export {createAndDisplayJoinedData, drawTableAndSetUpHandlers, run};
+export {createAndDisplayJoinedData, run};
+
+// For testing.
+export {drawTableAndSetUpHandlers, createScorePromise};
 
 // Promise for score asset. After it's first resolved, we never need to download
 // it from EarthEngine again.
@@ -19,6 +22,21 @@ let snapAndDamagePromise;
 const scalingFactor = 100;
 
 const resolvedScoreAsset = new SettablePromise();
+
+function createScorePromise() {
+  snapAndDamagePromise =
+      convertEeObjectToPromise(ee.FeatureCollection(getScoreAsset()))
+      .catch((err) => {
+        if (err.endsWith('not found.')) {
+          return convertEeObjectToPromise(ee.FeatureCollection(getBackupScoreAsset()));
+        } else {
+          throw err;
+        }
+      });
+  resolvedScoreAsset.setPromise(
+      snapAndDamagePromise.then((collection) => collection.id));
+  return resolvedScoreAsset.getPromise();
+}
 
 /**
  * Main function that processes the known layers (damage, SNAP) and
@@ -32,17 +50,7 @@ const resolvedScoreAsset = new SettablePromise();
  */
 function run(map, firebaseAuthPromise, disasterMetadataPromise) {
   setMapToDrawLayersOn(map);
-  snapAndDamagePromise =
-      convertEeObjectToPromise(ee.FeatureCollection(getScoreAsset()))
-          .catch((err) => {
-            if (err.endsWith('not found.')) {
-              return convertEeObjectToPromise(ee.FeatureCollection(getBackupScoreAsset()));
-            } else {
-              throw err;
-            }
-      });
-  resolvedScoreAsset.setPromise(
-      snapAndDamagePromise.then((collection) => collection.id));
+  createScorePromise();
   const initialTogglesValuesPromise =
       setUpToggles(disasterMetadataPromise, map);
   createAndDisplayJoinedData(map, initialTogglesValuesPromise);
