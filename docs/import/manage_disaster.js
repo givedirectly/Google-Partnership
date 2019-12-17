@@ -45,7 +45,8 @@ export {
 let disasterData = new Map();
 /**
  * @type {Map<string, Promise<Array<string>>>} Disaster id to listing of
- *     assets in corresponding EE folder
+ *     assets in corresponding EE folder. For feature collections, only those
+ *     collections with non-null geometries are included in this map.
  */
 const disasterAssets = new Map();
 

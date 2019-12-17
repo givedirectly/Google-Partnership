@@ -326,8 +326,9 @@ function createStateAssetPickers(states) {
 }
 
 /**
- *
- * @param disaster
+ * Set up the disaster asset picker div with a fake picker as a placeholder
+ * while the real picker is waiting for earth engine to list and parse assets.
+ * @param {string} disaster
  */
 function createDisasterPicker(disaster) {
   const div = $('#disaster-asset-picker').empty();
@@ -338,11 +339,11 @@ function createDisasterPicker(disaster) {
                                .attr('id', disaster + 'adder-label')
                                .append(assetPicker);
   div.append(assetPickerLabel);
-  div.append(document.createElement('br'));
 }
 
 /**
- * Given either states or disasters, displays their assets in pickers.
+ * Display disaster assets in a select underneat the #disaster-adder-label label
+ * and add an add button which adds a layer.
  * @param {string} disaster
  */
 function populateDisasterAssetPicker(disaster) {
