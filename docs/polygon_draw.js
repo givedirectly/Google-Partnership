@@ -5,7 +5,7 @@ import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {latLngToGeoPoint, polygonToGeoPointArray, transformGeoPointArrayToLatLng} from './map_util.js';
 import {createPopup, isMarker, setUpPopup} from './popup.js';
 import {snapPopTag, totalPopTag} from './property_names.js';
-import {getScoreAsset} from './resources.js';
+import {getScoreAssetPath} from './resources.js';
 import {userRegionData} from './user_region_data.js';
 
 // StoredShapeData is only for testing.
@@ -258,7 +258,7 @@ StoredShapeData.prepareDamageCalculation = (polygon) => {
 };
 
 StoredShapeData.getIntersectingBlockGroups = (polygon) => {
-  return ee.FeatureCollection(getScoreAsset())
+  return ee.FeatureCollection(getScoreAssetPath())
       .filterBounds(polygon)
       .map((feature) => {
         const geometry = feature.geometry();

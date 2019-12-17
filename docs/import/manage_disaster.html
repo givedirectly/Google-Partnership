@@ -105,11 +105,11 @@
     </form>
   </div>
 <hr/>
-  <div id="current-disaster-interaction">
-    <button type="button" id="delete" disabled>Delete Current Disaster</button>
-    <div id="score-asset-selection">
-      <div class="form-title">Select Score Data</div>
-      <div>
+  <div id="current-disaster-interaction" style="width:100%">
+    <button type="button" id="delete" class="delete-disaster-button" disabled>Delete Current Disaster</button>
+    <div>
+      <div class="content-container">
+        <div class="content-title">Select Score Data</div>
         <table id="asset-selection-table">
           <thead>
           <tr id="score-asset-header-row"><td>Score Assets</td></tr>
@@ -118,11 +118,17 @@
         </table>
       </div>
       <!-- TODO: Make "Damage asset"" a label again? Style it properly if so -->
-      <div>Damage asset: <a href="https://docs.google.com/document/d/1WnjHIexMnlVkn5lqnzYlBVg4aWxh2wVDZI2DBAu-TGI/edit?ts=5de7cd32#bookmark=id.ppvphy5dof7n" target="_blank"><i class="help fa fa-question-circle" aria-hidden="true"></i></a>: </label><select id="damage-asset-select"></select>
-        <div id="map-bounds-div" hidden>
-         OR (before damage asset available) draw a region<a href="https://docs.google.com/document/d/1WnjHIexMnlVkn5lqnzYlBVg4aWxh2wVDZI2DBAu-TGI/edit?ts=5de7cd32#bookmark=id.pmr206t53gos" target="_blank"><i class="help fa fa-question-circle" aria-hidden="true"></i></a>:
-          <div id="score-bounds-map" class="map"></div>
+      <div class="content-container">
+        <div>Damage asset: 
+          <a href="https://docs.google.com/document/d/1WnjHIexMnlVkn5lqnzYlBVg4aWxh2wVDZI2DBAu-TGI/edit?ts=5de7cd32#bookmark=id.ppvphy5dof7n" target="_blank">
+            <i class="help fa fa-question-circle" aria-hidden="true"></i>
+          </a>: <select id="damage-asset-select"></select>
+          <div id="map-bounds-div" hidden>
+           OR (before damage asset available) draw a region<a href="https://docs.google.com/document/d/1WnjHIexMnlVkn5lqnzYlBVg4aWxh2wVDZI2DBAu-TGI/edit?ts=5de7cd32#bookmark=id.pmr206t53gos" target="_blank"><i class="help fa fa-question-circle" aria-hidden="true"></i></a>:
+            <div id="score-bounds-map" class="map"></div>
+          </div>
         </div>
+      </div>
     </div>
 
     <button disabled hidden id="process-button"></button>

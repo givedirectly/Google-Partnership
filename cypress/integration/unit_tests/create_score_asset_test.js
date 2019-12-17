@@ -1,5 +1,6 @@
 import {createScoreAsset} from '../../../docs/import/create_score_asset.js';
 import {convertEeObjectToPromise} from '../../../docs/map_util';
+import {getBackupScoreAssetPath, getScoreAssetPath} from '../../../docs/resources.js';
 import {assertFirestoreMapBounds} from '../../support/firestore_map_bounds';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 
@@ -28,8 +29,17 @@ describe('Unit tests for create_score_asset.js', () => {
       makePoint(1.4, 0.7),
       makePoint(1.5, 0.5),
     ]);
-    // Stub out delete and export. We'll assert on what was exported, below.
-    cy.stub(ee.data, 'deleteAsset').callsFake((_, callback) => callback());
+    // Stub out delete, rename, and export. We'll assert on what was exported
+    // below.
+    cy.stub(ee.data, 'deleteAsset').callsFake((oldAsset, callback) => {
+      expect(oldAsset).to.equal(getBackupScoreAssetPath());
+      callback();
+    });
+    cy.stub(ee.data, 'renameAsset').callsFake((from, to, callback) => {
+      expect(from).to.equal(getScoreAssetPath());
+      expect(to).to.equal(getBackupScoreAssetPath());
+      callback();
+    });
     exportStub = cy.stub(ee.batch.Export.table, 'toAsset')
                      .returns({start: () => {}, id: 'FAKE_ID'});
 

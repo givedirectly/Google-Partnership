@@ -43,7 +43,7 @@ html, body {
 
   --error-color: #F44336;
 
-  --main-content-padding: 24px;
+  --main-content-padding: 20px;
 
   --shadow-transition: box-shadow 0.3s ease-in-out;
   --background-color-transition: background-color 0.3s ease-in-out;
@@ -103,7 +103,6 @@ h1 {
   position: relative;
   width: 100%;
   height: 75%;
-  margin: 16px auto;
 }
 
 .map {
@@ -117,6 +116,7 @@ h1 {
   display: table;
   min-height: 200px;
   width: 100%;
+  margin-top: 10px;
 }
 
 /* Help css */
@@ -266,7 +266,6 @@ h1 {
   padding: 0 8px;
   -webkit-transition: var(--background-color-transition);
   transition: var(--background-color-transition);
-  min-width: 250px
 }
 
 .dropdown:hover {
@@ -296,9 +295,9 @@ h1 {
 
 /* Form css */
 
-.form-title {
+.content-title {
   font-size: 24px;
-  font-weight: bold;
+  font-weight: 500;
   color: #232626;
   line-height: 30px;
   margin-bottom: 10px;
@@ -357,8 +356,10 @@ input[type='button'], button {
   box-shadow: var(--shadow-1);
   -webkit-transition: var(--background-color-transition), var(--shadow-transition);
   transition: var(--background-color-transition), var(--shadow-transition);
-  margin-left: 5px;
-  margin-right: 5px;
+  font-size: var(--font-size-3);
+  line-height: 18px;
+  margin: 4px;
+  padding: 4px 6px;
 }
 
 input[type='button']:hover, button:hover {
@@ -373,9 +374,9 @@ input[type='button']:disabled, button:disabled {
 
 .form-button {
   font-size: var(--font-size-3);
-  line-height: 24px;
+  line-height: 18px;
   margin: 8px 0;
-  padding: 6px;
+  padding: 4px;
 }
 
 .form-button:disabled {
@@ -553,10 +554,13 @@ input[type=checkbox]:checked {
 
 .main-content {
   box-sizing: border-box;
-  padding: var(--main-content-padding);
-  width: 75%;
   flex-grow: 1;
   overflow-x: auto;
+  padding: var(--main-content-padding);
+}
+
+.content-container {
+  margin-bottom: 20px;
 }
 
 /** Sidebar styling */
@@ -731,4 +735,29 @@ input[type=checkbox]:checked {
 .snackbar-toast {
   background-color: #F4FBFA;
   color: #000000;
+}
+
+select {
+  font-size: 18px;
+  background-color: white;
+}
+
+thead {
+  background-color: var(--green-3) !important;
+  color: white !important;
+}
+
+table, th, td {
+  border-color: grey;
+  
+}
+
+.table-header {
+  background-color: var(--green-3);
+  color: white;
+}
+
+.header-cell {
+  background-image: none;
+  background-color: none;
 }
