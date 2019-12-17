@@ -8,7 +8,7 @@ import {getCurrentData, getCurrentLayers, getRowIndex, ILLEGAL_STATE_ERR, onUpda
 export {enableWhenReady, updateAfterSort};
 // Visible for testing
 export {
-  createAssetPickers,
+  createDisasterPicker,
   createLayerRow,
   createOptionFrom,
   createStateAssetPickers,
@@ -31,6 +31,8 @@ const stateAssets = new Map();
 
 // A map of maps of the form:
 // {'disaster-2017' => {'asset/path': LayerType}}
+// For feature collections, only those collections with non-null geometries
+// are included in this map.
 const disasterAssets = new Map();
 
 // TODO: general reminder to add loading indicators for things like creating
@@ -303,40 +305,15 @@ function createLayerRow(layer, index) {
  * after potentially retrieving assets from ee.
  */
 function populateStateAndDisasterAssetPickers(disaster) {
-  const assetPickerDiv = $('.asset-pickers');
-  assetPickerDiv.empty();
-
-  const promises = [];
   if (disasterAssets.has(disaster)) {
-    createDisasterAssetPicker(disaster);
+    populateDisasterAssetPicker(disaster);
+    return Promise.resolve();
   } else {
-    const disasterDone = getDisasterAssetsFromEe(disaster).then((assets) => {
+    return getDisasterAssetsFromEe(disaster).then((assets) => {
       disasterAssets.set(disaster, assets);
-      createDisasterAssetPicker(disaster);
+      populateDisasterAssetPicker(disaster);
     });
-    promises.push(disasterDone);
   }
-
-  const states = getCurrentData()['states'];
-  const statesToFetch = [];
-  for (const state of states) {
-    if (!stateAssets.has(state)) statesToFetch.push(state);
-  }
-  // TODO: add functionality to re-pull all cached states from ee without
-  // reloading the page.
-  if (statesToFetch.length === 0) {
-    createStateAssetPickers(states);
-  } else {
-    const statesDone = getStatesAssetsFromEe(statesToFetch).then((assets) => {
-      for (const asset of assets) {
-        stateAssets.set(asset[0], asset[1]);
-      }
-      createStateAssetPickers(states);
-    });
-    promises.push(statesDone);
-  }
-
-  return Promise.all(promises);
 }
 
 /**
@@ -344,50 +321,52 @@ function populateStateAndDisasterAssetPickers(disaster) {
  * @param {Array<string>} states of the form ['WA', ...]
  */
 function createStateAssetPickers(states) {
-  createAssetPickers(states, stateAssets, $('#state-asset-pickers'));
+  // Disabled for now waiting for #327
+  // createAssetPickers(states, stateAssets, $('#state-asset-pickers'));
 }
 
 /**
- * Create an asset picker for the given disaster.
- * @param {string} disaster
+ *
+ * @param disaster
  */
-function createDisasterAssetPicker(disaster) {
-  createAssetPickers([disaster], disasterAssets, $('#disaster-asset-picker'));
+function createDisasterPicker(disaster) {
+  const div = $('#disaster-asset-picker').empty();
+  const assetPicker = $(document.createElement('select'))
+      .width(200);
+  assetPicker.append(createOptionFrom('pending...')).attr('disabled', true);
+  const assetPickerLabel = $(document.createElement('label'))
+      .text('Add layer from ' + disaster + ': ').attr('id',
+          disaster + 'adder-label').append(assetPicker);
+  div.append(assetPickerLabel);
+  div.append(document.createElement('br'));
 }
+
 /**
  * Given either states or disasters, displays their assets in pickers.
- * @param {Array<string>} pickers e.g. ['WA',...] or ['harvey-2017']
- * @param {Map<string, Array<string>>} assetMap
- * @param {JQuery<HTMLElement>} div where to attach new pickers
+ * @param {string} disaster
  */
-function createAssetPickers(pickers, assetMap, div) {
-  for (const folder of pickers) {
-    const assetPicker = $(document.createElement('select'))
-                            .attr({
-                              id: folder + '-adder',
-                            })
-                            .width(200);
-    if (assetMap.get(folder)) {
-      for (const asset of assetMap.get(folder)) {
-        const type = layerTypeStrings.get(asset[1]);
-        assetPicker.append(
-            createOptionFrom(asset[0]).text(asset[0] + '-' + type));
-      }
+function populateDisasterAssetPicker(disaster) {
+  const assetPickerLabel = $('#' + disaster + 'adder-label');
+  assetPickerLabel.children('select').remove();
+  const assetPicker = $(document.createElement('select'))
+      .attr('id', disaster + '-adder')
+      .width(200);
+  if (disasterAssets.get(disaster)) {
+    for (const asset of disasterAssets.get(disaster)) {
+      const type = layerTypeStrings.get(asset[1]);
+      assetPicker.append(
+          createOptionFrom(asset[0]).text(asset[0] + '-' + type));
     }
-    const assetPickerLabel = $(document.createElement('label'))
-                                 .text('Add layer from ' + folder + ': ');
-    const addButton =
-        $(document.createElement('button')).prop('type', 'button').text('add');
-    addButton.on('click', () => {
-      const asset = assetPicker.val();
-      const type = assetMap.get(folder).get(asset);
-      processNewEeLayer(asset, type);
-    });
-    div.append(assetPickerLabel);
-    assetPickerLabel.append(assetPicker);
-    assetPickerLabel.append(addButton);
-    div.append(document.createElement('br'));
   }
+  const addButton =
+      $(document.createElement('button')).prop('type', 'button').text('add');
+  addButton.on('click', () => {
+    const asset = assetPicker.val();
+    const type = disasterAssets.get(disaster).get(asset);
+    processNewEeLayer(asset, type);
+  });
+  assetPickerLabel.append(assetPicker);
+  assetPickerLabel.append(addButton);
 }
 
 /**
