@@ -4,10 +4,9 @@ import {createDisasterData} from '../../../docs/import/create_disaster_lib.js';
 import * as ListEeAssets from '../../../docs/import/list_ee_assets.js';
 import {assetSelectionRowPrefix, disasterData, scoreAssetTypes, scoreBoundsMap, setUpScoreBoundsMap, setUpScoreSelectorTable, stateAssets, validateUserFields} from '../../../docs/import/manage_disaster';
 import {enableWhenFirestoreReady} from '../../../docs/import/manage_disaster.js';
-import * as MapUtil from '../../../docs/map_util.js';
 import {getDisaster} from '../../../docs/resources.js';
 import {cyQueue} from '../../support/commands.js';
-import {setUpSavingStubs} from '../../support/import_test_util.js';
+import {getConvertEeObjectToPromiseRelease, setUpSavingStubs} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 
 // Triangle goes up into Canada, past default map of basic_map.js.
@@ -62,6 +61,27 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     cy.get('#damage-asset-select').should('have.value', '');
     cy.get('#map-bounds-div').should('be.visible');
     cy.get('.score-bounds-delete-button').should('not.be.visible');
+    // Wait for bounds promise to finish, and wait for the zoom level to
+    // change, so that we can assert that the map has been zoomed to NY state.
+    cy.wrap(Promise.all([
+        scoreBoundsMap.stateBoundsPromise,
+        new Promise(
+            (resolve) => google.maps.event.addListenerOnce(
+                scoreBoundsMap.map, 'zoom_changed', resolve)),
+      ]))
+        .then(() => {
+          // Has NY in view after EE promise finishes and zoom
+          // happens.
+          expect(scoreBoundsMap.map.getBounds().contains({
+            lng: -74,
+            lat: 41.7,
+          })).to.be.true;
+          // Does not have Texas in view.
+          expect(scoreBoundsMap.map.getBounds().contains({
+            lng: -100,
+            lat: 32,
+          })).to.be.false;
+        });
     cy.get('#damage-asset-select').select('asset2').blur();
     cy.get('#map-bounds-div').should('not.be.visible');
     readFirestoreAfterWritesFinish().then(
@@ -563,25 +583,6 @@ function checkSelectBorder(selector, rgbString) {
  */
 function checkHoverText(selector, text) {
   cy.get(selector).invoke('attr', 'title').should('eq', text);
-}
-
-/**
- * A wrapper for {@link convertEeObjectToPromise} that returns a resolve
- * function for releasing the result.
- * @return {Function}
- */
-function getConvertEeObjectToPromiseRelease() {
-  let resolveFunction = null;
-  const promise = new Promise((resolve) => resolveFunction = resolve);
-  const oldConvert = MapUtil.convertEeObjectToPromise;
-  MapUtil.convertEeObjectToPromise = (eeObject) => {
-    MapUtil.convertEeObjectToPromise = oldConvert;
-    return MapUtil.convertEeObjectToPromise(eeObject).then(async (result) => {
-      await promise;
-      return result;
-    });
-  };
-  return resolveFunction;
 }
 
 /**

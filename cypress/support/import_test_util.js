@@ -1,9 +1,11 @@
 import {disasterData} from '../../docs/import/manage_layers_lib';
+import * as MapUtil from '../../docs/map_util.js';
 import * as Toast from '../../docs/toast.js';
 
 export {
   createAndAppend,
   createTrs,
+  getConvertEeObjectToPromiseRelease,
   setDisasterAndLayers,
   setUpSavingStubs,
   waitForPromiseAndAssertSaves,
@@ -79,4 +81,23 @@ function setUpSavingStubs() {
     cy.wrap(toastStub.withArgs('Saving...', -1)).as('savingStub');
     cy.wrap(toastStub.withArgs('Saved')).as('savedStub');
   });
+}
+
+/**
+ * A wrapper for {@link convertEeObjectToPromise} that returns a resolve
+ * function for releasing the result.
+ * @return {Function}
+ */
+function getConvertEeObjectToPromiseRelease() {
+  let resolveFunction = null;
+  const promise = new Promise((resolve) => resolveFunction = resolve);
+  const oldConvert = MapUtil.convertEeObjectToPromise;
+  MapUtil.convertEeObjectToPromise = (eeObject) => {
+    MapUtil.convertEeObjectToPromise = oldConvert;
+    return MapUtil.convertEeObjectToPromise(eeObject).then(async (result) => {
+      await promise;
+      return result;
+    });
+  };
+  return resolveFunction;
 }
