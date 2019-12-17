@@ -45,8 +45,7 @@ const mockFirebaseLayers = [
   {
     'ee-name': 'tile_asset',
     'asset-type': LayerType.MAP_TILES,
-    // Put in a blank line at end, since that might happen in real life.
-    'urls': ['tile-url1/{X}/{Y}/{Z}', 'tile-url2/{X}/{Y}/{Z}', ''],
+    'urls': ['tile-url1/{X}/{Y}/{Z}', 'tile-url2/{X}/{Y}/{Z}'],
     'display-name': 'tiles',
     'display-on-load': true,
     'index': 4,
@@ -54,10 +53,8 @@ const mockFirebaseLayers = [
   {
     'ee-name': 'kml_urls',
     'asset-type': LayerType.KML,
-    // Put in a blank line at end, since that might happen in real life.
     'urls': [
       'https://www.nhc.noaa.gov/storm_graphics/api/AL092017_043adv_CONE.kmz',
-      '',
     ],
     'display-name': 'tiles',
     'display-on-load': false,

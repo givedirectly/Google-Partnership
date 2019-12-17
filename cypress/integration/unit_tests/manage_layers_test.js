@@ -148,8 +148,8 @@ describe('Unit tests for manage_layers page', () => {
     const list = flavors.children('textarea');
     expect(list.val()).to.equal(chocolate + '\n' + chai);
 
-    list.val(chai + '\n' + nutmeg);
-    testSave(onListBlur, property, list, [chai, nutmeg]);
+    list.val(chai + '\n' + nutmeg + '\n with spaces \n  \n');
+    testSave(onListBlur, property, list, [chai, nutmeg, 'with spaces']);
   });
 
   it('tests input cell', () => {

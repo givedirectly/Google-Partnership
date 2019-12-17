@@ -341,10 +341,6 @@ function addTileLayer(map, layer) {
   layerArray[layer['index']] = layerDisplayData;
   const urlPromises = [];
   for (const url of layer['urls']) {
-    if (!url) {
-      // Be gentle with blank lines.
-      continue;
-    }
     // Case-insensitive regexp match.
     if (url.match(/{Z}/i) && url.match(/{Y}/i) && url.match(/{X}/i)) {
       urlPromises.push(Promise.resolve(url));
@@ -493,10 +489,6 @@ function addKmlLayers(layer, map) {
   layerArray[layer['index']] = layerDisplayData;
   const overlays = [];
   for (const url of layer['urls']) {
-    if (!url) {
-      // Ignore blank lines: KmlLayer seems ok with it, but don't risk it.
-      continue;
-    }
     overlays.push(new google.maps.KmlLayer(url, {
       preserveViewport: true,
       map: map,

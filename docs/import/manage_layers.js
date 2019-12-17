@@ -151,13 +151,15 @@ function withText(td, layer, property) {
 }
 
 /**
- * Auto-saves on focus out from textarea cell.
+ * Auto-saves on focus out from textarea cell. Splits lines, trims whitespace,
+ * and discards empty lines.
  * @param {Object} event
  * @param {string} property
  * @return {?Promise<void>} See updateLayersInFirestore doc
  */
 function onListBlur(event, property) {
-  return onUpdate(event, property, (textarea) => textarea.val().split('\n'));
+  return onUpdate(event, property, (textarea) => textarea.val()
+  .split('\n').map((str) => str.trim()).filter((val) => val.length));
 }
 
 /**
