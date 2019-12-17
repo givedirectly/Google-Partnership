@@ -109,7 +109,7 @@ function createAndDisplayJoinedData(map, initialTogglesValuesPromise) {
  * @param {google.maps.Map} map
  */
 function drawTableAndSetUpHandlers(processedData, map) {
-  Promise.all([resolvedScoreAsset.getPromise(), drawTable(processedData, map)])
+  Promise.all([resolvedScoreAsset, drawTable(processedData, map)])
       .then(([scoreAsset, tableSelector]) => {
         loadingElementFinished(tableContainerId);
         // every time we get a new table and data, reselect elements in the
