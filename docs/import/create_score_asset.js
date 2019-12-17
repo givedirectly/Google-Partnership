@@ -5,6 +5,9 @@ import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from '.
 
 export {createScoreAsset, setStatus};
 
+// For testing.
+export {backUpAssetAndStartTask};
+
 /**
  * For the given feature representing a block group, add properties for
  * total # buildings in the block group and # damaged buildings in the block
@@ -319,47 +322,86 @@ function createScoreAsset(
     allStatesProcessing = allStatesProcessing.merge(processing);
   }
 
+  return backUpAssetAndStartTask(allStatesProcessing);
+}
+
+/**
+ * Renames current score asset to backup location, deleting backup if necessary,
+ * and kicks off export task.
+ * @param {ee.FeatureCollection} featureCollection Collection to export
+ * @return {Promise<!ee.batch.ExportTask>} Promise that resolves with task if
+ *     rename dance was successful
+ */
+function backUpAssetAndStartTask(featureCollection) {
   const scoreAssetPath = getScoreAssetPath();
   const oldScoreAssetPath = getBackupScoreAssetPath();
   const task = ee.batch.Export.table.toAsset(
-      allStatesProcessing,
+      featureCollection,
       scoreAssetPath.substring(scoreAssetPath.lastIndexOf('/') + 1),
       scoreAssetPath);
-  return new Promise((resolve, reject) => {
-    ee.data.deleteAsset(oldScoreAssetPath, (_, err) => {
-      if (err) {
-        if (err === 'Asset not found.') {
-          console.log(
-              'Old ' + oldScoreAssetPath + ' not present, did not delete it');
+  return renameAssetAsPromise(scoreAssetPath, oldScoreAssetPath)
+      .catch((renameErr) => {
+        console.log(renameErr);
+        // These checks aren't perfect detection, but best we can do.
+        if (renameErr.includes('does not exist')) {
+          console.log('Old ' + scoreAssetPath + ' not found, did not move it');
+        } else if (renameErr.includes('Cannot overwrite asset')) {
+          // Delete and try again.
+          return new Promise(
+              (deleteResolve, deleteReject) =>
+                  ee.data.deleteAsset(oldScoreAssetPath, (_, deleteErr) => {
+                    if (deleteErr) {
+                      // Don't try to recover here.
+                      // Don't show deletion error to user, but log it
+                      // somewhere.
+                      console.error(deleteErr);
+                      const message =
+                          'Error moving old score asset: ' + renameErr;
+                      setStatus(message);
+                      deleteReject(message);
+                    } else {
+                      // Delete succeeded, try again.
+                      deleteResolve(renameAssetAsPromise(
+                          scoreAssetPath, oldScoreAssetPath));
+                    }
+                  }));
         } else {
-          const message = 'Error deleting: ' + err;
+          const message = 'Error moving old score asset: ' + renameErr;
           setStatus(message);
-          reject(new Error(message));
-          return;
+          console.error(message);
+          throw renameErr;
         }
-      }
-      ee.data.renameAsset(scoreAssetPath, oldScoreAssetPath, (_, err) => {
-        if (err) {
-          if (err.includes('does not exist')) {
-            // This check isn't perfect detection, but best we can do.
-            console.log(
-                'Old ' + scoreAssetPath + ' not found, did not move it');
-          } else {
-            const message = 'Error backing up: ' + err;
-            setStatus(message);
-            reject(new Error(message));
-            return;
-          }
-        }
+      })
+      .then(() => {
         task.start();
         $('#upload-status')
             .text(
                 'Check Code Editor console for upload progress. Task: ' +
                 task.id);
-        resolve(task);
+        return task;
       });
-    });
-  });
+}
+
+/**
+ * Converts {@link ee.data.renameAsset} into a Promise, by resolving/rejecting
+ * in its callback.
+ * @param {string} from See {@link ee.data.renameAsset}
+ * @param {string} to See {@link ee.data.renameAsset}
+ * @return {Promise<?Object>} Promise that resolves if rename is successful,
+ *     and completes with rejection if there is an error. The rejection is
+ *     just a string, not an `Error` because that is what EarthEngine does. The
+ *     resolve will typically be with an Object that has information about the
+ *     renamed asset, but EarthEngine doesn't guarantee that
+ */
+function renameAssetAsPromise(from, to) {
+  return new Promise(
+      (resolve, reject) => ee.data.renameAsset(from, to, (success, err) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(success);
+        }
+      }));
 }
 
 const damageError = {
