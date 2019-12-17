@@ -66,11 +66,13 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     // We add the zoom_changed listener only after the state promise finishes
     // out of an abundance of caution, so if the production code zooms for
     // some other reason at startup we won't react to that.
-    cy.wrap(Promise.all([scoreBoundsMap.stateBoundsPromise, new Promise(
-        (resolve) => google.maps.event.addListenerOnce(
-            scoreBoundsMap.map, 'zoom_changed', () => {
-              resolve();
-            }))]))
+    cy.wrap(Promise.all([scoreBoundsMap.stateBoundsPromise,
+      // new Promise(
+      //   (resolve) => google.maps.event.addListenerOnce(
+      //       scoreBoundsMap.map, 'zoom_changed', () => {
+      //         resolve();
+      //       }))
+    ]))
         .then(
             () => {
               // Has NY in view after EE promise finishes and zoom
