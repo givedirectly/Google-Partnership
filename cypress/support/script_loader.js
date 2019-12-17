@@ -155,7 +155,7 @@ const testPrefix = new Date().getTime() + '-';
 function addFirebaseHooks() {
   before(() => {
     cy.task('initializeTestFirebase', null, {
-        timeout: 10000,
+        timeout: 20000,
       }).then((token) => global.firestoreCustomToken = token);
     // Write a copy of the data to backup documents in case of accidental
     // deletion. One backup per day.
@@ -177,7 +177,7 @@ function addFirebaseHooks() {
  * @return {Cypress.Chainable<any>}
  */
 function doServerEeSetup() {
-  return cy.task('getEarthEngineToken')
+  return cy.task('getEarthEngineToken', {timeout: 20000})
       .then((token) => earthEngineCustomToken = token);
 }
 

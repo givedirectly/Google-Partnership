@@ -306,9 +306,8 @@ function createScoreAsset(
     }
 
     // Get building count by block group.
-    const buildingsHisto = buildingPath ?
-        computeBuildingsHisto(damageEnvelope, buildingPath, stateGroups) :
-        null;
+    const buildingsHisto =
+        buildingPath ? computeBuildingsHisto(buildingPath, stateGroups) : null;
 
     // Create final feature collection.
     const additionalTags = [];
@@ -411,14 +410,12 @@ function calculateDamage(assetData, setMapBoundsInfo) {
  *
  * This method will go away or be greatly changed if we're using CrowdAI data
  * instead of previously computed building data.
- * @param {ee.Geometry.Polygon} damageEnvelope Area we are concerned with
  * @param {string} buildingPath location of buildings asset in EE
  * @param {ee.FeatureCollection} stateGroups Collection with block groups
  * @return {ee.Dictionary} Number of buildings per block group
  */
-function computeBuildingsHisto(damageEnvelope, buildingPath, stateGroups) {
-  const buildings =
-      ee.FeatureCollection(buildingPath).filterBounds(damageEnvelope);
+function computeBuildingsHisto(buildingPath, stateGroups) {
+  const buildings = ee.FeatureCollection(buildingPath);
   const field = 'fieldToSaveBlockGroupUnder';
   const withBlockGroup =
       ee.Join.saveFirst(field)
