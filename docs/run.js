@@ -8,34 +8,60 @@ import {initializeAndProcessUserRegions} from './polygon_draw.js';
 import {setUserFeatureVisibility} from './popup.js';
 import {processJoinedData} from './process_joined_data.js';
 import {getBackupScoreAsset, getScoreAsset} from './resources.js';
-import {setUpToggles} from './update.js';
 import SettablePromise from './settable_promise.js';
+import {setUpToggles} from './update.js';
 
 export {createAndDisplayJoinedData, run};
 
 // For testing.
-export {drawTableAndSetUpHandlers, createScorePromise};
+export {
+  drawTableAndSetUpHandlers,
+  setScorePromiseAndReturnAssetName,
+  setScorePromises,
+};
 
 // Promise for score asset. After it's first resolved, we never need to download
 // it from EarthEngine again.
 let snapAndDamagePromise;
 const scalingFactor = 100;
 
+/**
+ * Contains `Promise<string>` with name of score asset. This is not just
+ * {@link getScoreAsset} because in the case that the asset with id
+ * {@link getScoreAsset} does not exist, we will fall back to the asset with id
+ * {@link getBackupScoreAsset}.
+ * @type {SettablePromise}
+ */
 const resolvedScoreAsset = new SettablePromise();
 
-function createScorePromise() {
+/**
+ * Sets {@link snapAndDamagePromise} to the {@link ee.FeatureCollection} with
+ * id {@link getScoreAsset}, or, if that does not exist, with id
+ * {@link getBackupScoreAsset}.
+ *
+ * @return {Promise<string>} Promise with the name of the score asset found
+ */
+function setScorePromiseAndReturnAssetName() {
   snapAndDamagePromise =
       convertEeObjectToPromise(ee.FeatureCollection(getScoreAsset()))
-      .catch((err) => {
-        if (err.endsWith('not found.')) {
-          return convertEeObjectToPromise(ee.FeatureCollection(getBackupScoreAsset()));
-        } else {
-          throw err;
-        }
-      });
-  resolvedScoreAsset.setPromise(
-      snapAndDamagePromise.then((collection) => collection.id));
-  return resolvedScoreAsset.getPromise();
+          .catch((err) => {
+            if (err.endsWith('not found.')) {
+              return convertEeObjectToPromise(
+                  ee.FeatureCollection(getBackupScoreAsset()));
+            } else {
+              throw err;
+            }
+          });
+  return snapAndDamagePromise.then((collection) => collection.id);
+}
+
+/**
+ * Calls {@link setScorePromiseAndReturnAssetName} and sets
+ * {@link resolvedScoreAsset} to the result. This is a separate function for use
+ * in tests.
+ */
+function setScorePromises() {
+  resolvedScoreAsset.setPromise(setScorePromiseAndReturnAssetName());
 }
 
 /**
@@ -50,7 +76,7 @@ function createScorePromise() {
  */
 function run(map, firebaseAuthPromise, disasterMetadataPromise) {
   setMapToDrawLayersOn(map);
-  createScorePromise();
+  setScorePromises();
   const initialTogglesValuesPromise =
       setUpToggles(disasterMetadataPromise, map);
   createAndDisplayJoinedData(map, initialTogglesValuesPromise);
@@ -88,19 +114,22 @@ function createAndDisplayJoinedData(map, initialTogglesValuesPromise) {
  * @param {google.maps.Map} map
  */
 function drawTableAndSetUpHandlers(processedData, map) {
-  Promise.all([resolvedScoreAsset.getPromise(), drawTable(processedData, map)]).then(([scoreAsset, tableSelector]) => {
-    loadingElementFinished(tableContainerId);
-    // every time we get a new table and data, reselect elements in the
-    // table based on {@code currentFeatures} in highlight_features.js.
-    selectHighlightedFeatures(tableSelector);
-    // TODO: handle ctrl+click situations
-    const clickFeatureHandler = (event) => clickFeature(
-        event.latLng.lng(), event.latLng.lat(), map, scoreAsset, tableSelector);
-    mapSelectListener = map.addListener('click', clickFeatureHandler);
-    // map.data covers clicks to map areas underneath map.data so we need
-    // two listeners
-    featureSelectListener = map.data.addListener('click', clickFeatureHandler);
-  });
+  Promise.all([resolvedScoreAsset.getPromise(), drawTable(processedData, map)])
+      .then(([scoreAsset, tableSelector]) => {
+        loadingElementFinished(tableContainerId);
+        // every time we get a new table and data, reselect elements in the
+        // table based on {@code currentFeatures} in highlight_features.js.
+        selectHighlightedFeatures(tableSelector);
+        // TODO: handle ctrl+click situations
+        const clickFeatureHandler = (event) => clickFeature(
+            event.latLng.lng(), event.latLng.lat(), map, scoreAsset,
+            tableSelector);
+        mapSelectListener = map.addListener('click', clickFeatureHandler);
+        // map.data covers clicks to map areas underneath map.data so we need
+        // two listeners
+        featureSelectListener =
+            map.data.addListener('click', clickFeatureHandler);
+      });
 }
 
 /**

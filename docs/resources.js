@@ -1,6 +1,7 @@
 import {gdEePathPrefix} from './ee_paths.js';
 
-export {getDisaster, getScoreAsset, getBackupScoreAsset};
+export {getBackupScoreAsset, getDisaster, getScoreAsset};
+
 /**
  * Determines and returns the current disaster.
  * @return {string} current disaster
@@ -18,8 +19,9 @@ function getScoreAsset() {
   return gdEePathPrefix + getDisaster() + '/data-ms-as-tot';
 }
 
+/** @return {string} EE asset path for previously created score asset */
 function getBackupScoreAsset() {
-  return gdEePathPrefix + getDisaster() + '/score-asset-previous-version'
+  return gdEePathPrefix + getDisaster() + '/score-asset-previous-version';
 }
 
 /** The default disaster. */

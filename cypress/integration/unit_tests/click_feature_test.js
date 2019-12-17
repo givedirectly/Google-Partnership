@@ -5,10 +5,8 @@ import * as loading from '../../../docs/loading.js';
 import {convertEeObjectToPromise} from '../../../docs/map_util.js';
 import {blockGroupTag, geoidTag} from '../../../docs/property_names';
 import {scoreTag} from '../../../docs/property_names.js';
-import {
-  createScorePromise,
-  drawTableAndSetUpHandlers,
-} from '../../../docs/run.js';
+import * as Resources from '../../../docs/resources.js';
+import {drawTableAndSetUpHandlers, setScorePromises} from '../../../docs/run.js';
 import {cyQueue} from '../../support/commands.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 import {convertPathToLatLng, createGoogleMap} from '../../support/test_map.js';
@@ -24,7 +22,6 @@ const missingPropertiesCorners = [-0.25, -0.25, 0, 0];
 describe('Unit tests for click_feature.js with map and table', () => {
   loadScriptsBeforeForUnitTests('ee', 'charts', 'maps');
 
-  let features;
   let scoredFeatures;
   let map;
 
@@ -39,13 +36,15 @@ describe('Unit tests for click_feature.js with map and table', () => {
     const missingPropertiesFeature =
         createFeatureWithOnlyGeoid(...missingPropertiesCorners)
             .set(blockGroupTag, 'missing properties group');
-    features = ee.FeatureCollection([
+    const features = ee.FeatureCollection([
       feature1,
       feature2,
       offMapFeature,
       zeroFeature,
       missingPropertiesFeature,
     ]);
+    // Make sure the "name" of this collection leads to itself.
+    features.id = features;
     scoredFeatures = ee.FeatureCollection([
       feature1.set(scoreTag, 1),
       feature2.set(scoreTag, 3),
@@ -53,6 +52,8 @@ describe('Unit tests for click_feature.js with map and table', () => {
       zeroFeature.set(scoreTag, 0),
       missingPropertiesFeature.set(scoreTag, 4),
     ]);
+    cy.stub(Resources, 'getScoreAsset').returns(features);
+    setScorePromises();
   });
 
   beforeEach(() => {
@@ -71,8 +72,6 @@ describe('Unit tests for click_feature.js with map and table', () => {
           if (id === tableContainerId) resolve();
         });
     createGoogleMap().then((mapResult) => map = mapResult);
-    // Make sure score asset name is known.
-    createScorePromise();
     cy.document().then((doc) => {
       // Lightly fake out prod document access.
       cy.stub(document, 'getElementById')

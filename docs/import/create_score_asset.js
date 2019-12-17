@@ -1,5 +1,5 @@
 import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, snapPercentageTag, snapPopTag, sviTag, totalPopTag, tractTag} from '../property_names.js';
-import {getScoreAsset} from '../resources.js';
+import {getBackupScoreAsset, getScoreAsset} from '../resources.js';
 import {computeAndSaveBounds} from './center.js';
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
 
@@ -321,28 +321,43 @@ function createScoreAsset(
   }
 
   const scoreAssetPath = getScoreAsset();
+  const oldScoreAssetPath = getBackupScoreAsset();
   const task = ee.batch.Export.table.toAsset(
       allStatesProcessing,
       scoreAssetPath.substring(scoreAssetPath.lastIndexOf('/') + 1),
       scoreAssetPath);
   return new Promise((resolve, reject) => {
-    ee.data.deleteAsset(scoreAssetPath, (_, err) => {
+    ee.data.deleteAsset(oldScoreAssetPath, (_, err) => {
       if (err) {
         if (err === 'Asset not found.') {
           console.log(
-              'Old ' + scoreAssetPath + ' not present, did not delete it');
+              'Old ' + oldScoreAssetPath + ' not present, did not delete it');
         } else {
           const message = 'Error deleting: ' + err;
           setStatus(message);
           reject(new Error(message));
+          return;
         }
       }
-      task.start();
-      $('#upload-status')
-          .text(
-              'Check Code Editor console for upload progress. Task: ' +
-              task.id);
-      resolve(task);
+      ee.data.renameAsset(scoreAssetPath, oldScoreAssetPath, (_, err) => {
+        if (err) {
+          if (err.includes('does not exist')) {
+            // This check isn't perfect detection, but best we can do.
+            console.log('Old ' + scoreAssetPath + ' not found, did not move it');
+          } else {
+            const message = 'Error backing up: ' + err;
+            setStatus(message);
+            reject(new Error(message));
+            return;
+          }
+        }
+        task.start();
+        $('#upload-status')
+            .text(
+                'Check Code Editor console for upload progress. Task: ' +
+                task.id);
+        resolve(task);
+      });
     });
   });
 }
