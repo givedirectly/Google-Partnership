@@ -54,7 +54,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
                      .to.eql('asset2'));
   });
 
-  it.only('no map coordinates to start', () => {
+  it('no map coordinates to start', () => {
     const data = setUpDefaultData();
     data.asset_data.score_bounds_coordinates = null;
     callEnableWhenReady(data);
