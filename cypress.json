@@ -1,4 +1,5 @@
 {
+  "defaultCommandTimeout": 40000,
   "projectId": "jr8ks8",
   "nodeVersion": "system",
   "animationDistanceThreshold": 20,
