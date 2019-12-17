@@ -174,7 +174,7 @@ function getLinearGradient(colorFunction) {
       break;
     case 1:
       const colors = [...(new Set(Object.values(colorFunction['colors'])))];
-      let percent = 100 / colors.length;
+      const percent = 100 / colors.length;
       for (let i = 1; i <= colors.length; i++) {
         gradientString += ', ' + colors[i - 1] + ' ' + (i * percent - percent) +
             '%, ' + colors[i - 1] + ' ' + i * percent + '%';
@@ -217,7 +217,7 @@ function createNewCheckboxForLayer(layer, parentDiv, map) {
  * Sets the checkbox background with a linear gradient to help users identify
  * layers.
  *
- * @param {Element} checkgox
+ * @param {Element} checkbox
  * @param {string} gradient the linear gradient for the checkbox background
  */
 function updateCheckboxBackground(checkbox, gradient) {
@@ -240,7 +240,7 @@ function updateCheckboxBackground(checkbox, gradient) {
 function createCheckboxForUserFeatures(parentDiv) {
   const newBox = createNewCheckbox(
       'user-features', 'user features', parentDiv,
-      {color: '#4CEF64', 'current-style': 2});
+      {'color': '#4CEF64', 'current-style': 2});
   newBox.checked = true;
   newBox.onclick = () => setUserFeatureVisibility(newBox.checked);
 }
@@ -272,7 +272,7 @@ function addLayers(map, firebaseLayers) {
         'display-name': scoreLayerName,
         'index': scoreLayerName,
         'display-on-load': true,
-        'color-function': {color: 'pink', 'current-style': 0},
+        'color-function': {'color': '#ff00ff', 'current-style': 0},
       },
       sidebarDiv, map);
 }
