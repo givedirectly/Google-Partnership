@@ -11,7 +11,6 @@ export {
   createAssetPickers,
   createLayerRow,
   createOptionFrom,
-  createStateAssetPickers,
   createTd,
   onCheck,
   onDelete,
@@ -328,29 +327,8 @@ function populateStateAndDisasterAssetPickers(disaster) {
   for (const state of states) {
     if (!stateAssets.has(state)) statesToFetch.push(state);
   }
-  // TODO: add functionality to re-pull all cached states from ee without
-  // reloading the page.
-  if (statesToFetch.length === 0) {
-    createStateAssetPickers(states);
-  } else {
-    const statesDone = getStatesAssetsFromEe(statesToFetch).then((assets) => {
-      for (const asset of assets) {
-        stateAssets.set(asset[0], asset[1]);
-      }
-      createStateAssetPickers(states);
-    });
-    promises.push(statesDone);
-  }
 
   return Promise.all(promises);
-}
-
-/**
- * Create asset pickers for the given states.
- * @param {Array<string>} states of the form ['WA', ...]
- */
-function createStateAssetPickers(states) {
-  createAssetPickers(states, stateAssets, $('#state-asset-pickers'));
 }
 
 /**
