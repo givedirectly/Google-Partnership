@@ -2,7 +2,7 @@ import {Authenticator} from './authenticate.js';
 import createMap from './create_map.js';
 import {readDisasterDocument} from './firestore_document.js';
 import {loadNavbarWithPicker} from './navbar.js';
-import run from './run.js';
+import {run} from './run.js';
 import SettablePromise from './settable_promise.js';
 import {initializeSidebar} from './sidebar.js';
 import TaskAccumulator from './task_accumulator.js';

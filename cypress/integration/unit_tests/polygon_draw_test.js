@@ -79,7 +79,7 @@ describe('Unit test for ShapeData', () => {
       ee.Feature(ee.Geometry.Point([200, 200])),
     ]);
     // Use our custom EarthEngine FeatureCollections.
-    cy.stub(resourceGetter, 'getScoreAsset').returns(scoreCollection);
+    cy.stub(resourceGetter, 'getScoreAssetPath').returns(scoreCollection);
 
     setUpPage();
   });
