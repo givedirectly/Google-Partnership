@@ -2,6 +2,7 @@ import {tableContainerId} from '../../../docs/dom_constants.js';
 import {tableHeadings} from '../../../docs/draw_table.js';
 import {currentFeatures} from '../../../docs/highlight_features';
 import * as loading from '../../../docs/loading.js';
+import * as MapUtil from '../../../docs/map_util.js';
 import {convertEeObjectToPromise} from '../../../docs/map_util.js';
 import {blockGroupTag, geoidTag} from '../../../docs/property_names';
 import {scoreTag} from '../../../docs/property_names.js';
@@ -22,6 +23,7 @@ const missingPropertiesCorners = [-0.25, -0.25, 0, 0];
 describe('Unit tests for click_feature.js with map and table', () => {
   loadScriptsBeforeForUnitTests('ee', 'charts', 'maps');
 
+  let features;
   let scoredFeatures;
   let map;
 
@@ -36,15 +38,13 @@ describe('Unit tests for click_feature.js with map and table', () => {
     const missingPropertiesFeature =
         createFeatureWithOnlyGeoid(...missingPropertiesCorners)
             .set(blockGroupTag, 'missing properties group');
-    const features = ee.FeatureCollection([
+    features = ee.FeatureCollection([
       feature1,
       feature2,
       offMapFeature,
       zeroFeature,
       missingPropertiesFeature,
     ]);
-    // Make sure the "name" of this collection leads to itself.
-    features.id = features;
     scoredFeatures = ee.FeatureCollection([
       feature1.set(scoreTag, 1),
       feature2.set(scoreTag, 3),
@@ -52,13 +52,22 @@ describe('Unit tests for click_feature.js with map and table', () => {
       zeroFeature.set(scoreTag, 0),
       missingPropertiesFeature.set(scoreTag, 4),
     ]);
-    cy.stub(Resources, 'getScoreAsset').returns(features);
-    setScorePromises();
   });
 
   beforeEach(() => {
     currentFeatures.clear();
     setUpPage();
+    cy.stub(Resources, 'getScoreAsset').returns(features);
+    const oldConvertToPromise = MapUtil.convertEeObjectToPromise;
+    MapUtil.convertEeObjectToPromise = (eeObject) => {
+      MapUtil.convertEeObjectToPromise = oldConvertToPromise;
+      const result = MapUtil.convertEeObjectToPromise(eeObject);
+      return result.then((obj) => {
+        obj.id = eeObject;
+        return obj;
+      });
+    };
+    setScorePromises();
   });
 
   /**
@@ -93,6 +102,7 @@ describe('Unit tests for click_feature.js with map and table', () => {
   }
 
   it('clicks on a feature on the map, then unclicks it', () => {
+    console.log('got here');
     clickAndVerifyBlockGroup();
     cy.wait(waitBeforeClick);
     cy.get('#test-map-div').click(500, 100);

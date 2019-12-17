@@ -66,7 +66,8 @@ function setScorePromiseAndReturnAssetName() {
  * in tests.
  */
 function setScorePromises() {
-  resolvedScoreAsset.setPromise(setScorePromiseAndReturnAssetName());
+  const scorePromiseAndReturnAssetName = setScorePromiseAndReturnAssetName();
+  resolvedScoreAsset.setPromise(scorePromiseAndReturnAssetName);
 }
 
 /**
