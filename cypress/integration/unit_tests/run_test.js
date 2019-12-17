@@ -6,7 +6,7 @@ import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 describe('Unit test for run.js', () => {
   loadScriptsBeforeForUnitTests('ee');
   let errorStub;
-  beforeEach(() => errorStub = cy.stub(Snackbar, 'showError'));
+  beforeEach(() => errorStub = cy.stub(Error, 'showError'));
 
   it('Score asset present', () => {
     const assetName = 'TIGER/2018/States';

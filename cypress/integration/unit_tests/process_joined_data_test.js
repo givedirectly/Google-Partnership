@@ -1,4 +1,4 @@
-import processJoinedData from '../../../docs/process_joined_data.js';
+import {processJoinedData} from '../../../docs/process_joined_data.js';
 
 const featureProperties = {
   'SNAP HOUSEHOLDS': 2,
