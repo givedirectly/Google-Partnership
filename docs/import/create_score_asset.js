@@ -343,7 +343,8 @@ function createScoreAsset(
         if (err) {
           if (err.includes('does not exist')) {
             // This check isn't perfect detection, but best we can do.
-            console.log('Old ' + scoreAssetPath + ' not found, did not move it');
+            console.log(
+                'Old ' + scoreAssetPath + ' not found, did not move it');
           } else {
             const message = 'Error backing up: ' + err;
             setStatus(message);
