@@ -1,25 +1,62 @@
 import {clickFeature, selectHighlightedFeatures} from './click_feature.js';
 import {sidebarDatasetsId, tableContainerId} from './dom_constants.js';
 import {drawTable} from './draw_table.js';
+import {showError} from './error.js';
 import {addLayer, addNullLayer, addScoreLayer, scoreLayerName, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from './layer_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {convertEeObjectToPromise} from './map_util.js';
 import {initializeAndProcessUserRegions} from './polygon_draw.js';
 import {setUserFeatureVisibility} from './popup.js';
-import processJoinedData from './process_joined_data.js';
-import {getScoreAsset} from './resources.js';
+import {processJoinedData} from './process_joined_data.js';
+import {getBackupScoreAssetPath, getScoreAssetPath} from './resources.js';
 import {setUpToggles} from './update.js';
 
-export {
-  createAndDisplayJoinedData,
-  drawTableAndSetUpHandlers,
-  run as default,
-};
+export {createAndDisplayJoinedData, run};
+
+// For testing.
+export {drawTableAndSetUpHandlers, setScorePromises};
 
 // Promise for score asset. After it's first resolved, we never need to download
 // it from EarthEngine again.
-let snapAndDamagePromise;
+let scorePromise;
 const scalingFactor = 100;
+
+/**
+ * Contains name of score asset. This is not just {@link getScoreAssetPath}
+ * because in the case that the asset with id {@link getScoreAssetPath} does not
+ * exist, we will fall back to the asset with id
+ * {@link getBackupScoreAssetPath}. Only assigned once, except in tests.
+ * @type {Promise<string>}
+ */
+let resolvedScoreAsset;
+
+/**
+ * Sets {@link scorePromise} to the {@link ee.FeatureCollection} with
+ * id {@link getScoreAssetPath}, or, if that does not exist, with id
+ * {@link getBackupScoreAssetPath}.  Sets {@link resolvedScoreAsset} to the id
+ * of the found collection.
+ *
+ * @return {Promise<string>} Promise with the name of the score asset found,
+ *     only needed by tests.
+ */
+function setScorePromises() {
+  scorePromise =
+      convertEeObjectToPromise(ee.FeatureCollection(getScoreAssetPath()))
+          .catch((err) => {
+            if (err.endsWith('not found.')) {
+              showError(
+                  'Primary score asset not found. Checking to see if ' +
+                      'backup exists',
+                  null);
+              return convertEeObjectToPromise(
+                  ee.FeatureCollection(getBackupScoreAssetPath()));
+            } else {
+              throw err;
+            }
+          });
+  resolvedScoreAsset = scorePromise.then((collection) => collection.id);
+  return resolvedScoreAsset;
+}
 
 /**
  * Main function that processes the known layers (damage, SNAP) and
@@ -33,12 +70,10 @@ const scalingFactor = 100;
  */
 function run(map, firebaseAuthPromise, disasterMetadataPromise) {
   setMapToDrawLayersOn(map);
-  const scoreAsset = getScoreAsset();
-  snapAndDamagePromise =
-      convertEeObjectToPromise(ee.FeatureCollection(scoreAsset));
+  setScorePromises();
   const initialTogglesValuesPromise =
       setUpToggles(disasterMetadataPromise, map);
-  createAndDisplayJoinedData(map, initialTogglesValuesPromise, scoreAsset);
+  createAndDisplayJoinedData(map, initialTogglesValuesPromise);
   initializeAndProcessUserRegions(map, disasterMetadataPromise);
   disasterMetadataPromise.then((doc) => addLayers(map, doc.data().layers));
 }
@@ -50,22 +85,20 @@ let featureSelectListener = null;
  * Creates the score overlay and draws the table
  *
  * @param {google.maps.Map} map main map
- * @param {Promise<Array<number>>} initialTogglesValuesPromise promise
- * that returns the poverty and damage thresholds and the poverty weight (from
- * which the damage weight is derived).
- * @param {string} scoreAsset
+ * @param {Promise<Array<number>>} initialTogglesValuesPromise promise that
+ *     returns the poverty and damage thresholds and the poverty weight (from
+ *     which the damage weight is derived).
  */
-function createAndDisplayJoinedData(
-    map, initialTogglesValuesPromise, scoreAsset) {
+function createAndDisplayJoinedData(map, initialTogglesValuesPromise) {
   addLoadingElement(tableContainerId);
   // clear old listeners
   google.maps.event.removeListener(mapSelectListener);
   google.maps.event.removeListener(featureSelectListener);
   const processedData = processJoinedData(
-      snapAndDamagePromise, scalingFactor, initialTogglesValuesPromise);
+      scorePromise, scalingFactor, initialTogglesValuesPromise);
   addScoreLayer(processedData);
   maybeCheckScoreCheckbox();
-  drawTableAndSetUpHandlers(processedData, map, scoreAsset);
+  drawTableAndSetUpHandlers(processedData, map);
 }
 
 /**
@@ -73,22 +106,24 @@ function createAndDisplayJoinedData(
  * handlers for the map.
  * @param {Promise<Array<GeoJson.Feature>>} processedData
  * @param {google.maps.Map} map
- * @param {string} scoreAsset EE path to score asset FeatureCollection
  */
-function drawTableAndSetUpHandlers(processedData, map, scoreAsset) {
-  drawTable(processedData, map).then((tableSelector) => {
-    loadingElementFinished(tableContainerId);
-    // every time we get a new table and data, reselect elements in the
-    // table based on {@code currentFeatures} in highlight_features.js.
-    selectHighlightedFeatures(tableSelector);
-    // TODO: handle ctrl+click situations
-    const clickFeatureHandler = (event) => clickFeature(
-        event.latLng.lng(), event.latLng.lat(), map, scoreAsset, tableSelector);
-    mapSelectListener = map.addListener('click', clickFeatureHandler);
-    // map.data covers clicks to map areas underneath map.data so we need
-    // two listeners
-    featureSelectListener = map.data.addListener('click', clickFeatureHandler);
-  });
+function drawTableAndSetUpHandlers(processedData, map) {
+  Promise.all([resolvedScoreAsset, drawTable(processedData, map)])
+      .then(([scoreAsset, tableSelector]) => {
+        loadingElementFinished(tableContainerId);
+        // every time we get a new table and data, reselect elements in the
+        // table based on {@code currentFeatures} in highlight_features.js.
+        selectHighlightedFeatures(tableSelector);
+        // TODO: handle ctrl+click situations
+        const clickFeatureHandler = (event) => clickFeature(
+            event.latLng.lng(), event.latLng.lat(), map, scoreAsset,
+            tableSelector);
+        mapSelectListener = map.addListener('click', clickFeatureHandler);
+        // map.data covers clicks to map areas underneath map.data so we need
+        // two listeners
+        featureSelectListener =
+            map.data.addListener('click', clickFeatureHandler);
+      });
 }
 
 /**

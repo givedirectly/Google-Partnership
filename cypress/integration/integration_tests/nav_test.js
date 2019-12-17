@@ -13,6 +13,7 @@ describe('Integration test for the navbar', () => {
         .eq(0)
         .contains('2018-michael');
     cy.get('#disaster-dropdown').select('2018-michael');
+    cy.awaitLoad();
 
     // The page should now be switched to the Michael disaster.
     cy.get('.google-visualization-table-td').contains('Florida');

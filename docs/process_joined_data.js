@@ -1,6 +1,6 @@
 import {damageTag, scoreTag, snapPercentageTag} from './property_names.js';
 
-export {processJoinedData as default};
+export {processJoinedData};
 
 const scoreDisplayCap = 255;
 
