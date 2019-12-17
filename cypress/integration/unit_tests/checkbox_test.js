@@ -57,7 +57,7 @@ const mockFirebaseLayers = [
     // Put in a blank line at end, since that might happen in real life.
     'urls': [
       'https://www.nhc.noaa.gov/storm_graphics/api/AL092017_043adv_CONE.kmz',
-        '',
+      '',
     ],
     'display-name': 'tiles',
     'display-on-load': false,
