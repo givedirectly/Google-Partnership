@@ -54,7 +54,6 @@ function setScorePromises() {
               throw err;
             }
           });
-  console.log(scorePromise);
   resolvedScoreAsset = scorePromise.then((collection) => collection.id);
   return resolvedScoreAsset;
 }
