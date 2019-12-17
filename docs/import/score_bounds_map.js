@@ -1,5 +1,5 @@
 import {applyMinimumBounds, createBasicMap} from '../basic_map.js';
-import {addLayer, addNullLayer, setMapToDrawLayersOn} from '../layer_util.js';
+import {addLayer, setMapToDrawLayersOn} from '../layer_util.js';
 import {convertEeObjectToPromise} from '../map_util.js';
 
 export {ScoreBoundsMap};
