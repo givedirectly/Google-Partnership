@@ -42,8 +42,7 @@ describe('Unit test for run.js', () => {
         .returns('nonexistent/feature/collection');
     cy.stub(Resources, 'getBackupScoreAssetPath').returns('another/bad/asset');
     const promise = setScorePromises().then(
-        (result) => assert.fail(null, null, 'unexpected: ' + result),
-        (err) => {
+        (result) => assert.fail(null, null, 'unexpected: ' + result), (err) => {
           expect(err).to.contain('another/bad/asset');
           expect(err).to.contain('not found.');
         });

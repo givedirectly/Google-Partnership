@@ -18,11 +18,11 @@ function getDisaster() {
  * EarthEngine path to score asset.
  *
  * This asset may be absent while it is being created. If a previous version of
- * the asset was created, it will be present under {@link getBackupScoreAssetPath}.
- * Therefore, this function should only be called when creating the score asset
- * and inside run.js when constructing the score asset promise. Naively calling
- * it could result in errors during the time when the score asset is being
- * updated.
+ * the asset was created, it will be present under {@link
+ * getBackupScoreAssetPath}. Therefore, this function should only be called when
+ * creating the score asset and inside run.js when constructing the score asset
+ * promise. Naively calling it could result in errors during the time when the
+ * score asset is being updated.
  * @return {string}
  */
 function getScoreAssetPath() {
