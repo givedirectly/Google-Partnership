@@ -1,4 +1,6 @@
 import {applyMinimumBounds, createBasicMap} from '../basic_map.js';
+import {sidebarDatasetsId} from '../dom_constants.js';
+import {addLayer, addNullLayer, scoreLayerName} from '../layer_util.js';
 import {convertEeObjectToPromise} from '../map_util.js';
 
 export {ScoreBoundsMap};
@@ -92,7 +94,7 @@ class ScoreBoundsMap {
    * @param {Array<string>} states Two-letter abbreviations for affected states/
    *     territories. Only used if polygon not given, to center/zoom map
    */
-  initialize(polygonCoordinates, states) {
+  initialize(polygonCoordinates, states, mapLayers) {
     if (this.polygon) {
       this._removePolygon();
     }
@@ -107,6 +109,7 @@ class ScoreBoundsMap {
                               .bounds();
       this.stateBoundsPromise = convertEeObjectToPromise(stateBounds);
     }
+    addLayers(this.map, mapLayers);
   }
 
   /**
@@ -237,4 +240,28 @@ ScoreBoundsMap._createStateFilter = (states) => {
  */
 function latLngLiteralFromArray(array) {
   return {lng: array[0], lat: array[1]};
+}
+
+
+/**
+ * Runs through layers list. For those that we auto-display on page load,
+ * creates overlays and displays. Also creates checkboxes.
+ *
+ * @param {google.maps.Map} map main map
+ * @param {Array<Object>} firebaseLayers layer metadata retrieved from
+ *     Firestore, ordered by the order they should be drawn on the map (higher
+ *     indices are displayed over lower ones)
+ */
+function addLayers(map, firebaseLayers) {
+  // const sidebarDiv = document.getElementById(sidebarDatasetsId);
+  for (let i = 0; i < firebaseLayers.length; i++) {
+    const properties = firebaseLayers[i];
+    properties['index'] = i;
+    if (properties['display-on-load']) {
+      addLayer(properties, map);
+    } else {
+      addNullLayer(properties);
+    }
+    // createNewCheckboxForLayer(properties, sidebarDiv, map);
+  }
 }
