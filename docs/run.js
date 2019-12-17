@@ -1,6 +1,7 @@
 import {clickFeature, selectHighlightedFeatures} from './click_feature.js';
 import {sidebarDatasetsId, tableContainerId} from './dom_constants.js';
 import {drawTable} from './draw_table.js';
+import {showError} from './error.js';
 import {addLayer, addNullLayer, addScoreLayer, scoreLayerName, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from './layer_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {convertEeObjectToPromise} from './map_util.js';
@@ -46,6 +47,10 @@ function setScorePromiseAndReturnAssetName() {
       convertEeObjectToPromise(ee.FeatureCollection(getScoreAsset()))
           .catch((err) => {
             if (err.endsWith('not found.')) {
+              showError(
+                  'Primary score asset not found. Checking to see if ' +
+                      'backup exists',
+                  null);
               return convertEeObjectToPromise(
                   ee.FeatureCollection(getBackupScoreAsset()));
             } else {

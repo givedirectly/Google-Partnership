@@ -1,9 +1,13 @@
+import * as Error from '../../../docs/error.js';
 import * as Resources from '../../../docs/resources.js';
 import {setScorePromiseAndReturnAssetName} from '../../../docs/run.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
 describe('Unit test for run.js', () => {
   loadScriptsBeforeForUnitTests('ee');
+  let errorStub;
+  beforeEach(() => errorStub = cy.stub(Snackbar, 'showError'));
+
   it('Score asset present', () => {
     const assetName = 'TIGER/2018/States';
     cy.stub(Resources, 'getScoreAsset').returns(assetName);
@@ -11,6 +15,7 @@ describe('Unit test for run.js', () => {
     cy.wrap(setScorePromiseAndReturnAssetName()).then((result) => {
       expect(result).to.equal(assetName);
       expect(backupStub).to.not.be.called;
+      expect(errorStub).to.not.be.called;
     });
   });
 
@@ -19,8 +24,10 @@ describe('Unit test for run.js', () => {
         .returns('nonexistent/feature/collection');
     const backupName = 'TIGER/2018/States';
     cy.stub(Resources, 'getBackupScoreAsset').returns(backupName);
-    cy.wrap(setScorePromiseAndReturnAssetName())
-        .then((result) => expect(result).to.equal(backupName));
+    cy.wrap(setScorePromiseAndReturnAssetName()).then((result) => {
+      expect(result).to.equal(backupName);
+      expect(errorStub).to.be.calledOnce;
+    });
   });
 
 
@@ -36,6 +43,6 @@ describe('Unit test for run.js', () => {
           expect(err).to.contain('another/bad/asset');
           expect(err).to.contain('not found.');
         });
-    cy.wrap(promise);
+    cy.wrap(promise).then(() => expect(errorStub).to.be.calledOnce);
   });
 });
