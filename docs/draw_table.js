@@ -78,9 +78,16 @@ function renderTable(list, features, map, selectorReceiver) {
   dataView.hideColumns([0]);
   const table =
       new google.visualization.Table(document.getElementById('table'));
-  table.draw(
-      dataView,
-      {page: 'enable', pageSize: 25, sortColumn: 1, sortAscending: false});
+  table.draw(dataView, {
+    page: 'enable',
+    pageSize: 25,
+    sortColumn: 1,
+    sortAscending: false,
+    cssClassNames: {
+      'headerRow': 'table-header',
+      'headerCell': 'header-cell',
+    },
+  });
   const tableSelector = new TableSelector(table, list);
   selectorReceiver((geoids) => tableSelector.selectRowsFor(geoids));
 
