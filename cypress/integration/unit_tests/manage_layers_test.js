@@ -9,7 +9,6 @@ import {createAndAppend, createTrs, setDisasterAndLayers, setUpSavingStubs, wait
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
 const KNOWN_STATE = 'WF';
-const UNKNOWN_STATE = 'DN';
 const KNOWN_STATE_ASSET = gdEeStatePrefix + KNOWN_STATE + '/snap';
 
 describe('Unit tests for manage_layers page', () => {
