@@ -45,7 +45,8 @@ const mockFirebaseLayers = [
   {
     'ee-name': 'tile_asset',
     'asset-type': LayerType.MAP_TILES,
-    'urls': ['tile-url1/{X}/{Y}/{Z}', 'tile-url2/{X}/{Y}/{Z}'],
+    // Put in a blank line at end, since that might happen in real life.
+    'urls': ['tile-url1/{X}/{Y}/{Z}', 'tile-url2/{X}/{Y}/{Z}', ''],
     'display-name': 'tiles',
     'display-on-load': true,
     'index': 4,

@@ -341,6 +341,10 @@ function addTileLayer(map, layer) {
   layerArray[layer['index']] = layerDisplayData;
   const urlPromises = [];
   for (const url of layer['urls']) {
+    if (!url) {
+      // Be gentle with blank lines.
+      continue;
+    }
     // Case-insensitive regexp match.
     if (url.match(/{Z}/i) && url.match(/{Y}/i) && url.match(/{X}/i)) {
       urlPromises.push(Promise.resolve(url));
