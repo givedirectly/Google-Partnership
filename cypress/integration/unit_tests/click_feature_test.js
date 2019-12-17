@@ -57,7 +57,7 @@ describe('Unit tests for click_feature.js with map and table', () => {
   beforeEach(() => {
     currentFeatures.clear();
     setUpPage();
-    cy.stub(Resources, 'getScoreAsset').returns(features);
+    cy.stub(Resources, 'getScoreAssetPath').returns(features);
     const oldConvertToPromise = MapUtil.convertEeObjectToPromise;
     MapUtil.convertEeObjectToPromise = (eeObject) => {
       MapUtil.convertEeObjectToPromise = oldConvertToPromise;
@@ -102,7 +102,6 @@ describe('Unit tests for click_feature.js with map and table', () => {
   }
 
   it('clicks on a feature on the map, then unclicks it', () => {
-    console.log('got here');
     clickAndVerifyBlockGroup();
     cy.wait(waitBeforeClick);
     cy.get('#test-map-div').click(500, 100);

@@ -2,49 +2,54 @@ import {clickFeature, selectHighlightedFeatures} from './click_feature.js';
 import {sidebarDatasetsId, tableContainerId} from './dom_constants.js';
 import {drawTable} from './draw_table.js';
 import {showError} from './error.js';
-import {addLayer, addNullLayer, addScoreLayer, scoreLayerName, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from './layer_util.js';
+import {
+  addLayer,
+  addNullLayer,
+  addScoreLayer,
+  scoreLayerName,
+  setMapToDrawLayersOn,
+  toggleLayerOff,
+  toggleLayerOn,
+} from './layer_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {convertEeObjectToPromise} from './map_util.js';
 import {initializeAndProcessUserRegions} from './polygon_draw.js';
 import {setUserFeatureVisibility} from './popup.js';
 import {processJoinedData} from './process_joined_data.js';
-import {getBackupScoreAsset, getScoreAsset} from './resources.js';
-import SettablePromise from './settable_promise.js';
+import {getBackupScoreAssetPath, getScoreAssetPath} from './resources.js';
 import {setUpToggles} from './update.js';
 
 export {createAndDisplayJoinedData, run};
 
 // For testing.
-export {
-  drawTableAndSetUpHandlers,
-  setScorePromiseAndReturnAssetName,
-  setScorePromises,
-};
+export {drawTableAndSetUpHandlers, setScorePromises};
 
 // Promise for score asset. After it's first resolved, we never need to download
 // it from EarthEngine again.
-let snapAndDamagePromise;
+let scorePromise;
 const scalingFactor = 100;
 
 /**
- * Contains `Promise<string>` with name of score asset. This is not just
- * {@link getScoreAsset} because in the case that the asset with id
- * {@link getScoreAsset} does not exist, we will fall back to the asset with id
- * {@link getBackupScoreAsset}.
- * @type {SettablePromise}
+ * Contains name of score asset. This is not just {@link getScoreAssetPath}
+ * because in the case that the asset with id {@link getScoreAssetPath} does not
+ * exist, we will fall back to the asset with id
+ * {@link getBackupScoreAssetPath}. Only assigned once, except in tests.
+ * @type {Promise<string>}
  */
-const resolvedScoreAsset = new SettablePromise();
+let resolvedScoreAsset;
 
 /**
- * Sets {@link snapAndDamagePromise} to the {@link ee.FeatureCollection} with
- * id {@link getScoreAsset}, or, if that does not exist, with id
- * {@link getBackupScoreAsset}.
+ * Sets {@link scorePromise} to the {@link ee.FeatureCollection} with
+ * id {@link getScoreAssetPath}, or, if that does not exist, with id
+ * {@link getBackupScoreAssetPath}.  Sets {@link resolvedScoreAsset} to the id
+ * of the found collection.
  *
- * @return {Promise<string>} Promise with the name of the score asset found
+ * @return {Promise<string>} Promise with the name of the score asset found,
+ *     only needed by tests.
  */
-function setScorePromiseAndReturnAssetName() {
-  snapAndDamagePromise =
-      convertEeObjectToPromise(ee.FeatureCollection(getScoreAsset()))
+function setScorePromises() {
+  scorePromise =
+      convertEeObjectToPromise(ee.FeatureCollection(getScoreAssetPath()))
           .catch((err) => {
             if (err.endsWith('not found.')) {
               showError(
@@ -52,22 +57,14 @@ function setScorePromiseAndReturnAssetName() {
                       'backup exists',
                   null);
               return convertEeObjectToPromise(
-                  ee.FeatureCollection(getBackupScoreAsset()));
+                  ee.FeatureCollection(getBackupScoreAssetPath()));
             } else {
               throw err;
             }
           });
-  return snapAndDamagePromise.then((collection) => collection.id);
-}
-
-/**
- * Calls {@link setScorePromiseAndReturnAssetName} and sets
- * {@link resolvedScoreAsset} to the result. This is a separate function for use
- * in tests.
- */
-function setScorePromises() {
-  const scorePromiseAndReturnAssetName = setScorePromiseAndReturnAssetName();
-  resolvedScoreAsset.setPromise(scorePromiseAndReturnAssetName);
+  console.log(scorePromise);
+  resolvedScoreAsset = scorePromise.then((collection) => collection.id);
+  return resolvedScoreAsset;
 }
 
 /**
@@ -107,7 +104,7 @@ function createAndDisplayJoinedData(map, initialTogglesValuesPromise) {
   google.maps.event.removeListener(mapSelectListener);
   google.maps.event.removeListener(featureSelectListener);
   const processedData = processJoinedData(
-      snapAndDamagePromise, scalingFactor, initialTogglesValuesPromise);
+      scorePromise, scalingFactor, initialTogglesValuesPromise);
   addScoreLayer(processedData);
   maybeCheckScoreCheckbox();
   drawTableAndSetUpHandlers(processedData, map);

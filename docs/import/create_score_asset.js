@@ -1,5 +1,5 @@
 import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, snapPercentageTag, snapPopTag, sviTag, totalPopTag, tractTag} from '../property_names.js';
-import {getBackupScoreAsset, getScoreAsset} from '../resources.js';
+import {getBackupScoreAssetPath, getScoreAssetPath} from '../resources.js';
 import {computeAndSaveBounds} from './center.js';
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
 
@@ -320,8 +320,8 @@ function createScoreAsset(
     allStatesProcessing = allStatesProcessing.merge(processing);
   }
 
-  const scoreAssetPath = getScoreAsset();
-  const oldScoreAssetPath = getBackupScoreAsset();
+  const scoreAssetPath = getScoreAssetPath();
+  const oldScoreAssetPath = getBackupScoreAssetPath();
   const task = ee.batch.Export.table.toAsset(
       allStatesProcessing,
       scoreAssetPath.substring(scoreAssetPath.lastIndexOf('/') + 1),
