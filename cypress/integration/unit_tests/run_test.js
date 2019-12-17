@@ -13,11 +13,12 @@ import SettablePromise from '../../../docs/settable_promise.js';
 
 describe('Unit test for run.js', () => {
   loadScriptsBeforeForUnitTests('ee', 'deck', 'maps');
-  it('Score asset not present, but backup is', () => {
+  xit('Score asset not present, but backup is', () => {
     cy.stub(Update, 'createToggles');
     cy.stub(PolygonDraw, 'initializeAndProcessUserRegions');
     cy.stub(LayerUtil, 'setMapToDrawLayersOn');
-    cy.stub(ProcessJoinedData, 'processJoinedData').callsFake((promise) => promise);
+    cy.stub(ProcessJoinedData, 'processJoinedData').
+        callsFake((promise) => promise);
     cy.stub(LayerUtil, 'addScoreLayer');
     const promiseGivenToDrawTable = new SettablePromise();
     cy.stub(DrawTable, 'drawTable').callsFake((promise) => {
@@ -26,19 +27,36 @@ describe('Unit test for run.js', () => {
     });
     cy.stub(Loading, 'addLoadingElement');
     cy.stub(ClickFeature, 'selectHighlightedFeatures');
-    cy.stub(Resources, 'getScoreAsset').returns('nonexistent/feature/collection');
-    cy.stub(Resources, 'getBackupScoreAsset').returns(ee.FeatureCollection([ee.Feature(ee.Geometry.Point([0, 0]), {property: 'value'})]));
+    cy.stub(Resources, 'getScoreAsset').
+        returns('nonexistent/feature/collection');
+    cy.stub(Resources, 'getBackupScoreAsset').
+        returns(ee.FeatureCollection(
+            [ee.Feature(ee.Geometry.Point([0, 0]), {property: 'value'})]));
     cy.stub(Loading, 'loadingElementFinished');
-    const fakeMap = {addListener: () => {}, data: {addListener: () => {}}};
-    run(null, null, new Promise(() => {}));
+    const fakeMap = {
+      addListener: () => {
+      }, data: {
+        addListener: () => {
+        }
+      }
+    };
+    run(null, null, new Promise(() => {
+    }));
     cy.wrap(promiseGivenToDrawTable.getPromise()).then((result) => {
       expect(result.features).to.have.length(1);
-      expect(result.features[0].properties).to.have.property('property', 'value');
+      expect(result.features[0].properties).
+          to.
+          have.
+          property('property', 'value');
     });
   });
 
   it('Score asset not present, but backup is', () => {
-    cy.stub(Resources, 'getScoreAsset').returns('nonexistent/feature/collection');
-    cy.stub(Resources, 'getBackupScoreAsset').returns(ee.FeatureCollection([ee.Feature(ee.Geometry.Point([0, 0]), {property: 'value'})]));
-    cy.wrap(createScorePromise()).then()
+    cy.stub(Resources, 'getScoreAsset').
+        returns('nonexistent/feature/collection');
+    cy.stub(Resources, 'getBackupScoreAsset').
+        returns(ee.FeatureCollection(
+            [ee.Feature(ee.Geometry.Point([0, 0]), {property: 'value'})]));
+    cy.wrap(createScorePromise()).then(console.log);
   });
+});
