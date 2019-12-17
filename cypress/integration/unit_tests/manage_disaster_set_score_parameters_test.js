@@ -69,11 +69,16 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
                      .to.eql('asset2'));
   });
 
-  const allStateAssetsMissingText =
-      'Missing asset(s): Poverty, Income, SVI, Census TIGER Shapefiles, ' +
-      'Microsoft Building Shapefiles';
-  const allMissingText = allStateAssetsMissingText +
-      ', and must specify either damage asset or map bounds';
+  const allMandatoryMissingText =
+      'Missing asset(s): Poverty, Census TIGER Shapefiles';
+  const alwaysOptionalMissing =
+      '; warning: created asset will be missing Income, SVI';
+  const allOptionalMissing = alwaysOptionalMissing + ', Building counts';
+  const allStateAssetsMissingWithDamageAssetText = allMandatoryMissingText +
+      ', Microsoft Building Shapefiles' + alwaysOptionalMissing;
+  const allMissingText = allMandatoryMissingText +
+      ', and must specify either damage asset or map bounds' +
+      allOptionalMissing;
 
   it('validates asset data', () => {
     const boundsChanged = new Promise((resolve) => {
@@ -103,7 +108,6 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     cy.stub(window, 'confirm').returns(true);
 
     cy.get('.score-bounds-delete-button').click();
-    // We've only set the score region, so the button is not enabled.
     cy.get('#process-button').should('be.disabled');
     cy.get('#process-button')
         .should('have.text', allMissingText)
@@ -112,25 +116,29 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
                 scoreBoundsMap._createPolygonOptions(scoreBoundsCoordinates),
                 scoreBoundsMap.drawingManager));
 
-    cy.get('#process-button').should('have.text', allStateAssetsMissingText);
+    cy.get('#process-button')
+        .should('have.text', allMandatoryMissingText + allOptionalMissing);
     cy.get('.score-bounds-delete-button').click();
     cy.get('#process-button').should('have.text', allMissingText);
 
     // Specifying the damage asset works too.
     cy.get('#damage-asset-select').select('asset2').blur();
-    cy.get('#process-button').should('have.text', allStateAssetsMissingText);
+    cy.get('#process-button')
+        .should('have.text', allStateAssetsMissingWithDamageAssetText);
 
     // Setting one asset has the expected effect.
     setFirstSelectInScoreRow(0);
     cy.get('#process-button')
         .should(
             'have.text',
-            'Missing asset(s): Income, SVI, Census TIGER Shapefiles, ' +
-                'Microsoft Building Shapefiles');
+            'Missing asset(s): Census TIGER Shapefiles, Microsoft ' +
+                'Building Shapefiles; warning: created asset will be missing ' +
+                'Income, SVI');
     cy.get('#process-button').should('be.disabled');
     // Clear that select: back where we started.
     setFirstSelectInScoreRow(0).select('').blur();
-    cy.get('#process-button').should('have.text', allStateAssetsMissingText);
+    cy.get('#process-button')
+        .should('have.text', allStateAssetsMissingWithDamageAssetText);
     // Now set all the per-state assets.
     for (let i = 0; i < scoreAssetTypes.length; i++) {
       setFirstSelectInScoreRow(i);
@@ -138,7 +146,37 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     // Yay! We're ready to go.
     cy.get('#process-button')
         .should('have.text', 'Kick off Data Processing (will take a while!)');
-    cy.get('#process-button').should('be.enabled');
+    cy.get('#process-button')
+        .should('be.enabled')
+        .should('have.css', 'background-color')
+        .and('eq', 'rgb(0, 128, 0)');
+    // Getting rid of income keeps enabled, but warns
+    setFirstSelectInScoreRow(1).select('').blur();
+    cy.get('#process-button')
+        .should('be.enabled')
+        .should(
+            'have.text',
+            'Kick off Data Processing (will take a while!); warning: ' +
+                'created asset will be missing Income');
+    cy.get('#process-button')
+        .should('have.css', 'background-color')
+        .and('eq', 'rgb(150, 150, 0)');
+    // Get rid of score asset.
+    setFirstSelectInScoreRow(0).select('').blur();
+    cy.get('#process-button')
+        .should('be.disabled')
+        .should('have.css', 'background-color')
+        .and('eq', 'rgb(128, 128, 128)');
+    // Put score asset back.
+    setFirstSelectInScoreRow(0);
+    // Put income back.
+    setFirstSelectInScoreRow(1);
+    cy.get('#process-button')
+        .should('have.text', 'Kick off Data Processing (will take a while!)');
+    cy.get('#process-button')
+        .should('be.enabled')
+        .should('have.css', 'background-color')
+        .and('eq', 'rgb(0, 128, 0)');
     // Get rid of damage: not ready anymore.
     cy.get('#damage-asset-select').select('').blur();
     // Message is just about damage.
@@ -146,7 +184,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
         .should('have.text', 'Must specify either damage asset or map bounds');
     cy.get('#process-button').should('be.disabled');
     // Get rid of score asset.
-    setFirstSelectInScoreRow(0).select('');
+    setFirstSelectInScoreRow(0).select('').blur();
     cy.get('#process-button')
         .should(
             'have.text',
@@ -174,20 +212,23 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
         .should('eq', 5)
         .then(validateUserFields);
     cy.get('#process-button').should('be.disabled');
-    const allStateAssetsMissingText =
-        'Missing asset(s): Poverty [NY, WY], Income [NY, WY], SVI [NY, WY], ' +
-        'Census TIGER Shapefiles [NY, WY], Microsoft Building Shapefiles [NY,' +
-        ' WY], and must specify either damage asset or map bounds';
-    cy.get('#process-button').should('have.text', allStateAssetsMissingText);
+    cy.get('#process-button')
+        .should(
+            'have.text',
+            'Missing asset(s): Poverty [NY, WY], Census TIGER ' +
+                'Shapefiles [NY, WY], and must specify either damage asset ' +
+                'or map bounds; warning: created asset will be missing Income' +
+                ' [NY, WY], SVI [NY, WY], Building counts [NY, WY]');
     // Specifying one state has desired effect.
     setFirstSelectInScoreRow(0);
     cy.get('#process-button')
         .should(
             'have.text',
-            'Missing asset(s): Poverty [WY], Income [NY, WY], SVI [NY, WY], ' +
-                'Census TIGER Shapefiles [NY, WY], Microsoft Building ' +
-                'Shapefiles [NY, WY], and must specify either damage asset ' +
-                'or map bounds');
+            'Missing asset(s): Poverty [WY], ' +
+                'Census TIGER Shapefiles [NY, WY], and must specify either ' +
+                'damage asset or map bounds; warning: created asset will be ' +
+                'missing Income [NY, WY], SVI [NY, WY], Building counts [NY, ' +
+                'WY]');
     // Specifying assets for income, both states, one type, gets rid of income
     // from message.
     setFirstSelectInScoreRow(1);
@@ -195,9 +236,10 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     cy.get('#process-button')
         .should(
             'have.text',
-            'Missing asset(s): Poverty [WY], SVI [NY, WY], Census TIGER ' +
-                'Shapefiles [NY, WY], Microsoft Building Shapefiles [NY, WY],' +
-                ' and must specify either damage asset or map bounds');
+            'Missing asset(s): Poverty [WY], Census TIGER Shapefiles ' +
+                '[NY, WY], and must specify either damage asset or map ' +
+                'bounds; warning: created asset will be missing ' +
+                'SVI [NY, WY], Building counts [NY, WY]');
   });
 
   it('nonexistent asset not ok', () => {
@@ -211,7 +253,8 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     // Everything is missing, even though we have values stored.
     cy.get('#process-button').should('have.text', allMissingText);
     cy.get('#damage-asset-select').select('asset1');
-    cy.get('#process-button').should('have.text', allStateAssetsMissingText);
+    cy.get('#process-button')
+        .should('have.text', allStateAssetsMissingWithDamageAssetText);
     // Data wasn't actually in Firestore before, but checking that it was
     // written on a different change shows we're not silently overwriting it.
     readFirestoreAfterWritesFinish().then(
@@ -382,6 +425,10 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
   function preparePage() {
     cy.visit('test_utils/empty.html');
     return cy.document().then((doc) => {
+      const buttonCss = doc.createElement('style');
+      buttonCss.innerHTML = 'button {background-color: green;} ' +
+          'button:disabled {background-color: grey}';
+      doc.head.appendChild(buttonCss);
       const tbody = doc.createElement('tbody');
       tbody.id = 'asset-selection-table-body';
       doc.body.appendChild(tbody);
@@ -482,7 +529,7 @@ function setFirstSelectInScoreRow(rowNum) {
  * @return {Cypress.Chainable} Cypress promise of the td
  */
 function getFirstTdInScoreRow(rowNum) {
-  return cy.get('#' + assetSelectionRowPrefix + scoreAssetTypes[rowNum][0])
+  return cy.get('#' + assetSelectionRowPrefix + scoreAssetTypes[rowNum].idStem)
       .find('td')
       .first();
 }
