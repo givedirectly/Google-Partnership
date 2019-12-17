@@ -141,10 +141,12 @@ class ScoreBoundsMap {
         if (zoomChangedByUser) {
           return;
         }
-        const coordinates = resolvedBounds.coordinates[0];
-        bounds.extend(latLngLiteralFromArray(coordinates[0]));
-        bounds.extend(latLngLiteralFromArray(coordinates[2]));
-        console.log('changed bounds inside');
+        const rectangleCoordinates = resolvedBounds.coordinates[0];
+        const swCorner = rectangleCoordinates[0];
+        const neCorner = rectangleCoordinates[2];
+
+        bounds.extend(latLngLiteralFromArray(swCorner))
+            .extend(latLngLiteralFromArray(neCorner));
         applyMinimumBounds(bounds, this.map);
       });
     }

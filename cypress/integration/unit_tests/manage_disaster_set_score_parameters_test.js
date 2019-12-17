@@ -54,27 +54,36 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
                      .to.eql('asset2'));
   });
 
-  it('no map coordinates to start', () => {
+  it.only('no map coordinates to start', () => {
     const data = setUpDefaultData();
     data.asset_data.score_bounds_coordinates = null;
     callEnableWhenReady(data);
     cy.get('#damage-asset-select').should('have.value', '');
     cy.get('#map-bounds-div').should('be.visible');
     cy.get('.score-bounds-delete-button').should('not.be.visible');
-    // Has NY in view after EE promise finishes and zoom happens.
-    cy.wrap(scoreBoundsMap.stateBoundsPromise).then(() => {
-      new Promise(
-          (resolve) => google.maps.event.addListenerOnce(
-              scoreBoundsMap.map, 'zoom_changed', () => {
-                expect(scoreBoundsMap.map.getBounds().contains({
-                  lng: -74,
-                  lat: 41.7,
-                })).to.be.true;
-                expect(underTest.map.getBounds().contains({lng: -100, lat: 32}))
-                    .to.be.false;
-                resolve();
-              }));
-    });
+    // Wait for bounds promise to finish, and then wait for the zoom level to
+    // change, so that we can assert that the map has been zoomed to NY state.
+    // We add the zoom_changed listener only after the state promise finishes
+    // out of an abundance of caution, so if the production code zooms for
+    // some other reason at startup we won't react to that.
+    cy.wrap(scoreBoundsMap.stateBoundsPromise)
+        .then(
+            () => new Promise(
+                (resolve) => google.maps.event.addListenerOnce(
+                    scoreBoundsMap.map, 'zoom_changed', () => {
+                      // Has NY in view after EE promise finishes and zoom
+                      // happens.
+                      expect(scoreBoundsMap.map.getBounds().contains({
+                        lng: -74,
+                        lat: 41.7,
+                      })).to.be.true;
+                      // Does not have Texas in view.
+                      expect(underTest.map.getBounds().contains({
+                        lng: -100,
+                        lat: 32,
+                      })).to.be.false;
+                      resolve();
+                    })));
     cy.get('#damage-asset-select').select('asset2').blur();
     cy.get('#map-bounds-div').should('not.be.visible');
     readFirestoreAfterWritesFinish().then(
