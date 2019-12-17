@@ -22,7 +22,8 @@ table {
    border: 2px solid;
 }
 
-.map {
+.map-container {
   width: 600px;
   height: 400px;
+  margin: 0 0 0 0;
 }

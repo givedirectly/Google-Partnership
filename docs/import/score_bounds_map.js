@@ -1,6 +1,11 @@
 import {applyMinimumBounds, createBasicMap} from '../basic_map.js';
 import {sidebarDatasetsId} from '../dom_constants.js';
-import {addLayer, addNullLayer, scoreLayerName} from '../layer_util.js';
+import {
+  addLayer,
+  addNullLayer,
+  scoreLayerName,
+  setMapToDrawLayersOn,
+} from '../layer_util.js';
 import {convertEeObjectToPromise} from '../map_util.js';
 
 export {ScoreBoundsMap};
@@ -38,6 +43,7 @@ class ScoreBoundsMap {
       this.saveData();
     });
     this.drawingManager.setMap(this.map);
+    setMapToDrawLayersOn(this.map);
   }
 
   /** @private Creates {@link this.deleteButton} and attaches it to the map. */
