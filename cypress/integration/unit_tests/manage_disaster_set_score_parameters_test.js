@@ -80,7 +80,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
                 lat: 41.7,
               })).to.be.true;
               // Does not have Texas in view.
-              expect(underTest.map.getBounds().contains({
+              expect(scoreBoundsMap.map.getBounds().contains({
                 lng: -100,
                 lat: 32,
               })).to.be.false;
