@@ -73,7 +73,8 @@ class Authenticator {
     this.additionalScopes = additionalScopes;
     this.errorCallback = errorCallback;
     this.loginTasksToComplete = 2;
-    this.googleAuthInstance = new Promise((resolve) => this.googleAuthInstanceResolve = resolve);
+    this.googleAuthInstance =
+        new Promise((resolve) => this.googleAuthInstanceResolve = resolve);
   }
 
   /** Kicks off all processes. */
