@@ -106,7 +106,7 @@ class Authenticator {
    * pop-up-blocking functionality of browsers.
    */
   onSignInFailedFirstTime() {
-    this.gapiInitDone.then(
+    this.gapiInitDone.getPromise().then(
         () => gapi.auth2.getAuthInstance().signIn({ux_mode: 'redirect'}));
   }
 
