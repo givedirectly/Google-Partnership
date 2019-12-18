@@ -85,7 +85,8 @@ class Authenticator {
           alert(
               'You must be signed in as ' + gdUserEmail +
               ' to access this page. Please open in an incognito window or ' +
-              'sign in as ' + gdUserEmail + ' here');
+              'sign in as ' + gdUserEmail +
+              ' in this window after closing this alert.');
           this.onSignInFailedFirstTime({prompt: 'select_account'});
         } else {
           this.onLoginTaskCompleted();
