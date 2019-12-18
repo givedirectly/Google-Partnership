@@ -62,8 +62,7 @@ class Authenticator {
    * @param {Function} eeInitializeCallback Called after EarthEngine
    *     initialization is complete
    */
-  constructor(
-      authCallback, eeInitializeCallback) {
+  constructor(authCallback, eeInitializeCallback) {
     this.authCallback = authCallback;
     this.eeInitializeCallback = eeInitializeCallback;
     this.loginTasksToComplete = 2;
