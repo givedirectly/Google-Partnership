@@ -341,7 +341,6 @@ function backUpAssetAndStartTask(featureCollection) {
       scoreAssetPath);
   return renameAssetAsPromise(scoreAssetPath, oldScoreAssetPath)
       .catch((renameErr) => {
-        console.log(renameErr);
         // These checks aren't perfect detection, but best we can do.
         if (renameErr.includes('does not exist')) {
           console.log('Old ' + scoreAssetPath + ' not found, did not move it');
@@ -352,8 +351,8 @@ function backUpAssetAndStartTask(featureCollection) {
                   ee.data.deleteAsset(oldScoreAssetPath, (_, deleteErr) => {
                     if (deleteErr) {
                       // Don't try to recover here.
-                      // Don't show deletion error to user, but log it
-                      // somewhere.
+                      // Don't show deletion error to user, rename error is what
+                      // we'll display, but log deletion error here.
                       console.error(deleteErr);
                       const message =
                           'Error moving old score asset: ' + renameErr;
@@ -368,7 +367,6 @@ function backUpAssetAndStartTask(featureCollection) {
         } else {
           const message = 'Error moving old score asset: ' + renameErr;
           setStatus(message);
-          console.error(message);
           throw renameErr;
         }
       })
