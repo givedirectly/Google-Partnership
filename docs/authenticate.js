@@ -5,7 +5,7 @@ import SettablePromise from './settable_promise.js';
 export {trackEeAndFirebase};
 
 // For testing.
-export{CLIENT_ID, getFirebaseConfig};
+export {CLIENT_ID, getFirebaseConfig};
 
 // The client ID from
 // https://console.cloud.google.com/apis/credentials?project=mapping-crisis
@@ -83,13 +83,10 @@ class Authenticator {
     this.eeAuthenticate(() => this.onSignInFailedFirstTime());
     const gapiSettings = Object.assign({}, gapiTemplate);
     gapiSettings.scope = this.additionalScopes.join(' ');
-    gapi.load(
-        'auth2',
-        () => gapi.auth2.init(gapiSettings)
-                  .then(() => {
-                    this.googleAuthInstanceResolve(gapi.auth2.getAuthInstance());
-                    this.onLoginTaskCompleted();
-                  }));
+    gapi.load('auth2', () => gapi.auth2.init(gapiSettings).then(() => {
+      this.googleAuthInstanceResolve(gapi.auth2.getAuthInstance());
+      this.onLoginTaskCompleted();
+    }));
   }
 
   /**
@@ -110,8 +107,8 @@ class Authenticator {
    * pop-up-blocking functionality of browsers.
    */
   onSignInFailedFirstTime() {
-    this.googleAuthInstance.then((authInstance) => authInstance.signIn(
-        {ux_mode: 'redirect'}));
+    this.googleAuthInstance.then(
+        (authInstance) => authInstance.signIn({ux_mode: 'redirect'}));
   }
 
   /** Initializes EarthEngine. */
