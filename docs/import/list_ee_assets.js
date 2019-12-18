@@ -38,12 +38,12 @@ function getDisasterAssetsFromEe(disaster) {
   }
   const result = listEeAssets(eeLegacyPathPrefix + disaster)
                      .then((result) => {
-                       const nullGeometryPromises = [];
+                       const assetPromises = [];
                        result.forEach((type, asset) => {
                          if (type !== LayerType.FEATURE_COLLECTION) return;
                          // assuming that if the first feature's geometry in a
                          // collection is null, they're all null
-                         const promise = convertEeObjectToPromise(
+                         const assetPromise = convertEeObjectToPromise(
                                              ee.FeatureCollection(asset)
                                                  .first()
                                                  .geometry()
@@ -53,18 +53,18 @@ function getDisasterAssetsFromEe(disaster) {
                                                  return [asset, type];
                                                }
                                              });
-                         nullGeometryPromises.push(promise);
+                         assetPromises.push(assetPromise);
                        });
-                       return Promise.all(nullGeometryPromises);
+                       return Promise.all(assetPromises);
                      })
                      .then((results) => {
-                       const toReturn = new Map();
+                       const nonNulls = new Map();
                        for (const result of results) {
                          if (result) {
-                           toReturn.set(result[0], result[1]);
+                           nonNulls.set(result[0], result[1]);
                          }
                        }
-                       return toReturn;
+                       return nonNulls;
                      });
   disasterAssetPromises.set(disaster, result);
   return result;

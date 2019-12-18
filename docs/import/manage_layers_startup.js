@@ -6,7 +6,6 @@ import TaskAccumulator from '../task_accumulator.js';
 import {populateColorFunctions} from './color_function_util.js';
 import {setUpDisasterPicker, enableWhenReady, onSetDisaster, updateAfterSort} from './manage_layers.js';
 
-
 // 2 tasks: EE authentication, page load. Firebase is taken care of by Promise,
 // but enableWhenReady can do some work even before that.
 const taskAccumulator =
