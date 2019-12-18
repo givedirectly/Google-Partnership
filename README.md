@@ -69,7 +69,7 @@ https://dashboard.cypress.io in the "Runs" tab under "Settings".
 
     ```shell
     # Following line only needs to be run once per shell.
-    SOURCE_FILES='web/*.js 
+    SOURCE_FILES='docs/*.js 
         cypress/integration/**/*.js cypress/support/*.js cypress/plugins/*.js'
 
     clang-format -i --style=Google $SOURCE_FILES
