@@ -1,4 +1,4 @@
-import {Authenticator} from './authenticate.js';
+import {trackEeAndFirebase} from './authenticate.js';
 import createMap from './create_map.js';
 import {readDisasterDocument} from './firestore_document.js';
 import {loadNavbarWithPicker} from './navbar.js';
@@ -17,8 +17,7 @@ const disasterMetadataPromise = firebaseAuthPromise.then(readDisasterDocument);
 const taskAccumulator = new TaskAccumulator(
     2, () => run(map, firebaseAuthPromise, disasterMetadataPromise));
 
-firebaseAuthPromiseWrapper.setPromise(
-    Authenticator.trackEeAndFirebase(taskAccumulator));
+firebaseAuthPromiseWrapper.setPromise(trackEeAndFirebase(taskAccumulator));
 
 google.charts.load('current', {packages: ['table', 'controls']});
 

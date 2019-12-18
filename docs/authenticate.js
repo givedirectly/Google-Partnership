@@ -2,14 +2,10 @@ import {showError} from './error.js';
 import {earthEngineTestTokenCookieName, firebaseTestTokenPropertyName, getValueFromLocalStorage, inProduction} from './in_test_util.js';
 import SettablePromise from './settable_promise.js';
 
-export {
-  authenticateToFirebase,
-  Authenticator,
-  CLIENT_ID,
-  getFirebaseConfig,
-  initializeEE,
-  initializeFirebase,
-};
+export {trackEeAndFirebase};
+
+// For testing.
+export {CLIENT_ID, getFirebaseConfig};
 
 // The client ID from
 // https://console.cloud.google.com/apis/credentials?project=mapping-crisis
@@ -65,29 +61,24 @@ class Authenticator {
    * authentication
    * @param {Function} eeInitializeCallback Called after EarthEngine
    *     initialization is complete
-   * @param {Function} errorCallback Called on any errors (defaults to
-   *     defaultErrorCallback)
-   * @param {Array<string>} additionalScopes OAuth2 scopes to request, if any
    */
-  constructor(
-      authCallback, eeInitializeCallback, errorCallback = defaultErrorCallback,
-      additionalScopes = []) {
+  constructor(authCallback, eeInitializeCallback) {
     this.authCallback = authCallback;
     this.eeInitializeCallback = eeInitializeCallback;
-    this.additionalScopes = additionalScopes;
-    this.errorCallback = errorCallback;
     this.loginTasksToComplete = 2;
+    this.gapiInitDone = new SettablePromise();
   }
 
   /** Kicks off all processes. */
   start() {
     this.eeAuthenticate(() => this.onSignInFailedFirstTime());
     const gapiSettings = Object.assign({}, gapiTemplate);
-    gapiSettings.scope = this.additionalScopes.join(' ');
-    gapi.load(
-        'auth2',
-        () => gapi.auth2.init(gapiSettings)
-                  .then(() => this.onLoginTaskCompleted()));
+    gapiSettings.scope = '';
+    gapi.load('auth2', () => {
+      const initPromise = gapi.auth2.init(gapiSettings);
+      this.gapiInitDone.setPromise(initPromise);
+      initPromise.then(() => this.onLoginTaskCompleted());
+    });
   }
 
   /**
@@ -99,34 +90,22 @@ class Authenticator {
    */
   eeAuthenticate(failureCallback) {
     ee.data.authenticateViaOauth(
-        CLIENT_ID, () => this.internalInitializeEE(), failureCallback,
-        this.additionalScopes);
+        CLIENT_ID, () => this.internalInitializeEE(), failureCallback, []);
   }
 
   /**
-   * Falls back to showing a sign-in button on page so that user can click on
-   * it, getting around pop-up-blocking functionality of browsers.
+   * Falls back to a page redirect so that user can log in, getting around
+   * pop-up-blocking functionality of browsers.
    */
   onSignInFailedFirstTime() {
-    $(document).ready(() => {
-      $('.g-sign-in').removeClass('hidden');
-      $('.output').text('(Log in to see the result.)');
-      $('.g-sign-in .button').click(() => {
-        // TODO(janakr): If authentication fails here, user has to reload page
-        // to try again. Not clear how that can happen, but maybe should be more
-        // graceful?
-        this.eeAuthenticate(
-            (err) =>
-                this.errorCallback('Error authenticating EarthEngine: ' + err));
-        $('.g-sign-in').addClass('hidden');
-      });
-    });
+    this.gapiInitDone.getPromise().then(
+        () => gapi.auth2.getAuthInstance().signIn({ux_mode: 'redirect'}));
   }
 
   /** Initializes EarthEngine. */
   internalInitializeEE() {
     this.onLoginTaskCompleted();
-    initializeEE(this.eeInitializeCallback, this.errorCallback);
+    initializeEE(this.eeInitializeCallback);
   }
 
   /**
@@ -149,7 +128,7 @@ class Authenticator {
  *     EarthEngine is logged in
  * @return {Promise} Promise that completes when Firebase is logged in
  */
-Authenticator.trackEeAndFirebase = (taskAccumulator) => {
+function trackEeAndFirebase(taskAccumulator) {
   if (inProduction()) {
     const firebaseAuthPromise = new SettablePromise();
     const authenticator = new Authenticator(
@@ -196,13 +175,11 @@ function initializeFirebase() {
 /**
  * Initializes EarthEngine. Exposed only for use in test codepaths.
  * @param {Function} runCallback Called if initialization succeeds
- * @param {Function} errorCallback Called on failure, defaults to
- *     defaultErrorCallback
  */
-function initializeEE(runCallback, errorCallback = defaultErrorCallback) {
+function initializeEE(runCallback) {
   ee.initialize(
       /** opt_baseurl */ null, /** opt_tileurl */ null, runCallback,
-      (err) => errorCallback('Error initializing EarthEngine: ' + err));
+      (err) => defaultErrorCallback('Error initializing EarthEngine: ' + err));
 }
 
 /**
