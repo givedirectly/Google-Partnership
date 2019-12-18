@@ -87,8 +87,8 @@ module.exports = (on, config) => {
       return Promise
           .all([result, deleteOldPromise, retrieveFirestoreDataForTest()])
           .then((list) => firestoreUserToken = list[0])
-          .then(() => currentApp.delete())
-          .then(() => firestoreUserToken);
+          .then(() => firestoreUserToken)
+          .finally(() => currentApp.delete());
     },
     /**
      * Produces an EarthEngine token that can be used by production code.
@@ -135,8 +135,8 @@ module.exports = (on, config) => {
             signinPromise.then(() => testDisasterDocReference.set(data)));
       }
       return Promise.all(writePromises)
-          .then(() => testApp.delete())
-          .then(() => null);
+          .then(() => null)
+          .finally(() => testApp.delete());
     },
 
     /**
@@ -148,7 +148,7 @@ module.exports = (on, config) => {
     deleteTestData(currentTestRoot) {
       const currentApp = createTestFirebaseAdminApp();
       const result = deleteTestData(currentTestRoot, currentApp);
-      return result.then(() => currentApp.delete()).then(() => null);
+      return result.then(() => null).finally(() => currentApp.delete());
     },
     /**
      * Debugging function that allows us to see output from Cypress in the
@@ -276,8 +276,8 @@ function retrieveFirestoreDataForTest() {
   }
   return Promise.all(readPromises)
       .then((result) => perTestFirestoreData = result)
-      .then(() => prodApp.delete())
-      .then(() => null);
+      .then(() => null)
+      .finally(() => prodApp.delete());
 }
 
 const testPrefix = 'test/';
