@@ -727,5 +727,7 @@ table, th, td {
   background-color: transparent;
 }
 
-/* Override jquery ui's default weird gradient. */
+/* Override jquery ui's default weird gradient in dialog boxes. */
 .ui-widget-content {background: #eeeeee;}
+
+/* TODO: style jQuery dialog to fit in more with our theme. */
