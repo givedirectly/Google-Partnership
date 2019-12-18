@@ -724,5 +724,8 @@ table, th, td {
 
 .header-cell {
   background-image: none;
-  background-color: none;
+  background-color: transparent;
 }
+
+/* Override jquery ui's default weird gradient. */
+.ui-widget-content {background: #eeeeee;}
