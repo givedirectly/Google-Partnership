@@ -57,7 +57,7 @@ describe('Unit tests for manage_layers page', () => {
     disasterData.set('2003-spring', {});
   });
 
-  it.only('filters out a null geometry disaster folder asset', () => {
+  it('filters out a null geometry disaster folder asset', () => {
     disasterAssets.clear();
     const disaster = getDisaster();
     listAssetsStub
