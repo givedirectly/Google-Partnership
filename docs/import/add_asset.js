@@ -47,11 +47,10 @@ ee.data.setCloudApiEnabled(true);
 // 3 tasks: EE authentication, OAuth2 token retrieval, and page load.
 const taskAccumulator = new TaskAccumulator(3, enableWhenReady);
 // Perform EE login/Google OAuth2 process.
-// TODO(janakr): fix this page or delete.
-// const authenticator = new Authenticator(
-//     setUpAllHeaders, () => taskAccumulator.taskCompleted(), setStatusDiv,
-//     [storageScope]);
-// authenticator.start();
+const authenticator = new Authenticator(
+    setUpAllHeaders, () => taskAccumulator.taskCompleted(), setStatusDiv,
+    [storageScope]);
+authenticator.start();
 
 /**
  * Processes files and asset name user gave, mostly asynchronously.
