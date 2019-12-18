@@ -2,6 +2,7 @@ import {clickFeature, selectHighlightedFeatures} from './click_feature.js';
 import {sidebarDatasetsId, tableContainerId} from './dom_constants.js';
 import {drawTable} from './draw_table.js';
 import {showError} from './error.js';
+import {getLinearGradient} from './import/color_function_util.js';
 import {addLayer, addNullLayer, addScoreLayer, scoreLayerName, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from './layer_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {convertEeObjectToPromise} from './map_util.js';
@@ -12,7 +13,6 @@ import {getBackupScoreAssetPath, getScoreAssetPath} from './resources.js';
 import {setUpToggles} from './update.js';
 
 export {createAndDisplayJoinedData, run};
-
 // For testing.
 export {drawTableAndSetUpHandlers, setScorePromises};
 
@@ -132,25 +132,27 @@ function drawTableAndSetUpHandlers(processedData, map) {
  * @param {number|string} index checkbox index, basis for id
  * @param {String} displayName checkbox display name
  * @param {div} parentDiv div to attach checkbox to
+ * @param {Object} colorFunction color data from the layer
  * @return {HTMLInputElement} the checkbox
  */
 function createNewCheckbox(index, displayName, parentDiv) {
   const newRow = document.createElement('div');
   newRow.className = 'checkbox-row';
+
+  // TODO: add additional information on mouseover.
   const newBox = document.createElement('input');
   newBox.type = 'checkbox';
   newBox.id = getCheckBoxId(index);
-  newBox.className = 'checkbox';
+  newBox.className = 'checkbox layer-checkbox';
   newBox.checked = true;
   newRow.appendChild(newBox);
-  const newMark = document.createElement('span');
-  newMark.className = 'checkmark';
-  newRow.appendChild(newMark);
+
   const label = document.createElement('label');
   label.className = 'checkbox-label';
   label.htmlFor = newBox.id;
   label.innerHTML = displayName;
   newRow.appendChild(label);
+
   parentDiv.appendChild(newRow);
   return newBox;
 }
@@ -166,10 +168,12 @@ function createNewCheckbox(index, displayName, parentDiv) {
 function createNewCheckboxForLayer(layer, parentDiv, map) {
   const index = layer['index'];
   const newBox = createNewCheckbox(index, layer['display-name'], parentDiv);
-  if (!layer['display-on-load']) {
-    newBox.checked = false;
-  }
+  const linearGradient = getLinearGradient(layer['color-function']);
+  newBox.checked = !!layer['display-on-load'];
+  updateCheckboxBackground(newBox, linearGradient);
+
   newBox.onclick = () => {
+    updateCheckboxBackground(newBox, linearGradient);
     if (newBox.checked) {
       toggleLayerOn(layer, map);
     } else {
@@ -179,12 +183,33 @@ function createNewCheckboxForLayer(layer, parentDiv, map) {
 }
 
 /**
+ * Sets the checkbox background with a linear gradient to help users identify
+ * layers.
+ *
+ * @param {Element} checkbox
+ * @param {string} gradient the linear gradient for the checkbox background
+ */
+function updateCheckboxBackground(checkbox, gradient) {
+  if (checkbox.checked) {
+    if (gradient) {
+      checkbox.style.backgroundImage = gradient;
+    }
+  } else {
+    if (gradient) {
+      checkbox.style.backgroundImage = '';
+    }
+  }
+}
+
+/**
  * Creates a show/hide checkbox for user features.
  *
  * @param {div} parentDiv div to attach checkbox to
  */
 function createCheckboxForUserFeatures(parentDiv) {
-  const newBox = createNewCheckbox('user-features', 'user features', parentDiv);
+  const newBox = createNewCheckbox(
+      'user-features', 'user features', parentDiv,
+      {'color': '#4CEF64', 'current-style': 2});
   newBox.checked = true;
   newBox.onclick = () => setUserFeatureVisibility(newBox.checked);
 }
@@ -216,6 +241,7 @@ function addLayers(map, firebaseLayers) {
         'display-name': scoreLayerName,
         'index': scoreLayerName,
         'display-on-load': true,
+        'color-function': {'color': '#ff00ff', 'current-style': 0},
       },
       sidebarDiv, map);
 }

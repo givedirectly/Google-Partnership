@@ -423,11 +423,6 @@ input.file-chooser {
 
 /* Checkbox css */
 
-.checkbox-row {
-  white-space: nowrap;
-  margin: 8px 0;
-}
-
 input[type=checkbox] {
   -webkit-appearance: none;
   appearance: none;
@@ -450,6 +445,23 @@ input[type=checkbox]:checked {
 
 .checkbox-label {
   text-transform: capitalize;
+}
+
+.checkbox-row {
+  height: 25px;
+  white-space: nowrap;
+  margin: 8px 0;
+}
+
+#layer-user-features-checkbox:checked {
+  background-color: #4CEF64;
+}
+
+.checkbox.layer-checkbox {
+  width: 20px;
+  height: 20px;
+  -webkit-transition: background-image 0.2s ease-in-out;
+  transition: background-image 0.2s ease-in-out;
 }
 
 /* Loading indicator css */
