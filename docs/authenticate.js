@@ -141,6 +141,9 @@ class Authenticator {
         //  failure here.
         // TODO(#340): Maybe don't require EE failure every time, store
         //  something in localStorage so that we know user needs token.
+        // Use a jQuery dialog because normal "alert" doesn't display hyperlinks
+        // as clickable. Inferior, though, because it does allow page to
+        // continue to load behind the dialog. Not too big a deal.
         $(eeErrorDialog)
             .dialog(
                 {modal: true, width: 600, close: () => this.requireSignIn()});
