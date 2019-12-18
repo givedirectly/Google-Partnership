@@ -43,7 +43,10 @@ const firebaseConfigTest = {
 const gdUserEmail = 'gd-earthengine-user@givedirectly.org';
 
 const eeErrorDialog =
-    '<div title="EarthEngine authentication error">You do not appear to be whitelisted for EarthEngine access. Please whitelist your account at <a href="https://signup.earthengine.google.com">https://signup.earthengine.google.com</a> or sign into a whitelisted account after closing this dialog</div>';
+    '<div title="EarthEngine authentication error">You do not appear to be ' +
+    'whitelisted for EarthEngine access. Please whitelist your account at ' +
+    '<a href="https://signup.earthengine.google.com">https://signup.earthengine.google.com</a>' +
+    'or sign into a whitelisted account after closing this dialog</div>';
 
 /**
  * Logs an error message to the console and shows a snackbar notification
