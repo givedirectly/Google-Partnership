@@ -73,8 +73,7 @@ class Authenticator {
     this.additionalScopes = additionalScopes;
     this.errorCallback = errorCallback;
     this.loginTasksToComplete = 2;
-    this.googleAuthInstance =
-        new Promise((resolve) => this.googleAuthInstanceResolve = resolve);
+    this.gapiInitDone = new SettablePromise();
   }
 
   /** Kicks off all processes. */
@@ -82,10 +81,11 @@ class Authenticator {
     this.eeAuthenticate(() => this.onSignInFailedFirstTime());
     const gapiSettings = Object.assign({}, gapiTemplate);
     gapiSettings.scope = this.additionalScopes.join(' ');
-    gapi.load('auth2', () => gapi.auth2.init(gapiSettings).then(() => {
-      this.googleAuthInstanceResolve(gapi.auth2.getAuthInstance());
-      this.onLoginTaskCompleted();
-    }));
+    gapi.load('auth2', () => {
+      const initPromise = gapi.auth2.init(gapiSettings);
+      this.gapiInitDone.setPromise(initPromise);
+      initPromise.then(() => this.onLoginTaskCompleted());
+    });
   }
 
   /**
@@ -106,8 +106,8 @@ class Authenticator {
    * pop-up-blocking functionality of browsers.
    */
   onSignInFailedFirstTime() {
-    this.googleAuthInstance.then(
-        (authInstance) => authInstance.signIn({ux_mode: 'redirect'}));
+    this.gapiInitDone.then(
+        () => gapi.auth2.getAuthInstance().signIn({ux_mode: 'redirect'}));
   }
 
   /** Initializes EarthEngine. */
