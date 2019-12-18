@@ -1,5 +1,6 @@
 import {LayerType} from '../firebase_layers.js';
 import {getDisaster} from '../resources.js';
+
 import {processNewEeLayer, processNonEeLayer} from './add_layer.js';
 import {withColor} from './color_function_util.js';
 import {getDisasterAssetsFromEe, getStatesAssetsFromEe} from './list_ee_assets.js';
@@ -8,11 +9,12 @@ import {getCurrentData, getCurrentLayers, getRowIndex, ILLEGAL_STATE_ERR, onUpda
 export {enableWhenReady, updateAfterSort};
 // Visible for testing
 export {
-  createDisasterPicker,
   createLayerRow,
   createOptionFrom,
   createStateAssetPickers,
   createTd,
+  disasterAssets,
+  getAssetsAndPopulateDisasterPicker,
   onCheck,
   onDelete,
   onInputBlur,
@@ -67,8 +69,7 @@ function onSetDisaster() {
   setCurrentDisaster(disaster);
   // display layer table
   populateLayersTable();
-  // display state asset pickers
-  return populateStateAndDisasterAssetPickers(disaster);
+  return getAssetsAndPopulateDisasterPicker(disaster);
 }
 
 /**
@@ -275,7 +276,6 @@ function createLayerRow(layer, index) {
   // index
   row.append(createTd().text(index).addClass('index-td'));
   // display name
-  // TODO: make this editable.
   row.append(withInput(createTd(), layer, 'display-name'));
   // asset path/url sample
   const assetOrUrl = createTd();
@@ -304,7 +304,7 @@ function createLayerRow(layer, index) {
  * @return {Promise<void>} returns when all asset pickers have been populated
  * after potentially retrieving assets from ee.
  */
-function populateStateAndDisasterAssetPickers(disaster) {
+function getAssetsAndPopulateDisasterPicker(disaster) {
   if (disasterAssets.has(disaster)) {
     populateDisasterAssetPicker(disaster);
     return Promise.resolve();
@@ -330,7 +330,7 @@ function createStateAssetPickers(states) {
  * while the real picker is waiting for earth engine to list and parse assets.
  * @param {string} disaster
  */
-function createDisasterPicker(disaster) {
+function setUpDisasterPicker(disaster) {
   const div = $('#disaster-asset-picker').empty();
   const assetPicker = $(document.createElement('select')).width(200);
   assetPicker.append(createOptionFrom('pending...')).attr('disabled', true);
