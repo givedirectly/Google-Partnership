@@ -20,7 +20,8 @@ if [[ "$modified_js_files" ]]; then
     if [[ "$first_arg" == "--fix" ]]; then
       echo "Auto-formatting ${badfiles[@]}"
       clang-format -i --style=Google ${badfiles[@]}
-      ./lint.sh
+      # Skips rest of this script.
+      exec ./lint.sh
     else
       echo 'Found badly formatted files. Run:'
       echo "clang-format -i --style=Google ${badfiles[@]}"
