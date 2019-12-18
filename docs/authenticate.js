@@ -40,6 +40,7 @@ const firebaseConfigTest = {
   appId: '1:340543030947:web:0cf3235904250687592116',
 };
 
+const gdUserEmail = 'gd-earthengine-user@givedirectly.org';
 /**
  * Logs an error message to the console and shows a snackbar notification
  * indicating an issue with authentication.
@@ -50,35 +51,49 @@ function defaultErrorCallback(msg) {
   showError(msg, 'Authentication Error');
 }
 
-/**
- * Performs EarthEngine authentication and returns an auth object usable for
- * other things like GCS or Firebase.
- */
+/** Performs EarthEngine and Firebase authentication. */
 class Authenticator {
   /**
    * @constructor
-   * @param {Function} authCallback Will receive the auth response coming from
-   * authentication
    * @param {Function} eeInitializeCallback Called after EarthEngine
    *     initialization is complete
+   * @param {boolean} needsGdUser See {@link trackEeAndFirebase}
    */
-  constructor(authCallback, eeInitializeCallback) {
-    this.authCallback = authCallback;
+  constructor(eeInitializeCallback, needsGdUser) {
     this.eeInitializeCallback = eeInitializeCallback;
+    this.needsGdUser = needsGdUser;
     this.loginTasksToComplete = 2;
     this.gapiInitDone = new SettablePromise();
+    this.firebaseAuthFinished = new SettablePromise();
   }
 
-  /** Kicks off all processes. */
+  /**
+   * Kicks off all processes.
+   * @return {Promise<void>} Promise that completes when Firebase authentication
+   *     is finished
+   */
   start() {
     this.eeAuthenticate(() => this.onSignInFailedFirstTime());
     const gapiSettings = Object.assign({}, gapiTemplate);
     gapiSettings.scope = '';
     gapi.load('auth2', () => {
-      const initPromise = gapi.auth2.init(gapiSettings);
-      this.gapiInitDone.setPromise(initPromise);
-      initPromise.then(() => this.onLoginTaskCompleted());
+      this.gapiInitDone.setPromise(gapi.auth2.init(gapiSettings).then(() => {
+        const basicProfile =
+            gapi.auth2.getAuthInstance().currentUser.get().getBasicProfile();
+        if (this.needsGdUser &&
+            (!basicProfile || basicProfile.getEmail() !== gdUserEmail)) {
+          alert(
+              'You must be signed in as ' + gdUserEmail +
+              ' to access this page. Please open in an incognito window or ' +
+              'sign in as ' + gdUserEmail +
+              ' in this window after closing this alert.');
+          this.onSignInFailedFirstTime({prompt: 'select_account'});
+        } else {
+          this.onLoginTaskCompleted();
+        }
+      }));
     });
+    return this.firebaseAuthFinished.getPromise();
   }
 
   /**
@@ -96,10 +111,12 @@ class Authenticator {
   /**
    * Falls back to a page redirect so that user can log in, getting around
    * pop-up-blocking functionality of browsers.
+   * @param {gapi.auth.SignInOptions} extraOptions Dictionary of sign-in options
    */
-  onSignInFailedFirstTime() {
+  onSignInFailedFirstTime(extraOptions = {}) {
     this.gapiInitDone.getPromise().then(
-        () => gapi.auth2.getAuthInstance().signIn({ux_mode: 'redirect'}));
+        () => gapi.auth2.getAuthInstance().signIn(
+            {...{ux_mode: 'redirect'}, ...extraOptions}));
   }
 
   /** Initializes EarthEngine. */
@@ -114,8 +131,8 @@ class Authenticator {
    */
   onLoginTaskCompleted() {
     if (--this.loginTasksToComplete === 0) {
-      const user = gapi.auth2.getAuthInstance().currentUser.get();
-      this.authCallback(user.getAuthResponse());
+      this.firebaseAuthFinished.setPromise(authenticateToFirebase(
+          gapi.auth2.getAuthInstance().currentUser.get()));
     }
   }
 }
@@ -126,20 +143,17 @@ class Authenticator {
  * counting down a {@link TaskAccumulator} when EarthEngine is logged in.
  * @param {TaskAccumulator} taskAccumulator that will be counted down when
  *     EarthEngine is logged in
+ * @param {boolean} needsGdUser True if page needs user to be logged in as GD
+ *     user (gd-earthengine-user@givedirectly.org) in order to work
  * @return {Promise} Promise that completes when Firebase is logged in
  */
-function trackEeAndFirebase(taskAccumulator) {
+function trackEeAndFirebase(taskAccumulator, needsGdUser = false) {
   if (inProduction()) {
-    const firebaseAuthPromise = new SettablePromise();
-    const authenticator = new Authenticator(
-        (token) =>
-            firebaseAuthPromise.setPromise(authenticateToFirebase(token)),
-        () => {
-          ee.data.setCloudApiEnabled(true);
-          taskAccumulator.taskCompleted();
-        });
-    authenticator.start();
-    return firebaseAuthPromise.getPromise();
+    const authenticator = new Authenticator(() => {
+      ee.data.setCloudApiEnabled(true);
+      taskAccumulator.taskCompleted();
+    }, needsGdUser);
+    return authenticator.start();
   } else {
     // We're inside a test. The test setup should have tokens for us that will
     // directly authenticate with Firebase and EarthEngine.
@@ -165,7 +179,7 @@ function trackEeAndFirebase(taskAccumulator) {
         /* updateAuthLibrary */ false);
     return firebase.auth().signInWithCustomToken(firebaseToken);
   }
-};
+}
 
 /** Initializes Firebase. Exposed only for use in test codepaths. */
 function initializeFirebase() {
@@ -195,32 +209,47 @@ function getFirebaseConfig(inProduction) {
 
 /**
  * Initializes Firebase and authenticates using the logged-in Google user
- * (most likely coming from Authenticator above).
+ * coming from Authenticator above.
  *
- * @param {gapi.auth2.AuthResponse} googleAuth
+ * @param {gapi.auth2.GoogleUser} googleUser
  * @return {Promise<any>} Promise that completes when authentication is done
  */
-function authenticateToFirebase(googleAuth) {
+function authenticateToFirebase(googleUser) {
   initializeFirebase();
   return new Promise((resolveFunction) => {
     const unsubscribe = firebase.auth().onAuthStateChanged((firebaseUser) => {
       unsubscribe();
-      if (firebaseUser && firebaseUser.providerData &&
-          firebaseUser.providerData[0].uid) {
-        // The Firebase sample code checks that this is the same user as the
-        // Google user. I don't really see how there can be a mismatch without
-        // something pretty weird going on, so punting on it for now.
-        console.warn('Not logging into Firebase again');
+      if (isUserEqual(googleUser, firebaseUser)) {
         resolveFunction(null);
         return;
       }
       // Build Firebase credential with the Google ID token.
-      const credential =
-          firebase.auth.GoogleAuthProvider.credential(googleAuth.id_token);
+      const credential = firebase.auth.GoogleAuthProvider.credential(
+          googleUser.getAuthResponse().id_token);
       // Sign in with credential from the Google user.
       const signinPromise = firebase.auth().signInWithCredential(credential);
       signinPromise.then(resolveFunction);
       return signinPromise;
     });
   });
+}
+
+/**
+ * Checks if a Firebase user is equal to the given Google user.
+ * @param {gapi.auth2.GoogleUser} googleUser
+ * @param {firebase.User} firebaseUser
+ * @return {boolean}
+ */
+function isUserEqual(googleUser, firebaseUser) {
+  if (firebaseUser) {
+    for (const providerItem of firebaseUser.providerData) {
+      if (providerItem.providerId ===
+              firebase.auth.GoogleAuthProvider.PROVIDER_ID &&
+          providerItem.uid === googleUser.getBasicProfile().getId()) {
+        // We don't need to reauth the Firebase connection.
+        return true;
+      }
+    }
+  }
+  return false;
 }

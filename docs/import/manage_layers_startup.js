@@ -10,7 +10,7 @@ import {enableWhenReady, onSetDisaster, updateAfterSort} from './manage_layers.j
 const taskAccumulator =
     new TaskAccumulator(2, () => enableWhenReady(firebaseDataPromise));
 
-const firebaseAuthPromise = trackEeAndFirebase(taskAccumulator);
+const firebaseAuthPromise = trackEeAndFirebase(taskAccumulator, true);
 const firebaseDataPromise = firebaseAuthPromise.then(getDisastersData);
 
 $(() => {

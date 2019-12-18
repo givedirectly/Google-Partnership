@@ -10,7 +10,7 @@ import {enableWhenReady, onSetDisaster, setUpScoreBoundsMap, setUpScoreSelectorT
 const taskAccumulator =
     new TaskAccumulator(2, () => enableWhenReady(firebaseDataPromise));
 
-const firebaseAuthPromise = trackEeAndFirebase(taskAccumulator);
+const firebaseAuthPromise = trackEeAndFirebase(taskAccumulator, true);
 const firebaseDataPromise = firebaseAuthPromise.then(getDisastersData);
 
 $(() => {
