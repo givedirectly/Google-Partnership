@@ -57,7 +57,7 @@ describe('Unit tests for manage_layers page', () => {
     disasterData.set('2003-spring', {});
   });
 
-  it('filters out a null geometry disaster folder asset', () => {
+  it.only('filters out a null geometry disaster folder asset', () => {
     disasterAssets.clear();
     const disaster = getDisaster();
     listAssetsStub
@@ -68,35 +68,13 @@ describe('Unit tests for manage_layers page', () => {
             {id: 'asset/with/null/geometry', type: 'TABLE'},
           ],
         }));
+    const withGeometry =
+        ee.FeatureCollection([ee.Feature(ee.Geometry.Point([1, 1]), {})]);
+    const withNullGeometry = ee.FeatureCollection([ee.Feature(null, {})]);
     const featureCollectionStub = cy.stub(ee, 'FeatureCollection');
-    featureCollectionStub.withArgs('asset/with/geometry').returns({
-      first: () => {
-        return {
-          geometry: () => {
-            return {
-              coordinates: () => {
-                // placeholder for a geometry - we only check if the list is
-                // empty or not.
-                return ee.List(['blergh']);
-              },
-            };
-          },
-        };
-      },
-    });
-    featureCollectionStub.withArgs('asset/with/null/geometry').returns({
-      first: () => {
-        return {
-          geometry: () => {
-            return {
-              coordinates: () => {
-                return ee.List([]);
-              },
-            };
-          },
-        };
-      },
-    });
+    featureCollectionStub.withArgs('asset/with/geometry').returns(withGeometry);
+    featureCollectionStub.withArgs('asset/with/null/geometry')
+        .returns(withNullGeometry);
     cy.wrap(getAssetsAndPopulateDisasterPicker(disaster)).then(() => {
       expect(Array.from(disasterAssets.get(disaster).keys())).to.eql([
         'asset/with/geometry',
