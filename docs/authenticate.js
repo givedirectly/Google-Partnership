@@ -61,17 +61,11 @@ class Authenticator {
    * authentication
    * @param {Function} eeInitializeCallback Called after EarthEngine
    *     initialization is complete
-   * @param {Function} errorCallback Called on any errors (defaults to
-   *     defaultErrorCallback)
-   * @param {Array<string>} additionalScopes OAuth2 scopes to request, if any
    */
   constructor(
-      authCallback, eeInitializeCallback, errorCallback = defaultErrorCallback,
-      additionalScopes = []) {
+      authCallback, eeInitializeCallback) {
     this.authCallback = authCallback;
     this.eeInitializeCallback = eeInitializeCallback;
-    this.additionalScopes = additionalScopes;
-    this.errorCallback = errorCallback;
     this.loginTasksToComplete = 2;
     this.gapiInitDone = new SettablePromise();
   }
@@ -80,7 +74,7 @@ class Authenticator {
   start() {
     this.eeAuthenticate(() => this.onSignInFailedFirstTime());
     const gapiSettings = Object.assign({}, gapiTemplate);
-    gapiSettings.scope = this.additionalScopes.join(' ');
+    gapiSettings.scope = '';
     gapi.load('auth2', () => {
       const initPromise = gapi.auth2.init(gapiSettings);
       this.gapiInitDone.setPromise(initPromise);
@@ -97,8 +91,7 @@ class Authenticator {
    */
   eeAuthenticate(failureCallback) {
     ee.data.authenticateViaOauth(
-        CLIENT_ID, () => this.internalInitializeEE(), failureCallback,
-        this.additionalScopes);
+        CLIENT_ID, () => this.internalInitializeEE(), failureCallback, []);
   }
 
   /**
@@ -113,7 +106,7 @@ class Authenticator {
   /** Initializes EarthEngine. */
   internalInitializeEE() {
     this.onLoginTaskCompleted();
-    initializeEE(this.eeInitializeCallback, this.errorCallback);
+    initializeEE(this.eeInitializeCallback);
   }
 
   /**
@@ -183,13 +176,11 @@ function initializeFirebase() {
 /**
  * Initializes EarthEngine. Exposed only for use in test codepaths.
  * @param {Function} runCallback Called if initialization succeeds
- * @param {Function} errorCallback Called on failure, defaults to
- *     defaultErrorCallback
  */
-function initializeEE(runCallback, errorCallback = defaultErrorCallback) {
+function initializeEE(runCallback) {
   ee.initialize(
       /** opt_baseurl */ null, /** opt_tileurl */ null, runCallback,
-      (err) => errorCallback('Error initializing EarthEngine: ' + err));
+      (err) => defaultErrorCallback('Error initializing EarthEngine: ' + err));
 }
 
 /**
