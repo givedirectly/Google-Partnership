@@ -50,6 +50,7 @@ describe('Unit tests for manage_layers page', () => {
     cy.stub(ee.data, 'createFolder');
 
     stateAssets.clear();
+    disasterAssets.clear();
     // In prod this would happen in enableWhenReady which would read from
     // firestore.
     disasterData.clear();
@@ -58,7 +59,6 @@ describe('Unit tests for manage_layers page', () => {
   });
 
   it('filters out a null geometry disaster folder asset', () => {
-    disasterAssets.clear();
     const disaster = getDisaster();
     listAssetsStub
         .withArgs(eeLegacyPathPrefix + disaster, {}, Cypress.sinon.match.func)
@@ -77,16 +77,18 @@ describe('Unit tests for manage_layers page', () => {
         .returns(withNullGeometry);
     cy.wrap(getAssetsAndPopulateDisasterPicker(disaster)).then(() => {
       const assets = disasterAssets.get(disaster);
-      expect(assets.get('asset/with/geometry').disable).to.be.false;
-      expect(assets.get('asset/with/null/geometry').disable).to.be.true;
+      expect(assets.get('asset/with/geometry').disabled).to.be.false;
+      expect(assets.get('asset/with/null/geometry').disabled).to.be.true;
     });
   });
 
+  // TODO: move this test when we delete state asset pickers from manage_layers.js
   it('gets state asset info from ee', () => {
-    cy.wrap(getStatesAssetsFromEe([KNOWN_STATE])).then((assets) => {
-      // tests folder type asset doesn't make it through
-      expect(assets[0]).to.eql(
-          [KNOWN_STATE, new Map([[KNOWN_STATE_ASSET, 'TABLE']])]);
+    cy.wrap(getStatesAssetsFromEe([KNOWN_STATE])).then((result) => {
+      expect(result.get([KNOWN_STATE])).to.not.be.null;
+      return result.get([KNOWN_STATE]);
+    }).then((assets) => {
+      expect(assets).to.eql(new Map([[KNOWN_STATE_ASSET, 'TABLE']]));
       expect(ee.data.listAssets)
           .to.be.calledWith(
               legacyStatePrefix + KNOWN_STATE, {}, Cypress.sinon.match.func);
