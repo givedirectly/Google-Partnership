@@ -1,3 +1,4 @@
+import {google} from 'googleapis';
 import {addPolygonWithPath} from '../../../docs/basic_map.js';
 import {mapContainerId, writeWaiterId} from '../../../docs/dom_constants.js';
 import * as loading from '../../../docs/loading.js';

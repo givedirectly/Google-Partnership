@@ -15,7 +15,6 @@ import * as ee from '@google/earthengine';
 import * as firebase from 'firebase';
 import * as firebaseAdmin from 'firebase-admin';
 const {google} = require('googleapis');
-import {readFileSync} from 'fs';
 
 import {firebaseConfigProd, firebaseConfigTest} from '../../docs/authenticate.js';
 
@@ -105,37 +104,39 @@ function onFunction(on, config) {
           .then(() => firestoreUserToken)
           .finally(() => currentApp.delete());
     },
+
     /**
-     * Produces an EarthEngine token that can be used by production code.
+     * Produces an EarthEngine token that can be used by production code. We use
+     * the somewhat deprecated and very poorly documented but still ticking
+     * googleapis library.
      *
      * @return {Promise<string>}
      */
     getEarthEngineToken() {
       const auth = new google.auth.GoogleAuth({scopes: ['https://www.googleapis.com/auth/cloud-platform']});
-      return auth.getClient().then(() => {
-        const iam = google.iamcredentials({version: 'v1', auth});
-        iam.projects.serviceAccounts.generateAccessToken({name: 'projects/-/serviceAccounts/firebase-adminsdk-j6emn-cfc145e0db@mapping-test-data.iam.gserviceaccount.com'},
-            {scope: ['email']},
-            (success) => console.log(
-            'here', success.response));
-      });
-      // const privateKey = JSON.parse(
-      //     readFileSync(process.env.GOOGLE_APPLICATION_CREDENTIALS, 'utf8'));
-      // const client = new JWT(privateKey.client_email, null, privateKey.private_key, ['https://www.googleapis.com/auth/earthengine.readonly']);
-      // return client.refreshToken().then(console.log);
-      // return client.request({url: 'https://iamcredentials.googleapis.com/v1/{name=projects/-/serviceAccounts/firebase-adminsdk-j6emn-cfc145e0db@mapping-test-data.iam.gserviceaccount.com}:generateAccessToken'})
-      //     .then(console.log);
-      // return fetch('https://iamcredentials.googleapis.com/v1/{name=projects/-/serviceAccounts/firebase-adminsdk-j6emn-cfc145e0db@mapping-test-data.iam.gserviceaccount.com}:generateAccessToken',
-      //     {method: 'POST'}).then(console.log);
-      //
-      // );
-      // return new Promise((resolve, reject) => {
-      //   ee.data.authenticateViaPrivateKey(
-      //       privateKey,
-      //       // TODO(janakr): no better way to do this?
-      //       // Strip 'Bearer ' from beginning.
-      //       () => resolve(ee.data.getAuthToken().substring(7)), reject);
-      // });
+      return auth.getClient().then((client) =>
+          new Promise((resolve, reject) => {
+            google.iamcredentials({
+              version: 'v1',
+              auth
+            }).projects.serviceAccounts.generateAccessToken({
+              // See
+              // https://cloud.google.com/iam/docs/reference/credentials/rest/v1/projects.serviceAccounts/generateAccessToken
+              name: 'projects/-/serviceAccounts/' + client.email,
+              // We need EE access, but no write access, I think.
+              requestBody: {scope: ['https://www.googleapis.com/auth/earthengine.readonly']}
+            }, (error, response) => {
+              if (error) {
+                reject(error);
+                return;
+              }
+              if (response.status === 200 && response.data
+                  && response.data.accessToken) {
+                resolve(response.data.accessToken);
+              }
+              reject(new Error(response.statusText + ' \n(' + response + ')'));
+            });
+          }));
     },
 
     /**
