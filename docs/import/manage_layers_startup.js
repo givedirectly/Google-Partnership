@@ -3,8 +3,9 @@ import {getDisastersData} from '../firestore_document.js';
 import {loadNavbarWithPicker} from '../navbar.js';
 import {getDisaster} from '../resources.js';
 import TaskAccumulator from '../task_accumulator.js';
+
 import {populateColorFunctions} from './color_function_util.js';
-import {setUpDisasterPicker, enableWhenReady, onSetDisaster, updateAfterSort} from './manage_layers.js';
+import {enableWhenReady, onSetDisaster, setUpDisasterPicker, updateAfterSort} from './manage_layers.js';
 
 // 2 tasks: EE authentication, page load. Firebase is taken care of by Promise,
 // but enableWhenReady can do some work even before that.

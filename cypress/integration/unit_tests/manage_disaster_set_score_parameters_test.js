@@ -102,20 +102,30 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
 
   it('has some disabled options', () => {
     cy.stub(ListEeAssets, 'getDisasterAssetsFromEe')
-        .returns(Promise.resolve(
-            new Map([['asset1', {type: 1, disable: false}],
-              ['asset2', {type: 2, disable: true}]])));
-    stateAssets.set('NY', Promise.resolve(
-        new Map([['state0', {disable: false}], ['state1', {disable: true}]])));
+        .returns(Promise.resolve(new Map([
+          ['asset1', {type: 1, disable: false}],
+          ['asset2', {type: 2, disable: true}]
+        ])));
+    stateAssets.set('NY', Promise.resolve(new Map([
+      ['state0', {disable: false}], ['state1', {disable: true}]
+    ])));
     callEnableWhenReady(createDisasterData(['NY']));
-    cy.get('#select-asset-selection-row-poverty-NY > option').eq(2).invoke(
-        'attr', 'disabled').should('eq', 'disabled');
-    cy.get('#select-asset-selection-row-poverty-NY > option').eq(1).invoke(
-        'attr', 'disabled').should('not.eq', 'disabled');
-    cy.get('#damage-asset-select > option').eq(2).invoke('attr',
-        'disabled').should('eq', 'disabled');
-    cy.get('#damage-asset-select > option').eq(1).invoke('attr',
-        'disabled').should('not.eq', 'disabled');
+    cy.get('#select-asset-selection-row-poverty-NY > option')
+        .eq(2)
+        .invoke('attr', 'disabled')
+        .should('eq', 'disabled');
+    cy.get('#select-asset-selection-row-poverty-NY > option')
+        .eq(1)
+        .invoke('attr', 'disabled')
+        .should('not.eq', 'disabled');
+    cy.get('#damage-asset-select > option')
+        .eq(2)
+        .invoke('attr', 'disabled')
+        .should('eq', 'disabled');
+    cy.get('#damage-asset-select > option')
+        .eq(1)
+        .invoke('attr', 'disabled')
+        .should('not.eq', 'disabled');
   });
 
   it('validates asset data', () => {
@@ -505,9 +515,10 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
    */
   function setUpDefaultData() {
     cy.stub(ListEeAssets, 'getDisasterAssetsFromEe')
-        .returns(Promise.resolve(
-            new Map([['asset1', {type: 1, disable: false}],
-              ['asset2', {type: 2, disable: false}]])));
+        .returns(Promise.resolve(new Map([
+          ['asset1', {type: 1, disable: false}],
+          ['asset2', {type: 2, disable: false}]
+        ])));
     const currentData = createDisasterData(['NY']);
     currentData.asset_data.score_bounds_coordinates =
         scoreBoundsCoordinates.map(
