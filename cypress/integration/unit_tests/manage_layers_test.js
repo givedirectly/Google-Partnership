@@ -57,7 +57,7 @@ describe('Unit tests for manage_layers page', () => {
     disasterData.set('2003-spring', {});
   });
 
-  it('filters out a null geometry disaster folder asset', () => {
+  it.only('filters out a null geometry disaster folder asset', () => {
     disasterAssets.clear();
     const disaster = getDisaster();
     listAssetsStub
@@ -76,9 +76,9 @@ describe('Unit tests for manage_layers page', () => {
     featureCollectionStub.withArgs('asset/with/null/geometry')
         .returns(withNullGeometry);
     cy.wrap(getAssetsAndPopulateDisasterPicker(disaster)).then(() => {
-      expect(Array.from(disasterAssets.get(disaster).keys())).to.eql([
-        'asset/with/geometry',
-      ]);
+      const assets = disasterAssets.get(disaster);
+      expect(assets.get('asset/with/geometry').disable).to.be.false;
+      expect(assets.get('asset/with/null/geometry').disable).to.be.true;
     });
   });
 

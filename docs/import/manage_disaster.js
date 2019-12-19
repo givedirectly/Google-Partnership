@@ -27,7 +27,6 @@ export {
   deleteDisaster,
   disasterData,
   enableWhenFirestoreReady,
-  initializeDamageSelector,
   initializeScoreSelectors,
   scoreAssetTypes,
   scoreBoundsMap,
@@ -44,13 +43,21 @@ export {
  */
 let disasterData = new Map();
 /**
- * @type {Map<string, Promise<Array<string>>>} Disaster id to listing of
- *     assets in corresponding EE folder. For feature collections, only those
- *     collections with non-null geometries are included in this map.
+ * Disaster id to assets in corresponding EE folder. We know
+ * for each asset what type it is and whether or not it should be disabled in
+ * the option picker. See {@link getDisasterAssetsFromEe} for details on
+ * disabled options.
+ * @type {Map<string, Promise<Map<string, {type: LayerType, disable:
+ *     boolean}>>>}
  */
 const disasterAssets = new Map();
 
-// Map of state to list of known assets
+/**
+ * State to assets in corresponding EE folder. We know for each asset whether or
+ * not it should be disabled in the option picker. See {@link
+ * getStatesAssetsFromEe} for details on disabled options.
+ * @type {Map<string, Promise<Map<string, {disable: boolean}>>>}
+ */
 const stateAssets = new Map();
 
 /**
@@ -301,10 +308,7 @@ function onSetDisaster() {
  */
 function maybeFetchDisasterAssets(disaster) {
   if (!disasterAssets.has(disaster)) {
-    disasterAssets.set(
-        disaster,
-        getDisasterAssetsFromEe(disaster).then(
-            (result) => Array.from(result.keys())));
+    disasterAssets.set(disaster, getDisasterAssetsFromEe(disaster));
   }
 }
 
@@ -384,7 +388,7 @@ function writeNewDisaster(disasterId, states) {
   const currentData = createDisasterData(states);
   disasterData.set(disasterId, currentData);
   // We know there are no assets in folder yet.
-  disasterAssets.set(disasterId, Promise.resolve([]));
+  disasterAssets.set(disasterId, Promise.resolve(new Map()));
 
   const folderCreationPromises = [];
   folderCreationPromises.push(
@@ -539,16 +543,17 @@ function initializeScoreSelectors(states) {
     for (const state of states) {
       if (stateAssets.get(state)) {
         const statePropertyPath = propertyPath.concat([state]);
-        const select =
-            createAssetDropdown(stateAssets.get(state), statePropertyPath)
-                .prop('id', 'select-' + id + '-' + state)
-                .on('change',
-                    (event) => onNonDamageAssetSelect(
-                        event, statePropertyPath, expectedColumns, idStem,
-                        state))
-                .addClass('with-status-border');
-        row.append(createTd().append(select));
-        verifyAsset(select.val(), idStem, state, expectedColumns);
+        stateAssets.get(state).then((assets) => {
+          const select = createAssetDropdown(assets, statePropertyPath)
+                             .prop('id', 'select-' + id + '-' + state)
+                             .on('change',
+                                 (event) => onNonDamageAssetSelect(
+                                     event, statePropertyPath, expectedColumns,
+                                     idStem, state))
+                             .addClass('with-status-border');
+          row.append(createTd().append(select));
+          verifyAsset(select.val(), idStem, state, expectedColumns);
+        });
       }
     }
   }
@@ -619,7 +624,8 @@ function removeAllButFirstFromRow(row) {
 
 /**
  * Initializes a dropdown with assets and the appropriate change handler.
- * @param {Array<string>} assets List of assets to add to dropdown
+ * @param {Map<string, {disable: boolean}>} assets map of assets to add to
+ *     dropdown
  * @param {Array<string>} propertyPath List of attributes to follow to get
  *     value.
  * @param {jQuery<HTMLSelectElement>} select Select element, will be created if
@@ -634,8 +640,10 @@ function createAssetDropdown(
 
   const value = getElementFromPath(propertyPath);
   // Add assets to selector and return it.
-  for (const asset of assets) {
-    const assetOption = createOptionFrom(asset);
+  for (const assetInfo of assets) {
+    const asset = assetInfo[0];
+    const assetOption =
+        createOptionFrom(asset).attr('disabled', assetInfo[1].disable);
     if (asset === value) {
       assetOption.attr('selected', true);
     }

@@ -19,6 +19,7 @@ export {
   onInputBlur,
   onListBlur,
   onSetDisaster,
+  setUpDisasterPicker,
   stateAssets,
   withCheckbox,
   withInput,
@@ -31,9 +32,9 @@ export {
 const stateAssets = new Map();
 
 // A map of maps of the form:
-// {'disaster-2017' => {'asset/path': LayerType}}
-// For feature collections, only those collections with non-null geometries
-// are included in this map.
+// {'disaster-2017' => {'asset/path' => {type: LayerType, disabled: boolean}}
+// The disabled boolean refers to whether the option should be disabled in the
+// disaster asset picker (see {@link getDisasterAssetsFromEe}).
 const disasterAssets = new Map();
 
 // TODO: general reminder to add loading indicators for things like creating
@@ -325,7 +326,7 @@ function createStateAssetPickers(states) {
 }
 
 /**
- * Set up the disaster asset picker div with a fake picker as a placeholder
+ * Sets up the disaster asset picker div with a fake picker as a placeholder
  * while the real picker is waiting for earth engine to list and parse assets.
  * @param {string} disaster
  */
@@ -341,8 +342,8 @@ function setUpDisasterPicker(disaster) {
 }
 
 /**
- * Display disaster assets in a select underneat the #disaster-adder-label label
- * and add an add button which adds a layer.
+ * Displays disaster assets in a select underneath the #disaster-adder-label
+ * label and adds an add button which adds a layer.
  * @param {string} disaster
  */
 function populateDisasterAssetPicker(disaster) {
@@ -353,16 +354,18 @@ function populateDisasterAssetPicker(disaster) {
                           .width(200);
   if (disasterAssets.get(disaster)) {
     for (const asset of disasterAssets.get(disaster)) {
-      const type = layerTypeStrings.get(asset[1]);
-      assetPicker.append(
-          createOptionFrom(asset[0]).text(asset[0] + '-' + type));
+      const assetInfo = asset[1];
+      const type = layerTypeStrings.get(assetInfo.type);
+      assetPicker.append(createOptionFrom(asset[0])
+                             .text(asset[0] + '-' + type)
+                             .attr('disabled', assetInfo.disable));
     }
   }
   const addButton =
       $(document.createElement('button')).prop('type', 'button').text('add');
   addButton.on('click', () => {
     const asset = assetPicker.val();
-    const type = disasterAssets.get(disaster).get(asset);
+    const type = disasterAssets.get(disaster).get(asset).type;
     processNewEeLayer(asset, type);
   });
   assetPickerLabel.append(assetPicker);

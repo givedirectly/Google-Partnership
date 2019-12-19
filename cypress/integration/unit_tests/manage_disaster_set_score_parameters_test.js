@@ -100,6 +100,24 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
       ', and must specify either damage asset or map bounds' +
       allOptionalMissing;
 
+  it('has some disabled options', () => {
+    cy.stub(ListEeAssets, 'getDisasterAssetsFromEe')
+        .returns(Promise.resolve(
+            new Map([['asset1', {type: 1, disable: false}],
+              ['asset2', {type: 2, disable: true}]])));
+    stateAssets.set('NY', Promise.resolve(
+        new Map([['state0', {disable: false}], ['state1', {disable: true}]])));
+    callEnableWhenReady(createDisasterData(['NY']));
+    cy.get('#select-asset-selection-row-poverty-NY > option').eq(2).invoke(
+        'attr', 'disabled').should('eq', 'disabled');
+    cy.get('#select-asset-selection-row-poverty-NY > option').eq(1).invoke(
+        'attr', 'disabled').should('not.eq', 'disabled');
+    cy.get('#damage-asset-select > option').eq(2).invoke('attr',
+        'disabled').should('eq', 'disabled');
+    cy.get('#damage-asset-select > option').eq(1).invoke('attr',
+        'disabled').should('not.eq', 'disabled');
+  });
+
   it('validates asset data', () => {
     const boundsChanged = new Promise((resolve) => {
       const listener = scoreBoundsMap.map.addListener('bounds_changed', () => {
@@ -222,7 +240,11 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
   });
 
   it('multistate displays properly', () => {
-    stateAssets.set('WY', ['wy0', 'wy1', 'wy2', 'wy3', 'wy4']);
+    const assets = new Map();
+    for (let i = 0; i <= 4; i++) {
+      assets.set('wy' + i, {disable: false});
+    }
+    stateAssets.set('WY', Promise.resolve(assets));
     setUpDefaultData();
     callEnableWhenReady(createDisasterData(['NY', 'WY']));
     // Check table is properly initialized, then validate.
@@ -483,13 +505,19 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
    */
   function setUpDefaultData() {
     cy.stub(ListEeAssets, 'getDisasterAssetsFromEe')
-        .returns(Promise.resolve(new Map([['asset1', 1], ['asset2', 1]])));
+        .returns(Promise.resolve(
+            new Map([['asset1', {type: 1, disable: false}],
+              ['asset2', {type: 2, disable: false}]])));
     const currentData = createDisasterData(['NY']);
     currentData.asset_data.score_bounds_coordinates =
         scoreBoundsCoordinates.map(
             (latlng) =>
                 new firebase.firestore.GeoPoint(latlng.lat, latlng.lng));
-    stateAssets.set('NY', ['state0', 'state1', 'state2', 'state3', 'state4']);
+    const assets = new Map();
+    for (let i = 0; i <= 4; i++) {
+      assets.set('state' + i, {disable: false});
+    }
+    stateAssets.set('NY', Promise.resolve(assets));
     return currentData;
   }
 

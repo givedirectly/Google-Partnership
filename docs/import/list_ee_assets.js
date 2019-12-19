@@ -5,67 +5,114 @@ import {convertEeObjectToPromise} from '../map_util.js';
 export {getDisasterAssetsFromEe, getStatesAssetsFromEe};
 
 /**
- * Requests all assets in ee directories corresponding to given states.
+ * Cache for the results of listEeAssets for each state.
+ * @type {Map<string, Promise<Map<string, string>>>} Promise with a map whose
+ *     keys are the asset names, and values are types
+ */
+const stateAssetPromises = new Map();
+
+/**
+ * Gets all assets in ee directories corresponding to given states. Caches
+ * results of calls to listEeAssets for each state. Marks assets with their type
+ * and whether or not they should be disabled when put into a select. Here,
+ * disabling any assets that aren't feature collections.
  * @param {Array<string>} states e.g. ['WA']
- * @return {Promise<Array<Array<string | Array<string>>>>} 2-d array of all
- *     retrieved assets in the form [['WA', {'asset/path': LayerType,...}], ...]
+ * @return {Promise<Array<Array<string, {disable: boolean}>>>} 2-d array of all
+ *     retrieved assets in the form [['WA', {'path' => {disable: true}}],...]
  */
 function getStatesAssetsFromEe(states) {
   const promises = [];
   for (const state of states) {
-    const dir = legacyStateDir + '/' + state;
-    promises.push(listEeAssets(dir).then((result) => [state, result]));
+    let listEeAssetsPromise = stateAssetPromises.get(state);
+    if (!listEeAssetsPromise) {
+      const dir = legacyStateDir + '/' + state;
+      listEeAssetsPromise = listEeAssets(dir);
+      stateAssetPromises.set(state, listEeAssetsPromise);
+    }
+    promises.push(listEeAssetsPromise.then((result) => [state, result]));
   }
-  return Promise.all(promises);
+  return Promise.all(promises).then((results) => {
+    const toReturn = [];
+    for (const result of results) {
+      const assetMap = new Map();
+      for (const assetInfo of result[1]) {
+        assetMap.set(
+            assetInfo[0],
+            {disable: assetInfo[1] !== LayerType.FEATURE_COLLECTION});
+      }
+      toReturn.push([result[0], assetMap]);
+    }
+    return toReturn;
+  });
 }
 
+/**
+ * Cache for the results of getDisasterAssetsFromEe for each disaster
+ * @type {Map<string, Promise<Map<string, {type: LayerType, disable:
+ *     boolean}>>>}
+ */
 const disasterAssetPromises = new Map();
 
 /**
  * Gets all assets for the given disaster. Assumes an ee folder has already
- * been created for this disaster.
+ * been created for this disaster. Marks assets with their type and whether or
+ * not they should be disabled when put into a select. Here, disabling any
+ * feature collections that have a null-looking (see comment below) geometry.
  *
- * Deduplicates requests, so retrying before a fetch completes won't start a new
- * fetch.
+ * De-duplicates requests, so retrying before a fetch completes won't start a
+ * new fetch.
  * @param {string} disaster disaster in the form name-year
- * @return {Promise<Map<string, string>>} Returns a promise containing the map
- * of asset path to type for the given disaster.
+ * @return {Promise<Map<string, {type: number, disabled: number}>>} Returns
+ *     a promise containing the map
+ * of asset path to info for the given disaster.
  */
 function getDisasterAssetsFromEe(disaster) {
   const maybePromise = disasterAssetPromises.get(disaster);
   if (maybePromise) {
     return maybePromise;
   }
-  const result = listEeAssets(eeLegacyPathPrefix + disaster)
-                     .then((result) => {
-                       const assetPromises = [];
-                       result.forEach((type, asset) => {
-                         if (type !== LayerType.FEATURE_COLLECTION) return;
-                         // assuming that if the first feature's geometry in a
-                         // collection is null, they're all null
-                         const assetPromise = convertEeObjectToPromise(
-                                             ee.FeatureCollection(asset)
-                                                 .first()
-                                                 .geometry()
-                                                 .coordinates())
-                                             .then((coords) => {
-                                               if (coords.length !== 0) {
-                                                 return [asset, type];
-                                               }
-                                             });
-                         assetPromises.push(assetPromise);
-                       });
-                       return Promise.all(assetPromises);
-                     })
-                     .then((results) => {
-                       const nonNulls = new Map();
-                       for (const result of results) {
-                         if (result) {
-                           nonNulls.set(result[0], result[1]);
-                         }
-                       }
-                       return nonNulls;
-                     });
+  const result =
+      listEeAssets(eeLegacyPathPrefix + disaster)
+          .then((result) => {
+            const shouldDisable = [];
+            for (const asset of Array.from(result.keys())) {
+              if (result.get(asset) === LayerType.FEATURE_COLLECTION) {
+                // census data returns an empty coords multipoint
+                // geometry instead of a true null geometry. So
+                // we check for that. Could be bad if we ever see
+                // a data set with a mix of empty and non-empty
+                // geometries.
+                shouldDisable.push(ee.Algorithms.If(
+                    ee.Algorithms.IsEqual(
+                        ee.FeatureCollection(asset)
+                            .first()
+                            .geometry()
+                            .coordinates()
+                            .length(),
+                        ee.Number(0)),
+                    true, false));
+              } else {
+                shouldDisable.push(false);
+              }
+            }
+            return Promise.all([
+              Promise.resolve(result),
+              convertEeObjectToPromise(ee.List(shouldDisable)),
+            ]);
+          })
+          .then((results) => {
+            const assetTypeMap = results[0];
+            const disableList = results[1];
+            const assetMap = new Map();
+            const assets = Array.from(assetTypeMap.keys());
+            for (let i = 0; i < assets.length; i++) {
+              const asset = assets[i];
+              assetMap.set(
+                  asset,
+                  {type: assetTypeMap.get(asset), disable: disableList[i]});
+            }
+            return assetMap;
+          });
   disasterAssetPromises.set(disaster, result);
   return result;
 }
