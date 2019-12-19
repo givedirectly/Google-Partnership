@@ -33,39 +33,42 @@
 
 <br><br><br>  <!-- TODO(ramvellanki): switch to using a margin above the main content of this page -->
 
-<div style="margin-left: 10px">
+<div class="main-content">
   <div id="status"></div>
   <div id="selected-disaster">
-    <table id="layer-manager" class="table table-bordered pagin-table">
-      <thead>
-        <tr>
-          <th style="width:20px"></th>
-          <th style="width:200px">Layer Name</th>
-          <th style="width:600px">EE Path/URL</th>
-          <th>Type</th>
-          <th>Display on Load</th>
-          <th>Color</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody id="tbody"></tbody>
-    </table>
-    <br>
-    <div id="color-fxn-editor" class="editor" hidden="true">
+    <div class="content-container">
+      <div class="content-title">Current Layers</div>
+      <table id="layer-manager" class="table table-bordered pagin-table">
+        <thead>
+          <tr>
+            <th style="width:20px"></th>
+            <th style="width:200px">Layer Name</th>
+            <th style="width:600px">EE Path/URL</th>
+            <th>Type</th>
+            <th>Display on Load</th>
+            <th>Color</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div id="color-fxn-editor" class="editor content-container" hidden="true">
       <div id="color-radios"></div><br>
       <div id="single" hidden="true" class="color-type-div"></div>
       <div id="continuous" hidden="true" class="color-type-div"></div>
       <div id="discrete" hidden="true" class="color-type-div"></div>
     </div>
-    <br>
-    <div id="asset-pickers">
-      <div id="disaster-asset-picker" class="asset-pickers"></div>
-      <div id="state-asset-pickers" class="asset-pickers"></div>
+    <div class="content-container">
+      <div class="content-title">Add Layer from Earth Engine</div>
+      <div id="asset-pickers">
+        <div id="disaster-asset-picker" class="asset-pickers"></div>
+        <div id="state-asset-pickers" class="asset-pickers"></div>
+      </div>
+      <p>Upload additional assets via the <a href="https://code.earthengine.google.com/" target="_blank"> code editor </a></p>
     </div>
-    <p>Upload additional assets via the <a href="https://code.earthengine.google.com/" target="_blank"> code editor </a></p>
-    <br>
-    <div>
-      <div style="font-weight:bold">Add Other Layer Type</div>
+    <div class="content-container">
+      <div class="content-title">Add Other Layer Type</div>
       <div>
         <label>Layer Type</label>
         <select id="non-eelayer-type">

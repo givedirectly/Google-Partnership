@@ -1,13 +1,21 @@
-import {createScoreAsset} from '../../../docs/import/create_score_asset.js';
+import {gdEePathPrefix} from '../../../docs/ee_paths.js';
+import {backUpAssetAndStartTask, createScoreAsset} from '../../../docs/import/create_score_asset.js';
 import {convertEeObjectToPromise} from '../../../docs/map_util';
-import {getBackupScoreAssetPath, getScoreAssetPath} from '../../../docs/resources.js';
+import * as Resources from '../../../docs/resources.js';
 import {assertFirestoreMapBounds} from '../../support/firestore_map_bounds';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
+
+const mockTask = {
+  start: () => {},
+  id: 'FAKE_ID',
+};
 
 describe('Unit tests for create_score_asset.js', () => {
   loadScriptsBeforeForUnitTests('ee', 'firebase', 'jquery');
   let testData;
   let exportStub;
+  let renameStub;
+  let taskStartStub;
   beforeEach(() => {
     // Create a trivial world: 2 block groups, each a 1x2 vertical stripe.
     const tigerBlockGroups = ee.FeatureCollection(
@@ -29,19 +37,14 @@ describe('Unit tests for create_score_asset.js', () => {
       makePoint(1.4, 0.7),
       makePoint(1.5, 0.5),
     ]);
-    // Stub out delete, rename, and export. We'll assert on what was exported
-    // below.
-    cy.stub(ee.data, 'deleteAsset').callsFake((oldAsset, callback) => {
-      expect(oldAsset).to.equal(getBackupScoreAssetPath());
-      callback();
-    });
-    cy.stub(ee.data, 'renameAsset').callsFake((from, to, callback) => {
-      expect(from).to.equal(getScoreAssetPath());
-      expect(to).to.equal(getBackupScoreAssetPath());
-      callback();
-    });
-    exportStub = cy.stub(ee.batch.Export.table, 'toAsset')
-                     .returns({start: () => {}, id: 'FAKE_ID'});
+    renameStub =
+        cy.stub(ee.data, 'renameAsset').callsFake((from, to, callback) => {
+          expect(from).to.equal(Resources.getScoreAssetPath());
+          expect(to).to.equal(Resources.getBackupScoreAssetPath());
+          callback();
+        });
+    taskStartStub = cy.stub(mockTask, 'start');
+    exportStub = cy.stub(ee.batch.Export.table, 'toAsset').returns(mockTask);
 
     // Test data is reasonably real. All of the keys should be able to vary,
     // with corresponding changes to test data (but no production changes). The
@@ -85,6 +88,8 @@ describe('Unit tests for create_score_asset.js', () => {
     cy.wrap(promise)
         .then(() => {
           expect(exportStub).to.be.calledOnce;
+          expect(taskStartStub).to.be.calledOnce;
+          expect(renameStub).to.be.calledOnce;
           return convertEeObjectToPromise(exportStub.firstCall.args[0]);
         })
         .then((result) => {
@@ -122,7 +127,7 @@ describe('Unit tests for create_score_asset.js', () => {
     expect(promise).to.not.be.null;
     cy.wrap(promise)
         .then(() => {
-          expect(exportStub).to.be.calledOnce;
+          expect(taskStartStub).to.be.calledOnce;
           return convertEeObjectToPromise(exportStub.firstCall.args[0]);
         })
         .then((result) => {
@@ -154,7 +159,7 @@ describe('Unit tests for create_score_asset.js', () => {
     expect(promise).to.not.be.null;
     cy.wrap(promise)
         .then(() => {
-          expect(exportStub).to.be.calledOnce;
+          expect(taskStartStub).to.be.calledOnce;
           return convertEeObjectToPromise(
               exportStub.firstCall.args[0].sort('GEOID'));
         })
@@ -173,7 +178,7 @@ describe('Unit tests for create_score_asset.js', () => {
     expect(promise).to.not.be.null;
     cy.wrap(promise)
         .then(() => {
-          expect(exportStub).to.be.calledOnce;
+          expect(taskStartStub).to.be.calledOnce;
           return convertEeObjectToPromise(exportStub.firstCall.args[0]);
         })
         .then((result) => {
@@ -192,7 +197,7 @@ describe('Unit tests for create_score_asset.js', () => {
     expect(promise).to.not.be.null;
     cy.wrap(promise)
         .then(() => {
-          expect(exportStub).to.be.calledOnce;
+          expect(taskStartStub).to.be.calledOnce;
           return convertEeObjectToPromise(exportStub.firstCall.args[0]);
         })
         .then((result) => {
@@ -213,6 +218,68 @@ describe('Unit tests for create_score_asset.js', () => {
     testData.asset_data = null;
     expect(createScoreAsset(testData)).to.be.null;
     expect(exportStub).to.not.be.called;
+  });
+
+  it('Main score asset not present', () => {
+    // Make things more realistic by specifying a missing main asset path.
+    cy.stub(Resources, 'getScoreAssetPath')
+        .returns(gdEePathPrefix + 'path/that/does/not/exist');
+    const deleteStub = cy.stub(ee.data, 'deleteAsset');
+    renameStub.restore();
+    cy.wrap(backUpAssetAndStartTask(null)).then(() => {
+      expect(deleteStub).to.not.be.called;
+      expect(exportStub).to.be.calledOnce;
+      expect(taskStartStub).to.be.calledOnce;
+    });
+  });
+
+  it('Backup score asset present', () => {
+    const deleteStub =
+        cy.stub(ee.data, 'deleteAsset').callsFake((oldAsset, callback) => {
+          expect(oldAsset).to.equal(Resources.getBackupScoreAssetPath());
+          callback();
+        });
+    renameStub.onCall(0).callsFake((from, to, callback) => {
+      expect(from).to.equal(Resources.getScoreAssetPath());
+      expect(to).to.equal(Resources.getBackupScoreAssetPath());
+      callback(
+          null,
+          'Cannot overwrite asset \'' + Resources.getBackupScoreAssetPath() +
+              '\'');
+    });
+    renameStub.onCall(1).callsFake((from, to, callback) => {
+      expect(from).to.equal(Resources.getScoreAssetPath());
+      expect(to).to.equal(Resources.getBackupScoreAssetPath());
+      callback();
+    });
+    cy.wrap(backUpAssetAndStartTask(null)).then(() => {
+      expect(renameStub).to.be.calledTwice;
+      expect(deleteStub).to.be.calledOnce;
+      expect(exportStub).to.be.calledOnce;
+      expect(taskStartStub).to.be.calledOnce;
+    });
+  });
+
+  it('Could not delete backup', () => {
+    // Make things more realistic by trying to delete an asset that we don't
+    // control.
+    cy.stub(Resources, 'getBackupScoreAssetPath').returns('TIGER/2018/States');
+    const renameError = 'Cannot overwrite asset \'' +
+        Resources.getBackupScoreAssetPath() + '\'';
+    renameStub.callsFake((from, to, callback) => {
+      expect(from).to.equal(Resources.getScoreAssetPath());
+      expect(to).to.equal(Resources.getBackupScoreAssetPath());
+      callback(null, renameError);
+    });
+    const promise = backUpAssetAndStartTask(null).then(
+        () => assert.fail(null, null, 'Should have failed'),
+        (err) => expect(err).to.equal(
+            'Error moving old score asset: ' + renameError));
+    cy.wrap(promise).then(() => {
+      expect(renameStub).to.be.calledOnce;
+      expect(exportStub).to.be.calledOnce;
+      expect(taskStartStub).to.not.be.called;
+    });
   });
 
   /** Sets `asset_data.score_bounds_coordinates` to a square. */

@@ -1,4 +1,4 @@
-import {Authenticator} from '../authenticate.js';
+import {trackEeAndFirebase} from '../authenticate.js';
 import {getDisastersData} from '../firestore_document.js';
 import {loadNavbarWithPicker} from '../navbar.js';
 import {getDisaster} from '../resources.js';
@@ -11,7 +11,7 @@ import {enableWhenReady, onSetDisaster, setUpDisasterPicker, updateAfterSort} fr
 const taskAccumulator =
     new TaskAccumulator(2, () => enableWhenReady(firebaseDataPromise));
 
-const firebaseAuthPromise = Authenticator.trackEeAndFirebase(taskAccumulator);
+const firebaseAuthPromise = trackEeAndFirebase(taskAccumulator, true);
 const firebaseDataPromise = firebaseAuthPromise.then(getDisastersData);
 
 $(() => {
