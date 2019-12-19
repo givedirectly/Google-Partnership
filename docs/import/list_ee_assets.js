@@ -18,15 +18,14 @@ const stateAssetPromises = new Map();
  * disabling any assets that aren't feature collections.
  * @param {Array<string>} states e.g. ['WA']
  * @return {Promise<Array<Array<string, {disable: boolean}>>>} 2-d array of all
- *     retrieved assets in the form [['WA', {'path' => {disable: true}}],...]
+ *     retrieved assets in the form [['WA', {'path': {disable: true}}],...]
  */
 function getStatesAssetsFromEe(states) {
   const promises = [];
   for (const state of states) {
     let listEeAssetsPromise = stateAssetPromises.get(state);
     if (!listEeAssetsPromise) {
-      const dir = legacyStateDir + '/' + state;
-      listEeAssetsPromise = listEeAssets(dir);
+      listEeAssetsPromise = listEeAssets(legacyStateDir + '/' + state);
       stateAssetPromises.set(state, listEeAssetsPromise);
     }
     promises.push(listEeAssetsPromise.then((result) => [state, result]));
@@ -63,8 +62,7 @@ const disasterAssetPromises = new Map();
  * new fetch.
  * @param {string} disaster disaster in the form name-year
  * @return {Promise<Map<string, {type: number, disabled: number}>>} Returns
- *     a promise containing the map
- * of asset path to info for the given disaster.
+ *     a promise containing the map of asset to info for the given disaster.
  */
 function getDisasterAssetsFromEe(disaster) {
   const maybePromise = disasterAssetPromises.get(disaster);
@@ -90,6 +88,7 @@ function getDisasterAssetsFromEe(disaster) {
                             .coordinates()
                             .length(),
                         ee.Number(0)),
+                    // DOM disable property can't recognize 0 and 1 as false and true :(
                     true, false));
               } else {
                 shouldDisable.push(false);

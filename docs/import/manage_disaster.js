@@ -1,5 +1,4 @@
 import {eeLegacyPathPrefix, legacyStateDir} from '../ee_paths.js';
-import {LayerType} from '../firebase_layers.js';
 import {disasterCollectionReference} from '../firestore_document.js';
 import {convertEeObjectToPromise, latLngToGeoPoint, transformGeoPointArrayToLatLng} from '../map_util.js';
 import {getDisaster} from '../resources.js';
@@ -56,7 +55,7 @@ const disasterAssets = new Map();
  * State to assets in corresponding EE folder. We know for each asset whether or
  * not it should be disabled in the option picker. See {@link
  * getStatesAssetsFromEe} for details on disabled options.
- * @type {Map<string, Promise<Map<string, {disable: boolean}>>>}
+ * @type {Map<string, Map<string, {disable: boolean}>>}
  */
 const stateAssets = new Map();
 
@@ -262,13 +261,7 @@ function onSetDisaster() {
   if (neededStates) {
     promise = getStatesAssetsFromEe(neededStates).then((result) => {
       for (const stateItem of result) {
-        const features = [];
-        stateItem[1].forEach((val, key) => {
-          if (val === LayerType.FEATURE_COLLECTION) {
-            features.push(key);
-          }
-        });
-        stateAssets.set(stateItem[0], features);
+        stateAssets.set(stateItem[0], stateItem[1]);
       }
     });
   }
@@ -543,17 +536,16 @@ function initializeScoreSelectors(states) {
     for (const state of states) {
       if (stateAssets.get(state)) {
         const statePropertyPath = propertyPath.concat([state]);
-        stateAssets.get(state).then((assets) => {
-          const select = createAssetDropdown(assets, statePropertyPath)
-                             .prop('id', 'select-' + id + '-' + state)
-                             .on('change',
-                                 (event) => onNonDamageAssetSelect(
-                                     event, statePropertyPath, expectedColumns,
-                                     idStem, state))
-                             .addClass('with-status-border');
-          row.append(createTd().append(select));
-          verifyAsset(select.val(), idStem, state, expectedColumns);
-        });
+        const select = createAssetDropdown(stateAssets.get(state),
+            statePropertyPath)
+            .prop('id', 'select-' + id + '-' + state)
+            .on('change',
+                (event) => onNonDamageAssetSelect(
+                    event, statePropertyPath, expectedColumns,
+                    idStem, state))
+            .addClass('with-status-border');
+        row.append(createTd().append(select));
+        verifyAsset(select.val(), idStem, state, expectedColumns);
       }
     }
   }
