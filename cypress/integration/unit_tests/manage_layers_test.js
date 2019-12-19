@@ -82,17 +82,21 @@ describe('Unit tests for manage_layers page', () => {
     });
   });
 
-  // TODO: move this test when we delete state asset pickers from manage_layers.js
+  // TODO: move this test when we delete state asset pickers from
+  // manage_layers.js
   it('gets state asset info from ee', () => {
-    cy.wrap(getStatesAssetsFromEe([KNOWN_STATE])).then((result) => {
-      expect(result.get([KNOWN_STATE])).to.not.be.null;
-      return result.get([KNOWN_STATE]);
-    }).then((assets) => {
-      expect(assets).to.eql(new Map([[KNOWN_STATE_ASSET, 'TABLE']]));
-      expect(ee.data.listAssets)
-          .to.be.calledWith(
-              legacyStatePrefix + KNOWN_STATE, {}, Cypress.sinon.match.func);
-    });
+    cy.wrap(getStatesAssetsFromEe([KNOWN_STATE]))
+        .then((result) => {
+          expect(result.get([KNOWN_STATE])).to.not.be.null;
+          return result.get([KNOWN_STATE]);
+        })
+        .then((assets) => {
+          expect(assets).to.eql(new Map([[KNOWN_STATE_ASSET, 'TABLE']]));
+          expect(ee.data.listAssets)
+              .to.be.calledWith(
+                  legacyStatePrefix + KNOWN_STATE, {},
+                  Cypress.sinon.match.func);
+        });
   });
 
   it('tests color cell', () => {

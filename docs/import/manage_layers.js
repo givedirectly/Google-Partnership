@@ -360,8 +360,8 @@ function setUpDisasterPicker(disaster) {
 function populateDisasterAssetPicker(disaster) {
   const div = $('#disaster-asset-picker').empty();
   const assetPickerLabel = $(document.createElement('label'))
-      .text('Add layer from ' + disaster + ': ')
-      .attr('id', disaster + 'adder-label');
+                               .text('Add layer from ' + disaster + ': ')
+                               .attr('id', disaster + 'adder-label');
   const assetPicker = $(document.createElement('select'))
                           .attr('id', disaster + '-adder')
                           .width(200);
