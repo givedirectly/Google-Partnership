@@ -2004,7 +2004,7 @@ globals@^12.1.0:
   dependencies:
     type-fest "^0.8.1"
 
-google-auth-library@^5.0.0, google-auth-library@^5.1.0, google-auth-library@^5.5.0, google-auth-library@^5.6.1:
+google-auth-library@^5.0.0, google-auth-library@^5.1.0, google-auth-library@^5.5.0, google-auth-library@^5.6.1, google-auth-library@^5.7.0:
   version "5.7.0"
   resolved "https://registry.yarnpkg.com/google-auth-library/-/google-auth-library-5.7.0.tgz#2d8273793a9177f9f37f3920861f4256419c77ae"
   integrity sha512-uclMldsQNf64Qr67O8TINdnqbU/Ixv81WryX+sF9g7uP0igJ98aCR/uU399u1ABLa53LNsyji+bo+bP8/iL9dA==

@@ -14,6 +14,7 @@
 import * as ee from '@google/earthengine';
 import * as firebase from 'firebase';
 import * as firebaseAdmin from 'firebase-admin';
+import {JWT} from 'google-auth-library';
 import {readFileSync} from 'fs';
 
 import {firebaseConfigProd, firebaseConfigTest} from '../../docs/authenticate.js';
@@ -112,13 +113,21 @@ function onFunction(on, config) {
     getEarthEngineToken() {
       const privateKey = JSON.parse(
           readFileSync(process.env.GOOGLE_APPLICATION_CREDENTIALS, 'utf8'));
-      return new Promise((resolve, reject) => {
-        ee.data.authenticateViaPrivateKey(
-            privateKey,
-            // TODO(janakr): no better way to do this?
-            // Strip 'Bearer ' from beginning.
-            () => resolve(ee.data.getAuthToken().substring(7)), reject);
-      });
+      // const client = new JWT(privateKey.client_email, null, privateKey.private_key, ['https://www.googleapis.com/auth/earthengine.readonly']);
+      // return client.refreshToken().then(console.log);
+      // return client.request({url: 'https://iamcredentials.googleapis.com/v1/{name=projects/-/serviceAccounts/firebase-adminsdk-j6emn-cfc145e0db@mapping-test-data.iam.gserviceaccount.com}:generateAccessToken'})
+      //     .then(console.log);
+      return fetch('https://iamcredentials.googleapis.com/v1/{name=projects/-/serviceAccounts/firebase-adminsdk-j6emn-cfc145e0db@mapping-test-data.iam.gserviceaccount.com}:generateAccessToken',
+          {method: 'POST'}).then(console.log);
+      //
+      // );
+      // return new Promise((resolve, reject) => {
+      //   ee.data.authenticateViaPrivateKey(
+      //       privateKey,
+      //       // TODO(janakr): no better way to do this?
+      //       // Strip 'Bearer ' from beginning.
+      //       () => resolve(ee.data.getAuthToken().substring(7)), reject);
+      // });
     },
 
     /**
