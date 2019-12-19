@@ -8,7 +8,6 @@ import {getCurrentData, getCurrentLayers, getRowIndex, ILLEGAL_STATE_ERR, onUpda
 export {enableWhenReady, updateAfterSort};
 // Visible for testing
 export {
-  createAssetPickers,
   createLayerRow,
   createOptionFrom,
   createTd,
@@ -17,16 +16,11 @@ export {
   onInputBlur,
   onListBlur,
   onSetDisaster,
-  stateAssets,
   withCheckbox,
   withInput,
   withList,
   withType,
 };
-
-// A map of maps of the form:
-// {'WA' => {'asset/path': LayerType}}
-const stateAssets = new Map();
 
 // A map of maps of the form:
 // {'disaster-2017' => {'asset/path': LayerType}}
@@ -321,13 +315,6 @@ function populateStateAndDisasterAssetPickers(disaster) {
     });
     promises.push(disasterDone);
   }
-
-  const states = getCurrentData()['states'];
-  const statesToFetch = [];
-  for (const state of states) {
-    if (!stateAssets.has(state)) statesToFetch.push(state);
-  }
-
   return Promise.all(promises);
 }
 

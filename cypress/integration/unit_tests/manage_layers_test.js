@@ -2,7 +2,7 @@ import {gdEeStatePrefix, legacyStateDir, legacyStatePrefix} from '../../../docs/
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
 import {withColor} from '../../../docs/import/color_function_util.js';
 import {getStatesAssetsFromEe} from '../../../docs/import/list_ee_assets.js';
-import {createOptionFrom, createTd, onCheck, onDelete, onInputBlur, onListBlur, stateAssets, updateAfterSort, withCheckbox, withInput, withList, withType} from '../../../docs/import/manage_layers.js';
+import {createOptionFrom, createTd, onCheck, onDelete, onInputBlur, onListBlur, updateAfterSort, withCheckbox, withInput, withList, withType} from '../../../docs/import/manage_layers.js';
 import {disasterData, getCurrentLayers} from '../../../docs/import/manage_layers_lib.js';
 import {getDisaster} from '../../../docs/resources';
 import {createAndAppend, createTrs, setDisasterAndLayers, setUpSavingStubs, waitForPromiseAndAssertSaves} from '../../support/import_test_util.js';
@@ -48,7 +48,6 @@ describe('Unit tests for manage_layers page', () => {
         }));
     cy.stub(ee.data, 'createFolder');
 
-    stateAssets.clear();
     // In prod this would happen in enableWhenReady which would read from
     // firestore.
     disasterData.clear();
@@ -57,7 +56,6 @@ describe('Unit tests for manage_layers page', () => {
   });
 
   afterEach(() => {
-    stateAssets.clear();
     disasterData.clear();
   });
 
