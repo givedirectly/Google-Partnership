@@ -29,7 +29,7 @@ function getStatesAssetsFromEe(states) {
     const statePromise =
         listEeAssets(legacyStateDir + '/' + state).then((result) => {
           const assetMap = new Map();
-          for (const [asset, type] of result) {
+          for (const {asset, type} of result) {
             assetMap.set(
                 asset, {disabled: type !== LayerType.FEATURE_COLLECTION});
           }
@@ -67,10 +67,10 @@ function getDisasterAssetsFromEe(disaster) {
   }
   const result =
       listEeAssets(eeLegacyPathPrefix + disaster)
-          .then((assetMap) => {
+          .then((assets) => {
             const shouldDisable = [];
-            for (const asset of Array.from(assetMap.keys())) {
-              if (assetMap.get(asset) === LayerType.FEATURE_COLLECTION) {
+            for (const {asset, type} of assets) {
+              if (type === LayerType.FEATURE_COLLECTION) {
                 // census data returns an empty coords multipoint
                 // geometry instead of a true null geometry. So
                 // we check for that. Could be bad if we ever see
@@ -92,14 +92,14 @@ function getDisasterAssetsFromEe(disaster) {
               }
             }
             return Promise.all([
-              Promise.resolve(assetMap),
+              assets,
               convertEeObjectToPromise(ee.List(shouldDisable)),
             ]);
           })
-          .then(([assetTypeMap, disableList]) => {
+          .then(([assets, disableList]) => {
             const assetMap = new Map();
             const disableListIterator = disableList[Symbol.iterator]();
-            for (const [asset, type] of assetTypeMap) {
+            for (const {asset, type} of assets) {
               assetMap.set(
                   asset,
                   {type: type, disabled: disableListIterator.next().value});
@@ -113,8 +113,8 @@ function getDisasterAssetsFromEe(disaster) {
 /**
  * Lists the EE assets in dir, filtering out unsupported ones.
  * @param {string} dir fully qualified EE path
- * @return {Promise<Map<string, string>>} Promise with a map whose keys are the
- *     asset names, and values are types
+ * @return {Promise<Array<{asset: string, type: LayerType}>>} Promise with an
+ *     array of asset info objects.
  */
 function listEeAssets(dir) {
   return ee.data.listAssets(dir, {}, () => {}).then(getIds);
@@ -123,15 +123,15 @@ function listEeAssets(dir) {
 /**
  * Turns a listAssets call result into a map of asset -> type.
  * @param {Object} listAssetsResult result of call to ee.data.listAssets
- * @return {Map<string, string>} asset-path -> type e.g. 'users/gd/my-asset' ->
- *     'IMAGE'
+ * @return {Array<{asset: string, type: LayerType}>} asset-path -> type e.g.
+ *     'users/gd/my-asset' -> 'IMAGE'
  */
 function getIds(listAssetsResult) {
-  const assets = new Map();
+  const assets = [];
   if (listAssetsResult.assets) {
     for (const asset of listAssetsResult.assets) {
       const type = maybeConvertAssetType(asset);
-      if (type) assets.set(asset.id, type);
+      if (type) assets.push({asset: asset.id, type: type});
     }
   }
   return assets;
@@ -142,7 +142,7 @@ function getIds(listAssetsResult) {
  * Check that the type of the given asset is one we support (Unsupported:
  * ALGORITHM, FOLDER, UNKNOWN).
  * @param {Object} asset single item from result of listAssets
- * @return {?number} the type of the asset if it's supported, else null
+ * @return {?LayerType} the type of the asset if it's supported, else null
  */
 function maybeConvertAssetType(asset) {
   switch (asset.type) {

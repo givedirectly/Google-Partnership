@@ -35,6 +35,10 @@ export {
   writeNewDisaster,
 };
 
+// TODO(juliexxia): consolidate asset picker logic and storage structure between
+// manage_layers.js and manage_disaster.js
+// TODO: refactor to avoid as much jumpiness as possible.
+
 /**
  * @type {Map<string, Object>} Disaster id to disaster data, corresponding to
  *     data in Firestore. Initialized when Firestore data is downloaded, but set

@@ -27,6 +27,10 @@ export {
   withType,
 };
 
+// TODO(juliexxia): consolidate asset picker logic and storage structure between
+// manage_layers.js and manage_disaster.js
+// TODO: refactor to avoid as much jumpiness as possible.
+
 // also waiting to be deleted
 // A map of maps of the form:
 // {'WA' => {'asset/path': LayerType}}
@@ -326,7 +330,9 @@ function getAssetsAndPopulateDisasterPicker(disaster) {
     return Promise.resolve();
   } else {
     setUpDisasterPicker(disaster);
+    console.time('start');
     return getDisasterAssetsFromEe(disaster).then((assets) => {
+      console.timeEnd('start');
       disasterAssets.set(disaster, assets);
       disasterLambda(disaster);
     });
