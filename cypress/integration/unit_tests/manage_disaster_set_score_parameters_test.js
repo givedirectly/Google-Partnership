@@ -100,16 +100,16 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
       ', and must specify either damage asset or map bounds' +
       allOptionalMissing;
 
-  it('has some disabled options', () => {
+  it.only('has some disabled options', () => {
     cy.stub(ListEeAssets, 'getDisasterAssetsFromEe')
         .returns(Promise.resolve(new Map([
           ['asset1', {type: 1, disable: false}],
           ['asset2', {type: 2, disable: true}],
         ])));
-    stateAssets.set('NY', Promise.resolve(new Map([
+    stateAssets.set('NY', new Map([
       ['state0', {disable: false}],
       ['state1', {disable: true}],
-    ])));
+    ]));
     callEnableWhenReady(createDisasterData(['NY']));
     cy.get('#select-asset-selection-row-poverty-NY > option')
         .eq(2)
@@ -255,7 +255,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     for (let i = 0; i <= 4; i++) {
       assets.set('wy' + i, {disable: false});
     }
-    stateAssets.set('WY', Promise.resolve(assets));
+    stateAssets.set('WY', assets);
     setUpDefaultData();
     callEnableWhenReady(createDisasterData(['NY', 'WY']));
     // Check table is properly initialized, then validate.
@@ -529,7 +529,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     for (let i = 0; i <= 4; i++) {
       assets.set('state' + i, {disable: false});
     }
-    stateAssets.set('NY', Promise.resolve(assets));
+    stateAssets.set('NY', assets);
     return currentData;
   }
 
