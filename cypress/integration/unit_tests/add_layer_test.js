@@ -12,14 +12,14 @@ describe('Unit tests for adding layers', () => {
   setUpSavingStubs();
   beforeEach(() => disasterData.clear());
 
-  afterEach(() => disasterData.clear());
-
-  it('processes a new feature layer with <= 25 vals', () => {
+  it.only('processes a new feature layer with <= 25 vals', () => {
     stubFeatureCollection(5);
     setDisasterAndLayers([{}, {}]);
     const rows = createTrs(2);
     const tbody = createAndAppend('tbody', 'tbody');
     tbody.append(rows);
+    createAndAppend('div', 'color-fxn-editor').hide();
+    expect($('#color-fxn-editor').prop('style').display).to.equal('none');
 
     waitForPromiseAndAssertSaves(
         processNewEeLayer(mockAsset, LayerType.FEATURE_COLLECTION))
@@ -39,6 +39,7 @@ describe('Unit tests for adding layers', () => {
           expect(scoopsColumn['min']).to.equal(0);
           expect(scoopsColumn['values']).to.eql(['0', '1', '2', '3', '4']);
           expect($('#tbody').children('tr').length).to.equal(3);
+          expect($('#color-fxn-editor').prop('style').display).to.equal('block');
         });
   });
 
