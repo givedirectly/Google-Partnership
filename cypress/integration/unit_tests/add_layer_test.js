@@ -12,7 +12,7 @@ describe('Unit tests for adding layers', () => {
   setUpSavingStubs();
   beforeEach(() => disasterData.clear());
 
-  it.only('processes a new feature layer with <= 25 vals', () => {
+  it('processes a new feature layer with <= 25 vals', () => {
     stubFeatureCollection(5);
     setDisasterAndLayers([{}, {}]);
     const rows = createTrs(2);
