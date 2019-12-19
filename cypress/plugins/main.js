@@ -11,7 +11,7 @@
  *
  * More about Cypress plugins here: https://on.cypress.io/plugins-guide
  */
-import * as earthEngine from '@google/earthengine';
+import * as ee from '@google/earthengine';
 import * as firebase from 'firebase';
 import * as firebaseAdmin from 'firebase-admin';
 import {readFileSync} from 'fs';
@@ -113,12 +113,11 @@ function onFunction(on, config) {
       const privateKey = JSON.parse(
           readFileSync(process.env.GOOGLE_APPLICATION_CREDENTIALS, 'utf8'));
       return new Promise((resolve, reject) => {
-        earthEngine.data.authenticateViaPrivateKey(
+        ee.data.authenticateViaPrivateKey(
             privateKey,
             // TODO(janakr): no better way to do this?
             // Strip 'Bearer ' from beginning.
-            () => resolve(earthEngine.data.getAuthToken().substring(7)),
-            reject);
+            () => resolve(ee.data.getAuthToken().substring(7)), reject);
       });
     },
 
