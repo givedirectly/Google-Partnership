@@ -107,7 +107,8 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
           ['asset2', {type: 2, disable: true}],
         ])));
     stateAssets.set('NY', Promise.resolve(new Map([
-      ['state0', {disable: false}], ['state1', {disable: true}],
+      ['state0', {disable: false}],
+      ['state1', {disable: true}],
     ])));
     callEnableWhenReady(createDisasterData(['NY']));
     cy.get('#select-asset-selection-row-poverty-NY > option')
