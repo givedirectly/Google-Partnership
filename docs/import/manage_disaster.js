@@ -24,9 +24,9 @@ export {
   assetSelectionRowPrefix,
   createScoreAsset,
   deleteDisaster,
+  disasterAssets,
   disasterData,
   enableWhenFirestoreReady,
-  initializeScoreSelectors,
   scoreAssetTypes,
   scoreBoundsMap,
   stateAssets,
@@ -55,7 +55,7 @@ const disasterAssets = new Map();
  * State to assets in corresponding EE folder. We know for each asset whether or
  * not it should be disabled in the option picker. See {@link
  * getStatesAssetsFromEe} for details on disabled options.
- * @type {Map<string, Map<string, {disabled: boolean}>>}
+ * @type {Map<string, Promise<Map<string, {disabled: boolean}>>>}
  */
 const stateAssets = new Map();
 
@@ -257,19 +257,21 @@ function onSetDisaster() {
       neededStates.push(state);
     }
   }
-  let promise = Promise.resolve();
   if (neededStates) {
-    promise = getStatesAssetsFromEe(neededStates).then((result) => {
-      for (const [state, assetMap] of result) {
-        stateAssets.set(state, assetMap);
-      }
-    });
+    const newStatePromises = getStatesAssetsFromEe(neededStates);
+    for (const [state, promise] of newStatePromises) {
+      stateAssets.set(state, promise);
+    }
   }
-  const scorePromise = promise.then(() => {
+  const statePromises = [];
+  for (const state of states) {
+    statePromises.push(stateAssets.get(state));
+  }
+  const scorePromise = Promise.all(statePromises).then((stateAssets) => {
     if (getDisaster() === currentDisaster &&
         !processedCurrentDisasterStateAssets) {
       // Don't do anything unless this is still the right disaster.
-      initializeScoreSelectors(states);
+      initializeScoreSelectors(states, stateAssets);
       processedCurrentDisasterStateAssets = true;
     }
   });
@@ -518,8 +520,10 @@ function setUpScoreSelectorTable() {
 /**
  * Initializes the select interface for score assets.
  * @param {Array<string>} states array of state (abbreviations)
+ * @param {Array<Map<string, {disabled: boolean}>>} stateAssets matching array to
+ * the {@code states} array that holds a map of asset info for each state.
  */
-function initializeScoreSelectors(states) {
+function initializeScoreSelectors(states, stateAssets) {
   const headerRow = $('#score-asset-header-row');
 
   // Initialize headers.
@@ -533,20 +537,18 @@ function initializeScoreSelectors(states) {
     const id = assetSelectionRowPrefix + idStem;
     const row = $('#' + id);
     removeAllButFirstFromRow(row);
-    for (const state of states) {
-      if (stateAssets.get(state)) {
-        const statePropertyPath = propertyPath.concat([state]);
-        const select =
-            createAssetDropdown(stateAssets.get(state), statePropertyPath)
-                .prop('id', 'select-' + id + '-' + state)
-                .on('change',
-                    (event) => onNonDamageAssetSelect(
-                        event, statePropertyPath, expectedColumns, idStem,
-                        state))
-                .addClass('with-status-border');
-        row.append(createTd().append(select));
-        verifyAsset(select.val(), idStem, state, expectedColumns);
-      }
+    for (const [i, state] of states.entries()) {
+      const assets = stateAssets[i];
+      const statePropertyPath = propertyPath.concat([state]);
+      const select =
+          createAssetDropdown(assets, statePropertyPath)
+              .prop('id', 'select-' + id + '-' + state)
+              .on('change',
+                  (event) => onNonDamageAssetSelect(
+                      event, statePropertyPath, expectedColumns, idStem, state))
+              .addClass('with-status-border');
+      row.append(createTd().append(select));
+      verifyAsset(select.val(), idStem, state, expectedColumns);
     }
   }
 }
@@ -555,7 +557,7 @@ const damagePropertyPath = Object.freeze(['damage_asset_path']);
 
 /**
  * Initializes the damage selector, given the provided assets.
- * @param {Array<string>} assets List of assets in the disaster folder
+ * @param {Map<string, {type: LayerType, disabled: boolean}>} assets List of assets in the disaster folder
  */
 function initializeDamageSelector(assets) {
   const select = createAssetDropdown(
@@ -632,10 +634,9 @@ function createAssetDropdown(
 
   const value = getElementFromPath(propertyPath);
   // Add assets to selector and return it.
-  for (const assetInfo of assets) {
-    const asset = assetInfo[0];
+  for (const [asset, assetInfo] of assets) {
     const assetOption =
-        createOptionFrom(asset).attr('disabled', assetInfo[1].disabled);
+        createOptionFrom(asset).attr('disabled', assetInfo.disabled);
     if (asset === value) {
       assetOption.attr('selected', true);
     }

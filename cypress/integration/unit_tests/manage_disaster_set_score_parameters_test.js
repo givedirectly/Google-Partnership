@@ -2,12 +2,13 @@ import {addPolygonWithPath} from '../../../docs/basic_map.js';
 import {readDisasterDocument} from '../../../docs/firestore_document.js';
 import {createDisasterData} from '../../../docs/import/create_disaster_lib.js';
 import * as ListEeAssets from '../../../docs/import/list_ee_assets.js';
-import {assetSelectionRowPrefix, disasterData, scoreAssetTypes, scoreBoundsMap, setUpScoreBoundsMap, setUpScoreSelectorTable, stateAssets, validateUserFields} from '../../../docs/import/manage_disaster';
+import {assetSelectionRowPrefix, disasterAssets, disasterData, scoreAssetTypes, scoreBoundsMap, setUpScoreBoundsMap, setUpScoreSelectorTable, stateAssets, validateUserFields} from '../../../docs/import/manage_disaster';
 import {enableWhenFirestoreReady} from '../../../docs/import/manage_disaster.js';
 import {getDisaster} from '../../../docs/resources.js';
 import {cyQueue} from '../../support/commands.js';
 import {getConvertEeObjectToPromiseRelease, setUpSavingStubs} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
+import {} from '../../../docs/import/manage_layers';
 
 // Triangle goes up into Canada, past default map of basic_map.js.
 const scoreBoundsCoordinates = [
@@ -40,6 +41,8 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
       }
     });
     disasterData.clear();
+    stateAssets.clear();
+    disasterAssets.clear();
   });
 
   it('damage asset/map-bounds elements', () => {
@@ -106,10 +109,10 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
           ['asset1', {type: 1, disabled: false}],
           ['asset2', {type: 2, disabled: true}],
         ])));
-    stateAssets.set('NY', new Map([
+    stateAssets.set('NY', Promise.resolve(new Map([
       ['state0', {disabled: false}],
       ['state1', {disabled: true}],
-    ]));
+    ])));
     callEnableWhenReady(createDisasterData(['NY']));
     cy.get('#select-asset-selection-row-poverty-NY > option')
         .eq(2)
@@ -255,7 +258,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     for (let i = 0; i <= 4; i++) {
       assets.set('wy' + i, {disabled: false});
     }
-    stateAssets.set('WY', assets);
+    stateAssets.set('WY', Promise.resolve(assets));
     setUpDefaultData();
     callEnableWhenReady(createDisasterData(['NY', 'WY']));
     // Check table is properly initialized, then validate.
@@ -529,7 +532,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     for (let i = 0; i <= 4; i++) {
       assets.set('state' + i, {disabled: false});
     }
-    stateAssets.set('NY', assets);
+    stateAssets.set('NY', Promise.resolve(assets));
     return currentData;
   }
 
