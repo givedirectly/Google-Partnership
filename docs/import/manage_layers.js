@@ -27,6 +27,7 @@ export {
   withType,
 };
 
+// also waiting to be deleted
 // A map of maps of the form:
 // {'WA' => {'asset/path': LayerType}}
 const stateAssets = new Map();
