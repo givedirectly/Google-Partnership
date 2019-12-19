@@ -1,17 +1,27 @@
-const earthEngine = require('@google/earthengine');
-const firebaseAdmin = require('firebase-admin');
-const firebase = require('firebase');
+/**
+ * Separate file from plugins/index.js so that we can transpile it using babel
+ * and thus use ES6 modules, and refer to the rest of our codebase. Suggested
+ * workaround from https://github.com/cypress-io/cypress/issues/1247, updated to
+ * modern versions of Babel.
+ *
+ * Note that even though this file appears to be written in ES6 style, it is
+ * transpiled using Babel, so there may be subtle language incompatibilities.
+ * Errors can usually be fixed by searching them and adding the necessary
+ * Babel plugin to .babelrc.
+ *
+ * More about Cypress plugins here: https://on.cypress.io/plugins-guide
+ */
+import * as earthEngine from '@google/earthengine';
+import * as firebaseAdmin from 'firebase-admin';
+import * as firebase from 'firebase';
+import {readFileSync} from 'fs';
 import {firebaseConfigProd, firebaseConfigTest}  from'../../docs/authenticate.js';
 
 export {onFunction};
 
-// You can read more here:
-// https://on.cypress.io/plugins-guide
-// ***********************************************************
-
 /**
- * When using Firestore, data that is retrieved using {@link
-    * retrieveFirestoreDataForTest} and then written on each test case
+ * When using Firestore, data that is retrieved using
+ * {@link retrieveFirestoreDataForTest} and then written on each test case
  * initialization. An array, with each element having a `disaster` attribute,
  * the name of the disaster, and a `data` attribute, the Firestore data for that
  * disaster.
@@ -99,7 +109,7 @@ function onFunction(on, config) {
      * @return {Promise<string>}
      */
     getEarthEngineToken() {
-      const privateKey = require(process.env.GOOGLE_APPLICATION_CREDENTIALS);
+      const privateKey = JSON.parse(readFileSync(process.env.GOOGLE_APPLICATION_CREDENTIALS, 'utf8'));
       return new Promise((resolve, reject) => {
         earthEngine.data.authenticateViaPrivateKey(
             privateKey,
@@ -111,9 +121,9 @@ function onFunction(on, config) {
     },
 
     /**
-     * Writes disasters data (retrieved using {@link
-        * retrieveFirestoreDataForTest} into the current test root, which lives
-     * under the root collection `test/`.
+     * Writes disasters data (retrieved using
+     * {@link retrieveFirestoreDataForTest} into the current test root, which
+     * lives under the root collection {@link testPrefix}.
      *
      * Should be called at the start of each test case.
      * @param {string} currentTestRoot
