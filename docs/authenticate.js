@@ -5,7 +5,7 @@ import SettablePromise from './settable_promise.js';
 export {trackEeAndFirebase};
 
 // For testing.
-export {CLIENT_ID, getFirebaseConfig};
+export {CLIENT_ID, getFirebaseConfig, firebaseConfigProd, firebaseConfigTest};
 
 // The client ID from
 // https://console.cloud.google.com/apis/credentials?project=mapping-crisis
