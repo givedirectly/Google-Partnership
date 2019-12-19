@@ -41,6 +41,13 @@ const firebaseConfigTest = {
 };
 
 const gdUserEmail = 'gd-earthengine-user@givedirectly.org';
+
+const eeErrorDialog =
+    '<div title="EarthEngine authentication error">You do not appear to be ' +
+    'whitelisted for EarthEngine access. Please whitelist your account at ' +
+    '<a href="https://signup.earthengine.google.com">https://signup.earthengine.google.com</a>' +
+    'or sign into a whitelisted account after closing this dialog</div>';
+
 /**
  * Logs an error message to the console and shows a snackbar notification
  * indicating an issue with authentication.
@@ -73,7 +80,7 @@ class Authenticator {
    *     is finished
    */
   start() {
-    this.eeAuthenticate(() => this.onSignInFailedFirstTime());
+    this.eeAuthenticate(() => this.navigateToSignInPage());
     const gapiSettings = Object.assign({}, gapiTemplate);
     gapiSettings.scope = '';
     gapi.load('auth2', () => {
@@ -87,7 +94,7 @@ class Authenticator {
               ' to access this page. Please open in an incognito window or ' +
               'sign in as ' + gdUserEmail +
               ' in this window after closing this alert.');
-          this.onSignInFailedFirstTime({prompt: 'select_account'});
+          this.requireSignIn();
         } else {
           this.onLoginTaskCompleted();
         }
@@ -109,20 +116,44 @@ class Authenticator {
   }
 
   /**
-   * Falls back to a page redirect so that user can log in, getting around
-   * pop-up-blocking functionality of browsers.
+   * Redirects page so that user can log in, getting around pop-up-blocking
+   * functionality of browsers.
    * @param {gapi.auth.SignInOptions} extraOptions Dictionary of sign-in options
    */
-  onSignInFailedFirstTime(extraOptions = {}) {
+  navigateToSignInPage(extraOptions = {}) {
     this.gapiInitDone.getPromise().then(
         () => gapi.auth2.getAuthInstance().signIn(
             {...{ux_mode: 'redirect'}, ...extraOptions}));
   }
 
+  /**
+   * Forces sign-in page to come up, even if user already signed into Google.
+   * Useful if user is not signed in to a required account.
+   */
+  requireSignIn() {
+    this.navigateToSignInPage({prompt: 'select_account'});
+  }
+
   /** Initializes EarthEngine. */
   internalInitializeEE() {
     this.onLoginTaskCompleted();
-    initializeEE(this.eeInitializeCallback);
+    initializeEE(this.eeInitializeCallback, (err) => {
+      if (err.message.includes('401')) {
+        // HTTP code 401 indicates "unauthorized".
+        // TODO(#340): Stand up a server that allows anonymous access in case of
+        //  failure here.
+        // TODO(#340): Maybe don't require EE failure every time, store
+        //  something in localStorage so that we know user needs token.
+        // Use a jQuery dialog because normal "alert" doesn't display hyperlinks
+        // as clickable. Inferior, though, because it does allow page to
+        // continue to load behind the dialog. Not too big a deal.
+        $(eeErrorDialog)
+            .dialog(
+                {modal: true, width: 600, close: () => this.requireSignIn()});
+      } else {
+        defaultErrorCallback(err);
+      }
+    });
   }
 
   /**
@@ -172,10 +203,14 @@ function trackEeAndFirebase(taskAccumulator, needsGdUser = false) {
         // Expires in 3600 is a lie, but no need to tell the truth.
         /* expiresIn */ 3600, /* extraScopes */[],
         /* callback */
-        () => initializeEE(() => {
-          ee.data.setCloudApiEnabled(true);
-          taskAccumulator.taskCompleted();
-        }),
+        () => initializeEE(
+            () => {
+              ee.data.setCloudApiEnabled(true);
+              taskAccumulator.taskCompleted();
+            },
+            (err) => {
+              throw new Error('EarthEngine init failure: ' + err);
+            }),
         /* updateAuthLibrary */ false);
     return firebase.auth().signInWithCustomToken(firebaseToken);
   }
@@ -187,13 +222,15 @@ function initializeFirebase() {
 }
 
 /**
- * Initializes EarthEngine. Exposed only for use in test codepaths.
+ * Initializes EarthEngine.
  * @param {Function} runCallback Called if initialization succeeds
+ * @param {Function} failureCallback Called if initialization fails, likely
+ *     because user not whitelisted for EarthEngine.
  */
-function initializeEE(runCallback) {
+function initializeEE(runCallback, failureCallback) {
   ee.initialize(
       /** opt_baseurl */ null, /** opt_tileurl */ null, runCallback,
-      (err) => defaultErrorCallback('Error initializing EarthEngine: ' + err));
+      failureCallback);
 }
 
 /**
