@@ -12,6 +12,7 @@
     "firebase": "^7.2.3",
     "firebase-admin": "^8.6.1",
     "google-auth-library": "^5.7.0",
+    "googleapis": "^46.0.0",
     "local-web-server": "^3.0.7"
   },
   "license": "MIT"

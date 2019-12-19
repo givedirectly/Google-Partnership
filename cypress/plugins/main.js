@@ -14,7 +14,7 @@
 import * as ee from '@google/earthengine';
 import * as firebase from 'firebase';
 import * as firebaseAdmin from 'firebase-admin';
-import {JWT} from 'google-auth-library';
+const {google} = require('googleapis');
 import {readFileSync} from 'fs';
 
 import {firebaseConfigProd, firebaseConfigTest} from '../../docs/authenticate.js';
@@ -111,14 +111,22 @@ function onFunction(on, config) {
      * @return {Promise<string>}
      */
     getEarthEngineToken() {
-      const privateKey = JSON.parse(
-          readFileSync(process.env.GOOGLE_APPLICATION_CREDENTIALS, 'utf8'));
+      const auth = new google.auth.GoogleAuth({scopes: ['https://www.googleapis.com/auth/cloud-platform']});
+      return auth.getClient().then(() => {
+        const iam = google.iamcredentials({version: 'v1', auth});
+        iam.projects.serviceAccounts.generateAccessToken({name: 'projects/-/serviceAccounts/firebase-adminsdk-j6emn-cfc145e0db@mapping-test-data.iam.gserviceaccount.com'},
+            {scope: ['email']},
+            (success) => console.log(
+            'here', success.response));
+      });
+      // const privateKey = JSON.parse(
+      //     readFileSync(process.env.GOOGLE_APPLICATION_CREDENTIALS, 'utf8'));
       // const client = new JWT(privateKey.client_email, null, privateKey.private_key, ['https://www.googleapis.com/auth/earthengine.readonly']);
       // return client.refreshToken().then(console.log);
       // return client.request({url: 'https://iamcredentials.googleapis.com/v1/{name=projects/-/serviceAccounts/firebase-adminsdk-j6emn-cfc145e0db@mapping-test-data.iam.gserviceaccount.com}:generateAccessToken'})
       //     .then(console.log);
-      return fetch('https://iamcredentials.googleapis.com/v1/{name=projects/-/serviceAccounts/firebase-adminsdk-j6emn-cfc145e0db@mapping-test-data.iam.gserviceaccount.com}:generateAccessToken',
-          {method: 'POST'}).then(console.log);
+      // return fetch('https://iamcredentials.googleapis.com/v1/{name=projects/-/serviceAccounts/firebase-adminsdk-j6emn-cfc145e0db@mapping-test-data.iam.gserviceaccount.com}:generateAccessToken',
+      //     {method: 'POST'}).then(console.log);
       //
       // );
       // return new Promise((resolve, reject) => {
