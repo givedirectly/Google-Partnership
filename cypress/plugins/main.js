@@ -12,10 +12,11 @@
  * More about Cypress plugins here: https://on.cypress.io/plugins-guide
  */
 import * as earthEngine from '@google/earthengine';
-import * as firebaseAdmin from 'firebase-admin';
 import * as firebase from 'firebase';
+import * as firebaseAdmin from 'firebase-admin';
 import {readFileSync} from 'fs';
-import {firebaseConfigProd, firebaseConfigTest}  from'../../docs/authenticate.js';
+
+import {firebaseConfigProd, firebaseConfigTest} from '../../docs/authenticate.js';
 
 export {onFunction};
 
@@ -109,7 +110,8 @@ function onFunction(on, config) {
      * @return {Promise<string>}
      */
     getEarthEngineToken() {
-      const privateKey = JSON.parse(readFileSync(process.env.GOOGLE_APPLICATION_CREDENTIALS, 'utf8'));
+      const privateKey = JSON.parse(
+          readFileSync(process.env.GOOGLE_APPLICATION_CREDENTIALS, 'utf8'));
       return new Promise((resolve, reject) => {
         earthEngine.data.authenticateViaPrivateKey(
             privateKey,
