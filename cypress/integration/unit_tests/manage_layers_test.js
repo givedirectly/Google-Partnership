@@ -91,6 +91,7 @@ describe('Unit tests for manage_layers page', () => {
           return result.get([KNOWN_STATE]);
         })
         .then((assets) => {
+          // tests folder type asset doesn't make it through
           expect(assets).to.eql(new Map([[KNOWN_STATE_ASSET, 'TABLE']]));
           expect(ee.data.listAssets)
               .to.be.calledWith(
