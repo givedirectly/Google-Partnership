@@ -104,10 +104,10 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     cy.stub(ListEeAssets, 'getDisasterAssetsFromEe')
         .returns(Promise.resolve(new Map([
           ['asset1', {type: 1, disable: false}],
-          ['asset2', {type: 2, disable: true}]
+          ['asset2', {type: 2, disable: true}],
         ])));
     stateAssets.set('NY', Promise.resolve(new Map([
-      ['state0', {disable: false}], ['state1', {disable: true}]
+      ['state0', {disable: false}], ['state1', {disable: true}],
     ])));
     callEnableWhenReady(createDisasterData(['NY']));
     cy.get('#select-asset-selection-row-poverty-NY > option')
@@ -517,7 +517,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     cy.stub(ListEeAssets, 'getDisasterAssetsFromEe')
         .returns(Promise.resolve(new Map([
           ['asset1', {type: 1, disable: false}],
-          ['asset2', {type: 2, disable: false}]
+          ['asset2', {type: 2, disable: false}],
         ])));
     const currentData = createDisasterData(['NY']);
     currentData.asset_data.score_bounds_coordinates =
