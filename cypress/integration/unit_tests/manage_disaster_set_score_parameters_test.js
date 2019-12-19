@@ -100,15 +100,15 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
       ', and must specify either damage asset or map bounds' +
       allOptionalMissing;
 
-  it.only('has some disabled options', () => {
+  it('has some disabled options', () => {
     cy.stub(ListEeAssets, 'getDisasterAssetsFromEe')
         .returns(Promise.resolve(new Map([
-          ['asset1', {type: 1, disable: false}],
-          ['asset2', {type: 2, disable: true}],
+          ['asset1', {type: 1, disabled: false}],
+          ['asset2', {type: 2, disabled: true}],
         ])));
     stateAssets.set('NY', new Map([
-      ['state0', {disable: false}],
-      ['state1', {disable: true}],
+      ['state0', {disabled: false}],
+      ['state1', {disabled: true}],
     ]));
     callEnableWhenReady(createDisasterData(['NY']));
     cy.get('#select-asset-selection-row-poverty-NY > option')
@@ -253,7 +253,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
   it('multistate displays properly', () => {
     const assets = new Map();
     for (let i = 0; i <= 4; i++) {
-      assets.set('wy' + i, {disable: false});
+      assets.set('wy' + i, {disabled: false});
     }
     stateAssets.set('WY', assets);
     setUpDefaultData();
@@ -517,8 +517,8 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
   function setUpDefaultData() {
     cy.stub(ListEeAssets, 'getDisasterAssetsFromEe')
         .returns(Promise.resolve(new Map([
-          ['asset1', {type: 1, disable: false}],
-          ['asset2', {type: 2, disable: false}],
+          ['asset1', {type: 1, disabled: false}],
+          ['asset2', {type: 2, disabled: false}],
         ])));
     const currentData = createDisasterData(['NY']);
     currentData.asset_data.score_bounds_coordinates =
@@ -527,7 +527,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
                 new firebase.firestore.GeoPoint(latlng.lat, latlng.lng));
     const assets = new Map();
     for (let i = 0; i <= 4; i++) {
-      assets.set('state' + i, {disable: false});
+      assets.set('state' + i, {disabled: false});
     }
     stateAssets.set('NY', assets);
     return currentData;

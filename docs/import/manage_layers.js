@@ -298,6 +298,8 @@ function createLayerRow(layer, index) {
   return row;
 }
 
+let processedCurrentDisasterSelfAssets = false;
+
 /**
  * Populates the state and disaster asset pickers with all known earth engine
  * assets for this disaster and relevant states.
@@ -306,13 +308,21 @@ function createLayerRow(layer, index) {
  * after potentially retrieving assets from ee.
  */
 function getAssetsAndPopulateDisasterPicker(disaster) {
+  processedCurrentDisasterSelfAssets = false;
+  const disasterLambda = (disaster) => {
+    if ((disaster) === getDisaster() && !processedCurrentDisasterSelfAssets) {
+      populateDisasterAssetPicker(disaster);
+      processedCurrentDisasterSelfAssets = true;
+    }
+  };
   if (disasterAssets.has(disaster)) {
-    populateDisasterAssetPicker(disaster);
+    disasterLambda(disaster);
     return Promise.resolve();
   } else {
+    setUpDisasterPicker(disaster);
     return getDisasterAssetsFromEe(disaster).then((assets) => {
       disasterAssets.set(disaster, assets);
-      populateDisasterAssetPicker(disaster);
+      disasterLambda(disaster);
     });
   }
 }
@@ -348,8 +358,10 @@ function setUpDisasterPicker(disaster) {
  * @param {string} disaster
  */
 function populateDisasterAssetPicker(disaster) {
-  const assetPickerLabel = $('#' + disaster + 'adder-label');
-  assetPickerLabel.children('select').remove();
+  const div = $('#disaster-asset-picker').empty();
+  const assetPickerLabel = $(document.createElement('label'))
+      .text('Add layer from ' + disaster + ': ')
+      .attr('id', disaster + 'adder-label');
   const assetPicker = $(document.createElement('select'))
                           .attr('id', disaster + '-adder')
                           .width(200);
@@ -359,7 +371,7 @@ function populateDisasterAssetPicker(disaster) {
       const type = layerTypeStrings.get(assetInfo.type);
       assetPicker.append(createOptionFrom(asset[0])
                              .text(asset[0] + '-' + type)
-                             .attr('disabled', assetInfo.disable));
+                             .attr('disabled', assetInfo.disabled));
     }
   }
   const addButton =
@@ -371,6 +383,7 @@ function populateDisasterAssetPicker(disaster) {
   });
   assetPickerLabel.append(assetPicker);
   assetPickerLabel.append(addButton);
+  div.append(assetPickerLabel);
 }
 
 /**

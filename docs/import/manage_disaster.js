@@ -46,7 +46,7 @@ let disasterData = new Map();
  * for each asset what type it is and whether or not it should be disabled in
  * the option picker. See {@link getDisasterAssetsFromEe} for details on
  * disabled options.
- * @type {Map<string, Promise<Map<string, {type: LayerType, disable:
+ * @type {Map<string, Promise<Map<string, {type: LayerType, disabled:
  *     boolean}>>>}
  */
 const disasterAssets = new Map();
@@ -55,7 +55,7 @@ const disasterAssets = new Map();
  * State to assets in corresponding EE folder. We know for each asset whether or
  * not it should be disabled in the option picker. See {@link
  * getStatesAssetsFromEe} for details on disabled options.
- * @type {Map<string, Map<string, {disable: boolean}>>}
+ * @type {Map<string, Map<string, {disabled: boolean}>>}
  */
 const stateAssets = new Map();
 
@@ -260,8 +260,8 @@ function onSetDisaster() {
   let promise = Promise.resolve();
   if (neededStates) {
     promise = getStatesAssetsFromEe(neededStates).then((result) => {
-      for (const stateItem of result) {
-        stateAssets.set(stateItem[0], stateItem[1]);
+      for (const [state, assetMap] of result) {
+        stateAssets.set(state, assetMap);
       }
     });
   }
@@ -536,14 +536,14 @@ function initializeScoreSelectors(states) {
     for (const state of states) {
       if (stateAssets.get(state)) {
         const statePropertyPath = propertyPath.concat([state]);
-        const select = createAssetDropdown(stateAssets.get(state),
-            statePropertyPath)
-            .prop('id', 'select-' + id + '-' + state)
-            .on('change',
-                (event) => onNonDamageAssetSelect(
-                    event, statePropertyPath, expectedColumns,
-                    idStem, state))
-            .addClass('with-status-border');
+        const select =
+            createAssetDropdown(stateAssets.get(state), statePropertyPath)
+                .prop('id', 'select-' + id + '-' + state)
+                .on('change',
+                    (event) => onNonDamageAssetSelect(
+                        event, statePropertyPath, expectedColumns, idStem,
+                        state))
+                .addClass('with-status-border');
         row.append(createTd().append(select));
         verifyAsset(select.val(), idStem, state, expectedColumns);
       }
@@ -616,7 +616,7 @@ function removeAllButFirstFromRow(row) {
 
 /**
  * Initializes a dropdown with assets and the appropriate change handler.
- * @param {Map<string, {disable: boolean}>} assets map of assets to add to
+ * @param {Map<string, {disabled: boolean}>} assets map of assets to add to
  *     dropdown
  * @param {Array<string>} propertyPath List of attributes to follow to get
  *     value.
@@ -635,7 +635,7 @@ function createAssetDropdown(
   for (const assetInfo of assets) {
     const asset = assetInfo[0];
     const assetOption =
-        createOptionFrom(asset).attr('disabled', assetInfo[1].disable);
+        createOptionFrom(asset).attr('disabled', assetInfo[1].disabled);
     if (asset === value) {
       assetOption.attr('selected', true);
     }

@@ -17,8 +17,8 @@ const stateAssetPromises = new Map();
  * and whether or not they should be disabled when put into a select. Here,
  * disabling any assets that aren't feature collections.
  * @param {Array<string>} states e.g. ['WA']
- * @return {Promise<Array<Array<string, {disable: boolean}>>>} 2-d array of all
- *     retrieved assets in the form [['WA', {'path': {disable: true}}],...]
+ * @return {Promise<Array<Array<string, {disabled: boolean}>>>} 2-d array of all
+ *     retrieved assets in the form [['WA', {'path': {disabled: true}}],...]
  */
 function getStatesAssetsFromEe(states) {
   const promises = [];
@@ -28,18 +28,19 @@ function getStatesAssetsFromEe(states) {
       listEeAssetsPromise = listEeAssets(legacyStateDir + '/' + state);
       stateAssetPromises.set(state, listEeAssetsPromise);
     }
-    promises.push(listEeAssetsPromise.then((result) => [state, result]));
+    promises.push(
+        listEeAssetsPromise.then((result) => ({state, assetInfo: result})));
   }
   return Promise.all(promises).then((results) => {
     const toReturn = [];
-    for (const result of results) {
+    for (const {state, assetInfo} of results) {
       const assetMap = new Map();
-      for (const assetInfo of result[1]) {
+      for (const [asset, type] of assetInfo) {
         assetMap.set(
-            assetInfo[0],
-            {disable: assetInfo[1] !== LayerType.FEATURE_COLLECTION});
+            asset,
+            {disabled: type !== LayerType.FEATURE_COLLECTION});
       }
-      toReturn.push([result[0], assetMap]);
+      toReturn.push([state, assetMap]);
     }
     return toReturn;
   });
@@ -47,7 +48,7 @@ function getStatesAssetsFromEe(states) {
 
 /**
  * Cache for the results of getDisasterAssetsFromEe for each disaster
- * @type {Map<string, Promise<Map<string, {type: LayerType, disable:
+ * @type {Map<string, Promise<Map<string, {type: LayerType, disabled:
  *     boolean}>>>}
  */
 const disasterAssetPromises = new Map();
@@ -61,7 +62,7 @@ const disasterAssetPromises = new Map();
  * De-duplicates requests, so retrying before a fetch completes won't start a
  * new fetch.
  * @param {string} disaster disaster in the form name-year
- * @return {Promise<Map<string, {type: number, disabled: number}>>} Returns
+ * @return {Promise<Map<string, {type: number, disabled: boolean}>>} Returns
  *     a promise containing the map of asset to info for the given disaster.
  */
 function getDisasterAssetsFromEe(disaster) {
@@ -71,10 +72,10 @@ function getDisasterAssetsFromEe(disaster) {
   }
   const result =
       listEeAssets(eeLegacyPathPrefix + disaster)
-          .then((result) => {
+          .then((assetMap) => {
             const shouldDisable = [];
-            for (const asset of Array.from(result.keys())) {
-              if (result.get(asset) === LayerType.FEATURE_COLLECTION) {
+            for (const asset of Array.from(assetMap.keys())) {
+              if (assetMap.get(asset) === LayerType.FEATURE_COLLECTION) {
                 // census data returns an empty coords multipoint
                 // geometry instead of a true null geometry. So
                 // we check for that. Could be bad if we ever see
@@ -88,27 +89,25 @@ function getDisasterAssetsFromEe(disaster) {
                             .coordinates()
                             .length(),
                         ee.Number(0)),
-                    // DOM disable property can't recognize 0 and 1 as false and true :(
+                    // DOM disable property can't recognize 0 and 1 as false and
+                    // true :(
                     true, false));
               } else {
                 shouldDisable.push(false);
               }
             }
             return Promise.all([
-              Promise.resolve(result),
+              Promise.resolve(assetMap),
               convertEeObjectToPromise(ee.List(shouldDisable)),
             ]);
           })
-          .then((results) => {
-            const assetTypeMap = results[0];
-            const disableList = results[1];
+          .then(([assetTypeMap, disableList]) => {
             const assetMap = new Map();
-            const assets = Array.from(assetTypeMap.keys());
-            for (let i = 0; i < assets.length; i++) {
-              const asset = assets[i];
+            const disableListIterator = disableList[Symbol.iterator]();
+            for (const [asset, type] of assetTypeMap) {
               assetMap.set(
                   asset,
-                  {type: assetTypeMap.get(asset), disable: disableList[i]});
+                  {type: type, disabled: disableListIterator.next().value});
             }
             return assetMap;
           });
