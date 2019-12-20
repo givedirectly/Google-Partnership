@@ -152,8 +152,6 @@ function createToggles(map) {
 
   // buttons
   form.appendChild(createButton('update', () => update(map)));
-  form.appendChild(document.createElement('br'));
-  form.appendChild(createButton('current settings', reset));
 
   document.getElementById('form-div').appendChild(form);
   updateWeights();
@@ -211,16 +209,6 @@ function createButton(id, onclick) {
   submitButton.onclick = onclick;
   submitButton.classList.add('form-button');
   return submitButton;
-}
-
-/**
- * Resets the toggles to their current value as displayed in the map and list
- */
-function reset() {
-  for (const [toggle, value] of toggles) {
-    setValue(toggle, value);
-  }
-  updateWeights();
 }
 
 /** Update the displayed weights based on a new poverty weight. */

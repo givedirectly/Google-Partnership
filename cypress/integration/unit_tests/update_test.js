@@ -122,27 +122,6 @@ describe('Unit test for updates.js', () => {
       expect(lastPassedPovertyThreshold).to.be.null;
     });
   });
-
-  it('resets', () => {
-    setUpDamageAsset().then(() => {
-      toggles.set('poverty weight', 0.77);
-      toggles.set('damage threshold', 0.77);
-
-      const damageThreshold = $('[id="damage threshold"]');
-      const povertyWeight = $('[id="poverty weight"]');
-
-      // test we don't get an error until we try to update.
-      povertyWeight.val(-0.01);
-      damageThreshold.val(0.24);
-
-      $('[id="current settings"]').trigger('click');
-
-      expect($('#poverty-weight-value').text()).to.equal('0.77');
-      expect($('#damage-weight-value').text()).to.equal('0.23');
-      expect(damageThreshold.val()).to.equal('0.77');
-      expect(povertyWeight.val()).to.equals('0.77');
-    });
-  });
 });
 
 /**
