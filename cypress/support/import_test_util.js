@@ -85,23 +85,25 @@ function setUpSavingStubs() {
 
 /**
  * A wrapper for {@link convertEeObjectToPromise} that returns a resolve
- * function for releasing the result.
- * @return {Function}
+ * function for releasing the result and a promise that resolves when the
+ * convert starts. This allows us to make multiple calls to this method
+ * and wait on the start promises, therefore ensuring that an instance of
+ * oldConvert never points to the new promise-waiting function.
+ * @return {{resolveFunction: Function, startPromise: Promise<void>}}
  */
 function getConvertEeObjectToPromiseRelease() {
-  console.log('starting twice');
-  let resolveFunction = null;
-  const promise = new Promise((resolve) => resolveFunction = resolve);
+  let releaseLatch = null;
+  const convertFinishLatch =
+      new Promise((resolve) => releaseLatch = resolve);
+  let startFunction = null;
+  const convertStartPromise = new Promise((resolve) => startFunction = resolve);
   const oldConvert = MapUtil.convertEeObjectToPromise;
   MapUtil.convertEeObjectToPromise = (eeObject) => {
-    // This is being called twice for the first
-    eeObject.evaluate((yes, no) => console.log(yes, no, 'hello'));
     MapUtil.convertEeObjectToPromise = oldConvert;
-    return MapUtil.convertEeObjectToPromise(eeObject).then(async (result) => {
-      await promise;
-      console.log('resolving', result);
-      return result;
-    });
+    startFunction();
+    return Promise
+        .all([MapUtil.convertEeObjectToPromise(eeObject), convertFinishLatch])
+        .then((results) => results[0]);
   };
-  return resolveFunction;
+  return {startPromise: convertStartPromise, releaseLatch: releaseLatch};
 }

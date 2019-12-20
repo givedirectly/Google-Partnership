@@ -65,9 +65,12 @@ function getDisasterAssetsFromEe(disaster) {
   if (maybePromise) {
     return maybePromise;
   }
+  // For passing through promise without re-promise-ifying.
+  let listEeAssetsResult;
   const result =
       listEeAssets(eeLegacyPathPrefix + disaster)
           .then((assets) => {
+            listEeAssetsResult = assets;
             const shouldDisable = [];
             for (const {asset, type} of assets) {
               if (type === LayerType.FEATURE_COLLECTION) {
@@ -91,22 +94,15 @@ function getDisasterAssetsFromEe(disaster) {
                 shouldDisable.push(false);
               }
             }
-            // TODO(juliexxia): remove debugging
-            console.log('should get stuck', shouldDisable);
-            return Promise.all([
-              assets,
-              convertEeObjectToPromise(ee.List(shouldDisable)),
-            ]);
+            return convertEeObjectToPromise(ee.List(shouldDisable));
           })
-          .then(([assets, disableList]) => {
-            // TODO(juliexxia): remove debugging
-            console.log('should not print', disableList);
+          .then((disableList) => {
             const assetMap = new Map();
             const disableListIterator = disableList[Symbol.iterator]();
-            for (const {asset, type} of assets) {
+            for (const {asset, type} of listEeAssetsResult) {
               assetMap.set(
                   asset,
-                  {type: type, disabled: disableListIterator.next().value});
+                  {type, disabled: disableListIterator.next().value});
             }
             return assetMap;
           });

@@ -419,20 +419,26 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     featureCollectionStub.withArgs('state0').returns(goodPovertyFeature);
     featureCollectionStub.withArgs('state1').returns(badPovertyFeature);
 
-    let firstRelease = getConvertEeObjectToPromiseRelease();
-    setFirstSelectInScoreRowTo(0, 'state0');
-
-    let secondRelease = getConvertEeObjectToPromiseRelease();
-    setFirstSelectInScoreRowTo(0, 'state1');
-
-    // release first evaluate but column still looks pending
-    firstRelease();
+    let firstRelease;
+    let firstStart;
+    cyQueue(() => {
+      const firstCall = getConvertEeObjectToPromiseRelease();
+      firstRelease = firstCall.releaseLatch;
+      firstStart = firstRelease.startPromise;
+    });
+    let secondRelease;
+    setFirstSelectInScoreRowTo(0, 'state0')
+        .then(() => firstStart)
+        .then(
+            () => secondRelease =
+                getConvertEeObjectToPromiseRelease().releaseLatch);
+    setFirstSelectInScoreRowTo(0, 'state1').then(() => firstRelease());
     checkSelectBorder(
         '#select-asset-selection-row-poverty-NY', 'rgb(255, 255, 0)');
-    checkHoverText(
-        '#select-asset-selection-row-poverty-NY', 'Checking columns...');
     // release second evaluate and column finishes with results from second.
-    secondRelease();
+    checkHoverText(
+        '#select-asset-selection-row-poverty-NY', 'Checking columns...')
+        .then(() => secondRelease());
     checkSelectBorder(
         '#select-asset-selection-row-poverty-NY', 'rgb(255, 0, 0)');
     checkHoverText(
@@ -441,21 +447,24 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
             'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
 
     // now do opposite order
-    firstRelease = getConvertEeObjectToPromiseRelease();
-    setFirstSelectInScoreRowTo(0, 'state0');
-
-    secondRelease = getConvertEeObjectToPromiseRelease();
-    setFirstSelectInScoreRowTo(0, 'state1');
-
-    secondRelease();
+    cyQueue(() => {
+      const firstCall = getConvertEeObjectToPromiseRelease();
+      firstRelease = firstCall.releaseLatch;
+      firstStart = firstCall.startPromise;
+    });
+    setFirstSelectInScoreRowTo(0, 'state0')
+        .then(() => firstStart)
+        .then(
+            () => secondRelease =
+                getConvertEeObjectToPromiseRelease().releaseLatch);
+    setFirstSelectInScoreRowTo(0, 'state1').then(() => secondRelease());
     checkSelectBorder(
         '#select-asset-selection-row-poverty-NY', 'rgb(255, 0, 0)');
     checkHoverText(
         '#select-asset-selection-row-poverty-NY',
         'Error! asset does not have all expected columns: ' +
-            'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
-
-    firstRelease();
+            'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01')
+        .then(() => firstRelease());
     checkSelectBorder(
         '#select-asset-selection-row-poverty-NY', 'rgb(255, 0, 0)');
     checkHoverText(
@@ -602,9 +611,10 @@ function setFirstSelectInScoreRowTo(rowNum, text) {
  * Asserts that the border around the given selector has the correct color
  * @param {string} selector cypress selector for a select element
  * @param {string} rgbString e.g. 'rgb(0, 0, 0)'
+ * @return {Cypress.Chainable}
  */
 function checkSelectBorder(selector, rgbString) {
-  cy.get(selector, {timeout: 5000})
+  return cy.get(selector, {timeout: 5000})
       .should('have.css', 'border-color')
       .and('eq', rgbString);
 }
@@ -613,9 +623,10 @@ function checkSelectBorder(selector, rgbString) {
  * Asserts on the hover text for the given span.
  * @param {string} selector cypress selector for a span element
  * @param {string} text
+ * @return {Cypress.Chainable}
  */
 function checkHoverText(selector, text) {
-  cy.get(selector).invoke('attr', 'title').should('eq', text);
+  return cy.get(selector).invoke('attr', 'title').should('eq', text);
 }
 
 /**
@@ -626,7 +637,7 @@ function checkHoverText(selector, text) {
  * @param {string} tdId e.g. 'poverty-NY'
  */
 function setSelectWithDelayedEvaluate(rowNum, text, tdId) {
-  const release = getConvertEeObjectToPromiseRelease();
+  const release = getConvertEeObjectToPromiseRelease().releaseLatch;
   setFirstSelectInScoreRowTo(rowNum, text);
   checkSelectBorder('#select-asset-selection-row-' + tdId, 'rgb(255, 255, 0)');
   checkHoverText('#select-asset-selection-row-' + tdId, 'Checking columns...');

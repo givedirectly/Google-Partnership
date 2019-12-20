@@ -3,12 +3,10 @@ import {gdEeStatePrefix, legacyStateDir, legacyStatePrefix} from '../../../docs/
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
 import {withColor} from '../../../docs/import/color_function_util.js';
 import {getStatesAssetsFromEe} from '../../../docs/import/list_ee_assets.js';
-import {createOptionFrom, createTd, disasterAssets, enableWhenReady, getAssetsAndPopulateDisasterPicker, onCheck, onDelete, onInputBlur, onListBlur, setUpDisasterPicker, stateAssets, updateAfterSort, withCheckbox, withInput, withList, withType} from '../../../docs/import/manage_layers.js';
+import {createOptionFrom, createTd, disasterAssets, getAssetsAndPopulateDisasterPicker, onCheck, onDelete, onInputBlur, onListBlur, stateAssets, updateAfterSort, withCheckbox, withInput, withList, withType} from '../../../docs/import/manage_layers.js';
 import {setCurrentDisaster} from '../../../docs/import/manage_layers_lib';
 import {disasterData, getCurrentLayers} from '../../../docs/import/manage_layers_lib.js';
-import * as MapUtil from '../../../docs/map_util';
 import {getDisaster} from '../../../docs/resources';
-import {cyQueue} from '../../support/commands';
 import {getConvertEeObjectToPromiseRelease} from '../../support/import_test_util';
 import {createAndAppend, createTrs, setDisasterAndLayers, setUpSavingStubs, waitForPromiseAndAssertSaves} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
@@ -86,49 +84,67 @@ describe('Unit tests for manage_layers page', () => {
     });
   });
 
-  // TODO: fix this test.
-  it.only('has racing disaster asset populates', () => {
+  it('has racing disaster asset populates', () => {
     const disaster = 'disaster';
     const otherDisaster = 'other';
-
     const fc =
         ee.FeatureCollection([ee.Feature(ee.Geometry.Point([1, 1]), {})]);
-    const otherFc = ee.FeatureCollection([ee.Feature(null, {blah: 'blah'})]);
-    const fcStub = cy.stub(ee, 'FeatureCollection');
-    fcStub.withArgs(disaster).returns(fc);
-    fcStub.withArgs(otherDisaster).returns(otherFc);
-    listAssetsStub
-        .withArgs(eeLegacyPathPrefix + disaster, {}, Cypress.sinon.match.func)
-        .returns(Promise.resolve({'assets': [{id: disaster, type: 'TABLE'}]}));
-    listAssetsStub
-        .withArgs(
-            eeLegacyPathPrefix + otherDisaster, {}, Cypress.sinon.match.func)
-        .returns(
-            Promise.resolve({'assets': [{id: otherDisaster, type: 'TABLE'}]}));
+    cy.stub(ee, 'FeatureCollection').returns(fc);
+    listAssetsStub.returns(
+        Promise.resolve({'assets': [{id: disaster, type: 'TABLE'}]}));
 
-    // has to be inside cy.doc for jquery selectors in tested methods to work.
-    cy.document().then((doc) => {
-      const damageDiv = document.createElement('div');
-      damageDiv.id = 'disaster-asset-picker';
-      doc.body.appendChild(damageDiv);
-      cy.stub(document, 'getElementById')
-          .callsFake((id) => doc.getElementById(id));
-
-      const firstRelease = getConvertEeObjectToPromiseRelease();
-      setCurrentDisaster(disaster);
-      getAssetsAndPopulateDisasterPicker(disaster);
-      expect($('#disaster-adder-label').find('select').prop('disabled'))
-          .to.be.true;
-      // creating this second release seem to call the new version of
-      // MapUtil.convertEeObjectToPromise for some reason, which is putting back
-      // MapUtil.convertEeObject to its original function? Something very weird
-      // is going on here. If you watch this test in yarn open, you can see the
-      // log inside the new convert is printed twice.
-      const secondRelease = getConvertEeObjectToPromiseRelease();
-      // setCurrentDisaster(otherDisaster);
-      // getAssetsAndPopulateDisasterPicker(otherDisaster);
-      // firstRelease();
+    let firstStartPromise;
+    let firstConvertRelease;
+    let finishedDisaster;
+    cy.document()
+        .then((doc) => {
+          const damageDiv = document.createElement('div');
+          damageDiv.id = 'disaster-asset-picker';
+          doc.body.appendChild(damageDiv);
+          cy.stub(document, 'getElementById')
+              .callsFake((id) => doc.getElementById(id));
+        })
+        .then(() => {
+          // set disaster to 'disaster'
+          const firstConvert = getConvertEeObjectToPromiseRelease();
+          firstStartPromise = firstConvert.startPromise;
+          firstConvertRelease = firstConvert.releaseLatch;
+          setCurrentDisaster(disaster);
+          finishedDisaster = getAssetsAndPopulateDisasterPicker(disaster);
+        });
+    let secondConvertRelease;
+    let finishedOther;
+    cy.get('#disaster-adder-label')
+        .find('select')
+        .should('be.disabled')
+        .then(() => {
+          // wait for us to hit 'disaster' call to convertEeObjectToPromise
+          return firstStartPromise;
+        })
+        .then(() => {
+          // set disaster to 'other'
+          secondConvertRelease =
+              getConvertEeObjectToPromiseRelease().releaseLatch;
+          setCurrentDisaster(otherDisaster);
+          finishedOther = getAssetsAndPopulateDisasterPicker(otherDisaster);
+        });
+    cy.get('#other-adder-label').find('select').should('be.disabled');
+    cy.get('#disaster-adder-label').should('not.exist').then(() => {
+      // release result of 'disaster' call to convertEeObjectToPromise
+      firstConvertRelease();
+      return finishedDisaster;
     });
+    // assert nothing changed even after waiting on 'disaster' call is entirely
+    // finished since we already kicked off 'other' call.
+    cy.get('#other-adder-label').find('select').should('be.disabled');
+    cy.get('#disaster-adder-label').should('not.exist').then(() => {
+      // release result of 'other' call to convertEeObjectToPromise
+      secondConvertRelease();
+      // wait on picker to be finished populating
+      return finishedOther;
+    });
+    cy.get('#other-adder-label').find('select').should('not.be.disabled');
+    cy.get('#disaster-adder-label').should('not.exist')
   });
 
   // TODO: move this test when we delete state asset pickers from
