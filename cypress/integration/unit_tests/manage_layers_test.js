@@ -114,27 +114,6 @@ describe('Unit tests for manage_layers page', () => {
     });
     cy.get('#other-adder-label').find('select').should('not.be.disabled');
     cy.get('#disaster-adder-label').should('not.exist');
-<<<<<<< HEAD
-  });
-
-  // TODO: move this test when we delete state asset pickers from
-  // manage_layers.js
-  it('gets state asset info from ee', () => {
-    cy.wrap(getStatesAssetsFromEe([KNOWN_STATE]))
-        .then((result) => {
-          expect(result.get([KNOWN_STATE])).to.not.be.null;
-          return result.get([KNOWN_STATE]);
-        })
-        .then((assets) => {
-          // tests folder type asset doesn't make it through
-          expect(assets).to.eql(new Map([[KNOWN_STATE_ASSET, 'TABLE']]));
-          expect(ee.data.listAssets)
-              .to.be.calledWith(
-                  legacyStatePrefix + KNOWN_STATE, {},
-                  Cypress.sinon.match.func);
-        });
-=======
->>>>>>> 84428b9ed0d92e63fc5c8ab9eccd5062bf0d82bd
   });
 
   it('tests color cell', () => {
