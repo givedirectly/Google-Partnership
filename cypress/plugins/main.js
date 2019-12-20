@@ -140,13 +140,13 @@ function onFunction(on, config) {
                     (error, response) => {
                       // See
                       // https://github.com/googleapis/nodejs-googleapis-common/blob/5cf2732a39b3c5d56dd377293e500ad82de62663/src/api.ts#L69
-                      // Error is actually a GaxiosError
-                      // https://github.com/googleapis/gaxios/blob/d21e08d2aada980d39bc5ca7093d54452be2d646/src/common.ts#L20
                       if (error) {
+                        // Error is actually a GaxiosError.
+                        // https://github.com/googleapis/gaxios/blob/d21e08d2aada980d39bc5ca7093d54452be2d646/src/common.ts#L20
                         reject(error);
                         return;
                       }
-                      // Response is a GaxiosResponse
+                      // Response is a GaxiosResponse.
                       // https://github.com/googleapis/gaxios/blob/d21e08d2aada980d39bc5ca7093d54452be2d646/src/common.ts#L45
                       if (response.status === 200 && response.data &&
                           response.data.accessToken) {
