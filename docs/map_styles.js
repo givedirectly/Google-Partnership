@@ -33,7 +33,7 @@ const mapStyles = [
     'elementType': 'labels.text.fill',
     'stylers': [{'color': '#757575'}],
   },
-  {'featureType': 'poi.business', 'stylers': [{'visibility': 'off'}]},
+  {'featureType': 'poi.business', 'stylers': [{'color': '#f5f5f5'}]},
   {
     'featureType': 'poi.park',
     'elementType': 'geometry',
@@ -42,7 +42,7 @@ const mapStyles = [
   {
     'featureType': 'poi.park',
     'elementType': 'labels.text.fill',
-    'stylers': [{'color': '#9e9e9e'}],
+    'stylers': [{'color': '#e5e5e5'}],
   },
   {
     'featureType': 'road',
