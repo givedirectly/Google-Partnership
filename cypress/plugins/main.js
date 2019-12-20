@@ -117,38 +117,45 @@ function onFunction(on, config) {
     getEarthEngineToken() {
       // This is the scope needed to use iamcredentials:
       // https://developers.google.com/identity/protocols/googlescopes#iamcredentialsv1
-      const auth = new googleapis.auth.GoogleAuth({scopes: ['https://www.googleapis.com/auth/cloud-platform']});
-      return auth.getClient().then((client) =>
-          new Promise((resolve, reject) => {
+      const auth = new googleapis.auth.GoogleAuth(
+          {scopes: ['https://www.googleapis.com/auth/cloud-platform']});
+      return auth.getClient().then(
+          (client) => new Promise((resolve, reject) => {
             // See
             // https://googleapis.dev/nodejs/googleapis/latest/iamcredentials/classes/Resource$Projects$Serviceaccounts.html#generateAccessToken
-            google.iamcredentials({
-              version: 'v1',
-              auth
-            }).projects.serviceAccounts.generateAccessToken({
-              // See
-              // https://cloud.google.com/iam/docs/reference/credentials/rest/v1/projects.serviceAccounts/generateAccessToken
-              name: 'projects/-/serviceAccounts/' + client.email,
-              // We need EE access, but no write access, although apparently
-              // write access can be needed for some non-write tasks.
-              requestBody: {scope: ['https://www.googleapis.com/auth/earthengine.readonly']}
-            }, (error, response) => {
-              // See
-              // https://github.com/googleapis/nodejs-googleapis-common/blob/5cf2732a39b3c5d56dd377293e500ad82de62663/src/api.ts#L69
-              // Error is actually a GaxiosError
-              // https://github.com/googleapis/gaxios/blob/d21e08d2aada980d39bc5ca7093d54452be2d646/src/common.ts#L20
-              if (error) {
-                reject(error);
-                return;
-              }
-              // Response is a GaxiosResponse
-              // https://github.com/googleapis/gaxios/blob/d21e08d2aada980d39bc5ca7093d54452be2d646/src/common.ts#L45
-              if (response.status === 200 && response.data
-                  && response.data.accessToken) {
-                resolve(response.data.accessToken);
-              }
-              reject(new Error(response.statusText + ' \n(' + response + ')'));
-            });
+            google.iamcredentials({version: 'v1', auth})
+                .projects.serviceAccounts.generateAccessToken(
+                    {
+                      // See
+                      // https://cloud.google.com/iam/docs/reference/credentials/rest/v1/projects.serviceAccounts/generateAccessToken
+                      name: 'projects/-/serviceAccounts/' + client.email,
+                      // We need EE access, but no write access, although
+                      // apparently
+                      // write access can be needed for some non-write tasks.
+                      requestBody: {
+                        scope: [
+                          'https://www.googleapis.com/auth/earthengine.readonly',
+                        ],
+                      },
+                    },
+                    (error, response) => {
+                      // See
+                      // https://github.com/googleapis/nodejs-googleapis-common/blob/5cf2732a39b3c5d56dd377293e500ad82de62663/src/api.ts#L69
+                      // Error is actually a GaxiosError
+                      // https://github.com/googleapis/gaxios/blob/d21e08d2aada980d39bc5ca7093d54452be2d646/src/common.ts#L20
+                      if (error) {
+                        reject(error);
+                        return;
+                      }
+                      // Response is a GaxiosResponse
+                      // https://github.com/googleapis/gaxios/blob/d21e08d2aada980d39bc5ca7093d54452be2d646/src/common.ts#L45
+                      if (response.status === 200 && response.data &&
+                          response.data.accessToken) {
+                        resolve(response.data.accessToken);
+                      }
+                      reject(new Error(
+                          response.statusText + ' \n(' + response + ')'));
+                    });
           }));
     },
 
