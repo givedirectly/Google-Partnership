@@ -109,8 +109,12 @@ function onFunction(on, config) {
     /**
      * Produces an EarthEngine token that can be used by production code. We use
      * the somewhat legacy and very poorly documented but still supported
-     * googleapis library. Using our service account, we request an access token
-     * with the `earthengine.readonly` scope.
+     * googleapis/google-api-nodejs-client library. The new hotness,
+     * googleapis/google-cloud-node, does not have an "idiomatic" library for
+     * IAM Credentials operations.
+     *
+     * Using our service account, we request an access token with the
+     * `earthengine.readonly` scope.
      *
      * @return {Promise<string>}
      */
