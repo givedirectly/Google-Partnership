@@ -614,7 +614,7 @@ function setFirstSelectInScoreRowTo(rowNum, text) {
  * @return {Cypress.Chainable}
  */
 function checkSelectBorder(selector, rgbString) {
-  return cy.get(selector, {timeout: 5000})
+  return cy.get(selector, {timeout: 7000})
       .should('have.css', 'border-color')
       .and('eq', rgbString);
 }
