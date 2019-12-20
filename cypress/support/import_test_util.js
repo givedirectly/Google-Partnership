@@ -95,7 +95,7 @@ function getConvertEeObjectToPromiseRelease() {
   let releaseLatch = null;
   const convertFinishLatch = new Promise((resolve) => releaseLatch = resolve);
   let startFunction = null;
-  const convertStartPromise = new Promise((resolve) => startFunction = resolve);
+  const startPromise = new Promise((resolve) => startFunction = resolve);
   const oldConvert = MapUtil.convertEeObjectToPromise;
   MapUtil.convertEeObjectToPromise = (eeObject) => {
     MapUtil.convertEeObjectToPromise = oldConvert;
@@ -104,5 +104,5 @@ function getConvertEeObjectToPromiseRelease() {
         .all([MapUtil.convertEeObjectToPromise(eeObject), convertFinishLatch])
         .then((results) => results[0]);
   };
-  return {startPromise: convertStartPromise, releaseLatch: releaseLatch};
+  return {startPromise, releaseLatch};
 }

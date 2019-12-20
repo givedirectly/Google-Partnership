@@ -432,13 +432,13 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
         .then(
             () => secondRelease =
                 getConvertEeObjectToPromiseRelease().releaseLatch);
-    setFirstSelectInScoreRowTo(0, 'state1').then(() => firstRelease());
+    setFirstSelectInScoreRowTo(0, 'state1').then(firstRelease);
     checkSelectBorder(
         '#select-asset-selection-row-poverty-NY', 'rgb(255, 255, 0)');
     // release second evaluate and column finishes with results from second.
     checkHoverText(
         '#select-asset-selection-row-poverty-NY', 'Checking columns...')
-        .then(() => secondRelease());
+        .then(secondRelease);
     checkSelectBorder(
         '#select-asset-selection-row-poverty-NY', 'rgb(255, 0, 0)');
     checkHoverText(

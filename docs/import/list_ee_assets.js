@@ -10,6 +10,7 @@ export {getDisasterAssetsFromEe, getStatesAssetsFromEe};
  */
 const stateAssetPromises = new Map();
 
+// TODO: we don't need to request multiple states
 /**
  * Gets all assets in ee directories corresponding to given states. Caches
  * results. Marks assets with their type and whether or not they should be
@@ -120,7 +121,7 @@ function listEeAssets(dir) {
 }
 
 /**
- * Turns a listAssets call result into a map of asset -> type.
+ * Turns a listAssets call result into a list of asset info objects.
  * @param {Object} listAssetsResult result of call to ee.data.listAssets
  * @return {Array<{asset: string, type: LayerType}>} asset-path -> type e.g.
  *     'users/gd/my-asset' -> 'IMAGE'
@@ -130,7 +131,7 @@ function getIds(listAssetsResult) {
   if (listAssetsResult.assets) {
     for (const asset of listAssetsResult.assets) {
       const type = maybeConvertAssetType(asset);
-      if (type) assets.push({asset: asset.id, type: type});
+      if (type) assets.push({asset: asset.id, type});
     }
   }
   return assets;

@@ -77,8 +77,6 @@ describe('Unit tests for manage_layers page', () => {
           doc.body.appendChild(damageDiv);
           cy.stub(document, 'getElementById')
               .callsFake((id) => doc.getElementById(id));
-        })
-        .then(() => {
           // set disaster to 'disaster'
           const firstConvert = getConvertEeObjectToPromiseRelease();
           firstStartPromise = firstConvert.startPromise;
@@ -91,10 +89,8 @@ describe('Unit tests for manage_layers page', () => {
     cy.get('#disaster-adder-label')
         .find('select')
         .should('be.disabled')
-        .then(() => {
-          // wait for us to hit 'disaster' call to convertEeObjectToPromise
-          return firstStartPromise;
-        })
+        // wait for us to hit 'disaster' call to convertEeObjectToPromise
+        .then(() => firstStartPromise)
         .then(() => {
           // set disaster to 'other'
           secondConvertRelease =
