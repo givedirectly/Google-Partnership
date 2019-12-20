@@ -1,7 +1,7 @@
 import {showError} from './error.js';
-import {getMillisecondsToExpiration} from './expiration_time.mjs';
 import {earthEngineTestTokenCookieName, firebaseTestTokenPropertyName, getValueFromLocalStorage, inProduction} from './in_test_util.js';
 import SettablePromise from './settable_promise.js';
+import {getMillisecondsToDateString} from './time_util.js';
 
 export {trackEeAndFirebase};
 // For testing.
@@ -207,14 +207,14 @@ class Authenticator {
                     (resolve) => ee.data.setAuthToken(
                         CLIENT_ID, 'Bearer', accessToken,
                         Math.floor(
-                            getMillisecondsToExpiration(expireTime) / 1000),
+                            getMillisecondsToDateString(expireTime) / 1000),
                         /* extraScopes */[], resolve,
                         /* updateAuthLibrary */ false))
                     .then(
                         () => setTimeout(
                             () => this.getAndSetEeTokenWithErrorHandling(),
                             Math.max(
-                                getMillisecondsToExpiration(expireTime) -
+                                getMillisecondsToDateString(expireTime) -
                                     TOKEN_EXPIRE_BUFFER,
                                 0))));
   }

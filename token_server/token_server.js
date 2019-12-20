@@ -1,12 +1,13 @@
 // To include modules outside of this root, they must have the extension '.mjs'
 // for Node to recognize them as modules.
 import {createServer} from 'http';
-import {generateEarthEngineToken} from '../ee_lib/ee_token_creator.mjs';
-import {getMillisecondsToExpiration} from '../docs/expiration_time.mjs';
+
+import {getMillisecondsToDateString} from '../docs/time_util.js';
+import {generateEarthEngineToken} from '../ee_lib/ee_token_creator.js';
 
 const RESPONSE_HEADERS = {
   'Content-type': 'text/plain',
-  'Vary': 'Origin'
+  'Vary': 'Origin',
 };
 
 const ONE_MINUTE_IN_MILLISECONDS = 60 * 1000;
@@ -43,14 +44,15 @@ createServer(async (req, res) => {
   const origin = req.headers['origin'];
   // TODO(janakr): Add check that request has valid Google user token, so this
   //  will only return tokens to logged-in users, mitigating abuse potential.
-  if (origin !== 'http://localhost:8080' && origin !== 'https://givedirectly.github.io') {
+  if (origin !== 'http://localhost:8080' &&
+      origin !== 'https://givedirectly.github.io') {
     res.writeHead(401, {'Content-type': 'text/plain'});
     res.write('Unauthorized origin');
     res.end();
     return;
   }
   let data = await currentTokenPromise;
-  if (getMillisecondsToExpiration(data.expireTime) < MIN_TOKEN_LIFETIME) {
+  if (getMillisecondsToDateString(data.expireTime) < MIN_TOKEN_LIFETIME) {
     // Should never happen because of periodic generation above, but generate a
     // new token if it does.
     currentTokenPromise = generateEarthEngineToken();
@@ -62,4 +64,4 @@ createServer(async (req, res) => {
   res.writeHead(200, headers);
   res.write(JSON.stringify(data));
   res.end();
-  }).listen(9080);
+}).listen(9080);
