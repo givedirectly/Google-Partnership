@@ -151,7 +151,8 @@ class Authenticator {
         // HTTP code 401 indicates "unauthorized".
         // 404 shows up when not on Google internal network.
         // TODO(#340): Maybe don't require EE failure every time, store
-        //  something in localStorage so that we know user needs token.
+        //  something in localStorage so that we know user needs token. Then
+        //  tests can just set that as well, unifying the codepaths.
         const dialog = $(eeErrorDialog).dialog({
           buttons: [
             {
