@@ -4,6 +4,12 @@ export {mapStyles as default};
 // (see https://mapstyle.withgoogle.com/) with blue water. Deprioritizes
 // display of landmarks, since they matter less to GD.
 const mapStyles = [
+  {'featureType': 'landscape.natural', 'stylers': [{'color': '#f5f5f5'}]},
+  {
+    'featureType': 'landscape.natural',
+    'elementType': 'geometry.fill',
+    'stylers': [{'color': '#f5f5f5'}]
+  },
   {'elementType': 'labels.icon', 'stylers': [{'visibility': 'off'}]},
   {'elementType': 'labels.text.fill', 'stylers': [{'color': '#616161'}]},
   {'elementType': 'labels.text.stroke', 'stylers': [{'color': '#f5f5f5'}]},
