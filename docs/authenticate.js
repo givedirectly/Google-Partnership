@@ -215,6 +215,31 @@ function trackEeAndFirebase(taskAccumulator, needsGdUser = false) {
   }
 }
 
+function getAndSetEeToken() {
+  return fetch('http://localhost:9080/').then((response) => {
+    if (!response.ok) {
+      throw new Error('Refresh token error: ' + response.status);
+    }
+    return response.json();
+  }).then(({accessToken, expireTime}) => {
+    const expireDate = Date.parse(expireTime);
+    const result = new Promise((resolve) =>
+        ee.data.setAuthToken(CLIENT_ID, 'Bearer', accessToken,
+            Math.floor(millisecondsFromNow(expireDate) / 1000),
+            /* extraScopres */ [],
+            resolve, /* updateAuthLibrary */ false));
+    result.then(() =>
+        setTimeout(getAndSetEeToken,
+            // Give a 5-minute buffer to avoid nasty surprises.
+            Math.max(millisecondsFromNow(expireDate - 20000), 0)));
+    return result;
+  })
+}
+
+function millisecondsFromNow(date) {
+  return date - Date.now();
+}
+
 /** Initializes Firebase. Exposed only for use in test codepaths. */
 function initializeFirebase() {
   firebase.initializeApp(getFirebaseConfig(inProduction()));
