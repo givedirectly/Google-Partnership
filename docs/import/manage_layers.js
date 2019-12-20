@@ -29,7 +29,7 @@ export {
 
 // TODO(juliexxia): consolidate asset picker logic and storage structure between
 // manage_layers.js and manage_disaster.js
-// TODO: refactor to avoid as much jumpiness as possible.
+// TODO: refactor to avoid as much jumpiness as possible. 
 
 // also waiting to be deleted
 // A map of maps of the form:
