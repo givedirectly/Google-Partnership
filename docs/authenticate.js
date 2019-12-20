@@ -3,9 +3,8 @@ import {earthEngineTestTokenCookieName, firebaseTestTokenPropertyName, getValueF
 import SettablePromise from './settable_promise.js';
 
 export {trackEeAndFirebase};
-
 // For testing.
-export {CLIENT_ID, getFirebaseConfig};
+export {CLIENT_ID, firebaseConfigProd, firebaseConfigTest, getFirebaseConfig};
 
 // The client ID from
 // https://console.cloud.google.com/apis/credentials?project=mapping-crisis
