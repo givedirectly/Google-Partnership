@@ -2,32 +2,25 @@ import {LayerType} from '../firebase_layers.js';
 import {getDisaster} from '../resources.js';
 import {processNewEeLayer, processNonEeLayer} from './add_layer.js';
 import {withColor} from './color_function_util.js';
-import {getDisasterAssetsFromEe, getStatesAssetsFromEe} from './list_ee_assets.js';
-import {getCurrentData, getCurrentLayers, getRowIndex, ILLEGAL_STATE_ERR, onUpdate, setCurrentDisaster, setDisasterData, setStatus, updateLayersInFirestore} from './manage_layers_lib.js';
+import {getDisasterAssetsFromEe} from './list_ee_assets.js';
+import {getCurrentLayers, getRowIndex, ILLEGAL_STATE_ERR, onUpdate, setCurrentDisaster, setDisasterData, setStatus, updateLayersInFirestore} from './manage_layers_lib.js';
 
 export {enableWhenReady, updateAfterSort};
 // Visible for testing
 export {
-  createAssetPickers,
   createLayerRow,
   createOptionFrom,
-  createStateAssetPickers,
   createTd,
   onCheck,
   onDelete,
   onInputBlur,
   onListBlur,
   onSetDisaster,
-  stateAssets,
   withCheckbox,
   withInput,
   withList,
   withType,
 };
-
-// A map of maps of the form:
-// {'WA' => {'asset/path': LayerType}}
-const stateAssets = new Map();
 
 // A map of maps of the form:
 // {'disaster-2017' => {'asset/path': LayerType}}
@@ -312,7 +305,6 @@ function populateStateAndDisasterAssetPickers(disaster) {
   const assetPickerDiv = $('.asset-pickers');
   assetPickerDiv.empty();
 
-  const promises = [];
   if (disasterAssets.has(disaster)) {
     createDisasterAssetPicker(disaster);
   } else {
@@ -320,37 +312,8 @@ function populateStateAndDisasterAssetPickers(disaster) {
       disasterAssets.set(disaster, assets);
       createDisasterAssetPicker(disaster);
     });
-    promises.push(disasterDone);
+    return disasterDone;
   }
-
-  const states = getCurrentData()['states'];
-  const statesToFetch = [];
-  for (const state of states) {
-    if (!stateAssets.has(state)) statesToFetch.push(state);
-  }
-  // TODO: add functionality to re-pull all cached states from ee without
-  // reloading the page.
-  if (statesToFetch.length === 0) {
-    createStateAssetPickers(states);
-  } else {
-    const statesDone = getStatesAssetsFromEe(statesToFetch).then((assets) => {
-      for (const asset of assets) {
-        stateAssets.set(asset[0], asset[1]);
-      }
-      createStateAssetPickers(states);
-    });
-    promises.push(statesDone);
-  }
-
-  return Promise.all(promises);
-}
-
-/**
- * Create asset pickers for the given states.
- * @param {Array<string>} states of the form ['WA', ...]
- */
-function createStateAssetPickers(states) {
-  createAssetPickers(states, stateAssets, $('#state-asset-pickers'));
 }
 
 /**

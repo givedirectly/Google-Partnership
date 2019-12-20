@@ -2,14 +2,13 @@ import {gdEeStatePrefix, legacyStateDir, legacyStatePrefix} from '../../../docs/
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
 import {withColor} from '../../../docs/import/color_function_util.js';
 import {getStatesAssetsFromEe} from '../../../docs/import/list_ee_assets.js';
-import {createOptionFrom, createStateAssetPickers, createTd, onCheck, onDelete, onInputBlur, onListBlur, stateAssets, updateAfterSort, withCheckbox, withInput, withList, withType} from '../../../docs/import/manage_layers.js';
+import {createOptionFrom, createTd, onCheck, onDelete, onInputBlur, onListBlur, updateAfterSort, withCheckbox, withInput, withList, withType} from '../../../docs/import/manage_layers.js';
 import {disasterData, getCurrentLayers} from '../../../docs/import/manage_layers_lib.js';
 import {getDisaster} from '../../../docs/resources';
 import {createAndAppend, createTrs, setDisasterAndLayers, setUpSavingStubs, waitForPromiseAndAssertSaves} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
 const KNOWN_STATE = 'WF';
-const UNKNOWN_STATE = 'DN';
 const KNOWN_STATE_ASSET = gdEeStatePrefix + KNOWN_STATE + '/snap';
 
 describe('Unit tests for manage_layers page', () => {
@@ -49,7 +48,6 @@ describe('Unit tests for manage_layers page', () => {
         }));
     cy.stub(ee.data, 'createFolder');
 
-    stateAssets.clear();
     // In prod this would happen in enableWhenReady which would read from
     // firestore.
     disasterData.clear();
@@ -58,7 +56,6 @@ describe('Unit tests for manage_layers page', () => {
   });
 
   afterEach(() => {
-    stateAssets.clear();
     disasterData.clear();
   });
 
@@ -71,21 +68,6 @@ describe('Unit tests for manage_layers page', () => {
           .to.be.calledWith(
               legacyStatePrefix + KNOWN_STATE, {}, Cypress.sinon.match.func);
     });
-  });
-
-  it('populates state asset pickers', () => {
-    const assetPickers = createAndAppend('div', 'state-asset-pickers');
-    const assets = [KNOWN_STATE, UNKNOWN_STATE];
-    stateAssets.set(KNOWN_STATE, new Map([[KNOWN_STATE_ASSET, 'TABLE']]));
-    stateAssets.set(UNKNOWN_STATE, new Map());
-    createStateAssetPickers(assets);
-
-    // 2 x <label> (w/ select nested inside) <br>
-    expect(assetPickers.children().length).to.equal(4);
-    const known = $('#' + KNOWN_STATE + '-adder');
-    expect(known).to.contain(gdEeStatePrefix + KNOWN_STATE + '/snap');
-    expect(known.children().length).to.equal(1);
-    expect($('#' + UNKNOWN_STATE + '-adder').children().length).to.equal(0);
   });
 
   it('tests color cell', () => {
