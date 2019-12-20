@@ -108,7 +108,7 @@ function onFunction(on, config) {
 
     /**
      * Produces an EarthEngine token that can be used by production code. We use
-     * the somewhat deprecated and very poorly documented but still ticking
+     * the somewhat legacy and very poorly documented but still supported
      * googleapis library. Using our service account, we request an access token
      * with the `earthengine.readonly` scope.
      *
@@ -123,7 +123,7 @@ function onFunction(on, config) {
           (client) => new Promise((resolve, reject) => {
             // See
             // https://googleapis.dev/nodejs/googleapis/latest/iamcredentials/classes/Resource$Projects$Serviceaccounts.html#generateAccessToken
-            google.iamcredentials({version: 'v1', auth})
+            googleapis.iamcredentials({version: 'v1', auth})
                 .projects.serviceAccounts.generateAccessToken(
                     {
                       // See
