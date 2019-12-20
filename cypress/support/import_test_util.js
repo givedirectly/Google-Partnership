@@ -93,8 +93,7 @@ function setUpSavingStubs() {
  */
 function getConvertEeObjectToPromiseRelease() {
   let releaseLatch = null;
-  const convertFinishLatch =
-      new Promise((resolve) => releaseLatch = resolve);
+  const convertFinishLatch = new Promise((resolve) => releaseLatch = resolve);
   let startFunction = null;
   const convertStartPromise = new Promise((resolve) => startFunction = resolve);
   const oldConvert = MapUtil.convertEeObjectToPromise;

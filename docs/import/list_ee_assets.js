@@ -101,8 +101,7 @@ function getDisasterAssetsFromEe(disaster) {
             const disableListIterator = disableList[Symbol.iterator]();
             for (const {asset, type} of listEeAssetsResult) {
               assetMap.set(
-                  asset,
-                  {type, disabled: disableListIterator.next().value});
+                  asset, {type, disabled: disableListIterator.next().value});
             }
             return assetMap;
           });

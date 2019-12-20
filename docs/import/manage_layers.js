@@ -29,7 +29,7 @@ export {
 
 // TODO(juliexxia): consolidate asset picker logic and storage structure between
 // manage_layers.js and manage_disaster.js
-// TODO: refactor to avoid as much jumpiness as possible. 
+// TODO: refactor to avoid as much jumpiness as possible.
 
 // also waiting to be deleted
 // A map of maps of the form:
@@ -352,7 +352,8 @@ function createStateAssetPickers(states) {
  */
 function setUpDisasterPicker(disaster) {
   const div = $('#disaster-asset-picker').empty();
-  const assetPicker = $(document.createElement('select')).width(200).attr('disabled', true);
+  const assetPicker =
+      $(document.createElement('select')).width(200).attr('disabled', true);
   assetPicker.append(createOptionFrom('pending...'));
   const assetPickerLabel = $(document.createElement('label'))
                                .text('Add layer from ' + disaster + ': ')
