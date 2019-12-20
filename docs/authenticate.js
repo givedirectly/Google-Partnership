@@ -80,18 +80,17 @@ class Authenticator {
     this.eeAuthenticate(() => this.navigateToSignInPage());
     const gapiSettings = Object.assign({}, gapiTemplate);
     gapiSettings.scope = '';
-    return new Promise((resolve, reject) =>
-        gapi.load('auth2', () =>
-            this.gapiInitDone.setPromise(
+    return new Promise(
+        (resolve, reject) => gapi.load(
+            'auth2',
+            () => this.gapiInitDone.setPromise(
                 gapi.auth2.init(gapiSettings).then(() => {
-                  const basicProfile =
-                      gapi.auth2.getAuthInstance().
-                          currentUser.
-                          get().
-                          getBasicProfile();
+                  const basicProfile = gapi.auth2.getAuthInstance()
+                                           .currentUser.get()
+                                           .getBasicProfile();
                   if (this.needsGdUser &&
-                      (!basicProfile || basicProfile.getEmail() !==
-                          gdUserEmail)) {
+                      (!basicProfile ||
+                       basicProfile.getEmail() !== gdUserEmail)) {
                     alert(
                         'You must be signed in as ' + gdUserEmail + ' to ' +
                         'access this page. Please open in an incognito window' +
@@ -100,8 +99,8 @@ class Authenticator {
                     this.requireSignIn();
                   } else {
                     authenticateToFirebase(
-                        gapi.auth2.getAuthInstance().currentUser.get()).
-                        then(resolve, reject);
+                        gapi.auth2.getAuthInstance().currentUser.get())
+                        .then(resolve, reject);
                   }
                 }))));
   }
@@ -116,7 +115,6 @@ class Authenticator {
   eeAuthenticate(failureCallback) {
     ee.data.authenticateViaOauth(
         CLIENT_ID, () => this.internalInitializeEE(), failureCallback, []);
-    // getAndSetEeToken().then(() => this.internalInitializeEE());
   }
 
   /**
@@ -151,17 +149,9 @@ class Authenticator {
         // Use a jQuery dialog because normal "alert" doesn't display hyperlinks
         // as clickable. Inferior, though, because it does allow page to
         // continue to load behind the dialog. Not too big a deal.
-        const dialog = $(eeErrorDialog)
+        $(eeErrorDialog)
             .dialog(
-                {buttons: [{text: 'Sign in with EarthEngine-enabled account', click: () => this.requireSignIn()},
-                    {text: 'Continue without sign-in', click: () => {
-                      // Don't trigger close callback, but close dialog.
-                      dialog.dialog({close: () => {}});
-                      dialog.dialog('close');
-                      getAndSetEeToken().then(() => initializeEE(
-                            this.eeInitializeCallback, defaultErrorCallback));
-                      }}],
-                  modal: true, width: 600, close: () => this.requireSignIn()});
+                {modal: true, width: 600, close: () => this.requireSignIn()});
       } else {
         defaultErrorCallback(err);
       }
@@ -195,64 +185,26 @@ function trackEeAndFirebase(taskAccumulator, needsGdUser = false) {
     if (!firebaseToken) {
       throw new Error('Did not receive Firebase token in test');
     }
-    // const eeToken = getValueFromLocalStorage(earthEngineTestTokenCookieName);
-    // if (!eeToken) {
-    //   throw new Error('Did not receive EarthEngine token in test');
-    // }
-    getAndSetEeToken().then(
-      () => initializeEE(() => {
-        ee.data.setCloudApiEnabled(true);
-        taskAccumulator.taskCompleted();
-      }));
-    // ee.data.setAuthToken(
-    //     CLIENT_ID, 'Bearer', eeToken,
-    //     // Expires in 3600 is a lie, but no need to tell the truth.
-    //     /* expiresIn */ 3600, /* extraScopes */[],
-    //     /* callback */
-    //     () => initializeEE(() => {
-    //       ee.data.setCloudApiEnabled(true);
-    //       taskAccumulator.taskCompleted();
-    //     }),
-    //     /* updateAuthLibrary */ false);
-    // setTimeout(() => {
-    //   fetch('http://localhost:9080/').then((response) => {
-    //     if (!response.ok) {
-    //       throw new Error('Refresh token error: ' + response.status);
-    //     }
-    //     return response.json();
-    //   }).then((json) => {
-    //     const {accessToken, expireTime} = JSON.parse(json);
-    //
-    //     ee.data.setAuthToken(CLIENT_ID, 'Bearer', token.accessToken, )
-    //   })
-    // }, 20000);
+    const eeToken = getValueFromLocalStorage(earthEngineTestTokenCookieName);
+    if (!eeToken) {
+      throw new Error('Did not receive EarthEngine token in test');
+    }
+    ee.data.setAuthToken(
+        CLIENT_ID, 'Bearer', eeToken,
+        // Expires in 3600 is a lie, but no need to tell the truth.
+        /* expiresIn */ 3600, /* extraScopes */[],
+        /* callback */
+        () => initializeEE(
+            () => {
+              ee.data.setCloudApiEnabled(true);
+              taskAccumulator.taskCompleted();
+            },
+            (err) => {
+              throw new Error('EarthEngine init failure: ' + err);
+            }),
+        /* updateAuthLibrary */ false);
     return firebase.auth().signInWithCustomToken(firebaseToken);
   }
-}
-
-function getAndSetEeToken() {
-  return fetch('http://localhost:9080/').then((response) => {
-    if (!response.ok) {
-      throw new Error('Refresh token error: ' + response.status);
-    }
-    return response.json();
-  }).then(({accessToken, expireTime}) => {
-    const expireDate = Date.parse(expireTime);
-    const result = new Promise((resolve) =>
-        ee.data.setAuthToken(CLIENT_ID, 'Bearer', accessToken,
-            Math.floor(millisecondsFromNow(expireDate) / 1000),
-            /* extraScopres */ [],
-            resolve, /* updateAuthLibrary */ false));
-    result.then(() =>
-        setTimeout(getAndSetEeToken,
-            // Give a 5-minute buffer to avoid nasty surprises.
-            Math.max(millisecondsFromNow(expireDate - 20000), 0)));
-    return result;
-  })
-}
-
-function millisecondsFromNow(date) {
-  return date - Date.now();
 }
 
 /** Initializes Firebase. Exposed only for use in test codepaths. */
