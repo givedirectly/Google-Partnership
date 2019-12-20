@@ -10,6 +10,7 @@ export {enableWhenReady, updateAfterSort};
 export {
   createLayerRow,
   createOptionFrom,
+  createStateAssetPickers,
   createTd,
   onCheck,
   onDelete,
@@ -314,6 +315,14 @@ function populateStateAndDisasterAssetPickers(disaster) {
     });
     return disasterDone;
   }
+}
+
+/**
+ * Create asset pickers for the given states.
+ * @param {Array<string>} states of the form ['WA', ...]
+ */
+function createStateAssetPickers(states) {
+  createAssetPickers(states, stateAssets, $('#state-asset-pickers'));
 }
 
 /**
