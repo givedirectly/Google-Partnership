@@ -1,8 +1,6 @@
 import {eeLegacyPathPrefix} from '../../../docs/ee_paths.js';
-import {gdEeStatePrefix, legacyStateDir, legacyStatePrefix} from '../../../docs/ee_paths.js';
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
 import {withColor} from '../../../docs/import/color_function_util.js';
-import {getStatesAssetsFromEe} from '../../../docs/import/list_ee_assets.js';
 import {createOptionFrom, createTd, disasterAssets, getAssetsAndPopulateDisasterPicker, onCheck, onDelete, onInputBlur, onListBlur, updateAfterSort, withCheckbox, withInput, withList, withType} from '../../../docs/import/manage_layers.js';
 import {setCurrentDisaster} from '../../../docs/import/manage_layers_lib';
 import {disasterData, getCurrentLayers} from '../../../docs/import/manage_layers_lib.js';
@@ -10,9 +8,6 @@ import {getDisaster} from '../../../docs/resources';
 import {getConvertEeObjectToPromiseRelease} from '../../support/import_test_util';
 import {createAndAppend, createTrs, setDisasterAndLayers, setUpSavingStubs, waitForPromiseAndAssertSaves} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
-
-const KNOWN_STATE = 'WF';
-const KNOWN_STATE_ASSET = gdEeStatePrefix + KNOWN_STATE + '/snap';
 
 describe('Unit tests for manage_layers page', () => {
   loadScriptsBeforeForUnitTests('ee', 'firebase', 'jquery');
@@ -29,26 +24,6 @@ describe('Unit tests for manage_layers page', () => {
   let listAssetsStub;
   beforeEach(() => {
     listAssetsStub = cy.stub(ee.data, 'listAssets');
-    listAssetsStub.withArgs(legacyStateDir, {}, Cypress.sinon.match.func)
-        .returns(Promise.resolve({
-          'assets': [{
-            id: gdEeStatePrefix + KNOWN_STATE,
-          }],
-        }));
-    listAssetsStub
-        .withArgs(legacyStatePrefix + KNOWN_STATE, {}, Cypress.sinon.match.func)
-        .returns(Promise.resolve({
-          'assets': [
-            {
-              id: gdEeStatePrefix + KNOWN_STATE + '/snap',
-              type: 'TABLE',
-            },
-            {
-              id: gdEeStatePrefix + KNOWN_STATE + '/folder',
-              type: 'FOLDER',
-            },
-          ],
-        }));
     cy.stub(ee.data, 'createFolder');
 
     disasterAssets.clear();
@@ -143,7 +118,7 @@ describe('Unit tests for manage_layers page', () => {
       return finishedOther;
     });
     cy.get('#other-adder-label').find('select').should('not.be.disabled');
-    cy.get('#disaster-adder-label').should('not.exist')
+    cy.get('#disaster-adder-label').should('not.exist');
   });
 
   it('tests color cell', () => {
