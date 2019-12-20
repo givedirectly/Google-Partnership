@@ -15,7 +15,7 @@ const ONE_MINUTE_IN_MILLISECONDS = 60 * 1000;
 const TIME_BEFORE_REGENERATION = 40 * ONE_MINUTE_IN_MILLISECONDS;
 
 // Regenerate if we ever see a token with < 10-minute remaining validity. This
-// should never happen, but maybe the periodic job doesn't run.
+// should never happen, but maybe the periodic job doesn't run. Paranoia!
 const MIN_TOKEN_LIFETIME = 10 * ONE_MINUTE_IN_MILLISECONDS;
 
 /**
@@ -52,8 +52,8 @@ createServer(async (req, res) => {
     // Should never happen because of periodic generation above, but generate a
     // new token if it does.
     currentTokenPromise = generateEarthEngineToken();
+    data = await currentTokenPromise;
   }
-  data = await currentTokenPromise;
   const headers = Object.assign({}, RESPONSE_HEADERS);
   // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Origin
   headers['Access-Control-Allow-Origin'] = origin;
