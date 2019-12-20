@@ -10,7 +10,11 @@ const mockAsset = 'mockAsset';
 describe('Unit tests for adding layers', () => {
   loadScriptsBeforeForUnitTests('ee', 'firebase', 'jquery');
   setUpSavingStubs();
-  beforeEach(() => disasterData.clear());
+  let setAclStub;
+  beforeEach(() => {
+    disasterData.clear();
+    setAclStub = cy.stub(ee.data, 'setAssetAcl');
+  });
 
   it('processes a new feature layer with <= 25 vals', () => {
     stubFeatureCollection(5);
@@ -24,6 +28,7 @@ describe('Unit tests for adding layers', () => {
     waitForPromiseAndAssertSaves(
         processNewEeLayer(mockAsset, LayerType.FEATURE_COLLECTION))
         .then(() => {
+          expect(setAclStub).to.be.calledOnce;
           const layers = getCurrentLayers();
           expect(layers.length).to.equal(3);
           const layer = layers[2];
@@ -52,6 +57,7 @@ describe('Unit tests for adding layers', () => {
     waitForPromiseAndAssertSaves(
         processNewEeLayer(mockAsset, LayerType.FEATURE_COLLECTION))
         .then(() => {
+          expect(setAclStub).to.be.calledOnce;
           const layers = getCurrentLayers();
           expect(layers.length).to.equal(1);
           const layer = layers[0];
@@ -76,6 +82,7 @@ describe('Unit tests for adding layers', () => {
     waitForPromiseAndAssertSaves(
         processNewEeLayer(mockAsset, LayerType.FEATURE_COLLECTION))
         .then(() => {
+          expect(setAclStub).to.be.calledOnce;
           const layer = getCurrentLayers()[0];
           expect(layer['color-function']['columns']['flavor']['values'])
               .to.eql(['vanilla']);
@@ -89,6 +96,7 @@ describe('Unit tests for adding layers', () => {
     waitForPromiseAndAssertSaves(
         processNewEeLayer(mockAsset, LayerType.IMAGE_COLLECTION))
         .then(() => {
+          expect(setAclStub).to.be.calledOnce;
           const layers = getCurrentLayers();
           expect(layers.length).to.equal(1);
           const layer = layers[0];
