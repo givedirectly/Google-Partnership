@@ -152,8 +152,6 @@ function createToggles(map) {
 
   // buttons
   form.appendChild(createButton('update', () => update(map)));
-  form.appendChild(document.createElement('br'));
-  form.appendChild(createButton('current settings', reset));
 
   document.getElementById('form-div').appendChild(form);
   updateWeights();
@@ -213,16 +211,6 @@ function createButton(id, onclick) {
   return submitButton;
 }
 
-/**
- * Resets the toggles to their current value as displayed in the map and list
- */
-function reset() {
-  for (const [toggle, value] of toggles) {
-    setValue(toggle, value);
-  }
-  updateWeights();
-}
-
 /** Update the displayed weights based on a new poverty weight. */
 function updateWeights() {
   if (!hasDamageAsset) return;
@@ -272,13 +260,4 @@ function setInnerHtml(id, message) {
  */
 function getValue(id) {
   return document.getElementById(id).value;
-}
-
-/**
- * Sets the value of the element with the given id.
- * @param {string} id
- * @param {string} value
- */
-function setValue(id, value) {
-  document.getElementById(id).value = value;
 }
