@@ -1,18 +1,13 @@
 import {eeLegacyPathPrefix} from '../../../docs/ee_paths.js';
-import {gdEeStatePrefix, legacyStateDir, legacyStatePrefix} from '../../../docs/ee_paths.js';
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
 import {withColor} from '../../../docs/import/color_function_util.js';
-import {getStatesAssetsFromEe} from '../../../docs/import/list_ee_assets.js';
-import {createOptionFrom, createTd, disasterAssets, getAssetsAndPopulateDisasterPicker, onCheck, onDelete, onInputBlur, onListBlur, stateAssets, updateAfterSort, withCheckbox, withInput, withList, withType} from '../../../docs/import/manage_layers.js';
+import {createOptionFrom, createTd, disasterAssets, getAssetsAndPopulateDisasterPicker, onCheck, onDelete, onInputBlur, onListBlur, updateAfterSort, withCheckbox, withInput, withList, withType} from '../../../docs/import/manage_layers.js';
 import {setCurrentDisaster} from '../../../docs/import/manage_layers_lib';
 import {disasterData, getCurrentLayers} from '../../../docs/import/manage_layers_lib.js';
 import {getDisaster} from '../../../docs/resources';
 import {getConvertEeObjectToPromiseRelease} from '../../support/import_test_util';
 import {createAndAppend, createTrs, setDisasterAndLayers, setUpSavingStubs, waitForPromiseAndAssertSaves} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
-
-const KNOWN_STATE = 'WF';
-const KNOWN_STATE_ASSET = gdEeStatePrefix + KNOWN_STATE + '/snap';
 
 describe('Unit tests for manage_layers page', () => {
   loadScriptsBeforeForUnitTests('ee', 'firebase', 'jquery');
@@ -29,29 +24,8 @@ describe('Unit tests for manage_layers page', () => {
   let listAssetsStub;
   beforeEach(() => {
     listAssetsStub = cy.stub(ee.data, 'listAssets');
-    listAssetsStub.withArgs(legacyStateDir, {}, Cypress.sinon.match.func)
-        .returns(Promise.resolve({
-          'assets': [{
-            id: gdEeStatePrefix + KNOWN_STATE,
-          }],
-        }));
-    listAssetsStub
-        .withArgs(legacyStatePrefix + KNOWN_STATE, {}, Cypress.sinon.match.func)
-        .returns(Promise.resolve({
-          'assets': [
-            {
-              id: gdEeStatePrefix + KNOWN_STATE + '/snap',
-              type: 'TABLE',
-            },
-            {
-              id: gdEeStatePrefix + KNOWN_STATE + '/folder',
-              type: 'FOLDER',
-            },
-          ],
-        }));
     cy.stub(ee.data, 'createFolder');
 
-    stateAssets.clear();
     disasterAssets.clear();
     // In prod this would happen in enableWhenReady which would read from
     // firestore.
@@ -96,31 +70,26 @@ describe('Unit tests for manage_layers page', () => {
     let firstStartPromise;
     let firstConvertRelease;
     let finishedDisaster;
-    cy.document()
-        .then((doc) => {
-          const damageDiv = document.createElement('div');
-          damageDiv.id = 'disaster-asset-picker';
-          doc.body.appendChild(damageDiv);
-          cy.stub(document, 'getElementById')
-              .callsFake((id) => doc.getElementById(id));
-        })
-        .then(() => {
-          // set disaster to 'disaster'
-          const firstConvert = getConvertEeObjectToPromiseRelease();
-          firstStartPromise = firstConvert.startPromise;
-          firstConvertRelease = firstConvert.releaseLatch;
-          setCurrentDisaster(disaster);
-          finishedDisaster = getAssetsAndPopulateDisasterPicker(disaster);
-        });
+    cy.document().then((doc) => {
+      const damageDiv = document.createElement('div');
+      damageDiv.id = 'disaster-asset-picker';
+      doc.body.appendChild(damageDiv);
+      cy.stub(document, 'getElementById')
+          .callsFake((id) => doc.getElementById(id));
+      // set disaster to 'disaster'
+      const firstConvert = getConvertEeObjectToPromiseRelease();
+      firstStartPromise = firstConvert.startPromise;
+      firstConvertRelease = firstConvert.releaseLatch;
+      setCurrentDisaster(disaster);
+      finishedDisaster = getAssetsAndPopulateDisasterPicker(disaster);
+    });
     let secondConvertRelease;
     let finishedOther;
     cy.get('#disaster-adder-label')
         .find('select')
         .should('be.disabled')
-        .then(() => {
-          // wait for us to hit 'disaster' call to convertEeObjectToPromise
-          return firstStartPromise;
-        })
+        // wait for us to hit 'disaster' call to convertEeObjectToPromise
+        .then(() => firstStartPromise)
         .then(() => {
           // set disaster to 'other'
           secondConvertRelease =
@@ -145,6 +114,7 @@ describe('Unit tests for manage_layers page', () => {
     });
     cy.get('#other-adder-label').find('select').should('not.be.disabled');
     cy.get('#disaster-adder-label').should('not.exist');
+<<<<<<< HEAD
   });
 
   // TODO: move this test when we delete state asset pickers from
@@ -163,6 +133,8 @@ describe('Unit tests for manage_layers page', () => {
                   legacyStatePrefix + KNOWN_STATE, {},
                   Cypress.sinon.match.func);
         });
+=======
+>>>>>>> 84428b9ed0d92e63fc5c8ab9eccd5062bf0d82bd
   });
 
   it('tests color cell', () => {

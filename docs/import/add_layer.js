@@ -68,7 +68,9 @@ function processNewEeLayer(asset, type) {
 function prependToTable(layer) {
   const index = getCurrentLayers().length;
   getCurrentLayers().push(layer);
-  $('#tbody').prepend(createLayerRow(layer, index));
+  const newRow = createLayerRow(layer, index);
+  $('#tbody').prepend(newRow);
+  newRow.children('.color-td').trigger('click');
   return updateLayersInFirestore();
 }
 

@@ -2,15 +2,14 @@ import {LayerType} from '../firebase_layers.js';
 import {getDisaster} from '../resources.js';
 import {processNewEeLayer, processNonEeLayer} from './add_layer.js';
 import {withColor} from './color_function_util.js';
-import {getDisasterAssetsFromEe, getStatesAssetsFromEe} from './list_ee_assets.js';
-import {getCurrentData, getCurrentLayers, getRowIndex, ILLEGAL_STATE_ERR, onUpdate, setCurrentDisaster, setDisasterData, setStatus, updateLayersInFirestore} from './manage_layers_lib.js';
+import {getDisasterAssetsFromEe} from './list_ee_assets.js';
+import {getCurrentLayers, getRowIndex, ILLEGAL_STATE_ERR, onUpdate, setDisasterData, setStatus, updateLayersInFirestore} from './manage_layers_lib.js';
 
 export {enableWhenReady, updateAfterSort};
 // Visible for testing
 export {
   createLayerRow,
   createOptionFrom,
-  createStateAssetPickers,
   createTd,
   disasterAssets,
   getAssetsAndPopulateDisasterPicker,
@@ -20,7 +19,6 @@ export {
   onListBlur,
   onSetDisaster,
   setUpDisasterPicker,
-  stateAssets,
   withCheckbox,
   withInput,
   withList,
@@ -30,11 +28,6 @@ export {
 // TODO(juliexxia): consolidate asset picker logic and storage structure between
 // manage_layers.js and manage_disaster.js
 // TODO: refactor to avoid as much jumpiness as possible.
-
-// also waiting to be deleted
-// A map of maps of the form:
-// {'WA' => {'asset/path': LayerType}}
-const stateAssets = new Map();
 
 // A map of maps of the form:
 // {'disaster-2017' => {'asset/path' => {type: LayerType, disabled: boolean}}
@@ -334,15 +327,6 @@ function getAssetsAndPopulateDisasterPicker(disaster) {
       disasterLambda(disaster);
     });
   }
-}
-
-/**
- * Create asset pickers for the given states.
- * @param {Array<string>} states of the form ['WA', ...]
- */
-function createStateAssetPickers(states) {
-  // Disabled for now waiting for #327
-  // createAssetPickers(states, stateAssets, $('#state-asset-pickers'));
 }
 
 /**
