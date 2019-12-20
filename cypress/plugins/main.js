@@ -129,8 +129,7 @@ function onFunction(on, config) {
                       // See
                       // https://cloud.google.com/iam/docs/reference/credentials/rest/v1/projects.serviceAccounts/generateAccessToken
                       name: 'projects/-/serviceAccounts/' + client.email,
-                      // We need EE access, but no write access, although
-                      // apparently
+                      // Just need read-only EE access, although apparently
                       // write access can be needed for some non-write tasks.
                       requestBody: {
                         scope: [
