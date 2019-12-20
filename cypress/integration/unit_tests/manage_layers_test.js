@@ -70,20 +70,19 @@ describe('Unit tests for manage_layers page', () => {
     let firstStartPromise;
     let firstConvertRelease;
     let finishedDisaster;
-    cy.document()
-        .then((doc) => {
-          const damageDiv = document.createElement('div');
-          damageDiv.id = 'disaster-asset-picker';
-          doc.body.appendChild(damageDiv);
-          cy.stub(document, 'getElementById')
-              .callsFake((id) => doc.getElementById(id));
-          // set disaster to 'disaster'
-          const firstConvert = getConvertEeObjectToPromiseRelease();
-          firstStartPromise = firstConvert.startPromise;
-          firstConvertRelease = firstConvert.releaseLatch;
-          setCurrentDisaster(disaster);
-          finishedDisaster = getAssetsAndPopulateDisasterPicker(disaster);
-        });
+    cy.document().then((doc) => {
+      const damageDiv = document.createElement('div');
+      damageDiv.id = 'disaster-asset-picker';
+      doc.body.appendChild(damageDiv);
+      cy.stub(document, 'getElementById')
+          .callsFake((id) => doc.getElementById(id));
+      // set disaster to 'disaster'
+      const firstConvert = getConvertEeObjectToPromiseRelease();
+      firstStartPromise = firstConvert.startPromise;
+      firstConvertRelease = firstConvert.releaseLatch;
+      setCurrentDisaster(disaster);
+      finishedDisaster = getAssetsAndPopulateDisasterPicker(disaster);
+    });
     let secondConvertRelease;
     let finishedOther;
     cy.get('#disaster-adder-label')
