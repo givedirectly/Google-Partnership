@@ -112,6 +112,7 @@ class Authenticator {
   eeAuthenticate(failureCallback) {
     ee.data.authenticateViaOauth(
         CLIENT_ID, () => this.internalInitializeEE(), failureCallback, []);
+    // getAndSetEeToken().then(() => this.internalInitializeEE());
   }
 
   /**
@@ -193,26 +194,64 @@ function trackEeAndFirebase(taskAccumulator, needsGdUser = false) {
     if (!firebaseToken) {
       throw new Error('Did not receive Firebase token in test');
     }
-    const eeToken = getValueFromLocalStorage(earthEngineTestTokenCookieName);
-    if (!eeToken) {
-      throw new Error('Did not receive EarthEngine token in test');
-    }
-    ee.data.setAuthToken(
-        CLIENT_ID, 'Bearer', eeToken,
-        // Expires in 3600 is a lie, but no need to tell the truth.
-        /* expiresIn */ 3600, /* extraScopes */[],
-        /* callback */
-        () => initializeEE(
-            () => {
-              ee.data.setCloudApiEnabled(true);
-              taskAccumulator.taskCompleted();
-            },
-            (err) => {
-              throw new Error('EarthEngine init failure: ' + err);
-            }),
-        /* updateAuthLibrary */ false);
+    // const eeToken = getValueFromLocalStorage(earthEngineTestTokenCookieName);
+    // if (!eeToken) {
+    //   throw new Error('Did not receive EarthEngine token in test');
+    // }
+    getAndSetEeToken().then(
+      () => initializeEE(() => {
+        ee.data.setCloudApiEnabled(true);
+        taskAccumulator.taskCompleted();
+      }));
+    // ee.data.setAuthToken(
+    //     CLIENT_ID, 'Bearer', eeToken,
+    //     // Expires in 3600 is a lie, but no need to tell the truth.
+    //     /* expiresIn */ 3600, /* extraScopes */[],
+    //     /* callback */
+    //     () => initializeEE(() => {
+    //       ee.data.setCloudApiEnabled(true);
+    //       taskAccumulator.taskCompleted();
+    //     }),
+    //     /* updateAuthLibrary */ false);
+    // setTimeout(() => {
+    //   fetch('http://localhost:9080/').then((response) => {
+    //     if (!response.ok) {
+    //       throw new Error('Refresh token error: ' + response.status);
+    //     }
+    //     return response.json();
+    //   }).then((json) => {
+    //     const {accessToken, expireTime} = JSON.parse(json);
+    //
+    //     ee.data.setAuthToken(CLIENT_ID, 'Bearer', token.accessToken, )
+    //   })
+    // }, 20000);
     return firebase.auth().signInWithCustomToken(firebaseToken);
   }
+}
+
+function getAndSetEeToken() {
+  return fetch('http://localhost:9080/').then((response) => {
+    if (!response.ok) {
+      throw new Error('Refresh token error: ' + response.status);
+    }
+    return response.json();
+  }).then(({accessToken, expireTime}) => {
+    const expireDate = Date.parse(expireTime);
+    const result = new Promise((resolve) =>
+        ee.data.setAuthToken(CLIENT_ID, 'Bearer', accessToken,
+            Math.floor(millisecondsFromNow(expireDate) / 1000),
+            /* extraScopres */ [],
+            resolve, /* updateAuthLibrary */ false));
+    result.then(() =>
+        setTimeout(getAndSetEeToken,
+            // Give a 5-minute buffer to avoid nasty surprises.
+            Math.max(millisecondsFromNow(expireDate - 20000), 0)));
+    return result;
+  })
+}
+
+function millisecondsFromNow(date) {
+  return date - Date.now();
 }
 
 /** Initializes Firebase. Exposed only for use in test codepaths. */
