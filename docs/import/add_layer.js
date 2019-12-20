@@ -2,6 +2,7 @@ import {LayerType} from '../firebase_layers.js';
 import {convertEeObjectToPromise} from '../map_util.js';
 import {createLayerRow} from './manage_layers.js';
 import {getCurrentLayers, updateLayersInFirestore} from './manage_layers_lib.js';
+import {eeLegacyPrefix} from '../ee_paths.js';
 
 export {processNewEeLayer, processNonEeLayer};
 
@@ -14,6 +15,9 @@ export {processNewEeLayer, processNonEeLayer};
  * written to firestore.
  */
 function processNewEeLayer(asset, type) {
+  ee.data.setAssetAcl(eeLegacyPrefix + asset, {all_users_can_read: true}, () => {
+    console.log('Made ' + eeLegacyPrefix + asset + ' world readable');
+  });
   switch (type) {
     case LayerType.IMAGE:
     case LayerType.IMAGE_COLLECTION:
