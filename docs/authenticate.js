@@ -231,11 +231,12 @@ class Authenticator {
  * @return {Promise} Promise that completes when Firebase is logged in
  */
 function trackEeAndFirebase(taskAccumulator, needsGdUser = false) {
+  const eeInitializeCallback = () => {
+    ee.data.setCloudApiEnabled(true);
+    taskAccumulator.taskCompleted();
+  };
   if (inProduction()) {
-    const authenticator = new Authenticator(() => {
-      ee.data.setCloudApiEnabled(true);
-      taskAccumulator.taskCompleted();
-    }, needsGdUser);
+    const authenticator = new Authenticator(eeInitializeCallback, needsGdUser);
     return authenticator.start();
   } else {
     // We're inside a test. The test setup should have tokens for us that will
@@ -256,10 +257,7 @@ function trackEeAndFirebase(taskAccumulator, needsGdUser = false) {
         /* expiresIn */ 3600, /* extraScopes */[],
         /* callback */
         () => initializeEE(
-            () => {
-              ee.data.setCloudApiEnabled(true);
-              taskAccumulator.taskCompleted();
-            },
+            eeInitializeCallback,
             (err) => {
               throw new Error('EarthEngine init failure: ' + err);
             }),
