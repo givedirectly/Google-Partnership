@@ -144,7 +144,7 @@ describe('Unit tests for manage_layers page', () => {
       return finishedOther;
     });
     cy.get('#other-adder-label').find('select').should('not.be.disabled');
-    cy.get('#disaster-adder-label').should('not.exist')
+    cy.get('#disaster-adder-label').should('not.exist');
   });
 
   // TODO: move this test when we delete state asset pickers from
