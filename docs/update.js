@@ -261,12 +261,3 @@ function setInnerHtml(id, message) {
 function getValue(id) {
   return document.getElementById(id).value;
 }
-
-/**
- * Sets the value of the element with the given id.
- * @param {string} id
- * @param {string} value
- */
-function setValue(id, value) {
-  document.getElementById(id).value = value;
-}
