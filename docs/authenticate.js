@@ -45,7 +45,7 @@ const eeErrorDialog =
     '<div title="EarthEngine authentication error">You do not appear to be ' +
     'whitelisted for EarthEngine access. Please whitelist your account at ' +
     '<a href="https://signup.earthengine.google.com">https://signup.earthengine.google.com</a>' +
-    'or sign into a whitelisted account after closing this dialog</div>';
+    ' or sign into a whitelisted account after closing this dialog</div>';
 
 /**
  * Logs an error message to the console and shows a snackbar notification
@@ -68,9 +68,7 @@ class Authenticator {
   constructor(eeInitializeCallback, needsGdUser) {
     this.eeInitializeCallback = eeInitializeCallback;
     this.needsGdUser = needsGdUser;
-    this.loginTasksToComplete = 2;
     this.gapiInitDone = new SettablePromise();
-    this.firebaseAuthFinished = new SettablePromise();
   }
 
   /**
@@ -82,24 +80,30 @@ class Authenticator {
     this.eeAuthenticate(() => this.navigateToSignInPage());
     const gapiSettings = Object.assign({}, gapiTemplate);
     gapiSettings.scope = '';
-    gapi.load('auth2', () => {
-      this.gapiInitDone.setPromise(gapi.auth2.init(gapiSettings).then(() => {
-        const basicProfile =
-            gapi.auth2.getAuthInstance().currentUser.get().getBasicProfile();
-        if (this.needsGdUser &&
-            (!basicProfile || basicProfile.getEmail() !== gdUserEmail)) {
-          alert(
-              'You must be signed in as ' + gdUserEmail +
-              ' to access this page. Please open in an incognito window or ' +
-              'sign in as ' + gdUserEmail +
-              ' in this window after closing this alert.');
-          this.requireSignIn();
-        } else {
-          this.onLoginTaskCompleted();
-        }
-      }));
-    });
-    return this.firebaseAuthFinished.getPromise();
+    return new Promise((resolve, reject) =>
+        gapi.load('auth2', () =>
+            this.gapiInitDone.setPromise(
+                gapi.auth2.init(gapiSettings).then(() => {
+                  const basicProfile =
+                      gapi.auth2.getAuthInstance().
+                          currentUser.
+                          get().
+                          getBasicProfile();
+                  if (this.needsGdUser &&
+                      (!basicProfile || basicProfile.getEmail() !==
+                          gdUserEmail)) {
+                    alert(
+                        'You must be signed in as ' + gdUserEmail + ' to ' +
+                        'access this page. Please open in an incognito window' +
+                        ' or sign in as ' + gdUserEmail +
+                        ' in this window after closing this alert.');
+                    this.requireSignIn();
+                  } else {
+                    authenticateToFirebase(
+                        gapi.auth2.getAuthInstance().currentUser.get()).
+                        then(resolve, reject);
+                  }
+                }))));
   }
 
   /**
@@ -136,10 +140,10 @@ class Authenticator {
 
   /** Initializes EarthEngine. */
   internalInitializeEE() {
-    this.onLoginTaskCompleted();
     initializeEE(this.eeInitializeCallback, (err) => {
-      if (err.message.includes('401')) {
+      if (err.message.includes('401') || err.message.includes('404')) {
         // HTTP code 401 indicates "unauthorized".
+        // 404 shows up when not on Google internal network.
         // TODO(#340): Stand up a server that allows anonymous access in case of
         //  failure here.
         // TODO(#340): Maybe don't require EE failure every time, store
@@ -147,24 +151,21 @@ class Authenticator {
         // Use a jQuery dialog because normal "alert" doesn't display hyperlinks
         // as clickable. Inferior, though, because it does allow page to
         // continue to load behind the dialog. Not too big a deal.
-        $(eeErrorDialog)
+        const dialog = $(eeErrorDialog)
             .dialog(
-                {modal: true, width: 600, close: () => this.requireSignIn()});
+                {buttons: [{text: 'Sign in with EarthEngine-enabled account', click: () => this.requireSignIn()},
+                    {text: 'Continue without sign-in', click: () => {
+                      // Don't trigger close callback, but close dialog.
+                      dialog.dialog({close: () => {}});
+                      dialog.dialog('close');
+                      getAndSetEeToken().then(() => initializeEE(
+                            this.eeInitializeCallback, defaultErrorCallback));
+                      }}],
+                  modal: true, width: 600, close: () => this.requireSignIn()});
       } else {
         defaultErrorCallback(err);
       }
     });
-  }
-
-  /**
-   * Notes that a login task has completed, and if all have, calls the callback
-   * with the access token.
-   */
-  onLoginTaskCompleted() {
-    if (--this.loginTasksToComplete === 0) {
-      this.firebaseAuthFinished.setPromise(authenticateToFirebase(
-          gapi.auth2.getAuthInstance().currentUser.get()));
-    }
   }
 }
 
