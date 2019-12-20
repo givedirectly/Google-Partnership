@@ -3,7 +3,7 @@ import {gdEeStatePrefix, legacyStateDir, legacyStatePrefix} from '../../../docs/
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
 import {withColor} from '../../../docs/import/color_function_util.js';
 import {getStatesAssetsFromEe} from '../../../docs/import/list_ee_assets.js';
-import {createOptionFrom, createTd, disasterAssets, getAssetsAndPopulateDisasterPicker, onCheck, onDelete, onInputBlur, onListBlur, stateAssets, updateAfterSort, withCheckbox, withInput, withList, withType} from '../../../docs/import/manage_layers.js';
+import {createOptionFrom, createTd, disasterAssets, getAssetsAndPopulateDisasterPicker, onCheck, onDelete, onInputBlur, onListBlur, updateAfterSort, withCheckbox, withInput, withList, withType} from '../../../docs/import/manage_layers.js';
 import {setCurrentDisaster} from '../../../docs/import/manage_layers_lib';
 import {disasterData, getCurrentLayers} from '../../../docs/import/manage_layers_lib.js';
 import {getDisaster} from '../../../docs/resources';
@@ -51,7 +51,6 @@ describe('Unit tests for manage_layers page', () => {
         }));
     cy.stub(ee.data, 'createFolder');
 
-    stateAssets.clear();
     disasterAssets.clear();
     // In prod this would happen in enableWhenReady which would read from
     // firestore.
@@ -145,24 +144,6 @@ describe('Unit tests for manage_layers page', () => {
     });
     cy.get('#other-adder-label').find('select').should('not.be.disabled');
     cy.get('#disaster-adder-label').should('not.exist')
-  });
-
-  // TODO: move this test when we delete state asset pickers from
-  // manage_layers.js
-  it('gets state asset info from ee', () => {
-    cy.wrap(getStatesAssetsFromEe([KNOWN_STATE]))
-        .then((result) => {
-          expect(result.get([KNOWN_STATE])).to.not.be.null;
-          return result.get([KNOWN_STATE]);
-        })
-        .then((assets) => {
-          // tests folder type asset doesn't make it through
-          expect(assets).to.eql(new Map([[KNOWN_STATE_ASSET, 'TABLE']]));
-          expect(ee.data.listAssets)
-              .to.be.calledWith(
-                  legacyStatePrefix + KNOWN_STATE, {},
-                  Cypress.sinon.match.func);
-        });
   });
 
   it('tests color cell', () => {
