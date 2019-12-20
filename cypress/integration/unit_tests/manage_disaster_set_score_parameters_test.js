@@ -113,22 +113,13 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
       ['state1', {disabled: true}],
     ])));
     callEnableWhenReady(createDisasterData(['NY']));
-    cy.get('#select-asset-selection-row-poverty-NY > option')
-        .eq(2)
-        .invoke('attr', 'disabled')
-        .should('eq', 'disabled');
-    cy.get('#select-asset-selection-row-poverty-NY > option')
-        .eq(1)
-        .invoke('attr', 'disabled')
-        .should('not.eq', 'disabled');
-    cy.get('#damage-asset-select > option')
-        .eq(2)
-        .invoke('attr', 'disabled')
-        .should('eq', 'disabled');
-    cy.get('#damage-asset-select > option')
-        .eq(1)
-        .invoke('attr', 'disabled')
-        .should('not.eq', 'disabled');
+    const stateSelector =
+        cy.get('#select-asset-selection-row-poverty-NY > option');
+    stateSelector.eq(2).should('be.disabled');
+    stateSelector.eq(1).should('not.be.disabled');
+    const disasterSelector = cy.get('#damage-asset-select > option');
+    disasterSelector.eq(2).should('be.disabled');
+    disasterSelector.eq(1).should('not.be.disabled');
   });
 
   it('validates asset data', () => {

@@ -71,7 +71,6 @@ function enableWhenReady(firebaseDataPromise) {
  */
 function onSetDisaster() {
   const disaster = getDisaster();
-  setCurrentDisaster(disaster);
   // display layer table
   populateLayersTable();
   return getAssetsAndPopulateDisasterPicker(disaster);
@@ -330,9 +329,7 @@ function getAssetsAndPopulateDisasterPicker(disaster) {
     return Promise.resolve();
   } else {
     setUpDisasterPicker(disaster);
-    console.time('start');
     return getDisasterAssetsFromEe(disaster).then((assets) => {
-      console.timeEnd('start');
       disasterAssets.set(disaster, assets);
       disasterLambda(disaster);
     });
@@ -355,11 +352,11 @@ function createStateAssetPickers(states) {
  */
 function setUpDisasterPicker(disaster) {
   const div = $('#disaster-asset-picker').empty();
-  const assetPicker = $(document.createElement('select')).width(200);
-  assetPicker.append(createOptionFrom('pending...')).attr('disabled', true);
+  const assetPicker = $(document.createElement('select')).width(200).attr('disabled', true);
+  assetPicker.append(createOptionFrom('pending...'));
   const assetPickerLabel = $(document.createElement('label'))
                                .text('Add layer from ' + disaster + ': ')
-                               .attr('id', disaster + 'adder-label')
+                               .attr('id', disaster + '-adder-label')
                                .append(assetPicker);
   div.append(assetPickerLabel);
 }
@@ -373,7 +370,7 @@ function populateDisasterAssetPicker(disaster) {
   const div = $('#disaster-asset-picker').empty();
   const assetPickerLabel = $(document.createElement('label'))
                                .text('Add layer from ' + disaster + ': ')
-                               .attr('id', disaster + 'adder-label');
+                               .attr('id', disaster + '-adder-label');
   const assetPicker = $(document.createElement('select'))
                           .attr('id', disaster + '-adder')
                           .width(200);

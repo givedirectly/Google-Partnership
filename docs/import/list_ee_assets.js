@@ -91,12 +91,16 @@ function getDisasterAssetsFromEe(disaster) {
                 shouldDisable.push(false);
               }
             }
+            // TODO(juliexxia): remove debugging
+            console.log('should get stuck', shouldDisable);
             return Promise.all([
               assets,
               convertEeObjectToPromise(ee.List(shouldDisable)),
             ]);
           })
           .then(([assets, disableList]) => {
+            // TODO(juliexxia): remove debugging
+            console.log('should not print', disableList);
             const assetMap = new Map();
             const disableListIterator = disableList[Symbol.iterator]();
             for (const {asset, type} of assets) {

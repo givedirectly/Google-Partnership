@@ -89,13 +89,17 @@ function setUpSavingStubs() {
  * @return {Function}
  */
 function getConvertEeObjectToPromiseRelease() {
+  console.log('starting twice');
   let resolveFunction = null;
   const promise = new Promise((resolve) => resolveFunction = resolve);
   const oldConvert = MapUtil.convertEeObjectToPromise;
   MapUtil.convertEeObjectToPromise = (eeObject) => {
+    // This is being called twice for the first
+    eeObject.evaluate((yes, no) => console.log(yes, no, 'hello'));
     MapUtil.convertEeObjectToPromise = oldConvert;
     return MapUtil.convertEeObjectToPromise(eeObject).then(async (result) => {
       await promise;
+      console.log('resolving', result);
       return result;
     });
   };

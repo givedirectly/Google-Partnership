@@ -3,9 +3,13 @@ import {gdEeStatePrefix, legacyStateDir, legacyStatePrefix} from '../../../docs/
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
 import {withColor} from '../../../docs/import/color_function_util.js';
 import {getStatesAssetsFromEe} from '../../../docs/import/list_ee_assets.js';
-import {createOptionFrom, createTd, disasterAssets, getAssetsAndPopulateDisasterPicker, onCheck, onDelete, onInputBlur, onListBlur, stateAssets, updateAfterSort, withCheckbox, withInput, withList, withType} from '../../../docs/import/manage_layers.js';
+import {createOptionFrom, createTd, disasterAssets, enableWhenReady, getAssetsAndPopulateDisasterPicker, onCheck, onDelete, onInputBlur, onListBlur, setUpDisasterPicker, stateAssets, updateAfterSort, withCheckbox, withInput, withList, withType} from '../../../docs/import/manage_layers.js';
+import {setCurrentDisaster} from '../../../docs/import/manage_layers_lib';
 import {disasterData, getCurrentLayers} from '../../../docs/import/manage_layers_lib.js';
+import * as MapUtil from '../../../docs/map_util';
 import {getDisaster} from '../../../docs/resources';
+import {cyQueue} from '../../support/commands';
+import {getConvertEeObjectToPromiseRelease} from '../../support/import_test_util';
 import {createAndAppend, createTrs, setDisasterAndLayers, setUpSavingStubs, waitForPromiseAndAssertSaves} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
@@ -79,6 +83,51 @@ describe('Unit tests for manage_layers page', () => {
       const assets = disasterAssets.get(disaster);
       expect(assets.get('asset/with/geometry').disabled).to.be.false;
       expect(assets.get('asset/with/null/geometry').disabled).to.be.true;
+    });
+  });
+
+  // TODO: fix this test.
+  it.only('has racing disaster asset populates', () => {
+    const disaster = 'disaster';
+    const otherDisaster = 'other';
+
+    const fc =
+        ee.FeatureCollection([ee.Feature(ee.Geometry.Point([1, 1]), {})]);
+    const otherFc = ee.FeatureCollection([ee.Feature(null, {blah: 'blah'})]);
+    const fcStub = cy.stub(ee, 'FeatureCollection');
+    fcStub.withArgs(disaster).returns(fc);
+    fcStub.withArgs(otherDisaster).returns(otherFc);
+    listAssetsStub
+        .withArgs(eeLegacyPathPrefix + disaster, {}, Cypress.sinon.match.func)
+        .returns(Promise.resolve({'assets': [{id: disaster, type: 'TABLE'}]}));
+    listAssetsStub
+        .withArgs(
+            eeLegacyPathPrefix + otherDisaster, {}, Cypress.sinon.match.func)
+        .returns(
+            Promise.resolve({'assets': [{id: otherDisaster, type: 'TABLE'}]}));
+
+    // has to be inside cy.doc for jquery selectors in tested methods to work.
+    cy.document().then((doc) => {
+      const damageDiv = document.createElement('div');
+      damageDiv.id = 'disaster-asset-picker';
+      doc.body.appendChild(damageDiv);
+      cy.stub(document, 'getElementById')
+          .callsFake((id) => doc.getElementById(id));
+
+      const firstRelease = getConvertEeObjectToPromiseRelease();
+      setCurrentDisaster(disaster);
+      getAssetsAndPopulateDisasterPicker(disaster);
+      expect($('#disaster-adder-label').find('select').prop('disabled'))
+          .to.be.true;
+      // creating this second release seem to call the new version of
+      // MapUtil.convertEeObjectToPromise for some reason, which is putting back
+      // MapUtil.convertEeObject to its original function? Something very weird
+      // is going on here. If you watch this test in yarn open, you can see the
+      // log inside the new convert is printed twice.
+      const secondRelease = getConvertEeObjectToPromiseRelease();
+      // setCurrentDisaster(otherDisaster);
+      // getAssetsAndPopulateDisasterPicker(otherDisaster);
+      // firstRelease();
     });
   });
 
