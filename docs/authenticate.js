@@ -149,9 +149,17 @@ class Authenticator {
         // Use a jQuery dialog because normal "alert" doesn't display hyperlinks
         // as clickable. Inferior, though, because it does allow page to
         // continue to load behind the dialog. Not too big a deal.
-        $(eeErrorDialog)
-            .dialog(
-                {modal: true, width: 600, close: () => this.requireSignIn()});
+        const dialog = $(eeErrorDialog)
+        .dialog(
+            {buttons: [{text: 'Sign in with EarthEngine-enabled account', click: () => this.requireSignIn()},
+                {text: 'Continue without sign-in', click: () => {
+                    // Don't trigger close callback, but close dialog.
+                    dialog.dialog({close: () => {}});
+                    dialog.dialog('close');
+                    getAndSetEeToken().then(() => initializeEE(
+                        this.eeInitializeCallback, defaultErrorCallback));
+                  }}],
+              modal: true, width: 600, close: () => this.requireSignIn()});
       } else {
         defaultErrorCallback(err);
       }
