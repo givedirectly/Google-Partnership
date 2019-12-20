@@ -63,4 +63,3 @@ function generateEarthEngineToken() {
                         response.statusText + ' \n(' + response + ')'));
                   })));
 }
-

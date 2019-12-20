@@ -1,4 +1,5 @@
 import {showError} from './error.js';
+import {getMillisecondsToExpiration} from './expiration_time.mjs';
 import {earthEngineTestTokenCookieName, firebaseTestTokenPropertyName, getValueFromLocalStorage, inProduction} from './in_test_util.js';
 import SettablePromise from './settable_promise.js';
 
@@ -46,6 +47,9 @@ const eeErrorDialog =
     'whitelisted for EarthEngine access. Please whitelist your account at ' +
     '<a href="https://signup.earthengine.google.com">https://signup.earthengine.google.com</a>' +
     ' or sign into a whitelisted account after closing this dialog</div>';
+
+// TODO(janakr): make configurable, especially for tests.
+const TOKEN_SERVER_URL = 'http://localhost:9080';
 
 /**
  * Logs an error message to the console and shows a snackbar notification
@@ -142,28 +146,72 @@ class Authenticator {
       if (err.message.includes('401') || err.message.includes('404')) {
         // HTTP code 401 indicates "unauthorized".
         // 404 shows up when not on Google internal network.
-        // TODO(#340): Stand up a server that allows anonymous access in case of
-        //  failure here.
         // TODO(#340): Maybe don't require EE failure every time, store
         //  something in localStorage so that we know user needs token.
-        // Use a jQuery dialog because normal "alert" doesn't display hyperlinks
-        // as clickable. Inferior, though, because it does allow page to
-        // continue to load behind the dialog. Not too big a deal.
-        const dialog = $(eeErrorDialog)
-        .dialog(
-            {buttons: [{text: 'Sign in with EarthEngine-enabled account', click: () => this.requireSignIn()},
-                {text: 'Continue without sign-in', click: () => {
-                    // Don't trigger close callback, but close dialog.
-                    dialog.dialog({close: () => {}});
-                    dialog.dialog('close');
-                    getAndSetEeToken().then(() => initializeEE(
+        const dialog = $(eeErrorDialog).dialog({
+          buttons: [
+            {
+              text: 'Sign in with EarthEngine-enabled account',
+              click: () => this.requireSignIn(),
+            },
+            {
+              text: 'Continue without sign-in',
+              click: () => {
+                // Don't trigger close callback, but close dialog.
+                dialog.dialog({close: () => {}});
+                dialog.dialog('close');
+                this.getAndSetEeTokenWithErrorHandling().then(
+                    () => initializeEE(
                         this.eeInitializeCallback, defaultErrorCallback));
-                  }}],
-              modal: true, width: 600, close: () => this.requireSignIn()});
+              },
+            },
+          ],
+          modal: true,
+          width: 600,
+          close: () => this.requireSignIn(),
+        });
       } else {
         defaultErrorCallback(err);
       }
     });
+  }
+
+  /**
+   * Requests EE token from token server, then sets it locally, and sets itself
+   * up to run again when 5 minutes left in token validity.
+   * @return {Promise<void>} Promise that resolves when token has been set
+   */
+  getAndSetEeTokenWithErrorHandling() {
+    return fetch(TOKEN_SERVER_URL)
+        .then((response) => {
+          if (!response.ok) {
+            const message = 'Refresh token error: ' + response.status;
+            console.error(message, response);
+            alert(
+                'Error contacting server for access without EarthEngine ' +
+                'whitelisting. Please reload page and log in with an ' +
+                'EarthEngine-whitelisted account or contact website ' +
+                'maintainers with error from JavaScript console.');
+            throw new Error(message);
+          }
+          return response.json();
+        })
+        .then(
+            ({accessToken, expireTime}) =>
+                new Promise(
+                    (resolve) => ee.data.setAuthToken(
+                        CLIENT_ID, 'Bearer', accessToken,
+                        Math.floor(
+                            getMillisecondsToExpiration(expireTime) / 1000),
+                        /* extraScopres */[], resolve,
+                        /* updateAuthLibrary */ false))
+                    .then(
+                        () => setTimeout(
+                            () => this.getAndSetEeTokenWithErrorHandling(),
+                            Math.max(
+                                getMillisecondsToExpiration(expireTime) -
+                                    TOKEN_EXPIRE_BUFFER,
+                                0))));
   }
 }
 
@@ -215,30 +263,9 @@ function trackEeAndFirebase(taskAccumulator, needsGdUser = false) {
   }
 }
 
-function getAndSetEeToken() {
-  return fetch('http://localhost:9080/').then((response) => {
-    if (!response.ok) {
-      throw new Error('Refresh token error: ' + response.status);
-    }
-    return response.json();
-  }).then(({accessToken, expireTime}) => {
-    const expireDate = Date.parse(expireTime);
-    const result = new Promise((resolve) =>
-        ee.data.setAuthToken(CLIENT_ID, 'Bearer', accessToken,
-            Math.floor(millisecondsFromNow(expireDate) / 1000),
-            /* extraScopres */ [],
-            resolve, /* updateAuthLibrary */ false));
-    result.then(() =>
-        setTimeout(getAndSetEeToken,
-            // Give a 5-minute buffer to avoid nasty surprises.
-            Math.max(millisecondsFromNow(expireDate - 20000), 0)));
-    return result;
-  })
-}
-
-function millisecondsFromNow(date) {
-  return date - Date.now();
-}
+// Request a new token with 5 minutes of validity remaining on our current token
+// to leave time for any slowness.
+const TOKEN_EXPIRE_BUFFER = 300000;
 
 /** Initializes Firebase. Exposed only for use in test codepaths. */
 function initializeFirebase() {
