@@ -12,7 +12,7 @@ describe('Unit tests for adding layers', () => {
   setUpSavingStubs();
   let setAclStub;
   beforeEach(() => {
-    disasterData.clear()
+    disasterData.clear();
     setAclStub = cy.stub(ee.data, 'setAssetAcl');
   });
 
