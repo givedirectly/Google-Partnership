@@ -305,7 +305,6 @@ function populateStateAndDisasterAssetPickers(disaster) {
   const assetPickerDiv = $('.asset-pickers');
   assetPickerDiv.empty();
 
-  const promises = [];
   if (disasterAssets.has(disaster)) {
     createDisasterAssetPicker(disaster);
   } else {
@@ -313,9 +312,8 @@ function populateStateAndDisasterAssetPickers(disaster) {
       disasterAssets.set(disaster, assets);
       createDisasterAssetPicker(disaster);
     });
-    promises.push(disasterDone);
+    return disasterDone;
   }
-  return Promise.all(promises);
 }
 
 /**
