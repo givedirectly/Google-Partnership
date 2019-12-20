@@ -1,8 +1,5 @@
 import {createServer} from 'http';
-import {
-  generateEarthEngineToken,
-
-} from '../ee_lib/ee_token_creator.mjs';
+import {generateEarthEngineToken} from '../ee_lib/ee_token_creator.mjs';
 import {getMillisecondsToExpiration} from '../docs/expiration_time.mjs';
 
 const RESPONSE_HEADERS = {

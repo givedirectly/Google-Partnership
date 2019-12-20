@@ -51,6 +51,10 @@ const eeErrorDialog =
 // TODO(janakr): make configurable, especially for tests.
 const TOKEN_SERVER_URL = 'http://localhost:9080';
 
+// Request a new token with 5 minutes of validity remaining on our current token
+// to leave time for any slowness.
+const TOKEN_EXPIRE_BUFFER = 300000;
+
 /**
  * Logs an error message to the console and shows a snackbar notification
  * indicating an issue with authentication.
@@ -203,7 +207,7 @@ class Authenticator {
                         CLIENT_ID, 'Bearer', accessToken,
                         Math.floor(
                             getMillisecondsToExpiration(expireTime) / 1000),
-                        /* extraScopres */[], resolve,
+                        /* extraScopes */[], resolve,
                         /* updateAuthLibrary */ false))
                     .then(
                         () => setTimeout(
@@ -262,10 +266,6 @@ function trackEeAndFirebase(taskAccumulator, needsGdUser = false) {
     return firebase.auth().signInWithCustomToken(firebaseToken);
   }
 }
-
-// Request a new token with 5 minutes of validity remaining on our current token
-// to leave time for any slowness.
-const TOKEN_EXPIRE_BUFFER = 300000;
 
 /** Initializes Firebase. Exposed only for use in test codepaths. */
 function initializeFirebase() {
