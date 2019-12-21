@@ -38,10 +38,12 @@ function createBasicMap(div, additionalOptions = {}) {
   // Search box code roughly taken from
   // https://developers.google.com/maps/documentation/javascript/examples/places-searchbox.
   // Create the search box.
+  const inputDiv = document.createElement('div');
   const input = document.createElement('input');
   input.setAttribute('type', 'text');
   input.setAttribute('placeholder', 'Search');
   const searchBox = new google.maps.places.SearchBox(input);
+  inputDiv.appendChild(input);
   map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
   searchBox.addListener('places_changed', () => {
     const bounds = new google.maps.LatLngBounds();

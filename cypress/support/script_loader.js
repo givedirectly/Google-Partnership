@@ -57,6 +57,15 @@ const scriptMap = new Map([
     },
   ],
   [
+    'jquery-ui',
+    {
+      script:
+          'https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.4/jquery-ui.js',
+      callback: () =>
+          typeof ($) !== 'undefined' && typeof ($().dialog) !== 'undefined',
+    },
+  ],
+  [
     'charts',
     {
       script: 'https://www.gstatic.com/charts/loader.js',

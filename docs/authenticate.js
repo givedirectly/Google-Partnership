@@ -2,7 +2,7 @@ import {showError} from './error.js';
 import {earthEngineTestTokenCookieName, firebaseTestTokenPropertyName, getValueFromLocalStorage, inProduction} from './in_test_util.js';
 import SettablePromise from './settable_promise.js';
 
-export {trackEeAndFirebase};
+export {reloadWithSignIn, trackEeAndFirebase};
 // For testing.
 export {CLIENT_ID, firebaseConfigProd, firebaseConfigTest, getFirebaseConfig};
 
@@ -120,12 +120,9 @@ class Authenticator {
   /**
    * Redirects page so that user can log in, getting around pop-up-blocking
    * functionality of browsers.
-   * @param {gapi.auth.SignInOptions} extraOptions Dictionary of sign-in options
    */
-  navigateToSignInPage(extraOptions = {}) {
-    this.gapiInitDone.getPromise().then(
-        () => gapi.auth2.getAuthInstance().signIn(
-            {...{ux_mode: 'redirect'}, ...extraOptions}));
+  navigateToSignInPage() {
+    this.gapiInitDone.getPromise().then(doSignIn);
   }
 
   /**
@@ -133,7 +130,7 @@ class Authenticator {
    * Useful if user is not signed in to a required account.
    */
   requireSignIn() {
-    this.navigateToSignInPage({prompt: 'select_account'});
+    this.gapiInitDone.getPromise().then(reloadWithSignIn);
   }
 
   /** Initializes EarthEngine. */
@@ -231,6 +228,20 @@ function initializeEE(runCallback, failureCallback) {
  */
 function getFirebaseConfig(inProduction) {
   return inProduction ? firebaseConfigProd : firebaseConfigTest;
+}
+
+/** Forces page to redirect to Google sign-in. */
+function reloadWithSignIn() {
+  doSignIn({prompt: 'select_account'});
+}
+
+/**
+ * Redirects to Google sign-in, if necessary or if forced by options.
+ * @param {gapi.auth.SignInOptions} extraOptions Dictionary of sign-in options
+ */
+function doSignIn(extraOptions = {}) {
+  gapi.auth2.getAuthInstance().signIn(
+      {...{ux_mode: 'redirect'}, ...extraOptions});
 }
 
 // Roughly copied from https://firebase.google.com/docs/auth/web/google-signin.

@@ -1,7 +1,7 @@
 import {addPolygonWithPath} from '../../../docs/basic_map.js';
 import {mapContainerId, writeWaiterId} from '../../../docs/dom_constants.js';
 import * as loading from '../../../docs/loading.js';
-import {initializeAndProcessUserRegions, setUpPolygonDrawing, StoredShapeData, transformGeoPointArrayToLatLng, userShapes} from '../../../docs/polygon_draw.js';
+import {initializeAndProcessUserRegions, StoredShapeData, transformGeoPointArrayToLatLng, userShapes} from '../../../docs/polygon_draw.js';
 import {setUserFeatureVisibility} from '../../../docs/popup.js';
 import * as resourceGetter from '../../../docs/resources.js';
 import {userRegionData} from '../../../docs/user_region_data.js';
@@ -91,18 +91,18 @@ describe('Unit test for ShapeData', () => {
    * @return {Cypress.Chainable}
    */
   function setUpPage() {
-    return createGoogleMap()
+    userRegionData.clear();
+    createGoogleMap()
         .then((mapResult) => map = mapResult)
-        .then(() => setUpPolygonDrawing(map, Promise.resolve(null)))
-        .then((drawingManagerResult) => drawingManager = drawingManagerResult)
-        .then(() => {
-          userRegionData.clear();
-          return initializeAndProcessUserRegions(map, Promise.resolve({
-            // Normally damage_asset_path is a string, but code tolerates just
-            // putting an ee.FeatureCollection in.
-            data: () => ({asset_data: {damage_asset_path: damageCollection}}),
-          }));
-        });
+        .then(
+            () => initializeAndProcessUserRegions(map, Promise.resolve({
+              // Normally damage_asset_path is a string, but code tolerates just
+              // putting an ee.FeatureCollection in.
+              data: () => ({asset_data: {damage_asset_path: damageCollection}}),
+            })))
+        .then((drawingManagerResult) => drawingManager = drawingManagerResult);
+    // Confirm that drawing controls are visible.
+    return cy.get('[title="Draw a shape"]');
   }
 
   it('Adds polygon', () => {
