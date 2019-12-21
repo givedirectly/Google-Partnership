@@ -1,6 +1,6 @@
 import {createServer} from 'http';
 import {getMillisecondsToDateString} from '../docs/time_util.js';
-import {generateEarthEngineToken} from '../ee_lib/ee_token_creator.js';
+import {generateEarthEngineToken} from './ee_token_creator.js';
 
 const RESPONSE_HEADERS = {
   'Content-type': 'text/plain',

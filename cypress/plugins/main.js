@@ -14,7 +14,7 @@
 import * as firebase from 'firebase';
 import * as firebaseAdmin from 'firebase-admin';
 import {firebaseConfigProd, firebaseConfigTest} from '../../docs/authenticate.js';
-import {generateEarthEngineToken} from '../../ee_lib/ee_token_creator.js';
+import {generateEarthEngineToken} from '../../token_server/ee_token_creator.js';
 
 export {onFunction};
 

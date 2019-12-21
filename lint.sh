@@ -8,7 +8,7 @@ readonly first_arg="$1"
 # locally anymore.
 # TODO(janakr): this is vulnerable to filenames with spaces.
 readonly modified_js_files="$(git diff --diff-filter=d --name-only \
-    master 'docs/*.js' 'docs/**/*.js' 'token_server/*.js' 'ee_lib/*.js' \
+    master 'docs/*.js' 'docs/**/*.js' 'token_server/*.js' \
     'cypress/integration/**/*.js' 'cypress/support/*.js' \
     'cypress/plugins/*.js')"
 if [[ "$modified_js_files" ]]; then
