@@ -91,15 +91,17 @@ describe('Unit test for ShapeData', () => {
    * @return {Cypress.Chainable}
    */
   function setUpPage() {
-    userRegionData.clear();
     createGoogleMap()
         .then((mapResult) => map = mapResult)
         .then(
-            () => initializeAndProcessUserRegions(map, Promise.resolve({
-              // Normally damage_asset_path is a string, but code tolerates just
-              // putting an ee.FeatureCollection in.
-              data: () => ({asset_data: {damage_asset_path: damageCollection}}),
-            })))
+            () => {
+              userRegionData.clear();
+              return initializeAndProcessUserRegions(map, Promise.resolve({
+                // Normally damage_asset_path is a string, but code tolerates just
+                // putting an ee.FeatureCollection in.
+                data: () => ({asset_data: {damage_asset_path: damageCollection}}),
+              }))
+            })
         .then((drawingManagerResult) => drawingManager = drawingManagerResult);
     // Confirm that drawing controls are visible.
     return cy.get('[title="Draw a shape"]');
@@ -126,7 +128,7 @@ describe('Unit test for ShapeData', () => {
     deletePolygon(cy.stub(window, 'confirm').returns(true));
   });
 
-  it('Almost deletes, then deletes', () => {
+  it.only('Almost deletes, then deletes', () => {
     drawPolygonAndClickOnIt();
     let confirmValue = false;
     const confirmStub =
