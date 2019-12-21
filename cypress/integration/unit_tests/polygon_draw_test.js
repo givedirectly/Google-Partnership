@@ -93,15 +93,14 @@ describe('Unit test for ShapeData', () => {
   function setUpPage() {
     createGoogleMap()
         .then((mapResult) => map = mapResult)
-        .then(
-            () => {
-              userRegionData.clear();
-              return initializeAndProcessUserRegions(map, Promise.resolve({
-                // Normally damage_asset_path is a string, but code tolerates just
-                // putting an ee.FeatureCollection in.
-                data: () => ({asset_data: {damage_asset_path: damageCollection}}),
-              }))
-            })
+        .then(() => {
+          userRegionData.clear();
+          return initializeAndProcessUserRegions(map, Promise.resolve({
+            // Normally damage_asset_path is a string, but code tolerates just
+            // putting an ee.FeatureCollection in.
+            data: () => ({asset_data: {damage_asset_path: damageCollection}}),
+          }))
+        })
         .then((drawingManagerResult) => drawingManager = drawingManagerResult);
     // Confirm that drawing controls are visible.
     return cy.get('[title="Draw a shape"]');
