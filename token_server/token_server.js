@@ -1,6 +1,6 @@
 import * as GoogleAuth from 'google-auth-library';
 import {createServer} from 'http';
-import {parse} from 'url';
+import parseBody from 'urlencoded-body-parser';
 import {CLIENT_ID, getMillisecondsToDateString} from '../docs/common_auth_utils.js';
 
 import {generateEarthEngineToken} from './ee_token_creator.js';
@@ -50,10 +50,11 @@ createServer(async (req, res) => {
     return;
   }
 
-  const idToken = parse(req.url, true).query.idToken;
   try {
+    const {idToken} = await parseBody(req);
     await client.verifyIdToken({idToken: idToken, audience: CLIENT_ID});
   } catch (err) {
+    console.log(err);
     fail(res);
     return;
   }

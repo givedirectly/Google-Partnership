@@ -188,7 +188,11 @@ class Authenticator {
                         .currentUser.get()
                         .getAuthResponse()
                         .id_token;
-    return fetch(TOKEN_SERVER_URL + '?' + $.param({idToken}))
+    return fetch(TOKEN_SERVER_URL, {
+             method: 'POST',
+             body: $.param({idToken}),
+             headers: {'Content-type': 'application/x-www-form-urlencoded'},
+           })
         .then((response) => {
           if (!response.ok) {
             const message = 'Refresh token error: ' + response.status;

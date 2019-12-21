@@ -18,6 +18,6 @@
   "dependencies": {
     "google-auth-library": "^5.7.0",
     "http": "^0.0.0",
-    "url": "^0.11.0"
+    "urlencoded-body-parser": "^3.0.0"
   }
 }
