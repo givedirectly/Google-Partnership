@@ -62,6 +62,5 @@ function createMap(firebasePromise) {
       }
     });
   });
-
   return map;
 }
