@@ -1,7 +1,4 @@
-// To include modules outside of this root, they must have the extension '.mjs'
-// for Node to recognize them as modules.
 import {createServer} from 'http';
-
 import {getMillisecondsToDateString} from '../docs/time_util.js';
 import {generateEarthEngineToken} from '../ee_lib/ee_token_creator.js';
 
