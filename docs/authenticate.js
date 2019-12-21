@@ -182,7 +182,8 @@ class Authenticator {
 
   /**
    * Requests EE token from token server, then sets it locally, and sets itself
-   * up to run again 5 minutes before token expires.
+   * up to run again 5 minutes before token expires. Passes user's id token to
+   * server so server can verify these aren't totally anonymous requests.
    * @return {Promise<void>} Promise that resolves when token has been set
    */
   getAndSetEeTokenWithErrorHandling() {
