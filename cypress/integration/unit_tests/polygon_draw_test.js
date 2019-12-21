@@ -99,7 +99,7 @@ describe('Unit test for ShapeData', () => {
             // Normally damage_asset_path is a string, but code tolerates just
             // putting an ee.FeatureCollection in.
             data: () => ({asset_data: {damage_asset_path: damageCollection}}),
-          }))
+          }));
         })
         .then((drawingManagerResult) => drawingManager = drawingManagerResult);
     // Confirm that drawing controls are visible.
