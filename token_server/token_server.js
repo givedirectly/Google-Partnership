@@ -1,6 +1,10 @@
 import * as GoogleAuth from 'google-auth-library';
 import {createServer} from 'http';
 import {parse} from 'url';
+import {
+  CLIENT_ID,
+  getMillisecondsToDateString,
+} from '../docs/common_auth_utils.js';
 
 import {generateEarthEngineToken} from './ee_token_creator.js';
 
@@ -39,8 +43,6 @@ function generateTokenPeriodically() {
 
 generateTokenPeriodically();
 
-const CLIENT_ID =
-    '38420505624-boghq4foqi5anc9kc5c5tsq82ar9k4n0.apps.googleusercontent.com';
 const client = new GoogleAuth.default.OAuth2Client(CLIENT_ID);
 
 createServer(async (req, res) => {
@@ -59,10 +61,7 @@ createServer(async (req, res) => {
     return;
   }
   let data = await currentTokenPromise;
-  // This calculation is same as that in
-  // authenticate.js#getMillisecondsToDateString but better to keep this server
-  // self-contained and duplicate a line.
-  if (Date.parse(data.expireTime) - Date.now() < MIN_TOKEN_LIFETIME) {
+  if (getMillisecondsToDateString(data.expireTime) < MIN_TOKEN_LIFETIME) {
     // Should never happen because of periodic generation above, but generate a
     // new token if it does.
     currentTokenPromise = generateEarthEngineToken();

@@ -14,5 +14,10 @@
     "local-web-server": "^3.0.7"
   },
   "type": "module",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "google-auth-library": "^5.7.0",
+    "http": "^0.0.0",
+    "url": "^0.11.0"
+  }
 }
