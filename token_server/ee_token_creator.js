@@ -1,5 +1,6 @@
-// Warning: this works with Babel, but not with Cypress's browserify (get an
-// error that util.promisify is not a function). So it's a bit brittle.
+// Warning: this works with Babel and native modules, but not with Cypress's
+// browserify (get an error that util.promisify is not a function). So it's a
+// bit brittle.
 import * as googleapis from 'googleapis';
 
 export {generateEarthEngineToken};
