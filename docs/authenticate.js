@@ -186,7 +186,12 @@ class Authenticator {
    * @return {Promise<void>} Promise that resolves when token has been set
    */
   getAndSetEeTokenWithErrorHandling() {
-    return fetch(TOKEN_SERVER_URL)
+    // To get here, we must already have logged in, so id token available.
+    const idToken = gapi.auth2.getAuthInstance()
+                        .currentUser.get()
+                        .getAuthResponse()
+                        .id_token;
+    return fetch(TOKEN_SERVER_URL + '?' + $.param({idToken}))
         .then((response) => {
           if (!response.ok) {
             const message = 'Refresh token error: ' + response.status;

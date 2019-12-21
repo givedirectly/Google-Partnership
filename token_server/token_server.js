@@ -1,4 +1,7 @@
+import * as GoogleAuth from 'google-auth-library';
 import {createServer} from 'http';
+import {parse} from 'url';
+
 import {generateEarthEngineToken} from './ee_token_creator.js';
 
 const RESPONSE_HEADERS = {
@@ -36,15 +39,23 @@ function generateTokenPeriodically() {
 
 generateTokenPeriodically();
 
+const CLIENT_ID =
+    '38420505624-boghq4foqi5anc9kc5c5tsq82ar9k4n0.apps.googleusercontent.com';
+const client = new GoogleAuth.default.OAuth2Client(CLIENT_ID);
+
 createServer(async (req, res) => {
   const origin = req.headers['origin'];
-  // TODO(janakr): Add check that request has valid Google user token, so this
-  //  will only return tokens to logged-in users, mitigating abuse potential.
   if (origin !== 'http://localhost:8080' &&
       origin !== 'https://givedirectly.github.io') {
-    res.writeHead(401, {'Content-type': 'text/plain'});
-    res.write('Unauthorized origin');
-    res.end();
+    fail(res);
+    return;
+  }
+
+  const idToken = parse(req.url, true).query.idToken;
+  try {
+    await client.verifyIdToken({idToken: idToken, audience: CLIENT_ID});
+  } catch (err) {
+    fail(res);
     return;
   }
   let data = await currentTokenPromise;
@@ -64,3 +75,16 @@ createServer(async (req, res) => {
   res.write(JSON.stringify(data));
   res.end();
 }).listen(9080);
+
+/**
+ * Returns a generic failure to the client.
+ * @param {http.ServerResponse} res
+ */
+function fail(res) {
+  // Without this header, JavaScript can't catch the error and show anything to
+  // user.
+  res.writeHead(
+      401, {'Content-type': 'text/plain', 'Access-Control-Allow-Origin': '*'});
+  res.write('Unauthorized');
+  res.end();
+}
