@@ -1,11 +1,6 @@
 import {CLIENT_ID, getMillisecondsToDateString} from './common_auth_utils.js';
 import {showError} from './error.js';
-import {
-  earthEngineTestTokenCookieName,
-  firebaseTestTokenPropertyName,
-  getValueFromLocalStorage,
-  inProduction,
-} from './in_test_util.js';
+import {earthEngineTestTokenCookieName, firebaseTestTokenPropertyName, getValueFromLocalStorage, inProduction} from './in_test_util.js';
 import SettablePromise from './settable_promise.js';
 
 export {trackEeAndFirebase};

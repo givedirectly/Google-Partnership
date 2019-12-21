@@ -1,10 +1,7 @@
 import * as GoogleAuth from 'google-auth-library';
 import {createServer} from 'http';
 import {parse} from 'url';
-import {
-  CLIENT_ID,
-  getMillisecondsToDateString,
-} from '../docs/common_auth_utils.js';
+import {CLIENT_ID, getMillisecondsToDateString} from '../docs/common_auth_utils.js';
 
 import {generateEarthEngineToken} from './ee_token_creator.js';
 
