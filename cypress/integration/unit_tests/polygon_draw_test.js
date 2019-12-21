@@ -127,7 +127,7 @@ describe('Unit test for ShapeData', () => {
     deletePolygon(cy.stub(window, 'confirm').returns(true));
   });
 
-  it.only('Almost deletes, then deletes', () => {
+  it('Almost deletes, then deletes', () => {
     drawPolygonAndClickOnIt();
     let confirmValue = false;
     const confirmStub =
