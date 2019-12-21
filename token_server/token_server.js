@@ -27,8 +27,8 @@ const MIN_TOKEN_LIFETIME = 10 * ONE_MINUTE_IN_MILLISECONDS;
 let currentTokenPromise;
 
 /**
- * Pre-fetch token, and periodically get a new one (every 40 minutes, leaving at
- * least 20 minutes of validity for the current token).
+ * Pre-fetches token and periodically gets a new one (every 40 minutes, leaving
+ * at least 20 minutes of validity for the current token).
  */
 function generateTokenPeriodically() {
   currentTokenPromise = generateEarthEngineToken();
