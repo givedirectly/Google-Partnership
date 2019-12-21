@@ -28,18 +28,18 @@ describe('Tests for polygon_draw.js with Firebase issues', () => {
   it('Unauthenticated Firestore displays error, disables row', () => {
     const errorStub =
         cy.stub(ErrorLibrary, 'showError')
-            .withArgs('Viewing as public, private data not available');
+            .withArgs('Viewing as public, private data not available', null);
     const signInStub = cy.stub(Authenticate, 'reloadWithSignIn');
     cy.wrap(firebase.auth().signOut());
     setUpDocumentAndReturnMap().then(
         (map) => initializeAndProcessUserRegions(
             map, Promise.resolve({data: () => ({asset_data: {}})})));
+    cy.get('[title="Draw a shape"]').should('not.exist');
     cy.get('#' + userFeaturesCheckboxRowId)
         .should('have.css', 'text-decoration')
         .and('contains', 'line-through')
         .then(() => expect(errorStub).to.be.calledOnce);
     cy.get('#' + userFeaturesCheckboxRowId).click();
-    cy.get('[title="Draw a shape"]').should('not.exist');
     const alertText =
         'Sign in to authorized account to view user-drawn features';
     cy.get('div').contains(alertText);
