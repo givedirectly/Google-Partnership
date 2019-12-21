@@ -1,5 +1,4 @@
 import {createServer} from 'http';
-import {getMillisecondsToDateString} from '../docs/time_util.js';
 import {generateEarthEngineToken} from './ee_token_creator.js';
 
 const RESPONSE_HEADERS = {
@@ -49,7 +48,10 @@ createServer(async (req, res) => {
     return;
   }
   let data = await currentTokenPromise;
-  if (getMillisecondsToDateString(data.expireTime) < MIN_TOKEN_LIFETIME) {
+  // This calculation is same as that in
+  // authenticate.js#getMillisecondsToDateString but better to keep this server
+  // self-contained and duplicate a line.
+  if (Date.parse(data.expireTime) - Date.now() < MIN_TOKEN_LIFETIME) {
     // Should never happen because of periodic generation above, but generate a
     // new token if it does.
     currentTokenPromise = generateEarthEngineToken();

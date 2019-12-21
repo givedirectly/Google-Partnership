@@ -1,7 +1,6 @@
 import {showError} from './error.js';
 import {earthEngineTestTokenCookieName, firebaseTestTokenPropertyName, getValueFromLocalStorage, inProduction} from './in_test_util.js';
 import SettablePromise from './settable_promise.js';
-import {getMillisecondsToDateString} from './time_util.js';
 
 export {trackEeAndFirebase};
 // For testing.
@@ -218,6 +217,16 @@ class Authenticator {
                                     TOKEN_EXPIRE_BUFFER,
                                 0))));
   }
+}
+
+/**
+ * Given a string representation of a future time (in some format parsed by
+ * {@link Date}, return the number of milliseconds from now until then.
+ * @param {string} dateAsString
+ * @return {number} Number of milliseconds until time given by `dateAsString`
+ */
+function getMillisecondsToDateString(dateAsString) {
+  return Date.parse(dateAsString) - Date.now();
 }
 
 /**
