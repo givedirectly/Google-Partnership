@@ -57,12 +57,12 @@ describe('Unit tests for click_feature.js with map and table', () => {
     currentFeatures.clear();
     setUpPage();
     cy.stub(Resources, 'getScoreAssetPath').returns(features);
-    const oldConvertToPromise = EePromiseCache.convertEeObjectToPromise;
-    EePromiseCache.convertEeObjectToPromise = (eeObject) => {
-      EePromiseCache.convertEeObjectToPromise = oldConvertToPromise;
-      const result = EePromiseCache.convertEeObjectToPromise(eeObject);
+    const oldGetPromise = EePromiseCache.getEePromiseForFeatureCollection;
+    EePromiseCache.getEePromiseForFeatureCollection = (assetPath) => {
+      EePromiseCache.getEePromiseForFeatureCollection = oldGetPromise;
+      const result = EePromiseCache.getEePromiseForFeatureCollection(assetPath);
       return result.then((obj) => {
-        obj.id = eeObject;
+        obj.id = ee.FeatureCollection(assetPath);
         return obj;
       });
     };
