@@ -2,7 +2,7 @@ import * as GoogleAuth from 'google-auth-library';
 import {createServer} from 'http';
 // TODO(janakr): this is a pretty random package. Maybe find a more popular one.
 import parseBody from 'urlencoded-body-parser';
-import {CLIENT_ID, getMillisecondsToDateString} from '../docs/common_auth_utils.js';
+import {CLIENT_ID} from '../docs/common_auth_utils.js';
 
 import {generateEarthEngineToken} from './ee_token_creator.js';
 
@@ -18,24 +18,33 @@ const ONE_MINUTE_IN_MILLISECONDS = 60 * 1000;
 // token.
 const TIME_BEFORE_REGENERATION = 40 * ONE_MINUTE_IN_MILLISECONDS;
 
-// Regenerate if we ever see a token with < 10-minute remaining validity. This
-// should never happen, but maybe the periodic job doesn't run. Paranoia!
-const MIN_TOKEN_LIFETIME = 10 * ONE_MINUTE_IN_MILLISECONDS;
-
 /**
  * Result of most recent call to {@link generateEarthEngineToken}. Because there
  * is no requirement that tokens be unique per user, we re-use tokens for almost
  * their full lifetime of 1 hour, minimizing work.
+ *
+ * After the initial {@link Promise} returned by
+ * {@link generateEarthEngineToken} resolves, this will always have a resolved
+ * {@link Promise}, because {@link generateTokenPeriodically} only sets it when
+ * further calls to {@link generateEarthEngineToken} have resolved.
+ *
  * @type {Promise<{accessToken: string, expireTime: string}>}
  */
-let currentTokenPromise;
+let currentTokenPromise = generateEarthEngineToken();
+
+setTimeout(generateTokenPeriodically, TIME_BEFORE_REGENERATION);
 
 /**
  * Pre-fetches token and periodically gets a new one (every 40 minutes, leaving
  * at least 20 minutes of validity for the current token).
+ *
+ * Only sets {@link currentTokenPromise} after {@link generateEarthEngineToken}
+ * promise resolves, so that web requests that come in during refresh don't have
+ * to wait, they can just use the old token.
  */
 function generateTokenPeriodically() {
-  currentTokenPromise = generateEarthEngineToken();
+  generateEarthEngineToken().then(
+      (token) => currentTokenPromise = Promise.resolve(token));
   setTimeout(generateTokenPeriodically, TIME_BEFORE_REGENERATION);
 }
 
@@ -43,6 +52,11 @@ generateTokenPeriodically();
 
 const client = new GoogleAuth.default.OAuth2Client(CLIENT_ID);
 
+/**
+ * See
+ * https://nodejs.org/api/http.html#http_http_createserver_options_requestlistener
+ * or https://www.w3schools.com/nodejs/nodejs_http.asp for a gentle intro.
+ */
 createServer(async (req, res) => {
   const origin = req.headers['origin'];
   if (origin !== 'http://localhost:8080' &&
@@ -59,13 +73,7 @@ createServer(async (req, res) => {
     fail(res);
     return;
   }
-  let data = await currentTokenPromise;
-  if (getMillisecondsToDateString(data.expireTime) < MIN_TOKEN_LIFETIME) {
-    // Should never happen because of periodic generation above, but generate a
-    // new token if it does.
-    currentTokenPromise = generateEarthEngineToken();
-    data = await currentTokenPromise;
-  }
+  const data = await currentTokenPromise;
   const headers = Object.assign({}, RESPONSE_HEADERS);
   // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Origin
   headers['Access-Control-Allow-Origin'] = origin;

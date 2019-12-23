@@ -183,7 +183,8 @@ class Authenticator {
    * @return {Promise<void>} Promise that resolves when token has been set
    */
   getAndSetEeTokenWithErrorHandling() {
-    // To get here, we must already have logged in, so id token available.
+    // To get here, we must already have logged into Google via gapi, even if
+    // not with an EE-enabled account, so Google user id token available.
     const idToken = gapi.auth2.getAuthInstance()
                         .currentUser.get()
                         .getAuthResponse()
@@ -197,6 +198,7 @@ class Authenticator {
           if (!response.ok) {
             const message = 'Refresh token error: ' + response.status;
             console.error(message, response);
+            // TODO(janakr): Find GD contact to list here.
             alert(
                 'Error contacting server for access without EarthEngine ' +
                 'whitelisting. Please reload page and log in with an ' +
