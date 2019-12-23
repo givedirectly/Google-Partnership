@@ -7,7 +7,7 @@ import {convertEeObjectToPromise} from '../../../docs/map_util.js';
 import {blockGroupTag, geoidTag} from '../../../docs/property_names';
 import {scoreTag} from '../../../docs/property_names.js';
 import * as Resources from '../../../docs/resources.js';
-import {drawTableAndSetUpHandlers, setScorePromises} from '../../../docs/run.js';
+import {drawTableAndSetUpHandlers, resolveScoreAsset} from '../../../docs/run.js';
 import {cyQueue} from '../../support/commands.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 import {convertPathToLatLng, createGoogleMap} from '../../support/test_map.js';
@@ -67,7 +67,7 @@ describe('Unit tests for click_feature.js with map and table', () => {
         return obj;
       });
     };
-    setScorePromises();
+    resolveScoreAsset();
   });
 
   /**
