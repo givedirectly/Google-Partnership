@@ -1,6 +1,6 @@
 import {tableContainerId} from '../../../docs/dom_constants.js';
 import {tableHeadings} from '../../../docs/draw_table.js';
-import {convertEeObjectToPromise, convertEeObjectToPromise1} from '../../../docs/ee_promise_cache.js';
+import * as EePromiseCache from '../../../docs/ee_promise_cache.js';
 import {currentFeatures} from '../../../docs/highlight_features';
 import * as loading from '../../../docs/loading.js';
 import {blockGroupTag, geoidTag} from '../../../docs/property_names';
@@ -57,10 +57,10 @@ describe('Unit tests for click_feature.js with map and table', () => {
     currentFeatures.clear();
     setUpPage();
     cy.stub(Resources, 'getScoreAssetPath').returns(features);
-    const oldConvertToPromise = convertEeObjectToPromise1;
-    convertEeObjectToPromise1 = (eeObject) => {
-      convertEeObjectToPromise1 = oldConvertToPromise;
-      const result = convertEeObjectToPromise1(eeObject);
+    const oldConvertToPromise = EePromiseCache.convertEeObjectToPromise;
+    EePromiseCache.convertEeObjectToPromise = (eeObject) => {
+      EePromiseCache.convertEeObjectToPromise = oldConvertToPromise;
+      const result = EePromiseCache.convertEeObjectToPromise(eeObject);
       return result.then((obj) => {
         obj.id = eeObject;
         return obj;
@@ -93,7 +93,8 @@ describe('Unit tests for click_feature.js with map and table', () => {
       tableDiv.id = 'table';
       containerDiv.appendChild(tableDiv);
       drawTableAndSetUpHandlers(
-          convertEeObjectToPromise(scoredFeatures).then((fc) => fc.features),
+          EePromiseCache.convertEeObjectToPromise(scoredFeatures)
+              .then((fc) => fc.features),
           map);
     });
     cy.wrap(loadingFinishedPromise);
