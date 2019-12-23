@@ -1,9 +1,8 @@
 import {tableContainerId} from '../../../docs/dom_constants.js';
 import {tableHeadings} from '../../../docs/draw_table.js';
+import {convertEeObjectToPromise, convertEeObjectToPromise1} from '../../../docs/ee_promise_cache.js';
 import {currentFeatures} from '../../../docs/highlight_features';
 import * as loading from '../../../docs/loading.js';
-import * as MapUtil from '../../../docs/map_util.js';
-import {convertEeObjectToPromise} from '../../../docs/map_util.js';
 import {blockGroupTag, geoidTag} from '../../../docs/property_names';
 import {scoreTag} from '../../../docs/property_names.js';
 import * as Resources from '../../../docs/resources.js';
@@ -58,10 +57,10 @@ describe('Unit tests for click_feature.js with map and table', () => {
     currentFeatures.clear();
     setUpPage();
     cy.stub(Resources, 'getScoreAssetPath').returns(features);
-    const oldConvertToPromise = MapUtil.convertEeObjectToPromise;
-    MapUtil.convertEeObjectToPromise = (eeObject) => {
-      MapUtil.convertEeObjectToPromise = oldConvertToPromise;
-      const result = MapUtil.convertEeObjectToPromise(eeObject);
+    const oldConvertToPromise = convertEeObjectToPromise1;
+    convertEeObjectToPromise1 = (eeObject) => {
+      convertEeObjectToPromise1 = oldConvertToPromise;
+      const result = convertEeObjectToPromise1(eeObject);
       return result.then((obj) => {
         obj.id = eeObject;
         return obj;

@@ -1,6 +1,4 @@
-import {convertEeObjectToPromise} from './map_util.js';
-
-export {getEePromiseForFeatureCollection};
+export {convertEeObjectToPromise, getEePromiseForFeatureCollection};
 
 // 250M objects in a FeatureCollection ought to be enough for anyone.
 const maxNumFeaturesExpected = 250000000;
@@ -30,4 +28,24 @@ function getEePromiseForFeatureCollection(eeAssetPath) {
   const result = convertEeObjectToPromise(eeAssetPath);
   cache.set(eeAssetPath, result);
   return result;
+}
+
+/**
+ * Transform an EE object into a standard Javascript Promise by wrapping its
+ * evaluate call. For an {@link ee.FeatureCollection}, call
+ * {@link getEePromiseForFeatureCollection} instead of this method directly!
+ *
+ * @param {ee.ComputedObject} eeObject
+ * @return {Promise<GeoJson>}
+ */
+function convertEeObjectToPromise(eeObject) {
+  return new Promise((resolve, reject) => {
+    eeObject.evaluate((resolvedObject, error) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+      resolve(resolvedObject);
+    });
+  });
 }
