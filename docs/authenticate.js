@@ -1,4 +1,4 @@
-import {CLIENT_ID, getMillisecondsToDateString} from './common_auth_utils.js';
+import {CLIENT_ID} from './common_auth_utils.js';
 import {showError} from './error.js';
 import {earthEngineTestTokenCookieName, firebaseTestTokenPropertyName, getValueFromLocalStorage, inProduction} from './in_test_util.js';
 import SettablePromise from './settable_promise.js';
@@ -346,4 +346,14 @@ function isUserEqual(googleUser, firebaseUser) {
     }
   }
   return false;
+}
+
+/**
+ * Given a string representation of a future time (in some format parsed by
+ * {@link Date}, return the number of milliseconds from now until then.
+ * @param {string} dateAsString
+ * @return {number} Number of milliseconds until time given by `dateAsString`
+ */
+function getMillisecondsToDateString(dateAsString) {
+  return Date.parse(dateAsString) - Date.now();
 }
