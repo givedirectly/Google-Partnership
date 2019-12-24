@@ -610,7 +610,7 @@ scoreDeckParams.colorFunction = (feature) =>
  */
 function addScoreLayer(layer) {
   return addLayerFromGeoJsonPromise(
-      layer, scoreDeckParams, scoreLayerName, 'Score');
+      layer, scoreDeckParams, scoreLayerName, scoreLayerName);
 }
 
 /**
@@ -639,13 +639,12 @@ function mapLoadingFinished() {
  */
 function wrapPromiseLoadingAware(promise, layerInfoForErrors) {
   addLoadingElement(mapContainerId);
+  const {index, 'display-name': displayName} = layerInfoForErrors;
   return promise
       .catch((err) => {
         showError(
-            'Error with layer ' + layerInfoForErrors['display-name'] + ', ' +
-                err,
-            'Error loading layer ' + layerInfoForErrors['display-name']);
-        const index = layerInfoForErrors['index'];
+            'Error with layer ' + displayName + ', ' + err,
+            'Error loading layer ' + displayName);
         $('#' + getCheckBoxRowId(index))
             .prop(
                 'title',
