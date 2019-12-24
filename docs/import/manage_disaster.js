@@ -386,11 +386,13 @@ async function writeNewDisaster(disasterId, states) {
   // We know there are no assets in folder yet.
   disasterAssets.set(disasterId, Promise.resolve(new Map()));
 
-  const eeFolderPromises = [getCreateFolderPromise(eeLegacyPathPrefix + disasterId)];
-  states.forEach((state) => eeFolderPromises.push(
-        getCreateFolderPromise(legacyStateDir + '/' + state)));
+  const eeFolderPromises =
+      [getCreateFolderPromise(eeLegacyPathPrefix + disasterId)];
+  states.forEach(
+      (state) => eeFolderPromises.push(
+          getCreateFolderPromise(legacyStateDir + '/' + state)));
 
-  const tailError = '". You can try refreshing the page';
+  const tailError = '" You can try refreshing the page';
   // Unsafe to do the Firestore write before EE folders are created, since maybe
   // we won't be able to undo the write.
   try {
@@ -403,7 +405,7 @@ async function writeNewDisaster(disasterId, states) {
     await disasterCollectionReference().doc(disasterId).set(currentData);
   } catch (err) {
     const message = err.message ? err.message : err;
-    showError('Error writing to Firestore: ' + message + tailError);
+    showError('Error writing to Firestore: "' + message + tailError);
     return false;
   }
   const disasterPicker = $('#disaster-dropdown');
@@ -436,10 +438,21 @@ async function writeNewDisaster(disasterId, states) {
  */
 function getCreateFolderPromise(dir) {
   return new Promise(
-      (resolve) => ee.data.createFolder(
-          dir, false,
-          () => ee.data.setAssetAcl(
-              dir, {all_users_can_read: true}, () => resolve())));
+      (resolve, reject) =>
+          ee.data.createFolder(dir, false, (result, failure) => {
+            if (failure) {
+              reject(failure);
+              return;
+            }
+            ee.data.setAssetAcl(
+                dir, {all_users_can_read: true}, (result, failure) => {
+                  if (failure) {
+                    reject(failure);
+                    return;
+                  }
+                  resolve(result);
+                });
+          }));
 }
 
 /**
