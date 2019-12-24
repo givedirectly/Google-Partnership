@@ -2,7 +2,6 @@ export {getCheckBoxId, getCheckBoxRowId};
 
 /**
  * Creates the id of a show/hide checkbox.
- *
  * @param {number|string} index Number unless 'score'
  * @return {string}
  */
