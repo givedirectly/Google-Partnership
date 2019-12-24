@@ -76,6 +76,10 @@ describe('Unit test for updates.js', () => {
             'have.text',
             'ERROR: poverty threshold must be between 0.00 and 1.00')
         .then(() => expect(errorStub).to.be.calledOnce);
+    cy.get('[id="poverty threshold"]').clear().type('0.0').blur();
+    cy.get('#update').click().then(
+        () => assertDisplayCalledWith(0.5, 0.0, 0.5));
+    cy.get('#error').should('have.text', '');
   });
 
   /**

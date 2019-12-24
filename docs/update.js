@@ -29,6 +29,7 @@ const damageWeightValueId = 'damage-weight-value';
  * @param {google.map.Maps} map
  */
 function update(map) {
+  setInnerHtml('error', '');
   if (!getUpdatedValue(povertyThresholdKey)) {
     return;
   }
