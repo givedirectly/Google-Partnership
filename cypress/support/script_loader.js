@@ -1,4 +1,5 @@
-import {CLIENT_ID, getFirebaseConfig} from '../../docs/authenticate';
+import {getFirebaseConfig} from '../../docs/authenticate';
+import {CLIENT_ID} from '../../docs/common_auth_utils.js';
 import {cypressTestPropertyName, earthEngineTestTokenCookieName, firebaseTestTokenPropertyName} from '../../docs/in_test_util';
 
 export {loadScriptsBeforeForUnitTests};
@@ -23,7 +24,7 @@ const scriptMap = new Map([
   [
     'deck',
     {
-      script: 'https://unpkg.com/deck.gl@latest/dist.min.js',
+      script: 'https://unpkg.com/deck.gl@7.3.11/dist.min.js',
       callback: () => typeof (deck) !== 'undefined',
     },
   ],
