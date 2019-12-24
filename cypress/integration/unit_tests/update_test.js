@@ -108,7 +108,7 @@ describe('Unit test for updates.js', () => {
       });
     });
   });
-
+ 
   it('updates toggles with errors', () => {
     setUpDamageAsset().then(() => {
       $('[id="poverty threshold"]').val(-0.01);
