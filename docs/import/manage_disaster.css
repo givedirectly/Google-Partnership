@@ -13,6 +13,8 @@ table {
 /* Kick-off button */
 #process-button {
   text-transform: none;
+  font-size: 16px;
+  min-height: 50px;
 }
 
 .with-status-border {
