@@ -16,12 +16,6 @@ describe('Unit test for updates.js', () => {
   before(() => {
     global.google = {maps: {event: {clearListeners: () => {}}}};
 
-    const formDiv = document.createElement('div');
-    formDiv.class = 'form';
-    formDiv.id = 'form-div';
-
-    document.body.appendChild(formDiv);
-
     const snackbarDiv = document.createElement('div');
     snackbarDiv.id = 'snackbar';
     const snackbarText = document.createElement('span');
@@ -51,87 +45,77 @@ describe('Unit test for updates.js', () => {
     lastPassedDamageThreshold = null;
     lastPassedPovertyThreshold = null;
     lastPassedPovertyWeight = null;
-
-    $('#form-div').empty();
+    cy.visit('test_utils/empty.html');
+    cy.document().then((doc) => {
+      const formDiv = doc.createElement('div');
+      formDiv.id = 'form-div';
+      doc.body.appendChild(formDiv);
+      cy.stub(document, 'getElementById').callsFake(
+          (id) => doc.getElementById(id));
+    });
   });
-
-  afterEach(() => $('#form-div').empty());
 
   it('does not have a damage asset', () => {
     const nullData = {asset_data: {damage_asset_path: null}};
-    setUpToggles(Promise.resolve({data: () => nullData}), {}).then(() => {
-      expect($('input').length).to.equal(3);
-
-      $('[id="poverty threshold"]').val(0.05);
-      $('#update').trigger('click');
-
+    cy.wrap(setUpToggles(Promise.resolve({data: () => nullData}), {}));
+    cy.get('input').should('have.length', 2);
+    cy.get('[id="poverty threshold"]').clear().type('0.05');
+    cy.get('#update').click().then(() => {
       expect(createAndDisplayJoinedDataStub).to.be.calledOnce;
-
       expect(toggles.get('poverty weight')).to.equals(1);
-      expect($('#error').text()).to.equal('');
+    });
+    cy.get('#error').should('have.text', '');
       cy.wrap(createAndDisplayJoinedDataPromise).then(() => {
         expect(lastPassedPovertyWeight).to.equals(1);
         expect(lastPassedDamageThreshold).to.equals(0.0);
       });
     });
-  });
 
   it('does have a damage asset', () => {
-    setUpDamageAsset().then(() => expect($('input').length).to.equal(5));
+    setUpDamageAsset();
+    cy.get('input').should('have.length', 4);
   });
 
   it('updates weight labels', () => {
-    setUpDamageAsset().then(() => {
-      const povertyWeight = $('[id="poverty weight"]');
-
-      povertyWeight.val(0.01).trigger('input');
-
-      expect($('#poverty-weight-value').text()).to.equal('0.01');
-      expect($('#damage-weight-value').text()).to.equal('0.99');
-    });
+    setUpDamageAsset();
+    cy.get('[id="poverty weight"]').invoke('val', 0.01).trigger('input');
+    cy.get('#poverty-weight-value').should('have.text', '0.01');
+    cy.get('#damage-weight-value').should('have.text', '0.99');
   });
 
   it('updates toggles', () => {
-    setUpDamageAsset().then(() => {
-      $('[id="poverty weight"]').val(0.01);
-      $('[id="damage threshold"]').val(0.24);
-
-      $('#update').trigger('click');
+    setUpDamageAsset();
+    cy.get('[id="poverty weight"]').invoke('val', 0.01).trigger('input');
+    cy.get('[id="damage threshold"]').invoke('val', 0.24).trigger('input');
+    cy.get('#update').click().then(() => {
       expect(createAndDisplayJoinedDataStub).to.be.calledOnce;
-
       expect(toggles.get('poverty weight')).to.equals(0.01);
       expect(toggles.get('damage threshold')).to.equals(0.24);
-      expect($('#error').text()).to.equal('');
+    });
+    cy.get('#error').should('have.text', '');
       cy.wrap(createAndDisplayJoinedDataPromise).then(() => {
         expect(lastPassedPovertyWeight).to.equals(0.01);
         expect(lastPassedDamageThreshold).to.equals(0.24);
       });
     });
-  });
 
-  it('updates toggles with errors', () => {
-    setUpDamageAsset().then(() => {
-      $('[id="poverty threshold"]').val(-0.01);
-
-      $('#update').trigger('click');
-
-      expect($('#snackbar-text').text())
-          .to.equal('poverty threshold must be between 0.00 and 1.00');
-      expect($('#error').text())
-          .to.equal('ERROR: poverty threshold must be between 0.00 and 1.00');
-      expect(lastPassedPovertyThreshold).to.be.null;
-    });
+  it.only('updates toggles with errors', () => {
+    setUpDamageAsset();
+    cy.get('[id="poverty weight"]').invoke('val', -0.01).trigger('input');
+    cy.get('#update').click().then(() => expect(
+        lastPassedPovertyThreshold).to.be.null);
+    cy.get('#snackbar-text').should('have.text', 'poverty threshold must be between 0.00 and 1.00');
+    cy.get('#error').should('have.text', 'ERROR: poverty threshold must be between 0.00 and 1.00');
   });
 });
 
 /**
  * Sets up as if we have a damage asset.
- * @return {Promise<Array<number>>}
+ * @return {Cypress.Chainable<Array<number>>}
  */
 function setUpDamageAsset() {
   const currentDisaster = '2005-fall';
   disasterData.set(currentDisaster, {asset_data: {damage_asset_path: 'foo'}});
   window.localStorage.setItem('disaster', currentDisaster);
-
-  return setUpToggles(Promise.resolve({data: getCurrentData}), {});
+  return cy.wrap(setUpToggles(Promise.resolve({data: getCurrentData}), {}));
 }
