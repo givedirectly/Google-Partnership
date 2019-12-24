@@ -4,7 +4,11 @@ import {createError, showError} from './error.js';
 import {getFirestoreRoot} from './firestore_document.js';
 import {POLYGON_HELP_URL} from './help.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
-import {latLngToGeoPoint, polygonToGeoPointArray, transformGeoPointArrayToLatLng} from './map_util.js';
+import {
+  latLngToGeoPoint,
+  polygonToGeoPointArray,
+  transformGeoPointArrayToLatLng
+} from './map_util.js';
 import {createPopup, isMarker, setUpPopup} from './popup.js';
 import {snapPopTag, totalPopTag} from './property_names.js';
 import {getScoreAssetPath} from './resources.js';
@@ -356,17 +360,6 @@ function setUpPolygonDrawing(map) {
 
   drawingManager.setMap(map);
   // Add the help link.
-  const helpContainer = document.createElement('div');
-  helpContainer.style.padding = '6px';
-  const helpLink = document.createElement('a');
-  helpLink.href = POLYGON_HELP_URL;
-  helpLink.target = '_blank';
-  helpLink.style.fontSize = '18px';
-  const helpIcon = document.createElement('i');
-  helpIcon.className = 'help fa fa-question-circle';
-  helpIcon.setAttribute('aria-hidden', 'true');
-  helpLink.appendChild(helpIcon);
-  helpContainer.appendChild(helpLink);
   // Seems to be a bug in Google Maps where just doing "insertAt" once the map
   // is displayed doesn't put help link in correct position, so we empty out
   // controls and recreate.
@@ -374,10 +367,27 @@ function setUpPolygonDrawing(map) {
   // Make a copy, since array is live.
   const currentControls = [...controls.getArray()];
   controls.clear();
-  controls.push(helpContainer);
+  controls.push(createHelpIcon(POLYGON_HELP_URL));
   currentControls.forEach((elt) => controls.push(elt));
 
   return drawingManager;
+}
+
+function createHelpIcon(url) {
+  // Add the help link.
+  const helpContainer = document.createElement('span');
+  helpContainer.style.padding = '6px';
+  const helpLink = document.createElement('a');
+  helpLink.href = url;
+  helpLink.target = '_blank';
+  helpLink.style.fontSize = '18px';
+  const helpIcon = document.createElement('i');
+  helpIcon.className = 'help fa fa-question-circle';
+  helpIcon.setAttribute('aria-hidden', 'true');
+  helpLink.appendChild(helpIcon);
+  helpContainer.appendChild(helpLink);
+  helpContainer.title = 'Help';
+  return helpContainer;
 }
 
 /**
@@ -394,13 +404,8 @@ async function initializeAndProcessUserRegions(map, firebasePromise) {
   addLoadingElement(mapContainerId);
   try {
     setUpPopup();
-    let doc;
-    try {
-      doc = await firebasePromise;
-    } catch (err) {
-      // Firebase retrieval error handled elsewhere.
-      throw err;
-    }
+    // Firebase retrieval error handled elsewhere. Let this throw if it throws.
+    const doc = await firebasePromise;
     // Damage asset may not exist yet, so this is undefined. We tolerate
     // gracefully.
     damageAsset = doc.data()['asset_data']['damage_asset_path'];
@@ -431,16 +436,15 @@ const USER_FEATURES_DIALOG =
 function handleUserShapesError(err) {
   const userFeaturesRow = $('#' + userFeaturesCheckboxRowId);
   userFeaturesRow.css('text-decoration', 'line-through');
-  // Checkbox just causes issues with double event triggering, and is useless
-  // anyway. Get rid of it.
-  userFeaturesRow.children('input').remove();
+  const checkbox = userFeaturesRow.children('input').prop('checked', false);
   if (err.code === AUTHENTICATION_ERROR_CODE) {
     showError('Viewing as public, private data not available', null);
     userFeaturesRow.prop(
         'title',
-        'User features not available: please click to log in to ' +
-            'authorized account');
+        'User features not available: please click to log in to authorized ' +
+        'account');
     const popUpDialog = () => {
+      checkbox.prop('checked', false);
       const dialogParent = $(USER_FEATURES_DIALOG);
       const dialog = dialogParent.dialog({
         buttons: [
@@ -456,9 +460,14 @@ function handleUserShapesError(err) {
         },
       });
     };
-    userFeaturesRow.on('click', popUpDialog);
+    // TODO(ruthtalbot): Add documentation for public-facing page, mentioning
+    //  that user features will be missing, and also with instructions for GD
+    //  people who may get here about how to add themselves to Firestore.
+    userFeaturesRow.append(createHelpIcon(POLYGON_HELP_URL));
+    checkbox.on('click', popUpDialog);
   } else {
     showError(err, 'Error retrieving user-drawn features. Try refreshing page');
+    checkbox.prop('disabled', true);
   }
 }
 
