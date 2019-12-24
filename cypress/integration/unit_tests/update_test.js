@@ -26,10 +26,6 @@ describe('Unit test for updates.js', () => {
 
   // creates the form div and stubs the relevant document methods.
   beforeEach(() => {
-    // function that resolves the createAndDisplayJoinedDataPromise
-    let resolvePromise;
-    createAndDisplayJoinedDataPromise =
-        new Promise((resolve) => resolvePromise = resolve);
     createAndDisplayJoinedDataStub =
         cy.stub(Run, 'createAndDisplayJoinedData')
             .callsFake((_, valuesPromise) => {
@@ -37,7 +33,6 @@ describe('Unit test for updates.js', () => {
                 lastPassedPovertyThreshold = toggles.povertyThreshold;
                 lastPassedDamageThreshold = toggles.damageThreshold;
                 lastPassedPovertyWeight = toggles.povertyWeight;
-                resolvePromise();
               });
             });
     cy.stub(LayerUtil, 'removeScoreLayer');
@@ -64,8 +59,7 @@ describe('Unit test for updates.js', () => {
       expect(createAndDisplayJoinedDataStub).to.be.calledOnce;
       expect(toggles.get('poverty weight')).to.equals(1);
     });
-    cy.get('#error').should('have.text', '');
-      cy.wrap(createAndDisplayJoinedDataPromise).then(() => {
+    cy.get('#error').should('have.text', '').then(() => {
         expect(lastPassedPovertyWeight).to.equals(1);
         expect(lastPassedDamageThreshold).to.equals(0.0);
       });
