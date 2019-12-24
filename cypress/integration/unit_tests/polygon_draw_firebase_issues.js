@@ -39,13 +39,13 @@ describe('Tests for polygon_draw.js with Firebase issues', () => {
         .should('have.css', 'text-decoration')
         .and('contains', 'line-through')
         .then(() => expect(errorStub).to.be.calledOnce);
-    cy.get('#' + userFeaturesCheckboxRowId).click();
+    cy.get('#' + userFeaturesCheckboxRowId).children('input').click();
     const alertText =
         'Sign in to authorized account to view user-drawn features';
     cy.get('div').contains(alertText);
     cy.get('button').contains('Close').click();
     cy.get('div').contains(alertText).should('not.exist');
-    cy.get('#' + userFeaturesCheckboxRowId).click();
+    cy.get('#' + userFeaturesCheckboxRowId).children('label').click();
     cy.get('div').contains(alertText).then(
         () => expect(signInStub).to.not.be.called);
     cy.get('button').contains('Sign in').click().then(
@@ -108,9 +108,13 @@ describe('Tests for polygon_draw.js with Firebase issues', () => {
     return cy.document().then((doc) => {
       const div = doc.createElement('div');
       div.id = userFeaturesCheckboxRowId;
-      div.appendChild(doc.createElement('input'));
+      const checkbox = doc.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.id = 'checkbox-id';
+      div.appendChild(checkbox);
       const label = doc.createElement('label');
       label.innerHTML = 'User features';
+      label.htmlFor = checkbox.id;
       div.appendChild(label);
       doc.body.appendChild(div);
       cy.stub(document, 'getElementById')
