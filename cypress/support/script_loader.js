@@ -1,4 +1,5 @@
-import {CLIENT_ID, getFirebaseConfig} from '../../docs/authenticate';
+import {getFirebaseConfig} from '../../docs/authenticate';
+import {CLIENT_ID} from '../../docs/common_auth_utils.js';
 import {cypressTestPropertyName, earthEngineTestTokenCookieName, firebaseTestTokenPropertyName} from '../../docs/in_test_util';
 
 export {loadScriptsBeforeForUnitTests};
