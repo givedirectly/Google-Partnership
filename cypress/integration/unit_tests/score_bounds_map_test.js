@@ -133,7 +133,7 @@ describe('Unit tests for ScoreBoundsMap class', () => {
   it('tests ScoreBoundsMap does not zoom to states if user zooms first', () => {
     underTest.map.setCenter(defaultMapCenter);
     underTest.map.setZoom(defaultZoomLevel);
-    const releasePromise = getConvertEeObjectToPromiseRelease();
+    const releasePromise = getConvertEeObjectToPromiseRelease().releaseLatch;
     underTest.initialize(null, ['TX', 'LA']);
     const promise = underTest.onShow();
     expect(promise).to.not.be.null;

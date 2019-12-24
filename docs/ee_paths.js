@@ -1,5 +1,6 @@
 export {
   eeLegacyPathPrefix,
+  eeLegacyPrefix,
   eeStatePrefixLength,
   gdEePathPrefix,
   gdEeStateDir,
@@ -9,8 +10,8 @@ export {
 };
 
 const gdEePathPrefix = 'users/gd/';
-const eeLegacyPathPrefix =
-    'projects/earthengine-legacy/assets/' + gdEePathPrefix;
+const eeLegacyPrefix = 'projects/earthengine-legacy/assets/';
+const eeLegacyPathPrefix = eeLegacyPrefix + gdEePathPrefix;
 const legacyStateDir = eeLegacyPathPrefix + 'states';
 const legacyStatePrefix = legacyStateDir + '/';
 const gdEeStateDir = gdEePathPrefix + 'states';

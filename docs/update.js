@@ -29,10 +29,15 @@ const damageWeightValueId = 'damage-weight-value';
  * @param {google.map.Maps} map
  */
 function update(map) {
-  getUpdatedValue(povertyThresholdKey);
+  setInnerHtml('error', '');
+  if (!getUpdatedValue(povertyThresholdKey)) {
+    return;
+  }
   if (hasDamageAsset) {
-    getUpdatedValue(damageThresholdKey);
-    getUpdatedValue(povertyWeightKey);
+    if (!getUpdatedValue(damageThresholdKey) ||
+        !getUpdatedValue(povertyWeightKey)) {
+      return;
+    }
   }
 
   removeScoreLayer();
@@ -45,12 +50,15 @@ function update(map) {
 /**
  * Pulls value from input box and
  * @param {string} toggle
+ * @return {boolean} True if successful, false if there was an error
  */
 function getUpdatedValue(toggle) {
   const newValue = Number(getValue(toggle));
-  if (!hasErrors(newValue, toggle)) {
+  if (validate(newValue, toggle)) {
     toggles.set(toggle, newValue);
+    return true;
   }
+  return false;
 }
 
 // Set in setUpInitialToggleValues.
@@ -152,8 +160,6 @@ function createToggles(map) {
 
   // buttons
   form.appendChild(createButton('update', () => update(map)));
-  form.appendChild(document.createElement('br'));
-  form.appendChild(createButton('current settings', reset));
 
   document.getElementById('form-div').appendChild(form);
   updateWeights();
@@ -213,16 +219,6 @@ function createButton(id, onclick) {
   return submitButton;
 }
 
-/**
- * Resets the toggles to their current value as displayed in the map and list
- */
-function reset() {
-  for (const [toggle, value] of toggles) {
-    setValue(toggle, value);
-  }
-  updateWeights();
-}
-
 /** Update the displayed weights based on a new poverty weight. */
 function updateWeights() {
   if (!hasDamageAsset) return;
@@ -237,14 +233,14 @@ function updateWeights() {
  * TODO: implement ability to show multiple errors at once?
  * @param {Number} threshold
  * @param {string} toggle
- * @return {boolean} true if there are any errors parsing the new threshold.
+ * @return {boolean} true if there are no errors parsing the new threshold.
  */
-function hasErrors(threshold, toggle) {
+function validate(threshold, toggle) {
   if (Number.isNaN(threshold) || threshold < 0.0 || threshold > 1.0) {
     setErrorMessage(toggle + ' must be between 0.00 and 1.00');
-    return true;
+    return false;
   }
-  return false;
+  return true;
 }
 
 /**
@@ -272,13 +268,4 @@ function setInnerHtml(id, message) {
  */
 function getValue(id) {
   return document.getElementById(id).value;
-}
-
-/**
- * Sets the value of the element with the given id.
- * @param {string} id
- * @param {string} value
- */
-function setValue(id, value) {
-  document.getElementById(id).value = value;
 }

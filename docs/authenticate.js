@@ -1,15 +1,11 @@
+import {CLIENT_ID} from './common_auth_utils.js';
 import {showError} from './error.js';
 import {earthEngineTestTokenCookieName, firebaseTestTokenPropertyName, getValueFromLocalStorage, inProduction} from './in_test_util.js';
 import SettablePromise from './settable_promise.js';
 
 export {reloadWithSignIn, trackEeAndFirebase};
 // For testing.
-export {CLIENT_ID, firebaseConfigProd, firebaseConfigTest, getFirebaseConfig};
-
-// The client ID from
-// https://console.cloud.google.com/apis/credentials?project=mapping-crisis
-const CLIENT_ID =
-    '38420505624-boghq4foqi5anc9kc5c5tsq82ar9k4n0.apps.googleusercontent.com';
+export {firebaseConfigProd, firebaseConfigTest, getFirebaseConfig};
 
 const gapiTemplate = {
   // From same page as above.
@@ -46,6 +42,13 @@ const eeErrorDialog =
     'whitelisted for EarthEngine access. Please whitelist your account at ' +
     '<a href="https://signup.earthengine.google.com">https://signup.earthengine.google.com</a>' +
     ' or sign into a whitelisted account after closing this dialog</div>';
+
+// TODO(janakr): make configurable, especially for tests.
+const TOKEN_SERVER_URL = 'http://localhost:9080';
+
+// Request a new token with 5 minutes of validity remaining on our current token
+// to leave time for any slowness.
+const TOKEN_EXPIRE_BUFFER = 300000;
 
 /**
  * Logs an error message to the console and shows a snackbar notification
@@ -139,20 +142,85 @@ class Authenticator {
       if (err.message.includes('401') || err.message.includes('404')) {
         // HTTP code 401 indicates "unauthorized".
         // 404 shows up when not on Google internal network.
-        // TODO(#340): Stand up a server that allows anonymous access in case of
-        //  failure here.
         // TODO(#340): Maybe don't require EE failure every time, store
-        //  something in localStorage so that we know user needs token.
-        // Use a jQuery dialog because normal "alert" doesn't display hyperlinks
-        // as clickable. Inferior, though, because it does allow page to
-        // continue to load behind the dialog. Not too big a deal.
-        $(eeErrorDialog)
-            .dialog(
-                {modal: true, width: 600, close: () => this.requireSignIn()});
+        //  something in localStorage so that we know user needs token. Then
+        //  tests can just set that as well, unifying the codepaths.
+        const dialog = $(eeErrorDialog).dialog({
+          buttons: [
+            {
+              text: 'Sign in with EarthEngine-enabled account',
+              click: () => this.requireSignIn(),
+            },
+            {
+              text: 'Continue without sign-in',
+              click: () => {
+                // Don't trigger close callback, but close dialog.
+                dialog.dialog({close: () => {}});
+                dialog.dialog('close');
+                this.getAndSetEeTokenWithErrorHandling().then(
+                    () => initializeEE(
+                        this.eeInitializeCallback, defaultErrorCallback));
+              },
+            },
+          ],
+          modal: true,
+          width: 600,
+          close: () => this.requireSignIn(),
+        });
       } else {
         defaultErrorCallback(err);
       }
     });
+  }
+
+  /**
+   * Requests EE token from token server, then sets it locally, and sets itself
+   * up to run again 5 minutes before token expires. Passes user's id token to
+   * server so server can verify these aren't totally anonymous requests.
+   * @return {Promise<void>} Promise that resolves when token has been set
+   */
+  getAndSetEeTokenWithErrorHandling() {
+    // To get here, we must already have logged into Google via gapi, even if
+    // not with an EE-enabled account, so Google user id token available.
+    const idToken = gapi.auth2.getAuthInstance()
+                        .currentUser.get()
+                        .getAuthResponse()
+                        .id_token;
+    return fetch(TOKEN_SERVER_URL, {
+             method: 'POST',
+             body: $.param({idToken}),
+             headers: {'Content-type': 'application/x-www-form-urlencoded'},
+           })
+        .then((response) => {
+          if (!response.ok) {
+            const message = 'Refresh token error: ' + response.status;
+            console.error(message, response);
+            // TODO(janakr): Find GD contact to list here.
+            alert(
+                'Error contacting server for access without EarthEngine ' +
+                'whitelisting. Please reload page and log in with an ' +
+                'EarthEngine-whitelisted account or contact website ' +
+                'maintainers with error from JavaScript console.');
+            throw new Error(message);
+          }
+          return response.json();
+        })
+        .then(
+            ({accessToken, expireTime}) =>
+                new Promise(
+                    (resolve) => ee.data.setAuthToken(
+                        CLIENT_ID, 'Bearer', accessToken,
+                        Math.floor(
+                            getMillisecondsToDateString(expireTime) / 1000),
+                        /* extraScopes */[], resolve,
+                        /* updateAuthLibrary */ false))
+                    .then(
+                        () => setTimeout(
+                            () => this.getAndSetEeTokenWithErrorHandling(),
+                            Math.max(
+                                getMillisecondsToDateString(expireTime) -
+                                    TOKEN_EXPIRE_BUFFER,
+                                0))));
   }
 }
 
@@ -167,11 +235,12 @@ class Authenticator {
  * @return {Promise} Promise that completes when Firebase is logged in
  */
 function trackEeAndFirebase(taskAccumulator, needsGdUser = false) {
+  const eeInitializeCallback = () => {
+    ee.data.setCloudApiEnabled(true);
+    taskAccumulator.taskCompleted();
+  };
   if (inProduction()) {
-    const authenticator = new Authenticator(() => {
-      ee.data.setCloudApiEnabled(true);
-      taskAccumulator.taskCompleted();
-    }, needsGdUser);
+    const authenticator = new Authenticator(eeInitializeCallback, needsGdUser);
     return authenticator.start();
   } else {
     // We're inside a test. The test setup should have tokens for us that will
@@ -192,10 +261,7 @@ function trackEeAndFirebase(taskAccumulator, needsGdUser = false) {
         /* expiresIn */ 3600, /* extraScopes */[],
         /* callback */
         () => initializeEE(
-            () => {
-              ee.data.setCloudApiEnabled(true);
-              taskAccumulator.taskCompleted();
-            },
+            eeInitializeCallback,
             (err) => {
               throw new Error('EarthEngine init failure: ' + err);
             }),
@@ -291,4 +357,14 @@ function isUserEqual(googleUser, firebaseUser) {
     }
   }
   return false;
+}
+
+/**
+ * Given a string representation of a future time (in some format parsed by
+ * {@link Date}, return the number of milliseconds from now until then.
+ * @param {string} dateAsString
+ * @return {number} Number of milliseconds until time given by `dateAsString`
+ */
+function getMillisecondsToDateString(dateAsString) {
+  return Date.parse(dateAsString) - Date.now();
 }

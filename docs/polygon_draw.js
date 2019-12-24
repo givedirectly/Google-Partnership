@@ -4,11 +4,7 @@ import {createError, showError} from './error.js';
 import {getFirestoreRoot} from './firestore_document.js';
 import {POLYGON_HELP_URL} from './help.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
-import {
-  latLngToGeoPoint,
-  polygonToGeoPointArray,
-  transformGeoPointArrayToLatLng
-} from './map_util.js';
+import {latLngToGeoPoint, polygonToGeoPointArray, transformGeoPointArrayToLatLng} from './map_util.js';
 import {createPopup, isMarker, setUpPopup} from './popup.js';
 import {snapPopTag, totalPopTag} from './property_names.js';
 import {getScoreAssetPath} from './resources.js';
@@ -373,6 +369,11 @@ function setUpPolygonDrawing(map) {
   return drawingManager;
 }
 
+/**
+ * Creates a help icon linking to the given URL. Does not insert into document.
+ * @param {string} url
+ * @return {HTMLSpanElement} Span with icon, to insert into document somewhere
+ */
 function createHelpIcon(url) {
   // Add the help link.
   const helpContainer = document.createElement('span');
@@ -442,7 +443,7 @@ function handleUserShapesError(err) {
     userFeaturesRow.prop(
         'title',
         'User features not available: please click to log in to authorized ' +
-        'account');
+            'account');
     const popUpDialog = () => {
       checkbox.prop('checked', false);
       const dialogParent = $(USER_FEATURES_DIALOG);
