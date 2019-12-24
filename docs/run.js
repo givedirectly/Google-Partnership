@@ -28,6 +28,18 @@ const scalingFactor = 100;
 let resolvedScoreAsset;
 
 /**
+ * Seeds {@link Promise} cache with `eeAsset`, and returns {@link Promise} whose
+ * value is `eeAsset`. Caller can then wait on returned {@link Promise} to see
+ * if `eeAsset` is valid asset.
+ * @param {string} eeAsset
+ * @return {Promise<string>} {@link Promise} with `eeAsset` once {@link
+ *     ee.FeatureCollection} with path `eeAsset` has been downloaded
+ */
+function createPromiseWithPathIfSuccessful(eeAsset) {
+  return getEePromiseForFeatureCollection(eeAsset).then(() => eeAsset);
+}
+
+/**
  * Sets {@link resolvedScoreAsset} to {@link getScoreAssetPath}, or, if that
  * does not exist as an EarthEngine asset, to {@link getBackupScoreAssetPath}.
  *
@@ -36,20 +48,17 @@ let resolvedScoreAsset;
  */
 function resolveScoreAsset() {
   resolvedScoreAsset =
-      getEePromiseForFeatureCollection(getScoreAssetPath())
-          .catch((err) => {
-            if (err.endsWith('not found.')) {
-              showError(
-                  'Primary score asset not found. Checking to see if ' +
-                      'backup exists',
-                  null);
-              return getEePromiseForFeatureCollection(
-                  ee.FeatureCollection(getBackupScoreAssetPath()));
-            } else {
-              throw err;
-            }
-          })
-          .then((collection) => collection.id);
+      createPromiseWithPathIfSuccessful(getScoreAssetPath()).catch((err) => {
+        if (err.endsWith('not found.')) {
+          showError(
+              'Primary score asset not found. Checking to see if ' +
+                  'backup exists',
+              null);
+          return createPromiseWithPathIfSuccessful(getBackupScoreAssetPath());
+        } else {
+          throw err;
+        }
+      });
   return resolvedScoreAsset;
 }
 
