@@ -84,7 +84,7 @@ describe('Unit test for toggleLayerOn', () => {
     deckGlArray[0] = new deck.GeoJsonLayer({});
     deckGlArray[1] = new deck.GeoJsonLayer({});
   });
- 
+
   it('tests adding kml urls', () => {
     createGoogleMap().then((map) => {
       const promise = addLayer(mockFirebaseLayers[5], map);
