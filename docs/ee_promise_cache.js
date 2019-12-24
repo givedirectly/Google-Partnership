@@ -1,5 +1,8 @@
 export {convertEeObjectToPromise, getEePromiseForFeatureCollection};
 
+// For testing only.
+export {clearForTesting};
+
 // 250M objects in a FeatureCollection ought to be enough for anyone.
 const maxNumFeaturesExpected = 250000000;
 
@@ -20,6 +23,7 @@ const cache = new Map();
  */
 function getEePromiseForFeatureCollection(eeAssetPath) {
   const maybePromise = cache.get(eeAssetPath);
+  console.log(eeAssetPath, maybePromise);
   if (maybePromise) {
     return maybePromise;
   }
@@ -48,4 +52,9 @@ function convertEeObjectToPromise(eeObject) {
       resolve(resolvedObject);
     });
   });
+}
+
+/** Clear cache, for use with tests. */
+function clearForTesting() {
+  cache.clear();
 }

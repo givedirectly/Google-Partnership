@@ -23,7 +23,7 @@ const scriptMap = new Map([
   [
     'deck',
     {
-      script: 'https://unpkg.com/deck.gl@latest/dist.min.js',
+      script: 'https://unpkg.com/deck.gl@7.3.11/dist.min.js',
       callback: () => typeof (deck) !== 'undefined',
     },
   ],
