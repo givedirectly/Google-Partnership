@@ -33,7 +33,8 @@ function update(map) {
     return;
   }
   if (hasDamageAsset) {
-    if (!getUpdatedValue(damageThresholdKey) || !getUpdatedValue(povertyWeightKey)) {
+    if (!getUpdatedValue(damageThresholdKey) ||
+        !getUpdatedValue(povertyWeightKey)) {
       return;
     }
   }
@@ -52,7 +53,7 @@ function update(map) {
  */
 function getUpdatedValue(toggle) {
   const newValue = Number(getValue(toggle));
-  if (!hasErrors(newValue, toggle)) {
+  if (validate(newValue, toggle)) {
     toggles.set(toggle, newValue);
     return true;
   }
@@ -231,14 +232,14 @@ function updateWeights() {
  * TODO: implement ability to show multiple errors at once?
  * @param {Number} threshold
  * @param {string} toggle
- * @return {boolean} true if there are any errors parsing the new threshold.
+ * @return {boolean} true if there are no errors parsing the new threshold.
  */
-function hasErrors(threshold, toggle) {
+function validate(threshold, toggle) {
   if (Number.isNaN(threshold) || threshold < 0.0 || threshold > 1.0) {
     setErrorMessage(toggle + ' must be between 0.00 and 1.00');
-    return true;
+    return false;
   }
-  return false;
+  return true;
 }
 
 /**
