@@ -390,7 +390,9 @@ function extractFromJson(jsonUrl) {
  *     render
  * @return {Promise} Promise that completes when layer is rendered. If the
  *     layer is toggled off, this Promise will complete immediately, see {@link
- *     createTileCallback}
+ *     createTileCallback}. Promise has no real way to fail, but because we use
+ *     common codepath, it will fail gracefully (disable checkbox and warn user)
+ *     if it somehow does
  */
 function createCompositeTilePromise(layerDisplayData, index, map,
     displayNameForErrors) {
@@ -619,7 +621,9 @@ function removeScoreLayer() {
   redrawLayers();
 }
 
-const mapLoadingFinished = () => loadingElementFinished(mapContainerId);
+function mapLoadingFinished() {
+  loadingElementFinished(mapContainerId);
+}
 
 /**
  * Notes that an element has started loading, and add a handler to the Promise
@@ -636,9 +640,10 @@ function wrapPromiseLoadingAware(promise, layerInfoForErrors) {
       .catch((err) => {
         showError('Error with layer ' + layerInfoForErrors['display-name'] + ', ' + err,
             'Error loading layer ' + layerInfoForErrors['display-name']);
-        let index = layerInfoForErrors['index'];
-        $('#' + getCheckBoxRowId(index))
-            .prop('title', 'Error showing layer');
+        const index = layerInfoForErrors['index'];
+        const row = $('#' + getCheckBoxRowId(index));
+        row.prop('title', 'Error showing layer. If you believe the layer is there, try refreshing the page');
+        row.css('text-decoration', 'line-through');
         let checkbox = $('#' + getCheckBoxId(index));
         checkbox.prop('checked', false);
         checkbox.prop('disabled', true);
