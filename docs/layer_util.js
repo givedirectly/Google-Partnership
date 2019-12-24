@@ -237,8 +237,6 @@ function addImageLayer(map, imageAsset, layer) {
                 resolve();
               }
             } else {
-              // TODO: if there's an error, disable checkbox, add tests for
-              // this.
               layerDisplayData.displayed = false;
               reject(failure);
             }
