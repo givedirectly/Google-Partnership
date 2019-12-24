@@ -23,9 +23,9 @@ function getEePromiseForFeatureCollection(eeAssetPath) {
   if (maybePromise) {
     return maybePromise;
   }
-  eeAssetPath =
+  const eeList =
       ee.FeatureCollection(eeAssetPath).toList(maxNumFeaturesExpected);
-  const result = convertEeObjectToPromise(eeAssetPath);
+  const result = convertEeObjectToPromise(eeList);
   cache.set(eeAssetPath, result);
   return result;
 }
