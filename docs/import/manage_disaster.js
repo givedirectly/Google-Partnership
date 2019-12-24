@@ -1,4 +1,5 @@
 import {eeLegacyPathPrefix, legacyStateDir} from '../ee_paths.js';
+import {showError} from '../error.js';
 import {disasterCollectionReference} from '../firestore_document.js';
 import {convertEeObjectToPromise, latLngToGeoPoint, transformGeoPointArrayToLatLng} from '../map_util.js';
 import {getDisaster} from '../resources.js';
@@ -369,16 +370,12 @@ function addDisaster() {
  * Writes the given details to a new disaster entry in firestore. Fails if
  * there is an existing disaster with the same details.
  *
- * TODO(janakr): If the user starts editing a disaster before the Firestore
- *  write completes, their edit could be overwritten by the initial Firestore
- *  write here. Probably solved similar to the delete disaster issue: don't
- *  actually show the disaster as editable until this write completes.
  * @param {string} disasterId of the form <year>-<name>
  * @param {Array<string>} states array of state (abbreviations)
- * @return {Promise<boolean>} returns true after successful write to firestore
+ * @return {boolean} returns true after successful write to firestore
  * and earth engine folder creations.
  */
-function writeNewDisaster(disasterId, states) {
+async function writeNewDisaster(disasterId, states) {
   if (disasterData.has(disasterId)) {
     setStatus('Error: disaster with that name and year already exists.');
     return Promise.resolve(false);
@@ -389,21 +386,25 @@ function writeNewDisaster(disasterId, states) {
   // We know there are no assets in folder yet.
   disasterAssets.set(disasterId, Promise.resolve(new Map()));
 
-  const folderCreationPromises = [];
-  folderCreationPromises.push(
-      getCreateFolderPromise(eeLegacyPathPrefix + disasterId));
-  for (const state of states) {
-    folderCreationPromises.push(
-        getCreateFolderPromise(legacyStateDir + '/' + state));
-  }
+  const eeFolderPromises = [getCreateFolderPromise(eeLegacyPathPrefix + disasterId)];
+  states.forEach((state) => eeFolderPromises.push(
+        getCreateFolderPromise(legacyStateDir + '/' + state)));
 
-  const eePromisesResult = Promise.all(folderCreationPromises).then(() => {
+  try {
+    await Promise.all(eeFolderPromises);
+  } catch (err) {
+    // We don't need to undo the ee folder creations, but we do need to undo the
+    // Firestore write.
+    showError('Error creating folders: ' + err + '. Please refresh the page');
+    return false;
+  }
+  const eePromisesResult = Promise.all(eeFolderPromises).then(() => {
     const disasterPicker = $('#disaster-dropdown');
     const disasterOptions = disasterPicker.children();
     let added = false;
     // We expect this recently created disaster to go near the top of the list,
-    // so do a linear scan down. Note: let's hope this tool isn't being used in
-    // the year 10000.
+    // so do a linear scan down.
+    // Note: let's hope this tool isn't being used in the year 10000.
     // Comment needed to quiet eslint.
     disasterOptions.each(/* @this HTMLElement */ function() {
       if ($(this).val() < disasterId) {
@@ -428,13 +429,6 @@ function writeNewDisaster(disasterId, states) {
 
 /**
  * Returns a promise that resolves on the creation of the given folder.
- *
- * This will print a console error for anyone other than the gd
- * account. Ee console seems to have the power to grant write access
- * to non-owners but it doesn't seem to work. Sent an email to
- * gestalt.
- * TODO: replace with setIamPolicy when that works.
- * TODO: add status bar for when this is finished.
  *
  * @param {string} dir asset path of folder to create
  * @return {Promise<void>} resolves when after the directory is created and
