@@ -398,8 +398,8 @@ function createHelpIcon(url) {
  * @param {google.maps.Map} map Map to display regions on
  * @param {Promise<any>} firebasePromise Promise with Firebase damage data (also
  *     implies that authentication is complete)
- * @return {?google.maps.drawing.DrawingManager} DrawingManager added to map
- *     (only used by tests). Null if there was an error
+ * @return {Promise<?google.maps.drawing.DrawingManager>} Promise with drawing
+ *     manager added to map (only used by tests). Null if there was an error
  */
 async function initializeAndProcessUserRegions(map, firebasePromise) {
   addLoadingElement(mapContainerId);
