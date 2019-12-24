@@ -4,6 +4,7 @@ import * as loading from '../../../docs/loading';
 import {CallbackLatch} from '../../support/callback_latch';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 import {createGoogleMap} from '../../support/test_map';
+import {getCheckBoxId, getCheckBoxRowId} from '../../../docs/checkbox_util.js';
 
 const mockData = {};
 
@@ -174,6 +175,30 @@ describe('Unit test for toggleLayerOn', () => {
       expect(layerProps).to.have.property('visible', true);
       expect(layerProps).to.have.property('data', emptyList);
     });
+  });
+
+  it.only('fails to load a layer', () => {
+    const index = 3;
+    cy.document((doc) => {
+      const div = doc.createElement('div');
+      div.id = getCheckBoxRowId(index);
+      const checkbox = doc.createElement('input');
+      checkbox.id = getCheckBoxId(index);
+      div.appendChild(checkbox);
+      doc.body.appendChild(div);
+      cy.stub(document, 'getElementById').callsFake((id) => doc.getElementById(id));
+      return addLayer(  {
+        'ee-name': 'asset/does/not/exist',
+        'asset-type': LayerType.FEATURE_COLLECTION,
+        'display-name': 'asset1',
+        'display-on-load': false,
+        'color-function': colorProperties,
+        'index': 1,
+      }, null);
+    });
+    cy.get('#' + getCheckBoxId(index)).should('be.disabled');
+    cy.get('#' + getCheckBoxId(index)).should('not.be.checked');
+    cy.get('#' + getCheckBoxRowId(index)).should('have.title').and('eq', 'Error showing layer');
   });
 
   // For the next three tests, we do the following setup:
