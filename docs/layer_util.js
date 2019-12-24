@@ -1,3 +1,4 @@
+import {getCheckBoxId, getCheckBoxRowId} from './checkbox_util.js';
 import {CompositeImageMapType} from './composite_image_map_type.js';
 import {mapContainerId} from './dom_constants.js';
 import {terrainStyle} from './earth_engine_asset.js';
@@ -5,7 +6,6 @@ import {createError, showError} from './error.js';
 import {colorMap, createStyleFunction, LayerType} from './firebase_layers.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {convertEeObjectToPromise} from './map_util.js';
-import {getCheckBoxId, getCheckBoxRowId} from './checkbox_util.js';
 
 export {
   addLayer,
@@ -164,8 +164,8 @@ function toggleLayerOn(layer, map) {
     // toggleLayerOn is called again for this layer, the promise will already
     // have completed.
     if (layerDisplayData.overlay instanceof CompositeImageMapType) {
-      return createCompositeTilePromise(layerDisplayData, index, map,
-          layer["display-name"]);
+      return createCompositeTilePromise(
+          layerDisplayData, index, map, layer['display-name']);
     }
     return createLoadingAwarePromise((resolve) => {
       resolveOnEeTilesFinished(layerDisplayData, resolve);
@@ -359,7 +359,8 @@ function addTileLayer(map, layer) {
       opacity: layer['opacity'],
     });
     layerDisplayData.pendingPromise = null;
-    return createCompositeTilePromise(layerDisplayData, layer['index'], map, layer['display-name']);
+    return createCompositeTilePromise(
+        layerDisplayData, layer['index'], map, layer['display-name']);
   });
   return layerDisplayData.pendingPromise;
 }
@@ -394,8 +395,8 @@ function extractFromJson(jsonUrl) {
  *     common codepath, it will fail gracefully (disable checkbox and warn user)
  *     if it somehow does
  */
-function createCompositeTilePromise(layerDisplayData, index, map,
-    displayNameForErrors) {
+function createCompositeTilePromise(
+    layerDisplayData, index, map, displayNameForErrors) {
   return createLoadingAwarePromise((resolve) => {
     layerDisplayData.overlay.setTileCallback(
         createTileCallback(layerDisplayData, resolve));
@@ -534,16 +535,17 @@ function processImageCollection(layerName) {
  *     render
  * @return {Promise} Promise that completes when the feature is rendered
  */
-function addLayerFromGeoJsonPromise(featuresPromise, deckParams, index,
-    displayNameForErrors) {
+function addLayerFromGeoJsonPromise(
+    featuresPromise, deckParams, index, displayNameForErrors) {
   const layerDisplayData = new LayerDisplayData(deckParams, true);
   layerArray[index] = layerDisplayData;
-  layerDisplayData.pendingPromise =
-      wrapPromiseLoadingAware(featuresPromise.then((features) => {
+  layerDisplayData.pendingPromise = wrapPromiseLoadingAware(
+      featuresPromise.then((features) => {
         layerDisplayData.data = features;
         addLayerFromFeatures(layerDisplayData, index);
         layerDisplayData.pendingPromise = null;
-      }), {'display-name': displayNameForErrors, index});
+      }),
+      {'display-name': displayNameForErrors, index});
   return layerDisplayData.pendingPromise;
 }
 
@@ -607,8 +609,8 @@ scoreDeckParams.colorFunction = (feature) =>
  * @return {Promise} Promise that completes when layer is displayed
  */
 function addScoreLayer(layer) {
-  return addLayerFromGeoJsonPromise(layer, scoreDeckParams, scoreLayerName,
-      'Score');
+  return addLayerFromGeoJsonPromise(
+      layer, scoreDeckParams, scoreLayerName, 'Score');
 }
 
 /**
@@ -621,6 +623,7 @@ function removeScoreLayer() {
   redrawLayers();
 }
 
+/** Notes that a layer has finished rendering on the map. */
 function mapLoadingFinished() {
   loadingElementFinished(mapContainerId);
 }
@@ -638,15 +641,20 @@ function wrapPromiseLoadingAware(promise, layerInfoForErrors) {
   addLoadingElement(mapContainerId);
   return promise
       .catch((err) => {
-        showError('Error with layer ' + layerInfoForErrors['display-name'] + ', ' + err,
+        showError(
+            'Error with layer ' + layerInfoForErrors['display-name'] + ', ' +
+                err,
             'Error loading layer ' + layerInfoForErrors['display-name']);
         const index = layerInfoForErrors['index'];
-        const row = $('#' + getCheckBoxRowId(index));
-        row.prop('title', 'Error showing layer. If you believe the layer is there, try refreshing the page');
-        row.css('text-decoration', 'line-through');
-        let checkbox = $('#' + getCheckBoxId(index));
-        checkbox.prop('checked', false);
-        checkbox.prop('disabled', true);
+        $('#' + getCheckBoxRowId(index))
+            .prop(
+                'title',
+                'Error showing layer. If you believe the layer is there, try ' +
+                    'refreshing the page')
+            .css('text-decoration', 'line-through');
+        $('#' + getCheckBoxId(index))
+            .prop('checked', false)
+            .prop('disabled', true);
       })
       .finally(mapLoadingFinished);
 }

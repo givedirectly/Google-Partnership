@@ -1,25 +1,11 @@
-import {LayerType} from '../../../docs/firebase_layers.js';
-import {
-  addLayer,
-  addNullLayer,
-  addScoreLayer,
-  deckGlArray,
-  DeckParams,
-  layerArray,
-  LayerDisplayData,
-  removeScoreLayer,
-  scoreLayerName,
-  setMapToDrawLayersOn,
-  toggleLayerOff,
-  toggleLayerOn
-} from '../../../docs/layer_util.js';
-import * as loading from '../../../docs/loading';
+import {getCheckBoxId, getCheckBoxRowId} from '../../../docs/checkbox_util.js';
 import * as ErrorLib from '../../../docs/error.js';
+import {LayerType} from '../../../docs/firebase_layers.js';
+import {addLayer, addNullLayer, addScoreLayer, deckGlArray, DeckParams, layerArray, LayerDisplayData, removeScoreLayer, scoreLayerName, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from '../../../docs/layer_util.js';
+import * as loading from '../../../docs/loading';
 import {CallbackLatch} from '../../support/callback_latch';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 import {createGoogleMap} from '../../support/test_map';
-import {getCheckBoxId, getCheckBoxRowId} from '../../../docs/checkbox_util.js';
-import {cyQueue} from '../../support/commands.js';
 
 const mockData = {};
 
@@ -193,15 +179,17 @@ describe('Unit test for toggleLayerOn', () => {
   });
 
   it('fails to load a layer', () => {
-    setUpLayerFailure().then(() =>
-        addLayer({
-          'ee-name': 'asset/does/not/exist',
-          'asset-type': LayerType.FEATURE_COLLECTION,
-          'display-name': 'asset1',
-          'display-on-load': false,
-          'color-function': colorProperties,
-          'index': 3,
-        }, null));
+    setUpLayerFailure().then(
+        () => addLayer(
+            {
+              'ee-name': 'asset/does/not/exist',
+              'asset-type': LayerType.FEATURE_COLLECTION,
+              'display-name': 'asset1',
+              'display-on-load': false,
+              'color-function': colorProperties,
+              'index': 3,
+            },
+            null));
     assertLayerFailure();
   });
 
@@ -215,28 +203,32 @@ describe('Unit test for toggleLayerOn', () => {
       'index': failureLayerIndex,
     };
     addNullLayer(layer);
-    setUpLayerFailure().then(() =>
-        toggleLayerOn({
-          'ee-name': 'asset/does/not/exist',
-          'asset-type': LayerType.FEATURE_COLLECTION,
-          'display-name': 'asset1',
-          'display-on-load': false,
-          'color-function': colorProperties,
-          'index': failureLayerIndex,
-        }, null));
+    setUpLayerFailure().then(
+        () => toggleLayerOn(
+            {
+              'ee-name': 'asset/does/not/exist',
+              'asset-type': LayerType.FEATURE_COLLECTION,
+              'display-name': 'asset1',
+              'display-on-load': false,
+              'color-function': colorProperties,
+              'index': failureLayerIndex,
+            },
+            null));
     assertLayerFailure();
   });
 
   it('fails to load an image layer', () => {
-    setUpLayerFailure().then(() =>
-        addLayer({
-          'ee-name': 'asset/does/not/exist',
-          'asset-type': LayerType.IMAGE,
-          'display-name': 'asset1',
-          'display-on-load': false,
-          'color-function': colorProperties,
-          'index': failureLayerIndex,
-        }, null));
+    setUpLayerFailure().then(
+        () => addLayer(
+            {
+              'ee-name': 'asset/does/not/exist',
+              'asset-type': LayerType.IMAGE,
+              'display-name': 'asset1',
+              'display-on-load': false,
+              'color-function': colorProperties,
+              'index': failureLayerIndex,
+            },
+            null));
     assertLayerFailure();
   });
 
@@ -257,18 +249,30 @@ describe('Unit test for toggleLayerOn', () => {
       checkbox.id = getCheckBoxId(index);
       div.appendChild(checkbox);
       doc.body.appendChild(div);
-      cy.stub(document, 'getElementById').callsFake((id) => doc.getElementById(id));
+      cy.stub(document, 'getElementById')
+          .callsFake((id) => doc.getElementById(id));
     });
-    return cy.wrap(cy.stub(ErrorLib, 'showError').withArgs(Cypress.sinon.match.any, 'Error loading layer asset1')).as('errorStub');
+    return cy.wrap(
+                 cy.stub(ErrorLib, 'showError')
+                     .withArgs(
+                         Cypress.sinon.match.any, 'Error loading layer asset1'))
+               .as('errorStub');
   }
 
   /** Makes expected assertions when a layer has failed to load. */
   function assertLayerFailure() {
-    cy.get('@errorStub').then((errorStub) => expect(errorStub).to.be.calledOnce);
+    cy.get('@errorStub')
+        .then((errorStub) => expect(errorStub).to.be.calledOnce);
     cy.get('#' + getCheckBoxId(failureLayerIndex)).should('be.disabled');
     cy.get('#' + getCheckBoxId(failureLayerIndex)).should('not.be.checked');
-    cy.get('#' + getCheckBoxRowId(failureLayerIndex)).should('have.attr', 'title', 'Error showing layer. If you believe the layer is there, try refreshing the page');
-    cy.get('#' + getCheckBoxRowId(failureLayerIndex)).should('have.css', 'text-decoration').and('contains', 'line-through');
+    cy.get('#' + getCheckBoxRowId(failureLayerIndex))
+        .should(
+            'have.attr', 'title',
+            'Error showing layer. If you believe the layer is there, try ' +
+                'refreshing the page');
+    cy.get('#' + getCheckBoxRowId(failureLayerIndex))
+        .should('have.css', 'text-decoration')
+        .and('contains', 'line-through');
   }
 
   // For the next three tests, we do the following setup:
