@@ -13,7 +13,7 @@ export {clickFeature, selectHighlightedFeatures};
  * @param {google.maps.Map} map
  * @param {string|ee.FeatureCollection} featuresAsset asset (path) of features
  *     which could be clicked
- * @param {Function} tableSelector See drawTable
+ * @param {Function} tableSelector See {@link drawTable}
  */
 function clickFeature(lng, lat, map, featuresAsset, tableSelector) {
   const point = ee.Geometry.Point(lng, lat);
