@@ -372,13 +372,13 @@ function addDisaster() {
  *
  * @param {string} disasterId of the form <year>-<name>
  * @param {Array<string>} states array of state (abbreviations)
- * @return {boolean} returns true after successful write to firestore
- * and earth engine folder creations.
+ * @return {Promise<boolean>} Returns true if EarthEngine folders created
+ *     successfully and successful write to Firestore
  */
 async function writeNewDisaster(disasterId, states) {
   if (disasterData.has(disasterId)) {
     setStatus('Error: disaster with that name and year already exists.');
-    return Promise.resolve(false);
+    return false;
   }
   clearStatus();
   const currentData = createDisasterData(states);
@@ -390,41 +390,41 @@ async function writeNewDisaster(disasterId, states) {
   states.forEach((state) => eeFolderPromises.push(
         getCreateFolderPromise(legacyStateDir + '/' + state)));
 
+  const tailError = '". You can try refreshing the page';
+  // Unsafe to do the Firestore write before EE folders are created, since maybe
+  // we won't be able to undo the write.
   try {
     await Promise.all(eeFolderPromises);
   } catch (err) {
-    // We don't need to undo the ee folder creations, but we do need to undo the
-    // Firestore write.
-    showError('Error creating folders: ' + err + '. Please refresh the page');
+    showError('Error creating EarthEngine folders: "' + err + tailError);
     return false;
   }
-  const eePromisesResult = Promise.all(eeFolderPromises).then(() => {
-    const disasterPicker = $('#disaster-dropdown');
-    const disasterOptions = disasterPicker.children();
-    let added = false;
-    // We expect this recently created disaster to go near the top of the list,
-    // so do a linear scan down.
-    // Note: let's hope this tool isn't being used in the year 10000.
-    // Comment needed to quiet eslint.
-    disasterOptions.each(/* @this HTMLElement */ function() {
-      if ($(this).val() < disasterId) {
-        $(createOptionFrom(disasterId)).insertBefore($(this));
-        added = true;
-        return false;
-      }
-    });
-    if (!added) disasterPicker.append(createOptionFrom(disasterId));
-    toggleState(true);
-
-    disasterPicker.val(disasterId).trigger('change');
+  try {
+    await disasterCollectionReference().doc(disasterId).set(currentData);
+  } catch (err) {
+    const message = err.message ? err.message : err;
+    showError('Error writing to Firestore: ' + message + tailError);
+    return false;
+  }
+  const disasterPicker = $('#disaster-dropdown');
+  const disasterOptions = disasterPicker.children();
+  let added = false;
+  // We expect this recently created disaster to go near the top of the list, so
+  // do a linear scan down.
+  // Note: let's hope this tool isn't being used in the year 10000.
+  // Comment needed to quiet eslint.
+  disasterOptions.each(/* @this HTMLElement */ function() {
+    if ($(this).val() < disasterId) {
+      $(createOptionFrom(disasterId)).insertBefore($(this));
+      added = true;
+      return false;
+    }
   });
+  if (!added) disasterPicker.append(createOptionFrom(disasterId));
+  toggleState(true);
 
-  return Promise
-      .all([
-        eePromisesResult,
-        disasterCollectionReference().doc(disasterId).set(currentData),
-      ])
-      .then(() => true);
+  disasterPicker.val(disasterId).trigger('change');
+  return true;
 }
 
 /**
