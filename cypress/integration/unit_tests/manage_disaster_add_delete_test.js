@@ -128,7 +128,6 @@ describe('Add/delete-related tests for manage_disaster.js', () => {
 
           year.val('hello');
           name.val('my name is');
-          states.val(['IG', 'MY']);
           return addDisaster();
         })
         .then((success) => {
@@ -138,7 +137,6 @@ describe('Add/delete-related tests for manage_disaster.js', () => {
 
           year.val('2000');
           name.val('HARVEY');
-          states.val(['IG', 'MY']);
           expect(createFolderStub).to.not.be.called;
           expect(setAclsStub).to.not.be.called;
 

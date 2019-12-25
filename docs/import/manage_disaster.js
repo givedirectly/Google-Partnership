@@ -373,7 +373,7 @@ function addDisaster() {
  * @param {string} disasterId of the form <year>-<name>
  * @param {Array<string>} states array of state (abbreviations)
  * @return {Promise<boolean>} Returns true if EarthEngine folders created
- *     successfully and successful write to Firestore
+ *     successfully and Firestore write was successful
  */
 async function writeNewDisaster(disasterId, states) {
   if (disasterData.has(disasterId)) {
@@ -431,6 +431,7 @@ async function writeNewDisaster(disasterId, states) {
 
 /**
  * Returns a promise that resolves on the creation of the given folder.
+ * TODO: add status bar for when this is finished.
  *
  * @param {string} dir asset path of folder to create
  * @return {Promise<void>} resolves when after the directory is created and
