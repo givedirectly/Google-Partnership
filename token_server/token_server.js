@@ -2,7 +2,7 @@ import * as GoogleAuth from 'google-auth-library';
 import {createServer} from 'http';
 // TODO(janakr): this is a pretty random package. Maybe find a more popular one.
 import parseBody from 'urlencoded-body-parser';
-import {CLIENT_ID} from '../docs/common_auth_utils.js';
+import {CLIENT_ID} from './auth_utils/common_auth_utils.js';
 
 import {generateEarthEngineToken} from './ee_token_creator.js';
 
@@ -49,6 +49,7 @@ function generateTokenPeriodically() {
 }
 
 generateTokenPeriodically();
+currentTokenPromise.then(console.log, console.log);
 
 const client = new GoogleAuth.default.OAuth2Client(CLIENT_ID);
 
@@ -80,7 +81,7 @@ createServer(async (req, res) => {
   res.writeHead(200, headers);
   res.write(JSON.stringify(data));
   res.end();
-}).listen(9080);
+}).listen(process.env.PORT);
 
 /**
  * Returns a generic failure to the client.

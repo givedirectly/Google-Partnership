@@ -1,5 +1,5 @@
 import {getFirebaseConfig} from '../../docs/authenticate';
-import {CLIENT_ID} from '../../docs/common_auth_utils.js';
+import {CLIENT_ID} from '../../token_server/auth_utils/common_auth_utils.js';
 import {cypressTestPropertyName, earthEngineTestTokenCookieName, firebaseTestTokenPropertyName} from '../../docs/in_test_util';
 
 export {loadScriptsBeforeForUnitTests};

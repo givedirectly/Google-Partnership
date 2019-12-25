@@ -37,6 +37,7 @@ function generateEarthEngineToken() {
  *     token result: access token and expiration time
  */
 function createTokenPromise(auth, client) {
+  console.log(auth, client);
   return new Promise(
       (resolve, reject) => requestToken(auth, client, (error, response) => {
         // See
