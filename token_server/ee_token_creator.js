@@ -37,7 +37,6 @@ function generateEarthEngineToken() {
  *     token result: access token and expiration time
  */
 function createTokenPromise(auth, client) {
-  console.log(auth, client);
   return new Promise(
       (resolve, reject) => requestToken(auth, client, (error, response) => {
         // See
@@ -68,12 +67,21 @@ function createTokenPromise(auth, client) {
  *     one of which will be null.
  */
 function requestToken(auth, client, callback) {
+  // On Google App Engine, client email not available. Running locally, the
+  // .json file used for tests has an email. We can't use the same account for
+  // both without developers having the prod private key on their machines,
+  // which is not desirable.
+  // TODO(janakr): switch to ee-token-provider@ service account once it has been
+  //  whitelisted for EE access.
+  const serviceAccount = client.email ?
+      client.email :
+      'firebase-adminsdk-pw40g@mapping-crisis.iam.gserviceaccount.com';
   google.iamcredentials({version: 'v1', auth})
       .projects.serviceAccounts.generateAccessToken(
           {
             // See
             // https://cloud.google.com/iam/docs/reference/credentials/rest/v1/projects.serviceAccounts/generateAccessToken
-            name: 'projects/-/serviceAccounts/' + client.email,
+            name: 'projects/-/serviceAccounts/' + serviceAccount,
             // Just need read-only EE access, although
             // apparently write access can be needed for some
             // non-write tasks.

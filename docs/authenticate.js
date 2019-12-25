@@ -1,4 +1,4 @@
-// import {CLIENT_ID} from '../token_server/auth_utils/common_auth_utils.js';
+import {CLIENT_ID} from 'common_auth_utils.js';
 import {showError} from './error.js';
 import {earthEngineTestTokenCookieName, firebaseTestTokenPropertyName, getValueFromLocalStorage, inProduction} from './in_test_util.js';
 import SettablePromise from './settable_promise.js';
@@ -6,9 +6,6 @@ import SettablePromise from './settable_promise.js';
 export {trackEeAndFirebase};
 // For testing.
 export {firebaseConfigProd, firebaseConfigTest, getFirebaseConfig};
-
-const CLIENT_ID =
-    '38420505624-boghq4foqi5anc9kc5c5tsq82ar9k4n0.apps.googleusercontent.com';
 
 const gapiTemplate = {
   // From same page as above.
@@ -46,9 +43,8 @@ const eeErrorDialog =
     '<a href="https://signup.earthengine.google.com">https://signup.earthengine.google.com</a>' +
     ' or sign into a whitelisted account after closing this dialog</div>';
 
-// TODO(janakr): make configurable, especially for tests.
 const TOKEN_SERVER_URL = 'https://mapping-crisis.appspot.com';
-// const TOKEN_SERVER_URL = 'https://mapping-test-data.appspot.com';
+// For local testing.
 // const TOKEN_SERVER_URL = 'http://localhost:9080';
 
 // Request a new token with 5 minutes of validity remaining on our current token

@@ -2,9 +2,17 @@ import * as GoogleAuth from 'google-auth-library';
 import {createServer} from 'http';
 // TODO(janakr): this is a pretty random package. Maybe find a more popular one.
 import parseBody from 'urlencoded-body-parser';
-import {CLIENT_ID} from './auth_utils/common_auth_utils.js';
 
 import {generateEarthEngineToken} from './ee_token_creator.js';
+
+// TODO(janakr): Figure out if it's possible to deploy to Google App Engine with
+//  a package that is in a sibling directory. That prevents us from sharing this
+//  line with docs/authenticate.js. Currently it seems impossible, in which case
+//  TODO is to create a repro and file a bug.
+// The client ID from
+// https://console.cloud.google.com/apis/credentials?project=mapping-crisis
+const CLIENT_ID =
+    '38420505624-boghq4foqi5anc9kc5c5tsq82ar9k4n0.apps.googleusercontent.com';
 
 const RESPONSE_HEADERS = {
   'Content-type': 'text/plain',
@@ -49,7 +57,6 @@ function generateTokenPeriodically() {
 }
 
 generateTokenPeriodically();
-currentTokenPromise.then(console.log, console.log);
 
 const client = new GoogleAuth.default.OAuth2Client(CLIENT_ID);
 
