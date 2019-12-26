@@ -175,8 +175,8 @@ describe('Add/delete-related tests for manage_disaster.js', () => {
     const id = '2005-summer';
     const states = [KNOWN_STATE];
     const errorStub = cy.stub(ErrorLib, 'showError');
-    // Tests don't have permission to create folders, so this will exercise EE
-    // failure mode better than we could fake it.
+    // Restore actual ee.createFolder. Tests don't have permission to create
+    // folders, so this exercises EE failure mode better than we could fake it.
     createFolderStub.restore();
     const firestoreStub =
         cy.stub(FirestoreDocument, 'disasterCollectionReference');

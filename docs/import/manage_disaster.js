@@ -368,7 +368,8 @@ function addDisaster() {
 
 /**
  * Writes the given details to a new disaster entry in firestore. Fails if
- * there is an existing disaster with the same details.
+ * there is an existing disaster with the same details or there are errors
+ * writing to EarthEngine or Firestore. Tells the user in all failure cases.
  *
  * @param {string} disasterId of the form <year>-<name>
  * @param {Array<string>} states array of state (abbreviations)
@@ -393,8 +394,8 @@ async function writeNewDisaster(disasterId, states) {
           getCreateFolderPromise(legacyStateDir + '/' + state)));
 
   const tailError = '" You can try refreshing the page';
-  // Unsafe to do the Firestore write before EE folders are created, since maybe
-  // we won't be able to undo the write.
+  // Wait on EE folder creation to do the Firestore write, since if folder
+  // creation fails we don't want to have to undo the write.
   try {
     await Promise.all(eeFolderPromises);
   } catch (err) {
@@ -409,13 +410,12 @@ async function writeNewDisaster(disasterId, states) {
     return false;
   }
   const disasterPicker = $('#disaster-dropdown');
-  const disasterOptions = disasterPicker.children();
   let added = false;
   // We expect this recently created disaster to go near the top of the list, so
   // do a linear scan down.
   // Note: let's hope this tool isn't being used in the year 10000.
   // Comment needed to quiet eslint.
-  disasterOptions.each(/* @this HTMLElement */ function() {
+  disasterPicker.children().each(/* @this HTMLElement */ function() {
     if ($(this).val() < disasterId) {
       $(createOptionFrom(disasterId)).insertBefore($(this));
       added = true;
