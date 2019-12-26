@@ -71,8 +71,6 @@ function requestToken(auth, client, callback) {
   // .json file used for tests has an email. We can't use the same account for
   // both without developers having the prod private key on their machines,
   // which is not desirable.
-  // TODO(janakr): switch to ee-token-provider@ service account once it has been
-  //  whitelisted for EE access.
   const serviceAccount = client.email ?
       client.email :
       'earthengine-token-provider@mapping-crisis.iam.gserviceaccount.com';

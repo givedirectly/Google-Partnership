@@ -1423,6 +1423,14 @@ duplexify@^4.1.1:
     readable-stream "^3.1.1"
     stream-shift "^1.0.0"
 
+"earth_engine_token_server@file:token_server":
+  version "1.0.0"
+  dependencies:
+    google-auth-library "^5.7.0"
+    googleapis "^46.0.0"
+    http "^0.0.0"
+    urlencoded-body-parser "^3.0.0"
+
 ecc-jsbn@~0.1.1:
   version "0.1.2"
   resolved "https://registry.yarnpkg.com/ecc-jsbn/-/ecc-jsbn-0.1.2.tgz#3a83a904e54353287874c564b7549386849a98c9"
