@@ -26,6 +26,16 @@ const ONE_MINUTE_IN_MILLISECONDS = 60 * 1000;
 // token.
 const TIME_BEFORE_REGENERATION = 40 * ONE_MINUTE_IN_MILLISECONDS;
 
+const allowedOrigins = new Set(['https://givedirectly.github.io']);
+
+if (!process.env.GAE_APPLICATION) {
+  // When running locally, allow requests from localhost.
+  allowedOrigins.add('http://localhost:8080');
+}
+
+// Google App Engine tells us the port to listen to.
+const port = process.env.PORT || 9080;
+
 /**
  * Result of most recent call to {@link generateEarthEngineToken}. Because there
  * is no requirement that tokens be unique per user, we re-use tokens for almost
@@ -67,8 +77,7 @@ const client = new GoogleAuth.default.OAuth2Client(CLIENT_ID);
  */
 createServer(async (req, res) => {
   const origin = req.headers['origin'];
-  if (origin !== 'http://localhost:8080' &&
-      origin !== 'https://givedirectly.github.io') {
+  if (!allowedOrigins.has(origin)) {
     fail(res);
     return;
   }
@@ -88,7 +97,7 @@ createServer(async (req, res) => {
   res.writeHead(200, headers);
   res.write(JSON.stringify(data));
   res.end();
-}).listen(process.env.PORT);
+}).listen(port);
 
 /**
  * Returns a generic failure to the client.

@@ -1,4 +1,4 @@
-import {CLIENT_ID} from 'common_auth_utils.js';
+import {CLIENT_ID} from './common_auth_utils.js';
 import {showError} from './error.js';
 import {earthEngineTestTokenCookieName, firebaseTestTokenPropertyName, getValueFromLocalStorage, inProduction} from './in_test_util.js';
 import SettablePromise from './settable_promise.js';

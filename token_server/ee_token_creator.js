@@ -75,7 +75,7 @@ function requestToken(auth, client, callback) {
   //  whitelisted for EE access.
   const serviceAccount = client.email ?
       client.email :
-      'firebase-adminsdk-pw40g@mapping-crisis.iam.gserviceaccount.com';
+      'earthengine-token-provider@mapping-crisis.iam.gserviceaccount.com';
   google.iamcredentials({version: 'v1', auth})
       .projects.serviceAccounts.generateAccessToken(
           {
