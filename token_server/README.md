@@ -13,7 +13,10 @@ step, and the quickstart guide is for their toy project, not this one.
 https://mapping-crisis.appspot.com (note that directly accessing that URL is not
 expected to work, since appropriate headers have to be attached to the request).
 
-* The app is set up using the features described at
+* The server should continue running forever, but will use few/no resources
+unless it is getting traffic.
+
+* The app was initially set up using the features described at
 [NodeJS Runtime](https://cloud.google.com/appengine/docs/standard/nodejs/runtime).
 
 ## Deploy to Amazon EC2
