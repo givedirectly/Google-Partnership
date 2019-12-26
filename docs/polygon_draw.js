@@ -402,9 +402,9 @@ function createHelpIcon(url) {
  *     manager added to map (only used by tests). Null if there was an error
  */
 async function initializeAndProcessUserRegions(map, firebasePromise) {
+  setUpPopup();
   addLoadingElement(mapContainerId);
   try {
-    setUpPopup();
     // Firebase retrieval error handled elsewhere. Let this throw if it throws.
     const doc = await firebasePromise;
     // Damage asset may not exist yet, so this is undefined. We tolerate
