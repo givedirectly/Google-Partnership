@@ -5,10 +5,10 @@ import parseBody from 'urlencoded-body-parser';
 
 import {generateEarthEngineToken} from './ee_token_creator.js';
 
-// TODO(janakr): Figure out if it's possible to deploy to Google App Engine with
+// TODO(janakr): Seems impossible to deploy to Google App Engine with
 //  a package that is in a sibling directory. That prevents us from sharing this
-//  line with docs/authenticate.js. Currently it seems impossible, in which case
-//  TODO is to create a repro and file a bug.
+//  line with docs/authenticate.js. Filed an internal bug.
+//  https://github.com/janakdr/nodejs-docs-samples/pull/1 has a minimal repro.
 // The client ID from
 // https://console.cloud.google.com/apis/credentials?project=mapping-crisis
 const CLIENT_ID =
