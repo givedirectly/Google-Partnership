@@ -42,6 +42,7 @@ function createPromiseWithPathIfSuccessful(eeAsset) {
 /**
  * Sets {@link resolvedScoreAsset} to {@link getScoreAssetPath}, or, if that
  * does not exist as an EarthEngine asset, to {@link getBackupScoreAssetPath}.
+ * The returned {@link Promise} throws if neither exists.
  *
  * @return {Promise<string>} Promise with the name of the score asset found,
  *     only needed by tests.

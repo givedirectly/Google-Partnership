@@ -3,7 +3,6 @@ import {convertEeObjectToPromise} from '../ee_promise_cache.js';
 import {disasterCollectionReference} from '../firestore_document.js';
 import {latLngToGeoPoint, transformGeoPointArrayToLatLng} from '../map_util.js';
 import {getDisaster} from '../resources.js';
-
 import {createDisasterData, incomeKey, snapKey, sviKey, totalKey} from './create_disaster_lib.js';
 import {createScoreAsset, setStatus} from './create_score_asset.js';
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';

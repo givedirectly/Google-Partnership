@@ -1,4 +1,4 @@
-import {clearForTesting} from '../../../docs/ee_promise_cache.js';
+import {clearPromiseCacheForTesting} from '../../../docs/ee_promise_cache.js';
 import {LayerType} from '../../../docs/firebase_layers.js';
 import {addLayer, addScoreLayer, deckGlArray, DeckParams, layerArray, LayerDisplayData, removeScoreLayer, scoreLayerName, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from '../../../docs/layer_util.js';
 import * as loading from '../../../docs/loading';
@@ -84,7 +84,7 @@ describe('Unit test for toggleLayerOn', () => {
     deckGlArray.length = 0;
     deckGlArray[0] = new deck.GeoJsonLayer({});
     deckGlArray[1] = new deck.GeoJsonLayer({});
-    clearForTesting();
+    clearPromiseCacheForTesting();
   });
 
   it('tests adding kml urls', () => {

@@ -1,6 +1,6 @@
 import {tableContainerId} from '../../../docs/dom_constants.js';
 import {tableHeadings} from '../../../docs/draw_table.js';
-import * as EePromiseCache from '../../../docs/ee_promise_cache.js';
+import {convertEeObjectToPromise} from '../../../docs/ee_promise_cache.js';
 import {currentFeatures} from '../../../docs/highlight_features';
 import * as loading from '../../../docs/loading.js';
 import {blockGroupTag, geoidTag} from '../../../docs/property_names';
@@ -84,8 +84,7 @@ describe('Unit tests for click_feature.js with map and table', () => {
       tableDiv.id = 'table';
       containerDiv.appendChild(tableDiv);
       drawTableAndSetUpHandlers(
-          EePromiseCache.convertEeObjectToPromise(scoredFeatures)
-              .then((fc) => fc.features),
+          convertEeObjectToPromise(scoredFeatures).then((fc) => fc.features),
           map);
     });
     cy.wrap(loadingFinishedPromise);

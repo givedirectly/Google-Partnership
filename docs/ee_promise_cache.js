@@ -1,7 +1,7 @@
 export {convertEeObjectToPromise, getEePromiseForFeatureCollection};
 
 // For testing only.
-export {clearForTesting};
+export {clearPromiseCacheForTesting};
 
 // 250M objects in a FeatureCollection ought to be enough for anyone.
 const maxNumFeaturesExpected = 250000000;
@@ -23,7 +23,6 @@ const cache = new Map();
  */
 function getEePromiseForFeatureCollection(eeAssetPath) {
   const maybePromise = cache.get(eeAssetPath);
-  console.log(eeAssetPath, maybePromise);
   if (maybePromise) {
     return maybePromise;
   }
@@ -35,7 +34,7 @@ function getEePromiseForFeatureCollection(eeAssetPath) {
 }
 
 /**
- * Transform an EE object into a standard Javascript Promise by wrapping its
+ * Transforms an EE object into a standard Javascript Promise by wrapping its
  * evaluate call. For an {@link ee.FeatureCollection}, call
  * {@link getEePromiseForFeatureCollection} instead of this method directly!
  *
@@ -54,7 +53,7 @@ function convertEeObjectToPromise(eeObject) {
   });
 }
 
-/** Clear cache, for use with tests. */
-function clearForTesting() {
+/** Clears cache, for use with tests. */
+function clearPromiseCacheForTesting() {
   cache.clear();
 }
