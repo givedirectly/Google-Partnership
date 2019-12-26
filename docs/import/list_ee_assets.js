@@ -60,48 +60,47 @@ function getDisasterAssetsFromEe(disaster) {
   if (maybePromise) {
     return maybePromise;
   }
-  // For passing through promise without re-promise-ifying.
-  let listEeAssetsResult;
-  const result =
-      listEeAssets(eeLegacyPathPrefix + disaster)
-          .then((assets) => {
-            listEeAssetsResult = assets;
-            const shouldDisable = [];
-            for (const {asset, type} of assets) {
-              if (type === LayerType.FEATURE_COLLECTION) {
-                // census data returns an empty coords multipoint
-                // geometry instead of a true null geometry. So
-                // we check for that. Could be bad if we ever see
-                // a data set with a mix of empty and non-empty
-                // geometries.
-                shouldDisable.push(ee.Algorithms.If(
-                    ee.Algorithms.IsEqual(
-                        ee.FeatureCollection(asset)
-                            .first()
-                            .geometry()
-                            .coordinates()
-                            .length(),
-                        ee.Number(0)),
-                    // DOM disable property can't recognize 0 and 1 as false and
-                    // true :(
-                    true, false));
-              } else {
-                shouldDisable.push(false);
-              }
-            }
-            return convertEeObjectToPromise(ee.List(shouldDisable));
-          })
-          .then((disableList) => {
-            const assetMap = new Map();
-            const disableListIterator = disableList[Symbol.iterator]();
-            for (const {asset, type} of listEeAssetsResult) {
-              assetMap.set(
-                  asset, {type, disabled: disableListIterator.next().value});
-            }
-            return assetMap;
-          });
+  const result = disableMissingGeometryAssets(listEeAssets(eeLegacyPathPrefix + disaster));
   disasterAssetPromises.set(disaster, result);
   return result;
+}
+
+function disableMissingGeometryAssets(listingPromise) {
+  // For passing through promise without re-promise-ifying.
+  let listEeAssetsResult;
+  return listingPromise
+.then((assets) => {
+    listEeAssetsResult = assets;
+    const shouldDisable = [];
+    for (const {asset, type} of assets) {
+      if (type === LayerType.FEATURE_COLLECTION) {
+        // census data returns an empty coords multipoint
+        // geometry instead of a true null geometry. So
+        // we check for that. Could be bad if we ever see
+        // a data set with a mix of empty and non-empty
+        // geometries.
+        const geometry = ee.FeatureCollection(asset).first().geometry();
+        // Null and empty list are false.
+        shouldDisable.push(ee.Algorithms.If(geometry,
+            ee.Algorithms.If(geometry.coordinates(),
+            // DOM disable property can't recognize 0 and 1 as false and
+            // true :(
+            true, false), false));
+      } else {
+        shouldDisable.push(false);
+      }
+    }
+    return convertEeObjectToPromise(ee.List(shouldDisable));
+  })
+  .then((disableList) => {
+    const assetMap = new Map();
+    const disableListIterator = disableList[Symbol.iterator]();
+    for (const {asset, type} of listEeAssetsResult) {
+      assetMap.set(
+          asset, {type, disabled: disableListIterator.next().value});
+    }
+    return assetMap;
+  });
 }
 
 /**
