@@ -1,13 +1,17 @@
 # Simple web server to provide EarthEngine tokens to non-whitelisted users
 
+This is an optional component for the mapping page, that allows any user to view
+it, even if they are not whitelisted with EarthEngine. Only the site maintainer
+should follow the instructions below, and they should only need to be done once.
+
 ## Deploy to Google App Engine
 
-* Follow initial steps for Google App Engine deployment: install `gcloud`, log
-in as the GD user `gd-earthengine-user@givedirectly.org`, and set the gcloud
-project to `mapping-crisis`. Helpful resource:
-[NodeJS Quickstart](https://cloud.google.com/appengine/docs/standard/nodejs/quickstart).
-Note that the project has already been created, so you don't need to do that
-step, and the quickstart guide is for their toy project, not this one.
+* Follow initial steps for Google App Engine deployment: install `gcloud`; when
+prompted, log into gcloud as the GD user `gd-earthengine-user@givedirectly.org`,
+and set the gcloud project to `mapping-crisis`. Typically you can run the
+commands `gcloud auth login` followed by
+`gcloud config set project mapping-crisis`. Please also consult the
+[Google Cloud SDK documentation](https://cloud.google.com/sdk/docs/).
 
 * Run `gcloud app deploy`. The app should now be running successfully at
 https://mapping-crisis.appspot.com (note that directly accessing that URL is not
@@ -27,6 +31,7 @@ You must be logged in as `gd-earthengine-user@givedirectly.org` to access it.
 
 `¯\_(ツ)_/¯`
 
-## Start locally
+## Start locally, for testing only
+
 Run locally with `yarn start` from this directory, and change `TOKEN_SERVER_URL` in
 `docs/authenticate.js` to `http://localhost:9080`.
