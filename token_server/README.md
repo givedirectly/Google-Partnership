@@ -19,6 +19,10 @@ unless it is getting traffic.
 * The app was initially set up using the features described at
 [NodeJS Runtime](https://cloud.google.com/appengine/docs/standard/nodejs/runtime).
 
+* Billing and usage is available at the
+[Dashboard](https://console.cloud.google.com/appengine?folder=&organizationId=838088520005&project=mapping-crisis).
+You must be logged in as `gd-earthengine-user@givedirectly.org` to access it.
+
 ## Deploy to Amazon EC2
 
 `¯\_(ツ)_/¯`
