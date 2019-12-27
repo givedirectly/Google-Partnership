@@ -2,8 +2,8 @@ import {CLIENT_ID} from './common_auth_utils.js';
 import {eeLegacyPathPrefix, eeLegacyPrefix} from './ee_paths.js';
 import {listEeAssets} from './ee_utils.js';
 import {showError} from './error.js';
-import {earthEngineTestTokenCookieName, firebaseTestTokenPropertyName, getTestValue, getValueFromLocalStorage, inProduction,} from './in_test_util.js';
-import {getBackupScoreAssetPath, getDisaster, getScoreAssetPath,} from './resources.js';
+import {earthEngineTestTokenCookieName, firebaseTestTokenPropertyName, getValueFromLocalStorage, inProduction} from './in_test_util.js';
+import {getBackupScoreAssetPath, getDisaster, getScoreAssetPath} from './resources.js';
 import {SettablePromise} from './settable_promise.js';
 
 export {reloadWithSignIn, trackEeAndFirebase};
@@ -289,6 +289,14 @@ function initializeFirebase() {
   firebase.initializeApp(getFirebaseConfig(inProduction()));
 }
 
+/**
+ * Lists assets in the current disaster's folder and for any that match a score
+ * asset path (either standard or backup), send a request to make that asset
+ * world-readable. This should only be called when logged in as the GD user. It
+ * does not wait for these calls to complete, and does not print any errors,
+ * since it is just trying to help other users, and is not triggered by an
+ * explicit user action.
+ */
 function makeScoreAssetsWorldReadable() {
   listEeAssets(eeLegacyPathPrefix + getDisaster()).then((listResult) => {
     if (!listResult) {
@@ -298,7 +306,8 @@ function makeScoreAssetsWorldReadable() {
     let foundAssets = 0;
     for (const {id} of listResult) {
       if (paths.has(id)) {
-        ee.data.setAssetAcl(eeLegacyPathPrefix + id, {all_users_can_read: true}, () => {});
+        ee.data.setAssetAcl(
+            eeLegacyPrefix + id, {all_users_can_read: true}, () => {});
         foundAssets++;
       }
       if (foundAssets === paths.size) {

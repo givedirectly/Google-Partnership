@@ -25,15 +25,15 @@ function getStateAssetsFromEe(state) {
   if (maybeStatePromise) {
     return maybeStatePromise;
   }
-  const statePromise =
-      markHasGeometryAssets(listAndProcessEeAssets(legacyStateDir + '/' + state))
-          .then((assetMap) => {
-            for (const attributes of assetMap.values()) {
-              attributes.disabled =
-                  attributes.type !== LayerType.FEATURE_COLLECTION;
-            }
-            return assetMap;
-          });
+  const statePromise = markHasGeometryAssets(
+                           listAndProcessEeAssets(legacyStateDir + '/' + state))
+                           .then((assetMap) => {
+                             for (const attributes of assetMap.values()) {
+                               attributes.disabled = attributes.type !==
+                                   LayerType.FEATURE_COLLECTION;
+                             }
+                             return assetMap;
+                           });
   stateAssetPromises.set(state, statePromise);
   return statePromise;
 }
@@ -63,14 +63,14 @@ function getDisasterAssetsFromEe(disaster) {
   if (maybePromise) {
     return maybePromise;
   }
-  const result =
-      markHasGeometryAssets(listAndProcessEeAssets(eeLegacyPathPrefix + disaster))
-          .then((assetMap) => {
-            for (const attributes of assetMap.values()) {
-              attributes.disabled = !attributes.hasGeometry;
-            }
-            return assetMap;
-          });
+  const result = markHasGeometryAssets(
+                     listAndProcessEeAssets(eeLegacyPathPrefix + disaster))
+                     .then((assetMap) => {
+                       for (const attributes of assetMap.values()) {
+                         attributes.disabled = !attributes.hasGeometry;
+                       }
+                       return assetMap;
+                     });
   disasterAssetPromises.set(disaster, result);
   return result;
 }
