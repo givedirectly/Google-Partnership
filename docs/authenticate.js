@@ -1,6 +1,13 @@
 import {CLIENT_ID} from './common_auth_utils.js';
+import {eeLegacyPathPrefix, eeLegacyPrefix} from './ee_paths.js';
+import {listEeAssets} from './ee_utils.js';
 import {showError} from './error.js';
 import {earthEngineTestTokenCookieName, firebaseTestTokenPropertyName, getValueFromLocalStorage, inProduction} from './in_test_util.js';
+import {
+  getBackupScoreAssetPath,
+  getDisaster,
+  getScoreAssetPath,
+} from './resources.js';
 import SettablePromise from './settable_promise.js';
 
 export {reloadWithSignIn, trackEeAndFirebase};
@@ -71,6 +78,7 @@ class Authenticator {
   constructor(eeInitializeCallback, needsGdUser) {
     this.eeInitializeCallback = eeInitializeCallback;
     this.needsGdUser = needsGdUser;
+    /** Promise will have boolean, true if gd user */
     this.gapiInitDone = new SettablePromise();
   }
 
@@ -88,12 +96,12 @@ class Authenticator {
             'auth2',
             () => this.gapiInitDone.setPromise(
                 gapi.auth2.init(gapiSettings).then(() => {
-                  const basicProfile = gapi.auth2.getAuthInstance()
-                                           .currentUser.get()
-                                           .getBasicProfile();
-                  if (this.needsGdUser &&
-                      (!basicProfile ||
-                       basicProfile.getEmail() !== gdUserEmail)) {
+                  const currentUser = gapi.auth2.getAuthInstance()
+                  .currentUser.get();
+                  const basicProfile = currentUser.getBasicProfile();
+                  const isGdUser = basicProfile &&
+                      basicProfile.getEmail() === gdUserEmail;
+                  if (this.needsGdUser && !isGdUser) {
                     alert(
                         'You must be signed in as ' + gdUserEmail + ' to ' +
                         'access this page. Please open in an incognito window' +
@@ -102,9 +110,10 @@ class Authenticator {
                     this.requireSignIn();
                   } else {
                     authenticateToFirebase(
-                        gapi.auth2.getAuthInstance().currentUser.get())
+                        currentUser)
                         .then(resolve, reject);
                   }
+                 return isGdUser;
                 }))));
   }
 
@@ -235,12 +244,22 @@ class Authenticator {
  * @return {Promise} Promise that completes when Firebase is logged in
  */
 function trackEeAndFirebase(taskAccumulator, needsGdUser = false) {
+  let authenticator;
   const eeInitializeCallback = () => {
     ee.data.setCloudApiEnabled(true);
     taskAccumulator.taskCompleted();
+    if (!authenticator) {
+      return;
+    }
+    authenticator.gapiInitDone.getPromise().then((isGdUser) => {
+      if (isGdUser) {
+        makeScoreAssetsWorldReadable();
+      }
+    });
   };
+
   if (inProduction()) {
-    const authenticator = new Authenticator(eeInitializeCallback, needsGdUser);
+    authenticator = new Authenticator(eeInitializeCallback, needsGdUser);
     return authenticator.start();
   } else {
     // We're inside a test. The test setup should have tokens for us that will
@@ -273,6 +292,25 @@ function trackEeAndFirebase(taskAccumulator, needsGdUser = false) {
 /** Initializes Firebase. Exposed only for use in test codepaths. */
 function initializeFirebase() {
   firebase.initializeApp(getFirebaseConfig(inProduction()));
+}
+
+function makeScoreAssetsWorldReadable() {
+  listEeAssets(eeLegacyPathPrefix + getDisaster()).then((listResult) => {
+    if (!listResult) {
+      return;
+    }
+    const paths = new Set([getScoreAssetPath(), getBackupScoreAssetPath()]);
+    let foundAssets = 0;
+    for (const {id} of listResult) {
+      if (paths.has(id)) {
+        ee.data.setAssetAcl(id, {all_users_can_read: true}, () => {});
+        foundAssets++;
+      }
+      if (foundAssets === paths.size) {
+        break;
+      }
+    }
+  });
 }
 
 /**

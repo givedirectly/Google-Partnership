@@ -2,7 +2,7 @@
 import {trackEeAndFirebase} from '../authenticate.js';
 import {getDisastersData} from '../firestore_document.js';
 import {loadNavbarWithPicker} from '../navbar.js';
-import TaskAccumulator from '../task_accumulator.js';
+import {TaskAccumulator} from '../task_accumulator.js';
 
 import {enableWhenReady, onSetDisaster, setUpScoreBoundsMap, setUpScoreSelectorTable, toggleState} from './manage_disaster.js';
 

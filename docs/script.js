@@ -5,7 +5,7 @@ import {loadNavbarWithPicker} from './navbar.js';
 import {run} from './run.js';
 import SettablePromise from './settable_promise.js';
 import {initializeSidebar} from './sidebar.js';
-import TaskAccumulator from './task_accumulator.js';
+import {TaskAccumulator} from './task_accumulator.js';
 
 // The base Google Map, Initialized lazily to ensure doc is ready
 let map = null;

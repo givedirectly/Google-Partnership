@@ -1,8 +1,9 @@
 import {eeLegacyPathPrefix, legacyStateDir} from '../ee_paths.js';
 import {convertEeObjectToPromise} from '../ee_promise_cache.js';
+import {listEeAssets} from '../ee_utils.js';
 import {LayerType} from '../firebase_layers.js';
 
-export {getDisasterAssetsFromEe, getStatesAssetsFromEe};
+export {getDisasterAssetsFromEe, getStatesAssetsFromEe, listAndProcessEeAssets};
 
 /**
  * Cache for the results of getStatesAssetsFromEe for each state.
@@ -28,7 +29,7 @@ function getStatesAssetsFromEe(states) {
       continue;
     }
     const statePromise =
-        listEeAssets(legacyStateDir + '/' + state).then((result) => {
+        listAndProcessEeAssets(legacyStateDir + '/' + state).then((result) => {
           const assetMap = new Map();
           for (const {asset, type} of result) {
             assetMap.set(
@@ -69,7 +70,7 @@ function getDisasterAssetsFromEe(disaster) {
   // For passing through promise without re-promise-ifying.
   let listEeAssetsResult;
   const result =
-      listEeAssets(eeLegacyPathPrefix + disaster)
+      listAndProcessEeAssets(eeLegacyPathPrefix + disaster)
           .then((assets) => {
             listEeAssetsResult = assets;
             const shouldDisable = [];
@@ -116,23 +117,21 @@ function getDisasterAssetsFromEe(disaster) {
  * @return {Promise<Array<{asset: string, type: LayerType}>>} Promise with an
  *     array of asset info objects.
  */
-function listEeAssets(dir) {
-  return ee.data.listAssets(dir, {}, () => {}).then(getIds);
+function listAndProcessEeAssets(dir) {
+  return listEeAssets(dir).then(getIds);
 }
 
 /**
  * Turns a listAssets call result into a list of asset info objects.
- * @param {Object} listAssetsResult result of call to ee.data.listAssets
+ * @param {Object} listResult result of call to {@link listEeAssets}
  * @return {Array<{asset: string, type: LayerType}>} asset-path -> type e.g.
  *     'users/gd/my-asset' -> 'IMAGE'
  */
-function getIds(listAssetsResult) {
+function getIds(listResult) {
   const assets = [];
-  if (listAssetsResult.assets) {
-    for (const asset of listAssetsResult.assets) {
-      const type = maybeConvertAssetType(asset);
-      if (type) assets.push({asset: asset.id, type});
-    }
+  for (const asset of listResult) {
+    const type = maybeConvertAssetType(asset);
+    if (type) assets.push({asset: asset.id, type});
   }
   return assets;
 }
