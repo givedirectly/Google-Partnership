@@ -1,7 +1,8 @@
 import {trackEeAndFirebase} from '../../../docs/authenticate.js';
-import {eeLegacyPrefix} from '../../../docs/ee_paths.js';
+import {eeLegacyPrefix, gdEePathPrefix} from '../../../docs/ee_paths.js';
 import {cypressTestPropertyName} from '../../../docs/in_test_util.js';
 import * as Resources from '../../../docs/resources.js';
+import {getDisaster} from '../../../docs/resources.js';
 import {getBackupScoreAssetPath} from '../../../docs/resources.js';
 import {getScoreAssetPath} from '../../../docs/resources.js';
 import {TaskAccumulator} from '../../../docs/task_accumulator.js';
@@ -11,8 +12,13 @@ import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
 loadScriptsBeforeForUnitTests('ee');
 
+/**
+ * Strategy in these tests is different from most other tests. We can't hope to
+ * truly use any Firebase features, since all authenticate.js does with Firebase
+ * is log in. So rather than including the real libraries, we mock everything.
+ */
 beforeEach(() => {
-  // Tell authenticate.js we're not in a test.
+  // Tell authenticate.js we're not in a test to exercise normal codepaths.
   window.localStorage.setItem(cypressTestPropertyName, '');
   const callsSecondArg = (_, callback) => callback();
   cy.wrap(cy.stub(ee.data, 'authenticateViaOauth').callsFake(callsSecondArg))
@@ -44,7 +50,7 @@ it('Tries to make score assets world-readable', () => {
   const primaryPath = eeLegacyPrefix + getScoreAssetPath();
   // Avoid non-determinism of backup asset existing by making sure it does.
   cy.stub(Resources, 'getBackupScoreAssetPath')
-      .returns('users/gd/2017-harvey/FEMA_Damage_Assessments');
+      .returns(gdEePathPrefix + getDisaster() + '/FEMA_Damage_Assessments');
   const backupPath = eeLegacyPrefix + getBackupScoreAssetPath();
   const {
     noReadPolicy,
@@ -115,6 +121,7 @@ it('Skips making readable if already readable', () => {
  * This is so gross, but it allows us to construct genuine Policy objects so
  * that we know our code can deal with them. If names change, test will break,
  * but should be able to find new ones.
+ * TODO(janakr): See what EE says about how to better construct policies.
  *
  * @return {Object} Collection of policies for use in tests
  */
@@ -190,7 +197,7 @@ function waitForTrackAndAssertNormalStubs() {
 
 /**
  * Creates a {@link sinon.SinonStub} that returns `val`.
- * @param {any} val What stub should return
+ * @param {*} val What stub should return
  * @return {sinon.SinonStub}
  */
 function stubReturns(val) {

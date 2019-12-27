@@ -328,6 +328,7 @@ function makeScoreAssetsWorldReadable() {
                       return;
                     }
                   }
+                  // TODO(janakr): Do better. See what EE says.
                   // If we got here, no roles/viewer binding. Use some
                   // Javascript magic.
                   const constructor = policy.bindings[0].constructor;
