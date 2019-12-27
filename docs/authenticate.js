@@ -2,13 +2,19 @@ import {CLIENT_ID} from './common_auth_utils.js';
 import {eeLegacyPathPrefix, eeLegacyPrefix} from './ee_paths.js';
 import {listEeAssets} from './ee_utils.js';
 import {showError} from './error.js';
-import {earthEngineTestTokenCookieName, firebaseTestTokenPropertyName, getValueFromLocalStorage, inProduction} from './in_test_util.js';
+import {
+  earthEngineTestTokenCookieName,
+  firebaseTestTokenPropertyName,
+  getTestValue,
+  getValueFromLocalStorage,
+  inProduction,
+} from './in_test_util.js';
 import {
   getBackupScoreAssetPath,
   getDisaster,
   getScoreAssetPath,
 } from './resources.js';
-import SettablePromise from './settable_promise.js';
+import {SettablePromise} from './settable_promise.js';
 
 export {reloadWithSignIn, trackEeAndFirebase};
 // For testing.
@@ -101,6 +107,7 @@ class Authenticator {
                   const basicProfile = currentUser.getBasicProfile();
                   const isGdUser = basicProfile &&
                       basicProfile.getEmail() === gdUserEmail;
+                  console.log('here', isGdUser);
                   if (this.needsGdUser && !isGdUser) {
                     alert(
                         'You must be signed in as ' + gdUserEmail + ' to ' +
