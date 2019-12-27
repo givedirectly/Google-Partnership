@@ -2,18 +2,8 @@ import {CLIENT_ID} from './common_auth_utils.js';
 import {eeLegacyPathPrefix, eeLegacyPrefix} from './ee_paths.js';
 import {listEeAssets} from './ee_utils.js';
 import {showError} from './error.js';
-import {
-  earthEngineTestTokenCookieName,
-  firebaseTestTokenPropertyName,
-  getTestValue,
-  getValueFromLocalStorage,
-  inProduction,
-} from './in_test_util.js';
-import {
-  getBackupScoreAssetPath,
-  getDisaster,
-  getScoreAssetPath,
-} from './resources.js';
+import {earthEngineTestTokenCookieName, firebaseTestTokenPropertyName, getTestValue, getValueFromLocalStorage, inProduction,} from './in_test_util.js';
+import {getBackupScoreAssetPath, getDisaster, getScoreAssetPath,} from './resources.js';
 import {SettablePromise} from './settable_promise.js';
 
 export {reloadWithSignIn, trackEeAndFirebase};
@@ -102,12 +92,11 @@ class Authenticator {
             'auth2',
             () => this.gapiInitDone.setPromise(
                 gapi.auth2.init(gapiSettings).then(() => {
-                  const currentUser = gapi.auth2.getAuthInstance()
-                  .currentUser.get();
+                  const currentUser =
+                      gapi.auth2.getAuthInstance().currentUser.get();
                   const basicProfile = currentUser.getBasicProfile();
-                  const isGdUser = basicProfile &&
-                      basicProfile.getEmail() === gdUserEmail;
-                  console.log('here', isGdUser);
+                  const isGdUser =
+                      basicProfile && basicProfile.getEmail() === gdUserEmail;
                   if (this.needsGdUser && !isGdUser) {
                     alert(
                         'You must be signed in as ' + gdUserEmail + ' to ' +
@@ -116,11 +105,9 @@ class Authenticator {
                         ' in this window after closing this alert.');
                     this.requireSignIn();
                   } else {
-                    authenticateToFirebase(
-                        currentUser)
-                        .then(resolve, reject);
+                    authenticateToFirebase(currentUser).then(resolve, reject);
                   }
-                 return isGdUser;
+                  return isGdUser;
                 }))));
   }
 
@@ -310,7 +297,7 @@ function makeScoreAssetsWorldReadable() {
     let foundAssets = 0;
     for (const {id} of listResult) {
       if (paths.has(id)) {
-        ee.data.setAssetAcl(id, {all_users_can_read: true}, () => {});
+        ee.data.setAssetAcl(eeLegacyPathPrefix + id, {all_users_can_read: true}, () => {});
         foundAssets++;
       }
       if (foundAssets === paths.size) {
