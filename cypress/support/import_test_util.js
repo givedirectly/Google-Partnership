@@ -27,6 +27,10 @@ function createTrs(num) {
   return rows;
 }
 
+function setHarvey() {
+
+}
+
 /**
  * Sets local storage to point to disaster with the given layers.
  * @param {Array<Object>} layers

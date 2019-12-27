@@ -90,6 +90,14 @@ describe('Unit tests for color function utility', () => {
     expectOneFirebaseWrite();
   });
 
+  it('switches schemas with real harvey data', () => {
+    firebase.firestore().collection('disaster-metadata').doc(
+        '2017-harvey').get().then((result) => {
+      // insufficient permissions here.
+      // console.log(result);
+    });
+  });
+
   it('switches schemas and writes data', () => {
     const layer = {
       'color-function': {

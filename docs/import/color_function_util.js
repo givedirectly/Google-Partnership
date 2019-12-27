@@ -39,13 +39,24 @@ function populateColorFunctions() {
 
   const continuousColorPicker = createColorPicker('continuous-color-picker');
   continuousColorPicker.on('change', () => setColor(continuousColorPicker));
-  const continuousPropertyPicker =
-      $(document.createElement('select'))
-          .prop('id', 'continuous-property-picker');
-  continuousPropertyPicker.on('change', () => {
-    setProperty(continuousPropertyPicker);
-    maybeDisplayMinMax(continuousPropertyPicker);
-  });
+
+  const propertyPicker =
+      $(document.createElement('select')).on('change', () => {
+        const property = propertyPicker.val();
+        setProperty(property);
+        switch(getColorFunction()['current-style']) {
+          case ColorStyle.CONTINUOUS:
+            maybeDisplayMinMax(property);
+            break;
+          case ColorStyle.DISCRETE:
+            populateDiscreteColorPickers(property);
+            break;
+          case ColorStyle.SINGLE:
+            throw Error('Tried to set property while in single color mode');
+        }
+      });
+  $('#property-picker').append(propertyPicker);
+
   const minMaxDiv =
       $(document.createElement('div'))
           .prop('id', 'min-max')
@@ -62,17 +73,9 @@ function populateColorFunctions() {
     createLabelFor(continuousColorPicker, 'base color'),
     continuousColorPicker,
     $(document.createElement('br')),
-    createLabelFor(continuousPropertyPicker, 'property'),
-    continuousPropertyPicker,
     minMaxDiv,
   ]);
 
-  const discretePropertyPicker = $(document.createElement('select'))
-                                     .prop('id', 'discrete-property-picker');
-  discretePropertyPicker.on('change', () => {
-    setProperty(discretePropertyPicker);
-    populateDiscreteColorPickers();
-  });
   const tooManyValuesWarning = $(document.createElement('p'))
                                    .prop('id', 'too-many-values')
                                    .text('Too many values to color discretely')
@@ -80,9 +83,7 @@ function populateColorFunctions() {
   const discreteColorPickers =
       $(document.createElement('ul')).prop('id', 'discrete-color-pickers');
   $('#discrete')
-      .append(
-          createLabelFor(discretePropertyPicker, 'property'),
-          discretePropertyPicker, tooManyValuesWarning, discreteColorPickers);
+      .append(tooManyValuesWarning, discreteColorPickers);
 }
 
 /**
@@ -103,23 +104,23 @@ function updateTdAndFirestore() {
 }
 
 /**
- * Updates the 'field' property which is shared by the continuous and discrete
+ *  Updates the 'field' property which is shared by the continuous and discrete
  * color schemas.
- * @param {JQuery<HTMLElement>} picker
+ * @param {string} property
+ * @return {?Promise<void>} See updateLayersInFirestore doc
  */
-function setProperty(picker) {
-  getColorFunction()['field'] = picker.val();
-  updateTdAndFirestore();
+function setProperty(property) {
+  getColorFunction()['field'] = property;
+  return updateTdAndFirestore();
 }
 
 /**
  * If there's a set property, ('field' in firestore,) shows the min-max div and
  * fills it in with the currently picked property's max and min. Else, hides
  * the min and max and returns early.
- * @param {JQuery<HTMLElement>} picker
+ * @param {string} property
  */
-function maybeDisplayMinMax(picker) {
-  const property = picker.val();
+function maybeDisplayMinMax(property) {
   const minMaxDiv = $('#min-max');
   if (!property) {
     minMaxDiv.hide();
@@ -338,24 +339,26 @@ function displaySchema(type) {
   const byPropertyDiv = $('#by-property');
   const continuousDiv = $('#continuous');
   const discreteDiv = $('#discrete');
+  const propertyPicker = $('#property-picker');
+  const property = propertyPicker.val();
   switch (type) {
     case ColorStyle.SINGLE:
       $('#single-color-picker').val(colorFunction['color']);
       $('#single').show();
       break;
     case ColorStyle.CONTINUOUS:
+      // WORKING HERE - should be able to combine these two!
+
       $('#continuous-color-picker').val(colorFunction['color']);
-      const picker = $('#continuous-property-picker');
-      populatePropertyPicker(picker);
-      maybeDisplayMinMax(picker);
+      populatePropertyPicker(propertyPicker);
+      maybeDisplayMinMax(property);
       byPropertyDiv.show();
       discreteDiv.hide();
       continuousDiv.show();
       break;
     case ColorStyle.DISCRETE:
-      const propertyPicker = $('#discrete-property-picker');
       populatePropertyPicker(propertyPicker);
-      populateDiscreteColorPickers();
+      populateDiscreteColorPickers(property);
       byPropertyDiv.show();
       continuousDiv.hide();
       discreteDiv.show();
@@ -391,7 +394,7 @@ const discreteColorPickerDataKey = 'value';
  * We add a piece of data to each of these pickers so they know what property
  * they're attached to.
  */
-function populateDiscreteColorPickers() {
+function populateDiscreteColorPickers(property) {
   const pickerList = $('#discrete-color-pickers').empty();
   const colorFunction = getColorFunction();
   if (!colorFunction['field']) {
