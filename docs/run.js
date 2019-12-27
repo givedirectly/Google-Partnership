@@ -2,11 +2,11 @@ import {getCheckBoxId, getCheckBoxRowId} from './checkbox_util.js';
 import {clickFeature, selectHighlightedFeatures} from './click_feature.js';
 import {sidebarDatasetsId, tableContainerId} from './dom_constants.js';
 import {drawTable} from './draw_table.js';
+import {AssetNotFoundError, getEePromiseForFeatureCollection} from './ee_promise_cache.js';
 import {showError} from './error.js';
 import {getLinearGradient} from './import/color_function_util.js';
 import {addLayer, addNullLayer, addScoreLayer, scoreLayerName, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from './layer_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
-import {convertEeObjectToPromise} from './map_util.js';
 import {initializeAndProcessUserRegions, userFeaturesCheckboxRowId} from './polygon_draw.js';
 import {setUserFeatureVisibility} from './popup.js';
 import {processJoinedData} from './process_joined_data.js';
@@ -15,11 +15,8 @@ import {setUpToggles} from './update.js';
 
 export {createAndDisplayJoinedData, run};
 // For testing.
-export {drawTableAndSetUpHandlers, setScorePromises};
+export {drawTableAndSetUpHandlers, resolveScoreAsset};
 
-// Promise for score asset. After it's first resolved, we never need to download
-// it from EarthEngine again.
-let scorePromise;
 const scalingFactor = 100;
 
 /**
@@ -32,30 +29,38 @@ const scalingFactor = 100;
 let resolvedScoreAsset;
 
 /**
- * Sets {@link scorePromise} to the {@link ee.FeatureCollection} with
- * id {@link getScoreAssetPath}, or, if that does not exist, with id
- * {@link getBackupScoreAssetPath}.  Sets {@link resolvedScoreAsset} to the id
- * of the found collection.
+ * Seeds {@link Promise} cache with `eeAsset`, and returns {@link Promise} whose
+ * value is `eeAsset`. Caller can then wait on returned {@link Promise} to see
+ * if `eeAsset` is valid asset.
+ * @param {string} eeAsset
+ * @return {Promise<string>} {@link Promise} with `eeAsset` once {@link
+ *     ee.FeatureCollection} with path `eeAsset` has been downloaded
+ */
+function createPromiseWithPathIfSuccessful(eeAsset) {
+  return getEePromiseForFeatureCollection(eeAsset).then(() => eeAsset);
+}
+
+/**
+ * Sets {@link resolvedScoreAsset} to {@link getScoreAssetPath}, or, if that
+ * does not exist as an EarthEngine asset, to {@link getBackupScoreAssetPath}.
+ * The returned {@link Promise} throws if neither exists.
  *
  * @return {Promise<string>} Promise with the name of the score asset found,
  *     only needed by tests.
  */
-function setScorePromises() {
-  scorePromise =
-      convertEeObjectToPromise(ee.FeatureCollection(getScoreAssetPath()))
-          .catch((err) => {
-            if (err.endsWith('not found.')) {
-              showError(
-                  'Primary score asset not found. Checking to see if ' +
-                      'backup exists',
-                  null);
-              return convertEeObjectToPromise(
-                  ee.FeatureCollection(getBackupScoreAssetPath()));
-            } else {
-              throw err;
-            }
-          });
-  resolvedScoreAsset = scorePromise.then((collection) => collection.id);
+function resolveScoreAsset() {
+  resolvedScoreAsset =
+      createPromiseWithPathIfSuccessful(getScoreAssetPath()).catch((err) => {
+        if (err instanceof AssetNotFoundError) {
+          showError(
+              'Primary score asset not found. Checking to see if ' +
+                  'backup exists',
+              null);
+          return createPromiseWithPathIfSuccessful(getBackupScoreAssetPath());
+        } else {
+          throw err;
+        }
+      });
   return resolvedScoreAsset;
 }
 
@@ -71,7 +76,7 @@ function setScorePromises() {
  */
 function run(map, firebaseAuthPromise, disasterMetadataPromise) {
   setMapToDrawLayersOn(map);
-  setScorePromises();
+  resolveScoreAsset();
   const initialTogglesValuesPromise =
       setUpToggles(disasterMetadataPromise, map);
   createAndDisplayJoinedData(map, initialTogglesValuesPromise);
@@ -96,7 +101,8 @@ function createAndDisplayJoinedData(map, initialTogglesValuesPromise) {
   google.maps.event.removeListener(mapSelectListener);
   google.maps.event.removeListener(featureSelectListener);
   const processedData = processJoinedData(
-      scorePromise, scalingFactor, initialTogglesValuesPromise);
+      resolvedScoreAsset.then(getEePromiseForFeatureCollection), scalingFactor,
+      initialTogglesValuesPromise);
   addScoreLayer(processedData);
   maybeCheckScoreCheckbox();
   drawTableAndSetUpHandlers(processedData, map);

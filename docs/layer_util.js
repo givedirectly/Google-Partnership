@@ -2,10 +2,10 @@ import {getCheckBoxId, getCheckBoxRowId} from './checkbox_util.js';
 import {CompositeImageMapType} from './composite_image_map_type.js';
 import {mapContainerId} from './dom_constants.js';
 import {terrainStyle} from './earth_engine_asset.js';
+import {AssetNotFoundError, getEePromiseForFeatureCollection, transformEarthEngineFailureMessage} from './ee_promise_cache.js';
 import {createError, showError} from './error.js';
 import {colorMap, createStyleFunction, LayerType} from './firebase_layers.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
-import {convertEeObjectToPromise} from './map_util.js';
 
 export {
   addLayer,
@@ -238,7 +238,7 @@ function addImageLayer(map, imageAsset, layer) {
               }
             } else {
               layerDisplayData.displayed = false;
-              reject(failure);
+              reject(transformEarthEngineFailureMessage(failure));
             }
             layerDisplayData.pendingPromise = null;
           },
@@ -449,9 +449,6 @@ function showColor(color) {
   return color ? color : colorMap.get('black');
 }
 
-// 250M objects in a FeatureCollection ought to be enough for anyone.
-const maxNumFeaturesExpected = 250000000;
-
 /**
  * Convenience wrapper for addLayerFromGeoJsonPromise/addImageLayer
  * @param {Object} layer Data for layer coming from Firestore
@@ -469,8 +466,7 @@ function addLayer(layer, map) {
     case LayerType.FEATURE_COLLECTION:
       const layerName = layer['ee-name'];
       return addLayerFromGeoJsonPromise(
-          convertEeObjectToPromise(
-              ee.FeatureCollection(layerName).toList(maxNumFeaturesExpected)),
+          getEePromiseForFeatureCollection(layerName),
           DeckParams.fromLayer(layer), layer['index'], layer['display-name']);
     case LayerType.KML:
       return addKmlLayers(layer, map);
@@ -640,17 +636,25 @@ function wrapPromiseLoadingAware(promise, layerInfoForErrors) {
   const {index, 'display-name': displayName} = layerInfoForErrors;
   return promise
       .catch((err) => {
-        const notFound = true;
+        const notFound = err instanceof AssetNotFoundError;
+        const message = err.message ? err.message : err;
         showError(
-            'Error with layer ' + displayName + ', ' + err,
-            notFound ? 'EarthEngine asset for ' + displayName + ' not found' : 'Error loading layer ' + displayName);
+            'Error with layer ' + displayName + ', ' + message,
+            notFound ? 'EarthEngine asset for ' + displayName + ' not found' :
+                       'Error loading layer ' + displayName);
+        if (err instanceof Error) {
+          // Give full stack trace if actually an error.
+          console.error(err);
+        }
         $('#' + getCheckBoxRowId(index))
             .prop(
                 'title',
-                notFound ? 'EarthEngine asset not found. If you ' +
-                'believe the layer is there, try refreshing the page' :
-                'Error showing layer. If you believe the layer is there, try ' +
-                    'refreshing the page (Error message: ' + err + ')')
+                notFound ?
+                    'EarthEngine asset not found. If you ' +
+                        'believe it is there, try refreshing the page' :
+                    'Error showing layer. If you believe the layer is there, ' +
+                        'try refreshing the page (Error message: ' + message +
+                        ')')
             .css('text-decoration', 'line-through');
         $('#' + getCheckBoxId(index))
             .prop('checked', false)

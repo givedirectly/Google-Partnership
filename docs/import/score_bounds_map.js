@@ -1,5 +1,5 @@
 import {applyMinimumBounds, createBasicMap} from '../basic_map.js';
-import {convertEeObjectToPromise} from '../map_util.js';
+import {convertEeObjectToPromise} from '../ee_promise_cache.js';
 
 export {ScoreBoundsMap};
 
