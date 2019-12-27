@@ -76,7 +76,12 @@ function getDisasterAssetsFromEe(disaster) {
  * Attaches geometry info to the given listing. Only
  * {@link ee.FeatureCollection} assets can have geometries, and an asset will
  * have the `hasGeometry` attribute if its {@link ee.Geometry} is non-null and
- * has a non-empty coordinates list.
+ * has a non-empty coordinates list. We only check the first element of each
+ * {@link ee.FeatureCollection}. Could be bad if we ever see a data set with a
+ * mix of empty and non-empty geometries.
+ *
+ * Census data returns an empty coords {@link ee.Geometry.MultiPoint} geometry
+ * instead of a true null geometry. So we check for that.
  * @param {Promise<Array<{asset: string, type: LayerType}>>} listingPromise
  *     See {@link listEeAssets}
  * @return {Map<string, {type: LayerType, hasGeometry: boolean}>}
@@ -90,12 +95,10 @@ function markHasGeometryAssets(listingPromise) {
         const hasGeometry = [];
         for (const {asset, type} of assets) {
           if (type === LayerType.FEATURE_COLLECTION) {
-            // census data returns an empty coords multipoint
-            // geometry instead of a true null geometry. So
-            // we check for that. Could be bad if we ever see
-            // a data set with a mix of empty and non-empty
-            // geometries.
             const geometry = ee.FeatureCollection(asset).first().geometry();
+            // For some reason, ee.Feature(null, {}).geometry() returns null,
+            // but ee.Feature(null, {}).geometry().coordinates() returns []. We
+            // don't rely on this, and check null and empty separately.
             // Null and empty list are false.
             hasGeometry.push(ee.Algorithms.If(
                 geometry, ee.Algorithms.If(geometry.coordinates(), true, false),
