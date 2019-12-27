@@ -25,12 +25,10 @@ function getStateAssetsFromEe(state) {
   }
   const statePromise =
       markHasGeometryAssets(listEeAssets(legacyStateDir + '/' + state))
-          .then((result) => {
-            const assetMap = new Map();
-            for (const [asset, attributes] of result) {
+          .then((assetMap) => {
+            for (const attributes of assetMap.values()) {
               attributes.disabled =
                   attributes.type !== LayerType.FEATURE_COLLECTION;
-              assetMap.set(asset, attributes);
             }
             return assetMap;
           });
@@ -54,8 +52,8 @@ const disasterAssetPromises = new Map();
  * De-duplicates requests, so retrying before a fetch completes won't start a
  * new fetch.
  * @param {string} disaster disaster in the form name-year
- * @return {Promise<Map<string, {type: number, disabled: boolean}>>} Returns
- *     a promise containing the map of asset to info for the given disaster.
+ * @return {Promise<Map<string, {type: LayerType, disabled: boolean}>>} A
+ *     promise containing the map of asset to info for the given disaster.
  */
 function getDisasterAssetsFromEe(disaster) {
   const maybePromise = disasterAssetPromises.get(disaster);
@@ -64,9 +62,12 @@ function getDisasterAssetsFromEe(disaster) {
   }
   const result =
       markHasGeometryAssets(listEeAssets(eeLegacyPathPrefix + disaster))
-          .then(
-              (assetMap) => new Map(Array.from(
-                  assetMap, ([k, v]) => [k, {disabled: !v.hasGeometry}])));
+          .then((assetMap) => {
+            for (const attributes of assetMap.values()) {
+              attributes.disabled = !attributes.hasGeometry;
+            }
+            return assetMap;
+          });
   disasterAssetPromises.set(disaster, result);
   return result;
 }
