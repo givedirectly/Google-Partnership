@@ -42,19 +42,25 @@ describe('Unit tests for manage_layers page', () => {
           'assets': [
             {id: 'asset/with/geometry', type: 'TABLE'},
             {id: 'asset/with/null/geometry', type: 'TABLE'},
+            {id: 'asset/with/empty/geometry', type: 'TABLE'},
           ],
         }));
     const withGeometry =
         ee.FeatureCollection([ee.Feature(ee.Geometry.Point([1, 1]), {})]);
     const withNullGeometry = ee.FeatureCollection([ee.Feature(null, {})]);
+    const withEmptyGeometry =
+        ee.FeatureCollection([ee.Feature(ee.Geometry.MultiPoint([]), {})]);
     const featureCollectionStub = cy.stub(ee, 'FeatureCollection');
     featureCollectionStub.withArgs('asset/with/geometry').returns(withGeometry);
     featureCollectionStub.withArgs('asset/with/null/geometry')
         .returns(withNullGeometry);
+    featureCollectionStub.withArgs('asset/with/empty/geometry')
+        .returns(withEmptyGeometry);
     cy.wrap(getAssetsAndPopulateDisasterPicker(disaster)).then(() => {
       const assets = disasterAssets.get(disaster);
       expect(assets.get('asset/with/geometry').disabled).to.be.false;
       expect(assets.get('asset/with/null/geometry').disabled).to.be.true;
+      expect(assets.get('asset/with/empty/geometry').disabled).to.be.true;
     });
   });
 

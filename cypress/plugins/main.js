@@ -7,7 +7,7 @@
  * Note that even though this file appears to be written in ES6 style, it is
  * transpiled using Babel, so there may be subtle language incompatibilities.
  * Errors can usually be fixed by searching them and adding the necessary
- * Babel plugin to .babelrc.
+ * Babel plugin to the section in plugins/index.js.
  *
  * More about Cypress plugins here: https://on.cypress.io/plugins-guide
  */
