@@ -2,7 +2,9 @@ import {eeLegacyPathPrefix, legacyStateDir} from '../ee_paths.js';
 import {convertEeObjectToPromise} from '../ee_promise_cache.js';
 import {LayerType} from '../firebase_layers.js';
 
-export {getDisasterAssetsFromEe, getStateAssetsFromEe};
+import {listEeAssets} from './ee_utils.js';
+
+export {getDisasterAssetsFromEe, getStateAssetsFromEe, listAndProcessEeAssets};
 
 /**
  * Cache for the results of getStateAssetsFromEe.
@@ -24,15 +26,15 @@ function getStateAssetsFromEe(state) {
   if (maybeStatePromise) {
     return maybeStatePromise;
   }
-  const statePromise =
-      markHasGeometryAssets(listEeAssets(legacyStateDir + '/' + state))
-          .then((assetMap) => {
-            for (const attributes of assetMap.values()) {
-              attributes.disabled =
-                  attributes.type !== LayerType.FEATURE_COLLECTION;
-            }
-            return assetMap;
-          });
+  const statePromise = markHasGeometryAssets(
+                           listAndProcessEeAssets(legacyStateDir + '/' + state))
+                           .then((assetMap) => {
+                             for (const attributes of assetMap.values()) {
+                               attributes.disabled = attributes.type !==
+                                   LayerType.FEATURE_COLLECTION;
+                             }
+                             return assetMap;
+                           });
   stateAssetPromises.set(state, statePromise);
   return statePromise;
 }
@@ -62,14 +64,14 @@ function getDisasterAssetsFromEe(disaster) {
   if (maybePromise) {
     return maybePromise;
   }
-  const result =
-      markHasGeometryAssets(listEeAssets(eeLegacyPathPrefix + disaster))
-          .then((assetMap) => {
-            for (const attributes of assetMap.values()) {
-              attributes.disabled = !attributes.hasGeometry;
-            }
-            return assetMap;
-          });
+  const result = markHasGeometryAssets(
+                     listAndProcessEeAssets(eeLegacyPathPrefix + disaster))
+                     .then((assetMap) => {
+                       for (const attributes of assetMap.values()) {
+                         attributes.disabled = !attributes.hasGeometry;
+                       }
+                       return assetMap;
+                     });
   disasterAssetPromises.set(disaster, result);
   return result;
 }
@@ -128,23 +130,21 @@ function markHasGeometryAssets(listingPromise) {
  * @return {Promise<Array<{asset: string, type: LayerType}>>} Promise with an
  *     array of asset info objects.
  */
-function listEeAssets(dir) {
-  return ee.data.listAssets(dir, {}, () => {}).then(getIds);
+function listAndProcessEeAssets(dir) {
+  return listEeAssets(dir).then(getIds);
 }
 
 /**
  * Turns a listAssets call result into a list of asset info objects.
- * @param {Object} listAssetsResult result of call to ee.data.listAssets
+ * @param {Object} listResult result of call to {@link listEeAssets}
  * @return {Array<{asset: string, type: LayerType}>} asset-path -> type e.g.
  *     'users/gd/my-asset' -> 'IMAGE'
  */
-function getIds(listAssetsResult) {
+function getIds(listResult) {
   const assets = [];
-  if (listAssetsResult.assets) {
-    for (const asset of listAssetsResult.assets) {
-      const type = maybeConvertAssetType(asset);
-      if (type) assets.push({asset: asset.id, type});
-    }
+  for (const asset of listResult) {
+    const type = maybeConvertAssetType(asset);
+    if (type) assets.push({asset: asset.id, type});
   }
   return assets;
 }
