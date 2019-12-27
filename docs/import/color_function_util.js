@@ -24,6 +24,7 @@ function populateColorFunctions() {
     $('#' + typeAsString + '-radio')
         .on('change', () => switchSchema(colorStyle)));
   $('#property-radio').on('change', () => {
+    console.log('changing');
     const lastByPropertyType =
         colorStyleTypeStrings.get(getColorFunction()['last-by-property-style']);
     $('#' + lastByPropertyType + '-radio')

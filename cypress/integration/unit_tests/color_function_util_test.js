@@ -14,9 +14,16 @@ describe('Unit tests for color function utility', () => {
   before(() => {
     colorFunctionEditor =
         $(document.createElement('div')).prop('id', 'color-fxn-editor').hide();
-    colorFunctionEditor.append(
-        makeTypeDiv('single'), makeTypeDiv('continuous'),
-        makeTypeDiv('discrete'));
+    const colorTypeRadios = $(document.createElement('div'));
+    colorTypeRadios.append(makeRadio('SINGLE-radio', 'property-or-single'),
+      makeRadio('property-radio', 'property-or-single'));
+    colorFunctionEditor.append(colorTypeRadios);
+    const byPropertyDiv = makeTypeDiv('by-property', 'color-type-div');
+    byPropertyDiv.append(makeRadio('CONTINUOUS-radio', 'by-property-type'),
+        makeRadio('DISCRETE-radio', 'by-property-type'),
+        makeTypeDiv('continuous'), makeTypeDiv('discrete'));
+    colorFunctionEditor.append(makeTypeDiv('single', 'color-type-div'),
+        byPropertyDiv);
     $(document.body).append(colorFunctionEditor);
 
     populateColorFunctions();
@@ -85,6 +92,7 @@ describe('Unit tests for color function utility', () => {
     const layer = {
       'color-function': {
         'current-style': 2,
+        'last-by-property-style': 0,
         'columns': {
           'wings': {'min': 0, 'max': 2, 'values': [0, 1, 2]},
           'legs': {'min': 0, 'max': 100, 'values': [0, 2, 4, 8, 100]},
@@ -109,8 +117,12 @@ describe('Unit tests for color function utility', () => {
     expect(td.children().first().css('background-color')).to.equal('red');
 
     // switch to continuous
-    $('#CONTINUOUS-radio').trigger('change');
+    const propertyRadio = $('#property-radio')
+    propertyRadio.trigger('change');
     expectOneFirebaseWrite();
+    const continuousRadio = $('#CONTINUOUS-radio');
+    expect(continuousRadio.prop('checked')).to.be.true;
+    expect(continuousRadio.prop('style').display).to.equal('');
     const continuousPropertyPicker = $('#continuous-property-picker');
     expect(getColorFunction()['current-style']).to.equal(0);
     expect(getColorFunction()['color']).to.equal('red');
@@ -123,11 +135,12 @@ describe('Unit tests for color function utility', () => {
     expect($('#continuous-color-picker').val()).to.equal('red');
 
     // switch to discrete
-    $('#DISCRETE-radio').trigger('change');
+    const discreteRadio = $('#DISCRETE-radio')
+    discreteRadio.trigger('change');
     expectOneFirebaseWrite();
     const discretePropertyPicker = $('#discrete-property-picker');
     expect(getColorFunction()['current-style']).to.equal(1);
-    expect(td.children().length).to.equal(0);
+    expect(td.children().length).to.equal(1);
     expect(getColorFunction()['field']).to.equal('wings');
     expect(discretePropertyPicker.val()).to.equal('wings');
     const discreteColorPickerList = $('#discrete-color-pickers');
@@ -160,42 +173,49 @@ describe('Unit tests for color function utility', () => {
     expect(td.children().length).to.equal(2);
     expect(td.children().eq(1).css('background-color')).to.equal('blue');
 
+    // switch to single and back to check state was saved
+    $('#SINGLE-radio').trigger('change');
+    expectOneFirebaseWrite();
+    propertyRadio.trigger('change');
+    expectOneFirebaseWrite();
+    expect(discreteRadio.prop('checked')).to.be.true;
+
     td.trigger('click');
     expect(colorFunctionEditor.is(':visible')).to.be.false;
     expect(writeToFirebaseStub).to.not.be.called;
   });
-});
 
-it('creates the correct linear gradients', () => {
-  const layer1 = {
-    'color-function': {
-      'current-style': 0,
-      'color': 'yellow',
-    },
-  };
+  it('creates the correct linear gradients', () => {
+    const layer1 = {
+      'color-function': {
+        'current-style': 0,
+        'color': 'yellow',
+      },
+    };
 
-  const layer2 = {
-    'color-function': {
-      'current-style': 1,
-      'colors': ['yellow', 'red'],
-    },
-  };
+    const layer2 = {
+      'color-function': {
+        'current-style': 1,
+        'colors': ['yellow', 'red'],
+      },
+    };
 
-  const layer3 = {
-    'color-function': {
-      'current-style': 2,
-      'color': 'blue',
-    },
-  };
-  const layer1Gradient = 'linear-gradient(to right, white, yellow)';
-  expect(getLinearGradient(layer1['color-function'])).to.equal(layer1Gradient);
+    const layer3 = {
+      'color-function': {
+        'current-style': 2,
+        'color': 'blue',
+      },
+    };
+    const layer1Gradient = 'linear-gradient(to right, white, yellow)';
+    expect(getLinearGradient(layer1['color-function'])).to.equal(layer1Gradient);
 
-  const layer2Gradient =
-      'linear-gradient(to right, yellow 0%, yellow 50%, red 50%, red 100%)';
-  expect(getLinearGradient(layer2['color-function'])).to.equal(layer2Gradient);
+    const layer2Gradient =
+        'linear-gradient(to right, yellow 0%, yellow 50%, red 50%, red 100%)';
+    expect(getLinearGradient(layer2['color-function'])).to.equal(layer2Gradient);
 
-  const layer3Gradient = 'linear-gradient(to right, blue, blue)';
-  expect(getLinearGradient(layer3['color-function'])).to.equal(layer3Gradient);
+    const layer3Gradient = 'linear-gradient(to right, blue, blue)';
+    expect(getLinearGradient(layer3['color-function'])).to.equal(layer3Gradient);
+  });
 });
 
 /**
@@ -230,11 +250,28 @@ function getColorFunction() {
 /**
  * Makes one of the type divs (mimicking html in manage_layers.html)
  * @param {string} id
+ * @param {string} className
  * @return {JQuery<HTMLDivElement>}
  */
-function makeTypeDiv(id) {
+function makeTypeDiv(id, className) {
   return $(document.createElement('div'))
-      .prop('id', id)
-      .hide()
-      .addClass('color-type-div');
+      .attr({
+        'id': id,
+        'hidden': true,
+      })
+      .addClass(className);
+}
+
+/**
+ * Makes a radio (mimicking html in manage-layers.html)
+ * @param {string} id
+ * @param {string} name
+ * @return {JQuery<HTMLInputElement>}
+ */
+function makeRadio(id, name) {
+  return $(document.createElement('input')).attr({
+    'id': id,
+    'name': name,
+    'type': 'radio',
+  });
 }
