@@ -119,7 +119,7 @@ describe('Unit tests for color function utility', () => {
     expect(td.children().first().css('background-color')).to.equal('red');
 
     // switch to continuous
-    const propertyRadio = $('#property-radio')
+    const propertyRadio = $('#property-radio');
     propertyRadio.trigger('change');
     expectOneFirebaseWrite();
     const continuousRadio = $('#CONTINUOUS-radio');
@@ -137,7 +137,7 @@ describe('Unit tests for color function utility', () => {
     expect($('#continuous-color-picker').val()).to.equal('red');
 
     // switch to discrete
-    const discreteRadio = $('#DISCRETE-radio')
+    const discreteRadio = $('#DISCRETE-radio');
     discreteRadio.trigger('change');
     expectOneFirebaseWrite();
     const discretePropertyPicker = $('#discrete-property-picker');
