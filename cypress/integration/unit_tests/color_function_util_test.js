@@ -15,15 +15,17 @@ describe('Unit tests for color function utility', () => {
     colorFunctionEditor =
         $(document.createElement('div')).prop('id', 'color-fxn-editor').hide();
     const colorTypeRadios = $(document.createElement('div'));
-    colorTypeRadios.append(makeRadio('SINGLE-radio', 'property-or-single'),
-      makeRadio('property-radio', 'property-or-single'));
+    colorTypeRadios.append(
+        makeRadio('SINGLE-radio', 'property-or-single'),
+        makeRadio('property-radio', 'property-or-single'));
     colorFunctionEditor.append(colorTypeRadios);
     const byPropertyDiv = makeTypeDiv('by-property', 'color-type-div');
-    byPropertyDiv.append(makeRadio('CONTINUOUS-radio', 'by-property-type'),
+    byPropertyDiv.append(
+        makeRadio('CONTINUOUS-radio', 'by-property-type'),
         makeRadio('DISCRETE-radio', 'by-property-type'),
         makeTypeDiv('continuous'), makeTypeDiv('discrete'));
-    colorFunctionEditor.append(makeTypeDiv('single', 'color-type-div'),
-        byPropertyDiv);
+    colorFunctionEditor.append(
+        makeTypeDiv('single', 'color-type-div'), byPropertyDiv);
     $(document.body).append(colorFunctionEditor);
 
     populateColorFunctions();
@@ -207,14 +209,17 @@ describe('Unit tests for color function utility', () => {
       },
     };
     const layer1Gradient = 'linear-gradient(to right, white, yellow)';
-    expect(getLinearGradient(layer1['color-function'])).to.equal(layer1Gradient);
+    expect(getLinearGradient(layer1['color-function']))
+        .to.equal(layer1Gradient);
 
     const layer2Gradient =
         'linear-gradient(to right, yellow 0%, yellow 50%, red 50%, red 100%)';
-    expect(getLinearGradient(layer2['color-function'])).to.equal(layer2Gradient);
+    expect(getLinearGradient(layer2['color-function']))
+        .to.equal(layer2Gradient);
 
     const layer3Gradient = 'linear-gradient(to right, blue, blue)';
-    expect(getLinearGradient(layer3['color-function'])).to.equal(layer3Gradient);
+    expect(getLinearGradient(layer3['color-function']))
+        .to.equal(layer3Gradient);
   });
 });
 
