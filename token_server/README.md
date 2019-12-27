@@ -17,10 +17,12 @@ change the hosting location for this server, just update that variable.
 * Run `gcloud app deploy --project mapping-crisis` from this directory
 (`token_server/`). If you are not already authenticated in gcloud, it will give
 you a command to run, probably `gcloud auth login`. Run it, logging in as
-`gd-earthengine-user@givedirectly.org` and try again. The token server should now
-be running successfully at https://mapping-crisis.appspot.com (note that directly
-accessing that URL is not expected to work, since appropriate headers have to be
-attached to the request).
+`gd-earthengine-user@givedirectly.org` and try again.
+
+  The token server should now be running successfully at
+  https://mapping-crisis.appspot.com (note that directly accessing that URL is
+  not expected to work, since appropriate headers have to be attached to the
+  request).
 
 * The server should continue running forever, but will use few/no resources
 unless it is getting traffic.
