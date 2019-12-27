@@ -1,5 +1,5 @@
+import {convertEeObjectToPromise} from '../ee_promise_cache.js';
 import {disasterDocumentReference} from '../firestore_document.js';
-import {convertEeObjectToPromise} from '../map_util.js';
 
 export {computeAndSaveBounds, saveBounds};
 

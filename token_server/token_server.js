@@ -2,9 +2,17 @@ import * as GoogleAuth from 'google-auth-library';
 import {createServer} from 'http';
 // TODO(janakr): this is a pretty random package. Maybe find a more popular one.
 import parseBody from 'urlencoded-body-parser';
-import {CLIENT_ID} from '../docs/common_auth_utils.js';
 
 import {generateEarthEngineToken} from './ee_token_creator.js';
+
+// TODO(janakr): Seems impossible to deploy to Google App Engine with
+//  a package that is in a sibling directory. That prevents us from sharing this
+//  line with docs/authenticate.js. Filed an internal bug.
+//  https://github.com/janakdr/nodejs-docs-samples/pull/1 has a minimal repro.
+// The client ID from
+// https://console.cloud.google.com/apis/credentials?project=mapping-crisis
+const CLIENT_ID =
+    '38420505624-boghq4foqi5anc9kc5c5tsq82ar9k4n0.apps.googleusercontent.com';
 
 const RESPONSE_HEADERS = {
   'Content-type': 'text/plain',
@@ -17,6 +25,16 @@ const ONE_MINUTE_IN_MILLISECONDS = 60 * 1000;
 // needs one. Tokens last 1 hour, user code regenerates with 5 minutes left on
 // token.
 const TIME_BEFORE_REGENERATION = 40 * ONE_MINUTE_IN_MILLISECONDS;
+
+const allowedOrigins = new Set(['https://givedirectly.github.io']);
+
+if (!process.env.GAE_APPLICATION) {
+  // When running locally, allow requests from localhost.
+  allowedOrigins.add('http://localhost:8080');
+}
+
+// Google App Engine tells us the port to listen to.
+const port = process.env.PORT || 9080;
 
 /**
  * Result of most recent call to {@link generateEarthEngineToken}. Because there
@@ -59,8 +77,7 @@ const client = new GoogleAuth.default.OAuth2Client(CLIENT_ID);
  */
 createServer(async (req, res) => {
   const origin = req.headers['origin'];
-  if (origin !== 'http://localhost:8080' &&
-      origin !== 'https://givedirectly.github.io') {
+  if (!allowedOrigins.has(origin)) {
     fail(res);
     return;
   }
@@ -80,7 +97,7 @@ createServer(async (req, res) => {
   res.writeHead(200, headers);
   res.write(JSON.stringify(data));
   res.end();
-}).listen(9080);
+}).listen(port);
 
 /**
  * Returns a generic failure to the client.

@@ -1,5 +1,5 @@
+import * as EePromiseCache from '../../docs/ee_promise_cache.js';
 import {disasterData} from '../../docs/import/manage_layers_lib';
-import * as MapUtil from '../../docs/map_util.js';
 import * as Toast from '../../docs/toast.js';
 
 export {
@@ -96,12 +96,15 @@ function getConvertEeObjectToPromiseRelease() {
   const convertFinishLatch = new Promise((resolve) => releaseLatch = resolve);
   let startFunction = null;
   const startPromise = new Promise((resolve) => startFunction = resolve);
-  const oldConvert = MapUtil.convertEeObjectToPromise;
-  MapUtil.convertEeObjectToPromise = (eeObject) => {
-    MapUtil.convertEeObjectToPromise = oldConvert;
+  const oldConvert = EePromiseCache.convertEeObjectToPromise;
+  EePromiseCache.convertEeObjectToPromise = (eeObject) => {
+    EePromiseCache.convertEeObjectToPromise = oldConvert;
     startFunction();
     return Promise
-        .all([MapUtil.convertEeObjectToPromise(eeObject), convertFinishLatch])
+        .all([
+          EePromiseCache.convertEeObjectToPromise(eeObject),
+          convertFinishLatch,
+        ])
         .then((results) => results[0]);
   };
   return {startPromise, releaseLatch};

@@ -1,6 +1,7 @@
+import {AssetNotFoundError} from '../../../docs/ee_promise_cache.js';
 import * as Error from '../../../docs/error.js';
 import * as Resources from '../../../docs/resources.js';
-import {setScorePromises} from '../../../docs/run.js';
+import {resolveScoreAsset} from '../../../docs/run.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
 const waitForPromiseToResolve = 6000;
@@ -16,7 +17,7 @@ describe('Unit test for run.js', () => {
     const backupStub = cy.stub(Resources, 'getBackupScoreAssetPath');
     // TODO(https://github.com/cypress-io/cypress/issues/5980): Remove
     cy.wait(waitForPromiseToResolve);
-    cy.wrap(setScorePromises()).then((result) => {
+    cy.wrap(resolveScoreAsset()).then((result) => {
       expect(result).to.equal(assetName);
       expect(backupStub).to.not.be.called;
       expect(errorStub).to.not.be.called;
@@ -30,7 +31,7 @@ describe('Unit test for run.js', () => {
     cy.stub(Resources, 'getBackupScoreAssetPath').returns(backupName);
     // TODO(https://github.com/cypress-io/cypress/issues/5980): Remove
     cy.wait(waitForPromiseToResolve);
-    cy.wrap(setScorePromises()).then((result) => {
+    cy.wrap(resolveScoreAsset()).then((result) => {
       expect(result).to.equal(backupName);
       expect(errorStub).to.be.calledOnce;
     });
@@ -41,10 +42,12 @@ describe('Unit test for run.js', () => {
     cy.stub(Resources, 'getScoreAssetPath')
         .returns('nonexistent/feature/collection');
     cy.stub(Resources, 'getBackupScoreAssetPath').returns('another/bad/asset');
-    const promise = setScorePromises().then(
+    const promise = resolveScoreAsset().then(
         (result) => assert.fail(null, null, 'unexpected: ' + result), (err) => {
-          expect(err).to.contain('another/bad/asset');
-          expect(err).to.contain('not found.');
+          expect(err).to.be.instanceOf(AssetNotFoundError);
+          expect(err).to.have.property('message').that.contains(
+              'another/bad/asset');
+          expect(err).to.have.property('message').that.contains('not found.');
         });
     // TODO(https://github.com/cypress-io/cypress/issues/5980): Remove
     cy.wait(waitForPromiseToResolve);

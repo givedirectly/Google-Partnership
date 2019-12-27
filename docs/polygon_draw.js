@@ -1,6 +1,9 @@
+import {reloadWithSignIn} from './authenticate.js';
+import {getCheckBoxRowId, partiallyHandleBadRowAndReturnCheckbox} from './checkbox_util.js';
 import {mapContainerId, writeWaiterId} from './dom_constants.js';
-import {createError} from './error.js';
+import {createError, showError} from './error.js';
 import {getFirestoreRoot} from './firestore_document.js';
+import {POLYGON_HELP_URL} from './help.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {latLngToGeoPoint, polygonToGeoPointArray, transformGeoPointArrayToLatLng} from './map_util.js';
 import {createPopup, isMarker, setUpPopup} from './popup.js';
@@ -8,14 +11,14 @@ import {snapPopTag, totalPopTag} from './property_names.js';
 import {getScoreAssetPath} from './resources.js';
 import {userRegionData} from './user_region_data.js';
 
-// StoredShapeData is only for testing.
-export {
-  displayCalculatedData,
-  initializeAndProcessUserRegions,
-  setUpPolygonDrawing,
-};
+export {displayCalculatedData, initializeAndProcessUserRegions};
+
 // For testing.
-export {StoredShapeData, transformGeoPointArrayToLatLng, userShapes};
+export {
+  StoredShapeData,
+  transformGeoPointArrayToLatLng,
+  userShapes,
+};
 
 let damageAsset = null;
 
@@ -324,39 +327,66 @@ const appearance = {
  * Create a Google Maps Drawing Manager for drawing polygons and markers.
  *
  * @param {google.maps.Map} map
- * @param {Promise<any>} firebasePromise Promise that will complete when
- *     Firebase authentication is finished
- * @return {Promise} Promise that contains DrawingManager when complete
+ * @return {google.maps.DrawingManager}
  */
-function setUpPolygonDrawing(map, firebasePromise) {
-  setUpPopup();
-
-  return firebasePromise.then(() => {
-    const drawingManager = new google.maps.drawing.DrawingManager({
-      drawingControl: true,
-      drawingControlOptions: {drawingModes: ['marker', 'polygon']},
-      polygonOptions: appearance,
-    });
-
-    drawingManager.addListener('overlaycomplete', (event) => {
-      const feature = event.overlay;
-      if (!isMarker(feature) && feature.getPath().length < 3) {
-        // https://b.corp.google.com/issues/35821407 (WNF) means that users will
-        // not be able to later edit the polygon to have fewer than three
-        // vertices, so checking here is sufficient to prevent degenerates.
-        alert('Polygons with fewer than three vertices are not supported');
-        feature.setMap(null);
-        return;
-      }
-      const popup = createPopup(feature, map, '');
-      const data = new StoredShapeData(null, null, null, popup);
-      userRegionData.set(feature, data);
-      data.update();
-    });
-
-    drawingManager.setMap(map);
-    return drawingManager;
+function setUpPolygonDrawing(map) {
+  const drawingManager = new google.maps.drawing.DrawingManager({
+    drawingControl: true,
+    drawingControlOptions: {drawingModes: ['marker', 'polygon']},
+    polygonOptions: appearance,
   });
+
+  drawingManager.addListener('overlaycomplete', (event) => {
+    const feature = event.overlay;
+    if (!isMarker(feature) && feature.getPath().length < 3) {
+      // https://b.corp.google.com/issues/35821407 (WNF) means that users will
+      // not be able to later edit the polygon to have fewer than three
+      // vertices, so checking here is sufficient to prevent degenerates.
+      alert('Polygons with fewer than three vertices are not supported');
+      feature.setMap(null);
+      return;
+    }
+    const popup = createPopup(feature, map, '');
+    const data = new StoredShapeData(null, null, null, popup);
+    userRegionData.set(feature, data);
+    data.update();
+  });
+
+  drawingManager.setMap(map);
+  // Add the help link.
+  // Seems to be a bug in Google Maps where just doing "insertAt" once the map
+  // is displayed doesn't put help link in correct position, so we empty out
+  // controls and recreate.
+  const controls = map.controls[google.maps.ControlPosition.TOP_LEFT];
+  // Make a copy, since array is live.
+  const currentControls = [...controls.getArray()];
+  controls.clear();
+  controls.push(createHelpIcon(POLYGON_HELP_URL));
+  currentControls.forEach((elt) => controls.push(elt));
+
+  return drawingManager;
+}
+
+/**
+ * Creates a help icon linking to the given URL. Does not insert into document.
+ * @param {string} url
+ * @return {HTMLSpanElement} Span with icon, to insert into document somewhere
+ */
+function createHelpIcon(url) {
+  // Add the help link.
+  const helpContainer = document.createElement('span');
+  helpContainer.style.padding = '6px';
+  const helpLink = document.createElement('a');
+  helpLink.href = url;
+  helpLink.target = '_blank';
+  helpLink.style.fontSize = '18px';
+  const helpIcon = document.createElement('i');
+  helpIcon.className = 'help fa fa-question-circle';
+  helpIcon.setAttribute('aria-hidden', 'true');
+  helpLink.appendChild(helpIcon);
+  helpContainer.appendChild(helpLink);
+  helpContainer.title = 'Help';
+  return helpContainer;
 }
 
 /**
@@ -366,22 +396,77 @@ function setUpPolygonDrawing(map, firebasePromise) {
  * @param {google.maps.Map} map Map to display regions on
  * @param {Promise<any>} firebasePromise Promise with Firebase damage data (also
  *     implies that authentication is complete)
- * @return {Promise} promise that is resolved when all initialization is done
- *     (only used by tests)
+ * @return {Promise<?google.maps.drawing.DrawingManager>} Promise with drawing
+ *     manager added to map (only used by tests). Null if there was an error
  */
-function initializeAndProcessUserRegions(map, firebasePromise) {
+async function initializeAndProcessUserRegions(map, firebasePromise) {
+  setUpPopup();
   addLoadingElement(mapContainerId);
-  return firebasePromise
-      .then((doc) => {
-        // Damage asset may not exist yet, so this is undefined. We tolerate
-        // gracefully.
-        damageAsset = doc.data()['asset_data']['damage_asset_path'];
-        userShapes = getFirestoreRoot().collection(collectionName);
-      })
-      .then(() => userShapes.get())
-      .then(
-          (querySnapshot) => drawRegionsFromFirestoreQuery(querySnapshot, map))
-      .catch(createError('getting user-drawn regions'));
+  try {
+    // Firebase retrieval error handled elsewhere. Let this throw if it throws.
+    const doc = await firebasePromise;
+    // Damage asset may not exist yet, so this is undefined. We tolerate
+    // gracefully.
+    damageAsset = doc.data()['asset_data']['damage_asset_path'];
+    userShapes = getFirestoreRoot().collection(collectionName);
+    let querySnapshot;
+    try {
+      querySnapshot = await userShapes.get();
+    } catch (err) {
+      handleUserShapesError(err);
+      return null;
+    }
+    drawRegionsFromFirestoreQuery(querySnapshot, map);
+    return setUpPolygonDrawing(map);
+  } finally {
+    loadingElementFinished(mapContainerId);
+  }
+}
+
+const AUTHENTICATION_ERROR_CODE = 'permission-denied';
+const USER_FEATURES_DIALOG =
+    '<div>Sign in to authorized account to view user-drawn features</div>';
+
+/**
+ * Handles errors thrown from retrieving user-defined features, most likely due
+ * to authentication issues.
+ * @param {Error|firebase.FirebaseError} err
+ */
+function handleUserShapesError(err) {
+  const userFeaturesRow = $('#' + getCheckBoxRowId('user-features'));
+  const checkbox = partiallyHandleBadRowAndReturnCheckbox(userFeaturesRow);
+  if (err.code === AUTHENTICATION_ERROR_CODE) {
+    showError('Viewing as public, private data not available', null);
+    userFeaturesRow.prop(
+        'title',
+        'User features not available: please click to log in to authorized ' +
+            'account');
+    const popUpDialog = () => {
+      checkbox.prop('checked', false);
+      const dialogParent = $(USER_FEATURES_DIALOG);
+      const dialog = dialogParent.dialog({
+        buttons: [
+          {text: 'Sign in', click: reloadWithSignIn},
+          {text: 'Close', click: () => dialog.dialog('close')},
+        ],
+        modal: true,
+        width: 600,
+        close: () => {
+          // Don't try to reuse the dialog.
+          dialogParent.empty();
+          dialogParent.remove();
+        },
+      });
+    };
+    // TODO(ruthtalbot): Add documentation for public-facing page, mentioning
+    //  that user features will be missing, and also with instructions for GD
+    //  people who may get here about how to add themselves to Firestore.
+    userFeaturesRow.append(createHelpIcon(POLYGON_HELP_URL));
+    checkbox.on('click', popUpDialog);
+  } else {
+    showError(err, 'Error retrieving user-drawn features. Try refreshing page');
+    checkbox.prop('disabled', true);
+  }
 }
 
 // TODO(janakr): it would be nice to unit-test this, but I don't know how to get
@@ -418,7 +503,6 @@ function drawRegionsFromFirestoreQuery(querySnapshot, map) {
             userDefinedRegion.id, notes, storedGeometry, popup));
     feature.setMap(map);
   });
-  loadingElementFinished(mapContainerId);
 }
 
 /**

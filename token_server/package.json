@@ -1,0 +1,18 @@
+{
+  "name": "earth_engine_token_server",
+  "version": "1.0.0",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "start": "node --experimental_modules token_server.js"
+  },
+  "engines": {
+    "node": "12.x.x"
+  },
+  "dependencies": {
+    "google-auth-library": "^5.7.0",
+    "http": "^0.0.0",
+    "urlencoded-body-parser": "^3.0.0",
+    "googleapis": "^46.0.0"
+  }
+}
