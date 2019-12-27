@@ -8,7 +8,6 @@ export {
   setColor,
   setDiscreteColor,
   setProperty,
-  switchSchema,
 };
 
 // At any given point in time, the color function div is displaying info
@@ -21,10 +20,16 @@ let globalTd;
  * DOM elements with attached on-change handlers.
  */
 function populateColorFunctions() {
-  const colorFunctionDiv = $('#color-fxn-editor');
-  colorFunctionDiv.prepend(createRadioFor(ColorStyle.SINGLE));
-  colorFunctionDiv.prepend(createRadioFor(ColorStyle.DISCRETE));
-  colorFunctionDiv.prepend(createRadioFor(ColorStyle.CONTINUOUS));
+  colorStyleTypeStrings.forEach((typeAsString, colorStyle) =>
+    $('#' + typeAsString + '-radio')
+        .on('change', () => switchSchema(colorStyle)));
+  $('#property-radio').on('change', () => {
+    const lastByPropertyType =
+        colorStyleTypeStrings.get(getColorFunction()['last-by-property-style']);
+    $('#' + lastByPropertyType + '-radio')
+        .prop('checked', true)
+        .trigger('change');
+  });
 
   const singleColorPicker = createColorPicker('single-color-picker');
   singleColorPicker.on('change', () => setColor(singleColorPicker));
@@ -196,6 +201,7 @@ function createMinOrMaxInputForContinuous(min, continuousPropertyPicker) {
 }
 
 const colorList = Array.from(colorMap.keys());
+
 /**
  * Creates a picker with our known colors.
  * @param {?string} id
@@ -218,29 +224,6 @@ for (const t in ColorStyle) {
   if (ColorStyle.hasOwnProperty(t)) {
     colorStyleTypeStrings.set(ColorStyle[t], t);
   }
-}
-
-/**
- * Creates a radio button in the color schema set.
- * @param {enum} colorType
- * @return {[JQuery<HTMLSelectElement>]}
- */
-function createRadioFor(colorType) {
-  const buttonAndLabel = [];
-  const type = colorStyleTypeStrings.get(colorType);
-  buttonAndLabel.push($(document.createElement('input'))
-                          .attr({
-                            name: 'color-type',
-                            type: 'radio',
-                            id: type + '-radio',
-                            value: colorType,
-                          })
-                          .on('change', () => switchSchema(colorType)));
-  buttonAndLabel.push($(document.createElement('label'))
-                          .prop('for', colorType + 'radio')
-                          .text(type));
-  buttonAndLabel.push($(document.createElement('span')).text('  '));
-  return buttonAndLabel;
 }
 
 /**
@@ -308,6 +291,9 @@ function onClick(td, type) {
   selectCurrentRow(false);
   globalTd = td;
   selectCurrentRow(true);
+  if (type !== ColorStyle.SINGLE) {
+    $('#property-radio').prop('checked', true);
+  }
   $('#' + colorStyleTypeStrings.get(type) + '-radio').prop('checked', true);
   displaySchema(type);
 }
@@ -333,7 +319,11 @@ function selectCurrentRow(selected) {
  */
 function switchSchema(type) {
   displaySchema(type);
-  getColorFunction()['current-style'] = type;
+  const colorFunction = getColorFunction();
+  colorFunction['current-style'] = type;
+  if (type !== ColorStyle.SINGLE) {
+    colorFunction['last-by-property-style'] = type;
+  }
   return updateTdAndFirestore();
 }
 
@@ -344,6 +334,9 @@ function switchSchema(type) {
 function displaySchema(type) {
   const colorFunction = getColorFunction();
   $('.color-type-div').hide();
+  const byPropertyDiv = $('#by-property');
+  const continuousDiv = $('#continuous');
+  const discreteDiv = $('#discrete');
   switch (type) {
     case ColorStyle.SINGLE:
       $('#single-color-picker').val(colorFunction['color']);
@@ -354,13 +347,17 @@ function displaySchema(type) {
       const picker = $('#continuous-property-picker');
       populatePropertyPicker(picker);
       maybeDisplayMinMax(picker);
-      $('#continuous').show();
+      byPropertyDiv.show();
+      discreteDiv.hide();
+      continuousDiv.show();
       break;
     case ColorStyle.DISCRETE:
       const propertyPicker = $('#discrete-property-picker');
       populatePropertyPicker(propertyPicker);
       populateDiscreteColorPickers();
-      $('#discrete').show();
+      byPropertyDiv.show();
+      continuousDiv.hide();
+      discreteDiv.show();
       break;
   }
 }
@@ -430,6 +427,10 @@ function populateDiscreteColorPickers() {
 function createColorBoxesForDiscrete(colorFunction, td) {
   const colorObject = colorFunction['colors'];
   const colorSet = new Set();
+  if (Object.keys(colorObject).length === 0) {
+    td.append(createColorBox());
+    return;
+  }
   Object.keys(colorObject).forEach((propertyValue) => {
     const color = colorObject[propertyValue];
     if (!colorSet.has(color)) {
@@ -441,10 +442,10 @@ function createColorBoxesForDiscrete(colorFunction, td) {
 
 /**
  * Creates an instance of the color boxes for the color col.
- * @param {string} color what color to make the box.
+ * @param {?string} color what color to make the box.
  * @return {JQuery<HTMLDivElement>}
  */
-function createColorBox(color) {
+function createColorBox(color = 'transparent') {
   return $(document.createElement('div'))
       .addClass('box')
       .css('background-color', color);

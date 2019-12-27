@@ -56,6 +56,7 @@ function processNewEeLayer(asset, type) {
               'color-function': {
                 'columns': columns,
                 'current-style': 2,
+                'last-by-property-style': 0,
                 'colors': {},
               },
               'display-name': '',
