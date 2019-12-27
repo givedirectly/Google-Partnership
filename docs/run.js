@@ -7,7 +7,7 @@ import {getLinearGradient} from './import/color_function_util.js';
 import {addLayer, addNullLayer, addScoreLayer, scoreLayerName, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from './layer_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {convertEeObjectToPromise} from './map_util.js';
-import {initializeAndProcessUserRegions} from './polygon_draw.js';
+import {initializeAndProcessUserRegions, userFeaturesCheckboxRowId} from './polygon_draw.js';
 import {setUserFeatureVisibility} from './popup.js';
 import {processJoinedData} from './process_joined_data.js';
 import {getBackupScoreAssetPath, getScoreAssetPath} from './resources.js';
@@ -213,6 +213,8 @@ function createCheckboxForUserFeatures(parentDiv) {
       'user-features', 'user features', parentDiv,
       {'color': '#4CEF64', 'current-style': 2});
   newBox.checked = true;
+  // Used for disabling in case of error retrieving features.
+  newBox.parentElement.id = userFeaturesCheckboxRowId;
   newBox.onclick = () => setUserFeatureVisibility(newBox.checked);
 }
 

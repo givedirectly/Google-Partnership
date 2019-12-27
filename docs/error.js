@@ -17,10 +17,10 @@ function createError(msg) {
  * Logs an error message to the console and shows a snackbar notification.
  *
  * @param {string} msg the message to be logged
- * @param {string} snackbarMsg the message to be shown in the notification (this
- *     can be omitted if the message should just be the logged message).
+ * @param {?string} snackbarMsg the message to be shown in the notification
+ *     (this can be omitted if the message should just be the logged message).
  */
-function showError(msg, snackbarMsg) {
+function showError(msg, snackbarMsg = null) {
   if (snackbarMsg == null) snackbarMsg = msg;
   console.error(msg);
   showSnackbar(
