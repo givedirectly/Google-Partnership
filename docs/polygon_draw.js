@@ -1,4 +1,5 @@
 import {reloadWithSignIn} from './authenticate.js';
+import {getCheckBoxRowId, partiallyHandleBadRowAndReturnCheckbox} from './checkbox_util.js';
 import {mapContainerId, writeWaiterId} from './dom_constants.js';
 import {createError, showError} from './error.js';
 import {getFirestoreRoot} from './firestore_document.js';
@@ -16,11 +17,8 @@ export {displayCalculatedData, initializeAndProcessUserRegions};
 export {
   StoredShapeData,
   transformGeoPointArrayToLatLng,
-  userFeaturesCheckboxRowId,
   userShapes,
 };
-
-const userFeaturesCheckboxRowId = 'user-features-checkbox-row';
 
 let damageAsset = null;
 
@@ -435,9 +433,8 @@ const USER_FEATURES_DIALOG =
  * @param {Error|firebase.FirebaseError} err
  */
 function handleUserShapesError(err) {
-  const userFeaturesRow = $('#' + userFeaturesCheckboxRowId);
-  userFeaturesRow.css('text-decoration', 'line-through');
-  const checkbox = userFeaturesRow.children('input').prop('checked', false);
+  const userFeaturesRow = $('#' + getCheckBoxRowId('user-features'));
+  const checkbox = partiallyHandleBadRowAndReturnCheckbox(userFeaturesRow);
   if (err.code === AUTHENTICATION_ERROR_CODE) {
     showError('Viewing as public, private data not available', null);
     userFeaturesRow.prop(
