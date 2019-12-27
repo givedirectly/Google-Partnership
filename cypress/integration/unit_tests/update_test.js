@@ -1,137 +1,118 @@
+import * as ErrorLib from '../../../docs/error.js';
 import {disasterData, getCurrentData} from '../../../docs/import/manage_layers_lib.js';
 import * as LayerUtil from '../../../docs/layer_util.js';
 import * as Run from '../../../docs/run.js';
-import {setUpToggles, toggles} from '../../../docs/update.js';
+import {setUpToggles} from '../../../docs/update.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
-
-let lastPassedPovertyThreshold;
-let lastPassedDamageThreshold;
-let lastPassedPovertyWeight;
-let createAndDisplayJoinedDataStub;
-let createAndDisplayJoinedDataPromise;
 
 describe('Unit test for updates.js', () => {
   loadScriptsBeforeForUnitTests('firebase', 'jquery');
 
-  before(() => {
-    global.google = {maps: {event: {clearListeners: () => {}}}};
-
-    const formDiv = document.createElement('div');
-    formDiv.class = 'form';
-    formDiv.id = 'form-div';
-
-    document.body.appendChild(formDiv);
-
-    const snackbarDiv = document.createElement('div');
-    snackbarDiv.id = 'snackbar';
-    const snackbarText = document.createElement('span');
-    snackbarText.id = 'snackbar-text';
-    snackbarDiv.appendChild(snackbarText);
-    document.body.appendChild(snackbarDiv);
-  });
+  before(() => global.google = {maps: {event: {clearListeners: () => {}}}});
 
   // creates the form div and stubs the relevant document methods.
   beforeEach(() => {
-    // function that resolves the createAndDisplayJoinedDataPromise
-    let resolvePromise;
-    createAndDisplayJoinedDataPromise =
-        new Promise((resolve) => resolvePromise = resolve);
-    createAndDisplayJoinedDataStub =
-        cy.stub(Run, 'createAndDisplayJoinedData')
-            .callsFake((_, valuesPromise) => {
-              valuesPromise.then((toggles) => {
-                lastPassedPovertyThreshold = toggles.povertyThreshold;
-                lastPassedDamageThreshold = toggles.damageThreshold;
-                lastPassedPovertyWeight = toggles.povertyWeight;
-                resolvePromise();
-              });
-            });
-    cy.stub(LayerUtil, 'removeScoreLayer');
+    cy.wrap(cy.stub(Run, 'createAndDisplayJoinedData')).as(
+        'createAndDisplayJoinedDataStub');
+    cy.wrap(cy.stub(LayerUtil, 'removeScoreLayer')).as('removeScoreLayerStub');
 
-    lastPassedDamageThreshold = null;
-    lastPassedPovertyThreshold = null;
-    lastPassedPovertyWeight = null;
-
-    $('#form-div').empty();
+    cy.visit('test_utils/empty.html');
+    cy.document().then((doc) => {
+      const formDiv = doc.createElement('div');
+      formDiv.id = 'form-div';
+      doc.body.appendChild(formDiv);
+      cy.stub(document, 'getElementById')
+          .callsFake((id) => doc.getElementById(id));
+    });
   });
-
-  afterEach(() => $('#form-div').empty());
 
   it('does not have a damage asset', () => {
     const nullData = {asset_data: {damage_asset_path: null}};
-    setUpToggles(Promise.resolve({data: () => nullData}), {}).then(() => {
-      expect($('input').length).to.equal(3);
-
-      $('[id="poverty threshold"]').val(0.05);
-      $('#update').trigger('click');
-
-      expect(createAndDisplayJoinedDataStub).to.be.calledOnce;
-
-      expect(toggles.get('poverty weight')).to.equals(1);
-      expect($('#error').text()).to.equal('');
-      cy.wrap(createAndDisplayJoinedDataPromise).then(() => {
-        expect(lastPassedPovertyWeight).to.equals(1);
-        expect(lastPassedDamageThreshold).to.equals(0.0);
-      });
-    });
+    cy.wrap(setUpToggles(Promise.resolve({data: () => nullData}), {}));
+    cy.get('input').should('have.length', 2);
+    cy.get('[id="poverty threshold"]').clear().type('0.05');
+    cy.get('#update').click().then(() => assertDisplayCalledWith(1, 0.3, 0));
+    cy.get('#error').should('have.text', '');
   });
 
   it('does have a damage asset', () => {
-    setUpDamageAsset().then(() => expect($('input').length).to.equal(5));
+    setUpDamageAsset();
+    cy.get('input').should('have.length', 4);
   });
 
   it('updates weight labels', () => {
-    setUpDamageAsset().then(() => {
-      const povertyWeight = $('[id="poverty weight"]');
-
-      povertyWeight.val(0.01).trigger('input');
-
-      expect($('#poverty-weight-value').text()).to.equal('0.01');
-      expect($('#damage-weight-value').text()).to.equal('0.99');
-    });
+    setUpDamageAsset();
+    cy.get('[id="poverty weight"]').invoke('val', 0.01).trigger('input');
+    cy.get('#poverty-weight-value').should('have.text', '0.01');
+    cy.get('#damage-weight-value').should('have.text', '0.99');
   });
 
   it('updates toggles', () => {
-    setUpDamageAsset().then(() => {
-      $('[id="poverty weight"]').val(0.01);
-      $('[id="damage threshold"]').val(0.24);
-
-      $('#update').trigger('click');
-      expect(createAndDisplayJoinedDataStub).to.be.calledOnce;
-
-      expect(toggles.get('poverty weight')).to.equals(0.01);
-      expect(toggles.get('damage threshold')).to.equals(0.24);
-      expect($('#error').text()).to.equal('');
-      cy.wrap(createAndDisplayJoinedDataPromise).then(() => {
-        expect(lastPassedPovertyWeight).to.equals(0.01);
-        expect(lastPassedDamageThreshold).to.equals(0.24);
-      });
-    });
+    setUpDamageAsset();
+    cy.get('[id="poverty weight"]').invoke('val', 0.01).trigger('input');
+    cy.get('[id="damage threshold"]').invoke('val', 0.24).trigger('input');
+    cy.get('#update').click().then(
+        () => assertDisplayCalledWith(0.01, 0.3, 0.24));
+    cy.get('#error').should('have.text', '');
   });
 
   it('updates toggles with errors', () => {
-    setUpDamageAsset().then(() => {
-      $('[id="poverty threshold"]').val(-0.01);
-
-      $('#update').trigger('click');
-
-      expect($('#snackbar-text').text())
-          .to.equal('poverty threshold must be between 0.00 and 1.00');
-      expect($('#error').text())
-          .to.equal('ERROR: poverty threshold must be between 0.00 and 1.00');
-      expect(lastPassedPovertyThreshold).to.be.null;
-    });
+    const errorStub =
+        cy.stub(ErrorLib, 'showError')
+            .withArgs('poverty threshold must be between 0.00 and 1.00');
+    setUpDamageAsset();
+    cy.get('[id="poverty threshold"]').clear().type('-0.01').blur();
+    cy.get('#update').click();
+    cy.get('@createAndDisplayJoinedDataStub')
+        .then(
+            (createAndDisplayJoinedDataStub) =>
+                expect(createAndDisplayJoinedDataStub).to.not.be.called);
+    cy.get('@removeScoreLayerStub')
+        .then(
+            (removeScoreLayerStub) =>
+                expect(removeScoreLayerStub).to.not.be.called);
+    cy.get('#error')
+        .should(
+            'have.text',
+            'ERROR: poverty threshold must be between 0.00 and 1.00')
+        .then(() => expect(errorStub).to.be.calledOnce);
+    cy.get('[id="poverty threshold"]').clear().type('0.0').blur();
+    cy.get('#update').click().then(
+        () => assertDisplayCalledWith(0.5, 0.0, 0.5));
+    cy.get('#error').should('have.text', '');
   });
+
+  /**
+   * Checks that stub was called with the expected toggles values.
+   * @param {number} povertyWeight
+   * @param {number} povertyThreshold
+   * @param {number} damageThreshold
+   */
+  function assertDisplayCalledWith(
+      povertyWeight, povertyThreshold, damageThreshold) {
+    cy.get('@createAndDisplayJoinedDataStub')
+        .then((createAndDisplayJoinedDataStub) => {
+          expect(createAndDisplayJoinedDataStub).to.be.calledOnce;
+          expect(createAndDisplayJoinedDataStub)
+              .to.be.calledWith(
+                  {},
+                  Promise.resolve(
+                      {povertyWeight, povertyThreshold, damageThreshold}));
+        });
+    cy.get('@removeScoreLayerStub')
+        .then(
+            (removeScoreLayerStub) =>
+                expect(removeScoreLayerStub).to.be.calledOnce);
+  }
 });
 
 /**
  * Sets up as if we have a damage asset.
- * @return {Promise<Array<number>>}
+ * @return {Cypress.Chainable<Array<number>>}
  */
 function setUpDamageAsset() {
   const currentDisaster = '2005-fall';
   disasterData.set(currentDisaster, {asset_data: {damage_asset_path: 'foo'}});
   window.localStorage.setItem('disaster', currentDisaster);
-
-  return setUpToggles(Promise.resolve({data: getCurrentData}), {});
+  return cy.wrap(setUpToggles(Promise.resolve({data: getCurrentData}), {}));
 }
