@@ -24,14 +24,16 @@ function getStateAssetsFromEe(state) {
     return maybeStatePromise;
   }
   const statePromise =
-      listEeAssets(legacyStateDir + '/' + state).then((result) => {
-        const assetMap = new Map();
-        for (const {asset, type} of result) {
-          assetMap.set(
-              asset, {disabled: type !== LayerType.FEATURE_COLLECTION});
-        }
-        return assetMap;
-      });
+      markHasGeometryAssets(listEeAssets(legacyStateDir + '/' + state))
+          .then((result) => {
+            const assetMap = new Map();
+            for (const [asset, attributes] of result) {
+              attributes.disabled =
+                  attributes.type !== LayerType.FEATURE_COLLECTION;
+              assetMap.set(asset, attributes);
+            }
+            return assetMap;
+          });
   stateAssetPromises.set(state, statePromise);
   return statePromise;
 }
@@ -60,47 +62,58 @@ function getDisasterAssetsFromEe(disaster) {
   if (maybePromise) {
     return maybePromise;
   }
-  const result = disableMissingGeometryAssets(listEeAssets(eeLegacyPathPrefix + disaster));
+  const result =
+      markHasGeometryAssets(listEeAssets(eeLegacyPathPrefix + disaster))
+          .then(
+              (assetMap) => new Map(Array.from(
+                  assetMap, ([k, v]) => [k, {disabled: !v.hasGeometry}])));
   disasterAssetPromises.set(disaster, result);
   return result;
 }
 
-function disableMissingGeometryAssets(listingPromise) {
+/**
+ * Attaches geometry info to the given listing. Only
+ * {@link ee.FeatureCollection} assets can have geometries, and an asset will
+ * have the `hasGeometry` attribute if its {@link ee.Geometry} is non-null and
+ * has a non-empty coordinates list.
+ * @param {Promise<Array<{asset: string, type: LayerType}>>} listingPromise
+ *     See {@link listEeAssets}
+ * @return {Map<string, {type: LayerType, hasGeometry: boolean}>}
+ */
+function markHasGeometryAssets(listingPromise) {
   // For passing through promise without re-promise-ifying.
   let listEeAssetsResult;
   return listingPromise
-.then((assets) => {
-    listEeAssetsResult = assets;
-    const shouldDisable = [];
-    for (const {asset, type} of assets) {
-      if (type === LayerType.FEATURE_COLLECTION) {
-        // census data returns an empty coords multipoint
-        // geometry instead of a true null geometry. So
-        // we check for that. Could be bad if we ever see
-        // a data set with a mix of empty and non-empty
-        // geometries.
-        const geometry = ee.FeatureCollection(asset).first().geometry();
-        // Null and empty list are false.
-        shouldDisable.push(ee.Algorithms.If(geometry,
-            ee.Algorithms.If(geometry.coordinates(),
-            // DOM disable property can't recognize 0 and 1 as false and
-            // true :(
-            true, false), false));
-      } else {
-        shouldDisable.push(false);
-      }
-    }
-    return convertEeObjectToPromise(ee.List(shouldDisable));
-  })
-  .then((disableList) => {
-    const assetMap = new Map();
-    const disableListIterator = disableList[Symbol.iterator]();
-    for (const {asset, type} of listEeAssetsResult) {
-      assetMap.set(
-          asset, {type, disabled: disableListIterator.next().value});
-    }
-    return assetMap;
-  });
+      .then((assets) => {
+        listEeAssetsResult = assets;
+        const hasGeometry = [];
+        for (const {asset, type} of assets) {
+          if (type === LayerType.FEATURE_COLLECTION) {
+            // census data returns an empty coords multipoint
+            // geometry instead of a true null geometry. So
+            // we check for that. Could be bad if we ever see
+            // a data set with a mix of empty and non-empty
+            // geometries.
+            const geometry = ee.FeatureCollection(asset).first().geometry();
+            // Null and empty list are false.
+            hasGeometry.push(ee.Algorithms.If(
+                geometry, ee.Algorithms.If(geometry.coordinates(), true, false),
+                false));
+          } else {
+            hasGeometry.push(false);
+          }
+        }
+        return convertEeObjectToPromise(ee.List(hasGeometry));
+      })
+      .then((hasGeometryList) => {
+        const assetMap = new Map();
+        const hasGeometryIterator = hasGeometryList[Symbol.iterator]();
+        for (const {asset, type} of listEeAssetsResult) {
+          assetMap.set(
+              asset, {type, hasGeometry: hasGeometryIterator.next().value});
+        }
+        return assetMap;
+      });
 }
 
 /**
@@ -110,6 +123,7 @@ function disableMissingGeometryAssets(listingPromise) {
  *     array of asset info objects.
  */
 function listEeAssets(dir) {
+  console.log(dir);
   return ee.data.listAssets(dir, {}, () => {}).then(getIds);
 }
 

@@ -472,12 +472,14 @@ const scoreAssetTypes = [
     propertyPath: ['block_group_asset_paths'],
     displayName: 'Census TIGER Shapefiles',
     expectedColumns: [tigerGeoidKey],
+    geometryExpected: true,
   },
   {
     idStem: 'buildings',
     propertyPath: ['building_asset_paths'],
     displayName: 'Microsoft Building Shapefiles',
     expectedColumns: [],
+    geometryExpected: true,
   },
 ];
 Object.freeze(scoreAssetTypes);
@@ -515,12 +517,20 @@ function initializeScoreSelectors(states, stateAssets) {
   }
 
   // For each asset type, add select for all assets for each state.
-  for (const {idStem, propertyPath, expectedColumns} of scoreAssetTypes) {
+  for (const {idStem,
+              propertyPath,
+              expectedColumns,
+              geometryExpected} of scoreAssetTypes) {
     const id = assetSelectionRowPrefix + idStem;
     const row = $('#' + id);
     removeAllButFirstFromRow(row);
     for (const [i, state] of states.entries()) {
-      const assets = stateAssets[i];
+      // Disable FeatureCollections without geometries if desired.
+      const assets = geometryExpected ?
+          new Map(Array.from(
+              stateAssets[i],
+              ([k, v]) => [k, {disabled: v.disabled || !v.hasGeometry}])) :
+          stateAssets[i];
       const statePropertyPath = propertyPath.concat([state]);
       const select =
           createAssetDropdown(assets, statePropertyPath)
