@@ -299,23 +299,35 @@ const allReadBinding = {role: 'roles/viewer', members: ['allUsers']};
  * explicit user action.
  */
 function makeScoreAssetsWorldReadable() {
-  for (const asset of [getScoreAssetPath(), getBackupScoreAssetPath()]) {
-    ee.data.getIamPolicy(eeLegacyPrefix + asset, () => {}).then((policy) => {
-      for (const binding of policy.bindings) {
-        console.log(binding);
-        if (binding.role === 'roles/viewer') {
-          if (!binding.members.includes('allUsers')) {
-            binding.members.push('allUsers');
-            ee.data.setIamPolicy(eeLegacyPrefix + asset, policy, () => {});
+  listEeAssets(eeLegacyPathPrefix + getDisaster()).then((listResult) => {
+    if (!listResult) {
+      return;
+    }
+    const paths = new Set([getScoreAssetPath(), getBackupScoreAssetPath()]);
+    let foundAssets = 0;
+    for (const {id} of listResult) {
+      if (paths.has(id)) {
+        foundAssets++;
+        ee.data.getIamPolicy(eeLegacyPrefix + id, () => {}).then((policy) => {
+          for (const binding of policy.bindings) {
+            if (binding.role === 'roles/viewer') {
+              if (!binding.members.includes('allUsers')) {
+                binding.members.push('allUsers');
+                ee.data.setIamPolicy(eeLegacyPrefix + id, policy, () => {});
+              }
+              return;
+            }
           }
-          return;
-        }
+          // If we got here, no roles/viewer binding.
+          policy.bindings.push(allReadBinding);
+          ee.data.setIamPolicy(eeLegacyPrefix + id, policy, () => {});
+        });
       }
-      // If we got here, no roles/viewer binding.
-      policy.bindings.push(allReadBinding);
-      ee.data.setIamPolicy(eeLegacyPrefix + asset, policy, () => {});
-    });
-  }
+      if (foundAssets === paths.size) {
+        return;
+      }
+    }
+});
 }
 
 /**
