@@ -4,18 +4,23 @@ This is an optional component for the mapping page, that allows any user to view
 it, even if they are not whitelisted with EarthEngine. Only the site maintainer
 should follow the instructions below, and they should only need to be done once.
 
-## Deploy to Google App Engine
+This server's location is unrelated to the mapping page's hosted location (The
+mapping page's hosted location is
+https://givedirectly.github.io/Google-Partnership as of January 2020). This
+server is pointed to by the `TOKEN_SERVER_URL` of `docs/authenticate.js`. If you
+change the hosting location for this server, just update that variable.
 
-* Follow initial steps for Google App Engine deployment: install `gcloud`; when
-prompted, log into gcloud as the GD user `gd-earthengine-user@givedirectly.org`,
-and set the gcloud project to `mapping-crisis`. Typically you can run the
-commands `gcloud auth login` followed by
-`gcloud config set project mapping-crisis`. Please also consult the
-[Google Cloud SDK documentation](https://cloud.google.com/sdk/docs/).
+## Run server on Google App Engine
 
-* Run `gcloud app deploy`. The app should now be running successfully at
-https://mapping-crisis.appspot.com (note that directly accessing that URL is not
-expected to work, since appropriate headers have to be attached to the request).
+* One-time only: [install `gcloud`](https://cloud.google.com/sdk/docs/).
+
+* Run `gcloud app deploy --project mapping-crisis` from this directory
+(`token_server/`). If you are not already authenticated in gcloud, it will give
+you a command to run, probably `gcloud auth login`. Run it, logging in as
+`gd-earthengine-user@givedirectly.org` and try again. The token server should now
+be running successfully at https://mapping-crisis.appspot.com (note that directly
+accessing that URL is not expected to work, since appropriate headers have to be
+attached to the request).
 
 * The server should continue running forever, but will use few/no resources
 unless it is getting traffic.
@@ -27,7 +32,7 @@ unless it is getting traffic.
 [Dashboard](https://console.cloud.google.com/appengine?folder=&organizationId=838088520005&project=mapping-crisis).
 You must be logged in as `gd-earthengine-user@givedirectly.org` to access it.
 
-## Deploy to Amazon EC2
+## Run server on Amazon EC2
 
 `¯\_(ツ)_/¯`
 
