@@ -6,7 +6,8 @@ export {getDisasterAssetsFromEe, getStateAssetsFromEe};
 
 /**
  * Cache for the results of getStateAssetsFromEe.
- * @type {Map<string, Promise<Map<string, {disabled: boolean}>>>}
+ * @typedef {Map<string, {disabled: boolean, hasGeometry: boolean}>} StateList
+ * @type {Map<string, Promise<StateList>>}
  */
 const stateAssetPromises = new Map();
 
@@ -16,7 +17,7 @@ const stateAssetPromises = new Map();
  * disabled when put into a select. Here, disabling any assets that aren't
  * feature collections.
  * @param {string} state
- * @return {Promise<Map<string, {disabled: boolean}>>}
+ * @return {Promise<StateList>}
  */
 function getStateAssetsFromEe(state) {
   const maybeStatePromise = stateAssetPromises.get(state);
@@ -38,8 +39,9 @@ function getStateAssetsFromEe(state) {
 
 /**
  * Cache for the results of getDisasterAssetsFromEe for each disaster
- * @type {Map<string, Promise<Map<string, {type: LayerType, disabled:
- *     boolean}>>>}
+ * @typedef {Map<string, {type: LayerType, disabled: boolean, hasGeometry:
+ * boolean}>} DisasterList
+ * @type {Map<string, Promise<DisasterList>>}
  */
 const disasterAssetPromises = new Map();
 
@@ -52,8 +54,8 @@ const disasterAssetPromises = new Map();
  * De-duplicates requests, so retrying before a fetch completes won't start a
  * new fetch.
  * @param {string} disaster disaster in the form name-year
- * @return {Promise<Map<string, {type: LayerType, disabled: boolean}>>} A
- *     promise containing the map of asset to info for the given disaster.
+ * @return {Promise<DisasterList>} Promise containing the map of asset to info
+ *     for the given disaster.
  */
 function getDisasterAssetsFromEe(disaster) {
   const maybePromise = disasterAssetPromises.get(disaster);

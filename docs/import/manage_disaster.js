@@ -514,9 +514,8 @@ function setUpScoreSelectorTable() {
 /**
  * Initializes the select interface for score assets.
  * @param {Array<string>} states array of state (abbreviations)
- * @param {Array<Map<string, {disabled: boolean}>>} stateAssets matching array
- *     to
- * the {@code states} array that holds a map of asset info for each state.
+ * @param {Array<StateList>} stateAssets matching array to the {@code states}
+ *     array that holds a map of asset info for each state.
  */
 function initializeScoreSelectors(states, stateAssets) {
   const headerRow = $('#score-asset-header-row');
@@ -561,8 +560,7 @@ const damagePropertyPath = Object.freeze(['damage_asset_path']);
 
 /**
  * Initializes the damage selector, given the provided assets.
- * @param {Map<string, {type: LayerType, disabled: boolean}>} assets List of
- *     assets in the disaster folder
+ * @param {DisasterList} assets List of assets in the disaster folder
  */
 function initializeDamageSelector(assets) {
   const select = createAssetDropdown(
