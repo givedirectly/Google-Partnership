@@ -288,18 +288,22 @@ function initializeFirebase() {
   firebase.initializeApp(getFirebaseConfig(inProduction()));
 }
 
-const allReadBinding = {
+const allReadBinding = Object.freeze({
   role: 'roles/viewer',
   members: ['allUsers'],
-};
+});
 
 /**
  * Lists assets in the current disaster's folder and for any that match a score
- * asset path (either standard or backup), send a request to make that asset
- * world-readable. This should only be called when logged in as the GD user. It
- * does not wait for these calls to complete, and does not print any errors,
- * since it is just trying to help other users, and is not triggered by an
- * explicit user action.
+ * asset path (either standard or backup) and are not already world-readable,
+ * send a request to make that asset world-readable. This should only be called
+ * when logged in as the GD user. It does not wait for these calls to complete,
+ * and does not print any errors, since it is just trying to help other users,
+ * and is not triggered by an explicit user action.
+ *
+ * Optimized for the common case of assets already being world-readable: the
+ * getIamPolicy is technically not necessary, but usually it will avoid a set,
+ * which should be at least as expensive.
  */
 function makeScoreAssetsWorldReadable() {
   // TODO(janakr): Switch to using listEeAssets once #368 is in.
@@ -331,8 +335,8 @@ function makeScoreAssetsWorldReadable() {
                   // TODO(janakr): Do better. See what EE says.
                   // If we got here, no roles/viewer binding. Use some
                   // Javascript magic.
-                  const constructor = policy.bindings[0].constructor;
-                  policy.bindings.push(new constructor(allReadBinding));
+                  const BindingConstructor = policy.bindings[0].constructor;
+                  policy.bindings.push(new BindingConstructor(allReadBinding));
                   ee.data.setIamPolicy(eeLegacyPrefix + id, policy, () => {});
                 });
           }
