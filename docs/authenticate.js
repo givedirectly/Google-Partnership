@@ -43,8 +43,9 @@ const eeErrorDialog =
     '<a href="https://signup.earthengine.google.com">https://signup.earthengine.google.com</a>' +
     ' or sign into a whitelisted account after closing this dialog</div>';
 
-// TODO(janakr): make configurable, especially for tests.
-const TOKEN_SERVER_URL = 'http://localhost:9080';
+const TOKEN_SERVER_URL = 'https://mapping-crisis.appspot.com';
+// For local testing.
+// const TOKEN_SERVER_URL = 'http://localhost:9080';
 
 // Request a new token with 5 minutes of validity remaining on our current token
 // to leave time for any slowness.
