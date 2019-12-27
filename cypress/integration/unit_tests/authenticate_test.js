@@ -1,6 +1,7 @@
 import {trackEeAndFirebase} from '../../../docs/authenticate.js';
 import {eeLegacyPrefix} from '../../../docs/ee_paths.js';
 import {cypressTestPropertyName} from '../../../docs/in_test_util.js';
+import * as Resources from '../../../docs/resources.js';
 import {getBackupScoreAssetPath} from '../../../docs/resources.js';
 import {getScoreAssetPath} from '../../../docs/resources.js';
 import {TaskAccumulator} from '../../../docs/task_accumulator.js';
@@ -40,52 +41,111 @@ beforeEach(() => {
 });
 
 it('Tries to make score assets world-readable', () => {
-  // Would be nice to use genuine ee.data.getIamPolicy calls, but those fail if
-  // not the GD user, which is the case in tests.
-  const privatePolicy = {
-    bindings: [
-      {
-        role: 'roles/owner',
-        members: ['user:gd-earthengine-user@givedirectly.org'],
-      },
-      {
-        role: 'roles/viewer',
-        members: ['user:gd-earthengine-user@givedirectly.org'],
-      },
-    ],
-  };
-  const publicPolicy = {
-    bindings: [
-      {
-        role: 'roles/owner',
-        members: ['user:gd-earthengine-user@givedirectly.org'],
-      },
-      {
-        role: 'roles/viewer',
-        members: ['user:gd-earthengine-user@givedirectly.org', 'allUsers'],
-      },
-    ],
-  };
+  const primaryPath = eeLegacyPrefix + getScoreAssetPath();
+  // Avoid non-determinism of backup asset existing by making sure it does.
+  cy.stub(Resources, 'getBackupScoreAssetPath')
+      .returns('users/gd/2017-harvey/FEMA_Damage_Assessments');
+  const backupPath = eeLegacyPrefix + getBackupScoreAssetPath();
+  const {
+    noReadPolicy,
+    privateReadPolicy,
+    publicPolicy,
+    publicPolicyWithReader,
+  } = getPolicies();
   const getStub = cy.stub(ee.data, 'getIamPolicy');
-  getStub
-      .withArgs(eeLegacyPrefix + getScoreAssetPath(), Cypress.sinon.match.func)
-      .returns(Promise.resolve(privatePolicy));
-  getStub
-      .withArgs(
-          eeLegacyPrefix + getBackupScoreAssetPath(), Cypress.sinon.match.func)
-      .returns(Promise.resolve(publicPolicy));
-  let setStub;
-  const setPromise = new Promise(
-      (resolve) => setStub =
-          cy.stub(ee.data, 'setIamPolicy').callsFake(resolve));
+  getStub.withArgs(primaryPath, Cypress.sinon.match.func)
+      .returns(Promise.resolve(noReadPolicy))
+      .withArgs(backupPath, Cypress.sinon.match.func)
+      .returns(Promise.resolve(privateReadPolicy));
+  const setIamStub = cy.stub(ee.data, 'setIamPolicy');
+  let setPrimaryStub;
+  const setPrimaryPromise = new Promise(
+      (resolve) => setPrimaryStub =
+          setIamStub
+              .withArgs(
+                  primaryPath, Cypress.sinon.match.any,
+                  Cypress.sinon.match.func)
+              .callsFake(resolve));
+  let setBackupStub;
+  const setBackupPromise = new Promise(
+      (resolve) => setBackupStub =
+          setIamStub
+              .withArgs(
+                  backupPath, Cypress.sinon.match.any, Cypress.sinon.match.func)
+              .callsFake(resolve));
   waitForTrackAndAssertNormalStubs();
-  cy.wait(100).then(() => expect(getStub).to.be.calledTwice);
-  cy.wrap(setPromise).then((result) => {
-    expect(setStub).to.be.calledOnce;
-    expect(setStub).to.be.calledWith(
-        eeLegacyPrefix + getScoreAssetPath(), publicPolicy);
+  cy.wrap(setPrimaryPromise).then(() => {
+    expect(getStub).to.be.called;
+    expect(setPrimaryStub).to.be.calledOnce;
+    expect(setPrimaryStub).to.be.calledWith(primaryPath, publicPolicy);
+  });
+  cy.wrap(setBackupPromise).then(() => {
+    expect(getStub).to.be.calledTwice;
+    expect(setBackupStub).to.be.calledOnce;
+    expect(setBackupStub).to.be.calledWith(backupPath, publicPolicyWithReader);
   });
 });
+
+it('Skips making readable if already readable', () => {
+  const primaryPath = eeLegacyPrefix + getScoreAssetPath();
+  // Avoid non-determinism of backup asset existing by making sure it doesn't.
+  cy.stub(Resources, 'getBackupScoreAssetPath').returns('does/not/exist');
+  const {publicPolicy} = getPolicies();
+
+  let getResolveFunction;
+  const getPromise = new Promise((resolve) => getResolveFunction = resolve);
+  const getStub = cy.stub(ee.data, 'getIamPolicy').callsFake(() => {
+    getResolveFunction();
+    return Promise.resolve(publicPolicy);
+  });
+  const setIamStub = cy.stub(ee.data, 'setIamPolicy');
+  waitForTrackAndAssertNormalStubs();
+  cy.wrap(getPromise).then(() => {
+    expect(getStub).to.be.calledOnce;
+    expect(getStub).to.be.calledWith(primaryPath);
+    expect(setIamStub).to.not.be.called;
+  });
+});
+
+/**
+ * Reaches deep into EarthEngine internals and constructs IamPolicy objects for
+ * returning in {@link ee.data.getIamPolicy} stubs. Calling that method doesn't
+ * seem to work in tests, even for assets we normally have write access to.
+ *
+ * This is so gross, but it allows us to construct genuine Policy objects so
+ * that we know our code can deal with them. If names change, test will break,
+ * but should be able to find new ones.
+ *
+ * @return {Object} Collection of policies for use in tests
+ */
+function getPolicies() {
+  const PolicyConstructor = module$exports$eeapiclient$ee_api_client.Policy;
+  const BindingConstructor = module$exports$eeapiclient$ee_api_client.Binding;
+  const ownerBinding = new BindingConstructor({
+    role: 'roles/owner',
+    members: ['user:gd-earthengine-user@givedirectly.org'],
+  });
+  const privateReaderBinding = new BindingConstructor({
+    role: 'roles/viewer',
+    members: ['user:gd-earthengine-user@givedirectly.org'],
+  });
+  const allReadWithReaderBinding = new BindingConstructor({
+    role: 'roles/viewer',
+    members: ['user:gd-earthengine-user@givedirectly.org', 'allUsers'],
+  });
+  const allReadBinding =
+      new BindingConstructor({role: 'roles/viewer', members: ['allUsers']});
+  return {
+    noReadPolicy: new PolicyConstructor({bindings: [ownerBinding]}),
+    privateReadPolicy:
+        new PolicyConstructor({bindings: [ownerBinding, privateReaderBinding]}),
+    publicPolicy:
+        new PolicyConstructor({bindings: [ownerBinding, allReadBinding]}),
+    publicPolicyWithReader: new PolicyConstructor(
+        {bindings: [ownerBinding, allReadWithReaderBinding]},
+        ),
+  };
+}
 
 it('Does not try to make score assets readable when not gd user', () => {
   cy.get('@gapiEmail')
