@@ -44,6 +44,8 @@ export {
  *     to an empty map here for testing
  */
 let disasterData = new Map();
+
+// TODO(janakr): remove this cache, we can rely on internal caching.
 /**
  * Disaster id to assets in corresponding EE folder. We know
  * for each asset what type it is and whether or not it should be disabled in
