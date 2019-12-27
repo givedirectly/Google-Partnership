@@ -640,14 +640,17 @@ function wrapPromiseLoadingAware(promise, layerInfoForErrors) {
   const {index, 'display-name': displayName} = layerInfoForErrors;
   return promise
       .catch((err) => {
+        const notFound = true;
         showError(
             'Error with layer ' + displayName + ', ' + err,
-            'Error loading layer ' + displayName);
+            notFound ? 'EarthEngine asset for ' + displayName + ' not found' : 'Error loading layer ' + displayName);
         $('#' + getCheckBoxRowId(index))
             .prop(
                 'title',
+                notFound ? 'EarthEngine asset not found. If you ' +
+                'believe the layer is there, try refreshing the page' :
                 'Error showing layer. If you believe the layer is there, try ' +
-                    'refreshing the page')
+                    'refreshing the page (Error message: ' + err + ')')
             .css('text-decoration', 'line-through');
         $('#' + getCheckBoxId(index))
             .prop('checked', false)
