@@ -1,3 +1,5 @@
+import * as ErrorLib from '../../../docs/error.js';
+import * as FirestoreDocument from '../../../docs/firestore_document.js';
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
 import {assetDataTemplate} from '../../../docs/import/create_disaster_lib.js';
 import {disasterData} from '../../../docs/import/manage_disaster';
@@ -88,10 +90,16 @@ describe('Add/delete-related tests for manage_disaster.js', () => {
     cy.wrap(writeNewDisaster(id, states))
         .then((success) => {
           expect(success).to.be.true;
+          expect(createFolderStub).to.be.calledTwice;
+          expect(setAclsStub).to.be.calledTwice;
+          createFolderStub.resetHistory();
+          setAclsStub.resetHistory();
           return writeNewDisaster(id, states);
         })
         .then((success) => {
           expect(success).to.be.false;
+          expect(createFolderStub).to.not.be.called;
+          expect(setAclsStub).to.not.be.called;
           const status = $('#compute-status');
           expect(status.is(':visible')).to.be.true;
           expect(status.text())
@@ -103,7 +111,10 @@ describe('Add/delete-related tests for manage_disaster.js', () => {
   it('tries to write a disaster with bad info, then fixes it', () => {
     const year = createAndAppend('input', 'year');
     const name = createAndAppend('input', 'name');
-    const states = createAndAppend('input', 'states');
+    const states = createAndAppend('select', 'states');
+    states.prop('multiple', 'multiple')
+        .append(createSelectedOption('IG'))
+        .append(createSelectedOption('MY'));
     const status = $('#compute-status');
 
     cy.wrap(addDisaster())
@@ -112,10 +123,11 @@ describe('Add/delete-related tests for manage_disaster.js', () => {
           expect(status.is(':visible')).to.be.true;
           expect(status.text())
               .to.eql('Error: Disaster name, year, and states are required.');
+          expect(createFolderStub).to.not.be.called;
+          expect(setAclsStub).to.not.be.called;
 
           year.val('hello');
           name.val('my name is');
-          states.val(['IG', 'MY']);
           return addDisaster();
         })
         .then((success) => {
@@ -125,6 +137,9 @@ describe('Add/delete-related tests for manage_disaster.js', () => {
 
           year.val('2000');
           name.val('HARVEY');
+          expect(createFolderStub).to.not.be.called;
+          expect(setAclsStub).to.not.be.called;
+
           return addDisaster();
         })
         .then((success) => {
@@ -135,10 +150,64 @@ describe('Add/delete-related tests for manage_disaster.js', () => {
                   'Error: disaster name must be comprised of only ' +
                   'lowercase letters');
 
+          expect(createFolderStub).to.not.be.called;
+          expect(setAclsStub).to.not.be.called;
           name.val('harvey');
           return addDisaster();
         })
-        .then((success) => expect(success).to.be.true);
+        .then((success) => {
+          expect(success).to.be.true;
+          expect(createFolderStub).to.be.calledThrice;
+          expect(setAclsStub).to.be.calledThrice;
+        });
+  });
+
+  /**
+   * Creates an option with the given text, already selected.
+   * @param {string} text
+   * @return {JQuery<HTMLOptionElement>}
+   */
+  function createSelectedOption(text) {
+    return $(document.createElement('option')).val(text).prop('selected', true);
+  }
+
+  it('Error creating EE folder', () => {
+    const id = '2005-summer';
+    const states = [KNOWN_STATE];
+    const errorStub = cy.stub(ErrorLib, 'showError');
+    // Restore actual ee.createFolder. Tests don't have permission to create
+    // folders, so this exercises EE failure mode better than we could fake it.
+    createFolderStub.restore();
+    const firestoreStub =
+        cy.stub(FirestoreDocument, 'disasterCollectionReference');
+    cy.wrap(writeNewDisaster(id, states)).then((success) => {
+      expect(success).to.be.false;
+      expect(firestoreStub).to.not.be.called;
+      expect(disasterData).to.be.empty;
+      expect(errorStub).to.be.calledOnce;
+      expect(errorStub).to.be.calledWith(
+          'Error creating EarthEngine folders: "Asset ' +
+          '\'projects/earthengine-legacy/assets/users/gd\' does not exist or ' +
+          'doesn\'t allow this operation." You can try refreshing the page');
+    });
+  });
+
+  it('Error writing to Firestore', () => {
+    const id = '2005-summer';
+    const states = [KNOWN_STATE];
+    const errorStub = cy.stub(ErrorLib, 'showError');
+    // Tests don't have permission to write to root Firestore, so this will
+    // exercise Firestore functionality better than we could fake it.
+    cy.stub(FirestoreDocument, 'disasterCollectionReference')
+        .returns(firebase.firestore().collection('disaster-metadata'));
+    cy.wrap(writeNewDisaster(id, states)).then((success) => {
+      expect(success).to.be.false;
+      expect(disasterData).to.be.empty;
+      expect(errorStub).to.be.calledOnce;
+      expect(errorStub).to.be.calledWith(
+          'Error writing to Firestore: "Missing or insufficient ' +
+          'permissions." You can try refreshing the page');
+    });
   });
 
   it('deletes a disaster', () => {
