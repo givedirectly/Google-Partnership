@@ -1,6 +1,6 @@
 import {eeLegacyPrefix} from '../ee_paths.js';
+import {convertEeObjectToPromise} from '../ee_promise_cache.js';
 import {LayerType} from '../firebase_layers.js';
-import {convertEeObjectToPromise} from '../map_util.js';
 
 import {createLayerRow} from './manage_layers.js';
 import {getCurrentLayers, updateLayersInFirestore} from './manage_layers_lib.js';

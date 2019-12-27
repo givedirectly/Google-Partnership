@@ -16,7 +16,7 @@ feature.properties = featureProperties;
 const geometryObject = {};
 feature.geometry = geometryObject;
 const joinedDataPromise = {};
-joinedDataPromise.then = (lambda) => lambda({features: [feature]});
+joinedDataPromise.then = (lambda) => lambda([feature]);
 
 describe('Unit test for processed_joined_data.js', () => {
   it('Processes an above threshold block group', () => {

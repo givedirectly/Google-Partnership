@@ -61,16 +61,16 @@ function processJoinedData(
     dataPromise, scalingFactor, initialTogglesValuesPromise) {
   return Promise.all([dataPromise, initialTogglesValuesPromise])
       .then((results) => {
-        const [featureCollection, {
+        const [featuresList, {
           povertyThreshold,
           damageThreshold,
           povertyWeight,
         }] = results;
-        for (const feature of featureCollection.features) {
+        for (const feature of featuresList) {
           colorAndRate(
               feature, scalingFactor, povertyThreshold, damageThreshold,
               povertyWeight);
         }
-        return featureCollection.features;
+        return featuresList;
       });
 }
