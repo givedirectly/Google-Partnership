@@ -525,7 +525,8 @@ function initializeScoreSelectors(states, stateAssets) {
     const row = $('#' + id);
     removeAllButFirstFromRow(row);
     for (const [i, state] of states.entries()) {
-      // Disable FeatureCollections without geometries if desired.
+      // Disable FeatureCollections without geometries if desired. Be careful
+      // not to modify stateAssets[i]!
       const assets = geometryExpected ?
           new Map(Array.from(
               stateAssets[i],

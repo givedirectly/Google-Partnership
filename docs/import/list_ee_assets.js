@@ -124,7 +124,6 @@ function markHasGeometryAssets(listingPromise) {
  *     array of asset info objects.
  */
 function listEeAssets(dir) {
-  console.log(dir);
   return ee.data.listAssets(dir, {}, () => {}).then(getIds);
 }
 
