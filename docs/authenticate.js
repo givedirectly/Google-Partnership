@@ -302,6 +302,10 @@ const allReadBinding = {
  * explicit user action.
  */
 function makeScoreAssetsWorldReadable() {
+  // TODO(janakr): Switch to using listEeAssets once #368 is in.
+  // TODO(janakr): Consider sharing cache with list_ee_assets.js. Not trivial
+  //  because that code does additional EE requests to look at geometries, so
+  //  we would need a two-level cache, one raw and one with geometries.
   ee.data.listAssets(eeLegacyPathPrefix + getDisaster(), {}, () => {})
       .then((listResult) => {
         if (!listResult) {
