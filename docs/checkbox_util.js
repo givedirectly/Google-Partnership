@@ -1,4 +1,8 @@
-export {getCheckBoxId, getCheckBoxRowId};
+export {
+  getCheckBoxId,
+  getCheckBoxRowId,
+  partiallyHandleBadRowAndReturnCheckbox,
+};
 
 /**
  * Creates the id of a show/hide checkbox.
@@ -16,4 +20,15 @@ function getCheckBoxId(index) {
  */
 function getCheckBoxRowId(index) {
   return getCheckBoxId(index) + '-row';
+}
+
+/**
+ * Does common work of marking a layers row as somehow bad: strikes through the
+ * text and unchecks the checkbox.
+ * @param {JQuery<HTMLDivElement>} row
+ * @return {JQuery<HTMLInputElement>} checkbox of this row
+ */
+function partiallyHandleBadRowAndReturnCheckbox(row) {
+  row.css('text-decoration', 'line-through');
+  return row.children('input').prop('checked', false);
 }

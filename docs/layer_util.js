@@ -1,4 +1,4 @@
-import {getCheckBoxId, getCheckBoxRowId} from './checkbox_util.js';
+import {getCheckBoxRowId, partiallyHandleBadRowAndReturnCheckbox} from './checkbox_util.js';
 import {CompositeImageMapType} from './composite_image_map_type.js';
 import {mapContainerId} from './dom_constants.js';
 import {terrainStyle} from './earth_engine_asset.js';
@@ -642,23 +642,16 @@ function wrapPromiseLoadingAware(promise, layerInfoForErrors) {
             'Error with layer ' + displayName + ', ' + message,
             notFound ? 'EarthEngine asset for ' + displayName + ' not found' :
                        'Error loading layer ' + displayName);
-        if (err instanceof Error) {
-          // Give full stack trace if actually an error.
-          console.error(err);
-        }
-        $('#' + getCheckBoxRowId(index))
-            .prop(
-                'title',
-                notFound ?
-                    'EarthEngine asset not found. If you ' +
-                        'believe it is there, try refreshing the page' :
-                    'Error showing layer. If you believe the layer is there, ' +
-                        'try refreshing the page (Error message: ' + message +
-                        ')')
-            .css('text-decoration', 'line-through');
-        $('#' + getCheckBoxId(index))
-            .prop('checked', false)
-            .prop('disabled', true);
+
+        const badRow = $('#' + getCheckBoxRowId(index));
+        partiallyHandleBadRowAndReturnCheckbox(badRow).prop('disabled', true);
+        badRow.prop(
+            'title',
+            notFound ?
+                'EarthEngine asset not found. If you ' +
+                    'believe it is there, try refreshing the page' :
+                'Error showing layer. If you believe the layer is there, ' +
+                    'try refreshing the page (Error message: ' + message + ')');
       })
       .finally(mapLoadingFinished);
 }
