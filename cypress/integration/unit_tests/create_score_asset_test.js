@@ -1,6 +1,6 @@
 import {gdEePathPrefix} from '../../../docs/ee_paths.js';
+import {convertEeObjectToPromise} from '../../../docs/ee_promise_cache.js';
 import {backUpAssetAndStartTask, createScoreAsset} from '../../../docs/import/create_score_asset.js';
-import {convertEeObjectToPromise} from '../../../docs/map_util';
 import * as Resources from '../../../docs/resources.js';
 import {assertFirestoreMapBounds} from '../../support/firestore_map_bounds';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';

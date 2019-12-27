@@ -1,6 +1,6 @@
 import {eeLegacyPathPrefix, legacyStateDir} from '../ee_paths.js';
+import {convertEeObjectToPromise} from '../ee_promise_cache.js';
 import {LayerType} from '../firebase_layers.js';
-import {convertEeObjectToPromise} from '../map_util.js';
 
 export {getDisasterAssetsFromEe, getStatesAssetsFromEe};
 

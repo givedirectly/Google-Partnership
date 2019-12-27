@@ -38,7 +38,8 @@ describe('Unit tests for adding layers', () => {
           expect(layer['display-on-load']).to.be.false;
           const colorFunction = layer['color-function'];
           expect(colorFunction['current-style']).to.equal(ColorStyle.SINGLE);
-          expect(colorFunction['last-by-property-style']).to.equal(ColorStyle.CONTINUOUS);
+          expect(colorFunction['last-by-property-style'])
+              .to.equal(ColorStyle.CONTINUOUS);
           expect(colorFunction['colors']).to.be.empty;
           const scoopsColumn = colorFunction['columns']['scoops'];
           expect(scoopsColumn['max']).to.equal(4);

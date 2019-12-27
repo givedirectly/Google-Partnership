@@ -1,5 +1,4 @@
 export {
-  convertEeObjectToPromise,
   geoPointToLatLng,
   latLngToGeoPoint,
   polygonToGeoPointArray,
@@ -51,23 +50,4 @@ function transformGeoPointArrayToLatLng(geopoints) {
   const coordinates = [];
   geopoints.forEach((geopoint) => coordinates.push(geoPointToLatLng(geopoint)));
   return coordinates;
-}
-
-/**
- * Transform an EE object into a standard Javascript Promise by wrapping its
- * evaluate call.
- *
- * @param {ee.ComputedObject} eeObject
- * @return {Promise<GeoJson>}
- */
-function convertEeObjectToPromise(eeObject) {
-  return new Promise((resolve, reject) => {
-    eeObject.evaluate((resolvedObject, error) => {
-      if (error) {
-        reject(error);
-        return;
-      }
-      resolve(resolvedObject);
-    });
-  });
 }

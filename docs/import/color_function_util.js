@@ -20,9 +20,10 @@ let globalTd;
  * DOM elements with attached on-change handlers.
  */
 function populateColorFunctions() {
-  colorStyleTypeStrings.forEach((typeAsString, colorStyle) =>
-    $('#' + typeAsString + '-radio')
-        .on('change', () => switchSchema(colorStyle)));
+  colorStyleTypeStrings.forEach(
+      (typeAsString, colorStyle) =>
+          $('#' + typeAsString + '-radio')
+              .on('change', () => switchSchema(colorStyle)));
   $('#property-radio').on('change', () => {
     const lastByPropertyType =
         colorStyleTypeStrings.get(getColorFunction()['last-by-property-style']);
