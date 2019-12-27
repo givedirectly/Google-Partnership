@@ -7,7 +7,7 @@ import {getDisaster} from '../resources.js';
 import {createDisasterData, incomeKey, snapKey, sviKey, totalKey} from './create_disaster_lib.js';
 import {createScoreAsset, setStatus} from './create_score_asset.js';
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
-import {getDisasterAssetsFromEe, getStatesAssetsFromEe} from './list_ee_assets.js';
+import {getDisasterAssetsFromEe, getStateAssetsFromEe} from './list_ee_assets.js';
 import {clearStatus} from './manage_layers_lib.js';
 import {ScoreBoundsMap} from './score_bounds_map.js';
 import {scoreCoordinatesAttribute} from './score_path_lib.js';
@@ -31,7 +31,6 @@ export {
   enableWhenFirestoreReady,
   scoreAssetTypes,
   scoreBoundsMap,
-  stateAssets,
   updateColorAndHover,
   validateUserFields,
   writeNewDisaster,
@@ -47,6 +46,8 @@ export {
  *     to an empty map here for testing
  */
 let disasterData = new Map();
+
+// TODO(janakr): remove this cache, we can rely on internal caching.
 /**
  * Disaster id to assets in corresponding EE folder. We know
  * for each asset what type it is and whether or not it should be disabled in
@@ -56,14 +57,6 @@ let disasterData = new Map();
  *     boolean}>>>}
  */
 const disasterAssets = new Map();
-
-/**
- * State to assets in corresponding EE folder. We know for each asset whether or
- * not it should be disabled in the option picker. See {@link
- * getStatesAssetsFromEe} for details on disabled options.
- * @type {Map<string, Promise<Map<string, {disabled: boolean}>>>}
- */
-const stateAssets = new Map();
 
 /**
  * Effectively constant {@link ScoreBoundsMap} initialized in {@link
@@ -257,30 +250,16 @@ function onSetDisaster() {
   scoreBoundsMap.initialize(
       scoreBoundsPath ? transformGeoPointArrayToLatLng(scoreBoundsPath) : null,
       states);
-  const neededStates = [];
-  for (const state of states) {
-    if (!stateAssets.has(state)) {
-      neededStates.push(state);
-    }
-  }
-  if (neededStates) {
-    const newStatePromises = getStatesAssetsFromEe(neededStates);
-    for (const [state, promise] of newStatePromises) {
-      stateAssets.set(state, promise);
-    }
-  }
-  const statePromises = [];
-  for (const state of states) {
-    statePromises.push(stateAssets.get(state));
-  }
-  const scorePromise = Promise.all(statePromises).then((stateAssets) => {
-    if (getDisaster() === currentDisaster &&
-        !processedCurrentDisasterStateAssets) {
-      // Don't do anything unless this is still the right disaster.
-      initializeScoreSelectors(states, stateAssets);
-      processedCurrentDisasterStateAssets = true;
-    }
-  });
+  // getStateAssetsFromEe does internal caching.
+  const scorePromise =
+      Promise.all(states.map(getStateAssetsFromEe)).then((stateAssets) => {
+        if (getDisaster() === currentDisaster &&
+            !processedCurrentDisasterStateAssets) {
+          // Don't do anything unless this is still the right disaster.
+          initializeScoreSelectors(states, stateAssets);
+          processedCurrentDisasterStateAssets = true;
+        }
+      });
   const disasterLambda = (assets) => {
     if (getDisaster() === currentDisaster &&
         !processedCurrentDisasterSelfAssets) {

@@ -2,44 +2,38 @@ import {eeLegacyPathPrefix, legacyStateDir} from '../ee_paths.js';
 import {convertEeObjectToPromise} from '../ee_promise_cache.js';
 import {LayerType} from '../firebase_layers.js';
 
-export {getDisasterAssetsFromEe, getStatesAssetsFromEe};
+export {getDisasterAssetsFromEe, getStateAssetsFromEe};
 
 /**
- * Cache for the results of getStatesAssetsFromEe for each state.
- * @type {Map<string, Promise<Map<string, string>>>}
+ * Cache for the results of getStateAssetsFromEe.
+ * @type {Map<string, Promise<Map<string, {disabled: boolean}>>>}
  */
 const stateAssetPromises = new Map();
 
-// TODO: we don't need to request multiple states
 /**
- * Gets all assets in ee directories corresponding to given states. Caches
+ * Gets all assets in ee directories corresponding to given state. Caches
  * results. Marks assets with their type and whether or not they should be
  * disabled when put into a select. Here, disabling any assets that aren't
  * feature collections.
- * @param {Array<string>} states
- * @return {Map<string, Promise<Map<string, {disabled: boolean}>>>}
+ * @param {string} state
+ * @return {Promise<Map<string, {disabled: boolean}>>}
  */
-function getStatesAssetsFromEe(states) {
-  const toReturn = new Map();
-  for (const state of states) {
-    const maybeStatePromise = stateAssetPromises.get(state);
-    if (maybeStatePromise) {
-      toReturn.set(state, maybeStatePromise);
-      continue;
-    }
-    const statePromise =
-        listEeAssets(legacyStateDir + '/' + state).then((result) => {
-          const assetMap = new Map();
-          for (const {asset, type} of result) {
-            assetMap.set(
-                asset, {disabled: type !== LayerType.FEATURE_COLLECTION});
-          }
-          return assetMap;
-        });
-    stateAssetPromises.set(state, statePromise);
-    toReturn.set(state, statePromise);
+function getStateAssetsFromEe(state) {
+  const maybeStatePromise = stateAssetPromises.get(state);
+  if (maybeStatePromise) {
+    return maybeStatePromise;
   }
-  return toReturn;
+  const statePromise =
+      listEeAssets(legacyStateDir + '/' + state).then((result) => {
+        const assetMap = new Map();
+        for (const {asset, type} of result) {
+          assetMap.set(
+              asset, {disabled: type !== LayerType.FEATURE_COLLECTION});
+        }
+        return assetMap;
+      });
+  stateAssetPromises.set(state, statePromise);
+  return statePromise;
 }
 
 /**
