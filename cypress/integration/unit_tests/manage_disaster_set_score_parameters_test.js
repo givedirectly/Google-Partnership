@@ -2,7 +2,7 @@ import {addPolygonWithPath} from '../../../docs/basic_map.js';
 import {readDisasterDocument} from '../../../docs/firestore_document.js';
 import {createDisasterData} from '../../../docs/import/create_disaster_lib.js';
 import * as ListEeAssets from '../../../docs/import/list_ee_assets.js';
-import {assetSelectionRowPrefix, disasterAssets, disasterData, scoreAssetTypes, scoreBoundsMap, setUpScoreBoundsMap, setUpScoreSelectorTable, stateAssets, validateUserFields} from '../../../docs/import/manage_disaster';
+import {assetSelectionRowPrefix, disasterAssets, disasterData, scoreAssetTypes, scoreBoundsMap, setUpScoreBoundsMap, setUpScoreSelectorTable, validateUserFields} from '../../../docs/import/manage_disaster';
 import {enableWhenFirestoreReady} from '../../../docs/import/manage_disaster.js';
 import {getDisaster} from '../../../docs/resources.js';
 import {cyQueue} from '../../support/commands.js';
@@ -25,6 +25,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
   loadScriptsBeforeForUnitTests('ee', 'firebase', 'jquery', 'maps');
   before(preparePage);
 
+  let stateStub;
   setUpSavingStubs();
   let firstTest = true;
   beforeEach(() => {
@@ -39,8 +40,8 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
         firstTest = false;
       }
     });
+    stateStub = cy.stub(ListEeAssets, 'getStateAssetsFromEe');
     disasterData.clear();
-    stateAssets.clear();
     disasterAssets.clear();
   });
 
@@ -108,7 +109,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
           ['asset1', {type: 1, disabled: false}],
           ['asset2', {type: 2, disabled: true}],
         ])));
-    stateAssets.set('NY', Promise.resolve(new Map([
+    stateStub.withArgs('NY').returns(Promise.resolve(new Map([
       ['state0', {disabled: false}],
       ['state1', {disabled: true}],
     ])));
@@ -248,7 +249,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     for (let i = 0; i <= 4; i++) {
       assets.set('wy' + i, {disabled: false});
     }
-    stateAssets.set('WY', Promise.resolve(assets));
+    stateStub.withArgs('WY').returns(Promise.resolve(assets));
     setUpDefaultData();
     callEnableWhenReady(createDisasterData(['NY', 'WY']));
     // Check table is properly initialized, then validate.
@@ -407,7 +408,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
         'Error! asset could not be found.');
   });
 
-  it.only('has two racing sets on same selector', () => {
+  it('has two racing sets on same selector', () => {
     callEnableWhenReady(setUpDefaultData());
     const goodPovertyFeature = ee.FeatureCollection([ee.Feature(
         null,
@@ -531,7 +532,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     for (let i = 0; i <= 4; i++) {
       assets.set('state' + i, {disabled: false});
     }
-    stateAssets.set('NY', Promise.resolve(assets));
+    stateStub.withArgs('NY').returns(Promise.resolve(assets));
     return currentData;
   }
 
