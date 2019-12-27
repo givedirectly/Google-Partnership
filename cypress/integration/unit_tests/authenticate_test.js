@@ -1,7 +1,7 @@
 import {trackEeAndFirebase} from '../../../docs/authenticate.js';
 import {eeLegacyPrefix} from '../../../docs/ee_paths.js';
 import {cypressTestPropertyName} from '../../../docs/in_test_util.js';
-import * as Resources from '../../../docs/resources.js';
+import {getBackupScoreAssetPath} from '../../../docs/resources.js';
 import {getScoreAssetPath} from '../../../docs/resources.js';
 import {TaskAccumulator} from '../../../docs/task_accumulator.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
@@ -40,27 +40,60 @@ beforeEach(() => {
 });
 
 it('Tries to make score assets world-readable', () => {
-  // Cope with non-determinism of backup score asset presence: make it absent.
-  cy.stub(Resources, 'getBackupScoreAssetPath').returns('does/not/exist');
-  let aclStub;
-  const aclPromise = new Promise(
-      (resolve) => aclStub =
-          cy.stub(ee.data, 'setAssetAcl').callsFake(resolve));
+  // Would be nice to use genuine ee.data.getIamPolicy calls, but those fail if
+  // not the GD user, which is the case in tests.
+  const privatePolicy = {
+    bindings: [
+      {
+        role: 'roles/owner',
+        members: ['user:gd-earthengine-user@givedirectly.org'],
+      },
+      {
+        role: 'roles/viewer',
+        members: ['user:gd-earthengine-user@givedirectly.org'],
+      },
+    ],
+  };
+  const publicPolicy = {
+    bindings: [
+      {
+        role: 'roles/owner',
+        members: ['user:gd-earthengine-user@givedirectly.org'],
+      },
+      {
+        role: 'roles/viewer',
+        members: ['user:gd-earthengine-user@givedirectly.org', 'allUsers'],
+      },
+    ],
+  };
+  const getStub = cy.stub(ee.data, 'getIamPolicy');
+  getStub
+      .withArgs(eeLegacyPrefix + getScoreAssetPath(), Cypress.sinon.match.func)
+      .returns(Promise.resolve(privatePolicy));
+  getStub
+      .withArgs(
+          eeLegacyPrefix + getBackupScoreAssetPath(), Cypress.sinon.match.func)
+      .returns(Promise.resolve(publicPolicy));
+  let setStub;
+  const setPromise = new Promise(
+      (resolve) => setStub =
+          cy.stub(ee.data, 'setIamPolicy').callsFake(resolve));
   waitForTrackAndAssertNormalStubs();
-  cy.wrap(aclPromise).then(() => {
-    expect(aclStub).to.be.calledOnce;
-    expect(aclStub).to.be.calledWith(
-        eeLegacyPrefix + getScoreAssetPath(), {all_users_can_read: true});
+  cy.wait(100).then(() => expect(getStub).to.be.calledTwice);
+  cy.wrap(setPromise).then((result) => {
+    expect(setStub).to.be.calledOnce;
+    expect(setStub).to.be.calledWith(
+        eeLegacyPrefix + getScoreAssetPath(), publicPolicy);
   });
 });
 
 it('Does not try to make score assets readable when not gd user', () => {
   cy.get('@gapiEmail')
       .then((emailStub) => emailStub.returns('some-user@givedirectly.org'));
-  const listAssetsStub = cy.stub(ee.data, 'listAssets');
+  const getPolicyStub = cy.stub(ee.data, 'getIamPolicy');
   waitForTrackAndAssertNormalStubs();
   // Give other thread a chance to call listAssets if that's going to happen.
-  cy.wait(0).then(() => expect(listAssetsStub).to.not.be.called);
+  cy.wait(0).then(() => expect(getPolicyStub).to.not.be.called);
 });
 
 /**

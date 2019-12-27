@@ -1,9 +1,8 @@
 import {CLIENT_ID} from './common_auth_utils.js';
-import {eeLegacyPathPrefix, eeLegacyPrefix} from './ee_paths.js';
-import {listEeAssets} from './ee_utils.js';
+import {eeLegacyPrefix} from './ee_paths.js';
 import {showError} from './error.js';
 import {earthEngineTestTokenCookieName, firebaseTestTokenPropertyName, getValueFromLocalStorage, inProduction} from './in_test_util.js';
-import {getBackupScoreAssetPath, getDisaster, getScoreAssetPath} from './resources.js';
+import {getBackupScoreAssetPath, getScoreAssetPath} from './resources.js';
 import {SettablePromise} from './settable_promise.js';
 
 export {reloadWithSignIn, trackEeAndFirebase};
@@ -289,6 +288,8 @@ function initializeFirebase() {
   firebase.initializeApp(getFirebaseConfig(inProduction()));
 }
 
+const allReadBinding = {role: 'roles/viewer', members: ['allUsers']};
+
 /**
  * Lists assets in the current disaster's folder and for any that match a score
  * asset path (either standard or backup), send a request to make that asset
@@ -298,23 +299,23 @@ function initializeFirebase() {
  * explicit user action.
  */
 function makeScoreAssetsWorldReadable() {
-  listEeAssets(eeLegacyPathPrefix + getDisaster()).then((listResult) => {
-    if (!listResult) {
-      return;
-    }
-    const paths = new Set([getScoreAssetPath(), getBackupScoreAssetPath()]);
-    let foundAssets = 0;
-    for (const {id} of listResult) {
-      if (paths.has(id)) {
-        ee.data.setAssetAcl(
-            eeLegacyPrefix + id, {all_users_can_read: true}, () => {});
-        foundAssets++;
+  for (const asset of [getScoreAssetPath(), getBackupScoreAssetPath()]) {
+    ee.data.getIamPolicy(eeLegacyPrefix + asset, () => {}).then((policy) => {
+      for (const binding of policy.bindings) {
+        console.log(binding);
+        if (binding.role === 'roles/viewer') {
+          if (!binding.members.includes('allUsers')) {
+            binding.members.push('allUsers');
+            ee.data.setIamPolicy(eeLegacyPrefix + asset, policy, () => {});
+          }
+          return;
+        }
       }
-      if (foundAssets === paths.size) {
-        break;
-      }
-    }
-  });
+      // If we got here, no roles/viewer binding.
+      policy.bindings.push(allReadBinding);
+      ee.data.setIamPolicy(eeLegacyPrefix + asset, policy, () => {});
+    });
+  }
 }
 
 /**
