@@ -483,12 +483,14 @@ const scoreAssetTypes = [
     propertyPath: ['block_group_asset_paths'],
     displayName: 'Census TIGER Shapefiles',
     expectedColumns: [tigerGeoidKey],
+    geometryExpected: true,
   },
   {
     idStem: 'buildings',
     propertyPath: ['building_asset_paths'],
     displayName: 'Microsoft Building Shapefiles',
     expectedColumns: [],
+    geometryExpected: true,
   },
 ];
 Object.freeze(scoreAssetTypes);
@@ -512,9 +514,8 @@ function setUpScoreSelectorTable() {
 /**
  * Initializes the select interface for score assets.
  * @param {Array<string>} states array of state (abbreviations)
- * @param {Array<Map<string, {disabled: boolean}>>} stateAssets matching array
- *     to
- * the {@code states} array that holds a map of asset info for each state.
+ * @param {Array<StateList>} stateAssets matching array to the {@code states}
+ *     array that holds a map of asset info for each state.
  */
 function initializeScoreSelectors(states, stateAssets) {
   const headerRow = $('#score-asset-header-row');
@@ -526,12 +527,21 @@ function initializeScoreSelectors(states, stateAssets) {
   }
 
   // For each asset type, add select for all assets for each state.
-  for (const {idStem, propertyPath, expectedColumns} of scoreAssetTypes) {
+  for (const {idStem,
+              propertyPath,
+              expectedColumns,
+              geometryExpected} of scoreAssetTypes) {
     const id = assetSelectionRowPrefix + idStem;
     const row = $('#' + id);
     removeAllButFirstFromRow(row);
     for (const [i, state] of states.entries()) {
-      const assets = stateAssets[i];
+      // Disable FeatureCollections without geometries if desired. Be careful
+      // not to modify stateAssets[i]!
+      const assets = geometryExpected ?
+          new Map(Array.from(
+              stateAssets[i],
+              ([k, v]) => [k, {disabled: v.disabled || !v.hasGeometry}])) :
+          stateAssets[i];
       const statePropertyPath = propertyPath.concat([state]);
       const select =
           createAssetDropdown(assets, statePropertyPath)
@@ -550,8 +560,7 @@ const damagePropertyPath = Object.freeze(['damage_asset_path']);
 
 /**
  * Initializes the damage selector, given the provided assets.
- * @param {Map<string, {type: LayerType, disabled: boolean}>} assets List of
- *     assets in the disaster folder
+ * @param {DisasterList} assets List of assets in the disaster folder
  */
 function initializeDamageSelector(assets) {
   const select = createAssetDropdown(
@@ -679,11 +688,12 @@ function verifyAsset(asset, type, state, expectedColumns) {
   const select = $('#select-' + assetSelectionRowPrefix + type + '-' + state);
   lastSelectedAsset.set(tdId, asset);
   const assetMissingErrorFunction = (err) => {
-    if (err.includes('\'' + asset + '\' not found.')) {
+    const message = err.message || err;
+    if (message.includes('\'' + asset + '\' not found.')) {
       updateColorAndHover(select, 'red', 'Error! asset could not be found.');
     } else {
       console.error(err);
-      updateColorAndHover(select, 'red', 'Unknown error: ' + err);
+      updateColorAndHover(select, 'red', 'Unknown error: ' + message);
     }
   };
   if (asset === '') {
