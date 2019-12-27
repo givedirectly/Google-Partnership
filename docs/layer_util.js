@@ -1,10 +1,10 @@
 import {CompositeImageMapType} from './composite_image_map_type.js';
 import {mapContainerId} from './dom_constants.js';
 import {terrainStyle} from './earth_engine_asset.js';
+import {getEePromiseForFeatureCollection} from './ee_promise_cache.js';
 import {createError} from './error.js';
 import {colorMap, createStyleFunction, LayerType} from './firebase_layers.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
-import {convertEeObjectToPromise} from './map_util.js';
 
 export {
   addLayer,
@@ -443,9 +443,6 @@ function showColor(color) {
   return color ? color : colorMap.get('black');
 }
 
-// 250M objects in a FeatureCollection ought to be enough for anyone.
-const maxNumFeaturesExpected = 250000000;
-
 /**
  * Convenience wrapper for addLayerFromGeoJsonPromise/addImageLayer
  * @param {Object} layer Data for layer coming from Firestore
@@ -463,8 +460,7 @@ function addLayer(layer, map) {
     case LayerType.FEATURE_COLLECTION:
       const layerName = layer['ee-name'];
       return addLayerFromGeoJsonPromise(
-          convertEeObjectToPromise(
-              ee.FeatureCollection(layerName).toList(maxNumFeaturesExpected)),
+          getEePromiseForFeatureCollection(layerName),
           DeckParams.fromLayer(layer), layer['index']);
     case LayerType.KML:
       return addKmlLayers(layer, map);

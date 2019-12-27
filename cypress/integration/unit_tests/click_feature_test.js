@@ -1,13 +1,12 @@
 import {tableContainerId} from '../../../docs/dom_constants.js';
 import {tableHeadings} from '../../../docs/draw_table.js';
+import {convertEeObjectToPromise} from '../../../docs/ee_promise_cache.js';
 import {currentFeatures} from '../../../docs/highlight_features';
 import * as loading from '../../../docs/loading.js';
-import * as MapUtil from '../../../docs/map_util.js';
-import {convertEeObjectToPromise} from '../../../docs/map_util.js';
 import {blockGroupTag, geoidTag} from '../../../docs/property_names';
 import {scoreTag} from '../../../docs/property_names.js';
 import * as Resources from '../../../docs/resources.js';
-import {drawTableAndSetUpHandlers, setScorePromises} from '../../../docs/run.js';
+import {drawTableAndSetUpHandlers, resolveScoreAsset} from '../../../docs/run.js';
 import {cyQueue} from '../../support/commands.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 import {convertPathToLatLng, createGoogleMap} from '../../support/test_map.js';
@@ -58,16 +57,7 @@ describe('Unit tests for click_feature.js with map and table', () => {
     currentFeatures.clear();
     setUpPage();
     cy.stub(Resources, 'getScoreAssetPath').returns(features);
-    const oldConvertToPromise = MapUtil.convertEeObjectToPromise;
-    MapUtil.convertEeObjectToPromise = (eeObject) => {
-      MapUtil.convertEeObjectToPromise = oldConvertToPromise;
-      const result = MapUtil.convertEeObjectToPromise(eeObject);
-      return result.then((obj) => {
-        obj.id = eeObject;
-        return obj;
-      });
-    };
-    setScorePromises();
+    resolveScoreAsset();
   });
 
   /**

@@ -1,7 +1,8 @@
 import {eeLegacyPathPrefix, legacyStateDir} from '../ee_paths.js';
-import {LayerType} from '../firebase_layers.js';
+import {convertEeObjectToPromise} from '../ee_promise_cache.js';
+import {showError} from '../error.js';
 import {disasterCollectionReference} from '../firestore_document.js';
-import {convertEeObjectToPromise, latLngToGeoPoint, transformGeoPointArrayToLatLng} from '../map_util.js';
+import {latLngToGeoPoint, transformGeoPointArrayToLatLng} from '../map_util.js';
 import {getDisaster} from '../resources.js';
 import {createDisasterData, incomeKey, snapKey, sviKey, totalKey} from './create_disaster_lib.js';
 import {createScoreAsset, setStatus} from './create_score_asset.js';
@@ -25,10 +26,9 @@ export {
   assetSelectionRowPrefix,
   createScoreAsset,
   deleteDisaster,
+  disasterAssets,
   disasterData,
   enableWhenFirestoreReady,
-  initializeDamageSelector,
-  initializeScoreSelectors,
   scoreAssetTypes,
   scoreBoundsMap,
   stateAssets,
@@ -37,6 +37,10 @@ export {
   writeNewDisaster,
 };
 
+// TODO(juliexxia): consolidate asset picker logic and storage structure between
+// manage_layers.js and manage_disaster.js
+// TODO: refactor to avoid as much jumpiness as possible.
+
 /**
  * @type {Map<string, Object>} Disaster id to disaster data, corresponding to
  *     data in Firestore. Initialized when Firestore data is downloaded, but set
@@ -44,12 +48,21 @@ export {
  */
 let disasterData = new Map();
 /**
- * @type {Map<string, Promise<Array<string>>>} Disaster id to listing of
- *     assets in corresponding EE folder
+ * Disaster id to assets in corresponding EE folder. We know
+ * for each asset what type it is and whether or not it should be disabled in
+ * the option picker. See {@link getDisasterAssetsFromEe} for details on
+ * disabled options.
+ * @type {Map<string, Promise<Map<string, {type: LayerType, disabled:
+ *     boolean}>>>}
  */
 const disasterAssets = new Map();
 
-// Map of state to list of known assets
+/**
+ * State to assets in corresponding EE folder. We know for each asset whether or
+ * not it should be disabled in the option picker. See {@link
+ * getStatesAssetsFromEe} for details on disabled options.
+ * @type {Map<string, Promise<Map<string, {disabled: boolean}>>>}
+ */
 const stateAssets = new Map();
 
 /**
@@ -250,25 +263,21 @@ function onSetDisaster() {
       neededStates.push(state);
     }
   }
-  let promise = Promise.resolve();
   if (neededStates) {
-    promise = getStatesAssetsFromEe(neededStates).then((result) => {
-      for (const stateItem of result) {
-        const features = [];
-        stateItem[1].forEach((val, key) => {
-          if (val === LayerType.FEATURE_COLLECTION) {
-            features.push(key);
-          }
-        });
-        stateAssets.set(stateItem[0], features);
-      }
-    });
+    const newStatePromises = getStatesAssetsFromEe(neededStates);
+    for (const [state, promise] of newStatePromises) {
+      stateAssets.set(state, promise);
+    }
   }
-  const scorePromise = promise.then(() => {
+  const statePromises = [];
+  for (const state of states) {
+    statePromises.push(stateAssets.get(state));
+  }
+  const scorePromise = Promise.all(statePromises).then((stateAssets) => {
     if (getDisaster() === currentDisaster &&
         !processedCurrentDisasterStateAssets) {
       // Don't do anything unless this is still the right disaster.
-      initializeScoreSelectors(states);
+      initializeScoreSelectors(states, stateAssets);
       processedCurrentDisasterStateAssets = true;
     }
   });
@@ -300,10 +309,7 @@ function onSetDisaster() {
  */
 function maybeFetchDisasterAssets(disaster) {
   if (!disasterAssets.has(disaster)) {
-    disasterAssets.set(
-        disaster,
-        getDisasterAssetsFromEe(disaster).then(
-            (result) => Array.from(result.keys())));
+    disasterAssets.set(disaster, getDisasterAssetsFromEe(disaster));
   }
 }
 
@@ -363,73 +369,69 @@ function addDisaster() {
 
 /**
  * Writes the given details to a new disaster entry in firestore. Fails if
- * there is an existing disaster with the same details.
+ * there is an existing disaster with the same details or there are errors
+ * writing to EarthEngine or Firestore. Tells the user in all failure cases.
  *
- * TODO(janakr): If the user starts editing a disaster before the Firestore
- *  write completes, their edit could be overwritten by the initial Firestore
- *  write here. Probably solved similar to the delete disaster issue: don't
- *  actually show the disaster as editable until this write completes.
  * @param {string} disasterId of the form <year>-<name>
  * @param {Array<string>} states array of state (abbreviations)
- * @return {Promise<boolean>} returns true after successful write to firestore
- * and earth engine folder creations.
+ * @return {Promise<boolean>} Returns true if EarthEngine folders created
+ *     successfully and Firestore write was successful
  */
-function writeNewDisaster(disasterId, states) {
+async function writeNewDisaster(disasterId, states) {
   if (disasterData.has(disasterId)) {
     setStatus('Error: disaster with that name and year already exists.');
-    return Promise.resolve(false);
+    return false;
   }
   clearStatus();
   const currentData = createDisasterData(states);
   disasterData.set(disasterId, currentData);
   // We know there are no assets in folder yet.
-  disasterAssets.set(disasterId, Promise.resolve([]));
+  disasterAssets.set(disasterId, Promise.resolve(new Map()));
 
-  const folderCreationPromises = [];
-  folderCreationPromises.push(
-      getCreateFolderPromise(eeLegacyPathPrefix + disasterId));
-  for (const state of states) {
-    folderCreationPromises.push(
-        getCreateFolderPromise(legacyStateDir + '/' + state));
+  const eeFolderPromises =
+      [getCreateFolderPromise(eeLegacyPathPrefix + disasterId)];
+  states.forEach(
+      (state) => eeFolderPromises.push(
+          getCreateFolderPromise(legacyStateDir + '/' + state)));
+
+  const tailError = '" You can try refreshing the page';
+  // Wait on EE folder creation to do the Firestore write, since if folder
+  // creation fails we don't want to have to undo the write.
+  try {
+    await Promise.all(eeFolderPromises);
+  } catch (err) {
+    showError('Error creating EarthEngine folders: "' + err + tailError);
+    return false;
   }
-
-  const eePromisesResult = Promise.all(folderCreationPromises).then(() => {
-    const disasterPicker = $('#disaster-dropdown');
-    const disasterOptions = disasterPicker.children();
-    let added = false;
-    // We expect this recently created disaster to go near the top of the list,
-    // so do a linear scan down. Note: let's hope this tool isn't being used in
-    // the year 10000.
-    // Comment needed to quiet eslint.
-    disasterOptions.each(/* @this HTMLElement */ function() {
-      if ($(this).val() < disasterId) {
-        $(createOptionFrom(disasterId)).insertBefore($(this));
-        added = true;
-        return false;
-      }
-    });
-    if (!added) disasterPicker.append(createOptionFrom(disasterId));
-    toggleState(true);
-
-    disasterPicker.val(disasterId).trigger('change');
+  try {
+    await disasterCollectionReference().doc(disasterId).set(currentData);
+  } catch (err) {
+    const message = err.message ? err.message : err;
+    showError('Error writing to Firestore: "' + message + tailError);
+    return false;
+  }
+  const disasterPicker = $('#disaster-dropdown');
+  let added = false;
+  // We expect this recently created disaster to go near the top of the list, so
+  // do a linear scan down.
+  // Note: let's hope this tool isn't being used in the year 10000.
+  // Comment needed to quiet eslint.
+  disasterPicker.children().each(/* @this HTMLElement */ function() {
+    if ($(this).val() < disasterId) {
+      $(createOptionFrom(disasterId)).insertBefore($(this));
+      added = true;
+      return false;
+    }
   });
+  if (!added) disasterPicker.append(createOptionFrom(disasterId));
+  toggleState(true);
 
-  return Promise
-      .all([
-        eePromisesResult,
-        disasterCollectionReference().doc(disasterId).set(currentData),
-      ])
-      .then(() => true);
+  disasterPicker.val(disasterId).trigger('change');
+  return true;
 }
 
 /**
  * Returns a promise that resolves on the creation of the given folder.
- *
- * This will print a console error for anyone other than the gd
- * account. Ee console seems to have the power to grant write access
- * to non-owners but it doesn't seem to work. Sent an email to
- * gestalt.
- * TODO: replace with setIamPolicy when that works.
  * TODO: add status bar for when this is finished.
  *
  * @param {string} dir asset path of folder to create
@@ -438,10 +440,21 @@ function writeNewDisaster(disasterId, states) {
  */
 function getCreateFolderPromise(dir) {
   return new Promise(
-      (resolve) => ee.data.createFolder(
-          dir, false,
-          () => ee.data.setAssetAcl(
-              dir, {all_users_can_read: true}, () => resolve())));
+      (resolve, reject) =>
+          ee.data.createFolder(dir, false, (result, failure) => {
+            if (failure) {
+              reject(failure);
+              return;
+            }
+            ee.data.setAssetAcl(
+                dir, {all_users_can_read: true}, (result, failure) => {
+                  if (failure) {
+                    reject(failure);
+                    return;
+                  }
+                  resolve(result);
+                });
+          }));
 }
 
 /**
@@ -520,8 +533,11 @@ function setUpScoreSelectorTable() {
 /**
  * Initializes the select interface for score assets.
  * @param {Array<string>} states array of state (abbreviations)
+ * @param {Array<Map<string, {disabled: boolean}>>} stateAssets matching array
+ *     to
+ * the {@code states} array that holds a map of asset info for each state.
  */
-function initializeScoreSelectors(states) {
+function initializeScoreSelectors(states, stateAssets) {
   const headerRow = $('#score-asset-header-row');
 
   // Initialize headers.
@@ -535,20 +551,18 @@ function initializeScoreSelectors(states) {
     const id = assetSelectionRowPrefix + idStem;
     const row = $('#' + id);
     removeAllButFirstFromRow(row);
-    for (const state of states) {
-      if (stateAssets.get(state)) {
-        const statePropertyPath = propertyPath.concat([state]);
-        const select =
-            createAssetDropdown(stateAssets.get(state), statePropertyPath)
-                .prop('id', 'select-' + id + '-' + state)
-                .on('change',
-                    (event) => onNonDamageAssetSelect(
-                        event, statePropertyPath, expectedColumns, idStem,
-                        state))
-                .addClass('with-status-border');
-        row.append(createTd().append(select));
-        verifyAsset(select.val(), idStem, state, expectedColumns);
-      }
+    for (const [i, state] of states.entries()) {
+      const assets = stateAssets[i];
+      const statePropertyPath = propertyPath.concat([state]);
+      const select =
+          createAssetDropdown(assets, statePropertyPath)
+              .prop('id', 'select-' + id + '-' + state)
+              .on('change',
+                  (event) => onNonDamageAssetSelect(
+                      event, statePropertyPath, expectedColumns, idStem, state))
+              .addClass('with-status-border');
+      row.append(createTd().append(select));
+      verifyAsset(select.val(), idStem, state, expectedColumns);
     }
   }
 }
@@ -557,7 +571,8 @@ const damagePropertyPath = Object.freeze(['damage_asset_path']);
 
 /**
  * Initializes the damage selector, given the provided assets.
- * @param {Array<string>} assets List of assets in the disaster folder
+ * @param {Map<string, {type: LayerType, disabled: boolean}>} assets List of
+ *     assets in the disaster folder
  */
 function initializeDamageSelector(assets) {
   const select = createAssetDropdown(
@@ -618,7 +633,8 @@ function removeAllButFirstFromRow(row) {
 
 /**
  * Initializes a dropdown with assets and the appropriate change handler.
- * @param {Array<string>} assets List of assets to add to dropdown
+ * @param {Map<string, {disabled: boolean}>} assets map of assets to add to
+ *     dropdown
  * @param {Array<string>} propertyPath List of attributes to follow to get
  *     value.
  * @param {jQuery<HTMLSelectElement>} select Select element, will be created if
@@ -633,8 +649,9 @@ function createAssetDropdown(
 
   const value = getElementFromPath(propertyPath);
   // Add assets to selector and return it.
-  for (const asset of assets) {
-    const assetOption = createOptionFrom(asset);
+  for (const [asset, assetInfo] of assets) {
+    const assetOption =
+        createOptionFrom(asset).attr('disabled', assetInfo.disabled);
     if (asset === value) {
       assetOption.attr('selected', true);
     }

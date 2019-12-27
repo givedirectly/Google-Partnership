@@ -2,35 +2,37 @@ import {LayerType} from '../firebase_layers.js';
 import {getDisaster} from '../resources.js';
 import {processNewEeLayer, processNonEeLayer} from './add_layer.js';
 import {withColor} from './color_function_util.js';
-import {getDisasterAssetsFromEe, getStatesAssetsFromEe} from './list_ee_assets.js';
-import {getCurrentData, getCurrentLayers, getRowIndex, ILLEGAL_STATE_ERR, onUpdate, setCurrentDisaster, setDisasterData, setStatus, updateLayersInFirestore} from './manage_layers_lib.js';
+import {getDisasterAssetsFromEe} from './list_ee_assets.js';
+import {getCurrentLayers, getRowIndex, ILLEGAL_STATE_ERR, onUpdate, setDisasterData, setStatus, updateLayersInFirestore} from './manage_layers_lib.js';
 
 export {enableWhenReady, updateAfterSort};
 // Visible for testing
 export {
-  createAssetPickers,
   createLayerRow,
   createOptionFrom,
-  createStateAssetPickers,
   createTd,
+  disasterAssets,
+  getAssetsAndPopulateDisasterPicker,
   onCheck,
   onDelete,
   onInputBlur,
   onListBlur,
   onSetDisaster,
-  stateAssets,
+  setUpDisasterPicker,
   withCheckbox,
   withInput,
   withList,
   withType,
 };
 
-// A map of maps of the form:
-// {'WA' => {'asset/path': LayerType}}
-const stateAssets = new Map();
+// TODO(juliexxia): consolidate asset picker logic and storage structure between
+// manage_layers.js and manage_disaster.js
+// TODO: refactor to avoid as much jumpiness as possible.
 
 // A map of maps of the form:
-// {'disaster-2017' => {'asset/path': LayerType}}
+// {'disaster-2017' => {'asset/path' => {type: LayerType, disabled: boolean}}
+// The disabled boolean refers to whether the option should be disabled in the
+// disaster asset picker (see {@link getDisasterAssetsFromEe}).
 const disasterAssets = new Map();
 
 // TODO: general reminder to add loading indicators for things like creating
@@ -62,11 +64,9 @@ function enableWhenReady(firebaseDataPromise) {
  */
 function onSetDisaster() {
   const disaster = getDisaster();
-  setCurrentDisaster(disaster);
   // display layer table
   populateLayersTable();
-  // display state asset pickers
-  return populateStateAndDisasterAssetPickers(disaster);
+  return getAssetsAndPopulateDisasterPicker(disaster);
 }
 
 /**
@@ -279,7 +279,6 @@ function createLayerRow(layer, index) {
   // index
   row.append(createTd().text(index).addClass('index-td'));
   // display name
-  // TODO: make this editable.
   row.append(withInput(createTd(), layer, 'display-name'));
   // asset path/url sample
   const assetOrUrl = createTd();
@@ -301,6 +300,8 @@ function createLayerRow(layer, index) {
   return row;
 }
 
+let processedCurrentDisasterSelfAssets = false;
+
 /**
  * Populates the state and disaster asset pickers with all known earth engine
  * assets for this disaster and relevant states.
@@ -308,92 +309,75 @@ function createLayerRow(layer, index) {
  * @return {Promise<void>} returns when all asset pickers have been populated
  * after potentially retrieving assets from ee.
  */
-function populateStateAndDisasterAssetPickers(disaster) {
-  const assetPickerDiv = $('.asset-pickers');
-  assetPickerDiv.empty();
-
-  const promises = [];
+function getAssetsAndPopulateDisasterPicker(disaster) {
+  processedCurrentDisasterSelfAssets = false;
+  const disasterLambda = (disaster) => {
+    if ((disaster) === getDisaster() && !processedCurrentDisasterSelfAssets) {
+      populateDisasterAssetPicker(disaster);
+      processedCurrentDisasterSelfAssets = true;
+    }
+  };
   if (disasterAssets.has(disaster)) {
-    createDisasterAssetPicker(disaster);
+    disasterLambda(disaster);
+    return Promise.resolve();
   } else {
-    const disasterDone = getDisasterAssetsFromEe(disaster).then((assets) => {
+    setUpDisasterPicker(disaster);
+    return getDisasterAssetsFromEe(disaster).then((assets) => {
       disasterAssets.set(disaster, assets);
-      createDisasterAssetPicker(disaster);
+      disasterLambda(disaster);
     });
-    promises.push(disasterDone);
   }
-
-  const states = getCurrentData()['states'];
-  const statesToFetch = [];
-  for (const state of states) {
-    if (!stateAssets.has(state)) statesToFetch.push(state);
-  }
-  // TODO: add functionality to re-pull all cached states from ee without
-  // reloading the page.
-  if (statesToFetch.length === 0) {
-    createStateAssetPickers(states);
-  } else {
-    const statesDone = getStatesAssetsFromEe(statesToFetch).then((assets) => {
-      for (const asset of assets) {
-        stateAssets.set(asset[0], asset[1]);
-      }
-      createStateAssetPickers(states);
-    });
-    promises.push(statesDone);
-  }
-
-  return Promise.all(promises);
 }
 
 /**
- * Create asset pickers for the given states.
- * @param {Array<string>} states of the form ['WA', ...]
- */
-function createStateAssetPickers(states) {
-  createAssetPickers(states, stateAssets, $('#state-asset-pickers'));
-}
-
-/**
- * Create an asset picker for the given disaster.
+ * Sets up the disaster asset picker div with a fake picker as a placeholder
+ * while the real picker is waiting for earth engine to list and parse assets.
  * @param {string} disaster
  */
-function createDisasterAssetPicker(disaster) {
-  createAssetPickers([disaster], disasterAssets, $('#disaster-asset-picker'));
+function setUpDisasterPicker(disaster) {
+  const div = $('#disaster-asset-picker').empty();
+  const assetPicker =
+      $(document.createElement('select')).width(200).attr('disabled', true);
+  assetPicker.append(createOptionFrom('pending...'));
+  const assetPickerLabel = $(document.createElement('label'))
+                               .text('Add layer from ' + disaster + ': ')
+                               .attr('id', disaster + '-adder-label')
+                               .append(assetPicker);
+  div.append(assetPickerLabel);
 }
+
 /**
- * Given either states or disasters, displays their assets in pickers.
- * @param {Array<string>} pickers e.g. ['WA',...] or ['harvey-2017']
- * @param {Map<string, Array<string>>} assetMap
- * @param {JQuery<HTMLElement>} div where to attach new pickers
+ * Displays disaster assets in a select underneath the #disaster-adder-label
+ * label and adds an add button which adds a layer.
+ * @param {string} disaster
  */
-function createAssetPickers(pickers, assetMap, div) {
-  for (const folder of pickers) {
-    const assetPicker = $(document.createElement('select'))
-                            .attr({
-                              id: folder + '-adder',
-                            })
-                            .width(200);
-    if (assetMap.get(folder)) {
-      for (const asset of assetMap.get(folder)) {
-        const type = layerTypeStrings.get(asset[1]);
-        assetPicker.append(
-            createOptionFrom(asset[0]).text(asset[0] + '-' + type));
-      }
+function populateDisasterAssetPicker(disaster) {
+  const div = $('#disaster-asset-picker').empty();
+  const assetPickerLabel = $(document.createElement('label'))
+                               .text('Add layer from ' + disaster + ': ')
+                               .attr('id', disaster + '-adder-label');
+  const assetPicker = $(document.createElement('select'))
+                          .attr('id', disaster + '-adder')
+                          .width(200);
+  if (disasterAssets.get(disaster)) {
+    for (const asset of disasterAssets.get(disaster)) {
+      const assetInfo = asset[1];
+      const type = layerTypeStrings.get(assetInfo.type);
+      assetPicker.append(createOptionFrom(asset[0])
+                             .text(asset[0] + '-' + type)
+                             .attr('disabled', assetInfo.disabled));
     }
-    const assetPickerLabel = $(document.createElement('label'))
-                                 .text('Add layer from ' + folder + ': ');
-    const addButton =
-        $(document.createElement('button')).prop('type', 'button').text('add');
-    addButton.on('click', () => {
-      const asset = assetPicker.val();
-      const type = assetMap.get(folder).get(asset);
-      processNewEeLayer(asset, type);
-    });
-    div.append(assetPickerLabel);
-    assetPickerLabel.append(assetPicker);
-    assetPickerLabel.append(addButton);
-    div.append(document.createElement('br'));
   }
+  const addButton =
+      $(document.createElement('button')).prop('type', 'button').text('add');
+  addButton.on('click', () => {
+    const asset = assetPicker.val();
+    const type = disasterAssets.get(disaster).get(asset).type;
+    processNewEeLayer(asset, type);
+  });
+  assetPickerLabel.append(assetPicker);
+  assetPickerLabel.append(addButton);
+  div.append(assetPickerLabel);
 }
 
 /**

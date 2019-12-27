@@ -2,7 +2,7 @@ import {addPolygonWithPath} from '../../../docs/basic_map.js';
 import {readDisasterDocument} from '../../../docs/firestore_document.js';
 import {createDisasterData} from '../../../docs/import/create_disaster_lib.js';
 import * as ListEeAssets from '../../../docs/import/list_ee_assets.js';
-import {assetSelectionRowPrefix, disasterData, scoreAssetTypes, scoreBoundsMap, setUpScoreBoundsMap, setUpScoreSelectorTable, stateAssets, validateUserFields} from '../../../docs/import/manage_disaster';
+import {assetSelectionRowPrefix, disasterAssets, disasterData, scoreAssetTypes, scoreBoundsMap, setUpScoreBoundsMap, setUpScoreSelectorTable, stateAssets, validateUserFields} from '../../../docs/import/manage_disaster';
 import {enableWhenFirestoreReady} from '../../../docs/import/manage_disaster.js';
 import {getDisaster} from '../../../docs/resources.js';
 import {cyQueue} from '../../support/commands.js';
@@ -40,6 +40,8 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
       }
     });
     disasterData.clear();
+    stateAssets.clear();
+    disasterAssets.clear();
   });
 
   it('damage asset/map-bounds elements', () => {
@@ -99,6 +101,26 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
   const allMissingText = allMandatoryMissingText +
       ', and must specify either damage asset or map bounds' +
       allOptionalMissing;
+
+  it('has some disabled options', () => {
+    cy.stub(ListEeAssets, 'getDisasterAssetsFromEe')
+        .returns(Promise.resolve(new Map([
+          ['asset1', {type: 1, disabled: false}],
+          ['asset2', {type: 2, disabled: true}],
+        ])));
+    stateAssets.set('NY', Promise.resolve(new Map([
+      ['state0', {disabled: false}],
+      ['state1', {disabled: true}],
+    ])));
+    callEnableWhenReady(createDisasterData(['NY']));
+    const stateSelector =
+        cy.get('#select-asset-selection-row-poverty-NY > option');
+    stateSelector.eq(2).should('be.disabled');
+    stateSelector.eq(1).should('not.be.disabled');
+    const disasterSelector = cy.get('#damage-asset-select > option');
+    disasterSelector.eq(2).should('be.disabled');
+    disasterSelector.eq(1).should('not.be.disabled');
+  });
 
   it('validates asset data', () => {
     const boundsChanged = new Promise((resolve) => {
@@ -222,7 +244,11 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
   });
 
   it('multistate displays properly', () => {
-    stateAssets.set('WY', ['wy0', 'wy1', 'wy2', 'wy3', 'wy4']);
+    const assets = new Map();
+    for (let i = 0; i <= 4; i++) {
+      assets.set('wy' + i, {disabled: false});
+    }
+    stateAssets.set('WY', Promise.resolve(assets));
     setUpDefaultData();
     callEnableWhenReady(createDisasterData(['NY', 'WY']));
     // Check table is properly initialized, then validate.
@@ -381,7 +407,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
         'Error! asset could not be found.');
   });
 
-  it('has two racing sets on same selector', () => {
+  it.only('has two racing sets on same selector', () => {
     callEnableWhenReady(setUpDefaultData());
     const goodPovertyFeature = ee.FeatureCollection([ee.Feature(
         null,
@@ -393,20 +419,26 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     featureCollectionStub.withArgs('state0').returns(goodPovertyFeature);
     featureCollectionStub.withArgs('state1').returns(badPovertyFeature);
 
-    let firstRelease = getConvertEeObjectToPromiseRelease();
-    setFirstSelectInScoreRowTo(0, 'state0');
-
-    let secondRelease = getConvertEeObjectToPromiseRelease();
-    setFirstSelectInScoreRowTo(0, 'state1');
-
-    // release first evaluate but column still looks pending
-    firstRelease();
+    let firstRelease;
+    let firstStart;
+    cyQueue(() => {
+      const firstCall = getConvertEeObjectToPromiseRelease();
+      firstRelease = firstCall.releaseLatch;
+      firstStart = firstRelease.startPromise;
+    });
+    let secondRelease;
+    setFirstSelectInScoreRowTo(0, 'state0')
+        .then(() => firstStart)
+        .then(
+            () => secondRelease =
+                getConvertEeObjectToPromiseRelease().releaseLatch);
+    setFirstSelectInScoreRowTo(0, 'state1').then(() => firstRelease());
     checkSelectBorder(
         '#select-asset-selection-row-poverty-NY', 'rgb(255, 255, 0)');
-    checkHoverText(
-        '#select-asset-selection-row-poverty-NY', 'Checking columns...');
     // release second evaluate and column finishes with results from second.
-    secondRelease();
+    checkHoverText(
+        '#select-asset-selection-row-poverty-NY', 'Checking columns...')
+        .then(() => secondRelease());
     checkSelectBorder(
         '#select-asset-selection-row-poverty-NY', 'rgb(255, 0, 0)');
     checkHoverText(
@@ -415,21 +447,24 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
             'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
 
     // now do opposite order
-    firstRelease = getConvertEeObjectToPromiseRelease();
-    setFirstSelectInScoreRowTo(0, 'state0');
-
-    secondRelease = getConvertEeObjectToPromiseRelease();
-    setFirstSelectInScoreRowTo(0, 'state1');
-
-    secondRelease();
+    cyQueue(() => {
+      const firstCall = getConvertEeObjectToPromiseRelease();
+      firstRelease = firstCall.releaseLatch;
+      firstStart = firstCall.startPromise;
+    });
+    setFirstSelectInScoreRowTo(0, 'state0')
+        .then(() => firstStart)
+        .then(
+            () => secondRelease =
+                getConvertEeObjectToPromiseRelease().releaseLatch);
+    setFirstSelectInScoreRowTo(0, 'state1').then(() => secondRelease());
     checkSelectBorder(
         '#select-asset-selection-row-poverty-NY', 'rgb(255, 0, 0)');
     checkHoverText(
         '#select-asset-selection-row-poverty-NY',
         'Error! asset does not have all expected columns: ' +
-            'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
-
-    firstRelease();
+            'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01')
+        .then(() => firstRelease());
     checkSelectBorder(
         '#select-asset-selection-row-poverty-NY', 'rgb(255, 0, 0)');
     checkHoverText(
@@ -483,13 +518,20 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
    */
   function setUpDefaultData() {
     cy.stub(ListEeAssets, 'getDisasterAssetsFromEe')
-        .returns(Promise.resolve(new Map([['asset1', 1], ['asset2', 1]])));
+        .returns(Promise.resolve(new Map([
+          ['asset1', {type: 1, disabled: false}],
+          ['asset2', {type: 2, disabled: false}],
+        ])));
     const currentData = createDisasterData(['NY']);
     currentData.asset_data.score_bounds_coordinates =
         scoreBoundsCoordinates.map(
             (latlng) =>
                 new firebase.firestore.GeoPoint(latlng.lat, latlng.lng));
-    stateAssets.set('NY', ['state0', 'state1', 'state2', 'state3', 'state4']);
+    const assets = new Map();
+    for (let i = 0; i <= 4; i++) {
+      assets.set('state' + i, {disabled: false});
+    }
+    stateAssets.set('NY', Promise.resolve(assets));
     return currentData;
   }
 
@@ -569,9 +611,10 @@ function setFirstSelectInScoreRowTo(rowNum, text) {
  * Asserts that the border around the given selector has the correct color
  * @param {string} selector cypress selector for a select element
  * @param {string} rgbString e.g. 'rgb(0, 0, 0)'
+ * @return {Cypress.Chainable}
  */
 function checkSelectBorder(selector, rgbString) {
-  cy.get(selector, {timeout: 5000})
+  return cy.get(selector, {timeout: 5000})
       .should('have.css', 'border-color')
       .and('eq', rgbString);
 }
@@ -580,9 +623,10 @@ function checkSelectBorder(selector, rgbString) {
  * Asserts on the hover text for the given span.
  * @param {string} selector cypress selector for a span element
  * @param {string} text
+ * @return {Cypress.Chainable}
  */
 function checkHoverText(selector, text) {
-  cy.get(selector).invoke('attr', 'title').should('eq', text);
+  return cy.get(selector).invoke('attr', 'title').should('eq', text);
 }
 
 /**
@@ -593,7 +637,7 @@ function checkHoverText(selector, text) {
  * @param {string} tdId e.g. 'poverty-NY'
  */
 function setSelectWithDelayedEvaluate(rowNum, text, tdId) {
-  const release = getConvertEeObjectToPromiseRelease();
+  const release = getConvertEeObjectToPromiseRelease().releaseLatch;
   setFirstSelectInScoreRowTo(rowNum, text);
   checkSelectBorder('#select-asset-selection-row-' + tdId, 'rgb(255, 255, 0)');
   checkHoverText('#select-asset-selection-row-' + tdId, 'Checking columns...');

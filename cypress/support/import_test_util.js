@@ -1,5 +1,5 @@
+import * as EePromiseCache from '../../docs/ee_promise_cache.js';
 import {disasterData} from '../../docs/import/manage_layers_lib';
-import * as MapUtil from '../../docs/map_util.js';
 import * as Toast from '../../docs/toast.js';
 
 export {
@@ -85,19 +85,27 @@ function setUpSavingStubs() {
 
 /**
  * A wrapper for {@link convertEeObjectToPromise} that returns a resolve
- * function for releasing the result.
- * @return {Function}
+ * function for releasing the result and a promise that resolves when the
+ * convert starts. This allows us to make multiple calls to this method
+ * and wait on the start promises, therefore ensuring that an instance of
+ * oldConvert never points to the new promise-waiting function.
+ * @return {{resolveFunction: Function, startPromise: Promise<void>}}
  */
 function getConvertEeObjectToPromiseRelease() {
-  let resolveFunction = null;
-  const promise = new Promise((resolve) => resolveFunction = resolve);
-  const oldConvert = MapUtil.convertEeObjectToPromise;
-  MapUtil.convertEeObjectToPromise = (eeObject) => {
-    MapUtil.convertEeObjectToPromise = oldConvert;
-    return MapUtil.convertEeObjectToPromise(eeObject).then(async (result) => {
-      await promise;
-      return result;
-    });
+  let releaseLatch = null;
+  const convertFinishLatch = new Promise((resolve) => releaseLatch = resolve);
+  let startFunction = null;
+  const startPromise = new Promise((resolve) => startFunction = resolve);
+  const oldConvert = EePromiseCache.convertEeObjectToPromise;
+  EePromiseCache.convertEeObjectToPromise = (eeObject) => {
+    EePromiseCache.convertEeObjectToPromise = oldConvert;
+    startFunction();
+    return Promise
+        .all([
+          EePromiseCache.convertEeObjectToPromise(eeObject),
+          convertFinishLatch,
+        ])
+        .then((results) => results[0]);
   };
-  return resolveFunction;
+  return {startPromise, releaseLatch};
 }

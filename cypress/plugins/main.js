@@ -11,12 +11,10 @@
  *
  * More about Cypress plugins here: https://on.cypress.io/plugins-guide
  */
-import * as ee from '@google/earthengine';
 import * as firebase from 'firebase';
 import * as firebaseAdmin from 'firebase-admin';
-import {readFileSync} from 'fs';
-
 import {firebaseConfigProd, firebaseConfigTest} from '../../docs/authenticate.js';
+import {generateEarthEngineToken} from '../../token_server/ee_token_creator.js';
 
 export {onFunction};
 
@@ -104,21 +102,9 @@ function onFunction(on, config) {
           .then(() => firestoreUserToken)
           .finally(() => currentApp.delete());
     },
-    /**
-     * Produces an EarthEngine token that can be used by production code.
-     *
-     * @return {Promise<string>}
-     */
+
     getEarthEngineToken() {
-      const privateKey = JSON.parse(
-          readFileSync(process.env.GOOGLE_APPLICATION_CREDENTIALS, 'utf8'));
-      return new Promise((resolve, reject) => {
-        ee.data.authenticateViaPrivateKey(
-            privateKey,
-            // TODO(janakr): no better way to do this?
-            // Strip 'Bearer ' from beginning.
-            () => resolve(ee.data.getAuthToken().substring(7)), reject);
-      });
+      return generateEarthEngineToken().then((data) => data.accessToken);
     },
 
     /**

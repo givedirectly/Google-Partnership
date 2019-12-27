@@ -1,15 +1,11 @@
+import {CLIENT_ID} from './common_auth_utils.js';
 import {showError} from './error.js';
 import {earthEngineTestTokenCookieName, firebaseTestTokenPropertyName, getValueFromLocalStorage, inProduction} from './in_test_util.js';
 import SettablePromise from './settable_promise.js';
 
-export {trackEeAndFirebase};
+export {reloadWithSignIn, trackEeAndFirebase};
 // For testing.
-export {CLIENT_ID, firebaseConfigProd, firebaseConfigTest, getFirebaseConfig};
-
-// The client ID from
-// https://console.cloud.google.com/apis/credentials?project=mapping-crisis
-const CLIENT_ID =
-    '38420505624-boghq4foqi5anc9kc5c5tsq82ar9k4n0.apps.googleusercontent.com';
+export {firebaseConfigProd, firebaseConfigTest, getFirebaseConfig};
 
 const gapiTemplate = {
   // From same page as above.
@@ -40,6 +36,20 @@ const firebaseConfigTest = {
 };
 
 const gdUserEmail = 'gd-earthengine-user@givedirectly.org';
+
+const eeErrorDialog =
+    '<div title="EarthEngine authentication error">You do not appear to be ' +
+    'whitelisted for EarthEngine access. Please whitelist your account at ' +
+    '<a href="https://signup.earthengine.google.com">https://signup.earthengine.google.com</a>' +
+    ' or sign into a whitelisted account after closing this dialog</div>';
+
+// TODO(janakr): make configurable, especially for tests.
+const TOKEN_SERVER_URL = 'http://localhost:9080';
+
+// Request a new token with 5 minutes of validity remaining on our current token
+// to leave time for any slowness.
+const TOKEN_EXPIRE_BUFFER = 300000;
+
 /**
  * Logs an error message to the console and shows a snackbar notification
  * indicating an issue with authentication.
@@ -61,9 +71,7 @@ class Authenticator {
   constructor(eeInitializeCallback, needsGdUser) {
     this.eeInitializeCallback = eeInitializeCallback;
     this.needsGdUser = needsGdUser;
-    this.loginTasksToComplete = 2;
     this.gapiInitDone = new SettablePromise();
-    this.firebaseAuthFinished = new SettablePromise();
   }
 
   /**
@@ -72,27 +80,32 @@ class Authenticator {
    *     is finished
    */
   start() {
-    this.eeAuthenticate(() => this.onSignInFailedFirstTime());
+    this.eeAuthenticate(() => this.navigateToSignInPage());
     const gapiSettings = Object.assign({}, gapiTemplate);
     gapiSettings.scope = '';
-    gapi.load('auth2', () => {
-      this.gapiInitDone.setPromise(gapi.auth2.init(gapiSettings).then(() => {
-        const basicProfile =
-            gapi.auth2.getAuthInstance().currentUser.get().getBasicProfile();
-        if (this.needsGdUser &&
-            (!basicProfile || basicProfile.getEmail() !== gdUserEmail)) {
-          alert(
-              'You must be signed in as ' + gdUserEmail +
-              ' to access this page. Please open in an incognito window or ' +
-              'sign in as ' + gdUserEmail +
-              ' in this window after closing this alert.');
-          this.onSignInFailedFirstTime({prompt: 'select_account'});
-        } else {
-          this.onLoginTaskCompleted();
-        }
-      }));
-    });
-    return this.firebaseAuthFinished.getPromise();
+    return new Promise(
+        (resolve, reject) => gapi.load(
+            'auth2',
+            () => this.gapiInitDone.setPromise(
+                gapi.auth2.init(gapiSettings).then(() => {
+                  const basicProfile = gapi.auth2.getAuthInstance()
+                                           .currentUser.get()
+                                           .getBasicProfile();
+                  if (this.needsGdUser &&
+                      (!basicProfile ||
+                       basicProfile.getEmail() !== gdUserEmail)) {
+                    alert(
+                        'You must be signed in as ' + gdUserEmail + ' to ' +
+                        'access this page. Please open in an incognito window' +
+                        ' or sign in as ' + gdUserEmail +
+                        ' in this window after closing this alert.');
+                    this.requireSignIn();
+                  } else {
+                    authenticateToFirebase(
+                        gapi.auth2.getAuthInstance().currentUser.get())
+                        .then(resolve, reject);
+                  }
+                }))));
   }
 
   /**
@@ -108,31 +121,106 @@ class Authenticator {
   }
 
   /**
-   * Falls back to a page redirect so that user can log in, getting around
-   * pop-up-blocking functionality of browsers.
-   * @param {gapi.auth.SignInOptions} extraOptions Dictionary of sign-in options
+   * Redirects page so that user can log in, getting around pop-up-blocking
+   * functionality of browsers.
    */
-  onSignInFailedFirstTime(extraOptions = {}) {
-    this.gapiInitDone.getPromise().then(
-        () => gapi.auth2.getAuthInstance().signIn(
-            {...{ux_mode: 'redirect'}, ...extraOptions}));
+  navigateToSignInPage() {
+    this.gapiInitDone.getPromise().then(doSignIn);
+  }
+
+  /**
+   * Forces sign-in page to come up, even if user already signed into Google.
+   * Useful if user is not signed in to a required account.
+   */
+  requireSignIn() {
+    this.gapiInitDone.getPromise().then(reloadWithSignIn);
   }
 
   /** Initializes EarthEngine. */
   internalInitializeEE() {
-    this.onLoginTaskCompleted();
-    initializeEE(this.eeInitializeCallback);
+    initializeEE(this.eeInitializeCallback, (err) => {
+      if (err.message.includes('401') || err.message.includes('404')) {
+        // HTTP code 401 indicates "unauthorized".
+        // 404 shows up when not on Google internal network.
+        // TODO(#340): Maybe don't require EE failure every time, store
+        //  something in localStorage so that we know user needs token. Then
+        //  tests can just set that as well, unifying the codepaths.
+        const dialog = $(eeErrorDialog).dialog({
+          buttons: [
+            {
+              text: 'Sign in with EarthEngine-enabled account',
+              click: () => this.requireSignIn(),
+            },
+            {
+              text: 'Continue without sign-in',
+              click: () => {
+                // Don't trigger close callback, but close dialog.
+                dialog.dialog({close: () => {}});
+                dialog.dialog('close');
+                this.getAndSetEeTokenWithErrorHandling().then(
+                    () => initializeEE(
+                        this.eeInitializeCallback, defaultErrorCallback));
+              },
+            },
+          ],
+          modal: true,
+          width: 600,
+          close: () => this.requireSignIn(),
+        });
+      } else {
+        defaultErrorCallback(err);
+      }
+    });
   }
 
   /**
-   * Notes that a login task has completed, and if all have, calls the callback
-   * with the access token.
+   * Requests EE token from token server, then sets it locally, and sets itself
+   * up to run again 5 minutes before token expires. Passes user's id token to
+   * server so server can verify these aren't totally anonymous requests.
+   * @return {Promise<void>} Promise that resolves when token has been set
    */
-  onLoginTaskCompleted() {
-    if (--this.loginTasksToComplete === 0) {
-      this.firebaseAuthFinished.setPromise(authenticateToFirebase(
-          gapi.auth2.getAuthInstance().currentUser.get()));
-    }
+  getAndSetEeTokenWithErrorHandling() {
+    // To get here, we must already have logged into Google via gapi, even if
+    // not with an EE-enabled account, so Google user id token available.
+    const idToken = gapi.auth2.getAuthInstance()
+                        .currentUser.get()
+                        .getAuthResponse()
+                        .id_token;
+    return fetch(TOKEN_SERVER_URL, {
+             method: 'POST',
+             body: $.param({idToken}),
+             headers: {'Content-type': 'application/x-www-form-urlencoded'},
+           })
+        .then((response) => {
+          if (!response.ok) {
+            const message = 'Refresh token error: ' + response.status;
+            console.error(message, response);
+            // TODO(janakr): Find GD contact to list here.
+            alert(
+                'Error contacting server for access without EarthEngine ' +
+                'whitelisting. Please reload page and log in with an ' +
+                'EarthEngine-whitelisted account or contact website ' +
+                'maintainers with error from JavaScript console.');
+            throw new Error(message);
+          }
+          return response.json();
+        })
+        .then(
+            ({accessToken, expireTime}) =>
+                new Promise(
+                    (resolve) => ee.data.setAuthToken(
+                        CLIENT_ID, 'Bearer', accessToken,
+                        Math.floor(
+                            getMillisecondsToDateString(expireTime) / 1000),
+                        /* extraScopes */[], resolve,
+                        /* updateAuthLibrary */ false))
+                    .then(
+                        () => setTimeout(
+                            () => this.getAndSetEeTokenWithErrorHandling(),
+                            Math.max(
+                                getMillisecondsToDateString(expireTime) -
+                                    TOKEN_EXPIRE_BUFFER,
+                                0))));
   }
 }
 
@@ -147,11 +235,12 @@ class Authenticator {
  * @return {Promise} Promise that completes when Firebase is logged in
  */
 function trackEeAndFirebase(taskAccumulator, needsGdUser = false) {
+  const eeInitializeCallback = () => {
+    ee.data.setCloudApiEnabled(true);
+    taskAccumulator.taskCompleted();
+  };
   if (inProduction()) {
-    const authenticator = new Authenticator(() => {
-      ee.data.setCloudApiEnabled(true);
-      taskAccumulator.taskCompleted();
-    }, needsGdUser);
+    const authenticator = new Authenticator(eeInitializeCallback, needsGdUser);
     return authenticator.start();
   } else {
     // We're inside a test. The test setup should have tokens for us that will
@@ -171,10 +260,11 @@ function trackEeAndFirebase(taskAccumulator, needsGdUser = false) {
         // Expires in 3600 is a lie, but no need to tell the truth.
         /* expiresIn */ 3600, /* extraScopes */[],
         /* callback */
-        () => initializeEE(() => {
-          ee.data.setCloudApiEnabled(true);
-          taskAccumulator.taskCompleted();
-        }),
+        () => initializeEE(
+            eeInitializeCallback,
+            (err) => {
+              throw new Error('EarthEngine init failure: ' + err);
+            }),
         /* updateAuthLibrary */ false);
     return firebase.auth().signInWithCustomToken(firebaseToken);
   }
@@ -186,13 +276,15 @@ function initializeFirebase() {
 }
 
 /**
- * Initializes EarthEngine. Exposed only for use in test codepaths.
+ * Initializes EarthEngine.
  * @param {Function} runCallback Called if initialization succeeds
+ * @param {Function} failureCallback Called if initialization fails, likely
+ *     because user not whitelisted for EarthEngine.
  */
-function initializeEE(runCallback) {
+function initializeEE(runCallback, failureCallback) {
   ee.initialize(
       /** opt_baseurl */ null, /** opt_tileurl */ null, runCallback,
-      (err) => defaultErrorCallback('Error initializing EarthEngine: ' + err));
+      failureCallback);
 }
 
 /**
@@ -202,6 +294,20 @@ function initializeEE(runCallback) {
  */
 function getFirebaseConfig(inProduction) {
   return inProduction ? firebaseConfigProd : firebaseConfigTest;
+}
+
+/** Forces page to redirect to Google sign-in. */
+function reloadWithSignIn() {
+  doSignIn({prompt: 'select_account'});
+}
+
+/**
+ * Redirects to Google sign-in, if necessary or if forced by options.
+ * @param {gapi.auth.SignInOptions} extraOptions Dictionary of sign-in options
+ */
+function doSignIn(extraOptions = {}) {
+  gapi.auth2.getAuthInstance().signIn(
+      {...{ux_mode: 'redirect'}, ...extraOptions});
 }
 
 // Roughly copied from https://firebase.google.com/docs/auth/web/google-signin.
@@ -251,4 +357,14 @@ function isUserEqual(googleUser, firebaseUser) {
     }
   }
   return false;
+}
+
+/**
+ * Given a string representation of a future time (in some format parsed by
+ * {@link Date}, return the number of milliseconds from now until then.
+ * @param {string} dateAsString
+ * @return {number} Number of milliseconds until time given by `dateAsString`
+ */
+function getMillisecondsToDateString(dateAsString) {
+  return Date.parse(dateAsString) - Date.now();
 }
