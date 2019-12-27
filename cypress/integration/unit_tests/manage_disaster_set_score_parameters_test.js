@@ -457,7 +457,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     checkHoverText('#select-asset-selection-row-buildings-NY', '');
   });
 
-  it.only('tries to set a missing asset', () => {
+  it('tries to set a missing asset', () => {
     callEnableWhenReady(setUpDefaultData());
     setSelectWithDelayedEvaluate(0, 'state0', 'poverty-NY');
     checkSelectBorder(
