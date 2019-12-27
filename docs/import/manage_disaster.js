@@ -246,7 +246,7 @@ function onSetDisaster() {
   scoreBoundsMap.initialize(
       scoreBoundsPath ? transformGeoPointArrayToLatLng(scoreBoundsPath) : null,
       states);
-  // May be cached.
+  // getStateAssetsFromEe does internal caching.
   const scorePromise =
       Promise.all(states.map(getStateAssetsFromEe)).then((stateAssets) => {
         if (getDisaster() === currentDisaster &&
