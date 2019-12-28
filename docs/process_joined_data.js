@@ -2,7 +2,7 @@ import {
   blockGroupTag,
   damageTag, geoidTag,
   scoreTag,
-  snapPercentageTag,
+  povertyPercentageTag,
 } from './property_names.js';
 
 export {processJoinedData};
@@ -27,7 +27,7 @@ const scoreDisplayCap = 255;
  */
 function colorAndRate(
     feature, scalingFactor, povertyThreshold, damageThreshold, povertyWeight) {
-  const povertyRatio = feature.properties[snapPercentageTag];
+  const povertyRatio = feature.properties[povertyPercentageTag];
   const ratioBuildingsDamaged = feature.properties[damageTag] || 0;
   let score = 0;
   if (povertyRatio >= povertyThreshold &&

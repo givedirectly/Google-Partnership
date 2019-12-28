@@ -1,4 +1,4 @@
-import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, snapPercentageTag, snapPopTag, sviTag, totalPopTag, tractTag} from '../property_names.js';
+import {blockGroupTag, damageTag, geoidTag, povertyPercentageTag, povertyHouseholdsTag, totalHouseholdsTag} from '../property_names.js';
 import {getBackupScoreAssetPath, getScoreAssetPath} from '../resources.js';
 import {computeAndSaveBounds} from './center.js';
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
@@ -7,6 +7,12 @@ export {createScoreAsset, setStatus};
 
 // For testing.
 export {backUpAssetAndStartTask};
+
+const TRACT_TAG = 'TRACT';
+const SVI_TAG = 'SVI';
+// Median household income in the past 12 months (in 2016 inflation-adjusted
+// dollars)
+const INCOME_TAG = 'MEDIAN INCOME';
 
 /**
  * For the given feature representing a block group, add properties for
@@ -46,8 +52,8 @@ function countDamageAndBuildings(feature, damage, buildings, additionalTags) {
   } else {
     properties = properties.set(damageTag, 0);
   }
-  const snapPop = feature.get(snapPopTag);
-  const totalPop = feature.get(totalPopTag);
+  const snapPop = feature.get(povertyHouseholdsTag);
+  const totalPop = feature.get(totalHouseholdsTag);
   // unfortunately, just using .contains(null) here throws an error.
   const snapPercentage = ee.Algorithms.If(
       ee.List([snapPop, totalPop]).containsAll([null]), null,
@@ -56,11 +62,11 @@ function countDamageAndBuildings(feature, damage, buildings, additionalTags) {
   // convertToNumber or absent assets} so must be set directly on feature, not
   // in dictionary.
   let result = ee.Feature(geometry, properties)
-                   .set(snapPopTag, snapPop)
-                   .set(totalPopTag, totalPop)
-                   .set(snapPercentageTag, snapPercentage);
+                   .set(povertyHouseholdsTag, snapPop)
+                   .set(totalHouseholdsTag, totalPop)
+                   .set(povertyPercentageTag, snapPercentage);
   if (buildings) {
-    result = result.set(buildingCountTag, totalBuildings);
+    result = result.set('BUILDING COUNT', totalBuildings);
   }
   additionalTags.forEach((tag) => result = result.set(tag, feature.get(tag)));
   return result;
@@ -109,9 +115,9 @@ function combineWithSnap(feature, snapKey, totalKey) {
         snapFeature.get(censusGeoidKey),
         blockGroupTag,
         snapFeature.get(censusBlockGroupKey),
-        snapPopTag,
+        povertyHouseholdsTag,
         convertToNumber(snapFeature.get(snapKey)),
-        totalPopTag,
+        totalHouseholdsTag,
         convertToNumber(ee.Number.parse(snapFeature.get(totalKey))),
       ]));
 }
@@ -151,7 +157,7 @@ function stringifyGeoid(feature) {
  * @return {ee.Feature}
  */
 function addTractInfo(feature) {
-  return feature.set(tractTag, ee.String(feature.get(geoidTag)).slice(0, -1));
+  return feature.set(TRACT_TAG, ee.String(feature.get(geoidTag)).slice(0, -1));
 }
 
 /**
@@ -298,14 +304,14 @@ function createScoreAsset(
       // Join with income.
       processing = innerJoin(processing, incomePath, geoidTag, censusGeoidKey);
       processing =
-          processing.map((f) => combineWithAsset(f, incomeTag, incomeKey));
+          processing.map((f) => combineWithAsset(f, INCOME_TAG, incomeKey));
     }
     if (sviPath) {
       // Join with SVI (data is at the tract level).
       processing = processing.map(addTractInfo);
 
-      processing = innerJoin(processing, sviPath, tractTag, cdcGeoidKey);
-      processing = processing.map((f) => combineWithAsset(f, sviTag, sviKey));
+      processing = innerJoin(processing, sviPath, TRACT_TAG, cdcGeoidKey);
+      processing = processing.map((f) => combineWithAsset(f, SVI_TAG, sviKey));
     }
 
     // Get building count by block group.
@@ -314,8 +320,8 @@ function createScoreAsset(
 
     // Create final feature collection.
     const additionalTags = [];
-    if (incomePath) additionalTags.push(incomeTag);
-    if (sviPath) additionalTags.push(sviTag);
+    if (incomePath) additionalTags.push(INCOME_TAG);
+    if (sviPath) additionalTags.push(SVI_TAG);
     processing = processing.map(
         (f) =>
             countDamageAndBuildings(f, damage, buildingsHisto, additionalTags));

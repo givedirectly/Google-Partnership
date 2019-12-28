@@ -3,9 +3,8 @@ import {convertEeObjectToPromise} from '../../../docs/ee_promise_cache.js';
 import {currentFeatures} from '../../../docs/highlight_features';
 import * as loading from '../../../docs/loading.js';
 import {
-  blockGroupTag, buildingCountTag, damageTag,
-  geoidTag, incomeTag,
-  snapPercentageTag, sviTag, totalPopTag,
+  blockGroupTag,
+  geoidTag
 } from '../../../docs/property_names';
 import {scoreTag} from '../../../docs/property_names.js';
 import * as Resources from '../../../docs/resources.js';
@@ -20,19 +19,6 @@ const feature1Corners = [0.25, 0.25, 0.75, 1];
 const feature2Corners = [0.75, 0.25, 1.5, 0.75];
 const zeroScoreCorners = [0, 0, 0.25, 0.25];
 const missingPropertiesCorners = [-0.25, -0.25, 0, 0];
-
-
-const tableHeadings = [
-  geoidTag,
-  blockGroupTag,
-  scoreTag,
-  snapPercentageTag,
-  damageTag,
-  buildingCountTag,
-  totalPopTag,
-  sviTag,
-  incomeTag,
-];
 
 describe('Unit tests for click_feature.js with map and table', () => {
   loadScriptsBeforeForUnitTests('ee', 'charts', 'maps');
@@ -99,7 +85,8 @@ describe('Unit tests for click_feature.js with map and table', () => {
       tableDiv.id = 'table';
       containerDiv.appendChild(tableDiv);
       drawTableAndSetUpHandlers(
-          convertEeObjectToPromise(scoredFeatures).then((fc) => fc.features),
+          convertEeObjectToPromise(scoredFeatures).then((fc) => (
+              {featuresList: fc.features, columnsFound: [geoidTag, blockGroupTag, scoreTag, 'OTHER PERCENTAGE', 'SOME PROPERTY']})),
           map);
     });
     cy.wrap(loadingFinishedPromise);
@@ -255,8 +242,7 @@ function createFeatureWithOnlyGeoid(west, south, east, north) {
  */
 function createFeatureFromCorners(west, south, east, north) {
   let result = createFeatureWithOnlyGeoid(west, south, east, north);
-  // for (let i = 1; i < tableHeadings.length; i++) {
-  //   result = result.set(tableHeadings[i], 100 * i);
-  // }
+  result = result.set('SOME PROPERTY', 100);
+  result = result.set('OTHER PERCENTAGE', 4.23223434);
   return result;
 }

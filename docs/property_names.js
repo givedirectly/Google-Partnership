@@ -1,28 +1,22 @@
 export {
   blockGroupTag,
-  buildingCountTag,
   damageTag,
   geoidTag,
-  incomeTag,
   scoreTag,
-  snapPercentageTag,
-  snapPopTag,
-  sviTag,
-  totalPopTag,
-  tractTag,
+  povertyPercentageTag,
+  povertyHouseholdsTag,
+  totalHouseholdsTag,
 };
 
 const blockGroupTag = 'BLOCK GROUP';
-const tractTag = 'TRACT';
 const damageTag = 'DAMAGE PERCENTAGE';
 const geoidTag = 'GEOID';
 const scoreTag = 'SCORE';
-const snapPercentageTag = 'SNAP PERCENTAGE';
+// TODO(janakr): Allow user to set the column names for the score ingredient
+//  (currently always 'SNAP PERCENTAGE') and population properties (for use with
+//  drawing polygons, currently always 'SNAP HOUSEHOLDS' and
+//  'TOTAL HOUSEHOLDS'). Then can read these in from Firestore.
+const povertyPercentageTag = 'SNAP PERCENTAGE';
 // TODO(ruthtalbot): Does GD actually want these totals surfaced?
-const snapPopTag = 'SNAP HOUSEHOLDS';
-const totalPopTag = 'TOTAL HOUSEHOLDS';
-const buildingCountTag = 'BUILDING COUNT';
-// Median household income in the past 12 months (in 2016 inflation-adjusted
-// dollars)
-const incomeTag = 'MEDIAN INCOME';
-const sviTag = 'SVI';
+const povertyHouseholdsTag = 'SNAP HOUSEHOLDS';
+const totalHouseholdsTag = 'TOTAL HOUSEHOLDS';
