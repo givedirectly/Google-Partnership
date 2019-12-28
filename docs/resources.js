@@ -28,7 +28,7 @@ function getDisaster() {
 function getScoreAssetPath() {
   // TODO(janakr): rename this path to something more intelligible, like
   //  .../score-asset
-  return gdEePathPrefix + getDisaster() + '/data-ms-as-tot';
+  return gdEePathPrefix + getDisaster() + '/poverty-damage-score';
 }
 
 /**
