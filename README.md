@@ -75,7 +75,6 @@ https://dashboard.cypress.io in the "Runs" tab under "Settings".
     clang-format -i --style=Google $SOURCE_FILES
     yarn run eslint $SOURCE_FILES
     ```
- 
 ## License
 
 [![license](https://img.shields.io/badge/license-MIT-green.svg)](/LICENSE)
