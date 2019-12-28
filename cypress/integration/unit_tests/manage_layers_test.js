@@ -37,7 +37,9 @@ describe('Unit tests for manage_layers page', () => {
   it('filters out a null geometry disaster folder asset', () => {
     const disaster = getDisaster();
     listAssetsStub
-        .withArgs(eeLegacyPathPrefix + disaster, {}, Cypress.sinon.match.func)
+        .withArgs(
+            eeLegacyPathPrefix + disaster, Cypress.sinon.match.any,
+            Cypress.sinon.match.func)
         .returns(Promise.resolve({
           'assets': [
             {id: 'asset/with/geometry', type: 'TABLE'},
