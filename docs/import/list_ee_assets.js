@@ -1,7 +1,6 @@
 import {eeLegacyPathPrefix, legacyStateDir} from '../ee_paths.js';
 import {convertEeObjectToPromise} from '../ee_promise_cache.js';
 import {LayerType} from '../firebase_layers.js';
-
 import {listEeAssets} from './ee_utils.js';
 
 export {getDisasterAssetsFromEe, getStateAssetsFromEe, listAndProcessEeAssets};
