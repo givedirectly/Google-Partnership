@@ -11,37 +11,22 @@ export {listEeAssets};
  *     is the path to the asset, without the
  *     `projects/earthengine-legacy/assets/` prefix
  */
-function listEeAssets(path) {
-  const result = [];
-  return listAssetsHelper(path, result, null).then(() => result);
-}
-
-/**
- * Helper function for {@link listEeAssets}. If result from
- * {@link ee.data.listAssets} has `next_page_token`, makes another request.
- * @param {string} path See {@link listEeAssets}
- * @param {Array<{type: string, id: string}>} result Accumulated results,
- *     eventually returned by {@link listEeAssets}
- * @param {?string} pageToken Point at which to start the listing, returned
- *     by {@link ee.data.listAssets} in the `next_page_token` field when the
- *     listing is too long
- * @return {Promise<void>} Promise that completes when all listings are done
- */
-async function listAssetsHelper(path) {
+async function listEeAssets(path) {
   let listAssetsResult = null;
-  let pageToken = null;
   const result = [];
-  while (listAssetsResult === null || pageToken) {
+  // Loop while either we are on first iteration or have a page token.
+  while (listAssetsResult === null || listAssetsResult.next_page_token) {
     listAssetsResult = await ee.data.listAssets(
-        path, pageToken ? {page_token: pageToken} : {}, () => {});
+        path,
+        listAssetsResult && listAssetsResult.next_page_token ?
+            {page_token: listAssetsResult.next_page_token} :
+            {},
+        () => {});
     if (!listAssetsResult) {
       break;
     }
     if (listAssetsResult.assets) {
       result.push(...listAssetsResult.assets);
-    }
-    if (listAssetsResult.next_page_token) {
-      pageToken = listAssetsResult.next_page_token;
     }
   }
   return result;
