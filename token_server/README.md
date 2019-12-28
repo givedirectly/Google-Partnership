@@ -34,7 +34,7 @@ unless it is getting traffic.
 [Dashboard](https://console.cloud.google.com/appengine?folder=&organizationId=838088520005&project=mapping-crisis).
 You must be logged in as `gd-earthengine-user@givedirectly.org` to access it.
 
-### Set up Google Cloud instance
+### Set up new Google Cloud instance
 * Most of the necessary work needs to be done to set up the mapping page to work
 properly in the first place. The only additional work is to create a service
 account that is whitelisted for EarthEngine access (currently
@@ -60,7 +60,7 @@ run `eb deploy` after running `eb init` in order to log in.
 are using Elastic Beanstalk.
 
 ### Set up new Amazon Elastic Beanstalk instance
-* See the [Google Cloud instructions](#set-up-google-cloud-instance) if that is
+* See the [Google Cloud instructions](#set-up-new-google-cloud-instance) if that is
 also changing.
 * Delete the `.elasticbeanstalk` subdirectory of this directory, and follow the
 instructions [here]((https://aws.amazon.com/getting-started/tutorials/deploy-app-command-line-elastic-beanstalk/)
