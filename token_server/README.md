@@ -34,9 +34,44 @@ unless it is getting traffic.
 [Dashboard](https://console.cloud.google.com/appengine?folder=&organizationId=838088520005&project=mapping-crisis).
 You must be logged in as `gd-earthengine-user@givedirectly.org` to access it.
 
-## Run server on Amazon EC2
+### Set up Google Cloud instance
+* Most of the work needs to be done to set up the mapping page to work properly
+in the first place. The only additional work is to create a service account that
 
-`¯\_(ツ)_/¯`
+## Run server on Amazon Elastic Beanstalk
+
+* Deploy using [these instructions](https://aws.amazon.com/getting-started/tutorials/deploy-app-command-line-elastic-beanstalk/).
+Since the project already exists on Amazon Elastic Beanstalk, you just need to
+run `eb deploy` after running `eb init` in order to log in. TODO(janakr): check this
+
+### Set up Amazon Elastic Beanstalk instance
+* See the [Google Cloud instructions](#set-up-google-cloud-instance) if that is
+also changing.
+* Delete the `.elasticbeanstalk` subdirectory of this directory, and follow the
+instructions [here]((https://aws.amazon.com/getting-started/tutorials/deploy-app-command-line-elastic-beanstalk/)
+to set up from scratch.
+* Delete the `.gitignore` file that setup creates, and add `.elasticbeanstalk/*`
+to git.
+* Add Google service account credentials to
+[Amazon Secrets Manager](https://aws.amazon.com/secrets-manager/getting-started/).
+Remember that you need to be logged into Google as
+`gd-earthengine-user@givedirectly.org`.
+   * The Google service account is currently
+`earthengine-token-provider@mapping-crisis.iam.gserviceaccount.com` (specified
+in `ee_token_creator.js`).
+   * Download private key JSON for the Google service account via the
+   [Credentials page](https://console.developers.google.com/apis/credentials?project=mapping-crisis).
+   * Upload to the [Amazon Secrets Manager](https://aws.amazon.com/secrets-manager/getting-started/)
+   using the provvided instructions.
+To make the secret readable by the server, you will have to have the server run
+as a user with permissions to read the secret:
+  * [Instructions for creating the user](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/iam-instanceprofile.html#iam-instanceprofile-create).
+  * [Give access only to this secret](https://docs.aws.amazon.com/secretsmanager/latest/userguide/auth-and-access_identity-based-policies.html#permissions_grant-limited-resources)
+  * After deploying the app, in the Elastic Beanstalk console, go to
+  Configuration > Security > Modify and choose the IAM instance profile you
+  created above.
+  * Make sure the region you created the secret in matches the region specified
+  in `token_server.js`! 
 
 ## Start locally, for testing only
 

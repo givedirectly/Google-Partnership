@@ -8,6 +8,8 @@ export {generateEarthEngineToken};
 // Cope with slight differences between Babel/Node transpilation of googleapis.
 const google = googleapis.google || googleapis.default.google;
 
+let authAndClientPromise;
+
 /**
  * Produces an EarthEngine token that can be used by production code. We use
  * the somewhat legacy and very poorly documented but still supported
@@ -18,14 +20,18 @@ const google = googleapis.google || googleapis.default.google;
  * Using our service account, we request an access token with the
  * `earthengine.readonly` scope.
  *
- * @return {Promise<string>}
+ * @return {Promise<{accessToken: string, expireTime: string}>}
  */
 function generateEarthEngineToken() {
-  // This is the scope needed to use iamcredentials:
-  // https://developers.google.com/identity/protocols/googlescopes#iamcredentialsv1
-  const auth = new google.auth.GoogleAuth(
-      {scopes: ['https://www.googleapis.com/auth/cloud-platform']});
-  return auth.getClient().then((client) => createTokenPromise(auth, client));
+  if (!authAndClientPromise) {
+    // This is the scope needed to use iamcredentials:
+    // https://developers.google.com/identity/protocols/googlescopes#iamcredentialsv1
+    const auth = new google.auth.GoogleAuth(
+        {scopes: ['https://www.googleapis.com/auth/cloud-platform']});
+    authAndClientPromise = {auth, client: auth.getClient()};
+  }
+  return authAndClientPromise.client.then(
+      (client) => createTokenPromise(authAndClientPromise.auth, client));
 }
 
 /**
@@ -73,6 +79,7 @@ function requestToken(auth, client, callback) {
   // which is not desirable.
   const serviceAccount = client.email ?
       client.email :
+      // If this changes, change the README as well.
       'earthengine-token-provider@mapping-crisis.iam.gserviceaccount.com';
   google.iamcredentials({version: 'v1', auth})
       .projects.serviceAccounts.generateAccessToken(
