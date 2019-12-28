@@ -1,7 +1,9 @@
 import {CLIENT_ID} from './common_auth_utils.js';
+import {eeLegacyPathPrefix, eeLegacyPrefix} from './ee_paths.js';
 import {showError} from './error.js';
 import {earthEngineTestTokenCookieName, firebaseTestTokenPropertyName, getValueFromLocalStorage, inProduction} from './in_test_util.js';
-import SettablePromise from './settable_promise.js';
+import {getBackupScoreAssetPath, getDisaster, getScoreAssetPath} from './resources.js';
+import {SettablePromise} from './settable_promise.js';
 
 export {reloadWithSignIn, trackEeAndFirebase};
 // For testing.
@@ -72,6 +74,7 @@ class Authenticator {
   constructor(eeInitializeCallback, needsGdUser) {
     this.eeInitializeCallback = eeInitializeCallback;
     this.needsGdUser = needsGdUser;
+    /** Promise will have boolean, true if gd user */
     this.gapiInitDone = new SettablePromise();
   }
 
@@ -89,12 +92,12 @@ class Authenticator {
             'auth2',
             () => this.gapiInitDone.setPromise(
                 gapi.auth2.init(gapiSettings).then(() => {
-                  const basicProfile = gapi.auth2.getAuthInstance()
-                                           .currentUser.get()
-                                           .getBasicProfile();
-                  if (this.needsGdUser &&
-                      (!basicProfile ||
-                       basicProfile.getEmail() !== gdUserEmail)) {
+                  const currentUser =
+                      gapi.auth2.getAuthInstance().currentUser.get();
+                  const basicProfile = currentUser.getBasicProfile();
+                  const isGdUser =
+                      basicProfile && basicProfile.getEmail() === gdUserEmail;
+                  if (this.needsGdUser && !isGdUser) {
                     alert(
                         'You must be signed in as ' + gdUserEmail + ' to ' +
                         'access this page. Please open in an incognito window' +
@@ -102,10 +105,9 @@ class Authenticator {
                         ' in this window after closing this alert.');
                     this.requireSignIn();
                   } else {
-                    authenticateToFirebase(
-                        gapi.auth2.getAuthInstance().currentUser.get())
-                        .then(resolve, reject);
+                    authenticateToFirebase(currentUser).then(resolve, reject);
                   }
+                  return isGdUser;
                 }))));
   }
 
@@ -236,12 +238,22 @@ class Authenticator {
  * @return {Promise} Promise that completes when Firebase is logged in
  */
 function trackEeAndFirebase(taskAccumulator, needsGdUser = false) {
+  let authenticator;
   const eeInitializeCallback = () => {
     ee.data.setCloudApiEnabled(true);
     taskAccumulator.taskCompleted();
+    if (!authenticator) {
+      return;
+    }
+    authenticator.gapiInitDone.getPromise().then((isGdUser) => {
+      if (isGdUser) {
+        makeScoreAssetsWorldReadable();
+      }
+    });
   };
+
   if (inProduction()) {
-    const authenticator = new Authenticator(eeInitializeCallback, needsGdUser);
+    authenticator = new Authenticator(eeInitializeCallback, needsGdUser);
     return authenticator.start();
   } else {
     // We're inside a test. The test setup should have tokens for us that will
@@ -274,6 +286,73 @@ function trackEeAndFirebase(taskAccumulator, needsGdUser = false) {
 /** Initializes Firebase. Exposed only for use in test codepaths. */
 function initializeFirebase() {
   firebase.initializeApp(getFirebaseConfig(inProduction()));
+}
+
+const allReadBinding = Object.freeze({
+  role: 'roles/viewer',
+  members: ['allUsers'],
+});
+
+/**
+ * Lists assets in the current disaster's folder and for any that match a score
+ * asset path (either standard or backup) and are not already world-readable,
+ * send a request to make that asset world-readable. This should only be called
+ * when logged in as the GD user. It does not wait for these calls to complete,
+ * and does not print any errors, since it is just trying to help other users,
+ * and is not triggered by an explicit user action.
+ *
+ * Optimized for the common case of assets already being world-readable: the
+ * getIamPolicy is technically not necessary, but usually it will avoid a set,
+ * which should be at least as expensive.
+ *
+ * See
+ * https://cloud.google.com/resource-manager/reference/rest/Shared.Types/Policy
+ * for documentation of the `Policy` object, and
+ * https://cloud.google.com/iam/docs/understanding-roles#primitive_roles for
+ * some background on IAM roles.
+ */
+function makeScoreAssetsWorldReadable() {
+  // TODO(janakr): Switch to using listEeAssets once #368 is in.
+  // TODO(janakr): Consider sharing cache with list_ee_assets.js. Not trivial
+  //  because that code does additional EE requests to look at geometries, so
+  //  we would need a two-level cache, one raw and one with geometries.
+  ee.data.listAssets(eeLegacyPathPrefix + getDisaster(), {}, () => {})
+      .then((listResult) => {
+        if (!listResult) {
+          return;
+        }
+        const paths = new Set([getScoreAssetPath(), getBackupScoreAssetPath()]);
+        const numAssets = paths.size;
+        let foundAssets = 0;
+        for (const {id} of listResult.assets) {
+          if (paths.has(id)) {
+            foundAssets++;
+            ee.data.getIamPolicy(eeLegacyPrefix + id, () => {})
+                .then((policy) => {
+                  for (const binding of policy.bindings) {
+                    // Only want to modify 'reader' permissions.
+                    if (binding.role === 'roles/viewer') {
+                      if (!binding.members.includes('allUsers')) {
+                        binding.members.push('allUsers');
+                        ee.data.setIamPolicy(
+                            eeLegacyPrefix + id, policy, () => {});
+                      }
+                      return;
+                    }
+                  }
+                  // TODO(janakr): Do better. See what EE says.
+                  // If we got here, no roles/viewer binding. Use some
+                  // Javascript magic.
+                  const BindingConstructor = policy.bindings[0].constructor;
+                  policy.bindings.push(new BindingConstructor(allReadBinding));
+                  ee.data.setIamPolicy(eeLegacyPrefix + id, policy, () => {});
+                });
+          }
+          if (foundAssets === numAssets) {
+            return;
+          }
+        }
+      });
 }
 
 /**

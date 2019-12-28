@@ -1,4 +1,4 @@
-export {SettablePromise as default};
+export {SettablePromise};
 
 /**
  * Class that provides a Promise that will be completed when the Promise passed
