@@ -75,8 +75,8 @@ let currentTokenPromise;
  * to wait, they can just use the old token.
  */
 function generateTokenPeriodically() {
-  googleCredentialsPresent.then(generateEarthEngineToken)
-      .then((token) => currentTokenPromise = Promise.resolve(token));
+  generateEarthEngineToken().then(
+      (token) => currentTokenPromise = Promise.resolve(token));
   setTimeout(generateTokenPeriodically, TIME_BEFORE_REGENERATION);
 }
 
