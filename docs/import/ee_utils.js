@@ -13,11 +13,12 @@ export {listEeAssets};
  */
 function listEeAssets(path) {
   const result = [];
-  return listAssetsRecursive(path, result, null).then(() => result);
+  return listAssetsHelper(path, result, null).then(() => result);
 }
 
 /**
- * Helper function for {@link listEeAssets}.
+ * Helper function for {@link listEeAssets}. If result from
+ * {@link ee.data.listAssets} has `next_page_token`, makes another request.
  * @param {string} path See {@link listEeAssets}
  * @param {Array<{type: string, id: string}>} result Accumulated results,
  *     eventually returned by {@link listEeAssets}
@@ -26,19 +27,22 @@ function listEeAssets(path) {
  *     listing is too long
  * @return {Promise<void>} Promise that completes when all listings are done
  */
-function listAssetsRecursive(path, result, pageToken) {
-  return ee.data
-      .listAssets(path, pageToken ? {page_token: pageToken} : {}, () => {})
-      .then((listAssetsResult) => {
-        if (!listAssetsResult) {
-          return;
-        }
-        if (listAssetsResult.assets) {
-          result.push(...listAssetsResult.assets);
-        }
-        if (listAssetsResult.next_page_token) {
-          return listAssetsRecursive(
-              path, result, listAssetsResult.next_page_token);
-        }
-      });
+async function listAssetsHelper(path) {
+  let listAssetsResult = null;
+  let pageToken = null;
+  const result = [];
+  while (listAssetsResult === null || pageToken) {
+    listAssetsResult = await ee.data.listAssets(
+        path, pageToken ? {page_token: pageToken} : {}, () => {});
+    if (!listAssetsResult) {
+      break;
+    }
+    if (listAssetsResult.assets) {
+      result.push(...listAssetsResult.assets);
+    }
+    if (listAssetsResult.next_page_token) {
+      pageToken = listAssetsResult.next_page_token;
+    }
+  }
+  return result;
 }
