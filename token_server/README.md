@@ -62,7 +62,7 @@ are using Elastic Beanstalk.
 ### Set up new Amazon Elastic Beanstalk instance
 * See the [Google Cloud instructions](#set-up-new-google-cloud-instance) if that is
 also changing.
-* Delete the `.elasticbeanstalk` subdirectory of this directory, and follow the
+* Delete the [.elasticbeanstalk](./.elasticbeanstalk) subdirectory of this directory, and follow the
 instructions [here]((https://aws.amazon.com/getting-started/tutorials/deploy-app-command-line-elastic-beanstalk/)
 to set up from scratch.
 * Delete the `.gitignore` file that setup creates, and add `.elasticbeanstalk/*`
