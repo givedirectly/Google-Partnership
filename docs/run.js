@@ -103,7 +103,7 @@ function createAndDisplayJoinedData(map, initialTogglesValuesPromise) {
   const processedData = processJoinedData(
       resolvedScoreAsset.then(getEePromiseForFeatureCollection), scalingFactor,
       initialTogglesValuesPromise);
-  addScoreLayer(processedData);
+  addScoreLayer(processedData.then(({featuresList}) => featuresList));
   maybeCheckScoreCheckbox();
   drawTableAndSetUpHandlers(processedData, map);
 }

@@ -1,9 +1,12 @@
 import {tableContainerId} from '../../../docs/dom_constants.js';
-import {tableHeadings} from '../../../docs/draw_table.js';
 import {convertEeObjectToPromise} from '../../../docs/ee_promise_cache.js';
 import {currentFeatures} from '../../../docs/highlight_features';
 import * as loading from '../../../docs/loading.js';
-import {blockGroupTag, geoidTag} from '../../../docs/property_names';
+import {
+  blockGroupTag, buildingCountTag, damageTag,
+  geoidTag, incomeTag,
+  snapPercentageTag, sviTag, totalPopTag,
+} from '../../../docs/property_names';
 import {scoreTag} from '../../../docs/property_names.js';
 import * as Resources from '../../../docs/resources.js';
 import {drawTableAndSetUpHandlers, resolveScoreAsset} from '../../../docs/run.js';
@@ -18,6 +21,18 @@ const feature2Corners = [0.75, 0.25, 1.5, 0.75];
 const zeroScoreCorners = [0, 0, 0.25, 0.25];
 const missingPropertiesCorners = [-0.25, -0.25, 0, 0];
 
+
+const tableHeadings = [
+  geoidTag,
+  blockGroupTag,
+  scoreTag,
+  snapPercentageTag,
+  damageTag,
+  buildingCountTag,
+  totalPopTag,
+  sviTag,
+  incomeTag,
+];
 
 describe('Unit tests for click_feature.js with map and table', () => {
   loadScriptsBeforeForUnitTests('ee', 'charts', 'maps');

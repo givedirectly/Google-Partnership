@@ -23,7 +23,7 @@ const scoreDisplayCap = 255;
 function colorAndRate(
     feature, scalingFactor, povertyThreshold, damageThreshold, povertyWeight) {
   const povertyRatio = feature.properties[snapPercentageTag];
-  const ratioBuildingsDamaged = feature.properties[damageTag];
+  const ratioBuildingsDamaged = feature.properties[damageTag] || 0;
   let score = 0;
   if (povertyRatio >= povertyThreshold &&
       ratioBuildingsDamaged >= damageThreshold) {
@@ -40,6 +40,9 @@ function colorAndRate(
       Math.min(Math.round((255 / scalingFactor) * score), scoreDisplayCap);
   feature.properties['color'] = [255, 0, 255, opacity];
 }
+
+const KEY_BLACKLIST = Object.freeze(new Set(['system:index', 'color']));
+const ALWAYS_PRESENT_KEYS = 
 
 /**
  * Processes the provided Promise. The returned Promise has the same underlying
@@ -60,17 +63,24 @@ function colorAndRate(
 function processJoinedData(
     dataPromise, scalingFactor, initialTogglesValuesPromise) {
   return Promise.all([dataPromise, initialTogglesValuesPromise])
-      .then((results) => {
-        const [featuresList, {
-          povertyThreshold,
-          damageThreshold,
-          povertyWeight,
-        }] = results;
+      .then(([featuresList, {
+    povertyThreshold,
+    damageThreshold,
+    povertyWeight,
+  }]) => {
+        const columnsFound = new Set();
         for (const feature of featuresList) {
           colorAndRate(
               feature, scalingFactor, povertyThreshold, damageThreshold,
               povertyWeight);
+          console.log(feature.properties);
+          for (const key of Object.keys(feature.properties)) {
+            if (!columnsFound.has(key) && !KEY_BLACKLIST.has(key)) {
+              columnsFound.add(key);
+            }
+          }
         }
-        return featuresList;
+        return {
+          featuresList, columnsFound: Object.freeze(Array.from(columnsFound))};
       });
 }
