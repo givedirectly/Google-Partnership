@@ -12,22 +12,15 @@ export {listEeAssets};
  *     `projects/earthengine-legacy/assets/` prefix
  */
 async function listEeAssets(path) {
-  let listAssetsResult = null;
+  let nextPageToken = null;
   const result = [];
-  // Loop while either we are on first iteration or have a page token.
-  while (listAssetsResult === null || listAssetsResult.next_page_token) {
-    listAssetsResult = await ee.data.listAssets(
-        path,
-        listAssetsResult && listAssetsResult.next_page_token ?
-            {page_token: listAssetsResult.next_page_token} :
-            {},
-        () => {});
-    if (!listAssetsResult) {
-      break;
+  do {
+    let assets;
+    ({next_page_token: nextPageToken, assets} =
+         await ee.data.listAssets(path, {page_token: nextPageToken}, () => {}));
+    if (assets) {
+      result.push(...assets);
     }
-    if (listAssetsResult.assets) {
-      result.push(...listAssetsResult.assets);
-    }
-  }
+  } while (nextPageToken);
   return result;
 }
