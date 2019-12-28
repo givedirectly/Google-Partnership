@@ -1,4 +1,9 @@
-import {damageTag, scoreTag, snapPercentageTag} from './property_names.js';
+import {
+  blockGroupTag,
+  damageTag, geoidTag,
+  scoreTag,
+  snapPercentageTag,
+} from './property_names.js';
 
 export {processJoinedData};
 
@@ -42,7 +47,9 @@ function colorAndRate(
 }
 
 const KEY_BLACKLIST = Object.freeze(new Set(['system:index', 'color']));
-const ALWAYS_PRESENT_KEYS = 
+// We put these keys here because adding them to the set first guarantees they
+// will be the first three columns in the table.
+const ALWAYS_PRESENT_KEYS = Object.freeze([geoidTag, blockGroupTag, scoreTag]);
 
 /**
  * Processes the provided Promise. The returned Promise has the same underlying
@@ -68,12 +75,11 @@ function processJoinedData(
     damageThreshold,
     povertyWeight,
   }]) => {
-        const columnsFound = new Set();
+        const columnsFound = new Set(ALWAYS_PRESENT_KEYS);
         for (const feature of featuresList) {
           colorAndRate(
               feature, scalingFactor, povertyThreshold, damageThreshold,
               povertyWeight);
-          console.log(feature.properties);
           for (const key of Object.keys(feature.properties)) {
             if (!columnsFound.has(key) && !KEY_BLACKLIST.has(key)) {
               columnsFound.add(key);

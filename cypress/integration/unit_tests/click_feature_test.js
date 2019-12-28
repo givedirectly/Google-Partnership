@@ -152,9 +152,6 @@ describe('Unit tests for click_feature.js with map and table', () => {
     assertFeatureShownOnMap(missingPropertiesCorners);
     cy.get('#test-map-div').should('contain', 'SCORE: 4');
     cy.get('#test-map-div').should('contain', 'missing properties group');
-    cy.get('#test-map-div').should('contain', 'SVI: undefined');
-    cy.get('#test-map-div').should('contain', 'MEDIAN INCOME: undefined');
-    cy.get('#test-map-div').should('contain', 'BUILDING COUNT: undefined');
   });
 
   /**
@@ -258,8 +255,8 @@ function createFeatureWithOnlyGeoid(west, south, east, north) {
  */
 function createFeatureFromCorners(west, south, east, north) {
   let result = createFeatureWithOnlyGeoid(west, south, east, north);
-  for (let i = 1; i < tableHeadings.length; i++) {
-    result = result.set(tableHeadings[i], 100 * i);
-  }
+  // for (let i = 1; i < tableHeadings.length; i++) {
+  //   result = result.set(tableHeadings[i], 100 * i);
+  // }
   return result;
 }
