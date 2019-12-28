@@ -31,6 +31,9 @@ const ONE_MINUTE_IN_MILLISECONDS = 60 * 1000;
 // token.
 const TIME_BEFORE_REGENERATION = 40 * ONE_MINUTE_IN_MILLISECONDS;
 
+// Cope with slight differences between ESM/Node transpilation of googleapis.
+const googleAuth = GoogleAuth.default || GoogleAuth;
+
 const allowedOrigins = new Set(['https://givedirectly.github.io']);
 
 // AWS does not provide any pre-set environment variables, but we can assume
@@ -44,13 +47,6 @@ if (!process.env.GAE_APPLICATION &&
 
 // AWS Elastic Beanstalk/Google App Engine tells us the port to listen to.
 const port = process.env.PORT || 9080;
-
-// Promise that resolves immediately if credentials are present, and resolves
-// once secret is retrieved, written to file, and variable set to file location
-// if credentials not present (meaning we're on AWS).
-const googleCredentialsPresent = process.env.GOOGLE_APPLICATION_CREDENTIALS ?
-    Promise.resolve() :
-    storeGoogleCredentials();
 
 /**
  * Result of most recent call to {@link generateEarthEngineToken}. Because there
@@ -80,45 +76,47 @@ function generateTokenPeriodically() {
   setTimeout(generateTokenPeriodically, TIME_BEFORE_REGENERATION);
 }
 
-// Cope with slight differences between ESM/Node transpilation of googleapis.
-const googleAuth = GoogleAuth.default || GoogleAuth;
-
 // Can't do anything more without credentials being present.
-googleCredentialsPresent.then(() => {
-  setTimeout(generateTokenPeriodically, TIME_BEFORE_REGENERATION);
+// Make promise that resolves immediately if credentials are present, and
+// resolves once secret is retrieved, written to file, and variable set to file
+// location if credentials not present (meaning we're on AWS).
+(process.env.GOOGLE_APPLICATION_CREDENTIALS ? Promise.resolve() :
+                                              storeGoogleCredentials())
+    .then(() => {
+      setTimeout(generateTokenPeriodically, TIME_BEFORE_REGENERATION);
 
-  currentTokenPromise = generateEarthEngineToken();
+      currentTokenPromise = generateEarthEngineToken();
 
-  const client = new googleAuth.OAuth2Client(CLIENT_ID);
+      const client = new googleAuth.OAuth2Client(CLIENT_ID);
 
-  /**
-   * See
-   * https://nodejs.org/api/http.html#http_http_createserver_options_requestlistener
-   * or https://www.w3schools.com/nodejs/nodejs_http.asp for a gentle intro.
-   */
-  createServer(async (req, res) => {
-    const origin = req.headers['origin'];
-    if (!allowedOrigins.has(origin)) {
-      fail(res);
-      return;
-    }
+      /**
+       * See
+       * https://nodejs.org/api/http.html#http_http_createserver_options_requestlistener
+       * or https://www.w3schools.com/nodejs/nodejs_http.asp for a gentle intro.
+       */
+      createServer(async (req, res) => {
+        const origin = req.headers['origin'];
+        if (!allowedOrigins.has(origin)) {
+          fail(res);
+          return;
+        }
 
-    try {
-      const {idToken} = await parseBody(req);
-      await client.verifyIdToken({idToken: idToken, audience: CLIENT_ID});
-    } catch (err) {
-      fail(res);
-      return;
-    }
-    const data = await currentTokenPromise;
-    const headers = Object.assign({}, RESPONSE_HEADERS);
-    // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Origin
-    headers['Access-Control-Allow-Origin'] = origin;
-    res.writeHead(200, headers);
-    res.write(JSON.stringify(data));
-    res.end();
-  }).listen(port);
-});
+        try {
+          const {idToken} = await parseBody(req);
+          await client.verifyIdToken({idToken: idToken, audience: CLIENT_ID});
+        } catch (err) {
+          fail(res);
+          return;
+        }
+        const data = await currentTokenPromise;
+        const headers = Object.assign({}, RESPONSE_HEADERS);
+        // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Origin
+        headers['Access-Control-Allow-Origin'] = origin;
+        res.writeHead(200, headers);
+        res.write(JSON.stringify(data));
+        res.end();
+      }).listen(port);
+    });
 
 /**
  * Returns a generic failure to the client.
