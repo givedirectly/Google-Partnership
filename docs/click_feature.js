@@ -46,7 +46,8 @@ function clickFeature(lng, lat, map, featuresAsset, tableSelector) {
   });
 }
 
-const HIDDEN_PROPERTIES = Object.freeze(new Set([  geoidTag,
+const HIDDEN_PROPERTIES = Object.freeze(new Set([
+  geoidTag,
   blockGroupTag,
   scoreTag,
 ]));

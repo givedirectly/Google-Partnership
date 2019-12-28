@@ -1,9 +1,4 @@
-import {
-  blockGroupTag,
-  damageTag, geoidTag,
-  scoreTag,
-  povertyPercentageTag,
-} from './property_names.js';
+import {blockGroupTag, damageTag, geoidTag, povertyPercentageTag, scoreTag} from './property_names.js';
 
 export {processJoinedData};
 
@@ -70,11 +65,14 @@ const ALWAYS_PRESENT_KEYS = Object.freeze([geoidTag, blockGroupTag, scoreTag]);
 function processJoinedData(
     dataPromise, scalingFactor, initialTogglesValuesPromise) {
   return Promise.all([dataPromise, initialTogglesValuesPromise])
-      .then(([featuresList, {
-    povertyThreshold,
-    damageThreshold,
-    povertyWeight,
-  }]) => {
+      .then(([
+              featuresList,
+              {
+                povertyThreshold,
+                damageThreshold,
+                povertyWeight,
+              },
+            ]) => {
         const columnsFound = new Set(ALWAYS_PRESENT_KEYS);
         for (const feature of featuresList) {
           colorAndRate(
@@ -87,6 +85,8 @@ function processJoinedData(
           }
         }
         return {
-          featuresList, columnsFound: Object.freeze(Array.from(columnsFound))};
+          featuresList,
+          columnsFound: Object.freeze(Array.from(columnsFound)),
+        };
       });
 }

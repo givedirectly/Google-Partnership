@@ -2,10 +2,7 @@ import {tableContainerId} from '../../../docs/dom_constants.js';
 import {convertEeObjectToPromise} from '../../../docs/ee_promise_cache.js';
 import {currentFeatures} from '../../../docs/highlight_features';
 import * as loading from '../../../docs/loading.js';
-import {
-  blockGroupTag,
-  geoidTag
-} from '../../../docs/property_names';
+import {blockGroupTag, geoidTag} from '../../../docs/property_names';
 import {scoreTag} from '../../../docs/property_names.js';
 import * as Resources from '../../../docs/resources.js';
 import {drawTableAndSetUpHandlers, resolveScoreAsset} from '../../../docs/run.js';
@@ -85,8 +82,17 @@ describe('Unit tests for click_feature.js with map and table', () => {
       tableDiv.id = 'table';
       containerDiv.appendChild(tableDiv);
       drawTableAndSetUpHandlers(
-          convertEeObjectToPromise(scoredFeatures).then((fc) => (
-              {featuresList: fc.features, columnsFound: [geoidTag, blockGroupTag, scoreTag, 'OTHER PERCENTAGE', 'SOME PROPERTY']})),
+          convertEeObjectToPromise(scoredFeatures).then((fc) => ({
+                                                          featuresList:
+                                                              fc.features,
+                                                          columnsFound: [
+                                                            geoidTag,
+                                                            blockGroupTag,
+                                                            scoreTag,
+                                                            'OTHER PERCENTAGE',
+                                                            'SOME PROPERTY',
+                                                          ],
+                                                        })),
           map);
     });
     cy.wrap(loadingFinishedPromise);

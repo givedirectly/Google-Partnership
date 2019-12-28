@@ -2,9 +2,9 @@ export {
   blockGroupTag,
   damageTag,
   geoidTag,
-  scoreTag,
-  povertyPercentageTag,
   povertyHouseholdsTag,
+  povertyPercentageTag,
+  scoreTag,
   totalHouseholdsTag,
 };
 

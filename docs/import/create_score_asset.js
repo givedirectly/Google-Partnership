@@ -1,10 +1,10 @@
-import {blockGroupTag, damageTag, geoidTag, povertyPercentageTag, povertyHouseholdsTag, totalHouseholdsTag} from '../property_names.js';
+import {blockGroupTag, damageTag, geoidTag, povertyHouseholdsTag, povertyPercentageTag, totalHouseholdsTag} from '../property_names.js';
 import {getBackupScoreAssetPath, getScoreAssetPath} from '../resources.js';
+
 import {computeAndSaveBounds} from './center.js';
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
 
 export {createScoreAsset, setStatus};
-
 // For testing.
 export {backUpAssetAndStartTask};
 
