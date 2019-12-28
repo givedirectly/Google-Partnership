@@ -7,7 +7,7 @@ should follow the instructions below, and they should only need to be done once.
 This server's location is unrelated to the mapping page's hosted location (The
 mapping page's hosted location is
 https://givedirectly.github.io/Google-Partnership as of January 2020). This
-server is pointed to by the `TOKEN_SERVER_URL` of `docs/authenticate.js`. If you
+server is pointed to by the `TOKEN_SERVER_URL` of [authenticate.js](../docs/authenticate.js). If you
 change the hosting location for this server, just update that variable.
 
 ## Run server on Google App Engine
@@ -73,7 +73,7 @@ Remember that you need to be logged into Google as
 `gd-earthengine-user@givedirectly.org`.
    * The Google service account is currently
 `earthengine-token-provider@mapping-crisis.iam.gserviceaccount.com` (specified
-in `ee_token_creator.js`).
+in [ee_token_creator.js](./ee_token_creator.js).
    * Download private key JSON for the Google service account via the
    [Credentials page](https://console.developers.google.com/apis/credentials?project=mapping-crisis).
    * Upload to the [Amazon Secrets Manager](https://aws.amazon.com/secrets-manager/getting-started/)
@@ -86,7 +86,7 @@ as a user with permissions to read the secret:
   Configuration > Security > Modify and choose the IAM instance profile you
   created above.
   * Make sure the region you created the secret in matches the region specified
-  in `token_server.js`! 
+  in [token_server.js](./token_server.js)! 
 
 ## Start locally, for testing only
 
