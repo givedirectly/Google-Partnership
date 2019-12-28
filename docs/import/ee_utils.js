@@ -24,7 +24,7 @@ async function listEeAssets(path) {
     }
     ({next_page_token: nextPageToken, assets} = listResult);
     if (assets) {
-      listResult.push(...assets);
+      result.push(...assets);
     }
   } while (nextPageToken);
   return result;
