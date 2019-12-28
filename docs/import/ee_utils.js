@@ -16,8 +16,13 @@ async function listEeAssets(path) {
   const result = [];
   do {
     let assets;
-    ({next_page_token: nextPageToken, assets} =
-         await ee.data.listAssets(path, {page_token: nextPageToken}, () => {}));
+    const result =
+        await ee.data.listAssets(path, {page_token: nextPageToken}, () => {});
+    if (!result) {
+      // Might only happen in tests?
+      break;
+    }
+    ({next_page_token: nextPageToken, assets} = result);
     if (assets) {
       result.push(...assets);
     }
