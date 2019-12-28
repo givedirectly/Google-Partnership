@@ -35,16 +35,31 @@ unless it is getting traffic.
 You must be logged in as `gd-earthengine-user@givedirectly.org` to access it.
 
 ### Set up Google Cloud instance
-* Most of the work needs to be done to set up the mapping page to work properly
-in the first place. The only additional work is to create a service account that
+* Most of the necessary work needs to be done to set up the mapping page to work
+properly in the first place. The only additional work is to create a service
+account that is whitelisted for EarthEngine access (currently
+`earthengine-token-provider`) and give it the "Service Account Token Creator" role
+in the
+[IAM page](https://console.developers.google.com/iam-admin/iam?project=mapping-crisis).
+
+* If you are serving tokens from Google App Engine, and not from Amazon, then
+you should also give the default AppEngine service account
+(currently `mapping-crisis@appspot.gserviceaccount.com`) the "Service Account
+Token Creator" role, so that it can create tokens for the service account you
+created above.
 
 ## Run server on Amazon Elastic Beanstalk
 
 * Deploy using [these instructions](https://aws.amazon.com/getting-started/tutorials/deploy-app-command-line-elastic-beanstalk/).
 Since the project already exists on Amazon Elastic Beanstalk, you just need to
-run `eb deploy` after running `eb init` in order to log in. TODO(janakr): check this
+run `eb deploy` after running `eb init` in order to log in.
 
-### Set up Amazon Elastic Beanstalk instance
+* The server URL will be entered here once we have GiveDirectly's account.
+
+* See the [console](https://console.aws.amazon.com/) for more information. We
+are using Elastic Beanstalk.
+
+### Set up new Amazon Elastic Beanstalk instance
 * See the [Google Cloud instructions](#set-up-google-cloud-instance) if that is
 also changing.
 * Delete the `.elasticbeanstalk` subdirectory of this directory, and follow the
@@ -62,7 +77,7 @@ in `ee_token_creator.js`).
    * Download private key JSON for the Google service account via the
    [Credentials page](https://console.developers.google.com/apis/credentials?project=mapping-crisis).
    * Upload to the [Amazon Secrets Manager](https://aws.amazon.com/secrets-manager/getting-started/)
-   using the provvided instructions.
+   using the provided instructions.
 To make the secret readable by the server, you will have to have the server run
 as a user with permissions to read the secret:
   * [Instructions for creating the user](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/iam-instanceprofile.html#iam-instanceprofile-create).
