@@ -304,6 +304,12 @@ const allReadBinding = Object.freeze({
  * Optimized for the common case of assets already being world-readable: the
  * getIamPolicy is technically not necessary, but usually it will avoid a set,
  * which should be at least as expensive.
+ *
+ * See
+ * https://cloud.google.com/resource-manager/reference/rest/Shared.Types/Policy
+ * for documentation of the `Policy` object, and
+ * https://cloud.google.com/iam/docs/understanding-roles#primitive_roles for
+ * some background on IAM roles.
  */
 function makeScoreAssetsWorldReadable() {
   // TODO(janakr): Switch to using listEeAssets once #368 is in.
@@ -316,6 +322,7 @@ function makeScoreAssetsWorldReadable() {
           return;
         }
         const paths = new Set([getScoreAssetPath(), getBackupScoreAssetPath()]);
+        const numAssets = paths.size;
         let foundAssets = 0;
         for (const {id} of listResult.assets) {
           if (paths.has(id)) {
@@ -323,6 +330,7 @@ function makeScoreAssetsWorldReadable() {
             ee.data.getIamPolicy(eeLegacyPrefix + id, () => {})
                 .then((policy) => {
                   for (const binding of policy.bindings) {
+                    // Only want to modify 'reader' permissions.
                     if (binding.role === 'roles/viewer') {
                       if (!binding.members.includes('allUsers')) {
                         binding.members.push('allUsers');
@@ -340,7 +348,7 @@ function makeScoreAssetsWorldReadable() {
                   ee.data.setIamPolicy(eeLegacyPrefix + id, policy, () => {});
                 });
           }
-          if (foundAssets === paths.size) {
+          if (foundAssets === numAssets) {
             return;
           }
         }

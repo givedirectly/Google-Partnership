@@ -168,7 +168,7 @@ it('Does not try to make score assets readable when not gd user', () => {
  * conciseness, we use the `this` mode of accessing Cypress-aliased variables
  * (https://docs.cypress.io/guides/core-concepts/variables-and-aliases.html#Sharing-Context).
  * This means that this function cannot be called from within an arrow function.
- * @this Context
+ * @this Mocha.Context
  */
 function assertNormalStubsCalled() {
   expect(this.authenticateViaOAuth).to.be.calledOnce;
