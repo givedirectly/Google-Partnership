@@ -24,15 +24,14 @@ you must update the `allowedOrigins` field in
 ## Moving to a different Google account/Changing server setup
 
 While the application is client-side JavaScript, it talks to two Google
-services, EarthEngine and Firestore. The resources it accesses are owned by the
-"Admin account", `gd-earthengine-user@givedirectly.org`, but can be accessed
-by any EarthEngine-whitelisted user, and by any Google user, respectively (some
-Firestore data is available only to specific users, see below).
+services, [EarthEngine](https://earthengine.google.com) and
+[Firestore](https://firestore.google.com). The resources it accesses are owned
+by the "Admin account", `gd-earthengine-user@givedirectly.org`, but can be
+accessed by any EarthEngine-whitelisted user, and by any Google user,
+respectively (some Firestore data is available only to specific users, see
+below).
 
-You should not need to change that, but if for some reason you need to set up a
-new instance of this (if you are a different organization, for instance), read
-on. You may also find this helpful when troubleshooting, or adding/modifying
-Google services.
+To set up a brand-new system with new Google accounts:
 
 1.  Create a Google account and sign into it. This is your new Admin account.
     All the remaining steps should be done while logged into this account,
