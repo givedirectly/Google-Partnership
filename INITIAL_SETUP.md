@@ -164,7 +164,7 @@ credentials. The current Test account is
 
 -  Run the command `travis encrypt-file ./service_account.json --com`.
 
--  Edit [.travis.yml](./.travis.yml) file. Add the line output by the last
+-  Edit the [.travis.yml](./.travis.yml) file. Add the line output by the last
    command to the `before_install` section, but edited so that instead of
    `-out ./service_account.json`, it reads
    `-out $GOOGLE_APPLICATION_CREDENTIALS`.
@@ -173,7 +173,7 @@ credentials. The current Test account is
    `service_account.json.enc`.
 
 -  [Enable EarthEngine API](https://console.cloud.google.com/apis/api/earthengine.googleapis.com/overview)
-   for Test account
+   for Test account in the developer console.
 
 ### Modify/set up Firestore rules
 
@@ -197,5 +197,7 @@ credentials. The current Test account is
    [firestore_rules/test](./firestore_rules/test) subdirectory and repeat. This
    time, you will have to log in as the test user and specify the test project.
 
--  If the project is no longer `mapping-crisis`, you _may_ have to modify the
-   [.firebaserc](./firestore_rules/prod/.firebaserc) file.
+-  If the project is no longer `mapping-crisis` or the test project is no longer
+   `mapping-test-data`, you _may_ have to modify the
+   [.firebaserc](./firestore_rules/prod/.firebaserc) file (or the corresponding
+   test [.firebaserc](./firestore_rules/test/.firebaserc) file).
