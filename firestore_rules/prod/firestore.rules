@@ -1,0 +1,37 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // All users should be allowed to access disaster metadata, since mapping
+    // page is globally accessible.
+    match /disaster-metadata/{document=**} {
+      allow read: if true;
+    }
+
+    // Only specific users can access usershapes, since that has potentially
+    // sensitive entered data.
+    match /usershapes/{docname} {
+      allow read, write: if inUserDatabase();
+    }
+
+    // Disaster metadata can only be written by admin user.
+    match /disaster-metadata/{document=**} {
+      allow write: if isAdminUser();
+    }
+
+    function inUserDatabase() {
+      return hasEmail()
+      && request.auth.token.email in
+          get(/databases/$(database)/documents/ALLOWED_USERS/ALL_USERS).data.USERS;
+    }
+
+    function isAdminUser() {
+      return hasEmail()
+      && request.auth.token.email == 'gd-earthengine-user@givedirectly.org';
+    }
+
+    function hasEmail() {
+      return request.auth != null && request.auth.token != null
+            && request.auth.token.email != null;
+    }
+  }
+}

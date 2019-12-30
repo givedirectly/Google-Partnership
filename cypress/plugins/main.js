@@ -18,6 +18,9 @@ import {generateEarthEngineToken} from '../../token_server/ee_token_creator.js';
 
 export {onFunction};
 
+// Keep in sync with firestore_rules/test.rules.
+const TEST_FIRESTORE_USER = 'cypress-firestore-test-user';
+
 /**
  * When using Firestore, data that is retrieved using
  * {@link retrieveFirestoreDataForTest} and then written on each test case
@@ -95,7 +98,7 @@ function onFunction(on, config) {
       const currentApp = createTestFirebaseAdminApp();
       const deleteOldPromise = deleteAllOldTestData(currentApp);
       const result =
-          currentApp.auth().createCustomToken('cypress-firestore-test-user');
+          currentApp.auth().createCustomToken(TEST_FIRESTORE_USER);
       return Promise
           .all([result, deleteOldPromise, retrieveFirestoreDataForTest()])
           .then((list) => firestoreUserToken = list[0])
