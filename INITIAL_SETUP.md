@@ -59,6 +59,7 @@ Google services.
   does not work.
 
 1. Setting up an API Key.
+
   - You should see an "API Keys" section, and under that "Browser key (auto
     created by Firebase)", or similar:
     ![credentials browser key screenshot](./markdown_images/credentials_browser_key.png)
@@ -84,6 +85,7 @@ Google services.
     [script_loader.js](./cypress/support/script_loader.js).
 
 1. Setting up OAuth client ID.
+
   - Go back to the
     [Credentials](https://console.developers.google.com/apis/credentials) page.
     Below the "API Keys" section is an OAuth 2.0 Client IDs section. It may be
