@@ -6,6 +6,10 @@ Because the application is all client-side JavaScript, any static web host
 (Wordpress, a blog, etc.) should work as a server. Simply copy all the files
 from [docs/](./docs) and below to the location you're serving from.
 
+Our current server setup is Github Pages. We serve from the `master` branch,
+`docs` folder:
+!(https://user-images.githubusercontent.com/10134896/67606660-1697c400-f750-11e9-93ad-c9c4bd725c6d.png).
+
 To make the [Token Server](./token_server/README.md) work with the new location,
 you must update the `allowedOrigins` field in
 [token_server.js](./token_server/token_server.js) to be the new server's domain.
@@ -29,7 +33,9 @@ on. You may also find this helpful when troubleshooting.
   the project is created, click on "Database" and "Create database".
 
 * Follow instructions to
-[modify/set up firestore rules](#modifyset-up-firestore-rules)
+[modify/set up firestore rules](#modifyset-up-firestore-rules).
+
+
 ### Modify/set up Firestore rules
 
 * One-time: install `firebase-tools` globally: `yarn global add firebase-tools`.
