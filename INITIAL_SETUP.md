@@ -29,7 +29,7 @@ on. You may also find this helpful when troubleshooting.
   the project is created, click on "Database" and "Create database".
 
 * Follow instructions to
-[modify/set up firestore rules](#modify-set-up-firestore-rules)
+[modify/set up firestore rules](#modifyset-up-firestore-rules)
 ### Modify/set up Firestore rules
 
 * One-time: install `firebase-tools` globally: `yarn global add firebase-tools`.
