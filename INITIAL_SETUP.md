@@ -2,13 +2,13 @@
 
 ## Moving to a different server for the mapping page
 
+Our current server setup is Github Pages. We serve from the `master` branch,
+`docs` folder:
+![github pages setup screenshot](https://user-images.githubusercontent.com/10134896/67606660-1697c400-f750-11e9-93ad-c9c4bd725c6d.png)
+
 Because the application is all client-side JavaScript, any static web host
 (Wordpress, a blog, etc.) should work as a server. Simply copy all the files
 from [docs/](./docs) and below to the location you're serving from.
-
-Our current server setup is Github Pages. We serve from the `master` branch,
-`docs` folder:
-!(https://user-images.githubusercontent.com/10134896/67606660-1697c400-f750-11e9-93ad-c9c4bd725c6d.png).
 
 To make the [Token Server](./token_server/README.md) work with the new location,
 you must update the `allowedOrigins` field in
@@ -17,25 +17,32 @@ you must update the `allowedOrigins` field in
 ## Moving to a different Google account
 
 While the application is client-side JavaScript, it talks to two Google
-services, EarthEngine and Firestore. The resources it accesses are owned by
-`gd-earthengine-user@givedirectly.org`, but can be accessed by any
-EarthEngine-whitelisted user, and by any Google user, respectively (some
+services, EarthEngine and Firestore. The resources it accesses are owned by the
+"Admin account", `gd-earthengine-user@givedirectly.org`, but can be accessed
+by any EarthEngine-whitelisted user, and by any Google user, respectively (some
 Firestore data is available only to specific users, see below).
 
 You should not need to change that, but if for some reason you need to set up a
 new instance of this (if you are a different organization, for instance), read
 on. You may also find this helpful when troubleshooting.
 
-* Create a Google account and sign into it. Then go to
-  https://console.firebase.google.com/. You should have to create a project.
-  Currently, the project is "mapping-crisis". You don't need to enable Google
-  Analytics or anything else fancy: we are only using this as data storage. Once
-  the project is created, click on "Database" and "Create database".
+* Create a Google account and sign into it. This is your new Admin account. Then
+  go to https://console.firebase.google.com/. You should have to create a
+  project. Currently, the project is "mapping-crisis". You don't need to enable
+  Google Analytics or anything else fancy: we are only using this as data
+  storage. Once the project is created, click on "Database" and "Create
+  database".
 
 * Follow instructions to
 [modify/set up firestore rules](#modifyset-up-firestore-rules).
 
-
+* Go to https://console.developers.google.com. Under
+  [Credentials](https://console.developers.google.com/apis/credentials) you
+  should see an "API Keys" section, and under that "Browser key (auto created
+  by Firebase)":
+  ![credentials browser key screenshot](../markdown_images/credentials_browser_key.png)
+  Click on it.
+  
 ### Modify/set up Firestore rules
 
 * One-time: install `firebase-tools` globally: `yarn global add firebase-tools`.
