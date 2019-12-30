@@ -60,7 +60,7 @@ Google services.
 
 1.  Setting up an API Key.
 
-    -  You should see an "API Keys" section, and under that "Browser key (auto
+  -  You should see an "API Keys" section, and under that "Browser key (auto
        created by Firebase)", or similar:
        ![credentials browser key screenshot](./markdown_images/credentials_browser_key.png)
        Click on it.
