@@ -97,8 +97,7 @@ function onFunction(on, config) {
     initializeTestFirebase() {
       const currentApp = createTestFirebaseAdminApp();
       const deleteOldPromise = deleteAllOldTestData(currentApp);
-      const result =
-          currentApp.auth().createCustomToken(TEST_FIRESTORE_USER);
+      const result = currentApp.auth().createCustomToken(TEST_FIRESTORE_USER);
       return Promise
           .all([result, deleteOldPromise, retrieveFirestoreDataForTest()])
           .then((list) => firestoreUserToken = list[0])
