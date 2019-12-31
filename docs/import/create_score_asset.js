@@ -43,8 +43,6 @@ function countDamageAndBuildings(feature, damage, buildings, additionalTags) {
         ee.Algorithms.If(
             totalBuildings, ee.Number(damagedBuildings).divide(totalBuildings),
             0));
-  } else {
-    properties = properties.set(damageTag, 0);
   }
   const snapPop = feature.get(snapPopTag);
   const totalPop = feature.get(totalPopTag);

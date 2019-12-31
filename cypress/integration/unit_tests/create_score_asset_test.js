@@ -137,7 +137,6 @@ describe('Unit tests for create_score_asset.js', () => {
           expect(feature.properties).to.eql({
             'BLOCK GROUP': 'Some state, group 361',
             'BUILDING COUNT': 3,
-            'DAMAGE PERCENTAGE': 0,
             'GEOID': '361',
             'MEDIAN INCOME': 37,
             'SNAP HOUSEHOLDS': 10,
