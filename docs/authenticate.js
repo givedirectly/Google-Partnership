@@ -338,8 +338,7 @@ function makeScoreAssetsWorldReadable() {
             }
           }
           // TODO(janakr): Do better. See what EE says.
-          // If we got here, no roles/viewer binding. Use some
-          // Javascript magic.
+          // If we got here, no roles/viewer binding. Use some Javascript magic.
           const BindingConstructor = policy.bindings[0].constructor;
           policy.bindings.push(new BindingConstructor(allReadBinding));
           ee.data.setIamPolicy(eeLegacyPrefix + id, policy, () => {});
