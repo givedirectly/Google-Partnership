@@ -61,6 +61,7 @@ function processJoinedData(
     dataPromise, scalingFactor, initialTogglesValuesPromise) {
   return Promise.all([dataPromise, initialTogglesValuesPromise])
       .then((results) => {
+        console.log(results[1]);
         const [featuresList, {
           povertyThreshold,
           damageThreshold,

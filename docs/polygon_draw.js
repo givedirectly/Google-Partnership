@@ -3,7 +3,7 @@ import {getCheckBoxRowId, partiallyHandleBadRowAndReturnCheckbox} from './checkb
 import {mapContainerId, writeWaiterId} from './dom_constants.js';
 import {createError, showError} from './error.js';
 import {getFirestoreRoot} from './firestore_document.js';
-import {POLYGON_HELP_URL} from './help.js';
+import {POLYGON_HELP_URL, POLYGON_MOUSEOVER_URL} from './help.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {latLngToGeoPoint, polygonToGeoPointArray, transformGeoPointArrayToLatLng} from './map_util.js';
 import {createPopup, isMarker, setUpPopup} from './popup.js';
@@ -361,7 +361,7 @@ function setUpPolygonDrawing(map) {
   // Make a copy, since array is live.
   const currentControls = [...controls.getArray()];
   controls.clear();
-  controls.push(createHelpIcon(POLYGON_HELP_URL));
+  controls.push(createHelpIcon(POLYGON_HELP_URL, POLYGON_MOUSEOVER_URL));
   currentControls.forEach((elt) => controls.push(elt));
 
   return drawingManager;
@@ -372,7 +372,7 @@ function setUpPolygonDrawing(map) {
  * @param {string} url
  * @return {HTMLSpanElement} Span with icon, to insert into document somewhere
  */
-function createHelpIcon(url) {
+function createHelpIcon(url, hoverUrl) {
   // Add the help link.
   const helpContainer = document.createElement('span');
   helpContainer.style.padding = '6px';
@@ -385,7 +385,19 @@ function createHelpIcon(url) {
   helpIcon.setAttribute('aria-hidden', 'true');
   helpLink.appendChild(helpIcon);
   helpContainer.appendChild(helpLink);
-  helpContainer.title = 'Help';
+  // helpContainer.title = 'Help';
+  if (hoverUrl) {
+    const hoverDiv = document.createElement('div');
+    const hoverIframe = document.createElement('iframe');
+    hoverIframe.src = hoverUrl;
+    helpContainer.appendChild(hoverDiv);
+    hoverDiv.appendChild(hoverIframe);
+    $(helpContainer).on('mouseenter', () => {
+      hoverDiv.style.display = 'block';
+    }).on('mouseleave', () => {
+      hoverDiv.style.display = 'none';
+    });
+  }
   return helpContainer;
 }
 
