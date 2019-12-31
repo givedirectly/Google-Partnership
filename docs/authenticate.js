@@ -1,6 +1,7 @@
 import {CLIENT_ID} from './common_auth_utils.js';
 import {eeLegacyPathPrefix, eeLegacyPrefix} from './ee_paths.js';
 import {showError} from './error.js';
+import {listEeAssets} from './import/ee_utils.js';
 import {earthEngineTestTokenCookieName, firebaseTestTokenPropertyName, getValueFromLocalStorage, inProduction} from './in_test_util.js';
 import {getBackupScoreAssetPath, getDisaster, getScoreAssetPath} from './resources.js';
 import {SettablePromise} from './settable_promise.js';
@@ -312,47 +313,43 @@ const allReadBinding = Object.freeze({
  * some background on IAM roles.
  */
 function makeScoreAssetsWorldReadable() {
-  // TODO(janakr): Switch to using listEeAssets once #368 is in.
   // TODO(janakr): Consider sharing cache with list_ee_assets.js. Not trivial
   //  because that code does additional EE requests to look at geometries, so
   //  we would need a two-level cache, one raw and one with geometries.
-  ee.data.listAssets(eeLegacyPathPrefix + getDisaster(), {}, () => {})
-      .then((listResult) => {
-        if (!listResult) {
-          return;
-        }
-        const paths = new Set([getScoreAssetPath(), getBackupScoreAssetPath()]);
-        const numAssets = paths.size;
-        let foundAssets = 0;
-        for (const {id} of listResult.assets) {
-          if (paths.has(id)) {
-            foundAssets++;
-            ee.data.getIamPolicy(eeLegacyPrefix + id, () => {})
-                .then((policy) => {
-                  for (const binding of policy.bindings) {
-                    // Only want to modify 'reader' permissions.
-                    if (binding.role === 'roles/viewer') {
-                      if (!binding.members.includes('allUsers')) {
-                        binding.members.push('allUsers');
-                        ee.data.setIamPolicy(
-                            eeLegacyPrefix + id, policy, () => {});
-                      }
-                      return;
-                    }
-                  }
-                  // TODO(janakr): Do better. See what EE says.
-                  // If we got here, no roles/viewer binding. Use some
-                  // Javascript magic.
-                  const BindingConstructor = policy.bindings[0].constructor;
-                  policy.bindings.push(new BindingConstructor(allReadBinding));
-                  ee.data.setIamPolicy(eeLegacyPrefix + id, policy, () => {});
-                });
+  listEeAssets(eeLegacyPathPrefix + getDisaster()).then((listedAssets) => {
+    if (!listedAssets) {
+      return;
+    }
+    const paths = new Set([getScoreAssetPath(), getBackupScoreAssetPath()]);
+    const numAssets = paths.size;
+    let foundAssets = 0;
+    for (const {id} of listedAssets) {
+      if (paths.has(id)) {
+        foundAssets++;
+        ee.data.getIamPolicy(eeLegacyPrefix + id, () => {}).then((policy) => {
+          for (const binding of policy.bindings) {
+            // Only want to modify 'reader' permissions.
+            if (binding.role === 'roles/viewer') {
+              if (!binding.members.includes('allUsers')) {
+                binding.members.push('allUsers');
+                ee.data.setIamPolicy(eeLegacyPrefix + id, policy, () => {});
+              }
+              return;
+            }
           }
-          if (foundAssets === numAssets) {
-            return;
-          }
-        }
-      });
+          // TODO(janakr): Do better. See what EE says.
+          // If we got here, no roles/viewer binding. Use some
+          // Javascript magic.
+          const BindingConstructor = policy.bindings[0].constructor;
+          policy.bindings.push(new BindingConstructor(allReadBinding));
+          ee.data.setIamPolicy(eeLegacyPrefix + id, policy, () => {});
+        });
+      }
+      if (foundAssets === numAssets) {
+        return;
+      }
+    }
+  });
 }
 
 /**
