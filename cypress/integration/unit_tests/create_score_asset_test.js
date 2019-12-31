@@ -1,6 +1,6 @@
 import {gdEePathPrefix} from '../../../docs/ee_paths.js';
 import {convertEeObjectToPromise} from '../../../docs/ee_promise_cache.js';
-import {backUpAssetAndStartTask, createScoreAsset} from '../../../docs/import/create_score_asset.js';
+import {backUpAssetAndStartTask, createScoreAssetForStateBasedDisaster} from '../../../docs/import/create_score_asset.js';
 import * as Resources from '../../../docs/resources.js';
 import {assertFirestoreMapBounds} from '../../support/firestore_map_bounds';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
@@ -83,7 +83,7 @@ describe('Unit tests for create_score_asset.js', () => {
   it('Basic test', () => {
     const {boundsPromise, mapBoundsCallback} =
         makeCallbackForTextAndPromise('Found bounds');
-    const promise = createScoreAsset(testData, mapBoundsCallback);
+    const promise = createScoreAssetForStateBasedDisaster(testData, mapBoundsCallback);
     expect(promise).to.not.be.null;
     cy.wrap(promise)
         .then(() => {
@@ -123,7 +123,7 @@ describe('Unit tests for create_score_asset.js', () => {
 
     const {boundsPromise, mapBoundsCallback} =
         makeCallbackForTextAndPromise('Found bounds');
-    const promise = createScoreAsset(testData, mapBoundsCallback);
+    const promise = createScoreAssetForStateBasedDisaster(testData, mapBoundsCallback);
     expect(promise).to.not.be.null;
     cy.wrap(promise)
         .then(() => {
@@ -137,7 +137,6 @@ describe('Unit tests for create_score_asset.js', () => {
           expect(feature.properties).to.eql({
             'BLOCK GROUP': 'Some state, group 361',
             'BUILDING COUNT': 3,
-            'DAMAGE PERCENTAGE': 0,
             'GEOID': '361',
             'MEDIAN INCOME': 37,
             'SNAP HOUSEHOLDS': 10,
@@ -155,7 +154,7 @@ describe('Unit tests for create_score_asset.js', () => {
         [makeIncomeGroup('360', '250,000+'), makeIncomeGroup('361', '-')]);
     testData.asset_data.snap_data.paths.NY = ee.FeatureCollection(
         [makeSnapGroup('360', 10, 15), makeSnapGroup('361', 10, 15)]);
-    const promise = createScoreAsset(testData);
+    const promise = createScoreAssetForStateBasedDisaster(testData);
     expect(promise).to.not.be.null;
     cy.wrap(promise)
         .then(() => {
@@ -174,7 +173,7 @@ describe('Unit tests for create_score_asset.js', () => {
   it('handles no svi/income assets', () => {
     testData.asset_data.income_asset_paths = {};
     testData.asset_data.svi_asset_paths = {};
-    const promise = createScoreAsset(testData);
+    const promise = createScoreAssetForStateBasedDisaster(testData);
     expect(promise).to.not.be.null;
     cy.wrap(promise)
         .then(() => {
@@ -193,7 +192,7 @@ describe('Unit tests for create_score_asset.js', () => {
     testData.asset_data.building_asset_paths = {};
     testData.asset_data.damage_asset_path = null;
     setScoreBoundsCoordinates();
-    const promise = createScoreAsset(testData);
+    const promise = createScoreAssetForStateBasedDisaster(testData);
     expect(promise).to.not.be.null;
     cy.wrap(promise)
         .then(() => {
@@ -205,19 +204,6 @@ describe('Unit tests for create_score_asset.js', () => {
           expect(features).to.have.length(1);
           expect(features[0]['properties']['BUILDING COUNT']).to.be.undefined;
         });
-  });
-
-
-  it('errors on no buildings asset when damage present', () => {
-    testData.asset_data.building_asset_paths = {};
-    expect(createScoreAsset(testData)).to.be.null;
-    expect(exportStub).to.not.be.called;
-  });
-
-  it('Test missing data', () => {
-    testData.asset_data = null;
-    expect(createScoreAsset(testData)).to.be.null;
-    expect(exportStub).to.not.be.called;
   });
 
   it('Main score asset not present', () => {
@@ -360,7 +346,7 @@ function createGeoPoint(lng, lat) {
 }
 
 /**
- * Creates a callback for use with {@link createScoreAsset} so that we will be
+ * Creates a callback for use with {@link createScoreAssetForStateBasedDisaster} so that we will be
  * informed when the Firestore write of the map bounds has completed. Returns a
  * Promise that can be waited on for that write to complete.
  * @return {{boundsPromise: Promise, mapBoundsCallback: Function}}
