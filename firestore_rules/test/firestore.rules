@@ -1,0 +1,21 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Nobody allowed to access test database by default. These rules do not
+    // apply to service accounts, which is what the test framework acts as when
+    // it does administrative operations.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Tests create data under test/ collection. They can read/write there.
+    match /test/{random}/{document=**} {
+      allow read, write: if isTestUser();
+    }
+
+    function isTestUser() {
+      // Keep in sync with cypress/integration/plugins/main.js.
+      return request.auth.uid == "cypress-firestore-test-user";
+    }
+  }
+}

@@ -1,4 +1,4 @@
-import {CLIENT_ID} from './common_auth_utils.js';
+import {API_KEY, CLIENT_ID} from './common_auth_utils.js';
 import {eeLegacyPathPrefix, eeLegacyPrefix} from './ee_paths.js';
 import {showError} from './error.js';
 import {earthEngineTestTokenCookieName, firebaseTestTokenPropertyName, getValueFromLocalStorage, inProduction} from './in_test_util.js';
@@ -10,8 +10,7 @@ export {reloadWithSignIn, trackEeAndFirebase};
 export {firebaseConfigProd, firebaseConfigTest, getFirebaseConfig};
 
 const gapiTemplate = {
-  // From same page as above.
-  apiKey: 'AIzaSyBAQkh-kRrYitkPafxVLoZx3E5aYM-auXM',
+  apiKey: API_KEY,
   clientId: CLIENT_ID,
 };
 
