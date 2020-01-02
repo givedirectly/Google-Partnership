@@ -134,8 +134,10 @@ class StoredShapeData {
         weightedTotalHouseholds,
       ]));
     } catch (err) {
-      showError(err, 'Error calculating data for polygon: ' + err.message);
-      throw err;
+      this.terminateWriteWithError(
+          err,
+          'Error calculating data for polygon. ' +
+          'Try editing the shape and saving again');
     }
     const calculatedData = {
       damage: eeResult[0],
@@ -147,10 +149,14 @@ class StoredShapeData {
     try {
       await this.doRemoteUpdate();
     } catch (err) {
-      showError(err, 'Error writing polygon to backend');
-      this.noteWriteFinished();
-      throw err;
+      this.terminateWriteWithError(err, 'Error writing polygon to backend');
     }
+  }
+
+  terminateWriteWithError(err, message) {
+    showError(err, message + ': ' + err.message);
+    this.noteWriteFinished();
+    throw err;
   }
 
   /**

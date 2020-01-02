@@ -4,6 +4,7 @@ import {initializeAndProcessUserRegions, StoredShapeData, transformGeoPointArray
 import {setUserFeatureVisibility} from '../../../docs/popup.js';
 import * as resourceGetter from '../../../docs/resources.js';
 import * as Toast from '../../../docs/toast.js';
+import * as ErrorLib from '../../../docs/error.js';
 import {userRegionData} from '../../../docs/user_region_data.js';
 import {CallbackLatch} from '../../support/callback_latch.js';
 import {cyQueue} from '../../support/commands.js';
@@ -429,6 +430,24 @@ describe('Unit test for ShapeData', () => {
                                            firestoreSpy,
                                          }));
   }
+
+  it('handles EarthEngine error', () => {
+    // Wrap ee.List so that we can throw when it evaluates.
+    const oldList = ee.List;
+    ee.List = (list) => {
+      ee.List = oldList;
+      const returnValue = ee.List(list);
+      cy.stub(returnValue, 'evaluate').callsFake((callback) => callback(null, 'Error evaluating list'));
+      return returnValue;
+    };
+    cy.stub()
+    drawPolygon()
+        .then(() => {
+          currentUpdatePromise.catch((err) => {
+
+          })
+    });
+  });
 
   it('Absence of damage asset tolerated', () => {
     cy.wrap(initializeAndProcessUserRegions(map, Promise.resolve({
