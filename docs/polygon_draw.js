@@ -134,10 +134,7 @@ class StoredShapeData {
         weightedTotalHouseholds,
       ]));
     } catch (err) {
-      this.terminateWriteWithError(
-          err,
-          'Error calculating data for polygon. ' +
-          'Try editing the shape and saving again');
+      this.terminateWriteWithError(err, 'calculating data for polygon');
     }
     const calculatedData = {
       damage: eeResult[0],
@@ -149,12 +146,23 @@ class StoredShapeData {
     try {
       await this.doRemoteUpdate();
     } catch (err) {
-      this.terminateWriteWithError(err, 'Error writing polygon to backend');
+      this.terminateWriteWithError(err, 'writing polygon to backend');
     }
   }
 
+  /**
+   * In case of an error when calculating data or writing to Firestore, cleans
+   * up and throws the error.
+   * @param {Error} err Error whose message will be shown to user, and thrown
+   * @param {string} message Message to show to user, along with hint about how
+   *     to recover
+   * @throws {Error} Always throws `err`, never returns
+   */
   terminateWriteWithError(err, message) {
-    showError(err, message + ': ' + err.message);
+    showError(
+        err,
+        'Error ' + message +
+            '. Try editing the shape and saving again: ' + err.message);
     this.noteWriteFinished();
     this.state = StoredShapeData.State.SAVED;
     throw err;
