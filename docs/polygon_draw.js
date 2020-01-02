@@ -109,7 +109,8 @@ class StoredShapeData {
     const numDamagePoints = StoredShapeData.prepareDamageCalculation(polygon);
     const intersectingBlockGroups =
         StoredShapeData.getIntersectingBlockGroups(polygon);
-    // TODO(janakr): we should have poor/total
+    // TODO(janakr): with arbitrary data, only a "poverty percentage" may be
+    //  available, as opposed to underlying totals. This won't work then.
     const weightedSnapHouseholds = StoredShapeData.calculateWeightedTotal(
         intersectingBlockGroups, povertyHouseholdsTag);
     const weightedTotalHouseholds = StoredShapeData.calculateWeightedTotal(

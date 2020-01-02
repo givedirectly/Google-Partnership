@@ -4,6 +4,8 @@ export {processJoinedData};
 
 const scoreDisplayCap = 255;
 
+const COLOR_TAG = 'color';
+
 /**
  * Processes a feature corresponding to a geographic area and sets the score,
  * poverty and damage ratios, and color.
@@ -39,10 +41,9 @@ function colorAndRate(
   // score > scalingFactor.
   const opacity =
       Math.min(Math.round((255 / scalingFactor) * score), scoreDisplayCap);
-  feature.properties['color'] = [255, 0, 255, opacity];
+  feature.properties[COLOR_TAG] = [255, 0, 255, opacity];
 }
 
-const KEY_BLACKLIST = Object.freeze(new Set(['system:index', 'color']));
 // We put these keys here because adding them to the set first guarantees they
 // will be the first three columns in the table.
 const ALWAYS_PRESENT_KEYS = Object.freeze([geoidTag, blockGroupTag, scoreTag]);
@@ -61,7 +62,11 @@ const ALWAYS_PRESENT_KEYS = Object.freeze([geoidTag, blockGroupTag, scoreTag]);
  * @param {Promise<Object>} initialTogglesValuesPromise promise
  * that returns the poverty and damage thresholds and the poverty weight (from
  * which the damage weight is derived).
- * @return {Promise}
+ * @typedef {Object} GeoJsonFeature See
+ *     https://macwright.org/2015/03/23/geojson-second-bite.html#features
+ * @return {Promise<{featuresList: Array<GeoJsonFeature>, columnsFound:
+ *     Array<string>}>} Resolved scored features, together with all columns
+ *     found in features
  */
 function processJoinedData(
     dataPromise, scalingFactor, initialTogglesValuesPromise) {
@@ -80,7 +85,8 @@ function processJoinedData(
               feature, scalingFactor, povertyThreshold, damageThreshold,
               povertyWeight);
           for (const key of Object.keys(feature.properties)) {
-            if (!columnsFound.has(key) && !KEY_BLACKLIST.has(key)) {
+            // Ignore EarthEngine-added internal properties.
+            if (key !== COLOR_TAG && !key.startsWith('system:')) {
               columnsFound.add(key);
             }
           }

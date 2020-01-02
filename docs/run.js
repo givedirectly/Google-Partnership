@@ -111,7 +111,7 @@ function createAndDisplayJoinedData(map, initialTogglesValuesPromise) {
 /**
  * Invokes {@link drawTable} with the appropriate callbacks to set up click
  * handlers for the map.
- * @param {Promise<Array<GeoJson.Feature>>} processedData
+ * @param {Promise<Array<GeoJsonFeature>>} processedData
  * @param {google.maps.Map} map
  */
 function drawTableAndSetUpHandlers(processedData, map) {

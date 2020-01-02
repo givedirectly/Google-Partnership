@@ -10,8 +10,7 @@ export {backUpAssetAndStartTask};
 
 const TRACT_TAG = 'TRACT';
 const SVI_TAG = 'SVI';
-// Median household income in the past 12 months (in 2016 inflation-adjusted
-// dollars)
+// Median household income in the past 12 months.
 const INCOME_TAG = 'MEDIAN INCOME';
 
 /**
