@@ -1,8 +1,8 @@
 # Instructions for Initial Setup
 
-This is a reference for the steps taken to set this app up the first time. None
-of these steps should have to be performed again, but they may be a useful
-reference when troubleshooting.
+This is a reference for the steps taken to set this app up the first time.
+**None of these steps should have to be performed again**, but they may be a
+useful reference when troubleshooting.
 
 As well, if for some reason you need to set up a new instance of the app (if you
 are a different organization, for instance), read on.
@@ -15,7 +15,7 @@ Our current server setup is GitHub Pages. We serve from the `master` branch,
 
 Because the application is all client-side JavaScript, any static web host
 (WordPress, a blog, etc.) should work as a server. Simply copy all the files
-from [docs/](./docs) and below to the location you're serving from.
+from [docs/](./docs) and its subdirectories to the location you're serving from.
 
 To make the [Token Server](./token_server/README.md) work with the new location,
 you must update the `allowedOrigins` field in
@@ -178,7 +178,8 @@ credentials. The current Test account is
 ### Modify/set up Firestore rules
 
 -  One-time: install `firebase-tools` globally:
-   `yarn global add firebase-tools`.
+   `yarn global add firebase-tools`. (Install [yarn](http://yarnpkg.com/) if
+   necessary first.) 
 
 -  Go to the [firestore_rules/prod](./firestore_rules/prod) subdirectory.
 
