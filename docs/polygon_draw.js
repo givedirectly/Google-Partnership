@@ -8,7 +8,7 @@ import {POLYGON_HELP_URL} from './help.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {latLngToGeoPoint, polygonToGeoPointArray, transformGeoPointArrayToLatLng} from './map_util.js';
 import {createPopup, isMarker, setUpPopup} from './popup.js';
-import {snapPopTag, totalPopTag} from './property_names.js';
+import {povertyHouseholdsTag, totalHouseholdsTag} from './property_names.js';
 import {getScoreAssetPath} from './resources.js';
 import {showToastMessage} from './toast.js';
 import {userRegionData} from './user_region_data.js';
@@ -122,10 +122,12 @@ class StoredShapeData {
     const numDamagePoints = StoredShapeData.prepareDamageCalculation(polygon);
     const intersectingBlockGroups =
         StoredShapeData.getIntersectingBlockGroups(polygon);
+    // TODO(janakr): with arbitrary data, only a "poverty percentage" may be
+    //  available, as opposed to underlying totals. This won't work then.
     const weightedSnapHouseholds = StoredShapeData.calculateWeightedTotal(
-        intersectingBlockGroups, snapPopTag);
+        intersectingBlockGroups, povertyHouseholdsTag);
     const weightedTotalHouseholds = StoredShapeData.calculateWeightedTotal(
-        intersectingBlockGroups, totalPopTag);
+        intersectingBlockGroups, totalHouseholdsTag);
     let eeResult;
     try {
       eeResult = await convertEeObjectToPromise(ee.List([

@@ -9,7 +9,8 @@ export {listEeAssets};
  *     EarthEngineAsset objects, having at least a `type` field which can
  *     include `TABLE`, `IMAGE`, or `IMAGE_COLLECTION`, and an `id` field which
  *     is the path to the asset, without the
- *     `projects/earthengine-legacy/assets/` prefix
+ *     `projects/earthengine-legacy/assets/` prefix. This comes directly from
+ *     the result of {@link ee.data.listAssets}, although it is undocumented
  */
 async function listEeAssets(path) {
   let nextPageToken = null;
