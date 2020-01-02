@@ -213,6 +213,10 @@ function stringifyCollection(
  * @return {ee.FeatureCollection}
  */
 function renameProperty(featureCollection, property, newProperty) {
+  if (property === newProperty) {
+    // Be gentle if two properties are the same.
+    return featureCollection;
+  }
   return featureCollection.map(
       (f) => f.set(newProperty, f.get(property)).set(property, null));
 }
