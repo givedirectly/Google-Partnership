@@ -223,8 +223,10 @@ describe('Unit tests for create_score_asset.js', () => {
 
   it('succeeds for flexible disaster with geographic poverty', () => {
     const flexibleData = setDefaultFlexibleData();
-    flexibleData.povertyPath = ee.FeatureCollection(
-        [makeCensusBlockGroup(1).set(basicFlexiblePovertyAttributes)]);
+    flexibleData.povertyPath =
+        ee.FeatureCollection([makeCensusBlockGroup(1)
+                                  .set(basicFlexiblePovertyAttributes)
+                                  .set('GEOid2', null)]);
     flexibleData.povertyGeoid = 'GEOID';
     flexibleData.geographyPath = null;
     expectForFlexibleDisaster();
