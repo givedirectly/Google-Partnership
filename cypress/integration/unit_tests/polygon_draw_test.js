@@ -229,9 +229,10 @@ describe('Unit test for ShapeData', () => {
         expect(currentUpdatePromise).to.be.null;
         expect(data.state).to.eql(StoredShapeData.State.QUEUED_WRITE);
         expect(StoredShapeData.pendingWriteCount).to.eql(1);
-        // Don't reset history after this assertion: assertOnFirestoreAndPopup
+        // Don't reset history after this assertion: waitForWriteToFinish
         // will check this too.
         expect(saveStartedStub).to.be.calledOnce;
+        expect(saveFinishedStub).to.not.be.called;
         userShapes.doc = realDocFunction;
         fakeCalled = true;
         return realDoc.set(record);
