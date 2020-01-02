@@ -156,6 +156,7 @@ class StoredShapeData {
   terminateWriteWithError(err, message) {
     showError(err, message + ': ' + err.message);
     this.noteWriteFinished();
+    this.state = StoredShapeData.State.SAVED;
     throw err;
   }
 

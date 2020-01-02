@@ -436,17 +436,41 @@ describe('Unit test for ShapeData', () => {
     const oldList = ee.List;
     ee.List = (list) => {
       ee.List = oldList;
+      console.log('got here somehow');
       const returnValue = ee.List(list);
       cy.stub(returnValue, 'evaluate').callsFake((callback) => callback(null, 'Error evaluating list'));
       return returnValue;
     };
-    cy.stub()
+    const errorStub = cy.stub(ErrorLib, 'showError');
     drawPolygon()
         .then(() => {
-          currentUpdatePromise.catch((err) => {
-
-          })
+          return currentUpdatePromise.then((result) => {throw new Error('unexpected ' +  result);},
+          () => {});
+    }).then(() => {
+      expect(errorStub).to.be.calledOnce;
+      errorStub.resetHistory();
+      saveStartedStub.resetHistory();
+      saveFinishedStub.resetHistory();
+      expect(StoredShapeData.pendingWriteCount).to.eql(0);
+      return userShapes.get();
+    }).then((querySnapshot) => {
+        expect(querySnapshot).to.have.property('size', 0);
+        expect(querySnapshot.docs).to.be.empty;
     });
+    cy.get('#test-map-div').click();
+    const newPath = JSON.parse(JSON.stringify(path));
+    pressPopupButton('edit').then(() => {
+      // Clone path and edit.
+      newPath[0].lng = 0.5;
+      getFirstFeature().setPath(newPath);
+    });
+    pressPopupButton('save');
+    waitForWriteToFinish().then(() => expect(errorStub).to.not.be.called);
+    assertOnFirestoreAndPopup(newPath);
+  });
+
+  it('handled Firestore error', () => {
+
   });
 
   it('Absence of damage asset tolerated', () => {
