@@ -86,7 +86,7 @@ You must be logged in as `gd-earthengine-user@givedirectly.org` to access it.
         [Credentials page](https://console.developers.google.com/apis/credentials?project=mapping-crisis).
      -  Upload to the [Amazon Secrets Manager](https://aws.amazon.com/secrets-manager/getting-started/)
         using the provided instructions.
-     -  Take the "Secret ARN"'" (starting with `arn:aws:secretsmanager`) and put
+     -  Take the "Secret ARN" (starting with `arn:aws:secretsmanager`) and put
         it into the `SECRET_ID` field in
         [aws_get_credentials.js](./aws_get_credentials.js).
      - Make sure the region you created the secret in matches the region
