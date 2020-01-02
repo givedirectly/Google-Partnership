@@ -229,17 +229,6 @@ function addTractInfo(feature) {
 }
 
 /**
- * Displays error to the user coming from incomplete asset entry.
- * @param {string} str Fragment of error message
- * @return {null} Return value can be ignored, but is present so that
- *     callers can write "return missingAssetError" and save a line
- */
-function missingAssetError(str) {
-  setStatus('Error! Please specify ' + str);
-  return null;
-}
-
-/**
  * Displays status message to user.
  * @param {string} str message
  */
@@ -284,9 +273,6 @@ function createScoreAssetForStateBasedDisaster(
     disasterData, setMapBoundsInfoFunction = setMapBoundsInfo) {
   setStatus('');
   const states = disasterData['states'];
-  if (!states) {
-    return missingAssetError('affected states');
-  }
   const assetData = disasterData['asset_data'];
   const blockGroupPaths = assetData['block_group_asset_paths'];
   const snapData = assetData['snap_data'];
@@ -301,10 +287,6 @@ function createScoreAssetForStateBasedDisaster(
   const buildingPaths = assetData['building_asset_paths'];
   const {damage, damageEnvelope} =
       calculateDamage(assetData, setMapBoundsInfoFunction);
-  if (!damageEnvelope) {
-    // Must have been an error.
-    return null;
-  }
   let allStatesProcessing = ee.FeatureCollection([]);
   for (const state of states) {
     const snapPath = snapPaths[state];
@@ -393,10 +375,6 @@ function createScoreAssetForFlexibleDisaster(
   const assetData = disasterData['asset_data'];
   const {damage, damageEnvelope} =
       calculateDamage(assetData, setMapBoundsInfoFunction);
-  if (!damageEnvelope) {
-    // Must have been an error.
-    return null;
-  }
   const {flexibleData} = assetData;
   let processing = ee.FeatureCollection(flexibleData.povertyPath);
   const {geographyPath, buildingPath, buildingKey} = flexibleData;
@@ -530,11 +508,6 @@ function renameAssetAsPromise(from, to) {
       }));
 }
 
-const damageError = {
-  damage: null,
-  damageEnvelope: null,
-};
-
 // Distance in meters away from damage point that we are still interested in
 // collecting information.
 const damageBuffer = 1000;
@@ -565,10 +538,6 @@ function calculateDamage(assetData, setMapBoundsInfo) {
     damageEnvelope = damage.geometry().buffer(damageBuffer);
   } else {
     const scoreBounds = assetData['score_bounds_coordinates'];
-    if (!scoreBounds) {
-      missingAssetError('specify damage asset or draw bounds on map');
-      return damageError;
-    }
     const coordinates = [];
     scoreBounds.forEach(
         (geopoint) => coordinates.push(geopoint.longitude, geopoint.latitude));
