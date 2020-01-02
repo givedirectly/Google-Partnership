@@ -9,6 +9,7 @@ import {latLngToGeoPoint, polygonToGeoPointArray, transformGeoPointArrayToLatLng
 import {createPopup, isMarker, setUpPopup} from './popup.js';
 import {snapPopTag, totalPopTag} from './property_names.js';
 import {getScoreAssetPath} from './resources.js';
+import {showToastMessage} from './toast.js';
 import {userRegionData} from './user_region_data.js';
 
 export {displayCalculatedData, initializeAndProcessUserRegions};
@@ -52,7 +53,7 @@ class StoredShapeData {
   /** Decrements write count and finishes a load for {@link writeWaiterId}. */
   noteWriteFinished() {
     StoredShapeData.pendingWriteCount--;
-    loadingElementFinished(writeWaiterId);
+    showToastMessage('Saved');
   }
 
   /**
@@ -64,16 +65,27 @@ class StoredShapeData {
    * should be performed when the pending one completes and returns immediately.
    * @return {?Promise} Promise that resolves when all writes queued when this
    *     call started are complete, or null if there were already writes in
-   * flight, in which case this method does not know when those writes will
-   * complete.
+   *     flight, in which case this method does not know when those writes will
+   *     complete.
    */
   update() {
     if (this.state !== StoredShapeData.State.SAVED) {
       this.state = StoredShapeData.State.QUEUED_WRITE;
       return null;
     }
+    showToastMessage('Saving...', -1);
+    return this.updateWithoutStatusChange();
+  }
+
+  /**
+   * Writes this shape's data to the backend, using the existing id
+   * field, or adding a new document to Firestore if there is no id. New values
+   * are retrieved from the popup object.
+   * @return {!Promise} Promise that resolves when all writes queued when this
+   *     call started are complete.
+   */
+  updateWithoutStatusChange() {
     const feature = this.popup.mapFeature;
-    addLoadingElement(writeWaiterId);
     this.state = StoredShapeData.State.WRITING;
     StoredShapeData.pendingWriteCount++;
     if (!feature.getMap()) {
@@ -173,7 +185,7 @@ class StoredShapeData {
    * After a write completes, checks if there are pending writes and kicks off
    * a new update if so.
    * @return {!Promise} Promise that completes when all currently known writes
-   *    are done (or null if an unexpected error is encountered)
+   *    are done
    */
   finishWriteAndMaybeWriteAgain() {
     StoredShapeData.pendingWriteCount--;
@@ -181,14 +193,12 @@ class StoredShapeData {
     this.state = StoredShapeData.State.SAVED;
     switch (oldState) {
       case StoredShapeData.State.WRITING:
-        loadingElementFinished(writeWaiterId);
+        this.noteWriteFinished();
         return Promise.resolve();
       case StoredShapeData.State.QUEUED_WRITE:
-        loadingElementFinished(writeWaiterId);
-        return this.update();
+        return this.updateWithoutStatusChange();
       case StoredShapeData.State.SAVED:
         console.error('Unexpected feature state:' + this);
-        return null;
     }
   }
 

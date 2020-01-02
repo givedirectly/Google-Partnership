@@ -1,6 +1,7 @@
 import {addPolygonWithPath} from '../../../docs/basic_map.js';
 import {mapContainerId, writeWaiterId} from '../../../docs/dom_constants.js';
-import * as loading from '../../../docs/loading.js';
+import * as Loading from '../../../docs/loading.js';
+import * as Toast from '../../../docs/toast.js';
 import {initializeAndProcessUserRegions, StoredShapeData, transformGeoPointArrayToLatLng, userShapes} from '../../../docs/polygon_draw.js';
 import {setUserFeatureVisibility} from '../../../docs/popup.js';
 import * as resourceGetter from '../../../docs/resources.js';
@@ -48,19 +49,17 @@ describe('Unit test for ShapeData', () => {
   // wrapping update call.
   let currentUpdatePromise = null;
 
-  let loadingStartedStub;
-  let loadingFinishedStub;
+  let saveStartedStub;
+  let saveFinishedStub;
   let expectedLoadingFinished = 1;
   beforeEach(() => {
-    // Track writes.
-    const addStub = cy.stub(loading, 'addLoadingElement');
-    loadingStartedStub = addStub.withArgs(writeWaiterId);
-    const finishStub = cy.stub(loading, 'loadingElementFinished');
-    loadingFinishedStub = finishStub.withArgs(writeWaiterId);
-    expectedLoadingFinished = 1;
     // Stub out map updates, not useful for us.
-    addStub.withArgs(mapContainerId);
-    finishStub.withArgs(mapContainerId);
+    cy.stub(Loading, 'addLoadingElement');
+    cy.stub(Loading, 'loadingElementFinished');
+    const toastStub = cy.stub(Toast, 'showToastMessage');
+    saveStartedStub = toastStub.withArgs('Saving', -1);
+    saveFinishedStub = toastStub.withArgs('Saved');
+    expectedLoadingFinished = 1;
     // Default polygon intersects feature1 and feature2, not feature3.
     const feature1 = ee.Feature(
         ee.Geometry.Polygon(0, 0, 0, 10, 10, 10, 10, 0),
@@ -206,7 +205,7 @@ describe('Unit test for ShapeData', () => {
     pressPopupButton('close').then(() => {
       expect(confirmStub).to.be.calledOnce;
       expect(currentUpdatePromise).to.be.null;
-      expect(loadingStartedStub).to.not.be.called;
+      expect(saveStartedStub).to.not.be.called;
       expect(convertPathToLatLng(getFirstFeature().getPath())).to.eql(path);
     });
     assertOnFirestoreAndPopup(path);
@@ -234,8 +233,8 @@ describe('Unit test for ShapeData', () => {
         expect(currentUpdatePromise).to.be.null;
         expect(data.state).to.eql(StoredShapeData.State.QUEUED_WRITE);
         expect(StoredShapeData.pendingWriteCount).to.eql(1);
-        expect(loadingStartedStub).to.be.calledOnce;
-        loadingStartedStub.resetHistory();
+        expect(saveStartedStub).to.be.calledOnce;
+        saveStartedStub.resetHistory();
         userShapes.doc = realDocFunction;
         fakeCalled = true;
         return realDoc.set(record);
@@ -637,14 +636,14 @@ describe('Unit test for ShapeData', () => {
    */
   function waitForWriteToFinish() {
     return cyQueue(() => {
-             expect(loadingStartedStub).to.be.calledOnce;
-             loadingStartedStub.resetHistory();
+             expect(saveStartedStub).to.be.calledOnce;
+             saveStartedStub.resetHistory();
              return currentUpdatePromise;
            })
         .then(() => {
-          expect(loadingFinishedStub)
+          expect(saveFinishedStub)
               .to.have.callCount(expectedLoadingFinished);
-          loadingFinishedStub.resetHistory();
+          saveFinishedStub.resetHistory();
         });
   }
 });
