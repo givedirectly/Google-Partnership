@@ -1,6 +1,6 @@
 import {reloadWithSignIn} from './authenticate.js';
 import {getCheckBoxRowId, partiallyHandleBadRowAndReturnCheckbox} from './checkbox_util.js';
-import {mapContainerId, writeWaiterId} from './dom_constants.js';
+import {mapContainerId} from './dom_constants.js';
 import {createError, showError} from './error.js';
 import {getFirestoreRoot} from './firestore_document.js';
 import {POLYGON_HELP_URL} from './help.js';
@@ -50,7 +50,7 @@ class StoredShapeData {
     this.state = StoredShapeData.State.SAVED;
   }
 
-  /** Decrements write count and finishes a load for {@link writeWaiterId}. */
+  /** Decrements write count and pops up 'Saved' message. */
   noteWriteFinished() {
     StoredShapeData.pendingWriteCount--;
     showToastMessage('Saved');
@@ -74,6 +74,7 @@ class StoredShapeData {
       return null;
     }
     showToastMessage('Saving...', -1);
+    StoredShapeData.pendingWriteCount++;
     return this.updateWithoutStatusChange();
   }
 
@@ -87,7 +88,6 @@ class StoredShapeData {
   updateWithoutStatusChange() {
     const feature = this.popup.mapFeature;
     this.state = StoredShapeData.State.WRITING;
-    StoredShapeData.pendingWriteCount++;
     if (!feature.getMap()) {
       return this.delete();
     }
@@ -188,7 +188,6 @@ class StoredShapeData {
    *    are done
    */
   finishWriteAndMaybeWriteAgain() {
-    StoredShapeData.pendingWriteCount--;
     const oldState = this.state;
     this.state = StoredShapeData.State.SAVED;
     switch (oldState) {

@@ -1,10 +1,9 @@
 import {addPolygonWithPath} from '../../../docs/basic_map.js';
-import {mapContainerId, writeWaiterId} from '../../../docs/dom_constants.js';
 import * as Loading from '../../../docs/loading.js';
-import * as Toast from '../../../docs/toast.js';
 import {initializeAndProcessUserRegions, StoredShapeData, transformGeoPointArrayToLatLng, userShapes} from '../../../docs/polygon_draw.js';
 import {setUserFeatureVisibility} from '../../../docs/popup.js';
 import * as resourceGetter from '../../../docs/resources.js';
+import * as Toast from '../../../docs/toast.js';
 import {userRegionData} from '../../../docs/user_region_data.js';
 import {CallbackLatch} from '../../support/callback_latch.js';
 import {cyQueue} from '../../support/commands.js';
@@ -51,15 +50,13 @@ describe('Unit test for ShapeData', () => {
 
   let saveStartedStub;
   let saveFinishedStub;
-  let expectedLoadingFinished = 1;
   beforeEach(() => {
     // Stub out map updates, not useful for us.
     cy.stub(Loading, 'addLoadingElement');
     cy.stub(Loading, 'loadingElementFinished');
     const toastStub = cy.stub(Toast, 'showToastMessage');
-    saveStartedStub = toastStub.withArgs('Saving', -1);
+    saveStartedStub = toastStub.withArgs('Saving...', -1);
     saveFinishedStub = toastStub.withArgs('Saved');
-    expectedLoadingFinished = 1;
     // Default polygon intersects feature1 and feature2, not feature3.
     const feature1 = ee.Feature(
         ee.Geometry.Polygon(0, 0, 0, 10, 10, 10, 10, 0),
@@ -221,7 +218,6 @@ describe('Unit test for ShapeData', () => {
       const realDoc = userShapes.doc(data.id);
       const realDocFunction = userShapes.doc;
       const fakeDoc = {};
-      expectedLoadingFinished = 2;
       cy.stub(userShapes, 'doc').withArgs(data.id).returns(fakeDoc);
       fakeDoc.set = (record) => {
         // Unfortunately Cypress can't really handle executing Cypress commands
@@ -233,8 +229,9 @@ describe('Unit test for ShapeData', () => {
         expect(currentUpdatePromise).to.be.null;
         expect(data.state).to.eql(StoredShapeData.State.QUEUED_WRITE);
         expect(StoredShapeData.pendingWriteCount).to.eql(1);
+        // Don't reset history after this assertion: assertOnFirestoreAndPopup
+        // will check this too.
         expect(saveStartedStub).to.be.calledOnce;
-        saveStartedStub.resetHistory();
         userShapes.doc = realDocFunction;
         fakeCalled = true;
         return realDoc.set(record);
@@ -641,8 +638,7 @@ describe('Unit test for ShapeData', () => {
              return currentUpdatePromise;
            })
         .then(() => {
-          expect(saveFinishedStub)
-              .to.have.callCount(expectedLoadingFinished);
+          expect(saveFinishedStub).to.be.calledOnce;
           saveFinishedStub.resetHistory();
         });
   }
