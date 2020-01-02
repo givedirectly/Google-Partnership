@@ -366,20 +366,20 @@ function createScoreAssetForStateBasedDisaster(
  *    the poverty asset. If it is absent, the poverty asset already has
  *    geometries;
  * 3. An optional buildings asset;
- *    - If it has a "geoid" key, it is a table of building count per district;
- *    - If it does not, it is an {@link ee.FeatureCollection} of polygons
- *      corresponding to buildings, and a count is computed of polygons per
- *      district;
- *    - If it is absent, and `useDamageForBuildings` is false, the poverty asset
- *      already has a building count. If `useDamageForBuildings` is true, see
- *      below;
+ *      - If it has a "geoid" key, it is a table of building count per district;
+ *      - If it does not, it is an {@link ee.FeatureCollection} of polygons
+ *        corresponding to buildings, and a count is computed of polygons per
+ *        district;
+ *      - If it is absent, and `useDamageForBuildings` is false, the poverty
+ *        asset already has a building count. If `useDamageForBuildings` is
+ *        true, see below;
  * 4. An optional damage asset;
- *    - If `damageLevelsKey` is present, then undamaged buildings (indicated by
- *      `noDamageValue`) are filtered out of the damage asset when counting
- *      damage points in a district;
- *    - If `useDamageForBuildings` is true, then `damageLevelsKey` must be
- *      present, and the total number of "damage" points in a district
- *      (including undamaged ones) is used as the total building count.
+ *      - If `damageLevelsKey` is present, then undamaged buildings (indicated
+ *        by `noDamageValue`) are filtered out of the damage asset when counting
+ *        damage points in a district;
+ *      - If `useDamageForBuildings` is true, then `damageLevelsKey` must be
+ *        present, and the total number of "damage" points in a district
+ *        (including undamaged ones) is used as the total building count.
  *
  * @param {Object} disasterData Data for current disaster coming from Firestore
  * @param {Function} setMapBoundsInfoFunction Function to be called when map
