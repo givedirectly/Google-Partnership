@@ -206,7 +206,6 @@ function stringifyCollection(
  * For each {@link ee.Feature}, sets `newProperty` to the value of `property`
  * for that feature, and sets `property` to null, effectively removing its value
  * from every feature.
- *
  * @param {ee.FeatureCollection} featureCollection
  * @param {string} property old name
  * @param {string} newProperty new name
@@ -266,7 +265,6 @@ function setMapBoundsInfo(message) {
  * Performs operation of processing inputs and creating output asset for a
  * disaster whose data is state-based (available on a per-state basis, coming
  * from the Census).
- *
  * @param {Object} disasterData Data for current disaster coming from Firestore
  * @param {Function} setMapBoundsInfoFunction Function to be called when map
  *     bounds-related operations are complete. First called with a message about
