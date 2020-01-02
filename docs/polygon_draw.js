@@ -53,6 +53,7 @@ class StoredShapeData {
 
   /** Decrements write count and pops up 'Saved' message. */
   noteWriteFinished() {
+    // Keep in sync with code in terminateWriteWithError.
     StoredShapeData.pendingWriteCount--;
     showToastMessage('Saved');
   }
@@ -165,7 +166,7 @@ class StoredShapeData {
         err,
         'Error ' + message +
             '. Try editing the shape and saving again: ' + err.message);
-    this.noteWriteFinished();
+    StoredShapeData.pendingWriteCount--;
     this.state = StoredShapeData.State.SAVED;
     throw err;
   }

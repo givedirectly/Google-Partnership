@@ -472,8 +472,9 @@ describe('Unit test for ShapeData', () => {
         .then(() => {
           expect(errorStub).to.be.calledOnce;
           errorStub.resetHistory();
+          expect(saveStartedStub).to.be.calledOnce;
           saveStartedStub.resetHistory();
-          saveFinishedStub.resetHistory();
+          expect(saveFinishedStub).to.not.be.called;
           expect(StoredShapeData.pendingWriteCount).to.eql(0);
           lambdaAfterFailure();
           return userShapes.get();
