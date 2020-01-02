@@ -1,4 +1,4 @@
-import {createError} from './error.js';
+import {showError} from './error.js';
 import {highlightFeatures} from './highlight_features.js';
 import {scoreTag} from './property_names.js';
 
@@ -15,7 +15,7 @@ export {drawTable};
  *     function returns the row selected if there was exactly one, or null
  *     otherwise. Complete when table has finished drawing
  */
-function drawTable(scoredFeaturesAndColumns, map) {
+async function drawTable(scoredFeaturesAndColumns, map) {
   // Create download button.
   const downloadButton = document.createElement('button');
   downloadButton.style.visibility = 'hidden';
@@ -27,26 +27,20 @@ function drawTable(scoredFeaturesAndColumns, map) {
   downloadLink.id = 'downloadLink';
   downloadButton.appendChild(downloadLink);
 
-  // TODO(#37): These callbacks could be executed out of order, and the table
-  //  might not reflect the user's latest request.
-  return scoredFeaturesAndColumns
-      .then(({featuresList, columnsFound}) => {
-        const features =
-            featuresList.filter((feature) => feature.properties[scoreTag]);
-        // Clone headings.
-        const list = [columnsFound];
-        for (const feature of features) {
-          list.push(columnsFound.map((col) => feature.properties[col]));
-        }
-        // TODO(juliexxia): more robust error reporting
-        // https://developers.google.com/chart/interactive/docs/reference#errordisplay
-        // Multiple calls to this are fine:
-        // https://developers.google.com/chart/interactive/docs/basic_load_libs#Callback
-        return new Promise(
-            (resolve) => google.charts.setOnLoadCallback(
-                () => renderTable(list, features, map, resolve)));
-      })
-      .catch(createError('Failure evaluating scored features'));
+  // This may throw an exception, but error reporting handled elsewhere.
+  const {featuresList, columnsFound} = await scoredFeaturesAndColumns;
+  const features =
+      featuresList.filter((feature) => feature.properties[scoreTag]);
+  // Clone headings.
+  const list = [columnsFound];
+  for (const feature of features) {
+    list.push(columnsFound.map((col) => feature.properties[col]));
+  }
+  // Multiple calls to this are fine:
+  // https://developers.google.com/chart/interactive/docs/basic_load_libs#Callback
+  return new Promise(
+      (resolve) => google.charts.setOnLoadCallback(
+          () => renderTable(list, features, map, resolve)));
 }
 
 /**
@@ -76,6 +70,10 @@ function renderTable(list, features, map, selectorReceiver) {
       'headerCell': 'header-cell',
     },
   });
+  // https://developers.google.com/chart/interactive/docs/events#the-error-event
+  google.visualization.events.addListener(
+      table, 'error',
+      (err) => showError(err, 'Error displaying table: ' + err.message));
   const tableSelector = new TableSelector(table, list);
   selectorReceiver((geoids) => tableSelector.selectRowsFor(geoids));
 

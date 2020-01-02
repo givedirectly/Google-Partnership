@@ -100,9 +100,12 @@ function createAndDisplayJoinedData(map, initialTogglesValuesPromise) {
   // clear old listeners
   google.maps.event.removeListener(mapSelectListener);
   google.maps.event.removeListener(featureSelectListener);
+  const dataPromise = resolvedScoreAsset.then(getEePromiseForFeatureCollection);
+  dataPromise.catch(
+      (err) =>
+          showError(err, 'Error retrieving score asset. Try reloading page'));
   const processedData = processJoinedData(
-      resolvedScoreAsset.then(getEePromiseForFeatureCollection), scalingFactor,
-      initialTogglesValuesPromise);
+      dataPromise, scalingFactor, initialTogglesValuesPromise);
   addScoreLayer(processedData.then(({featuresList}) => featuresList));
   maybeCheckScoreCheckbox();
   drawTableAndSetUpHandlers(processedData, map);
