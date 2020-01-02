@@ -458,7 +458,7 @@ describe('Unit test for ShapeData', () => {
    * and expects success.
    *
    * @param {Function} lambdaAfterFailure Function to call after failure, to
-   *     undo whatever setup the test did to trigger a failure if needed
+   *     undo whatever setup the test did to trigger a failure
    */
   function doUnsuccessfulDrawThenSuccess(lambdaAfterFailure) {
     const errorStub = cy.stub(ErrorLib, 'showError');
