@@ -1,3 +1,4 @@
+import {legacyStateDir} from '../../../docs/ee_paths.js';
 import * as ErrorLib from '../../../docs/error.js';
 import * as FirestoreDocument from '../../../docs/firestore_document.js';
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
@@ -24,9 +25,8 @@ describe('Add/delete-related tests for manage_disaster.js', () => {
   let setAclsStub;
   beforeEach(() => {
     disasterData.clear();
-    createFolderStub =
-        cy.stub(ee.data, 'createFolder')
-            .callsFake((asset, overwrite, callback) => callback());
+    createFolderStub = cy.stub(ee.data, 'createFolder');
+    createFolderStub.callsFake((asset, overwrite, callback) => callback());
     setAclsStub = cy.stub(ee.data, 'setAssetAcl')
                       .callsFake((asset, acls, callback) => callback());
   });
@@ -183,12 +183,29 @@ describe('Add/delete-related tests for manage_disaster.js', () => {
     cy.wrap(writeNewDisaster(id, states)).then((success) => {
       expect(success).to.be.false;
       expect(firestoreStub).to.not.be.called;
-      expect(disasterData).to.be.empty;
+      // https://github.com/cypress-io/cypress/issues/6072 means no ".empty" :(
+      expect(disasterData).to.have.property('size', 0);
       expect(errorStub).to.be.calledOnce;
       expect(errorStub).to.be.calledWith(
           'Error creating EarthEngine folders: "Asset ' +
           '\'projects/earthengine-legacy/assets/users/gd\' does not exist or ' +
           'doesn\'t allow this operation." You can try refreshing the page');
+    });
+  });
+
+  it('Tolerates already existing folder', () => {
+    const id = '2005-summer';
+    const states = [KNOWN_STATE];
+    const errorStub = cy.stub(ErrorLib, 'showError');
+    // Sadly, don't know how to get ee to actually return this error for real.
+    createFolderStub
+        .withArgs(legacyStateDir + KNOWN_STATE, false, Cypress.sinon.match.func)
+        .callsFake((asset, overwrite, callback) => {
+          callback(null, 'Cannot overwrite asset \'' + asset + '\'.');
+        });
+    cy.wrap(writeNewDisaster(id, states)).then((success) => {
+      expect(success).to.be.true;
+      expect(errorStub).to.not.be.called;
     });
   });
 
@@ -202,7 +219,8 @@ describe('Add/delete-related tests for manage_disaster.js', () => {
         .returns(firebase.firestore().collection('disaster-metadata'));
     cy.wrap(writeNewDisaster(id, states)).then((success) => {
       expect(success).to.be.false;
-      expect(disasterData).to.be.empty;
+      // https://github.com/cypress-io/cypress/issues/6072 means no ".empty" :(
+      expect(disasterData).to.have.property('size', 0);
       expect(errorStub).to.be.calledOnce;
       expect(errorStub).to.be.calledWith(
           'Error writing to Firestore: "Missing or insufficient ' +

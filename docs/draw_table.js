@@ -1,33 +1,21 @@
 import {showError} from './error.js';
 import {highlightFeatures} from './highlight_features.js';
-import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, scoreTag, snapPercentageTag, sviTag, totalPopTag} from './property_names.js';
+import {scoreTag} from './property_names.js';
 
-export {drawTable, tableHeadings};
-
-const tableHeadings = [
-  geoidTag,
-  blockGroupTag,
-  scoreTag,
-  snapPercentageTag,
-  damageTag,
-  buildingCountTag,
-  totalPopTag,
-  sviTag,
-  incomeTag,
-];
+export {drawTable};
 
 /**
  * Displays a ranked table of the given features that have non-zero score. Sets
  * up handlers for clicking on the table and highlighting features on the map.
  *
- * @param {Promise} scoredFeatures
+ * @param {Promise} scoredFeaturesAndColumns
  * @param {google.maps.Map} map
  * @return {Promise<Function>} Promise for a function that takes an iterable of
  *     strings and selects rows in the table whose geoids are those strings. The
  *     function returns the row selected if there was exactly one, or null
  *     otherwise. Complete when table has finished drawing
  */
-async function drawTable(scoredFeatures, map) {
+async function drawTable(scoredFeaturesAndColumns, map) {
   // Create download button.
   const downloadButton = document.createElement('button');
   downloadButton.style.visibility = 'hidden';
@@ -40,13 +28,13 @@ async function drawTable(scoredFeatures, map) {
   downloadButton.appendChild(downloadLink);
 
   // This may throw an exception, but error reporting handled elsewhere.
-  const allFeatures = await scoredFeatures;
+  const {featuresList, columnsFound} = await scoredFeaturesAndColumns;
   const features =
-      allFeatures.filter((feature) => feature.properties[scoreTag]);
+      featuresList.filter((feature) => feature.properties[scoreTag]);
   // Clone headings.
-  const list = [tableHeadings];
+  const list = [columnsFound];
   for (const feature of features) {
-    list.push(tableHeadings.map((col) => feature.properties[col]));
+    list.push(columnsFound.map((col) => feature.properties[col]));
   }
   // Multiple calls to this are fine:
   // https://developers.google.com/chart/interactive/docs/basic_load_libs#Callback
@@ -98,7 +86,7 @@ function renderTable(list, features, map, selectorReceiver) {
   // Generate content and download on click.
   downloadButton.addEventListener('click', function() {
     // Add column headers to front of string content.
-    const columnHeaders = tableHeadings.join(',');
+    const columnHeaders = list[0].join(',');
     const content =
         columnHeaders + '\n' + google.visualization.dataTableToCsv(data);
     downloadContent(content);
