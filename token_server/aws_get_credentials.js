@@ -5,6 +5,8 @@ import tmp from 'tmp';
 export {storeGoogleCredentials};
 
 const AWS_REGION = 'us-east-1';
+
+// See instructions in README.md for where this comes from.
 const SECRET_ID = 'arn:aws:secretsmanager:us-east-1:560508828482:secret:' +
     'GoogleServiceAccountJson-EXtSJ9';
 
