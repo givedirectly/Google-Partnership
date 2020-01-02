@@ -179,7 +179,7 @@ describe('Unit tests for click_feature.js with map and table', () => {
     cy.get('#test-map-div').should('contain', 'SCORE: 1');
     cy.get('#test-map-div').should('contain', 'my block group');
     // Rounded because property name ends with 'PERCENTAGE'.
-    cy.get('#test-map-div').should('contain', 'OTHER PERCENTAGE: 4.232');
+    cy.get('#test-map-div').should('contain', 'OTHER PERCENTAGE: 4.233');
     cy.get('#test-map-div').should('contain', 'SOME PROPERTY: 100');
     cy.get('.google-visualization-table-tr-sel')
         .find('[class="google-visualization-table-td"]')
@@ -252,6 +252,6 @@ function createFeatureWithOnlyGeoid(west, south, east, north) {
 function createFeatureFromCorners(west, south, east, north) {
   let result = createFeatureWithOnlyGeoid(west, south, east, north);
   result = result.set('SOME PROPERTY', 100);
-  result = result.set('OTHER PERCENTAGE', 4.23223434);
+  result = result.set('OTHER PERCENTAGE', 4.23293434);
   return result;
 }
