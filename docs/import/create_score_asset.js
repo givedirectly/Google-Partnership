@@ -1,49 +1,110 @@
-import {
-  blockGroupTag,
-  buildingCountTag,
-  damageTag,
-  geoidTag,
-  incomeTag,
-  snapPercentageTag,
-  snapPopTag,
-  sviTag,
-  totalPopTag,
-  tractTag,
-} from '../property_names.js';
+import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, snapPercentageTag, snapPopTag, sviTag, totalPopTag, tractTag} from '../property_names.js';
 import {getBackupScoreAssetPath, getScoreAssetPath} from '../resources.js';
+
 import {computeAndSaveBounds} from './center.js';
-import {
-  cdcGeoidKey,
-  censusBlockGroupKey,
-  censusGeoidKey,
-  tigerGeoidKey,
-} from './import_data_keys.js';
+import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
 
-export {createScoreAssetForStateBasedDisaster, setStatus};
-
+export {
+  createScoreAssetForFlexibleDisaster,
+  createScoreAssetForStateBasedDisaster,
+  setStatus,
+};
 // For testing.
 export {backUpAssetAndStartTask};
 
-function combineWithBuildings(featureCollection, buildingsHisto, povertyGeoidTag) {
+/**
+ * Given a dictionary of building counts per district, attach the count to each
+ * district in the collection.
+ * @param {ee.FeatureCollection} featureCollection The features'
+ *     {@link geoidTag} are the keys of `buildingsHisto`
+ * @param {ee.Dictionary} buildingsHisto Each entry gives how many buildings are
+ *     in the feature whose {@link geoidTag} property is the entry's key
+ * @return {ee.FeatureCollection}
+ */
+function combineWithBuildings(featureCollection, buildingsHisto) {
   return featureCollection.map((f) => {
-    const geoId = f.get(povertyGeoidTag);
-    return f.set(buildingCountTag, ee.Algorithms.If(
-        buildingsHisto.contains(geoId), buildingsHisto.get(geoId), ee.Number(0)));
+    const geoId = f.get(geoidTag);
+    return f.set(
+        buildingCountTag,
+        ee.Algorithms.If(
+            buildingsHisto.contains(geoId), buildingsHisto.get(geoId),
+            ee.Number(0)));
   });
 }
 
-function combineWithDamage(featureCollection, damage) {
+/**
+ * Given an in-progress score asset, adds in the damage percentage. The damage
+ * asset may include undamaged buildings, in which case we must filter them out
+ * via the `damageLevelsKey` and `noDamageValue` parameters.
+ * @param {ee.FeatureCollection} featureCollection Score asset being created
+ * @param {ee.FeatureCollection} damage Damage collection, which may includes
+ *     undamaged buildings
+ * @param {?string} damageLevelsKey Property in damage collection whose value
+ *     can identify undamaged buildings
+ * @param {?string} noDamageValue Value for `damageLevelsKey` that indicates a
+ *     building is undamaged
+ * @return {ee.FeatureCollection}
+ */
+function combineWithDamage(
+    featureCollection, damage, damageLevelsKey, noDamageValue) {
   return featureCollection.map((f) => {
+    let damageForDistrict =
+        ee.FeatureCollection(damage).filterBounds(f.geometry());
+    if (damageLevelsKey) {
+      damageForDistrict = damageForDistrict.filterMetadata(
+          damageLevelsKey, 'not_equals', noDamageValue);
+    }
+    return addDamageTag(f, damageForDistrict.size());
+  });
+}
+
+/**
+ * Given an in-progress score asset, adds in the damage percentage and total
+ * building count, where the building count is computed from the damage asset,
+ * which must include all relevant buildings, including undamaged ones.
+ * @param {ee.FeatureCollection} featureCollection Score asset being created
+ * @param {ee.FeatureCollection} damage Damage collection, which includes all
+ *     buildings
+ * @param {string} damageLevelsKey Property in damage collection whose value can
+ *     identify undamaged buildings
+ * @param {string} noDamageValue Value for `damageLevelsKey` that indicates a
+ *     building is undamaged
+ * @return {ee.FeatureCollection}
+ */
+function combineWithDamageAndUseForBuildings(
+    featureCollection, damage, damageLevelsKey, noDamageValue) {
+  return featureCollection.map((f) => {
+    const damageForDistrict =
+        ee.FeatureCollection(damage).filterBounds(f.geometry());
+    const totalBuildings = damageForDistrict.size();
     const damagedBuildings =
-        ee.FeatureCollection(damage).filterBounds(f.geometry()).size();
-    const totalBuildings = f.get(buildingCountTag);
-    // If no buildings, this is probably spurious. Don't give any damage. We
-    // don't expect totalBuildings to be 0 in production, but it's bitten us
-    // when working with partial buildings datasets. If this starts showing up
-    // in production, we may need to surface it to user somehow.
-    return f.set(damageTag, ee.Algorithms.If(totalBuildings, ee.Number(damagedBuildings).divide(totalBuildings),
-        0));
-  })
+        damageForDistrict
+            .filterMetadata(damageLevelsKey, 'not_equals', noDamageValue)
+            .size();
+    return addDamageTag(
+        f.set(buildingCountTag, totalBuildings), damagedBuildings);
+  });
+}
+
+/**
+ * Sets {@link damageTag} on `feature` to `damagedBuildings / totalBuildings`,
+ * where `totalBuildings` comes from the feature's {@link buildingCountTag}.
+ * Handles edge case of `totalBuildings` being 0.
+ * @param {ee.Feature} feature
+ * @param {ee.Number} damagedBuildings
+ * @return {ee.Feature}
+ */
+function addDamageTag(feature, damagedBuildings) {
+  const totalBuildings = feature.get(buildingCountTag);
+  // If no buildings, this is probably spurious. Don't give any damage. We
+  // don't expect totalBuildings to be 0 in production, but it's bitten us
+  // when working with partial buildings datasets. If this starts showing up
+  // in production, we may need to surface it to user somehow.
+  return feature.set(
+      damageTag,
+      ee.Algorithms.If(
+          totalBuildings, ee.Number(damagedBuildings).divide(totalBuildings),
+          0));
 }
 
 // Permissive number regexp: matches optional +/- followed by 0 or more digits
@@ -86,9 +147,12 @@ function combineWithSnap(feature, snapKey, totalKey) {
   const snapPop = convertToNumber(snapFeature.get(snapKey));
   const totalPop = convertToNumber(ee.Number.parse(snapFeature.get(totalKey)));
   const badData = null;
-  const snapPercentage = ee.Algorithms.If(totalPop,
-      ee.Algorithms.If(ee.Algorithms.IsEqual(snapPop, null), badData,
-      ee.Number(snapPop).long().divide(ee.Number(totalPop).long())), badData);
+  const snapPercentage = ee.Algorithms.If(
+      totalPop,
+      ee.Algorithms.If(
+          ee.Algorithms.IsEqual(snapPop, null), badData,
+          ee.Number(snapPop).long().divide(ee.Number(totalPop).long())),
+      badData);
   return ee.Feature(
       ee.Feature(feature.get('secondary')).geometry(), ee.Dictionary([
         geoidTag,
@@ -120,18 +184,38 @@ function combineWithAsset(feature, tag, key) {
 }
 
 /**
- * Convert the GEOid2 column into a string column for sake of matching to
- * TIGER data.
- *
- * @param {ee.Feature} feature
- * @return {ee.Feature}
+ * Converts value of `property` in every {@link ee.Feature} into an
+ * {@link ee.String}. If `newProperty` is given, also effectively renames
+ * `property` to `newProperty`.
+ * @param {ee.FeatureCollection} featureCollection
+ * @param {string} property
+ * @param {string} newProperty Defaults to `property`
+ * @return {ee.FeatureCollection}
  */
-function stringifyGeoid(feature) {
-  return feature.set(censusGeoidKey, ee.String(feature.get(censusGeoidKey)));
+function stringifyCollection(
+    featureCollection, property, newProperty = property) {
+  return featureCollection.map((f) => {
+    const result = f.set(newProperty, ee.String(f.get(property)));
+    if (newProperty === property) {
+      return result;
+    }
+    return result.set(property, null);
+  });
 }
 
-function stringifyCollection(featureCollection, property) {
-  return featureCollection.map((f) => f.set(property, ee.String(f.get(property))));
+/**
+ * For each {@link ee.Feature}, sets `newProperty` to the value of `property`
+ * for that feature, and sets `property` to null, effectively removing its value
+ * from every feature.
+ *
+ * @param {ee.FeatureCollection} featureCollection
+ * @param {string} property old name
+ * @param {string} newProperty new name
+ * @return {ee.FeatureCollection}
+ */
+function renameProperty(featureCollection, property, newProperty) {
+  return featureCollection.map(
+      (f) => f.set(newProperty, f.get(property)).set(property, null));
 }
 
 /**
@@ -190,6 +274,7 @@ function setMapBoundsInfo(message) {
  * Performs operation of processing inputs and creating output asset for a
  * disaster whose data is state-based (available on a per-state basis, coming
  * from the Census).
+ *
  * @param {Object} disasterData Data for current disaster coming from Firestore
  * @param {Function} setMapBoundsInfoFunction Function to be called when map
  *     bounds-related operations are complete. First called with a message about
@@ -232,7 +317,8 @@ function createScoreAssetForStateBasedDisaster(
     const stateGroups =
         ee.FeatureCollection(blockGroupPath).filterBounds(damageEnvelope);
 
-    let processing = ee.FeatureCollection(snapPath).map(stringifyGeoid);
+    let processing =
+        stringifyCollection(ee.FeatureCollection(snapPath), censusGeoidKey);
 
     // Join snap stats to block group geometries.
     processing =
@@ -250,17 +336,20 @@ function createScoreAssetForStateBasedDisaster(
 
       processing = innerJoin(processing, sviPath, tractTag, cdcGeoidKey);
       // Remove tract tag from final feature.
-      processing = processing.map((f) => combineWithAsset(f, sviTag, sviKey).set(tractTag, null));
+      processing = processing.map(
+          (f) => combineWithAsset(f, sviTag, sviKey).set(tractTag, null));
     }
 
     if (buildingPath) {
       // Get building count by block group.
       const buildingsHisto =
           computeBuildingsHisto(buildingPath, stateGroups, geoidTag);
-      processing = combineWithBuildings(processing, buildingsHisto, geoidTag);
+      processing = combineWithBuildings(processing, buildingsHisto);
     }
 
     if (damage) {
+      // TODO(janakr): Assumes that damage asset does not include undamaged
+      //  buildings. Should probably offer option to filter.
       processing = combineWithDamage(processing, damage);
     }
 
@@ -270,7 +359,37 @@ function createScoreAssetForStateBasedDisaster(
   return backUpAssetAndStartTask(allStatesProcessing);
 }
 
-function createScoreAssetForGenericDisaster(disasterData, setMapBoundsInfoFunction = setMapBoundsInfo) {
+/**
+ * Performs operation of processing inputs and creating output asset for a
+ * disaster whose data is fairly flexible, with few assumptions. We expect:
+ * 1. A poverty asset;
+ * 2. An optional geography asset, which gives geographies to the districts in
+ *    the poverty asset. If it is absent, the poverty asset already has
+ *    geometries;
+ * 3. An optional buildings asset;
+ *    - If it has a "geoid" key, it is a table of building count per district;
+ *    - If it does not, it is an {@link ee.FeatureCollection} of polygons
+ *      corresponding to buildings, and a count is computed of polygons per
+ *      district;
+ *    - If it is absent, and `useDamageForBuildings` is false, the poverty asset
+ *      already has a building count. If `useDamageForBuildings` is true, see
+ *      below;
+ * 4. An optional damage asset;
+ *    - If `damageLevelsKey` is present, then undamaged buildings (indicated by
+ *      `noDamageValue`) are filtered out of the damage asset when counting
+ *      damage points in a district;
+ *    - If `useDamageForBuildings` is true, then `damageLevelsKey` must be
+ *      present, and the total number of "damage" points in a district
+ *      (including undamaged ones) is used as the total building count.
+ *
+ * @param {Object} disasterData Data for current disaster coming from Firestore
+ * @param {Function} setMapBoundsInfoFunction Function to be called when map
+ *     bounds-related operations are complete. First called with a message about
+ *     the task, then called with the results
+ * @return {?Promise<ee.batch.ExportTask>} Promise for task of asset write.
+ */
+function createScoreAssetForFlexibleDisaster(
+    disasterData, setMapBoundsInfoFunction = setMapBoundsInfo) {
   setStatus('');
   const assetData = disasterData['asset_data'];
   const {damage, damageEnvelope} =
@@ -281,25 +400,56 @@ function createScoreAssetForGenericDisaster(disasterData, setMapBoundsInfoFuncti
   }
   const {flexibleData} = assetData;
   let processing = ee.FeatureCollection(flexibleData.povertyPath);
-  const {geographyPath, buildingPath, povertyGeoid, geographyGeoid} = flexibleData;
-  const geographyCollection = geographyPath ? stringifyCollection(ee.FeatureCollection(geographyPath), geographyGeoid) : null;
-  if (geographyCollection) {
-    processing = stringifyCollection(processing, povertyGeoid);
-    processing = innerJoin(processing, geographyCollection, povertyGeoid, geographyGeoid);
+  const {geographyPath, buildingPath, buildingKey} = flexibleData;
+  const {useDamageForBuildings} = assetData;
+  if (geographyPath) {
+    const {geographyGeoid} = flexibleData;
+    const geographyCollection = stringifyCollection(
+        ee.FeatureCollection(geographyPath).filterBounds(damageEnvelope),
+        geographyGeoid);
+    processing =
+        stringifyCollection(processing, flexibleData.povertyGeoid, geoidTag);
+    processing =
+        innerJoin(processing, geographyCollection, geoidTag, geographyGeoid);
+    processing = processing.map(
+        (f) => ee.Feature(
+            ee.Feature(f.get('secondary')).geometry(),
+            ee.Feature(f.get('primary')).toDictionary()));
+  } else {
+    processing = processing.filterBounds(damageEnvelope);
   }
+  // Rename description property so it can be recognized as special.
+  processing = renameProperty(
+      processing, flexibleData.districtDescriptionKey, blockGroupTag);
+
   if (buildingPath) {
     const {buildingGeoid} = flexibleData;
-    let buildingCollection = ee.FeatureCollection(buildingPath);
+    const buildingCollection = ee.FeatureCollection(buildingPath);
     if (buildingGeoid) {
-      processing = innerJoin(processing, buildingCollection, povertyGeoid, buildingGeoid);
-      processing = processing.map((f) => combineWithAsset(f, buildingCountTag, flexibleData.buildingKey));
+      // TODO(janakr): Should this be a more expansive join? If some district is
+      //  missing building counts, this will exclude it completely.
+      processing = innerJoin(
+          processing, stringifyCollection(buildingCollection, buildingGeoid),
+          geoidTag, buildingGeoid);
+      processing = processing.map(
+          (f) => combineWithAsset(f, buildingCountTag, buildingKey));
     } else {
-      const buildingsHisto = computeBuildingsHisto(buildingCollection, processing, povertyGeoid);
-      processing = combineWithBuildings(buildingsHisto, povertyGeoid);
+      const buildingsHisto =
+          computeBuildingsHisto(buildingCollection, processing);
+      processing = combineWithBuildings(processing, buildingsHisto);
     }
+  } else if (!useDamageForBuildings) {
+    processing = renameProperty(processing, buildingKey, buildingCountTag);
   }
   if (damage) {
-    processing = combineWithDamage(processing, damage);
+    const {damageLevelsKey, noDamageValue} = assetData;
+    if (useDamageForBuildings) {
+      processing = combineWithDamageAndUseForBuildings(
+          processing, damage, damageLevelsKey, noDamageValue);
+    } else {
+      processing =
+          combineWithDamage(processing, damage, damageLevelsKey, noDamageValue);
+    }
   }
   return backUpAssetAndStartTask(processing);
 }
@@ -449,7 +599,7 @@ function calculateDamage(assetData, setMapBoundsInfo) {
  * @param {ee.FeatureCollection} geographies Collection with districts
  * @return {ee.Dictionary} Number of buildings per district
  */
-function computeBuildingsHisto(buildingPath, geographies, geoidTag) {
+function computeBuildingsHisto(buildingPath, geographies) {
   const buildings = ee.FeatureCollection(buildingPath);
   const field = 'fieldToSaveDistrictUnder';
   const withBlockGroup =
