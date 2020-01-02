@@ -91,7 +91,8 @@ You must be logged in as `gd-earthengine-user@givedirectly.org` to access it.
         [aws_get_credentials.js](./aws_get_credentials.js).
      - Make sure the region you created the secret in matches the region
        specified in `AWS_REGION` in
-       [aws_get_credentials.js](./aws_get_credentials.js)! 
+       [aws_get_credentials.js](./aws_get_credentials.js)!
+
    To make the secret readable by the server, you will have to have the server
    run as a user with permissions to read the secret:
      -  [Instructions for creating the user](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/iam-instanceprofile.html#iam-instanceprofile-create).
