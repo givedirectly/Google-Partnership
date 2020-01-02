@@ -377,15 +377,16 @@ function createScoreAssetForFlexibleDisaster(
       calculateDamage(assetData, setMapBoundsInfoFunction);
   const {flexibleData} = assetData;
   let processing = ee.FeatureCollection(flexibleData.povertyPath);
-  const {geographyPath, buildingPath, buildingKey} = flexibleData;
+  const {povertyGeoid, geographyPath, buildingPath, buildingKey} = flexibleData;
   const {useDamageForBuildings} = assetData;
+  // First thing we do is add geographies if necessary and restrict to the
+  // damage envelope, so that we can minimize downstream work.
   if (geographyPath) {
     const {geographyGeoid} = flexibleData;
     const geographyCollection = stringifyCollection(
         ee.FeatureCollection(geographyPath).filterBounds(damageEnvelope),
         geographyGeoid);
-    processing =
-        stringifyCollection(processing, flexibleData.povertyGeoid, geoidTag);
+    processing = stringifyCollection(processing, povertyGeoid, geoidTag);
     processing =
         innerJoin(processing, geographyCollection, geoidTag, geographyGeoid);
     processing = processing.map(
@@ -394,6 +395,7 @@ function createScoreAssetForFlexibleDisaster(
             ee.Feature(f.get('primary')).toDictionary()));
   } else {
     processing = processing.filterBounds(damageEnvelope);
+    processing = renameProperty(processing, povertyGeoid, geoidTag);
   }
   // Rename description property so it can be recognized as special.
   processing = renameProperty(
