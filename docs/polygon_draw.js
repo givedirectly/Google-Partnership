@@ -1,7 +1,8 @@
 import {reloadWithSignIn} from './authenticate.js';
 import {getCheckBoxRowId, partiallyHandleBadRowAndReturnCheckbox} from './checkbox_util.js';
 import {mapContainerId} from './dom_constants.js';
-import {createError, showError} from './error.js';
+import {convertEeObjectToPromise} from './ee_promise_cache.js';
+import {showError} from './error.js';
 import {getFirestoreRoot} from './firestore_document.js';
 import {POLYGON_HELP_URL} from './help.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
@@ -85,7 +86,7 @@ class StoredShapeData {
    * @return {!Promise} Promise that resolves when all writes queued when this
    *     call started are complete.
    */
-  updateWithoutStatusChange() {
+  async updateWithoutStatusChange() {
     const feature = this.popup.mapFeature;
     this.state = StoredShapeData.State.WRITING;
     if (!feature.getMap()) {
@@ -125,29 +126,31 @@ class StoredShapeData {
         intersectingBlockGroups, snapPopTag);
     const weightedTotalHouseholds = StoredShapeData.calculateWeightedTotal(
         intersectingBlockGroups, totalPopTag);
-    return new Promise(((resolve, reject) => {
-      ee.List([
-          numDamagePoints,
-          weightedSnapHouseholds,
-          weightedTotalHouseholds,
-        ]).evaluate((list, failure) => {
-        if (failure) {
-          createError('calculating data ' + this)(failure);
-          reject(failure);
-          return;
-        }
-        const calculatedData = {
-          damage: list[0],
-          snapFraction: list[2] > 0 ? roundToOneDecimal(list[1] / list[2]) : 0,
-          totalHouseholds: Math.round(list[2]),
-        };
-        this.popup.setCalculatedData(calculatedData);
-
-        this.doRemoteUpdate()
-            .then(() => resolve(null))
-            .catch((err) => reject(err));
-      });
-    }));
+    let eeResult;
+    try {
+      eeResult = await convertEeObjectToPromise(ee.List([
+        numDamagePoints,
+        weightedSnapHouseholds,
+        weightedTotalHouseholds,
+      ]));
+    } catch (err) {
+      showError(err, 'Error calculating data for polygon: ' + err.message);
+      throw err;
+    }
+    const calculatedData = {
+      damage: eeResult[0],
+      snapFraction:
+          eeResult[2] > 0 ? roundToOneDecimal(eeResult[1] / eeResult[2]) : 0,
+      totalHouseholds: Math.round(eeResult[2]),
+    };
+    this.popup.setCalculatedData(calculatedData);
+    try {
+      await this.doRemoteUpdate();
+    } catch (err) {
+      showError(err, 'Error writing polygon to backend');
+      this.noteWriteFinished();
+      throw err;
+    }
   }
 
   /**
@@ -206,7 +209,7 @@ class StoredShapeData {
    * (would be "private" in Java).
    * @return {Promise} Promise that completes when deletion is complete.
    */
-  delete() {
+  async delete() {
     // Feature has been removed from map, we should delete on backend.
     userRegionData.delete(this.popup.mapFeature);
     if (!this.id) {
@@ -218,10 +221,14 @@ class StoredShapeData {
     }
     // Nothing more needs to be done for this element because it is
     // unreachable and about to be GC'ed.
-    return userShapes.doc(this.id)
-        .delete()
-        .then(() => this.noteWriteFinished())
-        .catch(createError('error deleting ' + this));
+    try {
+      await userShapes.doc(this.id).delete();
+    } catch (err) {
+      showError({err, polygon: this}, 'Error deleting polygon');
+      throw err;
+    } finally {
+      this.noteWriteFinished();
+    }
   }
 }
 
