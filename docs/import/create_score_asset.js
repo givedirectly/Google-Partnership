@@ -164,9 +164,9 @@ function combineWithSnap(feature, snapKey, totalKey) {
         blockGroupTag,
         snapFeature.get(censusBlockGroupKey),
         povertyHouseholdsTag,
-        convertToNumber(snapFeature.get(snapKey)),
+        snapPop,
         totalHouseholdsTag,
-        convertToNumber(ee.Number.parse(snapFeature.get(totalKey))),
+        totalPop,
         povertyPercentageTag,
         snapPercentage,
       ]));
