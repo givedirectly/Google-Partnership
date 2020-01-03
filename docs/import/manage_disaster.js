@@ -533,8 +533,12 @@ function initializeScoreSelectors(states, stateAssets) {
   }
 
   // For each asset type, add select for all assets for each state.
-  for (const {idStem, propertyPath, expectedColumns, geometryExpected} of
-           scoreAssetTypes) {
+  for (const {
+         idStem,
+         propertyPath,
+         expectedColumns,
+         geometryExpected,
+       } of scoreAssetTypes) {
     const id = assetSelectionRowPrefix + idStem;
     const row = $('#' + id);
     removeAllButFirstFromRow(row);
