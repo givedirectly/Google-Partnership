@@ -8,7 +8,7 @@ import {CallbackLatch} from '../../support/callback_latch';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 import {createGoogleMap} from '../../support/test_map';
 
-const mockData = {};
+const mockData = [{geometry: {type: 'Nonsense'}}];
 
 const colorProperties = {
   'color': 'yellow',
@@ -414,8 +414,8 @@ describe('Unit test for toggleLayerOn', () => {
     expect(scorePromise).to.not.be.null;
     // Nothing happens until promise we passed in is resolved.
     expect(overlaySpy).to.not.be.called;
-    const promiseResult = ['a'];
-    const secondPromiseResult = ['b'];
+    const promiseResult = [{geometry: {type: 'a'}}];
+    const secondPromiseResult = [{geometry: {type: 'b'}}];
     resolveFunction(promiseResult);
     const scoreLayerId = scoreLayerName + '-' + scoreLayerName;
 
