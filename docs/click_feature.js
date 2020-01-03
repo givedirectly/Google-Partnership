@@ -1,3 +1,4 @@
+import {showError} from './error.js';
 import {currentFeatures, highlightFeatures} from './highlight_features.js';
 import {blockGroupTag, geoidTag, scoreTag} from './property_names.js';
 
@@ -20,7 +21,7 @@ function clickFeature(lng, lat, map, featuresAsset, tableSelector) {
   const selected = blockGroups.first();
   selected.evaluate((feature, failure) => {
     if (failure) {
-      console.error(failure);
+      showError(failure, 'Error finding clicked-on area: ' + failure);
       return;
     }
     if (feature === null) {
