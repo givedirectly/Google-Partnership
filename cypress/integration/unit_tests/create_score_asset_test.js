@@ -1,6 +1,6 @@
 import {gdEePathPrefix} from '../../../docs/ee_paths.js';
 import {convertEeObjectToPromise} from '../../../docs/ee_promise_cache.js';
-import {backUpAssetAndStartTask, createScoreAsset} from '../../../docs/import/create_score_asset.js';
+import {backUpAssetAndStartTask, createScoreAssetForFlexibleDisaster, createScoreAssetForStateBasedDisaster} from '../../../docs/import/create_score_asset.js';
 import * as Resources from '../../../docs/resources.js';
 import {assertFirestoreMapBounds} from '../../support/firestore_map_bounds';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
@@ -8,6 +8,14 @@ import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 const mockTask = {
   start: () => {},
   id: 'FAKE_ID',
+};
+
+const basicFlexiblePovertyAttributes = {
+  'POVERTY PERCENTAGE': 0.5,
+  'OTHER FIELD': 'blah',
+  'NUMERIC PERCENTAGE': 88,
+  'GEOid2': 361,
+  'GEOdescription': 'A nice place to live',
 };
 
 describe('Unit tests for create_score_asset.js', () => {
@@ -83,7 +91,8 @@ describe('Unit tests for create_score_asset.js', () => {
   it('Basic test', () => {
     const {boundsPromise, mapBoundsCallback} =
         makeCallbackForTextAndPromise('Found bounds');
-    const promise = createScoreAsset(testData, mapBoundsCallback);
+    const promise =
+        createScoreAssetForStateBasedDisaster(testData, mapBoundsCallback);
     expect(promise).to.not.be.null;
     cy.wrap(promise)
         .then(() => {
@@ -123,7 +132,8 @@ describe('Unit tests for create_score_asset.js', () => {
 
     const {boundsPromise, mapBoundsCallback} =
         makeCallbackForTextAndPromise('Found bounds');
-    const promise = createScoreAsset(testData, mapBoundsCallback);
+    const promise =
+        createScoreAssetForStateBasedDisaster(testData, mapBoundsCallback);
     expect(promise).to.not.be.null;
     cy.wrap(promise)
         .then(() => {
@@ -137,7 +147,6 @@ describe('Unit tests for create_score_asset.js', () => {
           expect(feature.properties).to.eql({
             'BLOCK GROUP': 'Some state, group 361',
             'BUILDING COUNT': 3,
-            'DAMAGE PERCENTAGE': 0,
             'GEOID': '361',
             'MEDIAN INCOME': 37,
             'SNAP HOUSEHOLDS': 10,
@@ -155,7 +164,7 @@ describe('Unit tests for create_score_asset.js', () => {
         [makeIncomeGroup('360', '250,000+'), makeIncomeGroup('361', '-')]);
     testData.asset_data.snap_data.paths.NY = ee.FeatureCollection(
         [makeSnapGroup('360', 10, 15), makeSnapGroup('361', 10, 15)]);
-    const promise = createScoreAsset(testData);
+    const promise = createScoreAssetForStateBasedDisaster(testData);
     expect(promise).to.not.be.null;
     cy.wrap(promise)
         .then(() => {
@@ -174,7 +183,7 @@ describe('Unit tests for create_score_asset.js', () => {
   it('handles no svi/income assets', () => {
     testData.asset_data.income_asset_paths = {};
     testData.asset_data.svi_asset_paths = {};
-    const promise = createScoreAsset(testData);
+    const promise = createScoreAssetForStateBasedDisaster(testData);
     expect(promise).to.not.be.null;
     cy.wrap(promise)
         .then(() => {
@@ -193,7 +202,7 @@ describe('Unit tests for create_score_asset.js', () => {
     testData.asset_data.building_asset_paths = {};
     testData.asset_data.damage_asset_path = null;
     setScoreBoundsCoordinates();
-    const promise = createScoreAsset(testData);
+    const promise = createScoreAssetForStateBasedDisaster(testData);
     expect(promise).to.not.be.null;
     cy.wrap(promise)
         .then(() => {
@@ -207,18 +216,105 @@ describe('Unit tests for create_score_asset.js', () => {
         });
   });
 
-
-  it('errors on no buildings asset when damage present', () => {
-    testData.asset_data.building_asset_paths = {};
-    expect(createScoreAsset(testData)).to.be.null;
-    expect(exportStub).to.not.be.called;
+  it('succeeds for basic flexible disaster', () => {
+    setDefaultFlexibleData();
+    expectForFlexibleDisaster();
   });
 
-  it('Test missing data', () => {
-    testData.asset_data = null;
-    expect(createScoreAsset(testData)).to.be.null;
-    expect(exportStub).to.not.be.called;
+  it('succeeds for flexible disaster with geographic poverty', () => {
+    const flexibleData = setDefaultFlexibleData();
+    flexibleData.povertyPath =
+        ee.FeatureCollection([makeCensusBlockGroup(1)
+                                  .set(basicFlexiblePovertyAttributes)
+                                  .set('GEOid2', null)]);
+    flexibleData.povertyGeoid = 'GEOID';
+    flexibleData.geographyPath = null;
+    expectForFlexibleDisaster();
   });
+
+  it('succeeds for flexible disaster with non-geographic buildings', () => {
+    const flexibleData = setDefaultFlexibleData();
+    flexibleData.buildingPath = ee.FeatureCollection([
+      ee.Feature(null, {'count': 1, 'buildinggeoid': 360}),
+      ee.Feature(null, {'count': 3, 'buildinggeoid': 361}),
+    ]);
+    flexibleData.buildingGeoid = 'buildinggeoid';
+    flexibleData.buildingKey = 'count';
+    expectForFlexibleDisaster();
+  });
+
+  it('succeeds for basic flexible disaster with poverty buildings', () => {
+    const flexibleData = setDefaultFlexibleData();
+    flexibleData.buildingPath = null;
+    flexibleData.buildingKey = 'buildingCount';
+    flexibleData.povertyPath = ee.FeatureCollection([
+      ee.Feature(null, basicFlexiblePovertyAttributes).set('buildingCount', 3),
+    ]);
+    expectForFlexibleDisaster();
+  });
+
+  it('succeeds for flexible disaster with buildings in damage', () => {
+    const flexibleData = setDefaultFlexibleData();
+    flexibleData.buildingPath = null;
+    const assetData = testData['asset_data'];
+    assetData.useDamageForBuildings = true;
+    const damageLevelsKey = 'expelliarmus';
+    assetData.damageLevelsKey = damageLevelsKey;
+    assetData.noDamageValue = 'no damage at all';
+    assetData.damage_asset_path = ee.FeatureCollection([
+      makePoint(0.4, 0.5).set(damageLevelsKey, 'minor'),
+      makePoint(1.5, .5).set(damageLevelsKey, 'major'),
+      makePoint(1.6, 0.7).set(damageLevelsKey, 'no damage at all'),
+      makePoint(1.7, 0.7).set(damageLevelsKey, 'no damage at all'),
+      makePoint(10, 12).set(damageLevelsKey, 'destroyed'),
+    ]);
+    expectForFlexibleDisaster();
+  });
+
+  /**
+   * Sets default data used for score asset creation from flexible data sources.
+   * @return {Object} testData.asset_data.flexibleData
+   */
+  function setDefaultFlexibleData() {
+    const assetData = testData.asset_data;
+    assetData.flexibleData = {
+      povertyPath: ee.FeatureCollection(
+          [ee.Feature(null, basicFlexiblePovertyAttributes)]),
+      povertyGeoid: 'GEOid2',
+      districtDescriptionKey: 'GEOdescription',
+      geographyPath: assetData.block_group_asset_paths.NY,
+      geographyGeoid: 'GEOID',
+      buildingPath: assetData.building_asset_paths.NY,
+    };
+    return assetData.flexibleData;
+  }
+
+  /**
+   * Makes assertions that flexible disaster score asset creates successfully.
+   * Assumes that underlying state of the world is always the same.
+   */
+  function expectForFlexibleDisaster() {
+    const promise = createScoreAssetForFlexibleDisaster(testData);
+    expect(promise).to.not.be.null;
+    cy.wrap(promise)
+        .then(() => {
+          expect(taskStartStub).to.be.calledOnce;
+          return convertEeObjectToPromise(exportStub.firstCall.args[0]);
+        })
+        .then((result) => {
+          const features = result.features;
+          expect(features).to.have.length(1);
+          expect(features[0].properties).to.eql({
+            'GEOID': '361',
+            'BLOCK GROUP': 'A nice place to live',
+            'BUILDING COUNT': 3,
+            'DAMAGE PERCENTAGE': 0.3333333333333333,
+            'OTHER FIELD': 'blah',
+            'NUMERIC PERCENTAGE': 88,
+            'POVERTY PERCENTAGE': 0.5,
+          });
+        });
+  }
 
   it('Main score asset not present', () => {
     // Make things more realistic by specifying a missing main asset path.
@@ -360,9 +456,10 @@ function createGeoPoint(lng, lat) {
 }
 
 /**
- * Creates a callback for use with {@link createScoreAsset} so that we will be
- * informed when the Firestore write of the map bounds has completed. Returns a
- * Promise that can be waited on for that write to complete.
+ * Creates a callback for use with {@link createScoreAssetForStateBasedDisaster}
+ * so that we will be informed when the Firestore write of the map bounds has
+ * completed. Returns a Promise that can be waited on for that write to
+ * complete.
  * @return {{boundsPromise: Promise, mapBoundsCallback: Function}}
  */
 function makeCallbackForTextAndPromise() {

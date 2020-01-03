@@ -5,7 +5,7 @@ import {disasterCollectionReference} from '../firestore_document.js';
 import {latLngToGeoPoint, transformGeoPointArrayToLatLng} from '../map_util.js';
 import {getDisaster} from '../resources.js';
 import {createDisasterData, incomeKey, snapKey, sviKey, totalKey} from './create_disaster_lib.js';
-import {createScoreAsset, setStatus} from './create_score_asset.js';
+import {createScoreAssetForStateBasedDisaster, setStatus} from './create_score_asset.js';
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
 import {getDisasterAssetsFromEe, getStateAssetsFromEe} from './list_ee_assets.js';
 import {clearStatus} from './manage_layers_lib.js';
@@ -24,7 +24,7 @@ export {
 export {
   addDisaster,
   assetSelectionRowPrefix,
-  createScoreAsset,
+  createScoreAssetForStateBasedDisaster,
   deleteDisaster,
   disasterAssets,
   disasterData,
@@ -81,6 +81,10 @@ const optionalWarningPrefix = '; warning: created asset will be missing ';
  * enabled, it is yellowed a bit to indicate the missing optional assets.
  * The buildings asset is optional if the damage asset is not present, but is
  * required if the damage asset is present.
+ * TODO(janakr): We could allow buildings asset to be absent even when
+ *  damage is present and calculate damage percentage based on household
+ *  count. But does GD want that? We'd have to warn here so users knew they were
+ *  getting a less accurate damage percentage count.
  */
 function validateUserFields() {
   const states = disasterData.get(getDisaster()).states;
@@ -115,16 +119,16 @@ function validateUserFields() {
   let optionalMessage = '';
   if (missingItems.length) {
     for (const missingItem of missingItems) {
-      const optionalBuildings =
-          missingItem[0] === 'Microsoft Building Shapefiles' &&
-          !damageAssetPresent;
+      const isBuildings = missingItem[0] === 'Microsoft Building Shapefiles';
+      // Buildings is optional if damage asset not present, mandatory otherwise.
+      const buildingsOptional = isBuildings && !damageAssetPresent;
       const optional = missingItem[0] === 'Income' ||
-          missingItem[0] === 'SVI' || optionalBuildings;
+          missingItem[0] === 'SVI' || buildingsOptional;
       // Construct string to append to message: display name + missing states,
-      // if any. Buildings is special because we don't actually display
+      // if any. Optional buildings is special because we don't actually display
       // "Microsoft Building Shapefiles" on the map, only building counts, so we
-      // tell the user that's what they're missing.
-      const itemString = optionalBuildings ?
+      // tell the user that's what they'll be missing.
+      const itemString = buildingsOptional ?
           ('Building counts' +
            (missingItem.length > 1 ? ' ' + missingItem[1] : '')) :
           missingItem.join(' ');
@@ -212,7 +216,7 @@ function enableWhenFirestoreReady(allDisastersData) {
   processButton.on('click', () => {
     // Disable button to avoid over-clicking. User can reload page if needed.
     processButton.prop('disabled', true);
-    createScoreAsset(disasterData.get(getDisaster()));
+    createScoreAssetForStateBasedDisaster(disasterData.get(getDisaster()));
   });
   return onSetDisaster();
 }
@@ -529,10 +533,12 @@ function initializeScoreSelectors(states, stateAssets) {
   }
 
   // For each asset type, add select for all assets for each state.
-  for (const {idStem,
-              propertyPath,
-              expectedColumns,
-              geometryExpected} of scoreAssetTypes) {
+  for (const {
+         idStem,
+         propertyPath,
+         expectedColumns,
+         geometryExpected,
+       } of scoreAssetTypes) {
     const id = assetSelectionRowPrefix + idStem;
     const row = $('#' + id);
     removeAllButFirstFromRow(row);
