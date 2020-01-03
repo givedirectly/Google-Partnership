@@ -2,6 +2,7 @@ export {
   colorMap,
   ColorStyle,
   createStyleFunction,
+  getLinearGradient,
   LayerType,
 };
 
@@ -109,3 +110,35 @@ const colorMap = new Map([
   ['black', [0, 0, 0]],
   ['white', [255, 255, 255]],
 ]);
+
+/**
+ * Gets the linear gradient of the colors for the legend.
+ *
+ * @param {Object} colorFunction color data from the layer
+ * @return {string} the linear gradient
+ */
+function getLinearGradient(colorFunction) {
+  if (!colorFunction) {
+    return '';
+  }
+  const currentStyle = colorFunction['current-style'];
+  let gradientString = 'linear-gradient(to right';
+  switch (currentStyle) {
+    case 0:
+      gradientString += ', white, ' + colorFunction['color'];
+      break;
+    case 1:
+      const colors = [...(new Set(Object.values(colorFunction['colors'])))];
+      const percent = 100 / colors.length;
+      for (let i = 1; i <= colors.length; i++) {
+        gradientString += ', ' + colors[i - 1] + ' ' + (i * percent - percent) +
+            '%, ' + colors[i - 1] + ' ' + i * percent + '%';
+      }
+      break;
+    case 2:
+      gradientString +=
+          ', ' + colorFunction['color'] + ', ' + colorFunction['color'];
+      break;
+  }
+  return gradientString + ')';
+}
