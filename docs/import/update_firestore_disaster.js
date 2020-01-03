@@ -1,6 +1,6 @@
 import {getFirestoreRoot} from '../firestore_document.js';
 import {getDisaster} from '../resources.js';
-import {showToastMessage} from '../toast.js';
+import {showSavedToast, showSavingToast} from '../toast.js';
 
 export {updateDataInFirestore};
 
@@ -68,12 +68,11 @@ function innerUpdate(dataSupplier) {
 /** Notes that a write has started. Disable disaster picker and notify user. */
 function startWrite() {
   $('#disaster-dropdown').prop('disabled', true);
-  // Keep message up as long as saving is in progress.
-  showToastMessage('Saving...', -1);
+  showSavingToast();
 }
 
 /** Notes that a write has started. Re-enable picker and notify user. */
 function finishWrite() {
   $('#disaster-dropdown').prop('disabled', false);
-  showToastMessage('Saved');
+  showSavedToast();
 }

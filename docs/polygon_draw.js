@@ -1,7 +1,8 @@
 import {reloadWithSignIn} from './authenticate.js';
 import {getCheckBoxRowId, partiallyHandleBadRowAndReturnCheckbox} from './checkbox_util.js';
-import {mapContainerId, writeWaiterId} from './dom_constants.js';
-import {createError, showError} from './error.js';
+import {mapContainerId} from './dom_constants.js';
+import {convertEeObjectToPromise} from './ee_promise_cache.js';
+import {showError} from './error.js';
 import {getFirestoreRoot} from './firestore_document.js';
 import {POLYGON_HELP_URL} from './help.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
@@ -9,10 +10,10 @@ import {latLngToGeoPoint, polygonToGeoPointArray, transformGeoPointArrayToLatLng
 import {createPopup, isMarker, setUpPopup} from './popup.js';
 import {povertyHouseholdsTag, totalHouseholdsTag} from './property_names.js';
 import {getScoreAssetPath} from './resources.js';
+import {showSavedToast, showSavingToast, showToastMessage} from './toast.js';
 import {userRegionData} from './user_region_data.js';
 
 export {displayCalculatedData, initializeAndProcessUserRegions};
-
 // For testing.
 export {
   StoredShapeData,
@@ -49,10 +50,31 @@ class StoredShapeData {
     this.state = StoredShapeData.State.SAVED;
   }
 
-  /** Decrements write count and finishes a load for {@link writeWaiterId}. */
-  noteWriteFinished() {
+  /**
+   * Decrements write count and pops up 'Saved' message if all writes done.
+   * @param {boolean} success True if this write succeeded
+   */
+  noteWriteFinished(success) {
     StoredShapeData.pendingWriteCount--;
-    loadingElementFinished(writeWaiterId);
+    if (success) {
+      if (this.errorSaving) {
+        this.errorSaving = false;
+        StoredShapeData.errorCount--;
+      }
+    } else {
+      if (!this.errorSaving) {
+        this.errorSaving = true;
+        StoredShapeData.errorCount++;
+      }
+    }
+    if (StoredShapeData.errorCount === 0 &&
+        StoredShapeData.pendingWriteCount === 0) {
+      showSavedToast();
+    } else if (StoredShapeData.pendingWriteCount === 0 && success) {
+      showToastMessage(
+          'Latest save succeeded, but there are still ' +
+          StoredShapeData.errorCount + ' feature(s) not saved');
+    }
   }
 
   /**
@@ -64,18 +86,29 @@ class StoredShapeData {
    * should be performed when the pending one completes and returns immediately.
    * @return {?Promise} Promise that resolves when all writes queued when this
    *     call started are complete, or null if there were already writes in
-   * flight, in which case this method does not know when those writes will
-   * complete.
+   *     flight, in which case this method does not know when those writes will
+   *     complete.
    */
   update() {
     if (this.state !== StoredShapeData.State.SAVED) {
       this.state = StoredShapeData.State.QUEUED_WRITE;
       return null;
     }
-    const feature = this.popup.mapFeature;
-    addLoadingElement(writeWaiterId);
-    this.state = StoredShapeData.State.WRITING;
+    showSavingToast();
     StoredShapeData.pendingWriteCount++;
+    return this.updateWithoutStatusChange();
+  }
+
+  /**
+   * Writes this shape's data to the backend, using the existing id
+   * field, or adding a new document to Firestore if there is no id. New values
+   * are retrieved from the popup object.
+   * @return {!Promise} Promise that resolves when all writes queued when this
+   *     call started are complete.
+   */
+  async updateWithoutStatusChange() {
+    const feature = this.popup.mapFeature;
+    this.state = StoredShapeData.State.WRITING;
     if (!feature.getMap()) {
       return this.delete();
     }
@@ -91,7 +124,7 @@ class StoredShapeData {
         // Because Javascript is single-threaded, during the execution of this
         // method, no additional queued writes can have accumulated. So we don't
         // need to check for them.
-        this.noteWriteFinished();
+        this.noteWriteFinished(true);
       }
 
       return Promise.resolve();
@@ -115,29 +148,46 @@ class StoredShapeData {
         intersectingBlockGroups, povertyHouseholdsTag);
     const weightedTotalHouseholds = StoredShapeData.calculateWeightedTotal(
         intersectingBlockGroups, totalHouseholdsTag);
-    return new Promise(((resolve, reject) => {
-      ee.List([
-          numDamagePoints,
-          weightedSnapHouseholds,
-          weightedTotalHouseholds,
-        ]).evaluate((list, failure) => {
-        if (failure) {
-          createError('calculating data ' + this)(failure);
-          reject(failure);
-          return;
-        }
-        const calculatedData = {
-          damage: list[0],
-          snapFraction: list[2] > 0 ? roundToOneDecimal(list[1] / list[2]) : 0,
-          totalHouseholds: Math.round(list[2]),
-        };
-        this.popup.setCalculatedData(calculatedData);
+    let eeResult;
+    try {
+      eeResult = await convertEeObjectToPromise(ee.List([
+        numDamagePoints,
+        weightedSnapHouseholds,
+        weightedTotalHouseholds,
+      ]));
+    } catch (err) {
+      this.terminateWriteWithError(err, 'calculating data for polygon');
+    }
+    const calculatedData = {
+      damage: eeResult[0],
+      snapFraction:
+          eeResult[2] > 0 ? roundToOneDecimal(eeResult[1] / eeResult[2]) : 0,
+      totalHouseholds: Math.round(eeResult[2]),
+    };
+    this.popup.setCalculatedData(calculatedData);
+    try {
+      await this.doRemoteUpdate();
+    } catch (err) {
+      this.terminateWriteWithError(err, 'writing polygon to backend');
+    }
+  }
 
-        this.doRemoteUpdate()
-            .then(() => resolve(null))
-            .catch((err) => reject(err));
-      });
-    }));
+  /**
+   * In case of an error when calculating data or writing to Firestore, cleans
+   * up and throws the error.
+   * @param {Error} err Error whose message will be shown to user, and thrown
+   * @param {string} message Message to show to user, along with hint about how
+   *     to recover
+   * @throws {Error} Always throws `err`, never returns
+   */
+  terminateWriteWithError(err, message) {
+    showError(
+        err,
+        'Error ' + message +
+            '. Try editing the shape and saving again: ' + err.message);
+    this.noteWriteFinished(false);
+    this.state = StoredShapeData.State.SAVED;
+    throw err;
   }
 
   /**
@@ -175,22 +225,19 @@ class StoredShapeData {
    * After a write completes, checks if there are pending writes and kicks off
    * a new update if so.
    * @return {!Promise} Promise that completes when all currently known writes
-   *    are done (or null if an unexpected error is encountered)
+   *    are done
    */
   finishWriteAndMaybeWriteAgain() {
-    StoredShapeData.pendingWriteCount--;
     const oldState = this.state;
     this.state = StoredShapeData.State.SAVED;
     switch (oldState) {
       case StoredShapeData.State.WRITING:
-        loadingElementFinished(writeWaiterId);
+        this.noteWriteFinished(true);
         return Promise.resolve();
       case StoredShapeData.State.QUEUED_WRITE:
-        loadingElementFinished(writeWaiterId);
-        return this.update();
+        return this.updateWithoutStatusChange();
       case StoredShapeData.State.SAVED:
         console.error('Unexpected feature state:' + this);
-        return null;
     }
   }
 
@@ -199,22 +246,22 @@ class StoredShapeData {
    * (would be "private" in Java).
    * @return {Promise} Promise that completes when deletion is complete.
    */
-  delete() {
+  async delete() {
     // Feature has been removed from map, we should delete on backend.
     userRegionData.delete(this.popup.mapFeature);
-    if (!this.id) {
-      // Even if the user creates a feature and then deletes it immediately,
-      // the creation should trigger an update that must complete before the
-      // deletion gets here. So there should always be an id.
-      console.error('Unexpected: feature to be deleted had no id: ', this);
-      return Promise.resolve();
-    }
+    // Even if the user creates a feature and then deletes it immediately, the
+    // creation should trigger an update that must complete before the deletion
+    // gets here. So there should always be an id.
     // Nothing more needs to be done for this element because it is
     // unreachable and about to be GC'ed.
-    return userShapes.doc(this.id)
-        .delete()
-        .then(() => this.noteWriteFinished())
-        .catch(createError('error deleting ' + this));
+    try {
+      await userShapes.doc(this.id).delete();
+    } catch (err) {
+      showError({err, polygon: this}, 'Error deleting polygon');
+      throw err;
+    } finally {
+      this.noteWriteFinished(true);
+    }
   }
 }
 
@@ -232,8 +279,11 @@ StoredShapeData.State = {
 };
 Object.freeze(StoredShapeData.State);
 
-// Tracks global pending writes so that we can warn if user leaves page early.
+// Tracks global pending writes so that we can warn if user leaves page early
+// and tell user when all saves completed.
 StoredShapeData.pendingWriteCount = 0;
+
+StoredShapeData.errorCount = 0;
 
 StoredShapeData.featureGeoPoints = (feature) => isMarker(feature) ?
     [latLngToGeoPoint(feature.getPosition())] :

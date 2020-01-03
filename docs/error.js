@@ -1,17 +1,6 @@
 import {showSnackbar} from './snackbar.js';
 
-export {createError, showError};
-
-/**
- * Simple function that returns a lambda to print an error to console.
- *
- * @param {string} msg
- * @return {Function}
- */
-function createError(msg) {
-  // TODO(janakr): use some standard error library?
-  return (error) => console.error('Error ' + msg + ': ' + error);
-}
+export {showError};
 
 /**
  * Logs an error message to the console and shows a snackbar notification.

@@ -105,11 +105,6 @@ function pressPopupButton(button) {
  * @param {number} y y-coordinate of the point in Cypress's scheme.
  */
 function drawPointAndPrepareForNext(x, y) {
-  // TODO(janakr): delete these lines or uncomment them if they're needed.
-  // mouse-move on map to simulate moving to next point might be necessary?
-  // const clientX = x + 5;
-  // const clientY = y + 81;
-  // cy.get('.map').trigger('mousemove', {clientX: clientX, clientY: clientY});
   cy.get('.map').click(x, y);
 }
 
@@ -119,7 +114,8 @@ function drawPointAndPrepareForNext(x, y) {
  */
 function saveAndAwait() {
   pressPopupButton('save');
-  cy.awaitLoad(['writeWaiter']);
+  // Give some extra time for Firestore write to complete.
+  cy.get('#snackbar', {timeout: 15000}).contains('Saved');
 }
 
 /**
