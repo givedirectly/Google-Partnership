@@ -230,15 +230,9 @@ class StoredShapeData {
   async delete() {
     // Feature has been removed from map, we should delete on backend.
     userRegionData.delete(this.popup.mapFeature);
-    if (!this.id) {
-      // Even if the user creates a feature and then deletes it immediately,
-      // the creation should trigger an update that must complete before the
-      // deletion gets here. So there should always be an id.
-      showError(this, 'Unexpected error deleting. Try reloading page');
-      // Keep in sync with code in terminateWriteWithError.
-      StoredShapeData.pendingWriteCount--;
-      return Promise.resolve();
-    }
+    // Even if the user creates a feature and then deletes it immediately, the
+    // creation should trigger an update that must complete before the deletion
+    // gets here. So there should always be an id.
     // Nothing more needs to be done for this element because it is
     // unreachable and about to be GC'ed.
     try {
