@@ -15,6 +15,7 @@ const TRACT_TAG = 'TRACT';
 const SVI_TAG = 'SVI';
 // Median household income in the past 12 months.
 const INCOME_TAG = 'MEDIAN INCOME';
+const BUILDING_COUNT_TAG = 'BUILDING COUNT';
 
 /**
  * Given a dictionary of building counts per district, attach the count to each
@@ -29,7 +30,7 @@ function combineWithBuildings(featureCollection, buildingsHisto) {
   return featureCollection.map((f) => {
     const geoId = f.get(geoidTag);
     return f.set(
-        buildingCountTag,
+        BUILDING_COUNT_TAG,
         ee.Algorithms.If(
             buildingsHisto.contains(geoId), buildingsHisto.get(geoId),
             ee.Number(0)));
@@ -86,20 +87,20 @@ function combineWithDamageAndUseForBuildings(
             .filterMetadata(damageLevelsKey, 'not_equals', noDamageValue)
             .size();
     return addDamageTag(
-        f.set(buildingCountTag, totalBuildings), damagedBuildings);
+        f.set(BUILDING_COUNT_TAG, totalBuildings), damagedBuildings);
   });
 }
 
 /**
  * Sets {@link damageTag} on `feature` to `damagedBuildings / totalBuildings`,
- * where `totalBuildings` comes from the feature's {@link buildingCountTag}.
+ * where `totalBuildings` comes from the feature's {@link BUILDING_COUNT_TAG}.
  * Handles edge case of `totalBuildings` being 0.
  * @param {ee.Feature} feature
  * @param {ee.Number} damagedBuildings
  * @return {ee.Feature}
  */
 function addDamageTag(feature, damagedBuildings) {
-  const totalBuildings = feature.get(buildingCountTag);
+  const totalBuildings = feature.get(BUILDING_COUNT_TAG);
   // If no buildings, this is probably spurious. Don't give any damage. We
   // don't expect totalBuildings to be 0 in production, but it's bitten us
   // when working with partial buildings datasets. If this starts showing up
@@ -418,14 +419,14 @@ function createScoreAssetForFlexibleDisaster(
           processing, stringifyCollection(buildingCollection, buildingGeoid),
           geoidTag, buildingGeoid);
       processing = processing.map(
-          (f) => combineWithAsset(f, buildingCountTag, buildingKey));
+          (f) => combineWithAsset(f, BUILDING_COUNT_TAG, buildingKey));
     } else {
       const buildingsHisto =
           computeBuildingsHisto(buildingCollection, processing);
       processing = combineWithBuildings(processing, buildingsHisto);
     }
   } else if (!useDamageForBuildings) {
-    processing = renameProperty(processing, buildingKey, buildingCountTag);
+    processing = renameProperty(processing, buildingKey, BUILDING_COUNT_TAG);
   }
   if (damage) {
     const {damageLevelsKey, noDamageValue} = assetData;
