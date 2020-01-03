@@ -1,6 +1,6 @@
 import {getFirestoreRoot} from '../firestore_document.js';
 import {getDisaster} from '../resources.js';
-import {showSavedToast, showSavingToast} from '../toast';
+import {showSavedToast, showSavingToast} from '../toast.js';
 
 export {updateDataInFirestore};
 
