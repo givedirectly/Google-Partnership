@@ -473,9 +473,9 @@ function addLayer(layer, map) {
     case LayerType.MAP_TILES:
       return addTileLayer(map, layer);
     default:
-      createError('parsing layer type during add')(
-          '[' + layer['index'] + ']: ' + layer['asset-name'] +
-          ' not recognized layer type');
+      // No way this can actually happen, but be ready for it.
+      handleErrorLoadingLayer('Error parsing layer type during add: ' + layer['asset-type'] +
+          ' not recognized layer type', layer);
   }
 }
 
@@ -626,34 +626,41 @@ function mapLoadingFinished() {
  * Notes that an element has started loading, and add a handler to the Promise
  * to note when it finishes. Also handle errors if the Promise fails.
  * @param {Promise} promise
- * @param {Object} layerInfoForErrors Data for layer in same format as coming
- *     from Firestore. Must have `display-name` and `index` properties. Only
- *     used in case of errors.
+ * @param {Object} layerInfoForErrors See {@link handleErrorLoadingLayer}
  * @return {Promise} wrappedPromise
  */
 function wrapPromiseLoadingAware(promise, layerInfoForErrors) {
   addLoadingElement(mapContainerId);
-  const {index, 'display-name': displayName} = layerInfoForErrors;
   return promise
-      .catch((err) => {
-        const notFound = err instanceof AssetNotFoundError;
-        const message = err.message ? err.message : err;
-        showError(
-            'Error with layer ' + displayName + ', ' + message,
-            notFound ? 'EarthEngine asset for ' + displayName + ' not found' :
-                       'Error loading layer ' + displayName);
-
-        const badRow = $('#' + getCheckBoxRowId(index));
-        partiallyHandleBadRowAndReturnCheckbox(badRow).prop('disabled', true);
-        badRow.prop(
-            'title',
-            notFound ?
-                'EarthEngine asset not found. If you ' +
-                    'believe it is there, try refreshing the page' :
-                'Error showing layer. If you believe the layer is there, ' +
-                    'try refreshing the page (Error message: ' + message + ')');
-      })
+      .catch((err) => handleErrorLoadingLayer(err, layerInfoForErrors))
       .finally(mapLoadingFinished);
+}
+
+/**
+ * Shows error and disables layer if an error is encountered loading a layer.
+ * @param {string|Error} err
+ * @param {Object} layerInfoForErrors Data for layer in same format as coming
+ *     from Firestore. Must have `display-name` and `index` properties. Only
+ *     used in case of errors.
+ */
+function handleErrorLoadingLayer(err, layerInfoForErrors) {
+  const {index, 'display-name': displayName} = layerInfoForErrors;
+  const notFound = err instanceof AssetNotFoundError;
+  const message = err.message ? err.message : err;
+  showError(
+      'Error with layer ' + displayName + ', ' + message,
+      notFound ? 'EarthEngine asset for ' + displayName + ' not found' :
+          'Error loading layer ' + displayName);
+
+  const badRow = $('#' + getCheckBoxRowId(index));
+  partiallyHandleBadRowAndReturnCheckbox(badRow).prop('disabled', true);
+  badRow.prop(
+      'title',
+      notFound ?
+          'EarthEngine asset not found. If you believe it is there, try ' +
+          'refreshing the page' :
+          'Error showing layer. If you believe the layer is there, try ' +
+          'refreshing the page (Error message: ' + message + ')');
 }
 
 /**
