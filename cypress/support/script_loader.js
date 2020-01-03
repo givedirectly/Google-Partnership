@@ -4,6 +4,10 @@ import {cypressTestPropertyName, earthEngineTestTokenCookieName, firebaseTestTok
 
 export {loadScriptsBeforeForUnitTests};
 
+// Getting the scripts from local disk seems to cause flaky failures, so go via
+// server.
+const libUrl = Cypress.config().baseUrl + 'external_libs/';
+
 /**
  * Scripts that unit tests may want to load. Values have script and callback
  * attributes, and optionally an extraScripts and extraCallback attributes, when
@@ -24,15 +28,14 @@ const scriptMap = new Map([
   [
     'deck',
     {
-      script: 'https://unpkg.com/deck.gl@7.3.11/dist.min.js',
+      script: libUrl + 'deck-8.0.2.min.js',
       callback: () => typeof (deck) !== 'undefined',
     },
   ],
   [
     'ee',
     {
-      script:
-          'https://rawcdn.githack.com/google/earthengine-api/3bb86bfc4f3d9eed98220f3d225b414982915b86/javascript/build/ee_api_js_debug.js',
+      script: libUrl + 'earthengine-0.1.209.debug.js',
       callback: () => typeof (ee) !== 'undefined',
     },
   ],
@@ -52,16 +55,14 @@ const scriptMap = new Map([
   [
     'jquery',
     {
-      script:
-          'https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js',
+      script: libUrl + 'jquery-3.4.1.slim.min.js',
       callback: () => typeof ($) !== 'undefined',
     },
   ],
   [
     'jquery-ui',
     {
-      script:
-          'https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.4/jquery-ui.js',
+      script: libUrl + 'jquery-ui-1.12.1.min.js',
       callback: () =>
           typeof ($) !== 'undefined' && typeof ($().dialog) !== 'undefined',
     },
