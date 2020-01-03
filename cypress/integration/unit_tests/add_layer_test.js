@@ -16,7 +16,7 @@ describe('Unit tests for adding layers', () => {
     setAclStub = cy.stub(ee.data, 'setAssetAcl');
   });
 
-  it('processes a new feature layer with <= 25 vals', () => {
+  it.only('processes a new feature layer with <= 25 vals', () => {
     stubFeatureCollection(5);
     setDisasterAndLayers([{}, {}]);
     const rows = createTrs(2);
