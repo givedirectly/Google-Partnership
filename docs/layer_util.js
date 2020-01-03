@@ -438,7 +438,7 @@ function addLayerFromFeatures(layerDisplayData, index) {
   };
   // Don't want points to have black borders, doesn't look nice. Check the first
   // item to see if it's a point and assume the rest are the same.
-  if (layerDisplayData.data &&
+  if (layerDisplayData.data && layerDisplayData.data.length &&
       layerDisplayData.data[0].geometry.type === 'Point') {
     jsonLayerParams.getLineColor = deckParams.colorFunction;
   }

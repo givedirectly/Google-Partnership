@@ -56,7 +56,8 @@ const scriptMap = new Map([
   [
     'jquery',
     {
-      script: libUrl + 'jquery-3.4.1.min.js',
+      script:
+          'https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js',
       callback: () => typeof ($) !== 'undefined',
     },
   ],
