@@ -34,7 +34,7 @@ describe('Tests for polygon_draw.js with Firebase issues', () => {
     cy.wrap(firebase.auth().signOut());
     setUpDocumentAndReturnMap().then(
         (map) => initializeAndProcessUserRegions(
-            map, Promise.resolve({data: () => ({asset_data: {}})})));
+            map, Promise.resolve({data: () => ({assetData: {}})})));
     cy.get('[title="Draw a shape"]').should('not.exist');
     cy.get('#' + getCheckBoxRowId('user-features'))
         .should('have.css', 'text-decoration')
@@ -74,7 +74,7 @@ describe('Tests for polygon_draw.js with Firebase issues', () => {
     setUpDocumentAndReturnMap()
         .then(
             (map) => initializeAndProcessUserRegions(
-                map, Promise.resolve({data: () => ({asset_data: {}})})))
+                map, Promise.resolve({data: () => ({assetData: {}})})))
         .then(() => {
           expect(getFirestoreStub).to.be.calledOnce;
           expect(collectionStub).to.be.calledOnce;

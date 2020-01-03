@@ -1,9 +1,7 @@
-import {geoidTag} from '../property_names.js';
-
 export {createDisasterData};
-export {incomeKey, snapKey, sviKey, totalKey, BUILDING_COUNT_KEY};
+export {BUILDING_COUNT_KEY, incomeKey, snapKey, sviKey, totalKey};
 // For testing
-export {stateAssetDataTemplate, flexibleAssetData};
+export {flexibleAssetData, stateAssetDataTemplate};
 
 const snapKey = 'HD01_VD02';
 const totalKey = 'HD01_VD01';
@@ -12,7 +10,24 @@ const incomeKey = 'HD01_VD01';
 const BUILDING_COUNT_KEY = 'BUILDING COUNT';
 
 const commonAssetDataTemplate = Object.freeze({
-  damage_asset_path: null,
+  damageAssetPath: null,
+  damageLevelsKey: null,
+  noDamageValue: null,
+});
+
+const stateBasedDataTemplate = Object.freeze({
+  score_bounds_coordinates: null,
+  blockGroupAssetPaths: {},
+  snapData: {
+    paths: {},
+    snapKey,
+    totalKey,
+  },
+  sviAssetPaths: {},
+  sviKey,
+  incomeAssetPaths: {},
+  incomeKey,
+  buildingAssetPaths: {},
 });
 
 // Has all the basic fields needed for a state-based score asset to be created:
@@ -22,28 +37,17 @@ const commonAssetDataTemplate = Object.freeze({
 // TODO: should we allow users to change the columns here, on a per-disaster
 //  level? Or only as a "global" default? Or just make them modify directly in
 //  Firestore?
-const stateAssetDataTemplate = Object.freeze({...commonAssetDataTemplate, ...{
-  score_bounds_coordinates: null,
-  block_group_asset_paths: {},
-  snap_data: {
-    paths: {},
-    snap_key: snapKey,
-    total_key: totalKey,
-  },
-  svi_asset_paths: {},
-  svi_key: sviKey,
-  income_asset_paths: {},
-  income_key: incomeKey,
-  building_asset_paths: {},
-}});
+const stateAssetDataTemplate = Object.freeze(
+    {...commonAssetDataTemplate, stateBasedData: stateBasedDataTemplate});
 
-const flexibleAssetData = Object.freeze({...commonAssetDataTemplate,
-  ...{flexibleData: {}}});
+const flexibleAssetData =
+    Object.freeze({...commonAssetDataTemplate, flexibleData: {}});
 
 /**
  * Creates disaster data for a disaster with the following states, or a flexible
  * disaster if `states` is null.
- * @param {?Array<string>} states array of states (abbreviations) or null if this is not a state-based disaster
+ * @param {?Array<string>} states array of states (abbreviations) or null if
+ *     this is not a state-based disaster
  * @return {Object}
  */
 function createDisasterData(states) {
@@ -51,13 +55,18 @@ function createDisasterData(states) {
   if (states) {
     const assetData = deepCopy(stateAssetDataTemplate);
     assetData.states = states;
-    result.asset_data = assetData;
+    result.assetData = assetData;
   } else {
-    result.asset_data = deepCopy(flexibleAssetData);
+    result.assetData = deepCopy(flexibleAssetData);
   }
   return result;
 }
 
+/**
+ * Makes a deep copy of `object` using {@link JSON}.
+ * @param {Object} object A simple object (no classes)
+ * @return {Object} Deep copy of `object`
+ */
 function deepCopy(object) {
   return JSON.parse(JSON.stringify(object));
 }

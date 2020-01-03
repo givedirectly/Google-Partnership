@@ -76,7 +76,7 @@ let hasDamageAsset;
  */
 function setUpToggles(disasterMetadataPromise, map) {
   return disasterMetadataPromise.then((doc) => {
-    hasDamageAsset = !!doc.data()['asset_data']['damage_asset_path'];
+    hasDamageAsset = !!doc.data().assetData['damageAssetPath'];
     if (hasDamageAsset) {
       toggles.set(damageThresholdKey, 0.5);
       toggles.set(povertyWeightKey, 0.5);

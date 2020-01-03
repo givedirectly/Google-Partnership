@@ -21,7 +21,7 @@ function createMap(firebasePromise) {
   const {map, searchBox} = createBasicMap(document.getElementById('map'));
 
   firebasePromise.then((doc) => {
-    const mapBounds = doc.data()['map-bounds'];
+    const {mapBounds} = doc.data();
     map.fitBounds(new google.maps.LatLngBounds(
         new google.maps.LatLng(geoPointToLatLng(mapBounds.sw)),
         new google.maps.LatLng(geoPointToLatLng(mapBounds.ne))));

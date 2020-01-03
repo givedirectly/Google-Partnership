@@ -1,8 +1,9 @@
 import {blockGroupTag, damageTag, geoidTag, povertyHouseholdsTag, povertyPercentageTag, totalHouseholdsTag} from '../property_names.js';
 import {getBackupScoreAssetPath, getScoreAssetPath} from '../resources.js';
+
 import {computeAndSaveBounds} from './center.js';
-import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
 import {BUILDING_COUNT_KEY} from './create_disaster_lib.js';
+import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
 
 export {
   createScoreAssetForFlexibleDisaster,
@@ -280,28 +281,30 @@ function setMapBoundsInfo(message) {
 function createScoreAssetForStateBasedDisaster(
     disasterData, setMapBoundsInfoFunction = setMapBoundsInfo) {
   setStatus('');
-  const assetData = disasterData['asset_data'];
-  const states = assetData['states'];
-  const blockGroupPaths = assetData['block_group_asset_paths'];
-  const snapData = assetData['snap_data'];
-  const snapPaths = snapData['paths'];
-  const snapKey = snapData['snap_key'];
-  const totalKey = snapData['total_key'];
-  const sviPaths = assetData['svi_asset_paths'];
-  const sviKey = assetData['svi_key'];
-  const incomePaths = assetData['income_asset_paths'];
-  const incomeKey = assetData['income_key'];
-  // If we switch to CrowdAI data, this will change.
-  const buildingPaths = assetData['building_asset_paths'];
+  const {assetData: {stateBasedData}} = disasterData;
+  const {
+    states,
+    blockGroupAssetPaths,
+    snapData,
+    snapKey,
+    totalKey,
+    sviPaths,
+    sviKey,
+    incomePaths,
+    incomeKey,
+    buildingAssetPaths,
+  } = stateBasedData;
+  const snapPaths = snapData.paths;
+  // If we switch to CrowdAI data, building asset paths will change.
   const {damage, damageEnvelope} =
-      calculateDamage(assetData, setMapBoundsInfoFunction);
+      calculateDamage(stateBasedData, setMapBoundsInfoFunction);
   let allStatesProcessing = ee.FeatureCollection([]);
   for (const state of states) {
     const snapPath = snapPaths[state];
     const sviPath = sviPaths[state];
     const incomePath = incomePaths[state];
-    const buildingPath = buildingPaths[state];
-    const blockGroupPath = blockGroupPaths[state];
+    const buildingPath = buildingAssetPaths[state];
+    const blockGroupPath = blockGroupAssetPaths[state];
 
     const stateGroups =
         ee.FeatureCollection(blockGroupPath).filterBounds(damageEnvelope);
@@ -380,7 +383,7 @@ function createScoreAssetForStateBasedDisaster(
 function createScoreAssetForFlexibleDisaster(
     disasterData, setMapBoundsInfoFunction = setMapBoundsInfo) {
   setStatus('');
-  const assetData = disasterData['asset_data'];
+  const {assetData} = disasterData;
   const {damage, damageEnvelope} =
       calculateDamage(assetData, setMapBoundsInfoFunction);
   const {flexibleData} = assetData;
@@ -534,12 +537,12 @@ const damageBuffer = 1000;
  *     both null if an error occurs
  */
 function calculateDamage(assetData, setMapBoundsInfo) {
-  const damagePath = assetData['damage_asset_path'];
+  const {damageAssetPath} = assetData;
   let geometry;
   let damage = null;
   let damageEnvelope;
-  if (damagePath) {
-    damage = ee.FeatureCollection(damagePath);
+  if (damageAssetPath) {
+    damage = ee.FeatureCollection(damageAssetPath);
     // Uncomment to test with a restricted damage set (14 block groups' worth).
     // damage = damage.filterBounds(
     //     ee.FeatureCollection('users/gd/2017-harvey/data-ms-as-nod')
@@ -547,9 +550,9 @@ function calculateDamage(assetData, setMapBoundsInfo) {
     geometry = damage.geometry();
     damageEnvelope = damage.geometry().buffer(damageBuffer);
   } else {
-    const scoreBounds = assetData['score_bounds_coordinates'];
+    const {scoreBoundsCoordinates} = assetData;
     const coordinates = [];
-    scoreBounds.forEach(
+    scoreBoundsCoordinates.forEach(
         (geopoint) => coordinates.push(geopoint.longitude, geopoint.latitude));
     damageEnvelope = ee.Geometry.Polygon(coordinates);
     geometry = damageEnvelope;

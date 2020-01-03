@@ -2,10 +2,7 @@ import {legacyStateDir} from '../../../docs/ee_paths.js';
 import * as ErrorLib from '../../../docs/error.js';
 import * as FirestoreDocument from '../../../docs/firestore_document.js';
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
-import {
-  flexibleAssetData,
-  stateAssetDataTemplate
-} from '../../../docs/import/create_disaster_lib.js';
+import {flexibleAssetData, stateAssetDataTemplate} from '../../../docs/import/create_disaster_lib.js';
 import {disasterData} from '../../../docs/import/manage_disaster';
 import {addDisaster, deleteDisaster, writeNewDisaster} from '../../../docs/import/manage_disaster.js';
 import {createOptionFrom} from '../../../docs/import/manage_layers.js';
@@ -43,9 +40,9 @@ describe('Add/delete-related tests for manage_disaster.js', () => {
           expect(success).to.be.true;
           expect(createFolderStub).to.be.calledThrice;
           expect(setAclsStub).to.be.calledThrice;
-          expect($('#status').is(':visible')).to.be.false;
-          expect(disasterData.get(id)['layers']).to.eql([]);
-          expect(disasterData.get(id)['asset_data']['states']).to.eql(states);
+          expect($('#status').is(':visible')).is.false;
+          expect(disasterData.get(id).layers).to.eql([]);
+          expect(disasterData.get(id).assetData).has.property('states', states);
           const disasterPicker = $('#disaster-dropdown');
           const options = disasterPicker.children();
           expect(options).to.have.length(3);
@@ -81,16 +78,15 @@ describe('Add/delete-related tests for manage_disaster.js', () => {
           const assetDataClone = Object.assign({}, stateAssetDataTemplate);
           assetDataClone.states = states;
           expect(data['layers']).to.eql([]);
-          expect(data['asset_data']).to.eql(assetDataClone);
+          const assetData = {data};
+          expect(assetData).to.eql(assetDataClone);
           // Sanity-check structure.
-          expect(data['asset_data']['snap_data']['paths']).to.not.be.null;
+          expect(assetData.snapData.paths).to.not.be.null;
+          expect(assetData).to.have.property('damageLevelsKey', null);
         });
   });
 
   it.only('writes a flexible disaster to firestore', () => {
-    const elt = {};
-    elt.attr = {};
-    expect(elt).to.have.deep.property('attr', {});
     cy.document().then((doc) => {
       const year = doc.createElement('input');
       doc.body.appendChild(year);
@@ -102,12 +98,15 @@ describe('Add/delete-related tests for manage_disaster.js', () => {
       doc.body.appendChild(flexible);
       flexible.id = 'disaster-type-flexible';
       flexible.type = 'radio';
-      cy.stub(document, 'getElementById').callsFake((id) => doc.getElementById(id));
+      cy.stub(document, 'getElementById')
+          .callsFake((id) => doc.getElementById(id));
     });
 
     cy.get('#year').type('9999');
     cy.get('#name').type('myname');
-    cy.get('#disaster-type-flexible').check().then(addDisaster)
+    cy.get('#disaster-type-flexible')
+        .check()
+        .then(addDisaster)
         .then((success) => {
           expect(success).to.be.true;
           expect(createFolderStub).to.be.calledOnce;
@@ -120,15 +119,17 @@ describe('Add/delete-related tests for manage_disaster.js', () => {
         .then((doc) => {
           expect(doc.exists).to.be.true;
           const data = doc.data();
-          expect(data['layers']).to.eql([]);
-          expect(data['asset_data']).to.eql(flexibleAssetData);
+          expect(data.layers).to.eql([]);
+          const {assetData} = data;
+          expect(assetData).to.eql(flexibleAssetData);
           // Sanity-check structure.
-          expect(data['asset_data']).to.not.have.property('snap_data');
+          expect(assetData).to.not.have.property('snapData');
           // For some reason, to.have.deep.property('flexibleData', {}) fails.
-          expect(data['asset_data'].flexibleData).to.eql({});
-          expect(data['asset_data']).to.have.deep.property('flexibleData', {});
-
-        })
+          // Seems to be fixed in Chai 4, but Cypress still on 3.5.
+          expect(assetData.flexibleData).to.eql({});
+          expect(assetData).to.have.property('damageAssetPath', null);
+          expect(assetData).to.have.property('damageLevelsKey', null);
+        });
   });
 
   it('tries to write a disaster id that already exists', () => {
