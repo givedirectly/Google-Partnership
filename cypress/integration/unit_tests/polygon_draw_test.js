@@ -55,9 +55,8 @@ describe('Unit test for ShapeData', () => {
     // Stub out map updates, not useful for us.
     cy.stub(Loading, 'addLoadingElement');
     cy.stub(Loading, 'loadingElementFinished');
-    const toastStub = cy.stub(Toast, 'showToastMessage');
-    saveStartedStub = toastStub.withArgs('Saving...', -1);
-    saveFinishedStub = toastStub.withArgs('Saved');
+    saveStartedStub = cy.stub(Toast, 'showSavingToast');
+    saveFinishedStub = cy.stub(Toast, 'showSavedToast');
     // Default polygon intersects feature1 and feature2, not feature3.
     const feature1 = ee.Feature(
         ee.Geometry.Polygon(0, 0, 0, 10, 10, 10, 10, 0),
@@ -442,27 +441,57 @@ describe('Unit test for ShapeData', () => {
           .callsFake((callback) => callback(null, 'Error evaluating list'));
       return returnValue;
     };
-    doUnsuccessfulDrawThenSuccess(() => {});
+    doUnsuccessfulDraw();
+    doSuccessfulDrawAfterFailure();
   });
 
   it('handles Firestore error', () => {
     const docStub = cy.stub(userShapes, 'doc').returns({
       set: cy.stub().throws(new Error('Some Firebase error')),
     });
-    doUnsuccessfulDrawThenSuccess(() => docStub.restore());
+    doUnsuccessfulDraw().then(() => docStub.restore());
+    doSuccessfulDrawAfterFailure();
+  });
+
+  it('handles error then other polygon success then success', () => {
+    const docStub = cy.stub(userShapes, 'doc').returns({
+      set: cy.stub().throws(new Error('Some Firebase error')),
+    });
+    const toastStub =
+        cy.stub(Toast, 'showToastMessage')
+            .withArgs(
+                'Latest save succeeded, but there are still 1 feature(s) not ' +
+                'saved');
+    const confirmStub = cy.stub(window, 'confirm').returns(true);
+    doUnsuccessfulDraw().then(() => docStub.restore());
+    // Draw a new polygon. It saves successfully, but doesn't say everything ok.
+    drawPolygon(
+        [{lat: -0.5, lng: -0.5}, {lat: 0, lng: 0}, {lat: -0.5, lng: 0}]);
+    assertWriteStartedAndGetPromise().then(() => {
+      expect(toastStub).to.be.calledOnce;
+      toastStub.resetHistory();
+    });
+    // Now delete second polygon, as an extra test and to make later assertions
+    // about Firestore contents true :)
+    // Found through unpleasant trial and error.
+    cy.get('#test-map-div').click(300, 470);
+    pressPopupButton('delete');
+    assertWriteStartedAndGetPromise().then(() => {
+      expect(toastStub).to.be.calledOnce;
+      expect(confirmStub).to.be.calledOnce;
+    });
+    // Try to save first polygon again: succeeds.
+    doSuccessfulDrawAfterFailure();
   });
 
   /**
-   * Tries to draw a polygon, expects failure on the save, calls
-   * `lambdaAfterFailure`, then tries to save the polygon with a modified path
-   * and expects success.
-   *
-   * @param {Function} lambdaAfterFailure Function to call after failure, to
-   *     undo whatever setup the test did to trigger a failure
+   * Tries to draw a polygon, expects failure on the save.
+   * @return {Cypress.Chainable<void>}
    */
-  function doUnsuccessfulDrawThenSuccess(lambdaAfterFailure) {
+  function doUnsuccessfulDraw() {
     const errorStub = cy.stub(ErrorLib, 'showError');
-    drawPolygon()
+    cy.wrap(errorStub).as('errorStub');
+    return drawPolygon()
         .then(
             () => currentUpdatePromise.then(
                 (result) => {
@@ -476,13 +505,19 @@ describe('Unit test for ShapeData', () => {
           saveStartedStub.resetHistory();
           expect(saveFinishedStub).to.not.be.called;
           expect(StoredShapeData.pendingWriteCount).to.eql(0);
-          lambdaAfterFailure();
           return userShapes.get();
         })
         .then((querySnapshot) => {
           expect(querySnapshot).to.have.property('size', 0);
           expect(querySnapshot.docs).to.be.empty;
         });
+  }
+
+  /**
+   * Tries to save a polygon originally created with {@link doUnsuccessfulDraw}
+   * with a modified path and expects success.
+   */
+  function doSuccessfulDrawAfterFailure() {
     const newPath = JSON.parse(JSON.stringify(path));
     cy.get('#test-map-div').click();
     pressPopupButton('edit').then(() => {
@@ -491,7 +526,9 @@ describe('Unit test for ShapeData', () => {
       getFirstFeature().setPath(newPath);
     });
     pressPopupButton('save');
-    waitForWriteToFinish().then(() => expect(errorStub).to.not.be.called);
+    waitForWriteToFinish();
+    cy.get('@errorStub')
+        .then((errorStub) => expect(errorStub).to.not.be.called);
     assertOnFirestoreAndPopup(newPath);
   }
 
@@ -679,22 +716,8 @@ describe('Unit test for ShapeData', () => {
   }
 
   /**
-   * Expects that a write started, then the current update promise finishes,
-   * then the write finishes, all during the Cypress phase of execution. Note
-   * that we don't just read {@link currentUpdatePromise} when this function is
-   * called, because the Cypress events will happen after the entire test's code
-   * has been executed. For instance, suppose we have the following code:
-   *
-   *   pressPopupButton('save');
-   *   waitForWriteToFinish().then(console.log);
-   *   console.log(currentUpdatePromise);
-   *
-   * This will first print null (from the third line), then print a promise
-   * (from the second line), because when the third line is executed, Cypress
-   * has not actually pressed the 'save' button yet. Only after all lines are
-   * executed does Cypress go back and execute its pending commands. When that
-   * happens, this function will retrieve the value of currentUpdatePromise,
-   * which will be the promise returned from {@link StoredShapeData#update}.
+   * Calls {@link assertWriteStartedAndGetPromise} and then asserts that
+   * the write finishes.
    * @return {Cypress.Chainable}
    */
   function waitForWriteToFinish() {
@@ -707,6 +730,33 @@ describe('Unit test for ShapeData', () => {
           expect(saveFinishedStub).to.be.calledOnce;
           saveFinishedStub.resetHistory();
         });
+  }
+
+  /**
+   * Expects that a write started, then returns the current update promise,
+   * during the Cypress phase of execution. Note that we don't just read
+   * {@link currentUpdatePromise} when this function is called, because the
+   * Cypress events will happen after the entire test's code has been executed.
+   * For instance, suppose we have the following code:
+   *
+   *   pressPopupButton('save');
+   *   assertWriteStartedAndGetPromise().then(console.log);
+   *   console.log(currentUpdatePromise);
+   *
+   * This will first print null (from the third line), then print a promise
+   * (from the second line), because when the third line is executed, Cypress
+   * has not actually pressed the 'save' button yet. Only after all lines are
+   * executed does Cypress go back and execute its pending commands. When that
+   * happens, this function will retrieve the value of currentUpdatePromise,
+   * which will be the promise returned from {@link StoredShapeData#update}.
+   * @return {Cypress.Chainable}
+   */
+  function assertWriteStartedAndGetPromise() {
+    return cyQueue(() => {
+      expect(saveStartedStub).to.be.calledOnce;
+      saveStartedStub.resetHistory();
+      return currentUpdatePromise;
+    });
   }
 });
 

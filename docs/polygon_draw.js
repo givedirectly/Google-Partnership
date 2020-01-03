@@ -10,11 +10,11 @@ import {latLngToGeoPoint, polygonToGeoPointArray, transformGeoPointArrayToLatLng
 import {createPopup, isMarker, setUpPopup} from './popup.js';
 import {povertyHouseholdsTag, totalHouseholdsTag} from './property_names.js';
 import {getScoreAssetPath} from './resources.js';
+import {showSavedToast, showSavingToast} from './toast';
 import {showToastMessage} from './toast.js';
 import {userRegionData} from './user_region_data.js';
 
 export {displayCalculatedData, initializeAndProcessUserRegions};
-
 // For testing.
 export {
   StoredShapeData,
@@ -51,11 +51,31 @@ class StoredShapeData {
     this.state = StoredShapeData.State.SAVED;
   }
 
-  /** Decrements write count and pops up 'Saved' message. */
-  noteWriteFinished() {
-    // Keep in sync with code in terminateWriteWithError.
+  /**
+   * Decrements write count and pops up 'Saved' message if all writes done.
+   * @param {boolean} success True if this write succeeded
+   */
+  noteWriteFinished(success) {
     StoredShapeData.pendingWriteCount--;
-    showToastMessage('Saved');
+    if (success) {
+      if (this.errorSaving) {
+        this.errorSaving = false;
+        StoredShapeData.errorCount--;
+      }
+    } else {
+      if (!this.errorSaving) {
+        this.errorSaving = true;
+        StoredShapeData.errorCount++;
+      }
+    }
+    if (StoredShapeData.errorCount === 0 &&
+        StoredShapeData.pendingWriteCount === 0) {
+      showSavedToast();
+    } else if (StoredShapeData.pendingWriteCount === 0 && success) {
+      showToastMessage(
+          'Latest save succeeded, but there are still ' +
+          StoredShapeData.errorCount + ' feature(s) not saved');
+    }
   }
 
   /**
@@ -75,7 +95,7 @@ class StoredShapeData {
       this.state = StoredShapeData.State.QUEUED_WRITE;
       return null;
     }
-    showToastMessage('Saving...', -1);
+    showSavingToast();
     StoredShapeData.pendingWriteCount++;
     return this.updateWithoutStatusChange();
   }
@@ -105,7 +125,7 @@ class StoredShapeData {
         // Because Javascript is single-threaded, during the execution of this
         // method, no additional queued writes can have accumulated. So we don't
         // need to check for them.
-        this.noteWriteFinished();
+        this.noteWriteFinished(true);
       }
 
       return Promise.resolve();
@@ -166,7 +186,7 @@ class StoredShapeData {
         err,
         'Error ' + message +
             '. Try editing the shape and saving again: ' + err.message);
-    StoredShapeData.pendingWriteCount--;
+    this.noteWriteFinished(false);
     this.state = StoredShapeData.State.SAVED;
     throw err;
   }
@@ -213,7 +233,7 @@ class StoredShapeData {
     this.state = StoredShapeData.State.SAVED;
     switch (oldState) {
       case StoredShapeData.State.WRITING:
-        this.noteWriteFinished();
+        this.noteWriteFinished(true);
         return Promise.resolve();
       case StoredShapeData.State.QUEUED_WRITE:
         return this.updateWithoutStatusChange();
@@ -241,7 +261,7 @@ class StoredShapeData {
       showError({err, polygon: this}, 'Error deleting polygon');
       throw err;
     } finally {
-      this.noteWriteFinished();
+      this.noteWriteFinished(true);
     }
   }
 }
@@ -260,8 +280,11 @@ StoredShapeData.State = {
 };
 Object.freeze(StoredShapeData.State);
 
-// Tracks global pending writes so that we can warn if user leaves page early.
+// Tracks global pending writes so that we can warn if user leaves page early
+// and tell user when all saves completed.
 StoredShapeData.pendingWriteCount = 0;
+
+StoredShapeData.errorCount = 0;
 
 StoredShapeData.featureGeoPoints = (feature) => isMarker(feature) ?
     [latLngToGeoPoint(feature.getPosition())] :
