@@ -44,8 +44,7 @@ describe('Unit tests for adding layers', () => {
           expect(scoopsColumn['min']).to.equal(0);
           expect(scoopsColumn['values']).to.eql(['0', '1', '2', '3', '4']);
           expect($('#tbody').children('tr').length).to.equal(3);
-          expect($('#color-fxn-editor').prop('style').display)
-              .to.equal('block');
+          expect($('#color-fxn-editor').css('display')).to.equal('block');
         });
   });
 

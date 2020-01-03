@@ -425,7 +425,7 @@ function addLayerFromFeatures(layerDisplayData, index) {
     deckParams.colorFunction =
         createStyleFunction(deckParams.colorFunctionProperties);
   }
-  deckGlArray[index] = new deck.GeoJsonLayer({
+  const jsonLayerParams = {
     id: layerDisplayData.deckParams.deckId + '-' + index,
     data: layerDisplayData.data,
     pointRadiusMinPixels: 1,
@@ -435,7 +435,14 @@ function addLayerFromFeatures(layerDisplayData, index) {
     // https://deck.gl/#/documentation/deckgl-api-reference/layers/geojson-layer?section=getelevation-function-number-optional-transition-enabled
     getFillColor: deckParams.colorFunction,
     visible: layerDisplayData.displayed,
-  });
+  };
+  // Don't want points to have black borders, doesn't look nice. Check the first
+  // item to see if it's a point and assume the rest are the same.
+  if (layerDisplayData.data && layerDisplayData.data.length &&
+      layerDisplayData.data[0].geometry.type === 'Point') {
+    jsonLayerParams.getLineColor = deckParams.colorFunction;
+  }
+  deckGlArray[index] = new deck.GeoJsonLayer(jsonLayerParams);
   redrawLayers();
 }
 
