@@ -43,11 +43,11 @@ const scriptMap = new Map([
   [
     'firebase',
     {
-      script: 'https://www.gstatic.com/firebasejs/6.3.3/firebase-app.js',
+      script: libUrl + 'firebase-app-7.6.1.js',
       callback: () => typeof (firebase) != 'undefined',
       extraScripts: [
-        'https://www.gstatic.com/firebasejs/6.3.3/firebase-firestore.js',
-        'https://www.gstatic.com/firebasejs/7.2.1/firebase-auth.js',
+        libUrl + 'firebase-firestore-7.6.1.js',
+        libUrl + 'firebase-auth-7.6.1.js',
       ],
       extraCallback: () => typeof (firebase.firestore) != 'undefined' &&
           typeof (firebase.auth) != 'undefined',
