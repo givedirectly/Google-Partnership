@@ -10,8 +10,7 @@ import {latLngToGeoPoint, polygonToGeoPointArray, transformGeoPointArrayToLatLng
 import {createPopup, isMarker, setUpPopup} from './popup.js';
 import {povertyHouseholdsTag, totalHouseholdsTag} from './property_names.js';
 import {getScoreAssetPath} from './resources.js';
-import {showSavedToast, showSavingToast} from './toast';
-import {showToastMessage} from './toast.js';
+import {showSavedToast, showSavingToast, showToastMessage} from './toast.js';
 import {userRegionData} from './user_region_data.js';
 
 export {displayCalculatedData, initializeAndProcessUserRegions};
