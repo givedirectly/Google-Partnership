@@ -4,15 +4,20 @@
   "type": "module",
   "license": "MIT",
   "scripts": {
-    "start": "node --experimental_modules token_server.js"
+    "start": "node -r esm token_server.js",
+    "start-12": "node --experimental_modules token_server.js"
   },
   "engines": {
-    "node": "12.x.x"
+    "node": ">=10"
   },
   "dependencies": {
+    "aws-sdk": "^2.596.0",
+    "esm": "^3.2.25",
+    "fs": "^0.0.1-security",
     "google-auth-library": "^5.7.0",
+    "googleapis": "^46.0.0",
     "http": "^0.0.0",
-    "urlencoded-body-parser": "^3.0.0",
-    "googleapis": "^46.0.0"
+    "tmp": "^0.1.0",
+    "urlencoded-body-parser": "^3.0.0"
   }
 }
