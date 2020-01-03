@@ -234,7 +234,9 @@ class StoredShapeData {
       // Even if the user creates a feature and then deletes it immediately,
       // the creation should trigger an update that must complete before the
       // deletion gets here. So there should always be an id.
-      console.error('Unexpected: feature to be deleted had no id: ', this);
+      showError(this, 'Unexpected error deleting. Try reloading page');
+      // Keep in sync with code in terminateWriteWithError.
+      StoredShapeData.pendingWriteCount--;
       return Promise.resolve();
     }
     // Nothing more needs to be done for this element because it is
