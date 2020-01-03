@@ -3,7 +3,7 @@ import {CompositeImageMapType} from './composite_image_map_type.js';
 import {mapContainerId} from './dom_constants.js';
 import {terrainStyle} from './earth_engine_asset.js';
 import {AssetNotFoundError, getEePromiseForFeatureCollection, transformEarthEngineFailureMessage} from './ee_promise_cache.js';
-import {createError, showError} from './error.js';
+import {showError} from './error.js';
 import {colorMap, createStyleFunction, LayerType} from './firebase_layers.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 
@@ -474,8 +474,10 @@ function addLayer(layer, map) {
       return addTileLayer(map, layer);
     default:
       // No way this can actually happen, but be ready for it.
-      handleErrorLoadingLayer('Error parsing layer type during add: ' + layer['asset-type'] +
-          ' not recognized layer type', layer);
+      handleErrorLoadingLayer(
+          'Error parsing layer type during add: ' + layer['asset-type'] +
+              ' not recognized layer type',
+          layer);
   }
 }
 
@@ -650,7 +652,7 @@ function handleErrorLoadingLayer(err, layerInfoForErrors) {
   showError(
       'Error with layer ' + displayName + ', ' + message,
       notFound ? 'EarthEngine asset for ' + displayName + ' not found' :
-          'Error loading layer ' + displayName);
+                 'Error loading layer ' + displayName);
 
   const badRow = $('#' + getCheckBoxRowId(index));
   partiallyHandleBadRowAndReturnCheckbox(badRow).prop('disabled', true);
@@ -658,9 +660,9 @@ function handleErrorLoadingLayer(err, layerInfoForErrors) {
       'title',
       notFound ?
           'EarthEngine asset not found. If you believe it is there, try ' +
-          'refreshing the page' :
+              'refreshing the page' :
           'Error showing layer. If you believe the layer is there, try ' +
-          'refreshing the page (Error message: ' + message + ')');
+              'refreshing the page (Error message: ' + message + ')');
 }
 
 /**
