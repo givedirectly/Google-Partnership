@@ -35,7 +35,7 @@ const scriptMap = new Map([
   [
     'ee',
     {
-      script: libUrl + 'earthengine-0.1.209.debug.js',
+      script: 'https://rawcdn.githack.com/google/earthengine-api/3bb86bfc4f3d9eed98220f3d225b414982915b86/javascript/build/ee_api_js_debug.js',
       callback: () => typeof (ee) !== 'undefined',
     },
   ],
@@ -55,7 +55,7 @@ const scriptMap = new Map([
   [
     'jquery',
     {
-      script: libUrl + 'jquery-3.4.1.slim.min.js',
+      script: libUrl + 'jquery-3.4.1.min.js',
       callback: () => typeof ($) !== 'undefined',
     },
   ],

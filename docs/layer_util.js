@@ -434,6 +434,7 @@ function addLayerFromFeatures(layerDisplayData, index) {
     // automatically color the features, but it doesn't appear to work:
     // https://deck.gl/#/documentation/deckgl-api-reference/layers/geojson-layer?section=getelevation-function-number-optional-transition-enabled
     getFillColor: deckParams.colorFunction,
+    getLineColor: deckParams.colorFunction,
     visible: layerDisplayData.displayed,
   });
   redrawLayers();
