@@ -4,7 +4,7 @@ import {sidebarDatasetsId, tableContainerId} from './dom_constants.js';
 import {drawTable} from './draw_table.js';
 import {AssetNotFoundError, getEePromiseForFeatureCollection} from './ee_promise_cache.js';
 import {showError} from './error.js';
-import {getLinearGradient} from './import/color_function_util.js';
+import {getLinearGradient} from './firebase_layers.js';
 import {addLayer, addNullLayer, addScoreLayer, scoreLayerName, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from './layer_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {initializeAndProcessUserRegions} from './polygon_draw.js';
