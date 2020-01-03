@@ -366,11 +366,6 @@ async function writeNewDisaster(disasterId, states) {
     return false;
   }
   clearStatus();
-  const currentData = createDisasterData(states);
-  disasterData.set(disasterId, currentData);
-  // We know there are no assets in folder yet.
-  disasterAssets.set(disasterId, Promise.resolve(new Map()));
-
   const eeFolderPromises =
       [getCreateFolderPromise(eeLegacyPathPrefix + disasterId)];
   states.forEach(
@@ -386,6 +381,8 @@ async function writeNewDisaster(disasterId, states) {
     showError('Error creating EarthEngine folders: "' + err + tailError);
     return false;
   }
+
+  const currentData = createDisasterData(states);
   try {
     await disasterCollectionReference().doc(disasterId).set(currentData);
   } catch (err) {
@@ -393,6 +390,11 @@ async function writeNewDisaster(disasterId, states) {
     showError('Error writing to Firestore: "' + message + tailError);
     return false;
   }
+
+  disasterData.set(disasterId, currentData);
+  // We know there are no assets in folder yet.
+  disasterAssets.set(disasterId, Promise.resolve(new Map()));
+
   const disasterPicker = $('#disaster-dropdown');
   let added = false;
   // We expect this recently created disaster to go near the top of the list, so
@@ -425,7 +427,7 @@ function getCreateFolderPromise(dir) {
   return new Promise(
       (resolve, reject) =>
           ee.data.createFolder(dir, false, (result, failure) => {
-            if (failure) {
+            if (failure && !failure.startsWith('Cannot overwrite asset ')) {
               reject(failure);
               return;
             }
@@ -531,10 +533,8 @@ function initializeScoreSelectors(states, stateAssets) {
   }
 
   // For each asset type, add select for all assets for each state.
-  for (const {idStem,
-              propertyPath,
-              expectedColumns,
-              geometryExpected} of scoreAssetTypes) {
+  for (const {idStem, propertyPath, expectedColumns, geometryExpected} of
+           scoreAssetTypes) {
     const id = assetSelectionRowPrefix + idStem;
     const row = $('#' + id);
     removeAllButFirstFromRow(row);

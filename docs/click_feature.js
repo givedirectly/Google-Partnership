@@ -1,6 +1,5 @@
-import {tableHeadings} from './draw_table.js';
 import {currentFeatures, highlightFeatures} from './highlight_features.js';
-import {blockGroupTag, geoidTag} from './property_names.js';
+import {blockGroupTag, geoidTag, scoreTag} from './property_names.js';
 
 export {clickFeature, selectHighlightedFeatures};
 
@@ -47,6 +46,12 @@ function clickFeature(lng, lat, map, featuresAsset, tableSelector) {
   });
 }
 
+const HIDDEN_PROPERTIES = Object.freeze(new Set([
+  geoidTag,
+  blockGroupTag,
+  scoreTag,
+]));
+
 /**
  * Puts the information for a blockgroup into a div.
  * @param {Feature} feature post-evaluate JSON feature
@@ -70,10 +75,11 @@ function createHtmlForPopup(feature, rowData) {
     property.innerText = 'SCORE: ' + rowData[2];
     properties.appendChild(property);
   }
-  for (let col = 3; col < tableHeadings.length; col++) {
-    const heading = tableHeadings[col];
+  for (let [heading, value] of Object.entries(feature.properties)) {
+    if (HIDDEN_PROPERTIES.has(heading)) {
+      continue;
+    }
     const property = document.createElement('li');
-    let value = feature.properties[heading];
     if (heading.endsWith(' PERCENTAGE')) {
       value = parseFloat(value).toFixed(3);
     }

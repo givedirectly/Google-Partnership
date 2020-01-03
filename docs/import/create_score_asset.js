@@ -1,4 +1,4 @@
-import {blockGroupTag, buildingCountTag, damageTag, geoidTag, incomeTag, snapPercentageTag, snapPopTag, sviTag, totalPopTag, tractTag} from '../property_names.js';
+import {blockGroupTag, damageTag, geoidTag, povertyHouseholdsTag, povertyPercentageTag, totalHouseholdsTag} from '../property_names.js';
 import {getBackupScoreAssetPath, getScoreAssetPath} from '../resources.js';
 import {computeAndSaveBounds} from './center.js';
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
@@ -10,6 +10,11 @@ export {
 };
 // For testing.
 export {backUpAssetAndStartTask};
+
+const TRACT_TAG = 'TRACT';
+const SVI_TAG = 'SVI';
+// Median household income in the past 12 months.
+const INCOME_TAG = 'MEDIAN INCOME';
 
 /**
  * Given a dictionary of building counts per district, attach the count to each
@@ -158,11 +163,11 @@ function combineWithSnap(feature, snapKey, totalKey) {
         snapFeature.get(censusGeoidKey),
         blockGroupTag,
         snapFeature.get(censusBlockGroupKey),
-        snapPopTag,
-        snapPop,
-        totalPopTag,
-        totalPop,
-        snapPercentageTag,
+        povertyHouseholdsTag,
+        convertToNumber(snapFeature.get(snapKey)),
+        totalHouseholdsTag,
+        convertToNumber(ee.Number.parse(snapFeature.get(totalKey))),
+        povertyPercentageTag,
         snapPercentage,
       ]));
 }
@@ -228,7 +233,7 @@ function renameProperty(featureCollection, property, newProperty) {
  * @return {ee.Feature}
  */
 function addTractInfo(feature) {
-  return feature.set(tractTag, ee.String(feature.get(geoidTag)).slice(0, -1));
+  return feature.set(TRACT_TAG, ee.String(feature.get(geoidTag)).slice(0, -1));
 }
 
 /**
@@ -311,16 +316,16 @@ function createScoreAssetForStateBasedDisaster(
       // Join with income.
       processing = innerJoin(processing, incomePath, geoidTag, censusGeoidKey);
       processing =
-          processing.map((f) => combineWithAsset(f, incomeTag, incomeKey));
+          processing.map((f) => combineWithAsset(f, INCOME_TAG, incomeKey));
     }
     if (sviPath) {
       // Join with SVI (data is at the tract level).
       processing = processing.map(addTractInfo);
 
-      processing = innerJoin(processing, sviPath, tractTag, cdcGeoidKey);
+      processing = innerJoin(processing, sviPath, TRACT_TAG, cdcGeoidKey);
       // Remove tract tag from final feature.
       processing = processing.map(
-          (f) => combineWithAsset(f, sviTag, sviKey).set(tractTag, null));
+          (f) => combineWithAsset(f, SVI_TAG, sviKey).set(TRACT_TAG, null));
     }
 
     if (buildingPath) {

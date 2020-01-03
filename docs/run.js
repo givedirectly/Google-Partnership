@@ -100,10 +100,13 @@ function createAndDisplayJoinedData(map, initialTogglesValuesPromise) {
   // clear old listeners
   google.maps.event.removeListener(mapSelectListener);
   google.maps.event.removeListener(featureSelectListener);
+  const dataPromise = resolvedScoreAsset.then(getEePromiseForFeatureCollection);
+  dataPromise.catch(
+      (err) =>
+          showError(err, 'Error retrieving score asset. Try reloading page'));
   const processedData = processJoinedData(
-      resolvedScoreAsset.then(getEePromiseForFeatureCollection), scalingFactor,
-      initialTogglesValuesPromise);
-  addScoreLayer(processedData);
+      dataPromise, scalingFactor, initialTogglesValuesPromise);
+  addScoreLayer(processedData.then(({featuresList}) => featuresList));
   maybeCheckScoreCheckbox();
   drawTableAndSetUpHandlers(processedData, map);
 }
@@ -111,7 +114,7 @@ function createAndDisplayJoinedData(map, initialTogglesValuesPromise) {
 /**
  * Invokes {@link drawTable} with the appropriate callbacks to set up click
  * handlers for the map.
- * @param {Promise<Array<GeoJson.Feature>>} processedData
+ * @param {Promise<Array<GeoJsonFeature>>} processedData
  * @param {google.maps.Map} map
  */
 function drawTableAndSetUpHandlers(processedData, map) {
