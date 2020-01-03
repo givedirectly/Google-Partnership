@@ -87,7 +87,7 @@ const optionalWarningPrefix = '; warning: created asset will be missing ';
  *  getting a less accurate damage percentage count.
  */
 function validateUserFields() {
-  const states = disasterData.get(getDisaster()).states;
+  const states = disasterData.get(getDisaster())['asset_data'].states;
   /**
    * Holds missing assets, as arrays. Each array has the display name of the
    * asset type, and, if this is a multistate disaster, a string indicating
@@ -250,7 +250,7 @@ function onSetDisaster() {
   processedCurrentDisasterStateAssets = false;
   processedCurrentDisasterSelfAssets = false;
   const scoreBoundsPath = getElementFromPath(scoreCoordinatesPath);
-  const states = disasterData.get(currentDisaster).states;
+  const states = disasterData.get(currentDisaster)['asset_data'].states;
   scoreBoundsMap.initialize(
       scoreBoundsPath ? transformGeoPointArrayToLatLng(scoreBoundsPath) : null,
       states);
@@ -331,10 +331,16 @@ function deleteDisaster() {
 function addDisaster() {
   const year = $('#year').val();
   const name = $('#name').val();
-  const states = $('#states').val();
+  let states = $('#states').val();
 
-  if (!year || !name || !states) {
-    setStatus('Error: Disaster name, year, and states are required.');
+  if (!year || !name) {
+    setStatus('Error: Disaster name and year are required.');
+    return Promise.resolve(false);
+  }
+  if ($('#disaster-type-flexible').val()) {
+    states = null;
+  } else if (!states) {
+    setStatus('Error: states are required for Census-based disaster.');
     return Promise.resolve(false);
   }
   if (isNaN(year)) {
@@ -356,7 +362,7 @@ function addDisaster() {
  * writing to EarthEngine or Firestore. Tells the user in all failure cases.
  *
  * @param {string} disasterId of the form <year>-<name>
- * @param {Array<string>} states array of state (abbreviations)
+ * @param {?Array<string>} states array of states (abbreviations) or null if this is not a state-based disaster
  * @return {Promise<boolean>} Returns true if EarthEngine folders created
  *     successfully and Firestore write was successful
  */
@@ -368,9 +374,11 @@ async function writeNewDisaster(disasterId, states) {
   clearStatus();
   const eeFolderPromises =
       [getCreateFolderPromise(eeLegacyPathPrefix + disasterId)];
-  states.forEach(
-      (state) => eeFolderPromises.push(
-          getCreateFolderPromise(legacyStateDir + '/' + state)));
+  if (states) {
+    states.forEach(
+        (state) => eeFolderPromises.push(
+            getCreateFolderPromise(legacyStateDir + '/' + state)));
+  }
 
   const tailError = '" You can try refreshing the page';
   // Wait on EE folder creation to do the Firestore write, since if folder

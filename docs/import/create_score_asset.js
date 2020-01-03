@@ -2,6 +2,7 @@ import {blockGroupTag, damageTag, geoidTag, povertyHouseholdsTag, povertyPercent
 import {getBackupScoreAssetPath, getScoreAssetPath} from '../resources.js';
 import {computeAndSaveBounds} from './center.js';
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
+import {BUILDING_COUNT_KEY} from './create_disaster_lib.js';
 
 export {
   createScoreAssetForFlexibleDisaster,
@@ -15,7 +16,6 @@ const TRACT_TAG = 'TRACT';
 const SVI_TAG = 'SVI';
 // Median household income in the past 12 months.
 const INCOME_TAG = 'MEDIAN INCOME';
-const BUILDING_COUNT_TAG = 'BUILDING COUNT';
 
 /**
  * Given a dictionary of building counts per district, attach the count to each
@@ -30,7 +30,7 @@ function combineWithBuildings(featureCollection, buildingsHisto) {
   return featureCollection.map((f) => {
     const geoId = f.get(geoidTag);
     return f.set(
-        BUILDING_COUNT_TAG,
+        BUILDING_COUNT_KEY,
         ee.Algorithms.If(
             buildingsHisto.contains(geoId), buildingsHisto.get(geoId),
             ee.Number(0)));
@@ -87,20 +87,20 @@ function combineWithDamageAndUseForBuildings(
             .filterMetadata(damageLevelsKey, 'not_equals', noDamageValue)
             .size();
     return addDamageTag(
-        f.set(BUILDING_COUNT_TAG, totalBuildings), damagedBuildings);
+        f.set(BUILDING_COUNT_KEY, totalBuildings), damagedBuildings);
   });
 }
 
 /**
  * Sets {@link damageTag} on `feature` to `damagedBuildings / totalBuildings`,
- * where `totalBuildings` comes from the feature's {@link BUILDING_COUNT_TAG}.
+ * where `totalBuildings` comes from the feature's {@link BUILDING_COUNT_KEY}.
  * Handles edge case of `totalBuildings` being 0.
  * @param {ee.Feature} feature
  * @param {ee.Number} damagedBuildings
  * @return {ee.Feature}
  */
 function addDamageTag(feature, damagedBuildings) {
-  const totalBuildings = feature.get(BUILDING_COUNT_TAG);
+  const totalBuildings = feature.get(BUILDING_COUNT_KEY);
   // If no buildings, this is probably spurious. Don't give any damage. We
   // don't expect totalBuildings to be 0 in production, but it's bitten us
   // when working with partial buildings datasets. If this starts showing up
@@ -280,8 +280,8 @@ function setMapBoundsInfo(message) {
 function createScoreAssetForStateBasedDisaster(
     disasterData, setMapBoundsInfoFunction = setMapBoundsInfo) {
   setStatus('');
-  const states = disasterData['states'];
   const assetData = disasterData['asset_data'];
+  const states = assetData['states'];
   const blockGroupPaths = assetData['block_group_asset_paths'];
   const snapData = assetData['snap_data'];
   const snapPaths = snapData['paths'];
@@ -419,14 +419,14 @@ function createScoreAssetForFlexibleDisaster(
           processing, stringifyCollection(buildingCollection, buildingGeoid),
           geoidTag, buildingGeoid);
       processing = processing.map(
-          (f) => combineWithAsset(f, BUILDING_COUNT_TAG, buildingKey));
+          (f) => combineWithAsset(f, BUILDING_COUNT_KEY, buildingKey));
     } else {
       const buildingsHisto =
           computeBuildingsHisto(buildingCollection, processing);
       processing = combineWithBuildings(processing, buildingsHisto);
     }
   } else if (!useDamageForBuildings) {
-    processing = renameProperty(processing, buildingKey, BUILDING_COUNT_TAG);
+    processing = renameProperty(processing, buildingKey, BUILDING_COUNT_KEY);
   }
   if (damage) {
     const {damageLevelsKey, noDamageValue} = assetData;

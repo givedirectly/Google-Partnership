@@ -2,7 +2,10 @@ import {legacyStateDir} from '../../../docs/ee_paths.js';
 import * as ErrorLib from '../../../docs/error.js';
 import * as FirestoreDocument from '../../../docs/firestore_document.js';
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
-import {assetDataTemplate} from '../../../docs/import/create_disaster_lib.js';
+import {
+  flexibleAssetData,
+  stateAssetDataTemplate
+} from '../../../docs/import/create_disaster_lib.js';
 import {disasterData} from '../../../docs/import/manage_disaster';
 import {addDisaster, deleteDisaster, writeNewDisaster} from '../../../docs/import/manage_disaster.js';
 import {createOptionFrom} from '../../../docs/import/manage_layers.js';
@@ -42,7 +45,7 @@ describe('Add/delete-related tests for manage_disaster.js', () => {
           expect(setAclsStub).to.be.calledThrice;
           expect($('#status').is(':visible')).to.be.false;
           expect(disasterData.get(id)['layers']).to.eql([]);
-          expect(disasterData.get(id)['states']).to.eql(states);
+          expect(disasterData.get(id)['asset_data']['states']).to.eql(states);
           const disasterPicker = $('#disaster-dropdown');
           const options = disasterPicker.children();
           expect(options).to.have.length(3);
@@ -75,12 +78,57 @@ describe('Add/delete-related tests for manage_disaster.js', () => {
         .then((doc) => {
           expect(doc.exists).to.be.true;
           const data = doc.data();
-          expect(data['states']).to.eql(states);
+          const assetDataClone = Object.assign({}, stateAssetDataTemplate);
+          assetDataClone.states = states;
           expect(data['layers']).to.eql([]);
-          expect(data['asset_data']).to.eql(assetDataTemplate);
+          expect(data['asset_data']).to.eql(assetDataClone);
           // Sanity-check structure.
           expect(data['asset_data']['snap_data']['paths']).to.not.be.null;
         });
+  });
+
+  it.only('writes a flexible disaster to firestore', () => {
+    const elt = {};
+    elt.attr = {};
+    expect(elt).to.have.deep.property('attr', {});
+    cy.document().then((doc) => {
+      const year = doc.createElement('input');
+      doc.body.appendChild(year);
+      year.id = 'year';
+      const name = doc.createElement('input');
+      doc.body.appendChild(name);
+      name.id = 'name';
+      const flexible = doc.createElement('input');
+      doc.body.appendChild(flexible);
+      flexible.id = 'disaster-type-flexible';
+      flexible.type = 'radio';
+      cy.stub(document, 'getElementById').callsFake((id) => doc.getElementById(id));
+    });
+
+    cy.get('#year').type('9999');
+    cy.get('#name').type('myname');
+    cy.get('#disaster-type-flexible').check().then(addDisaster)
+        .then((success) => {
+          expect(success).to.be.true;
+          expect(createFolderStub).to.be.calledOnce;
+          expect(setAclsStub).to.be.calledOnce;
+          return getFirestoreRoot()
+              .collection('disaster-metadata')
+              .doc('9999-myname')
+              .get();
+        })
+        .then((doc) => {
+          expect(doc.exists).to.be.true;
+          const data = doc.data();
+          expect(data['layers']).to.eql([]);
+          expect(data['asset_data']).to.eql(flexibleAssetData);
+          // Sanity-check structure.
+          expect(data['asset_data']).to.not.have.property('snap_data');
+          // For some reason, to.have.deep.property('flexibleData', {}) fails.
+          expect(data['asset_data'].flexibleData).to.eql({});
+          expect(data['asset_data']).to.have.deep.property('flexibleData', {});
+
+        })
   });
 
   it('tries to write a disaster id that already exists', () => {
