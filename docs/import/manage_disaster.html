@@ -50,6 +50,13 @@
     <form action="" id="new-disaster-form">
       <label for="name">Disaster Name: </label><input id="name"><label for="name"><i> ex: harvey</i></label><br>
       <label for="year">Disaster Year: </label><input id="year"><label for="year"><i> ex: 2017</i></label><br>
+      Will you be using U.S. Census data for this disaster? If not, you will have to provide
+      a poverty dataset in an appropriate format.<br/>
+      <input type="radio" name="disaster-type" id="disaster-type-census" value="census" checked>
+      <label for="disaster-type-census">U.S. Census data available</label>
+      <input type="radio" name="disaster-type" id="disaster-type-flexible" value="flexible">
+      <label for="disaster-type-flexible">No U.S. Census data available: I will provide an appropriate dataset</label><br/>
+
       <!-- TODO(#207): support us territory data sets and add them here -->
       <label for="states">State(s): </label><select multiple="multiple" id="states">
       <option value="AL">Alabama</option>
