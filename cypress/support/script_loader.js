@@ -35,7 +35,8 @@ const scriptMap = new Map([
   [
     'ee',
     {
-      script: 'https://rawcdn.githack.com/google/earthengine-api/3bb86bfc4f3d9eed98220f3d225b414982915b86/javascript/build/ee_api_js_debug.js',
+      script:
+          'https://rawcdn.githack.com/google/earthengine-api/3bb86bfc4f3d9eed98220f3d225b414982915b86/javascript/build/ee_api_js_debug.js',
       callback: () => typeof (ee) !== 'undefined',
     },
   ],
