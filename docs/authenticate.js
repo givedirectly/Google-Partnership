@@ -128,7 +128,8 @@ class Authenticator {
    * functionality of browsers.
    */
   navigateToSignInPage() {
-    this.gapiInitDone.getPromise().then(doSignIn);
+    alert('would be here');
+    // this.gapiInitDone.getPromise().then(doSignIn);
   }
 
   /**
