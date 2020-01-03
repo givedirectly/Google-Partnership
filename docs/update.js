@@ -114,7 +114,7 @@ function createToggles(map) {
 
   // threshold toggles
   const thresholdTitle = document.createElement('div');
-  thresholdTitle.className = 'form-title';
+  thresholdTitle.className = 'content-title';
   thresholdTitle.innerText = 'thresholds';
   form.appendChild(thresholdTitle);
   form.appendChild(createInput(povertyThresholdKey));
@@ -126,7 +126,7 @@ function createToggles(map) {
     const weightInputDiv = document.createElement('div');
     weightInputDiv.className = 'input-container';
     const weightTitle = document.createElement('div');
-    weightTitle.className = 'form-title';
+    weightTitle.className = 'content-title';
     weightTitle.innerText = 'weights';
     weightInputDiv.appendChild(weightTitle);
 
