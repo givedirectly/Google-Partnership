@@ -70,7 +70,7 @@ describe('Unit tests for manage_layers page', () => {
     cy.get('[id="asset/with/empty/geometry"]').should('be.disabled');
   });
 
-  it.only('has racing disaster asset populates', () => {
+  it('has racing disaster asset populates', () => {
     const disaster = 'disaster';
     const otherDisaster = 'other';
     const fc =

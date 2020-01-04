@@ -304,6 +304,8 @@ let processedCurrentDisasterSelfAssets = false;
  */
 function getAssetsAndPopulateDisasterPicker(disaster) {
   processedCurrentDisasterSelfAssets = false;
+  // This will be immediately overwritten if promise below is already done.
+  setUpDisasterPicker(disaster);
   return getDisasterAssetsFromEe(disaster).then((assets) => {
     if (disaster === getDisaster() && !processedCurrentDisasterSelfAssets) {
       populateDisasterAssetPicker(disaster, assets);
