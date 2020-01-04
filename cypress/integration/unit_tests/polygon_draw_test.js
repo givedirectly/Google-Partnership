@@ -481,6 +481,8 @@ describe('Unit test for ShapeData', () => {
       expect(toastStub).to.be.calledOnce;
       expect(confirmStub).to.be.calledOnce;
     });
+    // Page jumps around a bit, give it a chance to settle.
+    cy.wait(100);
     // Try to save first polygon again: succeeds.
     doSuccessfulDrawAfterFailure();
   });
