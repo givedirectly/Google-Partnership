@@ -86,7 +86,7 @@ const optionalWarningPrefix = '; warning: created asset will be missing ';
  *  getting a less accurate damage percentage count.
  */
 function validateUserFields() {
-  const {states} = disasterData.get(getDisaster()).assetData;
+  const {states} = disasterData.get(getDisaster()).assetData.stateBasedData;
   /**
    * Holds missing assets, as arrays. Each array has the display name of the
    * asset type, and, if this is a multistate disaster, a string indicating
@@ -249,7 +249,7 @@ function onSetDisaster() {
   processedCurrentDisasterStateAssets = false;
   processedCurrentDisasterSelfAssets = false;
   const scoreBoundsPath = getElementFromPath(scoreCoordinatesPath);
-  const {states} = disasterData.get(currentDisaster).assetData;
+  const {states} = disasterData.get(currentDisaster).assetData.stateBasedData;
   if (!states) {
     setStatus('Flexible disasters not yet supported.');
     return Promise.resolve();
@@ -480,32 +480,32 @@ function toggleState(known) {
 const scoreAssetTypes = [
   {
     idStem: 'poverty',
-    propertyPath: ['snapData', 'paths'],
+    propertyPath: ['stateBasedData', 'snapData', 'paths'],
     displayName: 'Poverty',
     expectedColumns: [censusGeoidKey, censusBlockGroupKey, snapKey, totalKey],
   },
   {
     idStem: 'income',
-    propertyPath: ['incomeAssetPaths'],
+    propertyPath: ['stateBasedData', 'incomeAssetPaths'],
     displayName: 'Income',
     expectedColumns: [censusGeoidKey, incomeKey],
   },
   {
     idStem: 'svi',
-    propertyPath: ['sviAssetPaths'],
+    propertyPath: ['stateBasedData', 'sviAssetPaths'],
     displayName: 'SVI',
     expectedColumns: [cdcGeoidKey, sviKey],
   },
   {
     idStem: 'tiger',
-    propertyPath: ['blockGroupAssetPaths'],
+    propertyPath: ['stateBasedData', 'blockGroupAssetPaths'],
     displayName: 'Census TIGER Shapefiles',
     expectedColumns: [tigerGeoidKey],
     geometryExpected: true,
   },
   {
     idStem: 'buildings',
-    propertyPath: ['buildingAssetPaths '],
+    propertyPath: ['stateBasedData', 'buildingAssetPaths'],
     displayName: 'Microsoft Building Shapefiles',
     expectedColumns: [],
     geometryExpected: true,

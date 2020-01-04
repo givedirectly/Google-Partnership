@@ -281,28 +281,27 @@ function setMapBoundsInfo(message) {
 function createScoreAssetForStateBasedDisaster(
     disasterData, setMapBoundsInfoFunction = setMapBoundsInfo) {
   setStatus('');
-  const {assetData: {stateBasedData}} = disasterData;
+  const {assetData} = disasterData;
+  const {stateBasedData} = assetData;
   const {
     states,
     blockGroupAssetPaths,
     snapData,
-    snapKey,
-    totalKey,
-    sviPaths,
+    sviAssetPaths,
     sviKey,
-    incomePaths,
+    incomeAssetPaths,
     incomeKey,
     buildingAssetPaths,
   } = stateBasedData;
-  const snapPaths = snapData.paths;
+  const {paths: snapPaths, snapKey, totalKey} = snapData;
   // If we switch to CrowdAI data, building asset paths will change.
   const {damage, damageEnvelope} =
-      calculateDamage(stateBasedData, setMapBoundsInfoFunction);
+      calculateDamage(assetData, setMapBoundsInfoFunction);
   let allStatesProcessing = ee.FeatureCollection([]);
   for (const state of states) {
     const snapPath = snapPaths[state];
-    const sviPath = sviPaths[state];
-    const incomePath = incomePaths[state];
+    const sviPath = sviAssetPaths[state];
+    const incomePath = incomeAssetPaths[state];
     const buildingPath = buildingAssetPaths[state];
     const blockGroupPath = blockGroupAssetPaths[state];
 

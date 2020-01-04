@@ -58,29 +58,31 @@ describe('Unit tests for create_score_asset.js', () => {
     // with corresponding changes to test data (but no production changes). The
     // state must be real.
     testData = {
-      states: ['NY'],
       assetData: {
         damageAssetPath: damageData,
-        blockGroupAssetPaths: {
-          NY: tigerBlockGroups,
-        },
-        snapData: {
-          paths: {
-            NY: snapData,
+        stateBasedData: {
+          states: ['NY'],
+          blockGroupAssetPaths: {
+            NY: tigerBlockGroups,
           },
-          snapKey: 'test_snap_key',
-          totalKey: 'test_total_key',
-        },
-        sviAssetPaths: {
-          NY: sviData,
-        },
-        sviKey: 'test_svi_key',
-        incomeAssetPaths: {
-          NY: incomeData,
-        },
-        incomeKey: 'testIncomeKey',
-        buildingAssetPaths: {
-          NY: buildingsCollection,
+          snapData: {
+            paths: {
+              NY: snapData,
+            },
+            snapKey: 'test_snap_key',
+            totalKey: 'test_total_key',
+          },
+          sviAssetPaths: {
+            NY: sviData,
+          },
+          sviKey: 'test_svi_key',
+          incomeAssetPaths: {
+            NY: incomeData,
+          },
+          incomeKey: 'testIncomeKey',
+          buildingAssetPaths: {
+            NY: buildingsCollection,
+          },
         },
       },
     };
@@ -158,9 +160,10 @@ describe('Unit tests for create_score_asset.js', () => {
   });
 
   it('handles non-numeric median income valuess', () => {
-    testData.assetData.incomeAssetPaths.NY = ee.FeatureCollection(
-        [makeIncomeGroup('360', '250,000+'), makeIncomeGroup('361', '-')]);
-    testData.assetData.snapData.paths.NY = ee.FeatureCollection(
+    testData.assetData.stateBasedData.incomeAssetPaths.NY =
+        ee.FeatureCollection(
+            [makeIncomeGroup('360', '250,000+'), makeIncomeGroup('361', '-')]);
+    testData.assetData.stateBasedData.snapData.paths.NY = ee.FeatureCollection(
         [makeSnapGroup('360', 10, 15), makeSnapGroup('361', 10, 15)]);
     const promise = createScoreAssetForStateBasedDisaster(testData);
     expect(promise).to.not.be.null;
@@ -179,8 +182,8 @@ describe('Unit tests for create_score_asset.js', () => {
   });
 
   it('handles no svi/income assets', () => {
-    testData.assetData.incomeAssetPaths = {};
-    testData.assetData.sviAssetPaths = {};
+    testData.assetData.stateBasedData.incomeAssetPaths = {};
+    testData.assetData.stateBasedData.sviAssetPaths = {};
     const promise = createScoreAssetForStateBasedDisaster(testData);
     expect(promise).to.not.be.null;
     cy.wrap(promise)
@@ -197,7 +200,7 @@ describe('Unit tests for create_score_asset.js', () => {
   });
 
   it('handles no buildings asset when damage missing', () => {
-    testData.assetData.buildingAssetPaths = {};
+    testData.assetData.stateBasedData.buildingAssetPaths = {};
     testData.assetData.damageAssetPath = null;
     setScoreBoundsCoordinates();
     const promise = createScoreAssetForStateBasedDisaster(testData);
@@ -280,9 +283,9 @@ describe('Unit tests for create_score_asset.js', () => {
           [ee.Feature(null, basicFlexiblePovertyAttributes)]),
       povertyGeoid: 'GEOid2',
       districtDescriptionKey: 'GEOdescription',
-      geographyPath: assetData.blockGroupAssetPaths.NY,
+      geographyPath: assetData.stateBasedData.blockGroupAssetPaths.NY,
       geographyGeoid: 'GEOID',
-      buildingPath: assetData.buildingAssetPaths.NY,
+      buildingPath: assetData.stateBasedData.buildingAssetPaths.NY,
     };
     return assetData.flexibleData;
   }
@@ -378,7 +381,7 @@ describe('Unit tests for create_score_asset.js', () => {
 
   /** Sets `assetData.score_bounds_coordinates` to a square. */
   function setScoreBoundsCoordinates() {
-    testData.assetData.score_bounds_coordinates = [
+    testData.assetData.scoreBoundsCoordinates = [
       createGeoPoint(0.39, 0.49),
       createGeoPoint(13, 0.49),
       createGeoPoint(13, 11),

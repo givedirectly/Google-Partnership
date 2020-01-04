@@ -296,9 +296,10 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     // Validate that score data was correctly written
     readFirestoreAfterWritesFinish().then((doc) => {
       const {assetData} = doc.data();
+      console.log(assetData);
       expect(assetData.damageAssetPath).to.be.null;
-      expect(assetData.sviAssetPaths).to.eql({'NY': 'state2'});
-      expect(assetData.snapData.paths).to.eql({'NY': null});
+      expect(assetData.stateBasedData.sviAssetPaths).to.eql({'NY': 'state2'});
+      expect(assetData.stateBasedData.snapData.paths).to.eql({'NY': null});
     });
   });
 
@@ -351,8 +352,8 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     const missingSnapPath = 'whereisasset';
     const data = setUpDefaultData();
     data.assetData.damageAssetPath = 'pathnotfound';
-    data.assetData.snapData.paths.NY = missingSnapPath;
-    data.assetData.score_bounds_coordinates = null;
+    data.assetData.stateBasedData.snapData.paths.NY = missingSnapPath;
+    data.assetData.scoreBoundsCoordinates = null;
     callEnableWhenReady(data);
     cy.get('#process-button').should('be.disabled');
     // Everything is missing, even though we have values stored.
@@ -363,7 +364,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     // Data wasn't actually in Firestore before, but checking that it was
     // written on a different change shows we're not silently overwriting it.
     readFirestoreAfterWritesFinish().then(
-        (doc) => expect(doc.data().assetData.snapData.paths.NY)
+        (doc) => expect(doc.data().assetData.stateBasedData.snapData.paths.NY)
                      .to.eql(missingSnapPath));
   });
 
@@ -577,7 +578,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
    */
   function setUpDefaultData() {
     const currentData = createDisasterData(['NY']);
-    currentData.assetData.score_bounds_coordinates = scoreBoundsCoordinates.map(
+    currentData.assetData.scoreBoundsCoordinates = scoreBoundsCoordinates.map(
         (latlng) => new firebase.firestore.GeoPoint(latlng.lat, latlng.lng));
     const assets = new Map();
     for (let i = 0; i <= 4; i++) {

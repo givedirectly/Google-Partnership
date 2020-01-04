@@ -28,6 +28,7 @@ const stateBasedDataTemplate = Object.freeze({
   incomeAssetPaths: {},
   incomeKey,
   buildingAssetPaths: {},
+  states: null,
 });
 
 // Has all the basic fields needed for a state-based score asset to be created:
@@ -54,7 +55,7 @@ function createDisasterData(states) {
   const result = {layers: []};
   if (states) {
     const assetData = deepCopy(stateAssetDataTemplate);
-    assetData.states = states;
+    assetData.stateBasedData.states = states;
     result.assetData = assetData;
   } else {
     result.assetData = deepCopy(flexibleAssetData);
