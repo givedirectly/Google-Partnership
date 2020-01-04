@@ -399,7 +399,7 @@ function doSignIn(extraOptions = {}) {
  *
  * @param {gapi.auth2.GoogleUser} googleUser
  * @return {Promise<gapi.auth2.AuthResponse>} Promise that completes when
- *     authentication is done with the authorization response
+ *     authentication is done with the original gapi authorization response
  */
 function authenticateToFirebase(googleUser) {
   initializeFirebase();

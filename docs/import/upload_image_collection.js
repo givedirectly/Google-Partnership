@@ -60,6 +60,10 @@ async function submitFiles(e) {
   // Build up a dictionary of already uploaded images so we don't do extra work
   // uploading or importing, and can tell the user what to delete.
   const gcsItems = await gcsListingPromise;
+  // This map's keys are the "munged" file names, with EE illegal characters
+  // replaced: because replaceEarthEngineIllegalCharacters is not invertible, if
+  // we stored original names here, we couldn't tell if EE had the corresponding
+  // file without iterating over all entries.
   const fileStatuses = new Map();
   // First put all elements from GCS into map, then go over EE and
   // overwrite.
