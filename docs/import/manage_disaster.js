@@ -427,7 +427,7 @@ async function writeNewDisaster(disasterId, states) {
   disasterPicker.val(disasterId).trigger('change');
   return true;
 }
- 
+
 /**
  * Returns a promise that resolves on the creation of the given folder.
  * TODO: add status bar for when this is finished.
