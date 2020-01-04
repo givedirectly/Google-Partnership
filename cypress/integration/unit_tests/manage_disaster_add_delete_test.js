@@ -86,7 +86,7 @@ describe('Add/delete-related tests for manage_disaster.js', () => {
         });
   });
 
-  it.only('writes a flexible disaster to firestore', () => {
+  it('writes a flexible disaster to firestore', () => {
     cy.document().then((doc) => {
       const year = doc.createElement('input');
       doc.body.appendChild(year);

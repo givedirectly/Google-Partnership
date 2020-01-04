@@ -379,7 +379,7 @@ describe('Unit tests for create_score_asset.js', () => {
     });
   });
 
-  /** Sets `assetData.score_bounds_coordinates` to a square. */
+  /** Sets `assetData.scoreBoundsCoordinates` to a square. */
   function setScoreBoundsCoordinates() {
     testData.assetData.scoreBoundsCoordinates = [
       createGeoPoint(0.39, 0.49),
