@@ -102,12 +102,12 @@ describe('Unit test for ShapeData', () => {
     return cy.get('[title="Draw a shape"]');
   }
 
-  it('Adds polygon', () => {
+  xit('Adds polygon', () => {
     drawPolygonAndClickOnIt();
     pressPopupButton('close');
   });
 
-  it('Updates notes and shape', () => {
+  xit('Updates notes and shape', () => {
     drawPolygonAndClickOnIt();
     pressPopupButton('edit');
     // Clone path and edit.
@@ -118,12 +118,12 @@ describe('Unit test for ShapeData', () => {
     assertOnFirestoreAndPopup(newPath, withNotes(notes));
   });
 
-  it('Deletes polygon', () => {
+  xit('Deletes polygon', () => {
     drawPolygonAndClickOnIt();
     deletePolygon(cy.stub(window, 'confirm').returns(true));
   });
 
-  it('Almost deletes, then deletes', () => {
+  xit('Almost deletes, then deletes', () => {
     drawPolygonAndClickOnIt();
     let confirmValue = false;
     const confirmStub =
@@ -162,14 +162,14 @@ describe('Unit test for ShapeData', () => {
         });
   }
 
-  it('Draws a polygon, clicks it, closes its info box', () => {
+  xit('Draws a polygon, clicks it, closes its info box', () => {
     drawPolygonAndClickOnIt();
     pressPopupButton('close');
     cy.get('#test-map-div').contains('damage count');
     cy.get('#test-map-div').contains('damage count').should('not.be.visible');
   });
 
-  it('Draws a polygon, almost closes while editing', () => {
+  xit('Draws a polygon, almost closes while editing', () => {
     const confirmStub = cy.stub(window, 'confirm').returns(false);
     drawPolygonAndClickOnIt();
     pressPopupButton('edit');
@@ -181,7 +181,7 @@ describe('Unit test for ShapeData', () => {
     assertOnFirestoreAndPopup(path, withNotes(notes));
   });
 
-  it('Draws a polygon, closes while editing', () => {
+  xit('Draws a polygon, closes while editing', () => {
     const confirmStub = cy.stub(window, 'confirm').returns(true);
     drawPolygonAndClickOnIt();
     pressPopupButton('edit');
@@ -193,7 +193,7 @@ describe('Unit test for ShapeData', () => {
     assertOnFirestoreAndPopup(path);
   });
 
-  it('Closes while editing reverts polygon changes', () => {
+  xit('Closes while editing reverts polygon changes', () => {
     const newPath = JSON.parse(JSON.stringify(path));
     newPath[0].lng = 0.5;
     const confirmStub = cy.stub(window, 'confirm').returns(true);
@@ -208,7 +208,7 @@ describe('Unit test for ShapeData', () => {
     assertOnFirestoreAndPopup(path);
   });
 
-  it('Updates while update pending', () => {
+  xit('Updates while update pending', () => {
     let fakeCalled = false;
     drawPolygonAndClickOnIt().then(() => {
       currentUpdatePromise = null;
