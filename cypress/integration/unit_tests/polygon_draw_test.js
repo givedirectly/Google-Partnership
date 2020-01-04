@@ -533,7 +533,7 @@ describe('Unit test for ShapeData', () => {
     assertOnFirestoreAndPopup(newPath);
   }
 
-  it('Absence of damage asset tolerated', () => {
+  xit('Absence of damage asset tolerated', () => {
     cy.wrap(initializeAndProcessUserRegions(map, Promise.resolve({
       data: () => ({assetData: {damageAssetPath: null}}),
     })));
@@ -544,7 +544,7 @@ describe('Unit test for ShapeData', () => {
     assertOnFirestoreAndPopup(path, expectedData);
   });
 
-  it('Hides polygon, re-shows, tries to hide during edit', () => {
+  xit('Hides polygon, re-shows, tries to hide during edit', () => {
     const alertStub = cy.stub(window, 'alert');
     drawPolygonAndClickOnIt().then(
         () => expect(getFirstFeatureVisibility()).to.be.true);
@@ -583,52 +583,57 @@ describe('Unit test for ShapeData', () => {
     cy.get('#test-map-div').contains(newNotes).should('not.be.visible');
   });
 
-  it('Hides, draws new one, tries to hide during edit, re-shows, hides', () => {
-    const alertStub = cy.stub(window, 'alert');
-    drawPolygonAndClickOnIt().then(
-        () => expect(getFirstFeatureVisibility()).to.be.true);
-    pressPopupButton('edit');
-    cy.get('.notes').type(notes);
-    pressButtonAndWaitForPromise('save');
-    cy.get('#test-map-div').contains(notes).should('be.visible');
-    setUserFeatureVisibilityInCypressAndAssert(false, true);
-    const otherPath =
-        [{lng: -0.5, lat: 0.5}, {lng: -0.25, lat: 0}, {lng: -0.25, lat: 0.5}];
-    drawPolygon(otherPath);
-    waitForWriteToFinish();
-    cy.get('#test-map-div').click(200, 300);
-    pressPopupButton('edit');
-    const newNotes = 'new notes';
-    cy.get('.notes').type(newNotes);
-    // Try to re-check the box. It will fail because we're editing.
-    setUserFeatureVisibilityInCypressAndAssert(true, false).then(() => {
-      expect(alertStub).to.be.calledOnce;
-      alertStub.resetHistory();
-      expect([...userRegionData.keys()][1].getVisible()).to.be.true;
-    });
+  xit('Hides, draws new one, tries to hide during edit, re-shows, hides',
+      () => {
+        const alertStub = cy.stub(window, 'alert');
+        drawPolygonAndClickOnIt().then(
+            () => expect(getFirstFeatureVisibility()).to.be.true);
+        pressPopupButton('edit');
+        cy.get('.notes').type(notes);
+        pressButtonAndWaitForPromise('save');
+        cy.get('#test-map-div').contains(notes).should('be.visible');
+        setUserFeatureVisibilityInCypressAndAssert(false, true);
+        const otherPath = [
+          {lng: -0.5, lat: 0.5},
+          {lng: -0.25, lat: 0},
+          {lng: -0.25, lat: 0.5},
+        ];
+        drawPolygon(otherPath);
+        waitForWriteToFinish();
+        cy.get('#test-map-div').click(200, 300);
+        pressPopupButton('edit');
+        const newNotes = 'new notes';
+        cy.get('.notes').type(newNotes);
+        // Try to re-check the box. It will fail because we're editing.
+        setUserFeatureVisibilityInCypressAndAssert(true, false).then(() => {
+          expect(alertStub).to.be.calledOnce;
+          alertStub.resetHistory();
+          expect([...userRegionData.keys()][1].getVisible()).to.be.true;
+        });
 
-    // Save the new notes and check the box, this time it succeeds.
-    pressButtonAndWaitForPromise('save');
-    setUserFeatureVisibilityInCypressAndAssert(true, true).then(() => {
-      expect(alertStub).to.not.be.called;
-      for (const polygon of userRegionData.keys()) {
-        expect(polygon.getVisible()).to.be.true;
-      }
-    });
-    // We can click on the old polygon and view its notes,
-    cy.get('#test-map-div').click();
-    cy.get('#test-map-div').contains(notes).should('be.visible');
-    // And the new polygon and view its notes.
-    cy.get('#test-map-div').click(200, 300);
-    cy.get('#test-map-div').contains(newNotes).should('be.visible');
+        // Save the new notes and check the box, this time it succeeds.
+        pressButtonAndWaitForPromise('save');
+        setUserFeatureVisibilityInCypressAndAssert(true, true).then(() => {
+          expect(alertStub).to.not.be.called;
+          for (const polygon of userRegionData.keys()) {
+            expect(polygon.getVisible()).to.be.true;
+          }
+        });
+        // We can click on the old polygon and view its notes,
+        cy.get('#test-map-div').click();
+        cy.get('#test-map-div').contains(notes).should('be.visible');
+        // And the new polygon and view its notes.
+        cy.get('#test-map-div').click(200, 300);
+        cy.get('#test-map-div').contains(newNotes).should('be.visible');
 
-    // Now hide both polygons, and verify that they're really gone.
-    setUserFeatureVisibilityInCypressAndAssert(false, true);
-    cy.get('#test-map-div').contains(notes).should('not.be.visible');
-    // Notes is invisible even if we click on the polygon, so it's really gone.
-    cy.get('#test-map-div').click(200, 300);
-    cy.get('#test-map-div').contains(newNotes).should('not.be.visible');
-  });
+        // Now hide both polygons, and verify that they're really gone.
+        setUserFeatureVisibilityInCypressAndAssert(false, true);
+        cy.get('#test-map-div').contains(notes).should('not.be.visible');
+        // Notes is invisible even if we click on the polygon, so it's really
+        // gone.
+        cy.get('#test-map-div').click(200, 300);
+        cy.get('#test-map-div').contains(newNotes).should('not.be.visible');
+      });
 
   /**
    * Draws a polygon with the given path, waits for it to save to Firestore,
