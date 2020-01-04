@@ -1,18 +1,17 @@
-import {Authenticator} from '../authenticate.js';
-import {eeLegacyPathPrefix, gdEePathPrefix} from '../ee_paths.js';
+import {eeLegacyPathPrefix} from '../ee_paths.js';
 import {getDisaster} from '../resources.js';
-import {TaskAccumulator} from '../task_accumulator.js';
+import {listEeAssets} from './ee_utils.js';
+import {transformEarthEngineFailureMessage} from '../ee_promise_cache.js';
+import {showError} from '../error.js';
 
-export {taskAccumulator};
+export {setUpAllHeaders};
 
-const earthEngineAssetBase = gdEePathPrefix + getDisaster();
-const earthEnginePrefix = eeLegacyPathPrefix + earthEngineAssetBase;
+const EARTH_ENGINE_PREFIX = eeLegacyPathPrefix;
 
 const BUCKET = 'givedirectly.appspot.com';
 const BASE_UPLOAD_URL =
     `https://www.googleapis.com/upload/storage/v1/b/${BUCKET}/o`;
 const BASE_LISTING_URL = `https://www.googleapis.com/storage/v1/b/${BUCKET}/o`;
-const storageScope = 'https://www.googleapis.com/auth/devstorage.read_write';
 
 const mostOfUploadUrl =
     BASE_UPLOAD_URL + '?' + encodeURIComponent('uploadType=media') + '&name=';
@@ -28,10 +27,11 @@ let deleteRequest = null;
  * @param {string} accessToken Token coming from gapi authentication.
  */
 function setUpAllHeaders(accessToken) {
+  console.log(accessToken);
   gcsHeader = new Headers({'Authorization': 'Bearer ' + accessToken});
   deleteRequest = {method: 'DELETE', headers: gcsHeader};
   listRequest = {method: 'GET', headers: gcsHeader};
-  taskAccumulator.taskCompleted();
+  enableWhenReady();
 }
 
 /** Enables the form once all necessary libraries are loaded. */
@@ -41,63 +41,43 @@ function enableWhenReady() {
   updateStatus();
 }
 
-// Necessary for listAssets.
-ee.data.setCloudApiEnabled(true);
-
-// 3 tasks: EE authentication, OAuth2 token retrieval, and page load.
-const taskAccumulator = new TaskAccumulator(3, enableWhenReady);
-// Perform EE login/Google OAuth2 process.
-const authenticator = new Authenticator(
-    setUpAllHeaders, () => taskAccumulator.taskCompleted(), setStatusDiv,
-    [storageScope]);
-authenticator.start();
-
 /**
  * Processes files and asset name user gave, mostly asynchronously.
  * @param {Event} e
- * @return {boolean}
  */
-function submitFiles(e) {
+async function submitFiles(e) {
   // prevent form's default submit action.
   e.preventDefault();
   const collectionName = document.getElementById('collectionName').value;
-  const gcsListingPromise = listGCSFiles(collectionName);
-  const assetPromise = maybeCreateImageCollection(collectionName);
-  const listingPromise =
-      assetPromise.then(() => listEEAssetFiles(collectionName));
+  const qualifiedName = getDisaster() + '/' + collectionName;
+  const gcsListingPromise = listGCSFiles(qualifiedName);
+  const assetPromise = maybeCreateImageCollection(qualifiedName);
+  const eeListingPromise =
+      assetPromise.then(() => listEeAssets(EARTH_ENGINE_PREFIX + qualifiedName));
 
   // Build up a dictionary of already uploaded images so we don't do extra work
   // uploading or importing, and can tell the user what to delete.
-  Promise.all([gcsListingPromise, listingPromise])
-      .then((list) => {
-        const gcsItems = list[0];
-        const eeItems = list[1];
-        const fileStatuses = new Map();
-        // First put all elements from GCS into map, then go over EE and
-        // overwrite.
-        const gcsPrefixLength = (collectionName + '/').length;
-        for (const item of gcsItems) {
-          fileStatuses.set(
-              item.name.substr(gcsPrefixLength), FileRemoteStatus.GCS_ONLY);
-        }
-        const eePrefixLength =
-            (earthEngineAssetBase + collectionName + '/').length;
-        // assets is apparently null if there are no items.
-        if (eeItems.assets) {
-          for (const item of eeItems.assets) {
-            const name = item.id.substring(eePrefixLength);
-            const oldStatus = fileStatuses.get(name);
-            if (oldStatus) {
-              fileStatuses.set(name, FileRemoteStatus.PRESENT_EVERYWHERE);
-            } else {
-              fileStatuses.set(name, FileRemoteStatus.EE_ONLY);
-            }
-          }
-        }
-        return fileStatuses;
-      })
-      .then((fileStatuses) => processFiles(collectionName, fileStatuses));
-  return false;
+  const gcsItems = await gcsListingPromise;
+  const fileStatuses = new Map();
+  // First put all elements from GCS into map, then go over EE and
+  // overwrite.
+  const gcsPrefixLength = (qualifiedName + '/').length;
+  for (const item of gcsItems) {
+    fileStatuses.set(
+        item.name.substr(gcsPrefixLength), FileRemoteStatus.GCS_ONLY);
+  }
+  const eeItems = await eeListingPromise;
+  const eePrefixLength = (eeLegacyPathPrefix + qualifiedName + '/').length;
+  for (const {id} of eeItems) {
+    const name = id.substring(eePrefixLength);
+    const oldStatus = fileStatuses.get(name);
+    if (oldStatus) {
+      fileStatuses.set(name, FileRemoteStatus.PRESENT_EVERYWHERE);
+    } else {
+      fileStatuses.set(name, FileRemoteStatus.EE_ONLY);
+    }
+  }
+  processFiles(qualifiedName, fileStatuses);
 }
 
 /**
@@ -116,22 +96,22 @@ function submitFiles(e) {
  *
  * TODO(janakr): delete files that are PRESENT_EVERYWHERE even if not listed?
  *
- * @param {string} collectionName
+ * @param {string} qualifiedName
  * @param {Map} fileStatuses
  */
-function processFiles(collectionName, fileStatuses) {
-  const files = document.getElementById('file').files;
+function processFiles(qualifiedName, fileStatuses) {
+  const files = document.getElementById('files').files;
   foundTopFiles += files.length;
   for (const file of files) {
     const mungedName = replaceEarthEngineIllegalCharacters(file.name);
     const status = fileStatuses.get(mungedName) || FileRemoteStatus.NEW;
     switch (status) {
       case FileRemoteStatus.NEW:
-        uploadFileToGCS(mungedName, file, collectionName, importEEAssetFromGCS);
+        uploadFileToGCS(mungedName, file, qualifiedName, importEEAssetFromGCS);
         break;
       case FileRemoteStatus.GCS_ONLY:
         alreadyUploadedToGCS++;
-        importEEAssetFromGCS(BUCKET, collectionName, mungedName);
+        importEEAssetFromGCS(BUCKET, qualifiedName, mungedName);
         break;
       case FileRemoteStatus.EE_ONLY:
         alreadyImportedToEE++;
@@ -139,7 +119,7 @@ function processFiles(collectionName, fileStatuses) {
         break;
       case FileRemoteStatus.PRESENT_EVERYWHERE:
         alreadyPresentEverywhere++;
-        deleteGCSFile(collectionName, mungedName, file.name);
+        deleteGCSFile(qualifiedName, mungedName, file.name);
         break;
     }
     processedFiles++;
@@ -161,14 +141,13 @@ const FileRemoteStatus = {
  *
  * @param {string} name file name, ideally with a single path segment
  * @param {Blob} contents
- * @param {string} collectionName name of EE ImageCollection and parent folder
- *     in GCS
+ * @param {string} qualifiedName Like '2017-harvey/noaa-images'
  * @param {Function} callback Will be passed the GCS bucket, asset name, and
  *     file name
  */
-function uploadFileToGCS(name, contents, collectionName, callback) {
+async function uploadFileToGCS(name, contents, qualifiedName, callback) {
   startedUploadToGCS++;
-  const fileName = encodeURIComponent(collectionName + '/' + name);
+  const fileName = encodeURIComponent(qualifiedName + '/' + name);
   // Use the simple media upload as per the spec here:
   // https://cloud.google.com/storage/docs/json_api/v1/how-tos/simple-upload
   const URL = mostOfUploadUrl + fileName;
@@ -178,35 +157,41 @@ function uploadFileToGCS(name, contents, collectionName, callback) {
     headers: gcsHeader,
     body: contents,
   };
-  fetch(URL, request)
-      .then((r) => r.json())
-      .then((r) => {
-        uploadedToGCS++;
-        return r;
-      })
-      .catch((err) => {
-        console.error(err);
-        resultDiv.innerHTML += '<br>Error uploading ' + name + ': ' + err;
-        throw err;
-      })
-      .then((result) => callback(result.bucket, collectionName, name))
-      .catch((err) => {
-        console.error(err);
-        resultDiv.innerHTML += '<br>Error processing ' + name + ': ' + err;
-      });
+  let bucket;
+  try {
+    const result = await fetch(URL, request);
+    const json = await result.json();
+    if (result.status !== 200) {
+      throw new Error('Unable to fetch from GCS: ' + json.error.message);
+    }
+    ({bucket} = json);
+  } catch (err) {
+    resultDiv.innerHTML += '<br>Error uploading ' + name + ': ' + err;
+    showError(err, 'Error uploading ' + name);
+    throw err;
+  }
+  uploadedToGCS++;
+  try {
+    return callback(bucket, qualifiedName, name);
+  } catch (err) {
+    resultDiv.innerHTML += '<br>Error processing ' + name + ': ' + err;
+    showError(err, 'Error processing ' + name);
+    throw err;
+  }
 }
 
 /**
- * Checks to see if asset given by collectionName is present. If not, creates it
- * and makes it world-readable.
+ * Checks to see if asset given by `qualifiedName` is present. If not, creates
+ * it and makes it world-readable.
  *
- * @param {string} collectionName Must contain only legal EE characters
- * @return {Promise<undefined>} Promise to wait for operation completion on
+ * @param {string} qualifiedName Must contain only legal EE characters. Like
+ *     '2017-harvey/noaa-images'
+ * @return {Promise<void>} Promise to wait for operation completion on
  */
-function maybeCreateImageCollection(collectionName) {
-  const assetName = earthEngineAssetBase + collectionName;
+function maybeCreateImageCollection(qualifiedName) {
+  const assetName = EARTH_ENGINE_PREFIX + qualifiedName;
   return new Promise(
-             (resolveFunction, rejectFunction) => ee.data.getAsset(
+             (resolve, reject) => ee.data.getAsset(
                  assetName,
                  (getResult) => {
                    if (!getResult) {
@@ -218,24 +203,25 @@ function maybeCreateImageCollection(collectionName) {
                          {id: assetName, type: 'ImageCollection'}, assetName,
                          false, {}, (createResult, failure) => {
                            if (failure) {
-                             rejectFunction(failure);
+                             reject(transformEarthEngineFailureMessage(failure));
                            } else {
                              ee.data.setAssetAcl(
                                  assetName, {all_users_can_read: true},
                                  (aclResult, failure) => {
                                    if (failure) {
-                                     rejectFunction(failure);
+                                     reject(transformEarthEngineFailureMessage(failure));
                                    } else {
-                                     resolveFunction(undefined);
+                                     resolve();
                                    }
                                  });
                            }
                          });
                    } else {
-                     resolveFunction(undefined);
+                     resolve();
                    }
                  }))
       .catch((err) => {
+        showError(err, 'Error creating image collection in EarthEngine');
         setStatusDiv(err);
         throw err;
       });
@@ -245,16 +231,16 @@ function maybeCreateImageCollection(collectionName) {
  * Imports image into EE ImageCollection from GCS file.
  *
  * @param {string} gcsBucket
- * @param {string} collectionName
+ * @param {string} qualifiedName
  * @param {string} name Must contain only legal EE characters
  */
-function importEEAssetFromGCS(gcsBucket, collectionName, name) {
+function importEEAssetFromGCS(gcsBucket, qualifiedName, name) {
   const id = ee.data.newTaskId()[0];
   const request = {
-    id: earthEnginePrefix + collectionName + '/' + name,
+    id: EARTH_ENGINE_PREFIX + qualifiedName + '/' + name,
     tilesets: [{
       sources: [
-        {primaryPath: 'gs://' + gcsBucket + '/' + collectionName + '/' + name},
+        {primaryPath: 'gs://' + gcsBucket + '/' + qualifiedName + '/' + name},
       ],
     }],
   };
@@ -262,13 +248,15 @@ function importEEAssetFromGCS(gcsBucket, collectionName, name) {
     const uploadId = (task && 'taskId' in task) ? task.taskId : id;
     const tail = ' ' + name + ' to EarthEngine with task id ' + uploadId;
     if (failure) {
-      resultDiv.innerHTML += '<br>Error importing ' + tail + ': ' + failure;
+      resultDiv.innerHTML += '<br>Error importing' + tail + ': ' + failure;
+      showError(failure, 'Error importing' + tail);
       return;
     }
     startedEETask++;
     if (('started' in task) && task.started === 'OK') {
       resultDiv.innerHTML += '<br>Importing' + tail;
     } else {
+      showError('Error importing' + tail);
       resultDiv.innerHTML += '<br>Error importing' + tail;
     }
   });
@@ -278,25 +266,25 @@ function importEEAssetFromGCS(gcsBucket, collectionName, name) {
  * Lists all GCS files in a collection, to avoid uploading them again (and to
  * delete them if they are already in EE). Since a maximum of 1000 entries is
  * returned, has to do some recursive footwork.
- * @param {string} collectionName
+ * @param {string} qualifiedName Like '2017-harvey/noaa-images'
  * @return {Promise} When resolved, contains list of items
  */
-function listGCSFiles(collectionName) {
-  return listGCSFilesRecursive(collectionName, null, []);
+function listGCSFiles(qualifiedName) {
+  return listGCSFilesRecursive(qualifiedName, null, []);
 }
 
 /**
  * Helper function. Accumulates results, issues follow-up queries with page
  * token if needed.
- * @param {string} collectionName Name of folder
+ * @param {string} qualifiedName Full path to folder, like '2017-harvey/noaa-images'
  * @param {?string} nextPageToken Token for page of results to request, used
  *     when listing spans multiple pages
  * @param {List} accumulatedList All files found so far
  * @return {Promise}
  */
-function listGCSFilesRecursive(collectionName, nextPageToken, accumulatedList) {
+function listGCSFilesRecursive(qualifiedName, nextPageToken, accumulatedList) {
   const listUrl = BASE_LISTING_URL +
-      '?prefix=' + encodeURIComponent(collectionName) +
+      '?prefix=' + encodeURIComponent(qualifiedName) +
       (nextPageToken ? '&pageToken=' + nextPageToken : '');
   return fetch(listUrl, listRequest).then((r) => r.json()).then((resp) => {
     if (!resp.items) {
@@ -315,20 +303,20 @@ function listGCSFilesRecursive(collectionName, nextPageToken, accumulatedList) {
       return accumulatedList;
     }
     return listGCSFilesRecursive(
-        collectionName, resp.nextPageToken, accumulatedList);
+        qualifiedName, resp.nextPageToken, accumulatedList);
   });
 }
 
 /**
  * Deletes a file from GCS.
- * @param {string} collectionName
+ * @param {string} qualifiedName
  * @param {string} name
  * @param {string} originalName Name before munging, to display to user
  * @return {Promise}
  */
-function deleteGCSFile(collectionName, name, originalName) {
+function deleteGCSFile(qualifiedName, name, originalName) {
   const deleteUrl =
-      BASE_LISTING_URL + '/' + encodeURIComponent(collectionName + '/' + name);
+      BASE_LISTING_URL + '/' + encodeURIComponent(qualifiedName + '/' + name);
   return fetch(deleteUrl, deleteRequest).then((resp) => {
     if (resp.ok) {
       deletedFromGCS++;
@@ -338,17 +326,6 @@ function deleteGCSFile(collectionName, name, originalName) {
           '<br>Error deleting ' + name + ' from GCS: ' + resp.status;
     }
   });
-}
-
-/**
- * Lists all images under the given EE asset.
- *
- * @param {string} assetName
- * @return {Promise}
- */
-function listEEAssetFiles(assetName) {
-  // Pass an empty callback because it makes this return a Promise.
-  return ee.data.listAssets(earthEnginePrefix + assetName, {}, () => {});
 }
 
 /**
@@ -425,6 +402,3 @@ function addFileToDelete(file) {
     filesToDelete.length = 0;
   }
 }
-
-// TODO(janakr): fix this page or delete.
-// loadNavbarWithTitle('Add Asset');

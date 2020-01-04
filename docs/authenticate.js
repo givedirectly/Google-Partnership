@@ -70,10 +70,12 @@ class Authenticator {
    * @param {Function} eeInitializeCallback Called after EarthEngine
    *     initialization is complete
    * @param {boolean} needsGdUser See {@link trackEeAndFirebase}
+   * @param {Array<string>} additionalScopes
    */
-  constructor(eeInitializeCallback, needsGdUser) {
+  constructor(eeInitializeCallback, needsGdUser, additionalScopes) {
     this.eeInitializeCallback = eeInitializeCallback;
     this.needsGdUser = needsGdUser;
+    this.additionalScopes = additionalScopes;
     /** Promise will have boolean, true if gd user */
     this.gapiInitDone = new SettablePromise();
   }
@@ -86,7 +88,7 @@ class Authenticator {
   start() {
     this.eeAuthenticate(() => this.navigateToSignInPage());
     const gapiSettings = Object.assign({}, gapiTemplate);
-    gapiSettings.scope = '';
+    gapiSettings.scope = this.additionalScopes.join(' ');
     return new Promise(
         (resolve, reject) => gapi.load(
             'auth2',
@@ -235,9 +237,12 @@ class Authenticator {
  *     EarthEngine is logged in
  * @param {boolean} needsGdUser True if page needs user to be logged in as GD
  *     user (gd-earthengine-user@givedirectly.org) in order to work
+ * @param {Array<string>} additionalScopes Additional scopes to request if
+ *     needed
  * @return {Promise} Promise that completes when Firebase is logged in
  */
-function trackEeAndFirebase(taskAccumulator, needsGdUser = false) {
+function trackEeAndFirebase(taskAccumulator, needsGdUser = false,
+    additionalScopes = []) {
   let authenticator;
   const eeInitializeCallback = () => {
     ee.data.setCloudApiEnabled(true);
@@ -253,7 +258,7 @@ function trackEeAndFirebase(taskAccumulator, needsGdUser = false) {
   };
 
   if (inProduction()) {
-    authenticator = new Authenticator(eeInitializeCallback, needsGdUser);
+    authenticator = new Authenticator(eeInitializeCallback, needsGdUser, additionalScopes);
     return authenticator.start();
   } else {
     // We're inside a test. The test setup should have tokens for us that will
@@ -392,24 +397,24 @@ function doSignIn(extraOptions = {}) {
  * coming from Authenticator above.
  *
  * @param {gapi.auth2.GoogleUser} googleUser
- * @return {Promise<any>} Promise that completes when authentication is done
+ * @return {Promise<string>} Promise that completes when authentication is done
+ *     with the id token
  */
 function authenticateToFirebase(googleUser) {
   initializeFirebase();
-  return new Promise((resolveFunction) => {
+  return new Promise((resolve) => {
     const unsubscribe = firebase.auth().onAuthStateChanged((firebaseUser) => {
       unsubscribe();
+      const idToken = googleUser.getAuthResponse().id_token;
       if (isUserEqual(googleUser, firebaseUser)) {
-        resolveFunction(null);
+        resolve(idToken);
         return;
       }
       // Build Firebase credential with the Google ID token.
-      const credential = firebase.auth.GoogleAuthProvider.credential(
-          googleUser.getAuthResponse().id_token);
+      const credential = firebase.auth.GoogleAuthProvider.credential(idToken);
       // Sign in with credential from the Google user.
       const signinPromise = firebase.auth().signInWithCredential(credential);
-      signinPromise.then(resolveFunction);
-      return signinPromise;
+      signinPromise.then(() => resolve(idToken));
     });
   });
 }
