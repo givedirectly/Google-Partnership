@@ -1,3 +1,4 @@
+// Map can take some time to be ready to register a click.
 const hackyWaitTime = 2000;
 const notes = 'Sphinx of black quartz, judge my vow';
 
@@ -61,9 +62,6 @@ function drawPolygonAndClickOnIt() {
   // Without this, seeing flaky failures on Travis where first point is off map.
   cy.wait(hackyWaitTime);
   drawPointAndPrepareForNext(150, 650);
-  // TODO(janakr): test seems to fail reliably on command line without these
-  // and pass with it. Figure out what to actually test for on the page and
-  // remove these waits.
   cy.wait(hackyWaitTime);
   drawPointAndPrepareForNext(400, 500);
   cy.wait(hackyWaitTime);
