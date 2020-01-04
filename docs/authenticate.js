@@ -241,8 +241,8 @@ class Authenticator {
  *     needed
  * @return {Promise} Promise that completes when Firebase is logged in
  */
-function trackEeAndFirebase(taskAccumulator, needsGdUser = false,
-    additionalScopes = []) {
+function trackEeAndFirebase(
+    taskAccumulator, needsGdUser = false, additionalScopes = []) {
   let authenticator;
   const eeInitializeCallback = () => {
     ee.data.setCloudApiEnabled(true);
@@ -258,7 +258,8 @@ function trackEeAndFirebase(taskAccumulator, needsGdUser = false,
   };
 
   if (inProduction()) {
-    authenticator = new Authenticator(eeInitializeCallback, needsGdUser, additionalScopes);
+    authenticator =
+        new Authenticator(eeInitializeCallback, needsGdUser, additionalScopes);
     return authenticator.start();
   } else {
     // We're inside a test. The test setup should have tokens for us that will
@@ -397,24 +398,25 @@ function doSignIn(extraOptions = {}) {
  * coming from Authenticator above.
  *
  * @param {gapi.auth2.GoogleUser} googleUser
- * @return {Promise<string>} Promise that completes when authentication is done
- *     with the id token
+ * @return {Promise<gapi.auth2.AuthResponse>} Promise that completes when
+ *     authentication is done with the authorization response
  */
 function authenticateToFirebase(googleUser) {
   initializeFirebase();
   return new Promise((resolve) => {
     const unsubscribe = firebase.auth().onAuthStateChanged((firebaseUser) => {
       unsubscribe();
-      const idToken = googleUser.getAuthResponse().id_token;
+      const authResponse = googleUser.getAuthResponse();
       if (isUserEqual(googleUser, firebaseUser)) {
-        resolve(idToken);
+        resolve(authResponse);
         return;
       }
       // Build Firebase credential with the Google ID token.
-      const credential = firebase.auth.GoogleAuthProvider.credential(idToken);
+      const credential =
+          firebase.auth.GoogleAuthProvider.credential(authResponse.id_token);
       // Sign in with credential from the Google user.
       const signinPromise = firebase.auth().signInWithCredential(credential);
-      signinPromise.then(() => resolve(idToken));
+      signinPromise.then(() => resolve(authResponse));
     });
   });
 }

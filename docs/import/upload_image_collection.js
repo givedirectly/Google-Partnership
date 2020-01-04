@@ -1,14 +1,15 @@
-import {eeLegacyPathPrefix} from '../ee_paths.js';
-import {getDisaster} from '../resources.js';
-import {listEeAssets} from './ee_utils.js';
+import {eeLegacyPathPrefix, gdEePathPrefix} from '../ee_paths.js';
 import {transformEarthEngineFailureMessage} from '../ee_promise_cache.js';
 import {showError} from '../error.js';
+import {getDisaster} from '../resources.js';
+
+import {listEeAssets} from './ee_utils.js';
 
 export {setUpAllHeaders};
 
 const EARTH_ENGINE_PREFIX = eeLegacyPathPrefix;
 
-const BUCKET = 'givedirectly.appspot.com';
+const BUCKET = 'mapping-crisis.appspot.com';
 const BASE_UPLOAD_URL =
     `https://www.googleapis.com/upload/storage/v1/b/${BUCKET}/o`;
 const BASE_LISTING_URL = `https://www.googleapis.com/storage/v1/b/${BUCKET}/o`;
@@ -23,12 +24,13 @@ let listRequest = null;
 let deleteRequest = null;
 
 /**
- * Initialize all headers necessary for GCS operations.
- * @param {string} accessToken Token coming from gapi authentication.
+ * Initializes all headers necessary for GCS operations, then enable page.
+ * @param {gapi.auth2.AuthResponse} authResponse Token coming from gapi
+ *     authentication.
  */
-function setUpAllHeaders(accessToken) {
-  console.log(accessToken);
-  gcsHeader = new Headers({'Authorization': 'Bearer ' + accessToken});
+function setUpAllHeaders(authResponse) {
+  gcsHeader =
+      new Headers({'Authorization': 'Bearer ' + authResponse.access_token});
   deleteRequest = {method: 'DELETE', headers: gcsHeader};
   listRequest = {method: 'GET', headers: gcsHeader};
   enableWhenReady();
@@ -52,8 +54,8 @@ async function submitFiles(e) {
   const qualifiedName = getDisaster() + '/' + collectionName;
   const gcsListingPromise = listGCSFiles(qualifiedName);
   const assetPromise = maybeCreateImageCollection(qualifiedName);
-  const eeListingPromise =
-      assetPromise.then(() => listEeAssets(EARTH_ENGINE_PREFIX + qualifiedName));
+  const eeListingPromise = assetPromise.then(
+      () => listEeAssets(EARTH_ENGINE_PREFIX + qualifiedName));
 
   // Build up a dictionary of already uploaded images so we don't do extra work
   // uploading or importing, and can tell the user what to delete.
@@ -64,10 +66,11 @@ async function submitFiles(e) {
   const gcsPrefixLength = (qualifiedName + '/').length;
   for (const item of gcsItems) {
     fileStatuses.set(
-        item.name.substr(gcsPrefixLength), FileRemoteStatus.GCS_ONLY);
+        replaceEarthEngineIllegalCharacters(item.name.substr(gcsPrefixLength)),
+        FileRemoteStatus.GCS_ONLY);
   }
   const eeItems = await eeListingPromise;
-  const eePrefixLength = (eeLegacyPathPrefix + qualifiedName + '/').length;
+  const eePrefixLength = (gdEePathPrefix + qualifiedName + '/').length;
   for (const {id} of eeItems) {
     const name = id.substring(eePrefixLength);
     const oldStatus = fileStatuses.get(name);
@@ -107,11 +110,11 @@ function processFiles(qualifiedName, fileStatuses) {
     const status = fileStatuses.get(mungedName) || FileRemoteStatus.NEW;
     switch (status) {
       case FileRemoteStatus.NEW:
-        uploadFileToGCS(mungedName, file, qualifiedName, importEEAssetFromGCS);
+        uploadFileToGCS(file.name, file, qualifiedName, importEEAssetFromGCS);
         break;
       case FileRemoteStatus.GCS_ONLY:
         alreadyUploadedToGCS++;
-        importEEAssetFromGCS(BUCKET, qualifiedName, mungedName);
+        importEEAssetFromGCS(BUCKET, qualifiedName, file.name);
         break;
       case FileRemoteStatus.EE_ONLY:
         alreadyImportedToEE++;
@@ -119,7 +122,7 @@ function processFiles(qualifiedName, fileStatuses) {
         break;
       case FileRemoteStatus.PRESENT_EVERYWHERE:
         alreadyPresentEverywhere++;
-        deleteGCSFile(qualifiedName, mungedName, file.name);
+        deleteGCSFile(qualifiedName, file.name);
         break;
     }
     processedFiles++;
@@ -127,12 +130,12 @@ function processFiles(qualifiedName, fileStatuses) {
 }
 
 /** See processFiles for usage. */
-const FileRemoteStatus = {
+const FileRemoteStatus = Object.freeze({
   'NEW': 0,
   'GCS_ONLY': 1,
   'EE_ONLY': 2,
   'PRESENT_EVERYWHERE': 3,
-};
+});
 
 /**
  * Uploads file to GCS, then invokes callback (to import it to EE).
@@ -203,13 +206,15 @@ function maybeCreateImageCollection(qualifiedName) {
                          {id: assetName, type: 'ImageCollection'}, assetName,
                          false, {}, (createResult, failure) => {
                            if (failure) {
-                             reject(transformEarthEngineFailureMessage(failure));
+                             reject(
+                                 transformEarthEngineFailureMessage(failure));
                            } else {
                              ee.data.setAssetAcl(
                                  assetName, {all_users_can_read: true},
                                  (aclResult, failure) => {
                                    if (failure) {
-                                     reject(transformEarthEngineFailureMessage(failure));
+                                     reject(transformEarthEngineFailureMessage(
+                                         failure));
                                    } else {
                                      resolve();
                                    }
@@ -237,7 +242,8 @@ function maybeCreateImageCollection(qualifiedName) {
 function importEEAssetFromGCS(gcsBucket, qualifiedName, name) {
   const id = ee.data.newTaskId()[0];
   const request = {
-    id: EARTH_ENGINE_PREFIX + qualifiedName + '/' + name,
+    id: EARTH_ENGINE_PREFIX + qualifiedName + '/' +
+        replaceEarthEngineIllegalCharacters(name),
     tilesets: [{
       sources: [
         {primaryPath: 'gs://' + gcsBucket + '/' + qualifiedName + '/' + name},
@@ -267,7 +273,7 @@ function importEEAssetFromGCS(gcsBucket, qualifiedName, name) {
  * delete them if they are already in EE). Since a maximum of 1000 entries is
  * returned, has to do some recursive footwork.
  * @param {string} qualifiedName Like '2017-harvey/noaa-images'
- * @return {Promise} When resolved, contains list of items
+ * @return {Promise<Array<string>>} When resolved, contains list of items
  */
 function listGCSFiles(qualifiedName) {
   return listGCSFilesRecursive(qualifiedName, null, []);
@@ -276,11 +282,12 @@ function listGCSFiles(qualifiedName) {
 /**
  * Helper function. Accumulates results, issues follow-up queries with page
  * token if needed.
- * @param {string} qualifiedName Full path to folder, like '2017-harvey/noaa-images'
+ * @param {string} qualifiedName Full path to folder, like
+ *     '2017-harvey/noaa-images'
  * @param {?string} nextPageToken Token for page of results to request, used
  *     when listing spans multiple pages
- * @param {List} accumulatedList All files found so far
- * @return {Promise}
+ * @param {Array<string>} accumulatedList All files found so far
+ * @return {Promise<Array<string>>} List of files
  */
 function listGCSFilesRecursive(qualifiedName, nextPageToken, accumulatedList) {
   const listUrl = BASE_LISTING_URL +
@@ -310,17 +317,16 @@ function listGCSFilesRecursive(qualifiedName, nextPageToken, accumulatedList) {
 /**
  * Deletes a file from GCS.
  * @param {string} qualifiedName
- * @param {string} name
- * @param {string} originalName Name before munging, to display to user
- * @return {Promise}
+ * @param {string} name File name
+ * @return {Promise<void>}
  */
-function deleteGCSFile(qualifiedName, name, originalName) {
+function deleteGCSFile(qualifiedName, name) {
   const deleteUrl =
       BASE_LISTING_URL + '/' + encodeURIComponent(qualifiedName + '/' + name);
   return fetch(deleteUrl, deleteRequest).then((resp) => {
     if (resp.ok) {
       deletedFromGCS++;
-      addFileToDelete(originalName);
+      addFileToDelete(name);
     } else {
       resultDiv.innerHTML +=
           '<br>Error deleting ' + name + ' from GCS: ' + resp.status;
@@ -337,9 +343,7 @@ function replaceEarthEngineIllegalCharacters(fileName) {
   return fileName.replace(/[^A-Za-z0-9_/-]/g, '_');
 }
 
-/**
- * These variables track progress of the uploads/imports for display.
- */
+/** These variables track progress of the uploads/imports for display. */
 let foundTopFiles = 0;
 let processedFiles = 0;
 let startedUploadToGCS = 0;
