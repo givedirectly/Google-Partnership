@@ -1,6 +1,7 @@
 import {blockGroupTag, damageTag, geoidTag, povertyHouseholdsTag, povertyPercentageTag, totalHouseholdsTag} from '../property_names.js';
 import {getBackupScoreAssetPath, getScoreAssetPath} from '../resources.js';
 import {computeAndSaveBounds} from './center.js';
+import {BUILDING_COUNT_KEY} from './create_disaster_lib.js';
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
 
 export {
@@ -15,7 +16,6 @@ const TRACT_TAG = 'TRACT';
 const SVI_TAG = 'SVI';
 // Median household income in the past 12 months.
 const INCOME_TAG = 'MEDIAN INCOME';
-const BUILDING_COUNT_TAG = 'BUILDING COUNT';
 
 /**
  * Given a dictionary of building counts per district, attach the count to each
@@ -30,7 +30,7 @@ function combineWithBuildings(featureCollection, buildingsHisto) {
   return featureCollection.map((f) => {
     const geoId = f.get(geoidTag);
     return f.set(
-        BUILDING_COUNT_TAG,
+        BUILDING_COUNT_KEY,
         ee.Algorithms.If(
             buildingsHisto.contains(geoId), buildingsHisto.get(geoId),
             ee.Number(0)));
@@ -87,20 +87,20 @@ function combineWithDamageAndUseForBuildings(
             .filterMetadata(damageLevelsKey, 'not_equals', noDamageValue)
             .size();
     return addDamageTag(
-        f.set(BUILDING_COUNT_TAG, totalBuildings), damagedBuildings);
+        f.set(BUILDING_COUNT_KEY, totalBuildings), damagedBuildings);
   });
 }
 
 /**
  * Sets {@link damageTag} on `feature` to `damagedBuildings / totalBuildings`,
- * where `totalBuildings` comes from the feature's {@link BUILDING_COUNT_TAG}.
+ * where `totalBuildings` comes from the feature's {@link BUILDING_COUNT_KEY}.
  * Handles edge case of `totalBuildings` being 0.
  * @param {ee.Feature} feature
  * @param {ee.Number} damagedBuildings
  * @return {ee.Feature}
  */
 function addDamageTag(feature, damagedBuildings) {
-  const totalBuildings = feature.get(BUILDING_COUNT_TAG);
+  const totalBuildings = feature.get(BUILDING_COUNT_KEY);
   // If no buildings, this is probably spurious. Don't give any damage. We
   // don't expect totalBuildings to be 0 in production, but it's bitten us
   // when working with partial buildings datasets. If this starts showing up
@@ -280,28 +280,29 @@ function setMapBoundsInfo(message) {
 function createScoreAssetForStateBasedDisaster(
     disasterData, setMapBoundsInfoFunction = setMapBoundsInfo) {
   setStatus('');
-  const states = disasterData['states'];
-  const assetData = disasterData['asset_data'];
-  const blockGroupPaths = assetData['block_group_asset_paths'];
-  const snapData = assetData['snap_data'];
-  const snapPaths = snapData['paths'];
-  const snapKey = snapData['snap_key'];
-  const totalKey = snapData['total_key'];
-  const sviPaths = assetData['svi_asset_paths'];
-  const sviKey = assetData['svi_key'];
-  const incomePaths = assetData['income_asset_paths'];
-  const incomeKey = assetData['income_key'];
-  // If we switch to CrowdAI data, this will change.
-  const buildingPaths = assetData['building_asset_paths'];
+  const {assetData} = disasterData;
+  const {stateBasedData} = assetData;
+  const {
+    states,
+    blockGroupAssetPaths,
+    snapData,
+    sviAssetPaths,
+    sviKey,
+    incomeAssetPaths,
+    incomeKey,
+    buildingAssetPaths,
+  } = stateBasedData;
+  const {paths: snapPaths, snapKey, totalKey} = snapData;
+  // If we switch to CrowdAI data, building asset paths will change.
   const {damage, damageEnvelope} =
       calculateDamage(assetData, setMapBoundsInfoFunction);
   let allStatesProcessing = ee.FeatureCollection([]);
   for (const state of states) {
     const snapPath = snapPaths[state];
-    const sviPath = sviPaths[state];
-    const incomePath = incomePaths[state];
-    const buildingPath = buildingPaths[state];
-    const blockGroupPath = blockGroupPaths[state];
+    const sviPath = sviAssetPaths[state];
+    const incomePath = incomeAssetPaths[state];
+    const buildingPath = buildingAssetPaths[state];
+    const blockGroupPath = blockGroupAssetPaths[state];
 
     const stateGroups =
         ee.FeatureCollection(blockGroupPath).filterBounds(damageEnvelope);
@@ -380,7 +381,7 @@ function createScoreAssetForStateBasedDisaster(
 function createScoreAssetForFlexibleDisaster(
     disasterData, setMapBoundsInfoFunction = setMapBoundsInfo) {
   setStatus('');
-  const assetData = disasterData['asset_data'];
+  const {assetData} = disasterData;
   const {damage, damageEnvelope} =
       calculateDamage(assetData, setMapBoundsInfoFunction);
   const {flexibleData} = assetData;
@@ -419,14 +420,14 @@ function createScoreAssetForFlexibleDisaster(
           processing, stringifyCollection(buildingCollection, buildingGeoid),
           geoidTag, buildingGeoid);
       processing = processing.map(
-          (f) => combineWithAsset(f, BUILDING_COUNT_TAG, buildingKey));
+          (f) => combineWithAsset(f, BUILDING_COUNT_KEY, buildingKey));
     } else {
       const buildingsHisto =
           computeBuildingsHisto(buildingCollection, processing);
       processing = combineWithBuildings(processing, buildingsHisto);
     }
   } else if (!useDamageForBuildings) {
-    processing = renameProperty(processing, buildingKey, BUILDING_COUNT_TAG);
+    processing = renameProperty(processing, buildingKey, BUILDING_COUNT_KEY);
   }
   if (damage) {
     const {damageLevelsKey, noDamageValue} = assetData;
@@ -534,12 +535,12 @@ const damageBuffer = 1000;
  *     both null if an error occurs
  */
 function calculateDamage(assetData, setMapBoundsInfo) {
-  const damagePath = assetData['damage_asset_path'];
+  const {damageAssetPath} = assetData;
   let geometry;
   let damage = null;
   let damageEnvelope;
-  if (damagePath) {
-    damage = ee.FeatureCollection(damagePath);
+  if (damageAssetPath) {
+    damage = ee.FeatureCollection(damageAssetPath);
     // Uncomment to test with a restricted damage set (14 block groups' worth).
     // damage = damage.filterBounds(
     //     ee.FeatureCollection('users/gd/2017-harvey/data-ms-as-nod')
@@ -547,9 +548,9 @@ function calculateDamage(assetData, setMapBoundsInfo) {
     geometry = damage.geometry();
     damageEnvelope = damage.geometry().buffer(damageBuffer);
   } else {
-    const scoreBounds = assetData['score_bounds_coordinates'];
+    const {scoreBoundsCoordinates} = assetData;
     const coordinates = [];
-    scoreBounds.forEach(
+    scoreBoundsCoordinates.forEach(
         (geopoint) => coordinates.push(geopoint.longitude, geopoint.latitude));
     damageEnvelope = ee.Geometry.Polygon(coordinates);
     geometry = damageEnvelope;

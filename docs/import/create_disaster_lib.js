@@ -1,44 +1,73 @@
 export {createDisasterData};
-export {incomeKey, snapKey, sviKey, totalKey};
+export {BUILDING_COUNT_KEY, incomeKey, snapKey, sviKey, totalKey};
 // For testing
-export {assetDataTemplate};
+export {deepCopy, flexibleAssetData, stateAssetDataTemplate};
 
 const snapKey = 'HD01_VD02';
 const totalKey = 'HD01_VD01';
 const sviKey = 'RPL_THEMES';
 const incomeKey = 'HD01_VD01';
+const BUILDING_COUNT_KEY = 'BUILDING COUNT';
 
-// Has all the basic fields needed for the score asset to be created: SNAP, SVI,
-// and income together with the columns of each, and optional damage asset path.
-// The default values for column names here are taken from Census American
-// FactFinder and CDC tables.
+const commonAssetDataTemplate = Object.freeze({
+  damageAssetPath: null,
+  damageLevelsKey: null,
+  noDamageValue: null,
+});
+
+const stateBasedDataTemplate = Object.freeze({
+  scoreBoundsCoordinates: null,
+  blockGroupAssetPaths: {},
+  snapData: {
+    paths: {},
+    snapKey,
+    totalKey,
+  },
+  sviAssetPaths: {},
+  sviKey,
+  incomeAssetPaths: {},
+  incomeKey,
+  buildingAssetPaths: {},
+  states: null,
+});
+
+// Has all the basic fields needed for a state-based score asset to be created:
+// SNAP, SVI, and income together with the columns of each, and optional damage
+// asset path. The default values for column names here are taken from Census
+// American FactFinder and CDC tables.
 // TODO: should we allow users to change the columns here, on a per-disaster
 //  level? Or only as a "global" default? Or just make them modify directly in
 //  Firestore?
-const assetDataTemplate = {
-  damage_asset_path: null,
-  score_bounds_coordinates: null,
-  block_group_asset_paths: {},
-  snap_data: {
-    paths: {},
-    snap_key: snapKey,
-    total_key: totalKey,
-  },
-  svi_asset_paths: {},
-  svi_key: sviKey,
-  income_asset_paths: {},
-  income_key: incomeKey,
-  building_asset_paths: {},
-};
-Object.freeze(assetDataTemplate);
+const stateAssetDataTemplate = Object.freeze(
+    {...commonAssetDataTemplate, stateBasedData: stateBasedDataTemplate});
+
+const flexibleAssetData =
+    Object.freeze({...commonAssetDataTemplate, flexibleData: {}});
 
 /**
- * Creates disaster data for a disaster with the following states.
- * @param {Array<string>} states
+ * Creates disaster data for a disaster with the following states, or a flexible
+ * disaster if `states` is null.
+ * @param {?Array<string>} states array of states (abbreviations) or null if
+ *     this is not a state-based disaster
  * @return {Object}
  */
 function createDisasterData(states) {
-  // Make a deep copy, so any local modifications don't affect template.
-  const assetData = JSON.parse(JSON.stringify(assetDataTemplate));
-  return {states, layers: [], asset_data: assetData};
+  const result = {layers: []};
+  if (states) {
+    const assetData = deepCopy(stateAssetDataTemplate);
+    assetData.stateBasedData.states = states;
+    result.assetData = assetData;
+  } else {
+    result.assetData = deepCopy(flexibleAssetData);
+  }
+  return result;
+}
+
+/**
+ * Makes a deep copy of `object` using {@link JSON}.
+ * @param {Object} object A simple object (no classes)
+ * @return {Object} Deep copy of `object`
+ */
+function deepCopy(object) {
+  return JSON.parse(JSON.stringify(object));
 }

@@ -58,31 +58,31 @@ describe('Unit tests for create_score_asset.js', () => {
     // with corresponding changes to test data (but no production changes). The
     // state must be real.
     testData = {
-      states: ['NY'],
-      asset_data: {
-        damage_asset_path: damageData,
-        map_bounds_sw: null,
-        map_bounds_ne: null,
-        block_group_asset_paths: {
-          NY: tigerBlockGroups,
-        },
-        snap_data: {
-          paths: {
-            NY: snapData,
+      assetData: {
+        damageAssetPath: damageData,
+        stateBasedData: {
+          states: ['NY'],
+          blockGroupAssetPaths: {
+            NY: tigerBlockGroups,
           },
-          snap_key: 'test_snap_key',
-          total_key: 'test_total_key',
-        },
-        svi_asset_paths: {
-          NY: sviData,
-        },
-        svi_key: 'test_svi_key',
-        income_asset_paths: {
-          NY: incomeData,
-        },
-        income_key: 'testIncomeKey',
-        building_asset_paths: {
-          NY: buildingsCollection,
+          snapData: {
+            paths: {
+              NY: snapData,
+            },
+            snapKey: 'test_snap_key',
+            totalKey: 'test_total_key',
+          },
+          sviAssetPaths: {
+            NY: sviData,
+          },
+          sviKey: 'test_svi_key',
+          incomeAssetPaths: {
+            NY: incomeData,
+          },
+          incomeKey: 'testIncomeKey',
+          buildingAssetPaths: {
+            NY: buildingsCollection,
+          },
         },
       },
     };
@@ -123,7 +123,7 @@ describe('Unit tests for create_score_asset.js', () => {
   });
 
   it('Test with no damage asset', () => {
-    testData.asset_data.damage_asset_path = null;
+    testData.assetData.damageAssetPath = null;
     const expectedLatLngBounds = {
       sw: {lng: 0.39, lat: 0.49},
       ne: {lng: 13, lat: 11},
@@ -160,9 +160,10 @@ describe('Unit tests for create_score_asset.js', () => {
   });
 
   it('handles non-numeric median income valuess', () => {
-    testData.asset_data.income_asset_paths.NY = ee.FeatureCollection(
-        [makeIncomeGroup('360', '250,000+'), makeIncomeGroup('361', '-')]);
-    testData.asset_data.snap_data.paths.NY = ee.FeatureCollection(
+    testData.assetData.stateBasedData.incomeAssetPaths.NY =
+        ee.FeatureCollection(
+            [makeIncomeGroup('360', '250,000+'), makeIncomeGroup('361', '-')]);
+    testData.assetData.stateBasedData.snapData.paths.NY = ee.FeatureCollection(
         [makeSnapGroup('360', 10, 15), makeSnapGroup('361', 10, 15)]);
     const promise = createScoreAssetForStateBasedDisaster(testData);
     expect(promise).to.not.be.null;
@@ -181,8 +182,8 @@ describe('Unit tests for create_score_asset.js', () => {
   });
 
   it('handles no svi/income assets', () => {
-    testData.asset_data.income_asset_paths = {};
-    testData.asset_data.svi_asset_paths = {};
+    testData.assetData.stateBasedData.incomeAssetPaths = {};
+    testData.assetData.stateBasedData.sviAssetPaths = {};
     const promise = createScoreAssetForStateBasedDisaster(testData);
     expect(promise).to.not.be.null;
     cy.wrap(promise)
@@ -199,8 +200,8 @@ describe('Unit tests for create_score_asset.js', () => {
   });
 
   it('handles no buildings asset when damage missing', () => {
-    testData.asset_data.building_asset_paths = {};
-    testData.asset_data.damage_asset_path = null;
+    testData.assetData.stateBasedData.buildingAssetPaths = {};
+    testData.assetData.damageAssetPath = null;
     setScoreBoundsCoordinates();
     const promise = createScoreAssetForStateBasedDisaster(testData);
     expect(promise).to.not.be.null;
@@ -256,12 +257,12 @@ describe('Unit tests for create_score_asset.js', () => {
   it('succeeds for flexible disaster with buildings in damage', () => {
     const flexibleData = setDefaultFlexibleData();
     flexibleData.buildingPath = null;
-    const assetData = testData['asset_data'];
+    const {assetData} = testData;
     assetData.useDamageForBuildings = true;
     const damageLevelsKey = 'expelliarmus';
     assetData.damageLevelsKey = damageLevelsKey;
     assetData.noDamageValue = 'no damage at all';
-    assetData.damage_asset_path = ee.FeatureCollection([
+    assetData.damageAssetPath = ee.FeatureCollection([
       makePoint(0.4, 0.5).set(damageLevelsKey, 'minor'),
       makePoint(1.5, .5).set(damageLevelsKey, 'major'),
       makePoint(1.6, 0.7).set(damageLevelsKey, 'no damage at all'),
@@ -273,18 +274,18 @@ describe('Unit tests for create_score_asset.js', () => {
 
   /**
    * Sets default data used for score asset creation from flexible data sources.
-   * @return {Object} testData.asset_data.flexibleData
+   * @return {Object} testData.assetData.flexibleData
    */
   function setDefaultFlexibleData() {
-    const assetData = testData.asset_data;
+    const {assetData} = testData;
     assetData.flexibleData = {
       povertyPath: ee.FeatureCollection(
           [ee.Feature(null, basicFlexiblePovertyAttributes)]),
       povertyGeoid: 'GEOid2',
       districtDescriptionKey: 'GEOdescription',
-      geographyPath: assetData.block_group_asset_paths.NY,
+      geographyPath: assetData.stateBasedData.blockGroupAssetPaths.NY,
       geographyGeoid: 'GEOID',
-      buildingPath: assetData.building_asset_paths.NY,
+      buildingPath: assetData.stateBasedData.buildingAssetPaths.NY,
     };
     return assetData.flexibleData;
   }
@@ -378,9 +379,9 @@ describe('Unit tests for create_score_asset.js', () => {
     });
   });
 
-  /** Sets `asset_data.score_bounds_coordinates` to a square. */
+  /** Sets `assetData.scoreBoundsCoordinates` to a square. */
   function setScoreBoundsCoordinates() {
-    testData.asset_data.score_bounds_coordinates = [
+    testData.assetData.scoreBoundsCoordinates = [
       createGeoPoint(0.39, 0.49),
       createGeoPoint(13, 0.49),
       createGeoPoint(13, 11),

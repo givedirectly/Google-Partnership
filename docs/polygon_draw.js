@@ -21,7 +21,7 @@ export {
   userShapes,
 };
 
-let damageAsset = null;
+let damageAssetPath = null;
 
 /**
  * Class holding data for a user-drawn feature (marker or polygon), including
@@ -307,8 +307,8 @@ StoredShapeData.compareGeoPointArrays = (array1, array2) => {
 };
 
 StoredShapeData.prepareDamageCalculation = (polygon) => {
-  return damageAsset ?
-      ee.FeatureCollection(damageAsset).filterBounds(polygon).size() :
+  return damageAssetPath ?
+      ee.FeatureCollection(damageAssetPath).filterBounds(polygon).size() :
       ee.String('unknown');
 };
 
@@ -459,7 +459,7 @@ async function initializeAndProcessUserRegions(map, firebasePromise) {
     const doc = await firebasePromise;
     // Damage asset may not exist yet, so this is undefined. We tolerate
     // gracefully.
-    damageAsset = doc.data()['asset_data']['damage_asset_path'];
+    ({damageAssetPath} = doc.data().assetData);
     userShapes = getFirestoreRoot().collection(collectionName);
     let querySnapshot;
     try {

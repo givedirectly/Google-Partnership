@@ -51,6 +51,15 @@
     <form action="" id="new-disaster-form">
       <label for="name">Disaster Name: </label><input id="name"><label for="name"><i> ex: harvey</i></label><br>
       <label for="year">Disaster Year: </label><input id="year"><label for="year"><i> ex: 2017</i></label><br>
+      <div>
+      Will you be using U.S. Census data for this disaster? If not, you will have to provide
+      poverty/geography/buildings datasets in appropriate formats.<br/>
+      <input type="radio" name="disaster-type" id="disaster-type-census" value="census" checked onclick="document.getElementById('states-select-div').hidden = false">
+      <label for="disaster-type-census">U.S. Census data available</label>
+      <input type="radio" name="disaster-type" id="disaster-type-flexible" value="flexible" onclick="document.getElementById('states-select-div').hidden = true">
+      <label for="disaster-type-flexible"><b>NOT YET FUNCTIONAL! DO NOT USE</b> No U.S. Census data available: I will provide appropriate datasets. </label>
+      </div>
+      <div id="states-select-div">
       <!-- TODO(#207): support us territory data sets and add them here -->
       <label for="states">State(s): </label><select multiple="multiple" id="states">
       <option value="AL">Alabama</option>
@@ -104,8 +113,9 @@
       <option value="WV">West Virginia</option>
       <option value="WI">Wisconsin</option>
       <option value="WY">Wyoming</option>
-    </select><br>
-      <button type="button" id="add-disaster-button" disabled>Add Disaster</button>
+    </select>
+      </div>
+  <button type="button" id="add-disaster-button" disabled>Add Disaster</button>
     </form>
   </div>
 <hr/>
