@@ -374,7 +374,7 @@ describe('Unit test for ShapeData', () => {
         });
       });
 
-  it('Dragged polygon triggers recalculation', /* @this Context */ function() {
+  xit('Dragged polygon triggers recalculation', /* @this Context */ function() {
     // Clone path and edit.
     const newPath = JSON.parse(JSON.stringify(path));
     newPath[0].lng = 0.5;
@@ -431,7 +431,7 @@ describe('Unit test for ShapeData', () => {
                                          }));
   }
 
-  it('handles EarthEngine error', () => {
+  xit('handles EarthEngine error', () => {
     // Wrap ee.List so that we can throw when it evaluates.
     const oldList = ee.List;
     ee.List = (list) => {
