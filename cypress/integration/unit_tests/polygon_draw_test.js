@@ -256,7 +256,7 @@ describe('Unit test for ShapeData', () => {
     assertOnFirestoreAndPopup(path, withNotes('racing notes'));
   });
 
-  it('Shows calculating before update finishes', () => {
+  xit('Shows calculating before update finishes', () => {
     // StoredShapeData#update creates an ee.List to evaluate the numbers it
     // needs. To make sure that update calculation does not finish until we're
     // ready, lightly wrap ee.List.evaluate and wait on a CallbackLatch. The
@@ -293,7 +293,7 @@ describe('Unit test for ShapeData', () => {
     cy.get('.popup-calculated-data').contains('damage count: 1');
   });
 
-  it('Draws marker, edits notes and drags, then deletes', () => {
+  xit('Draws marker, edits notes and drags, then deletes', () => {
     // Accept confirmation when it happens.
     const confirmStub = cy.stub(window, 'confirm').returns(true);
     const event = new Event('overlaycomplete');
@@ -350,7 +350,7 @@ describe('Unit test for ShapeData', () => {
         });
   }
 
-  it('Skips update if nothing changed', /* @this Context */ function() {
+  xit('Skips update if nothing changed', /* @this Context */ function() {
     drawPolygonAndSetUpSpies().as('spyResult');
     pressButtonAndWaitForPromise('save').then(() => {
       expect(this.spyResult.popupPendingCalculationSpy).to.not.be.called;
@@ -361,17 +361,18 @@ describe('Unit test for ShapeData', () => {
     });
   });
 
-  it('Skips recalculate if geometry unchanged', /* @this Context */ function() {
-    drawPolygonAndSetUpSpies().as('spyResult');
-    cy.get('.notes').type(notes);
-    pressButtonAndWaitForPromise('save').then(() => {
-      expect(this.spyResult.popupPendingCalculationSpy).to.not.be.called;
-      expect(this.spyResult.popupCalculatedDataSpy).to.not.be.called;
-      expect(this.spyResult.eeSpy).to.not.be.called;
-      expect(this.spyResult.firestoreSpy).to.be.calledOnce;
-      assertOnFirestoreAndPopup(path, withNotes(notes));
-    });
-  });
+  xit('Skips recalculate if geometry unchanged',
+      /* @this Context */ function() {
+        drawPolygonAndSetUpSpies().as('spyResult');
+        cy.get('.notes').type(notes);
+        pressButtonAndWaitForPromise('save').then(() => {
+          expect(this.spyResult.popupPendingCalculationSpy).to.not.be.called;
+          expect(this.spyResult.popupCalculatedDataSpy).to.not.be.called;
+          expect(this.spyResult.eeSpy).to.not.be.called;
+          expect(this.spyResult.firestoreSpy).to.be.calledOnce;
+          assertOnFirestoreAndPopup(path, withNotes(notes));
+        });
+      });
 
   it('Dragged polygon triggers recalculation', /* @this Context */ function() {
     // Clone path and edit.
