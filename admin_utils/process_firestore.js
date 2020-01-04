@@ -65,7 +65,7 @@ async function main() {
 }
 
 /**
- * Recursively process `data` and return a new object with all keys in camel
+ * Recursively processes `data` and returns a new object with all keys in camel
  * case, with a few exceptions. We transform `layers` to `layerArray` because
  * `layers` is a top-level array we would otherwise overwrite. We don't
  * transform `columns` or `colors` fields, because those are dictionaries whose
