@@ -10,7 +10,7 @@
        version, whatever it is. -->
   <script src="https://rawcdn.githack.com/google/earthengine-api/3bb86bfc4f3d9eed98220f3d225b414982915b86/javascript/build/ee_api_js_debug.js"></script>
   <script src="https://apis.google.com/js/api.js"></script>
-  <script type="module" src="./add_asset.js"></script>
+  <script type="module" src="./upload_image_collection.js"></script>
 
   <!-- Load our styles. -->
   <link rel="stylesheet" href="../style.css">
@@ -35,7 +35,7 @@
 <hr/>
 <div id="results"></div>
 <script type="module">
-  import {taskAccumulator} from './add_asset.js';
+  import {taskAccumulator} from './upload_image_collection.js';
   taskAccumulator.taskCompleted();
 </script>
 </body>
