@@ -249,11 +249,12 @@ function onSetDisaster() {
   processedCurrentDisasterStateAssets = false;
   processedCurrentDisasterSelfAssets = false;
   const scoreBoundsPath = getElementFromPath(scoreCoordinatesPath);
-  const {states} = disasterData.get(currentDisaster).assetData.stateBasedData;
-  if (!states) {
+  const {assetData} = disasterData.get(currentDisaster);
+  if (assetData.flexibleData) {
     setStatus('Flexible disasters not yet supported.');
     return Promise.resolve();
   }
+  const {states} = assetData.stateBasedData;
   scoreBoundsMap.initialize(
       scoreBoundsPath ? transformGeoPointArrayToLatLng(scoreBoundsPath) : null,
       states);
