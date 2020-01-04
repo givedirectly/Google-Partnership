@@ -158,7 +158,7 @@ describe('Add/delete-related tests for manage_disaster.js', () => {
         });
   });
 
-  it.only('tries to write a disaster with bad info, then fixes it', () => {
+  it('tries to write a disaster with bad info, then fixes it', () => {
     const year = createAndAppend('input', 'year');
     const name = createAndAppend('input', 'name');
     const states = createAndAppend('select', 'states');
