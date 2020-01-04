@@ -27,8 +27,7 @@ const earthEngineTestTokenCookieName = 'TEST_EARTHENGINE_TOKEN';
  * @return {string}
  */
 function getValueFromLocalStorage(propertyName) {
-  return typeof (window) !== 'undefined' &&
-      window.localStorage.getItem(propertyName);
+  return window.localStorage.getItem(propertyName);
 }
 
 /**

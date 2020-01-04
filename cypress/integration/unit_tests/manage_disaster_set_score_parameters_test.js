@@ -296,7 +296,6 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     // Validate that score data was correctly written
     readFirestoreAfterWritesFinish().then((doc) => {
       const {assetData} = doc.data();
-      console.log(assetData);
       expect(assetData.damageAssetPath).to.be.null;
       expect(assetData.stateBasedData.sviAssetPaths).to.eql({'NY': 'state2'});
       expect(assetData.stateBasedData.snapData.paths).to.eql({'NY': null});

@@ -1,7 +1,7 @@
 export {createDisasterData};
 export {BUILDING_COUNT_KEY, incomeKey, snapKey, sviKey, totalKey};
 // For testing
-export {flexibleAssetData, stateAssetDataTemplate};
+export {deepCopy, flexibleAssetData, stateAssetDataTemplate};
 
 const snapKey = 'HD01_VD02';
 const totalKey = 'HD01_VD01';
