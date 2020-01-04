@@ -453,7 +453,7 @@ describe('Unit test for ShapeData', () => {
     doSuccessfulDrawAfterFailure();
   });
 
-  it('handles error then other polygon success then success', () => {
+  it.only('handles error then other polygon success then success', () => {
     const docStub = cy.stub(userShapes, 'doc').returns({
       set: cy.stub().throws(new Error('Some Firebase error')),
     });
