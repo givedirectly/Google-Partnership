@@ -45,7 +45,8 @@ function processNewEeLayer(asset, type) {
       return convertEeObjectToPromise(
                  ee.Dictionary.fromLists(properties, stats))
           .then((columns) => {
-            const layer = {...createCommonColorFunctionFields(asset, type),
+            const layer = {
+              ...createCommonColorFunctionFields(asset, type),
               'color-function': {
                 'columns': columns,
                 'current-style': 2,

@@ -11,6 +11,7 @@ let writeToFirebaseStub;
 describe('Unit tests for color function utility', () => {
   loadScriptsBeforeForUnitTests('ee', 'firebase', 'jquery');
   let colorFunctionEditor;
+  let snackbarStub;
 
   before(() => {
     cy.visit('test_utils/empty.html');
@@ -39,6 +40,7 @@ describe('Unit tests for color function utility', () => {
 
   let first = true;
   beforeEach(() => {
+    snackbarStub = cy.stub(snackbar, 'showErrorSnackbar');
     cy.document().then((doc) => {
       cy.stub(document, 'getElementById')
           .callsFake((id) => doc.getElementById(id));
@@ -54,8 +56,6 @@ describe('Unit tests for color function utility', () => {
   });
 
   it('closes an incomplete color function form', () => {
-    const snackbarStub = cy.stub(snackbar, 'showErrorSnackbar');
-
     let td = setUpWithLayer({
       'color-function': {
         'current-style': 0,

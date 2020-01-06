@@ -308,7 +308,7 @@ function onClick(td) {
   if (type !== ColorStyle.SINGLE) {
     $('#property-radio').prop('checked', true);
   }
-  displaySchema();
+  displaySchema(type);
 }
 
 /**
@@ -380,10 +380,10 @@ function switchSchema(type) {
 /**
  * Displays the given schema in the color editor box.
  */
-function displaySchema() {
+function displaySchema(type) {
   $('.color-type-div').hide();
   const colorFunction = getColorFunction();
-  switch (colorFunction['current-style']) {
+  switch (type) {
     case ColorStyle.SINGLE:
       $('#single-color-picker').val(colorFunction.color);
       $('#single').show();

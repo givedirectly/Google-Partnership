@@ -1,4 +1,4 @@
-export {showSnackbar, showErrorSnackbar};
+export {showErrorSnackbar, showSnackbar};
 
 const ANIMATION_DURATION_MS = 500;
 const SNACKBAR_DURATION_MS = 3000;
@@ -14,7 +14,8 @@ let iconOriginalClassName;
  * @param {string} msg the message to be shown
  */
 function showErrorSnackbar(msg) {
-  showSnackbar(msg, ['snackbar-error'], ['fa', 'fa-exclamation-circle', 'fa-2x']);
+  showSnackbar(
+      msg, ['snackbar-error'], ['fa', 'fa-exclamation-circle', 'fa-2x']);
 }
 
 /**
