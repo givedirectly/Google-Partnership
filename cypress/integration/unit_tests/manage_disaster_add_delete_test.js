@@ -87,7 +87,7 @@ describe('Add/delete-related tests for manage_disaster.js', () => {
         });
   });
 
-  it('writes a flexible disaster to firestore', () => {
+  it.only('writes a flexible disaster to firestore', () => {
     cy.document().then((doc) => {
       const year = doc.createElement('input');
       doc.body.appendChild(year);
@@ -125,9 +125,6 @@ describe('Add/delete-related tests for manage_disaster.js', () => {
           expect(assetData).to.eql(flexibleAssetData);
           // Sanity-check structure.
           expect(assetData).to.not.have.property('stateBasedData');
-          // For some reason, to.have.deep.property('flexibleData', {}) fails.
-          // Seems to be fixed in Chai 4, but Cypress still on 3.5.
-          expect(assetData.flexibleData).to.eql({});
           expect(assetData).to.have.property('damageAssetPath', null);
           expect(assetData).to.have.property('noDamageKey', null);
         });
