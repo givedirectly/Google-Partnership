@@ -25,7 +25,7 @@ function saveBounds(bounds) {
   const sw = coordinates[0];
   const ne = coordinates[2];
   const docData = {
-    'map-bounds': {
+    mapBounds: {
       sw: makeGeoPointFromGeoJsonPoint(sw),
       ne: makeGeoPointFromGeoJsonPoint(ne),
     },
