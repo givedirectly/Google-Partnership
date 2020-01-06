@@ -1,4 +1,4 @@
-export {showSnackbar};
+export {showSnackbar, showErrorSnackbar};
 
 const ANIMATION_DURATION_MS = 500;
 const SNACKBAR_DURATION_MS = 3000;
@@ -8,6 +8,14 @@ let showNumber = 0;
 
 let snackbarOriginalClassName;
 let iconOriginalClassName;
+
+/**
+ * Shows a red snackbar with an error icon.
+ * @param {string} msg the message to be shown
+ */
+function showErrorSnackbar(msg) {
+  showSnackbar(msg, ['snackbar-error'], ['fa', 'fa-exclamation-circle', 'fa-2x']);
+}
 
 /**
  * Shows a snackbar notification.

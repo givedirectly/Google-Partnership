@@ -1,11 +1,12 @@
 import {eeLegacyPrefix} from '../ee_paths.js';
 import {convertEeObjectToPromise} from '../ee_promise_cache.js';
 import {LayerType} from '../firebase_layers.js';
-
 import {createLayerRow} from './manage_layers.js';
 import {getCurrentLayers, updateLayersInFirestore} from './manage_layers_lib.js';
 
 export {processNewEeLayer, processNonEeLayer};
+
+// TODO(juliexxia): document color function fields
 
 /**
  * Processes a new feature-collection-typed layer and puts its color column
@@ -23,13 +24,7 @@ function processNewEeLayer(asset, type) {
   switch (type) {
     case LayerType.IMAGE:
     case LayerType.IMAGE_COLLECTION:
-      const layer = {
-        'asset-type': type,
-        'ee-name': asset,
-        'display-name': '',
-        'display-on-load': false,
-      };
-      return prependToTable(layer);
+      return prependToTable(createCommonColorFunctionFields(asset, type));
     case LayerType.FEATURE_COLLECTION:
       const featureCollection = ee.FeatureCollection(asset);
       const properties = featureCollection.first().propertyNames();
@@ -50,21 +45,32 @@ function processNewEeLayer(asset, type) {
       return convertEeObjectToPromise(
                  ee.Dictionary.fromLists(properties, stats))
           .then((columns) => {
-            const layer = {
-              'asset-type': type,
-              'ee-name': asset,
+            const layer = {...createCommonColorFunctionFields(asset, type),
               'color-function': {
                 'columns': columns,
                 'current-style': 2,
                 'last-by-property-style': 0,
                 'colors': {},
               },
-              'display-name': '',
-              'display-on-load': false,
             };
             return prependToTable(layer);
           });
   }
+}
+
+/**
+ * Create fields that all ee layers have.
+ * @param {string} asset
+ * @param {LayerType} type
+ * @return {Object}
+ */
+function createCommonColorFunctionFields(asset, type) {
+  return {
+    'asset-type': type,
+    'ee-name': asset,
+    'display-name': '',
+    'display-on-load': false,
+  };
 }
 
 /**

@@ -1,6 +1,7 @@
 import {populateColorFunctions, withColor} from '../../../docs/import/color_function_util.js';
 import * as manageLayersLib from '../../../docs/import/manage_layers_lib.js';
 import {getCurrentLayers} from '../../../docs/import/manage_layers_lib.js';
+import * as snackbar from '../../../docs/snackbar.js';
 import {createTrs, setDisasterAndLayers} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
@@ -12,31 +13,121 @@ describe('Unit tests for color function utility', () => {
   let colorFunctionEditor;
 
   before(() => {
-    colorFunctionEditor =
-        $(document.createElement('div')).prop('id', 'color-fxn-editor').hide();
-    const colorTypeRadios = $(document.createElement('div'));
-    colorTypeRadios.append(
-        makeRadio('SINGLE-radio', 'property-or-single'),
-        makeRadio('property-radio', 'property-or-single'));
-    colorFunctionEditor.append(colorTypeRadios);
-    const byPropertyDiv = makeTypeDiv('by-property', 'color-type-div');
-    byPropertyDiv.append(
-        makeRadio('CONTINUOUS-radio', 'by-property-type'),
-        makeRadio('DISCRETE-radio', 'by-property-type'),
-        makeTypeDiv('continuous'), makeTypeDiv('discrete'));
-    colorFunctionEditor.append(
-        makeTypeDiv('single', 'color-type-div'), byPropertyDiv);
-    $(document.body).append(colorFunctionEditor);
-
-    populateColorFunctions();
+    cy.visit('test_utils/empty.html');
+    return cy.document().then((doc) => {
+      colorFunctionEditor = doc.createElement('div');
+      colorFunctionEditor.id = 'color-fxn-editor';
+      colorFunctionEditor.hidden = true;
+      const colorTypeRadios = doc.createElement('div');
+      colorTypeRadios.append(
+          ...makeRadio(doc, 'SINGLE-radio', 'property-or-single'),
+          ...makeRadio(doc, 'property-radio', 'property-or-single'));
+      colorFunctionEditor.append(colorTypeRadios);
+      const byPropertyDiv = makeTypeDiv(doc, 'by-property', 'color-type-div');
+      const propertyPicker = doc.createElement('select');
+      propertyPicker.id = 'property-picker';
+      byPropertyDiv.append(
+          propertyPicker, doc.createElement('br'),
+          ...makeRadio(doc, 'CONTINUOUS-radio', 'by-property-type'),
+          ...makeRadio(doc, 'DISCRETE-radio', 'by-property-type'),
+          makeTypeDiv(doc, 'continuous'), makeTypeDiv(doc, 'discrete'));
+      colorFunctionEditor.append(
+          makeTypeDiv(doc, 'single', 'color-type-div'), byPropertyDiv);
+      doc.body.appendChild(colorFunctionEditor);
+    });
   });
 
+  let first = true;
   beforeEach(() => {
+    cy.document().then((doc) => {
+      cy.stub(document, 'getElementById')
+          .callsFake((id) => doc.getElementById(id));
+      // We only need this to run once but stubs are supposed to be set
+      // in beforeEach not before.
+      if (first) {
+        populateColorFunctions();
+        first = false;
+      }
+    });
     writeToFirebaseStub = cy.stub(manageLayersLib, 'updateLayersInFirestore');
-    colorFunctionEditor.hide();
+    $(colorFunctionEditor).hide();
   });
 
-  afterEach(() => colorFunctionEditor.hide());
+  it('closes an incomplete color function form', () => {
+    const snackbarStub = cy.stub(snackbar, 'showErrorSnackbar');
+
+    let td = setUpWithLayer({
+      'color-function': {
+        'current-style': 0,
+        'columns': {
+          'wings': {'min': 0, 'max': 100, 'values': [0, 1, 2, 100]},
+        },
+      },
+    });
+    td.trigger('click');
+    td.trigger('click');
+    expect(
+        snackbarStub.withArgs(
+            'Warning: Closed layer missing color and property. May not show up on map.'))
+        .to.be.calledOnce;
+
+    const missingColorStub = snackbarStub.withArgs(
+        'Warning: Closed layer missing color. May not show up on map.');
+    td = setUpWithLayer({
+      'color-function': {
+        'current-style': 2,
+      },
+    });
+    td.trigger('click');
+    td.trigger('click');
+    expect(missingColorStub).to.be.calledOnce;
+
+    td = setUpWithLayer({
+      'color-function': {
+        'current-style': 0,
+        'columns': {
+          'wings': {'min': 0, 'max': 100, 'values': [0, 1, 2, 100]},
+        },
+        'field': 'wings',
+      },
+    });
+    td.trigger('click');
+    td.trigger('click');
+    expect(missingColorStub).to.be.calledTwice;
+
+    td = setUpWithLayer({
+      'color-function': {
+        'current-style': 0,
+        'columns': {
+          'wings': {'min': 0, 'max': 100, 'values': [0, 1, 2, 100]},
+        },
+        'color': 'red',
+      },
+    });
+    td.trigger('click');
+    td.trigger('click');
+    expect(
+        snackbarStub.withArgs(
+            'Warning: Closed layer missing property. May not show up on map.'))
+        .to.be.calledOnce;
+
+    td = setUpWithLayer({
+      'color-function': {
+        'current-style': 1,
+        'columns': {
+          'wings': {'min': 0, 'max': 100, 'values': [0, 1, 2, 100]},
+        },
+        'field': 'wings',
+        'colors': {},
+      },
+    });
+    td.trigger('click');
+    td.trigger('click');
+    expect(
+        snackbarStub.withArgs(
+            'Warning: Closed layer missing at least one color. May not show up on map.'))
+        .to.be.calledOnce;
+  });
 
   it('updates min-max values', () => {
     // layer in pre-picking a property state
@@ -53,8 +144,8 @@ describe('Unit tests for color function utility', () => {
     const maxMin = $('#max-min');
     expect(maxMin.is(':visible')).to.be.false;
 
-    const continuousPropertyPicker = $('#continuous-property-picker');
-    continuousPropertyPicker.val('wings').trigger('change');
+    const propertyPicker = $('#property-picker');
+    propertyPicker.val('wings').trigger('change');
     expectOneFirebaseWrite();
     expect(maxMin.is(':visible'));
     const maxInput = $('#continuous-max');
@@ -116,10 +207,10 @@ describe('Unit tests for color function utility', () => {
       },
     };
     const td = setUpWithLayer(layer);
-    expect(colorFunctionEditor.is(':visible')).to.be.false;
-
+    expect($(colorFunctionEditor).is(':visible')).to.be.false;
     td.trigger('click');
-    expect(colorFunctionEditor.is(':visible')).to.be.true;
+
+    expect($(colorFunctionEditor).is(':visible')).to.be.true;
     expect(writeToFirebaseStub).to.not.be.called;
     expect(getColorFunction()['color']).to.equal('yellow');
 
@@ -137,13 +228,13 @@ describe('Unit tests for color function utility', () => {
     const continuousRadio = $('#CONTINUOUS-radio');
     expect(continuousRadio.prop('checked')).to.be.true;
     expect(continuousRadio.prop('style').display).to.equal('');
-    const continuousPropertyPicker = $('#continuous-property-picker');
+    const propertyPicker = $('#property-picker');
     expect(getColorFunction()['current-style']).to.equal(0);
     expect(getColorFunction()['color']).to.equal('red');
-    expect(continuousPropertyPicker.val()).to.be.null;
+    expect(propertyPicker.val()).to.be.null;
 
     // update field
-    continuousPropertyPicker.val('wings').trigger('change');
+    propertyPicker.val('wings').trigger('change');
     expectOneFirebaseWrite();
     expect(getColorFunction()['field']).to.equal('wings');
     expect($('#continuous-color-picker').val()).to.equal('red');
@@ -152,16 +243,15 @@ describe('Unit tests for color function utility', () => {
     const discreteRadio = $('#DISCRETE-radio');
     discreteRadio.trigger('change');
     expectOneFirebaseWrite();
-    const discretePropertyPicker = $('#discrete-property-picker');
     expect(getColorFunction()['current-style']).to.equal(1);
     expect(td.children().length).to.equal(1);
     expect(getColorFunction()['field']).to.equal('wings');
-    expect(discretePropertyPicker.val()).to.equal('wings');
+    expect(propertyPicker.val()).to.equal('wings');
     const discreteColorPickerList = $('#discrete-color-pickers');
     expect(discreteColorPickerList.children('li').length).to.equal(3);
 
     // update field
-    discretePropertyPicker.val('legs').trigger('change');
+    propertyPicker.val('legs').trigger('change');
     expectOneFirebaseWrite();
     expect(getColorFunction()['field']).to.equal('legs');
 
@@ -195,7 +285,7 @@ describe('Unit tests for color function utility', () => {
     expect(discreteRadio.prop('checked')).to.be.true;
 
     td.trigger('click');
-    expect(colorFunctionEditor.is(':visible')).to.be.false;
+    expect($(colorFunctionEditor).is(':visible')).to.be.false;
     expect(writeToFirebaseStub).to.not.be.called;
   });
 });
@@ -208,6 +298,8 @@ describe('Unit tests for color function utility', () => {
 function setUpWithLayer(layer) {
   setDisasterAndLayers([layer]);
 
+  // We're not actually attaching this and grabbing it again so fine to use
+  // non-cy doc.
   const td = withColor($(document.createElement('td')), layer, property);
   const row = createTrs(1);
   row[0].append(td);
@@ -231,29 +323,33 @@ function getColorFunction() {
 
 /**
  * Makes one of the type divs (mimicking html in manage_layers.html)
+ * @param {HTMLDocument} doc
  * @param {string} id
  * @param {string} className
- * @return {JQuery<HTMLDivElement>}
+ * @return {HTMLDivElement}
  */
-function makeTypeDiv(id, className) {
-  return $(document.createElement('div'))
-      .attr({
-        'id': id,
-        'hidden': true,
-      })
-      .addClass(className);
+function makeTypeDiv(doc, id, className) {
+  const div = doc.createElement('div');
+  div.id = id;
+  div.hidden = true;
+  div.className = className;
+  return div;
 }
 
 /**
- * Makes a radio (mimicking html in manage-layers.html)
+ * Makes a radio (mimicking html in manage-layers.html). Add a label for
+ * easier test debugging.
+ * @param {HTMLDocument} doc
  * @param {string} id
  * @param {string} name
- * @return {JQuery<HTMLInputElement>}
+ * @return {HTMLInputElement}
  */
-function makeRadio(id, name) {
-  return $(document.createElement('input')).attr({
-    'id': id,
-    'name': name,
-    'type': 'radio',
-  });
+function makeRadio(doc, id, name) {
+  const label = doc.createElement('label');
+  label.innerText = id;
+  const radio = doc.createElement('input');
+  radio.id = id;
+  radio.name = name;
+  radio.type = 'radio';
+  return [label, radio];
 }

@@ -1,4 +1,5 @@
 import {colorMap, ColorStyle} from '../firebase_layers.js';
+import {showErrorSnackbar} from '../snackbar';
 
 import {getCurrentLayers, getRowIndex, ILLEGAL_STATE_ERR, setStatus, updateLayersInFirestore} from './manage_layers_lib.js';
 
@@ -35,34 +36,35 @@ function populateColorFunctions() {
   const singleColorPicker = createColorPicker('single-color-picker');
   singleColorPicker.on('change', () => setColor(singleColorPicker));
   $('#single').append(
-      createLabelFor(singleColorPicker, 'color'), singleColorPicker);
+      createLabelForMandatoryPicker(singleColorPicker, 'color'),
+      singleColorPicker);
 
   const continuousColorPicker = createColorPicker('continuous-color-picker');
   continuousColorPicker.on('change', () => setColor(continuousColorPicker));
 
-  const propertyPicker =
-      $(document.createElement('select')).on('change', () => {
-        const property = propertyPicker.val();
-        setProperty(property);
-        switch (getColorFunction()['current-style']) {
-          case ColorStyle.CONTINUOUS:
-            maybeDisplayMinMax(property);
-            break;
-          case ColorStyle.DISCRETE:
-            populateDiscreteColorPickers(property);
-            break;
-          case ColorStyle.SINGLE:
-            throw Error('Tried to set property while in single color mode');
-        }
-      });
-  $('#property-picker').append(propertyPicker);
+  // TODO: make an educated guess about if this property should
+  // be continuous or discrete (based on # distinct vals?)
+  const propertyPicker = $('#property-picker').on('change', () => {
+    const property = propertyPicker.val();
+    setProperty(property);
+    switch (getColorFunction()['current-style']) {
+      case ColorStyle.CONTINUOUS:
+        maybeDisplayMinMax(property);
+        break;
+      case ColorStyle.DISCRETE:
+        populateDiscreteColorPickers(property);
+        break;
+      case ColorStyle.SINGLE:
+        throw Error('Somehow tried to set property while in single color mode');
+    }
+  });
 
   const minMaxDiv =
       $(document.createElement('div'))
           .prop('id', 'min-max')
           .append([
-            createMinOrMaxInputForContinuous(true, continuousPropertyPicker),
-            createMinOrMaxInputForContinuous(false, continuousPropertyPicker),
+            createMinOrMaxInputForContinuous(true, propertyPicker),
+            createMinOrMaxInputForContinuous(false, propertyPicker),
             $(document.createElement('p'))
                 .prop('id', 'max-min-error')
                 .text('Error: min value > max value')
@@ -70,7 +72,7 @@ function populateColorFunctions() {
           ])
           .hide();
   $('#continuous').append([
-    createLabelFor(continuousColorPicker, 'base color'),
+    createLabelForMandatoryPicker(continuousColorPicker, 'base color'),
     continuousColorPicker,
     $(document.createElement('br')),
     minMaxDiv,
@@ -134,16 +136,15 @@ function maybeDisplayMinMax(property) {
 /**
  * Validates the given min or max value is valid and writes it.
  * @param {boolean} min
- * @param {JQuery<HTMLElement>} continuousPropertyPicker
+ * @param {JQuery<HTMLElement>} propertyPicker
  * @return {?Promise<void>} Returns when finished writing or null if it just
  * queued a write and doesn't know when that will finish. Also returns null
  * if the new max or min value was bad.
  */
-function updateMinMax(min, continuousPropertyPicker) {
-  const property = continuousPropertyPicker.val();
+function updateMinMax(min, propertyPicker) {
   const input = min ? $('#continuous-min') : $('#continuous-max');
   const potentialNewVal = Number(input.val());
-  const propertyStats = getColorFunction()['columns'][property];
+  const propertyStats = getColorFunction()['columns'][propertyPicker.val()];
   let minOrMax;
   const errorDiv = $('#max-min-error');
   if (min) {
@@ -188,15 +189,14 @@ function setColor(picker) {
 /**
  *
  * @param {boolean} min if true, creating for min, else for max
- * @param {JQuery<HTMLElement>} continuousPropertyPicker
+ * @param {JQuery<HTMLElement>} propertyPicker
  * @return {JQuery<HTMLLabelElement>} containing the relevant input
  */
-function createMinOrMaxInputForContinuous(min, continuousPropertyPicker) {
+function createMinOrMaxInputForContinuous(min, propertyPicker) {
   const minOrMax = min ? 'min' : 'max';
-  const input =
-      $(document.createElement('input'))
-          .prop('id', 'continuous-' + minOrMax)
-          .on('blur', () => updateMinMax(min, continuousPropertyPicker));
+  const input = $(document.createElement('input'))
+                    .prop('id', 'continuous-' + minOrMax)
+                    .on('blur', () => updateMinMax(min, propertyPicker));
   // TODO: add padding to all labels and take out spaces in label text.
   return $(document.createElement('label')).text(minOrMax + ': ').append(input);
 }
@@ -227,16 +227,19 @@ for (const t in ColorStyle) {
   }
 }
 
+/** An asterisk that gets styled to be red to help mark fields as mandatory. */
+const mandatory = '<span class="mandatory">*</span>';
+
 /**
  * Utility function - helps create a label for the given element.
  * @param {JQuery<HTMLLabelElement>} element
  * @param {string} text
  * @return {JQuery<HTMLLabelElement>}
  */
-function createLabelFor(element, text) {
+function createLabelForMandatoryPicker(element, text) {
   return $(document.createElement('label'))
       .prop('for', element.prop('id'))
-      .text(text.concat(': '));
+      .html(text.concat(mandatory + ': '));
 }
 
 /**
@@ -264,39 +267,85 @@ function withColor(td, layer, property) {
     default:
       setStatus(ILLEGAL_STATE_ERR + 'unrecognized color function: ' + layer);
   }
-  td.addClass('editable color-td')
-      .on('click', () => onClick(td, colorFunction['current-style']));
+  td.addClass('editable color-td').on('click', () => onClick(td));
   return td;
 }
 
 /**
  * On click function for color tds - updates the globalTd.
  * @param {JQuery<HTMLElement>} td
- * @param {enum} type
  */
-function onClick(td, type) {
+function onClick(td) {
   if ($(td).hasClass('na')) {
     return;
   }
   const colorFunctionDiv = $('#color-fxn-editor');
+  // open -> closed
   if (colorFunctionDiv.is(':visible') && td === globalTd) {
+    maybeDisplayWarningOnClose();
     colorFunctionDiv.hide();
     selectCurrentRow(false);
     return;
   }
-  colorFunctionDiv.show();
+  // most recent closed -> open
   if (td === globalTd) {
+    colorFunctionDiv.show();
     selectCurrentRow(true);
     return;
   }
+  // open td other than most recent closed
+  if (colorFunctionDiv.is(':visible')) {
+    console.log(colorFunctionDiv);
+    console.log('hello');
+    maybeDisplayWarningOnClose();
+  }
+  colorFunctionDiv.show();
   selectCurrentRow(false);
   globalTd = td;
   selectCurrentRow(true);
+  const type = getColorFunction()['current-style'];
+  $('#' + colorStyleTypeStrings.get(type) + '-radio').prop('checked', true);
   if (type !== ColorStyle.SINGLE) {
     $('#property-radio').prop('checked', true);
   }
-  $('#' + colorStyleTypeStrings.get(type) + '-radio').prop('checked', true);
-  displaySchema(type);
+  displaySchema();
+}
+
+/**
+ * Checks if necessary fields of the previous layer's coloring are filled out.
+ * Warns if not all are.
+ */
+function maybeDisplayWarningOnClose() {
+  const callShowSnackbar = (missing) => showErrorSnackbar(
+      'Warning: Closed layer missing ' + missing + '. May not show up on map.');
+  switch (getColorFunction()['current-style']) {
+    case ColorStyle.SINGLE:
+      if (!$('#single-color-picker').val()) {
+        callShowSnackbar('color');
+      }
+      break;
+    case ColorStyle.CONTINUOUS:
+      if (!$('#property-picker').val()) {
+        if (!$('#continuous-color-picker').val()) {
+          callShowSnackbar('color and property');
+        } else {
+          callShowSnackbar('property');
+        }
+      } else if (!$('#continuous-color-picker').val()) {
+        callShowSnackbar('color');
+      }
+      break;
+    case ColorStyle.DISCRETE:
+      $('#discrete-color-pickers')
+          .find('select')
+          .each(/* @this HTMLElement */ function() {
+            if (!$(this).val()) {
+              callShowSnackbar('at least one color');
+              return false;
+            }
+          });
+      break;
+  }
 }
 
 /**
@@ -330,37 +379,29 @@ function switchSchema(type) {
 
 /**
  * Displays the given schema in the color editor box.
- * @param {enum} type
  */
-function displaySchema(type) {
-  const colorFunction = getColorFunction();
+function displaySchema() {
   $('.color-type-div').hide();
-  const byPropertyDiv = $('#by-property');
-  const continuousDiv = $('#continuous');
-  const discreteDiv = $('#discrete');
-  const propertyPicker = $('#property-picker');
-  const property = propertyPicker.val();
-  switch (type) {
+  const colorFunction = getColorFunction();
+  switch (colorFunction['current-style']) {
     case ColorStyle.SINGLE:
-      $('#single-color-picker').val(colorFunction['color']);
+      $('#single-color-picker').val(colorFunction.color);
       $('#single').show();
       break;
     case ColorStyle.CONTINUOUS:
-      // WORKING HERE - should be able to combine these two!
-
-      $('#continuous-color-picker').val(colorFunction['color']);
-      populatePropertyPicker(propertyPicker);
-      maybeDisplayMinMax(property);
-      byPropertyDiv.show();
-      discreteDiv.hide();
-      continuousDiv.show();
+      $('#continuous-color-picker').val(colorFunction.color);
+      populatePropertyPicker($('#property-picker'));
+      maybeDisplayMinMax(colorFunction.field);
+      $('#by-property').show();
+      $('#discrete').hide();
+      $('#continuous').show();
       break;
     case ColorStyle.DISCRETE:
-      populatePropertyPicker(propertyPicker);
-      populateDiscreteColorPickers(property);
-      byPropertyDiv.show();
-      continuousDiv.hide();
-      discreteDiv.show();
+      populatePropertyPicker($('#property-picker'));
+      populateDiscreteColorPickers(colorFunction.field);
+      $('#by-property').show();
+      $('#continuous').hide();
+      $('#discrete').show();
       break;
   }
 }
@@ -373,13 +414,13 @@ function displaySchema(type) {
 function populatePropertyPicker(picker) {
   picker.empty();
   const colorFunction = getColorFunction();
-  const properties = colorFunction['columns'];
+  const properties = colorFunction.columns;
   const asOptions = [];
   Object.keys(properties)
       .forEach(
           (key) => asOptions.push(
               $(document.createElement('option')).val(key).text(key)));
-  picker.append(asOptions).val(colorFunction['field']);
+  picker.append(asOptions).val(colorFunction.field);
 }
 
 // The key for the data in each discrete schema color select to know which
@@ -396,11 +437,11 @@ const discreteColorPickerDataKey = 'value';
 function populateDiscreteColorPickers() {
   const pickerList = $('#discrete-color-pickers').empty();
   const colorFunction = getColorFunction();
-  if (!colorFunction['field']) {
+  const field = colorFunction.field;
+  if (!field) {
     return;
   }
-  const values =
-      colorFunction['columns'][$('#discrete-property-picker').val()]['values'];
+  const values = colorFunction['columns'][field]['values'];
   if (values.length === 0) {
     $('#too-many-values').show();
   } else {
