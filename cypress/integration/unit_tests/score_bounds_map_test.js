@@ -64,9 +64,6 @@ describe('Unit tests for ScoreBoundsMap class', () => {
               .to.be.false;
           // Now they're set.
           underTest.onShow();
-          // TODO(janakr): Bounds are not available immediately after map
-          //  initialization. Putting it here, after a few cy.get() operations,
-          //  appears to be enough, but might have to add a wait if flaky.
           // Check that map bounds have adjusted to include the polygon we drew,
           // which extends north of the US into Canada.
           const bounds = underTest.map.getBounds();

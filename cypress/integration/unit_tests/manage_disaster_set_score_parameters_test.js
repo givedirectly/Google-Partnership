@@ -2,7 +2,7 @@ import {addPolygonWithPath} from '../../../docs/basic_map.js';
 import {readDisasterDocument} from '../../../docs/firestore_document.js';
 import {createDisasterData} from '../../../docs/import/create_disaster_lib.js';
 import * as ListEeAssets from '../../../docs/import/list_ee_assets.js';
-import {assetSelectionRowPrefix, disasterAssets, disasterData, scoreAssetTypes, scoreBoundsMap, setUpScoreBoundsMap, setUpScoreSelectorTable, validateUserFields} from '../../../docs/import/manage_disaster';
+import {assetSelectionRowPrefix, disasterData, scoreAssetTypes, scoreBoundsMap, setUpScoreBoundsMap, setUpScoreSelectorTable, validateUserFields} from '../../../docs/import/manage_disaster';
 import {enableWhenFirestoreReady} from '../../../docs/import/manage_disaster.js';
 import {getDisaster} from '../../../docs/resources.js';
 import {cyQueue} from '../../support/commands.js';
@@ -49,7 +49,6 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
                        ])));
 
     disasterData.clear();
-    disasterAssets.clear();
   });
 
   it('damage asset/map-bounds elements', () => {
