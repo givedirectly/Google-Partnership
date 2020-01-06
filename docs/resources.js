@@ -26,8 +26,6 @@ function getDisaster() {
  * @return {string}
  */
 function getScoreAssetPath() {
-  // TODO(janakr): rename this path to something more intelligible, like
-  //  .../score-asset
   return gdEePathPrefix + getDisaster() + '/poverty-damage-score';
 }
 

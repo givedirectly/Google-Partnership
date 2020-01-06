@@ -25,7 +25,6 @@ export {
   assetSelectionRowPrefix,
   createScoreAssetForStateBasedDisaster,
   deleteDisaster,
-  disasterAssets,
   disasterData,
   enableWhenFirestoreReady,
   scoreAssetTypes,
@@ -45,17 +44,6 @@ export {
  *     to an empty map here for testing
  */
 let disasterData = new Map();
-
-// TODO(janakr): remove this cache, we can rely on internal caching.
-/**
- * Disaster id to assets in corresponding EE folder. We know
- * for each asset what type it is and whether or not it should be disabled in
- * the option picker. See {@link getDisasterAssetsFromEe} for details on
- * disabled options.
- * @type {Map<string, Promise<Map<string, {type: LayerType, disabled:
- *     boolean}>>>}
- */
-const disasterAssets = new Map();
 
 /**
  * Effectively constant {@link ScoreBoundsMap} initialized in {@link
@@ -182,7 +170,7 @@ function enableWhenReady(allDisastersData) {
   // Eagerly kick off current disaster asset listing before Firestore finishes.
   const currentDisaster = getDisaster();
   if (currentDisaster) {
-    maybeFetchDisasterAssets(currentDisaster);
+    getDisasterAssetsFromEe(currentDisaster);
   }
   return allDisastersData.then(enableWhenFirestoreReady);
 }
@@ -198,7 +186,7 @@ function enableWhenFirestoreReady(allDisastersData) {
   disasterData = allDisastersData;
   // Kick off all EE asset fetches.
   for (const disaster of disasterData.keys()) {
-    maybeFetchDisasterAssets(disaster);
+    getDisasterAssetsFromEe(disaster);
   }
   // enable add disaster button.
   const addDisasterButton = $('#add-disaster-button');
@@ -277,7 +265,7 @@ function onSetDisaster() {
     }
   };
   const damagePromise =
-      disasterAssets.get(currentDisaster).then(disasterLambda, (err) => {
+      getDisasterAssetsFromEe(currentDisaster).then(disasterLambda, (err) => {
         if (err &&
             err !==
                 'Asset "' + eeLegacyPathPrefix + currentDisaster +
@@ -287,17 +275,6 @@ function onSetDisaster() {
         disasterLambda([]);
       });
   return Promise.all([scorePromise, damagePromise]).then(validateUserFields);
-}
-
-/**
- * If disaster assets not known for disaster, kicks off fetch and stores promise
- * in disasterAssets map.
- * @param {string} disaster
- */
-function maybeFetchDisasterAssets(disaster) {
-  if (!disasterAssets.has(disaster)) {
-    disasterAssets.set(disaster, getDisasterAssetsFromEe(disaster));
-  }
 }
 
 /**
@@ -405,8 +382,6 @@ async function writeNewDisaster(disasterId, states) {
   }
 
   disasterData.set(disasterId, currentData);
-  // We know there are no assets in folder yet.
-  disasterAssets.set(disasterId, Promise.resolve(new Map()));
 
   const disasterPicker = $('#disaster-dropdown');
   let added = false;

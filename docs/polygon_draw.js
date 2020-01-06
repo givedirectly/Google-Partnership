@@ -521,8 +521,6 @@ function handleUserShapesError(err) {
   }
 }
 
-// TODO(janakr): it would be nice to unit-test this, but I don't know how to get
-// the google maps Polygon objects, and mocking them defeats the purpose.
 /**
  * Helper function that actually does drawing on map when Firestore query
  * completes.
