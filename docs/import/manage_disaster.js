@@ -341,7 +341,7 @@ function addDisaster() {
     setStatus('Error: Disaster name and year are required.');
     return Promise.resolve(false);
   }
-  if ($('#disaster-type-flexible').val()) {
+  if ($('#disaster-type-flexible').is(':checked')) {
     states = null;
   } else if (!states) {
     setStatus('Error: states are required for Census-based disaster.');

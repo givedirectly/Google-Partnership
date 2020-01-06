@@ -13,10 +13,10 @@ const commonAssetDataTemplate = Object.freeze({
   damageAssetPath: null,
   damageLevelsKey: null,
   noDamageValue: null,
+  scoreBoundsCoordinates: null,
 });
 
 const stateBasedDataTemplate = Object.freeze({
-  scoreBoundsCoordinates: null,
   blockGroupAssetPaths: {},
   snapData: {
     paths: {},
