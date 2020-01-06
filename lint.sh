@@ -10,8 +10,9 @@ readonly first_arg="$1"
 # See
 # https://stackoverflow.com/questions/4380945/exclude-a-directory-from-git-diff
 readonly modified_js_files="$(git diff --diff-filter=d --name-only master \
-    'docs/*.js' 'token_server/*.js' 'cypress/integration/*.js' \
-    'cypress/support/*.js' 'cypress/plugins/*.js' ':!docs/external_libs')"
+    'admin_utils/*.js' 'docs/*.js' 'token_server/*.js' \
+    'cypress/integration/*.js' 'cypress/support/*.js' 'cypress/plugins/*.js' \
+    ':!docs/external_libs')"
 if [[ "$modified_js_files" ]]; then
   if clang-format --style=Google -output-replacements-xml $modified_js_files \
       | grep -c '<replacement ' >/dev/null; then
