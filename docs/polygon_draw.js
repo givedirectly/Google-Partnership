@@ -460,7 +460,6 @@ async function initializeAndProcessUserRegions(map, firebasePromise) {
     // Damage asset may not exist yet, so this is undefined. We tolerate
     // gracefully.
     ({damageAssetPath} = doc.data().assetData);
-    console.log(damageAssetPath);
     userShapes = getFirestoreRoot().collection(collectionName);
     let querySnapshot;
     try {
