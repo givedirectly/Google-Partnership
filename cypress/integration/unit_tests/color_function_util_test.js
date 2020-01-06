@@ -66,10 +66,9 @@ describe('Unit tests for color function utility', () => {
     });
     td.trigger('click');
     td.trigger('click');
-    expect(
-        snackbarStub.withArgs(
-            'Warning: Closed layer missing color and property. '
-            + 'May not show up on map.'))
+    expect(snackbarStub.withArgs(
+               'Warning: Closed layer missing color and property. ' +
+               'May not show up on map.'))
         .to.be.calledOnce;
 
     const missingColorStub = snackbarStub.withArgs(
@@ -124,10 +123,9 @@ describe('Unit tests for color function utility', () => {
     });
     td.trigger('click');
     td.trigger('click');
-    expect(
-        snackbarStub.withArgs(
-            'Warning: Closed layer missing at least one color. '
-            + 'May not show up on map.'))
+    expect(snackbarStub.withArgs(
+               'Warning: Closed layer missing at least one color. ' +
+               'May not show up on map.'))
         .to.be.calledOnce;
   });
 
