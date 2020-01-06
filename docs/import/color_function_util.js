@@ -379,6 +379,7 @@ function switchSchema(type) {
 
 /**
  * Displays the given schema in the color editor box.
+ * @param {ColorStyle} type
  */
 function displaySchema(type) {
   $('.color-type-div').hide();
