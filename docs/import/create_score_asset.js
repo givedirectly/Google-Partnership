@@ -293,7 +293,6 @@ function createScoreAssetForStateBasedDisaster(
     buildingAssetPaths,
   } = stateBasedData;
   const {paths: snapPaths, snapKey, totalKey} = snapData;
-  // If we switch to CrowdAI data, building asset paths will change.
   const {damage, damageEnvelope} =
       calculateDamage(assetData, setMapBoundsInfoFunction);
   let allStatesProcessing = ee.FeatureCollection([]);
