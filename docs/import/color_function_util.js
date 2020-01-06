@@ -393,7 +393,7 @@ const discreteColorPickerDataKey = 'value';
  * We add a piece of data to each of these pickers so they know what property
  * they're attached to.
  */
-function populateDiscreteColorPickers(property) {
+function populateDiscreteColorPickers() {
   const pickerList = $('#discrete-color-pickers').empty();
   const colorFunction = getColorFunction();
   if (!colorFunction['field']) {
