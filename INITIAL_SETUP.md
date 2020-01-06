@@ -125,21 +125,32 @@ To set up a brand-new system with new Google accounts:
 
 ### Set up testing infrastructure
 
-In order to successfully run tests, locally or on
-[Travis CI](https://travis-ci.com/givedirectly/Google-Partnership/), a Test
-account must be set up, and developers and Travis must have access to its
-credentials. The current Test account is
-`gd-earthengine-test-user@givedirectly.org`. Moreover, data from Hurricane
-Harvey (2017) must be present, since our integration tests assert against it.
-
 #### Set up test data
+ 
+Data from Hurricane Harvey (2017) must be present, since our integration tests
+assert against it.
+
 -  As the Admin account (currently `gd-earthengine-user@givedirectly.org`), go
    to the
    [manage disaster](https://givedirectly.github.io/Google-Partnership/import/manage_disaster.html)
    page and add a disaster named `harvey` in `2017`, with Texas the affected
-   state.
+   state, if it does not already exist.
 
--  The 
+-  Follow [instructions](https://docs.google.com/document/d/1WnjHIexMnlVkn5lqnzYlBVg4aWxh2wVDZI2DBAu-TGI/edit?disco=AAAAEE2MdUU&ts=5e1368bd&usp_dm=true)
+   to create a score asset, using the FEMA Damage Assessments damage asset
+   currently available in the Admin account's `2017-harvey` folder, and Texas
+   data obtained as per the instructions.
+
+-  If your data differs significantly from that originally used, you may have
+   to adjust test parameters to get them to pass again.
+
+### Set up test account
+
+In order to successfully run tests, locally or on
+[Travis CI](https://travis-ci.com/givedirectly/Google-Partnership/), a Test
+account must be set up, and developers and Travis must have access to its
+credentials. The current Test account is
+`gd-earthengine-test-user@givedirectly.org`.
 
 -  If you need to create a new Test account, follow the first four steps of
    [Moving to a different Google account/Changing server setup](#moving-to-a-different-google-accountchanging-server-setup):
