@@ -7,8 +7,6 @@ import {listEeAssets} from './ee_utils.js';
 
 export {setUpAllHeaders};
 
-const EARTH_ENGINE_PREFIX = eeLegacyPathPrefix;
-
 const BUCKET = 'mapping-crisis.appspot.com';
 const BASE_UPLOAD_URL =
     `https://www.googleapis.com/upload/storage/v1/b/${BUCKET}/o`;
@@ -54,8 +52,8 @@ async function submitFiles(e) {
   const qualifiedName = getDisaster() + '/' + collectionName;
   const gcsListingPromise = listGCSFiles(qualifiedName);
   const assetPromise = maybeCreateImageCollection(qualifiedName);
-  const eeListingPromise = assetPromise.then(
-      () => listEeAssets(EARTH_ENGINE_PREFIX + qualifiedName));
+  const eeListingPromise =
+      assetPromise.then(() => listEeAssets(eeLegacyPathPrefix + qualifiedName));
 
   // Build up a dictionary of already uploaded images so we don't do extra work
   // uploading or importing, and can tell the user what to delete.
@@ -193,10 +191,10 @@ async function uploadFileToGCS(name, contents, qualifiedName, callback) {
  *
  * @param {string} qualifiedName Must contain only legal EE characters. Like
  *     '2017-harvey/noaa-images'
- * @return {Promise<void>} Promise to wait for operation completion on
+ * @return {Promise<void>} Promise that is done when image collection is created
  */
 function maybeCreateImageCollection(qualifiedName) {
-  const assetName = EARTH_ENGINE_PREFIX + qualifiedName;
+  const assetName = eeLegacyPathPrefix + qualifiedName;
   return new Promise(
              (resolve, reject) => ee.data.getAsset(
                  assetName,
@@ -246,7 +244,7 @@ function maybeCreateImageCollection(qualifiedName) {
 function importEEAssetFromGCS(gcsBucket, qualifiedName, name) {
   const id = ee.data.newTaskId()[0];
   const request = {
-    id: EARTH_ENGINE_PREFIX + qualifiedName + '/' +
+    id: eeLegacyPathPrefix + qualifiedName + '/' +
         replaceEarthEngineIllegalCharacters(name),
     tilesets: [{
       sources: [
