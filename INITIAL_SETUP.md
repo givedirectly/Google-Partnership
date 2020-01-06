@@ -129,7 +129,17 @@ In order to successfully run tests, locally or on
 [Travis CI](https://travis-ci.com/givedirectly/Google-Partnership/), a Test
 account must be set up, and developers and Travis must have access to its
 credentials. The current Test account is
-`gd-earthengine-test-user@givedirectly.org`.
+`gd-earthengine-test-user@givedirectly.org`. Moreover, data from Hurricane
+Harvey (2017) must be present, since our integration tests assert against it.
+
+#### Set up test data
+-  As the Admin account (currently `gd-earthengine-user@givedirectly.org`), go
+   to the
+   [manage disaster](https://givedirectly.github.io/Google-Partnership/import/manage_disaster.html)
+   page and add a disaster named `harvey` in `2017`, with Texas the affected
+   state.
+
+-  The 
 
 -  If you need to create a new Test account, follow the first four steps of
    [Moving to a different Google account/Changing server setup](#moving-to-a-different-google-accountchanging-server-setup):
