@@ -32,5 +32,5 @@ function clickBlockGroup() {
       .should(
           'have.text',
           'Block Group 4, Census Tract 2415, Harris County, Texas');
-  cy.get('.map').should('contain', 'SCORE: 72');
+  cy.get('.map').should('contain', 'SCORE: 71');
 }
