@@ -17,7 +17,7 @@ describe('Integration test for clicking feature', () => {
         .find('[class="google-visualization-table-td"]')
         .should(
             'have.text',
-            'Block Group 4, Census Tract 2415, Harris County, Texas21681');
+            'Block Group 4, Census Tract 2415, Harris County, Texas');
   });
 });
 
@@ -31,6 +31,6 @@ function clickBlockGroup() {
       .find('[class="google-visualization-table-td"]')
       .should(
           'have.text',
-          'Block Group 4, Census Tract 2415, Harris County, Texas21681');
-  cy.get('.map').should('contain', 'SCORE: 72');
+          'Block Group 4, Census Tract 2415, Harris County, Texas');
+  cy.get('.map').should('contain', 'SCORE: 71');
 }
