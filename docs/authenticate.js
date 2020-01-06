@@ -198,7 +198,7 @@ class Authenticator {
           if (!response.ok) {
             const message = 'Refresh token error: ' + response.status;
             console.error(message, response);
-            // TODO(janakr): Find GD contact to list here.
+            // TODO(#395): Find GD contact to list here.
             alert(
                 'Error contacting server for access without EarthEngine ' +
                 'whitelisting. Please reload page and log in with an ' +
