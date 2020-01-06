@@ -435,7 +435,6 @@ describe('Unit test for ShapeData', () => {
     const oldList = ee.List;
     ee.List = (list) => {
       ee.List = oldList;
-      console.log('got here somehow');
       const returnValue = ee.List(list);
       cy.stub(returnValue, 'evaluate')
           .callsFake((callback) => callback(null, 'Error evaluating list'));
