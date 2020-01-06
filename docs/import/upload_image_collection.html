@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Upload Image Collection</title>
+  <!-- Load jQuery, a 3rd-party library. -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+  <!-- TODO(janakr): Switch back to compiled version in production. -->
+  <!-- TODO(janakr): This is pinned to a particular version, but we should be targeting the live
+       version, whatever it is. -->
+  <script src="https://rawcdn.githack.com/google/earthengine-api/3bb86bfc4f3d9eed98220f3d225b414982915b86/javascript/build/ee_api_js_debug.js"></script>
+  <script src="https://apis.google.com/js/api.js"></script>
+
+  <script src="../external_libs/firebase-app-7.6.1.js"></script>
+  <script src="../external_libs/firebase-firestore-7.6.1.js"></script>
+  <script src="../external_libs/firebase-auth-7.6.1.js"></script>
+
+  <script type="module" src="./upload_image_collection_startup.js"></script>
+
+  <!-- Load our styles. -->
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<div id="navbar"></div>
+
+<br><br><br>  <!-- TODO(ramvellanki): switch to using a margin above the main content of this page -->
+
+<form action="" id="form">
+  <label for="collectionName">Name of ImageCollection (e.g. noaa-images). Will be created inside
+    current disaster folder: </label><input id="collectionName">
+  <br>
+  <input id="files" class="file-chooser" type="file" multiple></input>
+  <label id="file-label" for="files">Choose Files...</label>
+  <button class="form-button" type="submit" id="fileButton" disabled="true">Import to EarthEngine</button>
+</form>
+</p>
+<div id="status_div"></div>
+<hr/>
+<div id="command_div"></div>
+<hr/>
+<div id="results"></div>
+</body>
+</html>
