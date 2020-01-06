@@ -1,0 +1,2 @@
+# TODO(janakr): update to 12 when Amazon supports (and change package.json).
+runtime: nodejs10

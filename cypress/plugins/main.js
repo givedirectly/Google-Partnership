@@ -7,7 +7,7 @@
  * Note that even though this file appears to be written in ES6 style, it is
  * transpiled using Babel, so there may be subtle language incompatibilities.
  * Errors can usually be fixed by searching them and adding the necessary
- * Babel plugin to .babelrc.
+ * Babel plugin to the section in plugins/index.js.
  *
  * More about Cypress plugins here: https://on.cypress.io/plugins-guide
  */
@@ -17,6 +17,9 @@ import {firebaseConfigProd, firebaseConfigTest} from '../../docs/authenticate.js
 import {generateEarthEngineToken} from '../../token_server/ee_token_creator.js';
 
 export {onFunction};
+
+// Keep in sync with firestore_rules/test.rules.
+const TEST_FIRESTORE_USER = 'cypress-firestore-test-user';
 
 /**
  * When using Firestore, data that is retrieved using
@@ -94,8 +97,7 @@ function onFunction(on, config) {
     initializeTestFirebase() {
       const currentApp = createTestFirebaseAdminApp();
       const deleteOldPromise = deleteAllOldTestData(currentApp);
-      const result =
-          currentApp.auth().createCustomToken('cypress-firestore-test-user');
+      const result = currentApp.auth().createCustomToken(TEST_FIRESTORE_USER);
       return Promise
           .all([result, deleteOldPromise, retrieveFirestoreDataForTest()])
           .then((list) => firestoreUserToken = list[0])

@@ -26,7 +26,7 @@ const damageWeightValueId = 'damage-weight-value';
 
 /**
  * Updates the score layer and table based on current toggle values.
- * @param {google.map.Maps} map
+ * @param {google.maps.Map} map
  */
 function update(map) {
   setInnerHtml('error', '');
@@ -48,7 +48,7 @@ function update(map) {
 }
 
 /**
- * Pulls value from input box and
+ * Pulls value from input box and validates it.
  * @param {string} toggle
  * @return {boolean} True if successful, false if there was an error
  */
@@ -61,19 +61,22 @@ function getUpdatedValue(toggle) {
   return false;
 }
 
-// Set in setUpInitialToggleValues.
-let hasDamageAsset = null;
+/**
+ * Set in setUpInitialToggleValues.
+ * @type {boolean}
+ */
+let hasDamageAsset;
 
 /**
  * Initializes damage-related toggle values based on whether or not we have
  * a damage asset.
  * @param {Promise<Object>} disasterMetadataPromise
- * @param {google.map.Maps} map
+ * @param {google.maps.Map} map
  * @return {Promise<Object>} returns all the toggle initial values.
  */
 function setUpToggles(disasterMetadataPromise, map) {
   return disasterMetadataPromise.then((doc) => {
-    hasDamageAsset = doc.data()['asset_data']['damage_asset_path'];
+    hasDamageAsset = !!doc.data()['asset_data']['damage_asset_path'];
     if (hasDamageAsset) {
       toggles.set(damageThresholdKey, 0.5);
       toggles.set(povertyWeightKey, 0.5);
@@ -104,9 +107,7 @@ function getToggleValues() {
 function createToggles(map) {
   const form = document.createElement('form');
   form.id = 'toggles';
-  form.onsubmit = () => {
-    return false;
-  };
+  form.onsubmit = () => false;
   const errorMessage = document.createElement('p');
   errorMessage.id = 'error';
   errorMessage.className = 'error';
@@ -114,7 +115,7 @@ function createToggles(map) {
 
   // threshold toggles
   const thresholdTitle = document.createElement('div');
-  thresholdTitle.className = 'form-title';
+  thresholdTitle.className = 'content-title';
   thresholdTitle.innerText = 'thresholds';
   form.appendChild(thresholdTitle);
   form.appendChild(createInput(povertyThresholdKey));
@@ -126,7 +127,7 @@ function createToggles(map) {
     const weightInputDiv = document.createElement('div');
     weightInputDiv.className = 'input-container';
     const weightTitle = document.createElement('div');
-    weightTitle.className = 'form-title';
+    weightTitle.className = 'content-title';
     weightTitle.innerText = 'weights';
     weightInputDiv.appendChild(weightTitle);
 
@@ -188,7 +189,7 @@ function createInput(toggle) {
 }
 
 /**
- * Create a basic input element with the given id for the key name in {@code
+ * Creates a basic input element with the given id for the key name in {@code
  * toggles}
  *
  * @param {string} id
@@ -203,10 +204,10 @@ function createBasicToggleInputElement(id) {
 }
 
 /**
- * Create a generic button.
+ * Creates a generic button.
  *
  * @param {string} id
- * @param {function} onclick
+ * @param {Function} onclick
  * @return {HTMLInputElement}
  */
 function createButton(id, onclick) {
@@ -219,7 +220,7 @@ function createButton(id, onclick) {
   return submitButton;
 }
 
-/** Update the displayed weights based on a new poverty weight. */
+/** Updates the displayed weights based on a new poverty weight. */
 function updateWeights() {
   if (!hasDamageAsset) return;
   const newPovertyWeight =
@@ -244,7 +245,7 @@ function validate(threshold, toggle) {
 }
 
 /**
- * Set the error message
+ * Sets the error message
  * @param {string} message
  */
 function setErrorMessage(message) {
@@ -253,7 +254,7 @@ function setErrorMessage(message) {
 }
 
 /**
- * Set the displayed text of an element
+ * Sets the displayed text of an element
  * @param {string} id
  * @param {string} message
  */

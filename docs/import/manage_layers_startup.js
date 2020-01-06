@@ -2,7 +2,7 @@ import {trackEeAndFirebase} from '../authenticate.js';
 import {getDisastersData} from '../firestore_document.js';
 import {loadNavbarWithPicker} from '../navbar.js';
 import {getDisaster} from '../resources.js';
-import TaskAccumulator from '../task_accumulator.js';
+import {TaskAccumulator} from '../task_accumulator.js';
 import {populateColorFunctions} from './color_function_util.js';
 import {enableWhenReady, onSetDisaster, setUpDisasterPicker, updateAfterSort} from './manage_layers.js';
 

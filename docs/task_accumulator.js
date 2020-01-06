@@ -1,4 +1,4 @@
-export {TaskAccumulator as default};
+export {TaskAccumulator};
 
 /** A util class for waiting on multiple async processes to finish. */
 class TaskAccumulator {

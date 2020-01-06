@@ -1,51 +1,48 @@
 import {eeLegacyPathPrefix, legacyStateDir} from '../ee_paths.js';
 import {convertEeObjectToPromise} from '../ee_promise_cache.js';
 import {LayerType} from '../firebase_layers.js';
+import {listEeAssets} from './ee_utils.js';
 
-export {getDisasterAssetsFromEe, getStatesAssetsFromEe};
+export {getDisasterAssetsFromEe, getStateAssetsFromEe, listAndProcessEeAssets};
 
 /**
- * Cache for the results of getStatesAssetsFromEe for each state.
- * @type {Map<string, Promise<Map<string, string>>>}
+ * Cache for the results of getStateAssetsFromEe.
+ * @typedef {Map<string, {disabled: boolean, hasGeometry: boolean}>} StateList
+ * @type {Map<string, Promise<StateList>>}
  */
 const stateAssetPromises = new Map();
 
-// TODO: we don't need to request multiple states
 /**
- * Gets all assets in ee directories corresponding to given states. Caches
+ * Gets all assets in ee directories corresponding to given state. Caches
  * results. Marks assets with their type and whether or not they should be
  * disabled when put into a select. Here, disabling any assets that aren't
  * feature collections.
- * @param {Array<string>} states
- * @return {Map<string, Promise<Map<string, {disabled: boolean}>>>}
+ * @param {string} state
+ * @return {Promise<StateList>}
  */
-function getStatesAssetsFromEe(states) {
-  const toReturn = new Map();
-  for (const state of states) {
-    const maybeStatePromise = stateAssetPromises.get(state);
-    if (maybeStatePromise) {
-      toReturn.set(state, maybeStatePromise);
-      continue;
-    }
-    const statePromise =
-        listEeAssets(legacyStateDir + '/' + state).then((result) => {
-          const assetMap = new Map();
-          for (const {asset, type} of result) {
-            assetMap.set(
-                asset, {disabled: type !== LayerType.FEATURE_COLLECTION});
-          }
-          return assetMap;
-        });
-    stateAssetPromises.set(state, statePromise);
-    toReturn.set(state, statePromise);
+function getStateAssetsFromEe(state) {
+  const maybeStatePromise = stateAssetPromises.get(state);
+  if (maybeStatePromise) {
+    return maybeStatePromise;
   }
-  return toReturn;
+  const statePromise = markHasGeometryAssets(
+                           listAndProcessEeAssets(legacyStateDir + '/' + state))
+                           .then((assetMap) => {
+                             for (const attributes of assetMap.values()) {
+                               attributes.disabled = attributes.type !==
+                                   LayerType.FEATURE_COLLECTION;
+                             }
+                             return assetMap;
+                           });
+  stateAssetPromises.set(state, statePromise);
+  return statePromise;
 }
 
 /**
  * Cache for the results of getDisasterAssetsFromEe for each disaster
- * @type {Map<string, Promise<Map<string, {type: LayerType, disabled:
- *     boolean}>>>}
+ * @typedef {Map<string, {type: LayerType, disabled: boolean, hasGeometry:
+ * boolean}>} DisasterList
+ * @type {Map<string, Promise<DisasterList>>}
  */
 const disasterAssetPromises = new Map();
 
@@ -58,56 +55,72 @@ const disasterAssetPromises = new Map();
  * De-duplicates requests, so retrying before a fetch completes won't start a
  * new fetch.
  * @param {string} disaster disaster in the form name-year
- * @return {Promise<Map<string, {type: number, disabled: boolean}>>} Returns
- *     a promise containing the map of asset to info for the given disaster.
+ * @return {Promise<DisasterList>} Promise containing the map of asset to info
+ *     for the given disaster.
  */
 function getDisasterAssetsFromEe(disaster) {
   const maybePromise = disasterAssetPromises.get(disaster);
   if (maybePromise) {
     return maybePromise;
   }
-  // For passing through promise without re-promise-ifying.
-  let listEeAssetsResult;
-  const result =
-      listEeAssets(eeLegacyPathPrefix + disaster)
-          .then((assets) => {
-            listEeAssetsResult = assets;
-            const shouldDisable = [];
-            for (const {asset, type} of assets) {
-              if (type === LayerType.FEATURE_COLLECTION) {
-                // census data returns an empty coords multipoint
-                // geometry instead of a true null geometry. So
-                // we check for that. Could be bad if we ever see
-                // a data set with a mix of empty and non-empty
-                // geometries.
-                shouldDisable.push(ee.Algorithms.If(
-                    ee.Algorithms.IsEqual(
-                        ee.FeatureCollection(asset)
-                            .first()
-                            .geometry()
-                            .coordinates()
-                            .length(),
-                        ee.Number(0)),
-                    // DOM disable property can't recognize 0 and 1 as false and
-                    // true :(
-                    true, false));
-              } else {
-                shouldDisable.push(false);
-              }
-            }
-            return convertEeObjectToPromise(ee.List(shouldDisable));
-          })
-          .then((disableList) => {
-            const assetMap = new Map();
-            const disableListIterator = disableList[Symbol.iterator]();
-            for (const {asset, type} of listEeAssetsResult) {
-              assetMap.set(
-                  asset, {type, disabled: disableListIterator.next().value});
-            }
-            return assetMap;
-          });
+  const result = markHasGeometryAssets(
+                     listAndProcessEeAssets(eeLegacyPathPrefix + disaster))
+                     .then((assetMap) => {
+                       for (const attributes of assetMap.values()) {
+                         attributes.disabled = !attributes.hasGeometry;
+                       }
+                       return assetMap;
+                     });
   disasterAssetPromises.set(disaster, result);
   return result;
+}
+
+/**
+ * Attaches geometry info to the given listing. Only
+ * {@link ee.FeatureCollection} assets can have geometries, and an asset will
+ * have the `hasGeometry` attribute if its {@link ee.Geometry} is non-null and
+ * has a non-empty coordinates list. We only check the first element of each
+ * {@link ee.FeatureCollection}. Could be bad if we ever see a data set with a
+ * mix of empty and non-empty geometries.
+ *
+ * Census data returns an empty coords {@link ee.Geometry.MultiPoint} geometry
+ * instead of a true null geometry. So we check for that.
+ * @param {Promise<Array<{asset: string, type: LayerType}>>} listingPromise
+ *     See {@link listEeAssets}
+ * @return {Map<string, {type: LayerType, hasGeometry: boolean}>}
+ */
+function markHasGeometryAssets(listingPromise) {
+  // For passing through promise without re-promise-ifying.
+  let listEeAssetsResult;
+  return listingPromise
+      .then((assets) => {
+        listEeAssetsResult = assets;
+        const hasGeometry = [];
+        for (const {asset, type} of assets) {
+          if (type === LayerType.FEATURE_COLLECTION) {
+            const geometry = ee.FeatureCollection(asset).first().geometry();
+            // For some reason, ee.Feature(null, {}).geometry() returns null,
+            // but ee.Feature(null, {}).geometry().coordinates() returns []. We
+            // don't rely on this, and check null and empty separately.
+            // Null and empty list are false.
+            hasGeometry.push(ee.Algorithms.If(
+                geometry, ee.Algorithms.If(geometry.coordinates(), true, false),
+                false));
+          } else {
+            hasGeometry.push(false);
+          }
+        }
+        return convertEeObjectToPromise(ee.List(hasGeometry));
+      })
+      .then((hasGeometryList) => {
+        const assetMap = new Map();
+        const hasGeometryIterator = hasGeometryList[Symbol.iterator]();
+        for (const {asset, type} of listEeAssetsResult) {
+          assetMap.set(
+              asset, {type, hasGeometry: hasGeometryIterator.next().value});
+        }
+        return assetMap;
+      });
 }
 
 /**
@@ -116,23 +129,21 @@ function getDisasterAssetsFromEe(disaster) {
  * @return {Promise<Array<{asset: string, type: LayerType}>>} Promise with an
  *     array of asset info objects.
  */
-function listEeAssets(dir) {
-  return ee.data.listAssets(dir, {}, () => {}).then(getIds);
+function listAndProcessEeAssets(dir) {
+  return listEeAssets(dir).then(getIds);
 }
 
 /**
  * Turns a listAssets call result into a list of asset info objects.
- * @param {Object} listAssetsResult result of call to ee.data.listAssets
+ * @param {Object} listResult result of call to {@link listEeAssets}
  * @return {Array<{asset: string, type: LayerType}>} asset-path -> type e.g.
  *     'users/gd/my-asset' -> 'IMAGE'
  */
-function getIds(listAssetsResult) {
+function getIds(listResult) {
   const assets = [];
-  if (listAssetsResult.assets) {
-    for (const asset of listAssetsResult.assets) {
-      const type = maybeConvertAssetType(asset);
-      if (type) assets.push({asset: asset.id, type});
-    }
+  for (const asset of listResult) {
+    const type = maybeConvertAssetType(asset);
+    if (type) assets.push({asset: asset.id, type});
   }
   return assets;
 }

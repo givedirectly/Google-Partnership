@@ -1,12 +1,14 @@
+import {getCheckBoxId, getCheckBoxRowId} from '../../../docs/checkbox_util.js';
 import {clearPromiseCacheForTesting} from '../../../docs/ee_promise_cache.js';
+import * as ErrorLib from '../../../docs/error.js';
 import {LayerType} from '../../../docs/firebase_layers.js';
-import {addLayer, addScoreLayer, deckGlArray, DeckParams, layerArray, LayerDisplayData, removeScoreLayer, scoreLayerName, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from '../../../docs/layer_util.js';
+import {addLayer, addNullLayer, addScoreLayer, deckGlArray, DeckParams, layerArray, LayerDisplayData, removeScoreLayer, scoreLayerName, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from '../../../docs/layer_util.js';
 import * as loading from '../../../docs/loading';
 import {CallbackLatch} from '../../support/callback_latch';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 import {createGoogleMap} from '../../support/test_map';
 
-const mockData = {};
+const mockData = [{geometry: {type: 'Nonsense'}}];
 
 const colorProperties = {
   'color': 'yellow',
@@ -178,6 +180,102 @@ describe('Unit test for toggleLayerOn', () => {
     });
   });
 
+  it('fails to load a layer', () => {
+    setUpLayerFailure().then(
+        () => addLayer(
+            {
+              'ee-name': 'asset/does/not/exist',
+              'asset-type': LayerType.FEATURE_COLLECTION,
+              'display-name': 'asset1',
+              'display-on-load': false,
+              'color-function': colorProperties,
+              'index': 3,
+            },
+            null));
+    assertLayerFailure();
+  });
+
+  it('fails to toggle on a layer', () => {
+    const layer = {
+      'ee-name': 'asset/does/not/exist',
+      'asset-type': LayerType.FEATURE_COLLECTION,
+      'display-name': 'asset1',
+      'display-on-load': false,
+      'color-function': colorProperties,
+      'index': failureLayerIndex,
+    };
+    addNullLayer(layer);
+    setUpLayerFailure().then(
+        () => toggleLayerOn(
+            {
+              'ee-name': 'asset/does/not/exist',
+              'asset-type': LayerType.FEATURE_COLLECTION,
+              'display-name': 'asset1',
+              'display-on-load': false,
+              'color-function': colorProperties,
+              'index': failureLayerIndex,
+            },
+            null));
+    assertLayerFailure();
+  });
+
+  it('fails to load an image layer', () => {
+    setUpLayerFailure().then(
+        () => addLayer(
+            {
+              'ee-name': 'asset/does/not/exist',
+              'asset-type': LayerType.IMAGE,
+              'display-name': 'asset1',
+              'display-on-load': false,
+              'color-function': colorProperties,
+              'index': failureLayerIndex,
+            },
+            null));
+    assertLayerFailure();
+  });
+
+  const failureLayerIndex = 3;
+
+  /**
+   * Prepares for a test that fails to load a layer.
+   * @return {Cypress.Chainable<Sinon.SinonStub>}
+   */
+  function setUpLayerFailure() {
+    const index = 3;
+    // Visit a blank page first to clear out any prior page state.
+    cy.visit('test_utils/empty.html');
+    cy.document().then((doc) => {
+      const div = doc.createElement('div');
+      div.id = getCheckBoxRowId(index);
+      const checkbox = doc.createElement('input');
+      checkbox.id = getCheckBoxId(index);
+      div.appendChild(checkbox);
+      doc.body.appendChild(div);
+      cy.stub(document, 'getElementById')
+          .callsFake((id) => doc.getElementById(id));
+    });
+    return cy.wrap(cy.stub(ErrorLib, 'showError')).as('errorStub');
+  }
+
+  /** Makes expected assertions when a layer has failed to load. */
+  function assertLayerFailure() {
+    cy.get('@errorStub').then((errorStub) => {
+      expect(errorStub).to.be.calledOnce;
+      expect(errorStub).to.be.calledWith(
+          Cypress.sinon.match.any, 'EarthEngine asset for asset1 not found');
+    });
+    cy.get('#' + getCheckBoxId(failureLayerIndex)).should('be.disabled');
+    cy.get('#' + getCheckBoxId(failureLayerIndex)).should('not.be.checked');
+    cy.get('#' + getCheckBoxRowId(failureLayerIndex))
+        .should(
+            'have.attr', 'title',
+            'EarthEngine asset not found. If you believe it is there, try ' +
+                'refreshing the page');
+    cy.get('#' + getCheckBoxRowId(failureLayerIndex))
+        .should('have.css', 'text-decoration')
+        .and('contains', 'line-through');
+  }
+
   // For the next three tests, we do the following setup:
   // 1. Use a real map, since we want to see that it has an entry in its
   // overlayMapTypes.
@@ -316,8 +414,8 @@ describe('Unit test for toggleLayerOn', () => {
     expect(scorePromise).to.not.be.null;
     // Nothing happens until promise we passed in is resolved.
     expect(overlaySpy).to.not.be.called;
-    const promiseResult = ['a'];
-    const secondPromiseResult = ['b'];
+    const promiseResult = [{geometry: {type: 'a'}}];
+    const secondPromiseResult = [{geometry: {type: 'b'}}];
     resolveFunction(promiseResult);
     const scoreLayerId = scoreLayerName + '-' + scoreLayerName;
 

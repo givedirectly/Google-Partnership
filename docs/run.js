@@ -1,12 +1,13 @@
+import {getCheckBoxId, getCheckBoxRowId} from './checkbox_util.js';
 import {clickFeature, selectHighlightedFeatures} from './click_feature.js';
 import {sidebarDatasetsId, tableContainerId} from './dom_constants.js';
 import {drawTable} from './draw_table.js';
-import {getEePromiseForFeatureCollection} from './ee_promise_cache.js';
+import {AssetNotFoundError, getEePromiseForFeatureCollection} from './ee_promise_cache.js';
 import {showError} from './error.js';
-import {getLinearGradient} from './import/color_function_util.js';
+import {getLinearGradient} from './firebase_layers.js';
 import {addLayer, addNullLayer, addScoreLayer, scoreLayerName, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from './layer_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
-import {initializeAndProcessUserRegions, userFeaturesCheckboxRowId} from './polygon_draw.js';
+import {initializeAndProcessUserRegions} from './polygon_draw.js';
 import {setUserFeatureVisibility} from './popup.js';
 import {processJoinedData} from './process_joined_data.js';
 import {getBackupScoreAssetPath, getScoreAssetPath} from './resources.js';
@@ -50,7 +51,7 @@ function createPromiseWithPathIfSuccessful(eeAsset) {
 function resolveScoreAsset() {
   resolvedScoreAsset =
       createPromiseWithPathIfSuccessful(getScoreAssetPath()).catch((err) => {
-        if (err.endsWith('not found.')) {
+        if (err instanceof AssetNotFoundError) {
           showError(
               'Primary score asset not found. Checking to see if ' +
                   'backup exists',
@@ -99,10 +100,13 @@ function createAndDisplayJoinedData(map, initialTogglesValuesPromise) {
   // clear old listeners
   google.maps.event.removeListener(mapSelectListener);
   google.maps.event.removeListener(featureSelectListener);
+  const dataPromise = resolvedScoreAsset.then(getEePromiseForFeatureCollection);
+  dataPromise.catch(
+      (err) =>
+          showError(err, 'Error retrieving score asset. Try reloading page'));
   const processedData = processJoinedData(
-      resolvedScoreAsset.then(getEePromiseForFeatureCollection), scalingFactor,
-      initialTogglesValuesPromise);
-  addScoreLayer(processedData);
+      dataPromise, scalingFactor, initialTogglesValuesPromise);
+  addScoreLayer(processedData.then(({featuresList}) => featuresList));
   maybeCheckScoreCheckbox();
   drawTableAndSetUpHandlers(processedData, map);
 }
@@ -110,7 +114,7 @@ function createAndDisplayJoinedData(map, initialTogglesValuesPromise) {
 /**
  * Invokes {@link drawTable} with the appropriate callbacks to set up click
  * handlers for the map.
- * @param {Promise<Array<GeoJson.Feature>>} processedData
+ * @param {Promise<Array<GeoJsonFeature>>} processedData
  * @param {google.maps.Map} map
  */
 function drawTableAndSetUpHandlers(processedData, map) {
@@ -144,6 +148,7 @@ function drawTableAndSetUpHandlers(processedData, map) {
 function createNewCheckbox(index, displayName, parentDiv) {
   const newRow = document.createElement('div');
   newRow.className = 'checkbox-row';
+  newRow.id = getCheckBoxRowId(index);
 
   // TODO: add additional information on mouseover.
   const newBox = document.createElement('input');
@@ -217,8 +222,6 @@ function createCheckboxForUserFeatures(parentDiv) {
       'user-features', 'user features', parentDiv,
       {'color': '#4CEF64', 'current-style': 2});
   newBox.checked = true;
-  // Used for disabling in case of error retrieving features.
-  newBox.parentElement.id = userFeaturesCheckboxRowId;
   newBox.onclick = () => setUserFeatureVisibility(newBox.checked);
 }
 
@@ -264,14 +267,4 @@ function maybeCheckScoreCheckbox() {
   if (checkbox) {
     checkbox.checked = true;
   }
-}
-
-/**
- * Creates the id of a show/hide checkbox.
- *
- * @param {string} baseName
- * @return {string}
- */
-function getCheckBoxId(baseName) {
-  return 'layer-' + baseName + '-checkbox';
 }

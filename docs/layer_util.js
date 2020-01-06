@@ -1,8 +1,9 @@
+import {getCheckBoxRowId, partiallyHandleBadRowAndReturnCheckbox} from './checkbox_util.js';
 import {CompositeImageMapType} from './composite_image_map_type.js';
 import {mapContainerId} from './dom_constants.js';
 import {terrainStyle} from './earth_engine_asset.js';
-import {getEePromiseForFeatureCollection} from './ee_promise_cache.js';
-import {createError} from './error.js';
+import {AssetNotFoundError, getEePromiseForFeatureCollection, transformEarthEngineFailureMessage} from './ee_promise_cache.js';
+import {showError} from './error.js';
 import {colorMap, createStyleFunction, LayerType} from './firebase_layers.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 
@@ -163,12 +164,13 @@ function toggleLayerOn(layer, map) {
     // toggleLayerOn is called again for this layer, the promise will already
     // have completed.
     if (layerDisplayData.overlay instanceof CompositeImageMapType) {
-      return createCompositeTilePromise(layerDisplayData, index, map);
+      return createCompositeTilePromise(
+          layerDisplayData, index, map, layer['display-name']);
     }
     return createLoadingAwarePromise((resolve) => {
       resolveOnEeTilesFinished(layerDisplayData, resolve);
       showOverlayLayer(layerDisplayData.overlay, index, map);
-    });
+    }, layer);
   }
   if (layerDisplayData.pendingPromise) {
     return layerDisplayData.pendingPromise;
@@ -235,15 +237,13 @@ function addImageLayer(map, imageAsset, layer) {
                 resolve();
               }
             } else {
-              // TODO: if there's an error, disable checkbox, add tests for
-              // this.
               layerDisplayData.displayed = false;
-              reject(failure);
+              reject(transformEarthEngineFailureMessage(failure));
             }
             layerDisplayData.pendingPromise = null;
           },
         });
-      });
+      }, layer);
   return layerDisplayData.pendingPromise;
 }
 
@@ -357,7 +357,8 @@ function addTileLayer(map, layer) {
       opacity: layer['opacity'],
     });
     layerDisplayData.pendingPromise = null;
-    return createCompositeTilePromise(layerDisplayData, layer['index'], map);
+    return createCompositeTilePromise(
+        layerDisplayData, layer['index'], map, layer['display-name']);
   });
   return layerDisplayData.pendingPromise;
 }
@@ -384,16 +385,21 @@ function extractFromJson(jsonUrl) {
  * @param {LayerDisplayData} layerDisplayData
  * @param {number} index Order in the overlay types
  * @param {google.maps.Map} map
+ * @param {string} displayNameForErrors Name displayed to user if layer fails to
+ *     render
  * @return {Promise} Promise that completes when layer is rendered. If the
  *     layer is toggled off, this Promise will complete immediately, see {@link
- *     createTileCallback}
+ *     createTileCallback}. Promise has no real way to fail, but because we use
+ *     common codepath, it will fail gracefully (disable checkbox and warn user)
+ *     if it somehow does
  */
-function createCompositeTilePromise(layerDisplayData, index, map) {
+function createCompositeTilePromise(
+    layerDisplayData, index, map, displayNameForErrors) {
   return createLoadingAwarePromise((resolve) => {
     layerDisplayData.overlay.setTileCallback(
         createTileCallback(layerDisplayData, resolve));
     showOverlayLayer(layerDisplayData.overlay, index, map);
-  });
+  }, {'display-name': displayNameForErrors, index});
 }
 
 /**
@@ -419,7 +425,7 @@ function addLayerFromFeatures(layerDisplayData, index) {
     deckParams.colorFunction =
         createStyleFunction(deckParams.colorFunctionProperties);
   }
-  deckGlArray[index] = new deck.GeoJsonLayer({
+  const jsonLayerParams = {
     id: layerDisplayData.deckParams.deckId + '-' + index,
     data: layerDisplayData.data,
     pointRadiusMinPixels: 1,
@@ -429,7 +435,14 @@ function addLayerFromFeatures(layerDisplayData, index) {
     // https://deck.gl/#/documentation/deckgl-api-reference/layers/geojson-layer?section=getelevation-function-number-optional-transition-enabled
     getFillColor: deckParams.colorFunction,
     visible: layerDisplayData.displayed,
-  });
+  };
+  // Don't want points to have black borders, doesn't look nice. Check the first
+  // item to see if it's a point and assume the rest are the same.
+  if (layerDisplayData.data && layerDisplayData.data.length &&
+      layerDisplayData.data[0].geometry.type === 'Point') {
+    jsonLayerParams.getLineColor = deckParams.colorFunction;
+  }
+  deckGlArray[index] = new deck.GeoJsonLayer(jsonLayerParams);
   redrawLayers();
 }
 
@@ -461,15 +474,17 @@ function addLayer(layer, map) {
       const layerName = layer['ee-name'];
       return addLayerFromGeoJsonPromise(
           getEePromiseForFeatureCollection(layerName),
-          DeckParams.fromLayer(layer), layer['index']);
+          DeckParams.fromLayer(layer), layer['index'], layer['display-name']);
     case LayerType.KML:
       return addKmlLayers(layer, map);
     case LayerType.MAP_TILES:
       return addTileLayer(map, layer);
     default:
-      createError('parsing layer type during add')(
-          '[' + layer['index'] + ']: ' + layer['asset-name'] +
-          ' not recognized layer type');
+      // No way this can actually happen, but be ready for it.
+      handleErrorLoadingLayer(
+          'Error parsing layer type during add: ' + layer['asset-type'] +
+              ' not recognized layer type',
+          layer);
   }
 }
 
@@ -519,17 +534,21 @@ function processImageCollection(layerName) {
  * @param {DeckParams} deckParams
  * @param {number|string} index index of layer. A number unless this is the
  * score layer
+ * @param {string} displayNameForErrors Name displayed to user if layer fails to
+ *     render
  * @return {Promise} Promise that completes when the feature is rendered
  */
-function addLayerFromGeoJsonPromise(featuresPromise, deckParams, index) {
+function addLayerFromGeoJsonPromise(
+    featuresPromise, deckParams, index, displayNameForErrors) {
   const layerDisplayData = new LayerDisplayData(deckParams, true);
   layerArray[index] = layerDisplayData;
-  layerDisplayData.pendingPromise =
-      wrapPromiseLoadingAware(featuresPromise.then((features) => {
+  layerDisplayData.pendingPromise = wrapPromiseLoadingAware(
+      featuresPromise.then((features) => {
         layerDisplayData.data = features;
         addLayerFromFeatures(layerDisplayData, index);
         layerDisplayData.pendingPromise = null;
-      }));
+      }),
+      {'display-name': displayNameForErrors, index});
   return layerDisplayData.pendingPromise;
 }
 
@@ -593,7 +612,8 @@ scoreDeckParams.colorFunction = (feature) =>
  * @return {Promise} Promise that completes when layer is displayed
  */
 function addScoreLayer(layer) {
-  return addLayerFromGeoJsonPromise(layer, scoreDeckParams, scoreLayerName);
+  return addLayerFromGeoJsonPromise(
+      layer, scoreDeckParams, scoreLayerName, scoreLayerName);
 }
 
 /**
@@ -606,24 +626,58 @@ function removeScoreLayer() {
   redrawLayers();
 }
 
-const mapLoadingFinished = () => loadingElementFinished(mapContainerId);
+/** Notes that a layer has finished rendering on the map. */
+function mapLoadingFinished() {
+  loadingElementFinished(mapContainerId);
+}
 
 /**
  * Notes that an element has started loading, and add a handler to the Promise
- * to note when it finishes.
+ * to note when it finishes. Also handle errors if the Promise fails.
  * @param {Promise} promise
+ * @param {Object} layerInfoForErrors See {@link handleErrorLoadingLayer}
  * @return {Promise} wrappedPromise
  */
-function wrapPromiseLoadingAware(promise) {
+function wrapPromiseLoadingAware(promise, layerInfoForErrors) {
   addLoadingElement(mapContainerId);
-  return promise.then(mapLoadingFinished);
+  return promise
+      .catch((err) => handleErrorLoadingLayer(err, layerInfoForErrors))
+      .finally(mapLoadingFinished);
+}
+
+/**
+ * Shows error and disables layer if an error is encountered loading a layer.
+ * @param {string|Error} err
+ * @param {Object} layerInfoForErrors Data for layer in same format as coming
+ *     from Firestore. Must have `display-name` and `index` properties. Only
+ *     used in case of errors.
+ */
+function handleErrorLoadingLayer(err, layerInfoForErrors) {
+  const {index, 'display-name': displayName} = layerInfoForErrors;
+  const notFound = err instanceof AssetNotFoundError;
+  const message = err.message ? err.message : err;
+  showError(
+      'Error with layer ' + displayName + ', ' + message,
+      notFound ? 'EarthEngine asset for ' + displayName + ' not found' :
+                 'Error loading layer ' + displayName);
+
+  const badRow = $('#' + getCheckBoxRowId(index));
+  partiallyHandleBadRowAndReturnCheckbox(badRow).prop('disabled', true);
+  badRow.prop(
+      'title',
+      notFound ?
+          'EarthEngine asset not found. If you believe it is there, try ' +
+              'refreshing the page' :
+          'Error showing layer. If you believe the layer is there, try ' +
+              'refreshing the page (Error message: ' + message + ')');
 }
 
 /**
  * Creates a Promise that's already wrapped by {@code wrapPromiseLoadingAware}.
  * @param {Function} lambda that is the argument to Promise constructor
+ * @param {Object} layerInfoForErrors See {@link wrapPromiseLoadingAware}
  * @return {Promise} wrapped Promise
  */
-function createLoadingAwarePromise(lambda) {
-  return wrapPromiseLoadingAware(new Promise(lambda));
+function createLoadingAwarePromise(lambda, layerInfoForErrors) {
+  return wrapPromiseLoadingAware(new Promise(lambda), layerInfoForErrors);
 }

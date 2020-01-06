@@ -1,9 +1,10 @@
 import * as Authenticate from '../../../docs/authenticate.js';
+import {getCheckBoxRowId} from '../../../docs/checkbox_util.js';
 import {mapContainerId} from '../../../docs/dom_constants.js';
 import * as ErrorLibrary from '../../../docs/error.js';
 import * as FirestoreDocument from '../../../docs/firestore_document.js';
 import * as Loading from '../../../docs/loading.js';
-import {initializeAndProcessUserRegions, userFeaturesCheckboxRowId} from '../../../docs/polygon_draw.js';
+import {initializeAndProcessUserRegions} from '../../../docs/polygon_draw.js';
 import {cyQueue} from '../../support/commands.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 import {createGoogleMap} from '../../support/test_map.js';
@@ -35,17 +36,17 @@ describe('Tests for polygon_draw.js with Firebase issues', () => {
         (map) => initializeAndProcessUserRegions(
             map, Promise.resolve({data: () => ({asset_data: {}})})));
     cy.get('[title="Draw a shape"]').should('not.exist');
-    cy.get('#' + userFeaturesCheckboxRowId)
+    cy.get('#' + getCheckBoxRowId('user-features'))
         .should('have.css', 'text-decoration')
         .and('contains', 'line-through')
         .then(() => expect(errorStub).to.be.calledOnce);
-    cy.get('#' + userFeaturesCheckboxRowId).children('input').click();
+    cy.get('#' + getCheckBoxRowId('user-features')).children('input').click();
     const alertText =
         'Sign in to authorized account to view user-drawn features';
     cy.get('div').contains(alertText);
     cy.get('button').contains('Close').click();
     cy.get('div').contains(alertText).should('not.exist');
-    cy.get('#' + userFeaturesCheckboxRowId).children('label').click();
+    cy.get('#' + getCheckBoxRowId('user-features')).children('label').click();
     cy.get('div').contains(alertText).then(
         () => expect(signInStub).to.not.be.called);
     cy.get('button').contains('Sign in').click().then(
@@ -81,7 +82,7 @@ describe('Tests for polygon_draw.js with Firebase issues', () => {
           expect(errorStub).to.be.calledOnce;
         });
     cy.get('[title="Draw a shape"]').should('not.exist');
-    cy.get('#' + userFeaturesCheckboxRowId)
+    cy.get('#' + getCheckBoxRowId('user-features'))
         .should('have.css', 'text-decoration')
         .and('contains', 'line-through');
   });
@@ -107,7 +108,7 @@ describe('Tests for polygon_draw.js with Firebase issues', () => {
     createGoogleMap().then((mapResult) => map = mapResult);
     return cy.document().then((doc) => {
       const div = doc.createElement('div');
-      div.id = userFeaturesCheckboxRowId;
+      div.id = getCheckBoxRowId('user-features');
       const checkbox = doc.createElement('input');
       checkbox.type = 'checkbox';
       checkbox.id = 'checkbox-id';

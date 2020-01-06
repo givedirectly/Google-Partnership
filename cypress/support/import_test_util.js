@@ -81,9 +81,8 @@ function expectStubCalledOnce(stubName) {
  */
 function setUpSavingStubs() {
   beforeEach(() => {
-    const toastStub = cy.stub(Toast, 'showToastMessage');
-    cy.wrap(toastStub.withArgs('Saving...', -1)).as('savingStub');
-    cy.wrap(toastStub.withArgs('Saved')).as('savedStub');
+    cy.wrap(cy.stub(Toast, 'showSavingToast')).as('savingStub');
+    cy.wrap(cy.stub(Toast, 'showSavedToast')).as('savedStub');
   });
 }
 

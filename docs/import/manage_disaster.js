@@ -5,9 +5,9 @@ import {disasterCollectionReference} from '../firestore_document.js';
 import {latLngToGeoPoint, transformGeoPointArrayToLatLng} from '../map_util.js';
 import {getDisaster} from '../resources.js';
 import {createDisasterData, incomeKey, snapKey, sviKey, totalKey} from './create_disaster_lib.js';
-import {createScoreAsset, setStatus} from './create_score_asset.js';
+import {createScoreAssetForStateBasedDisaster, setStatus} from './create_score_asset.js';
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
-import {getDisasterAssetsFromEe, getStatesAssetsFromEe} from './list_ee_assets.js';
+import {getDisasterAssetsFromEe, getStateAssetsFromEe} from './list_ee_assets.js';
 import {clearStatus} from './manage_layers_lib.js';
 import {ScoreBoundsMap} from './score_bounds_map.js';
 import {scoreCoordinatesAttribute} from './score_path_lib.js';
@@ -24,14 +24,13 @@ export {
 export {
   addDisaster,
   assetSelectionRowPrefix,
-  createScoreAsset,
+  createScoreAssetForStateBasedDisaster,
   deleteDisaster,
   disasterAssets,
   disasterData,
   enableWhenFirestoreReady,
   scoreAssetTypes,
   scoreBoundsMap,
-  stateAssets,
   updateColorAndHover,
   validateUserFields,
   writeNewDisaster,
@@ -47,6 +46,8 @@ export {
  *     to an empty map here for testing
  */
 let disasterData = new Map();
+
+// TODO(janakr): remove this cache, we can rely on internal caching.
 /**
  * Disaster id to assets in corresponding EE folder. We know
  * for each asset what type it is and whether or not it should be disabled in
@@ -56,14 +57,6 @@ let disasterData = new Map();
  *     boolean}>>>}
  */
 const disasterAssets = new Map();
-
-/**
- * State to assets in corresponding EE folder. We know for each asset whether or
- * not it should be disabled in the option picker. See {@link
- * getStatesAssetsFromEe} for details on disabled options.
- * @type {Map<string, Promise<Map<string, {disabled: boolean}>>>}
- */
-const stateAssets = new Map();
 
 /**
  * Effectively constant {@link ScoreBoundsMap} initialized in {@link
@@ -88,6 +81,10 @@ const optionalWarningPrefix = '; warning: created asset will be missing ';
  * enabled, it is yellowed a bit to indicate the missing optional assets.
  * The buildings asset is optional if the damage asset is not present, but is
  * required if the damage asset is present.
+ * TODO(janakr): We could allow buildings asset to be absent even when
+ *  damage is present and calculate damage percentage based on household
+ *  count. But does GD want that? We'd have to warn here so users knew they were
+ *  getting a less accurate damage percentage count.
  */
 function validateUserFields() {
   const states = disasterData.get(getDisaster()).states;
@@ -122,16 +119,16 @@ function validateUserFields() {
   let optionalMessage = '';
   if (missingItems.length) {
     for (const missingItem of missingItems) {
-      const optionalBuildings =
-          missingItem[0] === 'Microsoft Building Shapefiles' &&
-          !damageAssetPresent;
+      const isBuildings = missingItem[0] === 'Microsoft Building Shapefiles';
+      // Buildings is optional if damage asset not present, mandatory otherwise.
+      const buildingsOptional = isBuildings && !damageAssetPresent;
       const optional = missingItem[0] === 'Income' ||
-          missingItem[0] === 'SVI' || optionalBuildings;
+          missingItem[0] === 'SVI' || buildingsOptional;
       // Construct string to append to message: display name + missing states,
-      // if any. Buildings is special because we don't actually display
+      // if any. Optional buildings is special because we don't actually display
       // "Microsoft Building Shapefiles" on the map, only building counts, so we
-      // tell the user that's what they're missing.
-      const itemString = optionalBuildings ?
+      // tell the user that's what they'll be missing.
+      const itemString = buildingsOptional ?
           ('Building counts' +
            (missingItem.length > 1 ? ' ' + missingItem[1] : '')) :
           missingItem.join(' ');
@@ -219,7 +216,7 @@ function enableWhenFirestoreReady(allDisastersData) {
   processButton.on('click', () => {
     // Disable button to avoid over-clicking. User can reload page if needed.
     processButton.prop('disabled', true);
-    createScoreAsset(disasterData.get(getDisaster()));
+    createScoreAssetForStateBasedDisaster(disasterData.get(getDisaster()));
   });
   return onSetDisaster();
 }
@@ -257,30 +254,16 @@ function onSetDisaster() {
   scoreBoundsMap.initialize(
       scoreBoundsPath ? transformGeoPointArrayToLatLng(scoreBoundsPath) : null,
       states);
-  const neededStates = [];
-  for (const state of states) {
-    if (!stateAssets.has(state)) {
-      neededStates.push(state);
-    }
-  }
-  if (neededStates) {
-    const newStatePromises = getStatesAssetsFromEe(neededStates);
-    for (const [state, promise] of newStatePromises) {
-      stateAssets.set(state, promise);
-    }
-  }
-  const statePromises = [];
-  for (const state of states) {
-    statePromises.push(stateAssets.get(state));
-  }
-  const scorePromise = Promise.all(statePromises).then((stateAssets) => {
-    if (getDisaster() === currentDisaster &&
-        !processedCurrentDisasterStateAssets) {
-      // Don't do anything unless this is still the right disaster.
-      initializeScoreSelectors(states, stateAssets);
-      processedCurrentDisasterStateAssets = true;
-    }
-  });
+  // getStateAssetsFromEe does internal caching.
+  const scorePromise =
+      Promise.all(states.map(getStateAssetsFromEe)).then((stateAssets) => {
+        if (getDisaster() === currentDisaster &&
+            !processedCurrentDisasterStateAssets) {
+          // Don't do anything unless this is still the right disaster.
+          initializeScoreSelectors(states, stateAssets);
+          processedCurrentDisasterStateAssets = true;
+        }
+      });
   const disasterLambda = (assets) => {
     if (getDisaster() === currentDisaster &&
         !processedCurrentDisasterSelfAssets) {
@@ -383,11 +366,6 @@ async function writeNewDisaster(disasterId, states) {
     return false;
   }
   clearStatus();
-  const currentData = createDisasterData(states);
-  disasterData.set(disasterId, currentData);
-  // We know there are no assets in folder yet.
-  disasterAssets.set(disasterId, Promise.resolve(new Map()));
-
   const eeFolderPromises =
       [getCreateFolderPromise(eeLegacyPathPrefix + disasterId)];
   states.forEach(
@@ -403,6 +381,8 @@ async function writeNewDisaster(disasterId, states) {
     showError('Error creating EarthEngine folders: "' + err + tailError);
     return false;
   }
+
+  const currentData = createDisasterData(states);
   try {
     await disasterCollectionReference().doc(disasterId).set(currentData);
   } catch (err) {
@@ -410,6 +390,11 @@ async function writeNewDisaster(disasterId, states) {
     showError('Error writing to Firestore: "' + message + tailError);
     return false;
   }
+
+  disasterData.set(disasterId, currentData);
+  // We know there are no assets in folder yet.
+  disasterAssets.set(disasterId, Promise.resolve(new Map()));
+
   const disasterPicker = $('#disaster-dropdown');
   let added = false;
   // We expect this recently created disaster to go near the top of the list, so
@@ -442,7 +427,7 @@ function getCreateFolderPromise(dir) {
   return new Promise(
       (resolve, reject) =>
           ee.data.createFolder(dir, false, (result, failure) => {
-            if (failure) {
+            if (failure && !failure.startsWith('Cannot overwrite asset ')) {
               reject(failure);
               return;
             }
@@ -504,12 +489,14 @@ const scoreAssetTypes = [
     propertyPath: ['block_group_asset_paths'],
     displayName: 'Census TIGER Shapefiles',
     expectedColumns: [tigerGeoidKey],
+    geometryExpected: true,
   },
   {
     idStem: 'buildings',
     propertyPath: ['building_asset_paths'],
     displayName: 'Microsoft Building Shapefiles',
     expectedColumns: [],
+    geometryExpected: true,
   },
 ];
 Object.freeze(scoreAssetTypes);
@@ -533,9 +520,8 @@ function setUpScoreSelectorTable() {
 /**
  * Initializes the select interface for score assets.
  * @param {Array<string>} states array of state (abbreviations)
- * @param {Array<Map<string, {disabled: boolean}>>} stateAssets matching array
- *     to
- * the {@code states} array that holds a map of asset info for each state.
+ * @param {Array<StateList>} stateAssets matching array to the {@code states}
+ *     array that holds a map of asset info for each state.
  */
 function initializeScoreSelectors(states, stateAssets) {
   const headerRow = $('#score-asset-header-row');
@@ -547,12 +533,23 @@ function initializeScoreSelectors(states, stateAssets) {
   }
 
   // For each asset type, add select for all assets for each state.
-  for (const {idStem, propertyPath, expectedColumns} of scoreAssetTypes) {
+  for (const {
+         idStem,
+         propertyPath,
+         expectedColumns,
+         geometryExpected,
+       } of scoreAssetTypes) {
     const id = assetSelectionRowPrefix + idStem;
     const row = $('#' + id);
     removeAllButFirstFromRow(row);
     for (const [i, state] of states.entries()) {
-      const assets = stateAssets[i];
+      // Disable FeatureCollections without geometries if desired. Be careful
+      // not to modify stateAssets[i]!
+      const assets = geometryExpected ?
+          new Map(Array.from(
+              stateAssets[i],
+              ([k, v]) => [k, {disabled: v.disabled || !v.hasGeometry}])) :
+          stateAssets[i];
       const statePropertyPath = propertyPath.concat([state]);
       const select =
           createAssetDropdown(assets, statePropertyPath)
@@ -571,8 +568,7 @@ const damagePropertyPath = Object.freeze(['damage_asset_path']);
 
 /**
  * Initializes the damage selector, given the provided assets.
- * @param {Map<string, {type: LayerType, disabled: boolean}>} assets List of
- *     assets in the disaster folder
+ * @param {DisasterList} assets List of assets in the disaster folder
  */
 function initializeDamageSelector(assets) {
   const select = createAssetDropdown(
@@ -700,11 +696,12 @@ function verifyAsset(asset, type, state, expectedColumns) {
   const select = $('#select-' + assetSelectionRowPrefix + type + '-' + state);
   lastSelectedAsset.set(tdId, asset);
   const assetMissingErrorFunction = (err) => {
-    if (err.includes('\'' + asset + '\' not found.')) {
+    const message = err.message || err;
+    if (message.includes('\'' + asset + '\' not found.')) {
       updateColorAndHover(select, 'red', 'Error! asset could not be found.');
     } else {
       console.error(err);
-      updateColorAndHover(select, 'red', 'Unknown error: ' + err);
+      updateColorAndHover(select, 'red', 'Unknown error: ' + message);
     }
   };
   if (asset === '') {

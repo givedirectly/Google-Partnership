@@ -1,8 +1,10 @@
-import {damageTag, scoreTag, snapPercentageTag} from './property_names.js';
+import {blockGroupTag, damageTag, geoidTag, povertyPercentageTag, scoreTag} from './property_names.js';
 
 export {processJoinedData};
 
 const scoreDisplayCap = 255;
+
+const COLOR_TAG = 'color';
 
 /**
  * Processes a feature corresponding to a geographic area and sets the score,
@@ -22,8 +24,9 @@ const scoreDisplayCap = 255;
  */
 function colorAndRate(
     feature, scalingFactor, povertyThreshold, damageThreshold, povertyWeight) {
-  const povertyRatio = feature.properties[snapPercentageTag];
-  const ratioBuildingsDamaged = feature.properties[damageTag];
+  const povertyRatio = feature.properties[povertyPercentageTag];
+  // If damage tag is absent, treat as 0.
+  const ratioBuildingsDamaged = feature.properties[damageTag] || 0;
   let score = 0;
   if (povertyRatio >= povertyThreshold &&
       ratioBuildingsDamaged >= damageThreshold) {
@@ -38,8 +41,12 @@ function colorAndRate(
   // score > scalingFactor.
   const opacity =
       Math.min(Math.round((255 / scalingFactor) * score), scoreDisplayCap);
-  feature.properties['color'] = [255, 0, 255, opacity];
+  feature.properties[COLOR_TAG] = [255, 0, 255, opacity];
 }
+
+// We put these keys here because adding them to the set first guarantees they
+// will be the first three columns in the table.
+const ALWAYS_PRESENT_KEYS = Object.freeze([geoidTag, blockGroupTag, scoreTag]);
 
 /**
  * Processes the provided Promise. The returned Promise has the same underlying
@@ -55,22 +62,38 @@ function colorAndRate(
  * @param {Promise<Object>} initialTogglesValuesPromise promise
  * that returns the poverty and damage thresholds and the poverty weight (from
  * which the damage weight is derived).
- * @return {Promise}
+ * @typedef {Object} GeoJsonFeature See
+ *     https://macwright.org/2015/03/23/geojson-second-bite.html#features
+ * @return {Promise<{featuresList: Array<GeoJsonFeature>, columnsFound:
+ *     Array<string>}>} Resolved scored features, together with all columns
+ *     found in features
  */
 function processJoinedData(
     dataPromise, scalingFactor, initialTogglesValuesPromise) {
   return Promise.all([dataPromise, initialTogglesValuesPromise])
-      .then((results) => {
-        const [featuresList, {
-          povertyThreshold,
-          damageThreshold,
-          povertyWeight,
-        }] = results;
+      .then(([
+              featuresList,
+              {
+                povertyThreshold,
+                damageThreshold,
+                povertyWeight,
+              },
+            ]) => {
+        const columnsFound = new Set(ALWAYS_PRESENT_KEYS);
         for (const feature of featuresList) {
           colorAndRate(
               feature, scalingFactor, povertyThreshold, damageThreshold,
               povertyWeight);
+          for (const key of Object.keys(feature.properties)) {
+            // Ignore EarthEngine-added internal properties.
+            if (key !== COLOR_TAG && !key.startsWith('system:')) {
+              columnsFound.add(key);
+            }
+          }
         }
-        return featuresList;
+        return {
+          featuresList,
+          columnsFound: Object.freeze(Array.from(columnsFound)),
+        };
       });
 }

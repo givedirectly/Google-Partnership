@@ -1,5 +1,4 @@
 import {tableContainerId} from '../../../docs/dom_constants.js';
-import {tableHeadings} from '../../../docs/draw_table.js';
 import {convertEeObjectToPromise} from '../../../docs/ee_promise_cache.js';
 import {currentFeatures} from '../../../docs/highlight_features';
 import * as loading from '../../../docs/loading.js';
@@ -17,7 +16,6 @@ const feature1Corners = [0.25, 0.25, 0.75, 1];
 const feature2Corners = [0.75, 0.25, 1.5, 0.75];
 const zeroScoreCorners = [0, 0, 0.25, 0.25];
 const missingPropertiesCorners = [-0.25, -0.25, 0, 0];
-
 
 describe('Unit tests for click_feature.js with map and table', () => {
   loadScriptsBeforeForUnitTests('ee', 'charts', 'maps');
@@ -84,7 +82,17 @@ describe('Unit tests for click_feature.js with map and table', () => {
       tableDiv.id = 'table';
       containerDiv.appendChild(tableDiv);
       drawTableAndSetUpHandlers(
-          convertEeObjectToPromise(scoredFeatures).then((fc) => fc.features),
+          convertEeObjectToPromise(scoredFeatures).then((fc) => ({
+                                                          featuresList:
+                                                              fc.features,
+                                                          columnsFound: [
+                                                            geoidTag,
+                                                            blockGroupTag,
+                                                            scoreTag,
+                                                            'OTHER PERCENTAGE',
+                                                            'SOME PROPERTY',
+                                                          ],
+                                                        })),
           map);
     });
     cy.wrap(loadingFinishedPromise);
@@ -137,9 +145,6 @@ describe('Unit tests for click_feature.js with map and table', () => {
     assertFeatureShownOnMap(missingPropertiesCorners);
     cy.get('#test-map-div').should('contain', 'SCORE: 4');
     cy.get('#test-map-div').should('contain', 'missing properties group');
-    cy.get('#test-map-div').should('contain', 'SVI: undefined');
-    cy.get('#test-map-div').should('contain', 'MEDIAN INCOME: undefined');
-    cy.get('#test-map-div').should('contain', 'BUILDING COUNT: undefined');
   });
 
   /**
@@ -173,6 +178,9 @@ describe('Unit tests for click_feature.js with map and table', () => {
     cy.get('#test-map-div').click(0, 0);
     cy.get('#test-map-div').should('contain', 'SCORE: 1');
     cy.get('#test-map-div').should('contain', 'my block group');
+    // Rounded because property name ends with 'PERCENTAGE'.
+    cy.get('#test-map-div').should('contain', 'OTHER PERCENTAGE: 4.233');
+    cy.get('#test-map-div').should('contain', 'SOME PROPERTY: 100');
     cy.get('.google-visualization-table-tr-sel')
         .find('[class="google-visualization-table-td"]')
         .should('have.text', 'my block group');
@@ -243,8 +251,7 @@ function createFeatureWithOnlyGeoid(west, south, east, north) {
  */
 function createFeatureFromCorners(west, south, east, north) {
   let result = createFeatureWithOnlyGeoid(west, south, east, north);
-  for (let i = 1; i < tableHeadings.length; i++) {
-    result = result.set(tableHeadings[i], 100 * i);
-  }
+  result = result.set('SOME PROPERTY', 100);
+  result = result.set('OTHER PERCENTAGE', 4.23293434);
   return result;
 }

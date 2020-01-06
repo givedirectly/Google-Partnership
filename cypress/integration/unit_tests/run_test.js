@@ -1,3 +1,4 @@
+import {AssetNotFoundError} from '../../../docs/ee_promise_cache.js';
 import * as Error from '../../../docs/error.js';
 import * as Resources from '../../../docs/resources.js';
 import {resolveScoreAsset} from '../../../docs/run.js';
@@ -43,8 +44,10 @@ describe('Unit test for run.js', () => {
     cy.stub(Resources, 'getBackupScoreAssetPath').returns('another/bad/asset');
     const promise = resolveScoreAsset().then(
         (result) => assert.fail(null, null, 'unexpected: ' + result), (err) => {
-          expect(err).to.contain('another/bad/asset');
-          expect(err).to.contain('not found.');
+          expect(err).to.be.instanceOf(AssetNotFoundError);
+          expect(err).to.have.property('message').that.contains(
+              'another/bad/asset');
+          expect(err).to.have.property('message').that.contains('not found.');
         });
     // TODO(https://github.com/cypress-io/cypress/issues/5980): Remove
     cy.wait(waitForPromiseToResolve);

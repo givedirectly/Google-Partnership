@@ -1,9 +1,10 @@
 import {addPolygonWithPath} from '../../../docs/basic_map.js';
-import {mapContainerId, writeWaiterId} from '../../../docs/dom_constants.js';
-import * as loading from '../../../docs/loading.js';
+import * as ErrorLib from '../../../docs/error.js';
+import * as Loading from '../../../docs/loading.js';
 import {initializeAndProcessUserRegions, StoredShapeData, transformGeoPointArrayToLatLng, userShapes} from '../../../docs/polygon_draw.js';
 import {setUserFeatureVisibility} from '../../../docs/popup.js';
 import * as resourceGetter from '../../../docs/resources.js';
+import * as Toast from '../../../docs/toast.js';
 import {userRegionData} from '../../../docs/user_region_data.js';
 import {CallbackLatch} from '../../support/callback_latch.js';
 import {cyQueue} from '../../support/commands.js';
@@ -48,19 +49,14 @@ describe('Unit test for ShapeData', () => {
   // wrapping update call.
   let currentUpdatePromise = null;
 
-  let loadingStartedStub;
-  let loadingFinishedStub;
-  let expectedLoadingFinished = 1;
+  let saveStartedStub;
+  let saveFinishedStub;
   beforeEach(() => {
-    // Track writes.
-    const addStub = cy.stub(loading, 'addLoadingElement');
-    loadingStartedStub = addStub.withArgs(writeWaiterId);
-    const finishStub = cy.stub(loading, 'loadingElementFinished');
-    loadingFinishedStub = finishStub.withArgs(writeWaiterId);
-    expectedLoadingFinished = 1;
     // Stub out map updates, not useful for us.
-    addStub.withArgs(mapContainerId);
-    finishStub.withArgs(mapContainerId);
+    cy.stub(Loading, 'addLoadingElement');
+    cy.stub(Loading, 'loadingElementFinished');
+    saveStartedStub = cy.stub(Toast, 'showSavingToast');
+    saveFinishedStub = cy.stub(Toast, 'showSavedToast');
     // Default polygon intersects feature1 and feature2, not feature3.
     const feature1 = ee.Feature(
         ee.Geometry.Polygon(0, 0, 0, 10, 10, 10, 10, 0),
@@ -206,7 +202,7 @@ describe('Unit test for ShapeData', () => {
     pressPopupButton('close').then(() => {
       expect(confirmStub).to.be.calledOnce;
       expect(currentUpdatePromise).to.be.null;
-      expect(loadingStartedStub).to.not.be.called;
+      expect(saveStartedStub).to.not.be.called;
       expect(convertPathToLatLng(getFirstFeature().getPath())).to.eql(path);
     });
     assertOnFirestoreAndPopup(path);
@@ -222,7 +218,6 @@ describe('Unit test for ShapeData', () => {
       const realDoc = userShapes.doc(data.id);
       const realDocFunction = userShapes.doc;
       const fakeDoc = {};
-      expectedLoadingFinished = 2;
       cy.stub(userShapes, 'doc').withArgs(data.id).returns(fakeDoc);
       fakeDoc.set = (record) => {
         // Unfortunately Cypress can't really handle executing Cypress commands
@@ -234,8 +229,10 @@ describe('Unit test for ShapeData', () => {
         expect(currentUpdatePromise).to.be.null;
         expect(data.state).to.eql(StoredShapeData.State.QUEUED_WRITE);
         expect(StoredShapeData.pendingWriteCount).to.eql(1);
-        expect(loadingStartedStub).to.be.calledOnce;
-        loadingStartedStub.resetHistory();
+        // Don't reset history after this assertion: waitForWriteToFinish
+        // will check this too.
+        expect(saveStartedStub).to.be.calledOnce;
+        expect(saveFinishedStub).to.not.be.called;
         userShapes.doc = realDocFunction;
         fakeCalled = true;
         return realDoc.set(record);
@@ -433,6 +430,108 @@ describe('Unit test for ShapeData', () => {
                                          }));
   }
 
+  it('handles EarthEngine error', () => {
+    // Wrap ee.List so that we can throw when it evaluates.
+    const oldList = ee.List;
+    ee.List = (list) => {
+      ee.List = oldList;
+      console.log('got here somehow');
+      const returnValue = ee.List(list);
+      cy.stub(returnValue, 'evaluate')
+          .callsFake((callback) => callback(null, 'Error evaluating list'));
+      return returnValue;
+    };
+    doUnsuccessfulDraw();
+    doSuccessfulDrawAfterFailure();
+  });
+
+  it('handles Firestore error', () => {
+    const docStub = cy.stub(userShapes, 'doc').returns({
+      set: cy.stub().throws(new Error('Some Firebase error')),
+    });
+    doUnsuccessfulDraw().then(() => docStub.restore());
+    doSuccessfulDrawAfterFailure();
+  });
+
+  it('handles error then other polygon success then success', () => {
+    const docStub = cy.stub(userShapes, 'doc').returns({
+      set: cy.stub().throws(new Error('Some Firebase error')),
+    });
+    const toastStub =
+        cy.stub(Toast, 'showToastMessage')
+            .withArgs(
+                'Latest save succeeded, but there are still 1 feature(s) not ' +
+                'saved');
+    const confirmStub = cy.stub(window, 'confirm').returns(true);
+    doUnsuccessfulDraw().then(() => docStub.restore());
+    // Draw a new polygon. It saves successfully, but doesn't say everything ok.
+    drawPolygon(
+        [{lat: -0.5, lng: -0.5}, {lat: 0, lng: 0}, {lat: -0.5, lng: 0}]);
+    assertWriteStartedAndGetPromise().then(() => {
+      expect(toastStub).to.be.calledOnce;
+      toastStub.resetHistory();
+    });
+    // Now delete second polygon, as an extra test and to make later assertions
+    // about Firestore contents true :)
+    // Found through unpleasant trial and error.
+    cy.get('#test-map-div').click(300, 470);
+    pressPopupButton('delete');
+    assertWriteStartedAndGetPromise().then(() => {
+      expect(toastStub).to.be.calledOnce;
+      expect(confirmStub).to.be.calledOnce;
+    });
+    // Try to save first polygon again: succeeds.
+    doSuccessfulDrawAfterFailure();
+  });
+
+  /**
+   * Tries to draw a polygon, expects failure on the save.
+   * @return {Cypress.Chainable<void>}
+   */
+  function doUnsuccessfulDraw() {
+    const errorStub = cy.stub(ErrorLib, 'showError');
+    cy.wrap(errorStub).as('errorStub');
+    return drawPolygon()
+        .then(
+            () => currentUpdatePromise.then(
+                (result) => {
+                  throw new Error('unexpected ' + result);
+                },
+                () => {}))
+        .then(() => {
+          expect(errorStub).to.be.calledOnce;
+          errorStub.resetHistory();
+          expect(saveStartedStub).to.be.calledOnce;
+          saveStartedStub.resetHistory();
+          expect(saveFinishedStub).to.not.be.called;
+          expect(StoredShapeData.pendingWriteCount).to.eql(0);
+          return userShapes.get();
+        })
+        .then((querySnapshot) => {
+          expect(querySnapshot).to.have.property('size', 0);
+          expect(querySnapshot.docs).to.be.empty;
+        });
+  }
+
+  /**
+   * Tries to save a polygon originally created with {@link doUnsuccessfulDraw}
+   * with a modified path and expects success.
+   */
+  function doSuccessfulDrawAfterFailure() {
+    const newPath = JSON.parse(JSON.stringify(path));
+    cy.get('#test-map-div').click();
+    pressPopupButton('edit').then(() => {
+      // Clone path and edit.
+      newPath[0].lng = 0.5;
+      getFirstFeature().setPath(newPath);
+    });
+    pressPopupButton('save');
+    waitForWriteToFinish();
+    cy.get('@errorStub')
+        .then((errorStub) => expect(errorStub).to.not.be.called);
+    assertOnFirestoreAndPopup(newPath);
+  }
+
   it('Absence of damage asset tolerated', () => {
     cy.wrap(initializeAndProcessUserRegions(map, Promise.resolve({
       data: () => ({asset_data: {damage_asset_path: null}}),
@@ -617,14 +716,31 @@ describe('Unit test for ShapeData', () => {
   }
 
   /**
-   * Expects that a write started, then the current update promise finishes,
-   * then the write finishes, all during the Cypress phase of execution. Note
-   * that we don't just read {@link currentUpdatePromise} when this function is
-   * called, because the Cypress events will happen after the entire test's code
-   * has been executed. For instance, suppose we have the following code:
+   * Calls {@link assertWriteStartedAndGetPromise} and then asserts that
+   * the write finishes.
+   * @return {Cypress.Chainable}
+   */
+  function waitForWriteToFinish() {
+    return cyQueue(() => {
+             expect(saveStartedStub).to.be.calledOnce;
+             saveStartedStub.resetHistory();
+             return currentUpdatePromise;
+           })
+        .then(() => {
+          expect(saveFinishedStub).to.be.calledOnce;
+          saveFinishedStub.resetHistory();
+        });
+  }
+
+  /**
+   * Expects that a write started, then returns the current update promise,
+   * during the Cypress phase of execution. Note that we don't just read
+   * {@link currentUpdatePromise} when this function is called, because the
+   * Cypress events will happen after the entire test's code has been executed.
+   * For instance, suppose we have the following code:
    *
    *   pressPopupButton('save');
-   *   waitForWriteToFinish().then(console.log);
+   *   assertWriteStartedAndGetPromise().then(console.log);
    *   console.log(currentUpdatePromise);
    *
    * This will first print null (from the third line), then print a promise
@@ -635,17 +751,12 @@ describe('Unit test for ShapeData', () => {
    * which will be the promise returned from {@link StoredShapeData#update}.
    * @return {Cypress.Chainable}
    */
-  function waitForWriteToFinish() {
+  function assertWriteStartedAndGetPromise() {
     return cyQueue(() => {
-             expect(loadingStartedStub).to.be.calledOnce;
-             loadingStartedStub.resetHistory();
-             return currentUpdatePromise;
-           })
-        .then(() => {
-          expect(loadingFinishedStub)
-              .to.have.callCount(expectedLoadingFinished);
-          loadingFinishedStub.resetHistory();
-        });
+      expect(saveStartedStub).to.be.calledOnce;
+      saveStartedStub.resetHistory();
+      return currentUpdatePromise;
+    });
   }
 });
 
