@@ -3,7 +3,6 @@ import * as manageLayersLib from '../../../docs/import/manage_layers_lib.js';
 import {getCurrentLayers} from '../../../docs/import/manage_layers_lib.js';
 import {createTrs, setDisasterAndLayers} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
-import getLinearGradient
 
 const property = 'color-function';
 let writeToFirebaseStub;
@@ -92,11 +91,15 @@ describe('Unit tests for color function utility', () => {
   });
 
   it('switches schemas with real harvey data', () => {
-    firebase.firestore().collection('disaster-metadata').doc(
-        '2017-harvey').get().then((result) => {
-      // insufficient permissions here.
-      // console.log(result);
-    });
+    firebase.firestore()
+        .collection('disaster-metadata')
+        .doc('2017-harvey')
+        .get()
+        .then(
+            (result) => {
+                // insufficient permissions here.
+                // console.log(result);
+            });
   });
 
   it('switches schemas and writes data', () => {
@@ -219,7 +222,7 @@ function expectOneFirebaseWrite() {
 }
 
 /**
- * Gets the current color function.
+ * Gets the current color function.Fscore-
  * @return {Object}
  */
 function getColorFunction() {

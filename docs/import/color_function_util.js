@@ -44,7 +44,7 @@ function populateColorFunctions() {
       $(document.createElement('select')).on('change', () => {
         const property = propertyPicker.val();
         setProperty(property);
-        switch(getColorFunction()['current-style']) {
+        switch (getColorFunction()['current-style']) {
           case ColorStyle.CONTINUOUS:
             maybeDisplayMinMax(property);
             break;
@@ -82,8 +82,7 @@ function populateColorFunctions() {
                                    .hide();
   const discreteColorPickers =
       $(document.createElement('ul')).prop('id', 'discrete-color-pickers');
-  $('#discrete')
-      .append(tooManyValuesWarning, discreteColorPickers);
+  $('#discrete').append(tooManyValuesWarning, discreteColorPickers);
 }
 
 /**
