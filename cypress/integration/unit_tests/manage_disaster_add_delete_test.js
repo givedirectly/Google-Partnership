@@ -83,7 +83,7 @@ describe('Add/delete-related tests for manage_disaster.js', () => {
           expect(assetData).to.eql(assetDataClone);
           // Sanity-check structure.
           expect(assetData.stateBasedData.snapData.paths).to.not.be.null;
-          expect(assetData).to.have.property('damageLevelsKey', null);
+          expect(assetData).to.have.property('noDamageKey', null);
         });
   });
 
@@ -129,7 +129,7 @@ describe('Add/delete-related tests for manage_disaster.js', () => {
           // Seems to be fixed in Chai 4, but Cypress still on 3.5.
           expect(assetData.flexibleData).to.eql({});
           expect(assetData).to.have.property('damageAssetPath', null);
-          expect(assetData).to.have.property('damageLevelsKey', null);
+          expect(assetData).to.have.property('noDamageKey', null);
         });
   });
 

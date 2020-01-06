@@ -259,15 +259,15 @@ describe('Unit tests for create_score_asset.js', () => {
     flexibleData.buildingPath = null;
     const {assetData} = testData;
     assetData.useDamageForBuildings = true;
-    const damageLevelsKey = 'expelliarmus';
-    assetData.damageLevelsKey = damageLevelsKey;
+    const noDamageKey = 'expelliarmus';
+    assetData.noDamageKey = noDamageKey;
     assetData.noDamageValue = 'no damage at all';
     assetData.damageAssetPath = ee.FeatureCollection([
-      makePoint(0.4, 0.5).set(damageLevelsKey, 'minor'),
-      makePoint(1.5, .5).set(damageLevelsKey, 'major'),
-      makePoint(1.6, 0.7).set(damageLevelsKey, 'no damage at all'),
-      makePoint(1.7, 0.7).set(damageLevelsKey, 'no damage at all'),
-      makePoint(10, 12).set(damageLevelsKey, 'destroyed'),
+      makePoint(0.4, 0.5).set(noDamageKey, 'minor'),
+      makePoint(1.5, .5).set(noDamageKey, 'major'),
+      makePoint(1.6, 0.7).set(noDamageKey, 'no damage at all'),
+      makePoint(1.7, 0.7).set(noDamageKey, 'no damage at all'),
+      makePoint(10, 12).set(noDamageKey, 'destroyed'),
     ]);
     expectForFlexibleDisaster();
   });

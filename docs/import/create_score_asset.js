@@ -40,24 +40,24 @@ function combineWithBuildings(featureCollection, buildingsHisto) {
 /**
  * Given an in-progress score asset, adds in the damage percentage. The damage
  * asset may include undamaged buildings, in which case we must filter them out
- * via the `damageLevelsKey` and `noDamageValue` parameters.
+ * via the `noDamageKey` and `noDamageValue` parameters.
  * @param {ee.FeatureCollection} featureCollection Score asset being created
  * @param {ee.FeatureCollection} damage Damage collection, which may includes
  *     undamaged buildings
- * @param {?string} damageLevelsKey Property in damage collection whose value
+ * @param {?string} noDamageKey Property in damage collection whose value
  *     can identify undamaged buildings
- * @param {?string} noDamageValue Value for `damageLevelsKey` that indicates a
+ * @param {?string} noDamageValue Value for `noDamageKey` that indicates a
  *     building is undamaged
  * @return {ee.FeatureCollection}
  */
 function combineWithDamage(
-    featureCollection, damage, damageLevelsKey, noDamageValue) {
+    featureCollection, damage, noDamageKey, noDamageValue) {
   return featureCollection.map((f) => {
     let damageForDistrict =
         ee.FeatureCollection(damage).filterBounds(f.geometry());
-    if (damageLevelsKey) {
+    if (noDamageKey) {
       damageForDistrict = damageForDistrict.filterMetadata(
-          damageLevelsKey, 'not_equals', noDamageValue);
+          noDamageKey, 'not_equals', noDamageValue);
     }
     return addDamageTag(f, damageForDistrict.size());
   });
@@ -70,21 +70,21 @@ function combineWithDamage(
  * @param {ee.FeatureCollection} featureCollection Score asset being created
  * @param {ee.FeatureCollection} damage Damage collection, which includes all
  *     buildings
- * @param {string} damageLevelsKey Property in damage collection whose value can
+ * @param {string} noDamageKey Property in damage collection whose value can
  *     identify undamaged buildings
- * @param {string} noDamageValue Value for `damageLevelsKey` that indicates a
+ * @param {string} noDamageValue Value for `noDamageKey` that indicates a
  *     building is undamaged
  * @return {ee.FeatureCollection}
  */
 function combineWithDamageAndUseForBuildings(
-    featureCollection, damage, damageLevelsKey, noDamageValue) {
+    featureCollection, damage, noDamageKey, noDamageValue) {
   return featureCollection.map((f) => {
     const damageForDistrict =
         ee.FeatureCollection(damage).filterBounds(f.geometry());
     const totalBuildings = damageForDistrict.size();
     const damagedBuildings =
         damageForDistrict
-            .filterMetadata(damageLevelsKey, 'not_equals', noDamageValue)
+            .filterMetadata(noDamageKey, 'not_equals', noDamageValue)
             .size();
     return addDamageTag(
         f.set(BUILDING_COUNT_KEY, totalBuildings), damagedBuildings);
@@ -364,10 +364,10 @@ function createScoreAssetForStateBasedDisaster(
  *        asset already has a building count. If `useDamageForBuildings` is
  *        true, see below;
  * 4. An optional damage asset;
- *      - If `damageLevelsKey` is present, then undamaged buildings (indicated
+ *      - If `noDamageKey` is present, then undamaged buildings (indicated
  *        by `noDamageValue`) are filtered out of the damage asset when counting
  *        damage points in a district;
- *      - If `useDamageForBuildings` is true, then `damageLevelsKey` must be
+ *      - If `useDamageForBuildings` is true, then `noDamageKey` must be
  *        present, and the total number of "damage" points in a district
  *        (including undamaged ones) is used as the total building count.
  *
@@ -429,13 +429,13 @@ function createScoreAssetForFlexibleDisaster(
     processing = renameProperty(processing, buildingKey, BUILDING_COUNT_KEY);
   }
   if (damage) {
-    const {damageLevelsKey, noDamageValue} = assetData;
+    const {noDamageKey, noDamageValue} = assetData;
     if (useDamageForBuildings) {
       processing = combineWithDamageAndUseForBuildings(
-          processing, damage, damageLevelsKey, noDamageValue);
+          processing, damage, noDamageKey, noDamageValue);
     } else {
       processing =
-          combineWithDamage(processing, damage, damageLevelsKey, noDamageValue);
+          combineWithDamage(processing, damage, noDamageKey, noDamageValue);
     }
   }
   return backUpAssetAndStartTask(processing);
