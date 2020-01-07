@@ -1,11 +1,11 @@
+import {ColorStyle, LayerType} from '../../../docs/firebase_layers';
+import {readDisasterDocument} from '../../../docs/firestore_document';
 import {populateColorFunctions, withColor} from '../../../docs/import/color_function_util.js';
 import * as manageLayersLib from '../../../docs/import/manage_layers_lib.js';
 import {getCurrentLayers} from '../../../docs/import/manage_layers_lib.js';
 import * as snackbar from '../../../docs/snackbar.js';
-import {createTrs, setDisasterAndLayers, setDisaster} from '../../support/import_test_util.js';
+import {createTrs, setDisaster, setDisasterAndLayers} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
-import {readDisasterDocument} from '../../../docs/firestore_document';
-import {ColorStyle, LayerType} from '../../../docs/firebase_layers';
 
 const property = 'color-function';
 let writeToFirebaseStub;
@@ -34,8 +34,7 @@ describe('Unit tests for color function utility', () => {
           ...makeRadio(doc, 'CONTINUOUS-radio', 'by-property-type'),
           ...makeRadio(doc, 'DISCRETE-radio', 'by-property-type'),
           makeTypeDiv(doc, 'continuous'), makeTypeDiv(doc, 'discrete'));
-      colorFunctionEditor.append(
-          makeTypeDiv(doc, 'single'), byPropertyDiv);
+      colorFunctionEditor.append(makeTypeDiv(doc, 'single'), byPropertyDiv);
       doc.body.appendChild(colorFunctionEditor);
     });
   });

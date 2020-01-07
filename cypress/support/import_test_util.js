@@ -6,10 +6,10 @@ export {
   createAndAppend,
   createTrs,
   getConvertEeObjectToPromiseRelease,
+  setDisaster,
   setDisasterAndLayers,
   setUpSavingStubs,
   waitForPromiseAndAssertSaves,
-    setDisaster,
 };
 
 /**
