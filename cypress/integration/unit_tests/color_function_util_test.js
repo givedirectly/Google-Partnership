@@ -93,8 +93,6 @@ describe('Unit tests for color function utility', () => {
         'color': 'yellow',
       },
     };
-    let currentStyle, color, field;
-
     const td = setUpWithLayer(layer);
     expect(colorFunctionEditor.is(':visible')).to.be.false;
 
@@ -114,6 +112,8 @@ describe('Unit tests for color function utility', () => {
     $('#CONTINUOUS-radio').trigger('change');
     expectOneFirebaseWrite();
     const continuousPropertyPicker = $('#continuous-property-picker');
+    let currentStyle;
+    let color;
     ({currentStyle, color} = getColorFunction());
     expect(currentStyle).to.equal(0);
     expect(color).to.equal('red');
@@ -129,6 +129,7 @@ describe('Unit tests for color function utility', () => {
     $('#DISCRETE-radio').trigger('change');
     expectOneFirebaseWrite();
     const discretePropertyPicker = $('#discrete-property-picker');
+    let field;
     ({currentStyle, field} = getColorFunction());
     expect(currentStyle).to.equal(1);
     expect(td.children().length).to.equal(0);
