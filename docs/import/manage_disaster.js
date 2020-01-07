@@ -327,14 +327,6 @@ async function onSetFlexibleDisaster(assetData) {
         const assetName = povertySelect.val();
         const attributes = disasterAssets.get(assetName);
         convertEeObjectToPromise(ee.FeatureCollection(assetName).first().propertyNames()).then((properties) => {
-          if (!povertySelect.val() !== assetName) {
-            // If we've switched assets, do nothing.
-            return;
-          }
-          properties = properties.filter(isUserProperty);
-
-          const geoidSelect = createDropdown(properties.map((p) => [p, {disabled: false}]), ['flexibleData', 'povertyGeoid'])
-              .on('change', )
         });
         if (!attributes.hasGeometry) {
 
@@ -343,7 +335,18 @@ async function onSetFlexibleDisaster(assetData) {
   flexiblePovertyDiv.append(povertySelect);
 }
 
-function poverty
+function povertyPropertiesProcessor(properties, povertySelect, assetName) {
+  if (!povertySelect.val() !== assetName) {
+    // If we've switched assets, do nothing.
+    return;
+  }
+  properties = properties.filter(isUserProperty);
+
+  const geoidSelect = createDropdown(properties.map((p) => [p, {disabled: false}]), ['flexibleData', 'povertyGeoid'])
+      .on('change', )
+
+}
+
 function initializeScoreBoundsMapFromAssetData(assetData, states = []) {
   const {scoreBoundsCoordinates} = assetData;
   const scoreBoundsAsLatLng = scoreBoundsCoordinates ? transformGeoPointArrayToLatLng(scoreBoundsCoordinates) : null;
