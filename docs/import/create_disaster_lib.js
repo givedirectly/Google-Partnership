@@ -155,7 +155,7 @@ const flexibleAssetData = Object.freeze(
  * @return {Object}
  */
 function createDisasterData(states) {
-  const result = {layers: []};
+  const result = {layerArray: []};
   if (states) {
     const assetData = deepCopy(stateAssetDataTemplate);
     assetData.stateBasedData.states = states;

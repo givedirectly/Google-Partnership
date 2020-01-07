@@ -33,7 +33,7 @@ const opacity = 200;
  */
 function createStyleFunction(colorFunctionProperties) {
   const field = colorFunctionProperties['field'];
-  switch (colorFunctionProperties['current-style']) {
+  switch (colorFunctionProperties.currentStyle) {
     case ColorStyle.SINGLE:
       const color = colorMap.get(colorFunctionProperties['color']);
       return () => color;
@@ -121,9 +121,8 @@ function getLinearGradient(colorFunction) {
   if (!colorFunction) {
     return '';
   }
-  const currentStyle = colorFunction['current-style'];
   let gradientString = 'linear-gradient(to right';
-  switch (currentStyle) {
+  switch (colorFunction.currentStyle) {
     case 0:
       gradientString += ', white, ' + colorFunction['color'];
       break;

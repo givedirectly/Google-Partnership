@@ -4,7 +4,7 @@ import {getCurrentLayers} from '../../../docs/import/manage_layers_lib.js';
 import {createTrs, setDisasterAndLayers} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
-const property = 'color-function';
+const property = 'colorFunction';
 let writeToFirebaseStub;
 
 describe('Unit tests for color function utility', () => {
@@ -27,13 +27,11 @@ describe('Unit tests for color function utility', () => {
     colorFunctionEditor.hide();
   });
 
-  afterEach(() => colorFunctionEditor.hide());
-
   it('updates min-max values', () => {
     // layer in pre-picking a property state
     const layer = {
-      'color-function': {
-        'current-style': 0,
+      'colorFunction': {
+        'currentStyle': 0,
         'columns': {
           'wings': {'min': 0, 'max': 100, 'values': [0, 1, 2, 100]},
         },
@@ -65,7 +63,7 @@ describe('Unit tests for color function utility', () => {
     expect(maxMin.is(':visible'));
     expect(maxInput.val()).to.equal('20');
     expect(minInput.val()).to.equal('1');
-    const wings = getCurrentLayers()[0]['color-function']['columns']['wings'];
+    const wings = getCurrentLayers()[0].colorFunction.columns.wings;
     expect(wings['min']).to.equal(1);
     expect(wings['max']).to.equal(20);
 
@@ -83,8 +81,8 @@ describe('Unit tests for color function utility', () => {
 
   it('switches schemas and writes data', () => {
     const layer = {
-      'color-function': {
-        'current-style': 2,
+      'colorFunction': {
+        'currentStyle': 2,
         'columns': {
           'wings': {'min': 0, 'max': 2, 'values': [0, 1, 2]},
           'legs': {'min': 0, 'max': 100, 'values': [0, 2, 4, 8, 100]},
@@ -99,12 +97,12 @@ describe('Unit tests for color function utility', () => {
     td.trigger('click');
     expect(colorFunctionEditor.is(':visible')).to.be.true;
     expect(writeToFirebaseStub).to.not.be.called;
-    expect(getColorFunction()['color']).to.equal('yellow');
+    expect(getColorFunction().color).to.equal('yellow');
 
     // update color
     $('#single-color-picker').val('red').trigger('change');
     expectOneFirebaseWrite();
-    expect(getColorFunction()['color']).to.equal('red');
+    expect(getColorFunction().color).to.equal('red');
     expect(td.children().length).to.equal(1);
     expect(td.children().first().css('background-color')).to.equal('red');
 
@@ -112,23 +110,26 @@ describe('Unit tests for color function utility', () => {
     $('#CONTINUOUS-radio').trigger('change');
     expectOneFirebaseWrite();
     const continuousPropertyPicker = $('#continuous-property-picker');
-    expect(getColorFunction()['current-style']).to.equal(0);
-    expect(getColorFunction()['color']).to.equal('red');
+    let {currentStyle, color} = getColorFunction();
+    expect(currentStyle).to.equal(0);
+    expect(color).to.equal('red');
     expect(continuousPropertyPicker.val()).to.be.null;
 
     // update field
     continuousPropertyPicker.val('wings').trigger('change');
     expectOneFirebaseWrite();
-    expect(getColorFunction()['field']).to.equal('wings');
+    expect(getColorFunction().field).to.equal('wings');
     expect($('#continuous-color-picker').val()).to.equal('red');
 
     // switch to discrete
     $('#DISCRETE-radio').trigger('change');
     expectOneFirebaseWrite();
     const discretePropertyPicker = $('#discrete-property-picker');
-    expect(getColorFunction()['current-style']).to.equal(1);
+    let field;
+    ({currentStyle, field} = getColorFunction());
+    expect(currentStyle).to.equal(1);
     expect(td.children().length).to.equal(0);
-    expect(getColorFunction()['field']).to.equal('wings');
+    expect(field).to.equal('wings');
     expect(discretePropertyPicker.val()).to.equal('wings');
     const discreteColorPickerList = $('#discrete-color-pickers');
     expect(discreteColorPickerList.children('li').length).to.equal(3);
@@ -136,17 +137,17 @@ describe('Unit tests for color function utility', () => {
     // update field
     discretePropertyPicker.val('legs').trigger('change');
     expectOneFirebaseWrite();
-    expect(getColorFunction()['field']).to.equal('legs');
+    expect(getColorFunction().field).to.equal('legs');
 
     // update discrete color
-    expect(getColorFunction()['colors']).to.be.empty;
+    expect(getColorFunction().colors).to.be.empty;
     discreteColorPickerList.children('li')
         .first()
         .children('select')
         .val('orange')
         .trigger('change');
     expectOneFirebaseWrite();
-    expect(getColorFunction()['colors']).to.eql({'0': 'orange'});
+    expect(getColorFunction().colors).to.eql({'0': 'orange'});
     expect(td.children().length).to.equal(1);
     expect(td.children().first().css('background-color')).to.equal('orange');
 

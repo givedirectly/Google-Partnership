@@ -81,7 +81,7 @@ function run(map, firebaseAuthPromise, disasterMetadataPromise) {
       setUpToggles(disasterMetadataPromise, map);
   createAndDisplayJoinedData(map, initialTogglesValuesPromise);
   initializeAndProcessUserRegions(map, disasterMetadataPromise);
-  disasterMetadataPromise.then((doc) => addLayers(map, doc.data().layers));
+  disasterMetadataPromise.then((doc) => addLayers(map, doc.data().layerArray));
 }
 
 let mapSelectListener = null;
@@ -178,9 +178,9 @@ function createNewCheckbox(index, displayName, parentDiv) {
  */
 function createNewCheckboxForLayer(layer, parentDiv, map) {
   const index = layer['index'];
-  const newBox = createNewCheckbox(index, layer['display-name'], parentDiv);
-  const linearGradient = getLinearGradient(layer['color-function']);
-  newBox.checked = !!layer['display-on-load'];
+  const newBox = createNewCheckbox(index, layer.displayName, parentDiv);
+  const linearGradient = getLinearGradient(layer.colorFunction);
+  newBox.checked = !!layer.displayOnLoad;
   updateCheckboxBackground(newBox, linearGradient);
 
   newBox.onclick = () => {
@@ -220,7 +220,7 @@ function updateCheckboxBackground(checkbox, gradient) {
 function createCheckboxForUserFeatures(parentDiv) {
   const newBox = createNewCheckbox(
       'user-features', 'user features', parentDiv,
-      {'color': '#4CEF64', 'current-style': 2});
+      {'color': '#4CEF64', 'currentStyle': 2});
   newBox.checked = true;
   newBox.onclick = () => setUserFeatureVisibility(newBox.checked);
 }
@@ -239,7 +239,7 @@ function addLayers(map, firebaseLayers) {
   for (let i = 0; i < firebaseLayers.length; i++) {
     const properties = firebaseLayers[i];
     properties['index'] = i;
-    if (properties['display-on-load']) {
+    if (properties.displayOnLoad) {
       addLayer(properties, map);
     } else {
       addNullLayer(properties);
@@ -249,10 +249,10 @@ function addLayers(map, firebaseLayers) {
   createCheckboxForUserFeatures(sidebarDiv);
   createNewCheckboxForLayer(
       {
-        'display-name': scoreLayerName,
+        'displayName': scoreLayerName,
         'index': scoreLayerName,
-        'display-on-load': true,
-        'color-function': {'color': '#ff00ff', 'current-style': 0},
+        'displayOnLoad': true,
+        'colorFunction': {'color': '#ff00ff', 'currentStyle': 0},
       },
       sidebarDiv, map);
 }

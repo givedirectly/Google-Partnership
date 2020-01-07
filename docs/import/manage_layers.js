@@ -272,11 +272,11 @@ function createLayerRow(layer, index) {
   // index
   row.append(createTd().text(index).addClass('index-td'));
   // display name
-  row.append(withInput(createTd(), layer, 'display-name'));
+  row.append(withInput(createTd(), layer, 'displayName'));
   // asset path/url sample
   const assetOrUrl = createTd();
-  if (layer['ee-name']) {
-    withText(assetOrUrl, layer, 'ee-name');
+  if (layer['eeName']) {
+    withText(assetOrUrl, layer, 'eeName');
   } else if (layer['urls']) {
     withList(assetOrUrl, layer, 'urls');
   } else {
@@ -284,11 +284,11 @@ function createLayerRow(layer, index) {
   }
   row.append(assetOrUrl);
   // type
-  row.append(withType(createTd(), layer, 'asset-type'));
+  row.append(withType(createTd(), layer, 'assetType'));
   // display on load
-  row.append(withCheckbox(createTd(), layer, 'display-on-load'));
+  row.append(withCheckbox(createTd(), layer, 'displayOnLoad'));
   // color
-  row.append(withColor(createTd(), layer, 'color-function'));
+  row.append(withColor(createTd(), layer, 'colorFunction'));
   row.append(withDeleteButton(createTd()));
   return row;
 }
