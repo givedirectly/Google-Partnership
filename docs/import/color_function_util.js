@@ -86,9 +86,8 @@ function populateColorFunctions() {
  */
 function updateTdAndFirestore() {
   const colorFunction = getColorFunction();
-  const style = colorFunction['current-style'];
   globalTd.empty();
-  if (style === ColorStyle.DISCRETE) {
+  if (colorFunction.currentStyle === ColorStyle.DISCRETE) {
     createColorBoxesForDiscrete(colorFunction, globalTd);
   } else {
     globalTd.append(createColorBox(colorFunction['color']));
@@ -267,7 +266,8 @@ function withColor(td, layer, property) {
   if (!colorFunction) {
     return td.text('N/A').addClass('na');
   }
-  switch (colorFunction['current-style']) {
+  const {currentStyle} = colorFunction;
+  switch (currentStyle) {
     case ColorStyle.SINGLE:
       td.append(createColorBox(colorFunction['color']));
       break;
@@ -281,7 +281,7 @@ function withColor(td, layer, property) {
       setStatus(ILLEGAL_STATE_ERR + 'unrecognized color function: ' + layer);
   }
   td.addClass('editable color-td')
-      .on('click', () => onClick(td, colorFunction['current-style']));
+      .on('click', () => onClick(td, currentStyle));
   return td;
 }
 
@@ -333,7 +333,7 @@ function selectCurrentRow(selected) {
  */
 function switchSchema(type) {
   displaySchema(type);
-  getColorFunction()['current-style'] = type;
+  getColorFunction().currentStyle = type;
   return updateTdAndFirestore();
 }
 
@@ -456,5 +456,5 @@ function createColorBox(color) {
  */
 function getColorFunction() {
   const index = getRowIndex(globalTd.parents('tr'));
-  return getCurrentLayers()[index]['color-function'];
+  return getCurrentLayers()[index]['colorFunction'];
 }
