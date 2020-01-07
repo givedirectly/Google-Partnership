@@ -128,7 +128,7 @@ class DeckParams {
 }
 
 DeckParams.fromLayer = (layer) => {
-  return new DeckParams(layer['ee-name'], layer['color-function']);
+  return new DeckParams(layer.eeName, layer.colorFunction);
 };
 
 /**
@@ -165,7 +165,7 @@ function toggleLayerOn(layer, map) {
     // have completed.
     if (layerDisplayData.overlay instanceof CompositeImageMapType) {
       return createCompositeTilePromise(
-          layerDisplayData, index, map, layer['display-name']);
+          layerDisplayData, index, map, layer.displayName);
     }
     return createLoadingAwarePromise((resolve) => {
       resolveOnEeTilesFinished(layerDisplayData, resolve);
@@ -211,8 +211,8 @@ function toggleLayerOff(index, map) {
  * @return {Promise} Promise that completes when layer is processed
  */
 function addImageLayer(map, imageAsset, layer) {
-  const imgStyles = layer['vis-params'];
-  if (layer['use-terrain-style']) {
+  const imgStyles = layer.visParams;
+  if (layer.useTerrainStyle) {
     imageAsset = terrainStyle(imageAsset);
   }
   const index = layer['index'];
@@ -352,13 +352,13 @@ function addTileLayer(map, layer) {
     layerDisplayData.overlay = new CompositeImageMapType({
       // JSON urls each had an array of tile URLS, so flatten them.
       tileUrls: urls.flat(),
-      tileSize: layer['tile-size'],
+      tileSize: layer['tileSize'],
       maxZoom: layer['maxZoom'],
       opacity: layer['opacity'],
     });
     layerDisplayData.pendingPromise = null;
     return createCompositeTilePromise(
-        layerDisplayData, layer['index'], map, layer['display-name']);
+        layerDisplayData, layer['index'], map, layer.displayName);
   });
   return layerDisplayData.pendingPromise;
 }
@@ -399,7 +399,7 @@ function createCompositeTilePromise(
     layerDisplayData.overlay.setTileCallback(
         createTileCallback(layerDisplayData, resolve));
     showOverlayLayer(layerDisplayData.overlay, index, map);
-  }, {'display-name': displayNameForErrors, index});
+  }, {'displayName': displayNameForErrors, index});
 }
 
 /**
@@ -463,18 +463,17 @@ function showColor(color) {
  * @return {Promise} Promise that completes when layer is processed
  */
 function addLayer(layer, map) {
-  switch (layer['asset-type']) {
+  switch (layer.assetType) {
     case LayerType.IMAGE:
-      return addImageLayer(map, ee.Image(layer['ee-name']), layer);
+      return addImageLayer(map, ee.Image(layer.eeName), layer);
     case LayerType.IMAGE_COLLECTION:
-      return addImageLayer(
-          map, processImageCollection(layer['ee-name']), layer);
+      return addImageLayer(map, processImageCollection(layer.eeName), layer);
     case LayerType.FEATURE:
     case LayerType.FEATURE_COLLECTION:
-      const layerName = layer['ee-name'];
+      const layerName = layer.eeName;
       return addLayerFromGeoJsonPromise(
           getEePromiseForFeatureCollection(layerName),
-          DeckParams.fromLayer(layer), layer['index'], layer['display-name']);
+          DeckParams.fromLayer(layer), layer['index'], layer.displayName);
     case LayerType.KML:
       return addKmlLayers(layer, map);
     case LayerType.MAP_TILES:
@@ -482,7 +481,7 @@ function addLayer(layer, map) {
     default:
       // No way this can actually happen, but be ready for it.
       handleErrorLoadingLayer(
-          'Error parsing layer type during add: ' + layer['asset-type'] +
+          'Error parsing layer type during add: ' + layer.assetType +
               ' not recognized layer type',
           layer);
   }
@@ -548,7 +547,7 @@ function addLayerFromGeoJsonPromise(
         addLayerFromFeatures(layerDisplayData, index);
         layerDisplayData.pendingPromise = null;
       }),
-      {'display-name': displayNameForErrors, index});
+      {'displayName': displayNameForErrors, index});
   return layerDisplayData.pendingPromise;
 }
 
@@ -559,7 +558,7 @@ function addLayerFromGeoJsonPromise(
  * @param {Object} layer Data for layer coming from Firestore
  */
 function addNullLayer(layer) {
-  const assetType = layer['asset-type'];
+  const assetType = layer.assetType;
   layerArray[layer['index']] = new LayerDisplayData(
       assetType === LayerType.FEATURE_COLLECTION ||
               assetType === LayerType.FEATURE ?
@@ -649,11 +648,11 @@ function wrapPromiseLoadingAware(promise, layerInfoForErrors) {
  * Shows error and disables layer if an error is encountered loading a layer.
  * @param {string|Error} err
  * @param {Object} layerInfoForErrors Data for layer in same format as coming
- *     from Firestore. Must have `display-name` and `index` properties. Only
+ *     from Firestore. Must have `displayName` and `index` properties. Only
  *     used in case of errors.
  */
 function handleErrorLoadingLayer(err, layerInfoForErrors) {
-  const {index, 'display-name': displayName} = layerInfoForErrors;
+  const {index, displayName} = layerInfoForErrors;
   const notFound = err instanceof AssetNotFoundError;
   const message = err.message ? err.message : err;
   showError(

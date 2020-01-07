@@ -6,8 +6,6 @@ import {getCurrentLayers, updateLayersInFirestore} from './manage_layers_lib.js'
 
 export {processNewEeLayer, processNonEeLayer};
 
-// TODO(juliexxia): document color function fields
-
 /**
  * Processes a new feature-collection-typed layer and puts its color column
  * info into firestore.
@@ -47,11 +45,11 @@ function processNewEeLayer(asset, type) {
           .then((columns) => {
             const layer = {
               ...createCommonColorFunctionFields(asset, type),
-              'color-function': {
-                'columns': columns,
-                'current-style': 2,
-                'last-by-property-style': 0,
-                'colors': {},
+              colorFunction: {
+                columns: columns,
+                currentStyle: 2,
+                lastByPropertyStyle: 0,
+                colors: {},
               },
             };
             return prependToTable(layer);
@@ -67,10 +65,10 @@ function processNewEeLayer(asset, type) {
  */
 function createCommonColorFunctionFields(asset, type) {
   return {
-    'asset-type': type,
-    'ee-name': asset,
-    'display-name': '',
-    'display-on-load': false,
+    assetType: type,
+    eeName: asset,
+    displayName: '',
+    displayOnLoad: false,
   };
 }
 
@@ -97,10 +95,10 @@ function prependToTable(layer) {
  */
 function processNonEeLayer(type, urls) {
   const layer = {
-    'display-name': '',
-    'asset-type': type,
-    'urls': urls,
-    'display-on-load': false,
+    displayName: '',
+    assetType: type,
+    urls: urls,
+    displayOnLoad: false,
   };
   return prependToTable(layer);
 }

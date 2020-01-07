@@ -27,7 +27,7 @@ describe('Unit test for updates.js', () => {
   });
 
   it('does not have a damage asset', () => {
-    const nullData = {asset_data: {damage_asset_path: null}};
+    const nullData = {assetData: {damageAssetPath: null}};
     cy.wrap(setUpToggles(Promise.resolve({data: () => nullData}), {}));
     cy.get('input').should('have.length', 2);
     cy.get('[id="poverty threshold"]').clear().type('0.05');
@@ -112,7 +112,7 @@ describe('Unit test for updates.js', () => {
  */
 function setUpDamageAsset() {
   const currentDisaster = '2005-fall';
-  disasterData.set(currentDisaster, {asset_data: {damage_asset_path: 'foo'}});
+  disasterData.set(currentDisaster, {assetData: {damageAssetPath: 'foo'}});
   window.localStorage.setItem('disaster', currentDisaster);
   return cy.wrap(setUpToggles(Promise.resolve({data: getCurrentData}), {}));
 }

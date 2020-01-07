@@ -27,7 +27,7 @@ function populateColorFunctions() {
               .on('change', () => switchSchema(colorStyle)));
   $('#property-radio').on('change', () => {
     const lastByPropertyType =
-        colorStyleTypeStrings.get(getColorFunction()['last-by-property-style']);
+        colorStyleTypeStrings.get(getColorFunction().lastByPropertyStyle);
     $('#' + lastByPropertyType + '-radio')
         .prop('checked', true)
         .trigger('change');
@@ -94,9 +94,8 @@ function populateColorFunctions() {
  */
 function updateTdAndFirestore() {
   const colorFunction = getColorFunction();
-  const style = colorFunction['current-style'];
   globalTd.empty();
-  if (style === ColorStyle.DISCRETE) {
+  if (colorFunction.currentStyle === ColorStyle.DISCRETE) {
     createColorBoxesForDiscrete(colorFunction, globalTd);
   } else {
     globalTd.append(createColorBox(colorFunction['color']));
@@ -254,7 +253,8 @@ function withColor(td, layer, property) {
   if (!colorFunction) {
     return td.text('N/A').addClass('na');
   }
-  switch (colorFunction['current-style']) {
+  const {currentStyle} = colorFunction;
+  switch (currentStyle) {
     case ColorStyle.SINGLE:
       td.append(createColorBox(colorFunction['color']));
       break;
@@ -367,9 +367,9 @@ function selectCurrentRow(selected) {
  */
 function switchSchema(type) {
   const colorFunction = getColorFunction();
-  colorFunction['current-style'] = type;
+  getColorFunction().currentStyle = type;
   if (type !== ColorStyle.SINGLE) {
-    colorFunction['last-by-property-style'] = type;
+    colorFunction.lastByPropertyStyle = type;
   }
 
   displaySchema(type);
@@ -503,5 +503,5 @@ function createColorBox(color = 'transparent') {
  */
 function getColorFunction() {
   const index = getRowIndex(globalTd.parents('tr'));
-  return getCurrentLayers()[index]['color-function'];
+  return getCurrentLayers()[index].colorFunction;
 }

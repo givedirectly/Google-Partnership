@@ -92,9 +92,9 @@ describe('Unit test for ShapeData', () => {
         .then(() => {
           userRegionData.clear();
           return initializeAndProcessUserRegions(map, Promise.resolve({
-            // Normally damage_asset_path is a string, but code tolerates just
+            // Normally damageAssetPath is a string, but code tolerates just
             // putting an ee.FeatureCollection in.
-            data: () => ({asset_data: {damage_asset_path: damageCollection}}),
+            data: () => ({assetData: {damageAssetPath: damageCollection}}),
           }));
         })
         .then((drawingManagerResult) => drawingManager = drawingManagerResult);
@@ -435,7 +435,6 @@ describe('Unit test for ShapeData', () => {
     const oldList = ee.List;
     ee.List = (list) => {
       ee.List = oldList;
-      console.log('got here somehow');
       const returnValue = ee.List(list);
       cy.stub(returnValue, 'evaluate')
           .callsFake((callback) => callback(null, 'Error evaluating list'));
@@ -480,6 +479,9 @@ describe('Unit test for ShapeData', () => {
       expect(toastStub).to.be.calledOnce;
       expect(confirmStub).to.be.calledOnce;
     });
+    // Page can jump around, give it time to settle. Passed with this >30 times
+    // in a row, without it, failed ~1/20 times.
+    cy.wait(100);
     // Try to save first polygon again: succeeds.
     doSuccessfulDrawAfterFailure();
   });
@@ -534,7 +536,7 @@ describe('Unit test for ShapeData', () => {
 
   it('Absence of damage asset tolerated', () => {
     cy.wrap(initializeAndProcessUserRegions(map, Promise.resolve({
-      data: () => ({asset_data: {damage_asset_path: null}}),
+      data: () => ({assetData: {damageAssetPath: null}}),
     })));
     drawPolygon();
     const expectedData = Object.assign({}, defaultData);

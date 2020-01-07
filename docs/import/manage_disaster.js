@@ -10,7 +10,6 @@ import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from '.
 import {getDisasterAssetsFromEe, getStateAssetsFromEe} from './list_ee_assets.js';
 import {clearStatus} from './manage_layers_lib.js';
 import {ScoreBoundsMap} from './score_bounds_map.js';
-import {scoreCoordinatesAttribute} from './score_path_lib.js';
 import {updateDataInFirestore} from './update_firestore_disaster.js';
 
 export {
@@ -26,7 +25,6 @@ export {
   assetSelectionRowPrefix,
   createScoreAssetForStateBasedDisaster,
   deleteDisaster,
-  disasterAssets,
   disasterData,
   enableWhenFirestoreReady,
   scoreAssetTypes,
@@ -47,17 +45,6 @@ export {
  */
 let disasterData = new Map();
 
-// TODO(janakr): remove this cache, we can rely on internal caching.
-/**
- * Disaster id to assets in corresponding EE folder. We know
- * for each asset what type it is and whether or not it should be disabled in
- * the option picker. See {@link getDisasterAssetsFromEe} for details on
- * disabled options.
- * @type {Map<string, Promise<Map<string, {type: LayerType, disabled:
- *     boolean}>>>}
- */
-const disasterAssets = new Map();
-
 /**
  * Effectively constant {@link ScoreBoundsMap} initialized in {@link
  * enableWhenReady}.
@@ -65,7 +52,7 @@ const disasterAssets = new Map();
  */
 let scoreBoundsMap;
 
-const scoreCoordinatesPath = Object.freeze([scoreCoordinatesAttribute]);
+const scoreCoordinatesPath = Object.freeze(['scoreBoundsCoordinates']);
 
 const kickOffText = 'Kick off Data Processing (will take a while!)';
 const optionalWarningPrefix = '; warning: created asset will be missing ';
@@ -87,7 +74,7 @@ const optionalWarningPrefix = '; warning: created asset will be missing ';
  *  getting a less accurate damage percentage count.
  */
 function validateUserFields() {
-  const states = disasterData.get(getDisaster()).states;
+  const {states} = disasterData.get(getDisaster()).assetData.stateBasedData;
   /**
    * Holds missing assets, as arrays. Each array has the display name of the
    * asset type, and, if this is a multistate disaster, a string indicating
@@ -183,7 +170,7 @@ function enableWhenReady(allDisastersData) {
   // Eagerly kick off current disaster asset listing before Firestore finishes.
   const currentDisaster = getDisaster();
   if (currentDisaster) {
-    maybeFetchDisasterAssets(currentDisaster);
+    getDisasterAssetsFromEe(currentDisaster);
   }
   return allDisastersData.then(enableWhenFirestoreReady);
 }
@@ -199,7 +186,7 @@ function enableWhenFirestoreReady(allDisastersData) {
   disasterData = allDisastersData;
   // Kick off all EE asset fetches.
   for (const disaster of disasterData.keys()) {
-    maybeFetchDisasterAssets(disaster);
+    getDisasterAssetsFromEe(disaster);
   }
   // enable add disaster button.
   const addDisasterButton = $('#add-disaster-button');
@@ -250,7 +237,12 @@ function onSetDisaster() {
   processedCurrentDisasterStateAssets = false;
   processedCurrentDisasterSelfAssets = false;
   const scoreBoundsPath = getElementFromPath(scoreCoordinatesPath);
-  const states = disasterData.get(currentDisaster).states;
+  const {assetData} = disasterData.get(currentDisaster);
+  if (assetData.flexibleData) {
+    setStatus('Flexible disasters not yet supported.');
+    return Promise.resolve();
+  }
+  const {states} = assetData.stateBasedData;
   scoreBoundsMap.initialize(
       scoreBoundsPath ? transformGeoPointArrayToLatLng(scoreBoundsPath) : null,
       states);
@@ -273,7 +265,7 @@ function onSetDisaster() {
     }
   };
   const damagePromise =
-      disasterAssets.get(currentDisaster).then(disasterLambda, (err) => {
+      getDisasterAssetsFromEe(currentDisaster).then(disasterLambda, (err) => {
         if (err &&
             err !==
                 'Asset "' + eeLegacyPathPrefix + currentDisaster +
@@ -283,17 +275,6 @@ function onSetDisaster() {
         disasterLambda([]);
       });
   return Promise.all([scorePromise, damagePromise]).then(validateUserFields);
-}
-
-/**
- * If disaster assets not known for disaster, kicks off fetch and stores promise
- * in disasterAssets map.
- * @param {string} disaster
- */
-function maybeFetchDisasterAssets(disaster) {
-  if (!disasterAssets.has(disaster)) {
-    disasterAssets.set(disaster, getDisasterAssetsFromEe(disaster));
-  }
 }
 
 /**
@@ -331,10 +312,16 @@ function deleteDisaster() {
 function addDisaster() {
   const year = $('#year').val();
   const name = $('#name').val();
-  const states = $('#states').val();
+  let states = $('#states').val();
 
-  if (!year || !name || !states) {
-    setStatus('Error: Disaster name, year, and states are required.');
+  if (!year || !name) {
+    setStatus('Error: Disaster name and year are required.');
+    return Promise.resolve(false);
+  }
+  if ($('#disaster-type-flexible').is(':checked')) {
+    states = null;
+  } else if (!states) {
+    setStatus('Error: states are required for Census-based disaster.');
     return Promise.resolve(false);
   }
   if (isNaN(year)) {
@@ -356,7 +343,8 @@ function addDisaster() {
  * writing to EarthEngine or Firestore. Tells the user in all failure cases.
  *
  * @param {string} disasterId of the form <year>-<name>
- * @param {Array<string>} states array of state (abbreviations)
+ * @param {?Array<string>} states array of states (abbreviations) or null if
+ *     this is not a state-based disaster
  * @return {Promise<boolean>} Returns true if EarthEngine folders created
  *     successfully and Firestore write was successful
  */
@@ -368,9 +356,11 @@ async function writeNewDisaster(disasterId, states) {
   clearStatus();
   const eeFolderPromises =
       [getCreateFolderPromise(eeLegacyPathPrefix + disasterId)];
-  states.forEach(
-      (state) => eeFolderPromises.push(
-          getCreateFolderPromise(legacyStateDir + '/' + state)));
+  if (states) {
+    states.forEach(
+        (state) => eeFolderPromises.push(
+            getCreateFolderPromise(legacyStateDir + '/' + state)));
+  }
 
   const tailError = '" You can try refreshing the page';
   // Wait on EE folder creation to do the Firestore write, since if folder
@@ -392,8 +382,6 @@ async function writeNewDisaster(disasterId, states) {
   }
 
   disasterData.set(disasterId, currentData);
-  // We know there are no assets in folder yet.
-  disasterAssets.set(disasterId, Promise.resolve(new Map()));
 
   const disasterPicker = $('#disaster-dropdown');
   let added = false;
@@ -468,32 +456,32 @@ function toggleState(known) {
 const scoreAssetTypes = [
   {
     idStem: 'poverty',
-    propertyPath: ['snap_data', 'paths'],
+    propertyPath: ['stateBasedData', 'snapData', 'paths'],
     displayName: 'Poverty',
     expectedColumns: [censusGeoidKey, censusBlockGroupKey, snapKey, totalKey],
   },
   {
     idStem: 'income',
-    propertyPath: ['income_asset_paths'],
+    propertyPath: ['stateBasedData', 'incomeAssetPaths'],
     displayName: 'Income',
     expectedColumns: [censusGeoidKey, incomeKey],
   },
   {
     idStem: 'svi',
-    propertyPath: ['svi_asset_paths'],
+    propertyPath: ['stateBasedData', 'sviAssetPaths'],
     displayName: 'SVI',
     expectedColumns: [cdcGeoidKey, sviKey],
   },
   {
     idStem: 'tiger',
-    propertyPath: ['block_group_asset_paths'],
+    propertyPath: ['stateBasedData', 'blockGroupAssetPaths'],
     displayName: 'Census TIGER Shapefiles',
     expectedColumns: [tigerGeoidKey],
     geometryExpected: true,
   },
   {
     idStem: 'buildings',
-    propertyPath: ['building_asset_paths'],
+    propertyPath: ['stateBasedData', 'buildingAssetPaths'],
     displayName: 'Microsoft Building Shapefiles',
     expectedColumns: [],
     geometryExpected: true,
@@ -564,7 +552,7 @@ function initializeScoreSelectors(states, stateAssets) {
   }
 }
 
-const damagePropertyPath = Object.freeze(['damage_asset_path']);
+const damagePropertyPath = Object.freeze(['damageAssetPath']);
 
 /**
  * Initializes the damage selector, given the provided assets.
@@ -596,13 +584,13 @@ function setMapBoundsDiv(hide) {
 }
 
 /**
- * Retrieves the object inside the current disaster's asset_data, given by the
+ * Retrieves the object inside the current disaster's assetData, given by the
  * "path" of {@code propertyPath}
  * @param {Array<string>} propertyPath List of attributes to follow
  * @return {*}
  */
 function getElementFromPath(propertyPath) {
-  let element = disasterData.get(getDisaster()).asset_data;
+  let element = disasterData.get(getDisaster()).assetData;
   for (const property of propertyPath) {
     element = element[property];
   }

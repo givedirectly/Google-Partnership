@@ -42,7 +42,7 @@ function getCurrentData() {
  * @return {Array<Object>}
  */
 function getCurrentLayers() {
-  return getCurrentData()['layers'];
+  return getCurrentData().layerArray;
 }
 
 /**

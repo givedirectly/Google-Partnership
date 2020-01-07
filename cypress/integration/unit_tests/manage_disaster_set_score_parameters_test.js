@@ -2,7 +2,7 @@ import {addPolygonWithPath} from '../../../docs/basic_map.js';
 import {readDisasterDocument} from '../../../docs/firestore_document.js';
 import {createDisasterData} from '../../../docs/import/create_disaster_lib.js';
 import * as ListEeAssets from '../../../docs/import/list_ee_assets.js';
-import {assetSelectionRowPrefix, disasterAssets, disasterData, scoreAssetTypes, scoreBoundsMap, setUpScoreBoundsMap, setUpScoreSelectorTable, validateUserFields} from '../../../docs/import/manage_disaster';
+import {assetSelectionRowPrefix, disasterData, scoreAssetTypes, scoreBoundsMap, setUpScoreBoundsMap, setUpScoreSelectorTable, validateUserFields} from '../../../docs/import/manage_disaster';
 import {enableWhenFirestoreReady} from '../../../docs/import/manage_disaster.js';
 import {getDisaster} from '../../../docs/resources.js';
 import {cyQueue} from '../../support/commands.js';
@@ -49,7 +49,6 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
                        ])));
 
     disasterData.clear();
-    disasterAssets.clear();
   });
 
   it('damage asset/map-bounds elements', () => {
@@ -60,13 +59,13 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     cy.get('#damage-asset-select').select('asset2').blur();
     cy.get('#map-bounds-div').should('not.be.visible');
     readFirestoreAfterWritesFinish().then(
-        (doc) => expect(doc.data()['asset_data']['damage_asset_path'])
-                     .to.eql('asset2'));
+        (doc) => expect(doc.data().assetData)
+                     .has.property('damageAssetPath', 'asset2'));
   });
 
   it('no map coordinates to start', () => {
     const data = setUpDefaultData();
-    data.asset_data.score_bounds_coordinates = null;
+    data.assetData.scoreBoundsCoordinates = null;
     callEnableWhenReady(data);
     cy.get('#damage-asset-select').should('have.value', '');
     cy.get('#map-bounds-div').should('be.visible');
@@ -95,8 +94,8 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     cy.get('#damage-asset-select').select('asset2').blur();
     cy.get('#map-bounds-div').should('not.be.visible');
     readFirestoreAfterWritesFinish().then(
-        (doc) => expect(doc.data()['asset_data']['damage_asset_path'])
-                     .to.eql('asset2'));
+        (doc) => expect(doc.data().assetData)
+                     .has.property('damageAssetPath', 'asset2'));
   });
 
   const allMandatoryMissingText =
@@ -295,11 +294,10 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     cy.get('#process-button').should('be.disabled');
     // Validate that score data was correctly written
     readFirestoreAfterWritesFinish().then((doc) => {
-      const assetData = doc.data()['asset_data'];
-
-      expect(assetData['damage_asset_path']).to.be.null;
-      expect(assetData['svi_asset_paths']).to.eql({'NY': 'state2'});
-      expect(assetData['snap_data']['paths']).to.eql({'NY': null});
+      const {assetData} = doc.data();
+      expect(assetData.damageAssetPath).to.be.null;
+      expect(assetData.stateBasedData.sviAssetPaths).to.eql({'NY': 'state2'});
+      expect(assetData.stateBasedData.snapData.paths).to.eql({'NY': null});
     });
   });
 
@@ -351,9 +349,9 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
   it('nonexistent asset not ok', () => {
     const missingSnapPath = 'whereisasset';
     const data = setUpDefaultData();
-    data.asset_data.damage_asset_path = 'pathnotfound';
-    data.asset_data.snap_data.paths.NY = missingSnapPath;
-    data.asset_data.score_bounds_coordinates = null;
+    data.assetData.damageAssetPath = 'pathnotfound';
+    data.assetData.stateBasedData.snapData.paths.NY = missingSnapPath;
+    data.assetData.scoreBoundsCoordinates = null;
     callEnableWhenReady(data);
     cy.get('#process-button').should('be.disabled');
     // Everything is missing, even though we have values stored.
@@ -364,7 +362,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     // Data wasn't actually in Firestore before, but checking that it was
     // written on a different change shows we're not silently overwriting it.
     readFirestoreAfterWritesFinish().then(
-        (doc) => expect(doc.data().asset_data.snap_data.paths.NY)
+        (doc) => expect(doc.data().assetData.stateBasedData.snapData.paths.NY)
                      .to.eql(missingSnapPath));
   });
 
@@ -578,10 +576,8 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
    */
   function setUpDefaultData() {
     const currentData = createDisasterData(['NY']);
-    currentData.asset_data.score_bounds_coordinates =
-        scoreBoundsCoordinates.map(
-            (latlng) =>
-                new firebase.firestore.GeoPoint(latlng.lat, latlng.lng));
+    currentData.assetData.scoreBoundsCoordinates = scoreBoundsCoordinates.map(
+        (latlng) => new firebase.firestore.GeoPoint(latlng.lat, latlng.lng));
     const assets = new Map();
     for (let i = 0; i <= 4; i++) {
       assets.set('state' + i, {disabled: false, hasGeometry: true});

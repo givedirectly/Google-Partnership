@@ -2,7 +2,7 @@ import {legacyStateDir} from '../../../docs/ee_paths.js';
 import * as ErrorLib from '../../../docs/error.js';
 import * as FirestoreDocument from '../../../docs/firestore_document.js';
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
-import {assetDataTemplate} from '../../../docs/import/create_disaster_lib.js';
+import {deepCopy, flexibleAssetData, stateAssetDataTemplate} from '../../../docs/import/create_disaster_lib.js';
 import {disasterData} from '../../../docs/import/manage_disaster';
 import {addDisaster, deleteDisaster, writeNewDisaster} from '../../../docs/import/manage_disaster.js';
 import {createOptionFrom} from '../../../docs/import/manage_layers.js';
@@ -40,9 +40,10 @@ describe('Add/delete-related tests for manage_disaster.js', () => {
           expect(success).to.be.true;
           expect(createFolderStub).to.be.calledThrice;
           expect(setAclsStub).to.be.calledThrice;
-          expect($('#status').is(':visible')).to.be.false;
-          expect(disasterData.get(id)['layers']).to.eql([]);
-          expect(disasterData.get(id)['states']).to.eql(states);
+          expect($('#status').is(':visible')).is.false;
+          expect(disasterData.get(id).layerArray).to.eql([]);
+          expect(disasterData.get(id).assetData.stateBasedData)
+              .has.property('states', states);
           const disasterPicker = $('#disaster-dropdown');
           const options = disasterPicker.children();
           expect(options).to.have.length(3);
@@ -75,11 +76,57 @@ describe('Add/delete-related tests for manage_disaster.js', () => {
         .then((doc) => {
           expect(doc.exists).to.be.true;
           const data = doc.data();
-          expect(data['states']).to.eql(states);
-          expect(data['layers']).to.eql([]);
-          expect(data['asset_data']).to.eql(assetDataTemplate);
+          const assetDataClone = deepCopy(stateAssetDataTemplate);
+          assetDataClone.stateBasedData.states = states;
+          expect(disasterData.get(id).layerArray).to.eql([]);
+          const {assetData} = data;
+          expect(assetData).to.eql(assetDataClone);
           // Sanity-check structure.
-          expect(data['asset_data']['snap_data']['paths']).to.not.be.null;
+          expect(assetData.stateBasedData.snapData.paths).to.not.be.null;
+          expect(assetData).to.have.property('noDamageKey', null);
+        });
+  });
+
+  it('writes a flexible disaster to firestore', () => {
+    cy.document().then((doc) => {
+      const year = doc.createElement('input');
+      doc.body.appendChild(year);
+      year.id = 'year';
+      const name = doc.createElement('input');
+      doc.body.appendChild(name);
+      name.id = 'name';
+      const flexible = doc.createElement('input');
+      doc.body.appendChild(flexible);
+      flexible.id = 'disaster-type-flexible';
+      flexible.type = 'radio';
+      cy.stub(document, 'getElementById')
+          .callsFake((id) => doc.getElementById(id));
+    });
+
+    cy.get('#year').type('9999');
+    cy.get('#name').type('myname');
+    cy.get('#disaster-type-flexible')
+        .check()
+        .then(addDisaster)
+        .then((success) => {
+          expect(success).to.be.true;
+          expect(createFolderStub).to.be.calledOnce;
+          expect(setAclsStub).to.be.calledOnce;
+          return getFirestoreRoot()
+              .collection('disaster-metadata')
+              .doc('9999-myname')
+              .get();
+        })
+        .then((doc) => {
+          expect(doc.exists).to.be.true;
+          const data = doc.data();
+          expect(data.layerArray).to.eql([]);
+          const {assetData} = data;
+          expect(assetData).to.eql(flexibleAssetData);
+          // Sanity-check structure.
+          expect(assetData).to.not.have.property('stateBasedData');
+          expect(assetData).to.have.property('damageAssetPath', null);
+          expect(assetData).to.have.property('noDamageKey', null);
         });
   });
 
@@ -122,7 +169,7 @@ describe('Add/delete-related tests for manage_disaster.js', () => {
           expect(success).to.be.false;
           expect(status.is(':visible')).to.be.true;
           expect(status.text())
-              .to.eql('Error: Disaster name, year, and states are required.');
+              .to.eql('Error: Disaster name and year are required.');
           expect(createFolderStub).to.not.be.called;
           expect(setAclsStub).to.not.be.called;
 

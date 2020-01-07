@@ -11,7 +11,6 @@ export {
   createLayerRow,
   createOptionFrom,
   createTd,
-  disasterAssets,
   getAssetsAndPopulateDisasterPicker,
   onCheck,
   onDelete,
@@ -28,12 +27,6 @@ export {
 // TODO(juliexxia): consolidate asset picker logic and storage structure between
 // manage_layers.js and manage_disaster.js
 // TODO: refactor to avoid as much jumpiness as possible.
-
-// A map of maps of the form:
-// {'disaster-2017' => {'asset/path' => {type: LayerType, disabled: boolean}}
-// The disabled boolean refers to whether the option should be disabled in the
-// disaster asset picker (see {@link getDisasterAssetsFromEe}).
-const disasterAssets = new Map();
 
 // TODO: general reminder to add loading indicators for things like creating
 // new state asset folders, etc.
@@ -279,11 +272,11 @@ function createLayerRow(layer, index) {
   // index
   row.append(createTd().text(index).addClass('index-td'));
   // display name
-  row.append(withInput(createTd(), layer, 'display-name'));
+  row.append(withInput(createTd(), layer, 'displayName'));
   // asset path/url sample
   const assetOrUrl = createTd();
-  if (layer['ee-name']) {
-    withText(assetOrUrl, layer, 'ee-name');
+  if (layer['eeName']) {
+    withText(assetOrUrl, layer, 'eeName');
   } else if (layer['urls']) {
     withList(assetOrUrl, layer, 'urls');
   } else {
@@ -291,11 +284,11 @@ function createLayerRow(layer, index) {
   }
   row.append(assetOrUrl);
   // type
-  row.append(withType(createTd(), layer, 'asset-type'));
+  row.append(withType(createTd(), layer, 'assetType'));
   // display on load
-  row.append(withCheckbox(createTd(), layer, 'display-on-load'));
+  row.append(withCheckbox(createTd(), layer, 'displayOnLoad'));
   // color
-  row.append(withColor(createTd(), layer, 'color-function'));
+  row.append(withColor(createTd(), layer, 'colorFunction'));
   row.append(withDeleteButton(createTd()));
   return row;
 }
@@ -311,22 +304,14 @@ let processedCurrentDisasterSelfAssets = false;
  */
 function getAssetsAndPopulateDisasterPicker(disaster) {
   processedCurrentDisasterSelfAssets = false;
-  const disasterLambda = (disaster) => {
-    if ((disaster) === getDisaster() && !processedCurrentDisasterSelfAssets) {
-      populateDisasterAssetPicker(disaster);
+  // This will be immediately overwritten if promise below is already done.
+  setUpDisasterPicker(disaster);
+  return getDisasterAssetsFromEe(disaster).then((assets) => {
+    if (disaster === getDisaster() && !processedCurrentDisasterSelfAssets) {
+      populateDisasterAssetPicker(disaster, assets);
       processedCurrentDisasterSelfAssets = true;
     }
-  };
-  if (disasterAssets.has(disaster)) {
-    disasterLambda(disaster);
-    return Promise.resolve();
-  } else {
-    setUpDisasterPicker(disaster);
-    return getDisasterAssetsFromEe(disaster).then((assets) => {
-      disasterAssets.set(disaster, assets);
-      disasterLambda(disaster);
-    });
-  }
+  });
 }
 
 /**
@@ -350,8 +335,9 @@ function setUpDisasterPicker(disaster) {
  * Displays disaster assets in a select underneath the #disaster-adder-label
  * label and adds an add button which adds a layer.
  * @param {string} disaster
+ * @param {Map<string, {type: LayerType, disabled: boolean}>} assets
  */
-function populateDisasterAssetPicker(disaster) {
+function populateDisasterAssetPicker(disaster, assets) {
   const div = $('#disaster-asset-picker').empty();
   const assetPickerLabel = $(document.createElement('label'))
                                .text('Add layer from ' + disaster + ': ')
@@ -359,20 +345,17 @@ function populateDisasterAssetPicker(disaster) {
   const assetPicker = $(document.createElement('select'))
                           .attr('id', disaster + '-adder')
                           .width(200);
-  if (disasterAssets.get(disaster)) {
-    for (const asset of disasterAssets.get(disaster)) {
-      const assetInfo = asset[1];
-      const type = layerTypeStrings.get(assetInfo.type);
-      assetPicker.append(createOptionFrom(asset[0])
-                             .text(asset[0] + '-' + type)
-                             .attr('disabled', assetInfo.disabled));
-    }
+  for (const [name, assetInfo] of assets) {
+    const type = layerTypeStrings.get(assetInfo.type);
+    assetPicker.append(createOptionFrom(name)
+                           .text(name + '-' + type)
+                           .attr('disabled', assetInfo.disabled));
   }
   const addButton =
       $(document.createElement('button')).prop('type', 'button').text('add');
   addButton.on('click', () => {
     const asset = assetPicker.val();
-    const type = disasterAssets.get(disaster).get(asset).type;
+    const type = assets.get(asset).type;
     processNewEeLayer(asset, type);
   });
   assetPickerLabel.append(assetPicker);

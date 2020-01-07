@@ -7,7 +7,7 @@ import * as snackbar from '../../../docs/snackbar.js';
 import {createTrs, setDisaster, setDisasterAndLayers} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
-const property = 'color-function';
+const property = 'colorFunction';
 let writeToFirebaseStub;
 
 describe('Unit tests for color function utility', () => {
@@ -58,10 +58,10 @@ describe('Unit tests for color function utility', () => {
 
   it('closes an incomplete color function form', () => {
     let td = setUpWithLayer({
-      'color-function': {
-        'current-style': 0,
-        'columns': {
-          'wings': {'min': 0, 'max': 100, 'values': [0, 1, 2, 100]},
+      colorFunction: {
+        currentStyle: 0,
+        columns: {
+          wings: {min: 0, max: 100, values: [0, 1, 2, 100]},
         },
       },
     });
@@ -75,8 +75,8 @@ describe('Unit tests for color function utility', () => {
     const missingColorStub = snackbarStub.withArgs(
         'Warning: Closed layer missing color. May not show up on map.');
     td = setUpWithLayer({
-      'color-function': {
-        'current-style': 2,
+      colorFunction: {
+        currentStyle: 2,
       },
     });
     td.trigger('click');
@@ -84,12 +84,12 @@ describe('Unit tests for color function utility', () => {
     expect(missingColorStub).to.be.calledOnce;
 
     td = setUpWithLayer({
-      'color-function': {
-        'current-style': 0,
-        'columns': {
-          'wings': {'min': 0, 'max': 100, 'values': [0, 1, 2, 100]},
+      colorFunction: {
+        currentStyle: 0,
+        columns: {
+          wings: {min: 0, max: 100, values: [0, 1, 2, 100]},
         },
-        'field': 'wings',
+        field: 'wings',
       },
     });
     td.trigger('click');
@@ -97,12 +97,12 @@ describe('Unit tests for color function utility', () => {
     expect(missingColorStub).to.be.calledTwice;
 
     td = setUpWithLayer({
-      'color-function': {
-        'current-style': 0,
-        'columns': {
-          'wings': {'min': 0, 'max': 100, 'values': [0, 1, 2, 100]},
+      colorFunction: {
+        currentStyle: 0,
+        columns: {
+          wings: {min: 0, max: 100, values: [0, 1, 2, 100]},
         },
-        'color': 'red',
+        color: 'red',
       },
     });
     td.trigger('click');
@@ -113,13 +113,13 @@ describe('Unit tests for color function utility', () => {
         .to.be.calledOnce;
 
     td = setUpWithLayer({
-      'color-function': {
-        'current-style': 1,
-        'columns': {
-          'wings': {'min': 0, 'max': 100, 'values': [0, 1, 2, 100]},
+      colorFunction: {
+        currentStyle: 1,
+        columns: {
+          wings: {min: 0, max: 100, values: [0, 1, 2, 100]},
         },
-        'field': 'wings',
-        'colors': {},
+        field: 'wings',
+        colors: {},
       },
     });
     td.trigger('click');
@@ -133,10 +133,10 @@ describe('Unit tests for color function utility', () => {
   it('updates min-max values', () => {
     // layer in pre-picking a property state
     const layer = {
-      'color-function': {
-        'current-style': 0,
-        'columns': {
-          'wings': {'min': 0, 'max': 100, 'values': [0, 1, 2, 100]},
+      colorFunction: {
+        currentStyle: 0,
+        columns: {
+          wings: {min: 0, max: 100, values: [0, 1, 2, 100]},
         },
       },
     };
@@ -166,9 +166,9 @@ describe('Unit tests for color function utility', () => {
     expect(maxMin.is(':visible'));
     expect(maxInput.val()).to.equal('20');
     expect(minInput.val()).to.equal('1');
-    const wings = getCurrentLayers()[0]['color-function']['columns']['wings'];
-    expect(wings['min']).to.equal(1);
-    expect(wings['max']).to.equal(20);
+    const wings = getCurrentLayers()[0].colorFunction.columns.wings;
+    expect(wings.min).to.equal(1);
+    expect(wings.max).to.equal(20);
 
     // try to input a bad val (min < max)
     const errorDiv = $('#max-min-error');
@@ -199,14 +199,14 @@ describe('Unit tests for color function utility', () => {
         return;
       }
 
-      const colorFunction = featureCollectionLayer['color-function'];
+      const colorFunction = featureCollectionLayer[colorFunction];
       const color = colorFunction.color;
       const property = colorFunction.field;
 
       const td = setUpWithLayer(featureCollectionLayer);
       td.trigger('click');
 
-      switch (colorFunction['current-style']) {
+      switch (colorFunction.currentStyle) {
         case ColorStyle.CONTINUOUS:
           expect($('#property-picker').val()).to.equal(property);
           expect($('#continuous-min').val())
@@ -245,15 +245,15 @@ describe('Unit tests for color function utility', () => {
 
   it('switches schemas and writes data', () => {
     const layer = {
-      'color-function': {
-        'current-style': 2,
-        'last-by-property-style': 0,
-        'columns': {
-          'wings': {'min': 0, 'max': 2, 'values': [0, 1, 2]},
-          'legs': {'min': 0, 'max': 100, 'values': [0, 2, 4, 8, 100]},
+    colorFunction: {
+      currentStyle: 2,
+        lastByPropertyStyle: 0,
+        columns: {
+          wings: {min: 0, max: 2, values: [0, 1, 2]},
+          legs: {min: 0, max: 100, values: [0, 2, 4, 8, 100]},
         },
-        'colors': {},
-        'color': 'yellow',
+        colors: {},
+        color: 'yellow',
       },
     };
     const td = setUpWithLayer(layer);
@@ -262,12 +262,12 @@ describe('Unit tests for color function utility', () => {
 
     expect($(colorFunctionEditor).is(':visible')).to.be.true;
     expect(writeToFirebaseStub).to.not.be.called;
-    expect(getColorFunction()['color']).to.equal('yellow');
+    expect(getColorFunction().color).to.equal('yellow');
 
     // update color
     $('#single-color-picker').val('red').trigger('change');
     expectOneFirebaseWrite();
-    expect(getColorFunction()['color']).to.equal('red');
+    expect(getColorFunction().color).to.equal('red');
     expect(td.children().length).to.equal(1);
     expect(td.children().first().css('background-color')).to.equal('red');
 
@@ -275,45 +275,50 @@ describe('Unit tests for color function utility', () => {
     const propertyRadio = $('#property-radio');
     propertyRadio.trigger('change');
     expectOneFirebaseWrite();
+
     const continuousRadio = $('#CONTINUOUS-radio');
     expect(continuousRadio.prop('checked')).to.be.true;
     expect(continuousRadio.prop('style').display).to.equal('');
     const propertyPicker = $('#property-picker');
-    expect(getColorFunction()['current-style']).to.equal(0);
-    expect(getColorFunction()['color']).to.equal('red');
     expect(propertyPicker.val()).to.be.null;
+    let {currentStyle, color} = getColorFunction();
+    expect(currentStyle).to.equal(0);
+    expect(color).to.equal('red');
 
     // update field
     propertyPicker.val('wings').trigger('change');
     expectOneFirebaseWrite();
-    expect(getColorFunction()['field']).to.equal('wings');
+    expect(getColorFunction().field).to.equal('wings');
     expect($('#continuous-color-picker').val()).to.equal('red');
 
     // switch to discrete
     const discreteRadio = $('#DISCRETE-radio');
     discreteRadio.trigger('change');
     expectOneFirebaseWrite();
-    expect(getColorFunction()['current-style']).to.equal(1);
-    expect(td.children().length).to.equal(1);
-    expect(getColorFunction()['field']).to.equal('wings');
-    expect(propertyPicker.val()).to.equal('wings');
+    const discretePropertyPicker = $('#discrete-property-picker');
+    let field;
+    ({currentStyle, field} = getColorFunction());
+    expect(currentStyle).to.equal(1);
+    expect(td.children().length).to.equal(0);
+    expect(field).to.equal('wings');
+    expect(discretePropertyPicker.val()).to.equal('wings');
     const discreteColorPickerList = $('#discrete-color-pickers');
     expect(discreteColorPickerList.children('li').length).to.equal(3);
 
     // update field
     propertyPicker.val('legs').trigger('change');
     expectOneFirebaseWrite();
-    expect(getColorFunction()['field']).to.equal('legs');
+    expect(getColorFunction().field).to.equal('legs');
 
     // update discrete color
-    expect(getColorFunction()['colors']).to.be.empty;
+    expect(getColorFunction().colors).to.be.empty;
     discreteColorPickerList.children('li')
         .first()
         .children('select')
         .val('orange')
         .trigger('change');
     expectOneFirebaseWrite();
-    expect(getColorFunction()['colors']).to.eql({'0': 'orange'});
+    expect(getColorFunction().colors).to.eql({'0': 'orange'});
     expect(td.children().length).to.equal(1);
     expect(td.children().first().css('background-color')).to.equal('orange');
 

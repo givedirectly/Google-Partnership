@@ -3,10 +3,10 @@
 In `disaster-metadata` => `<year>` => `<disaster>` => `layers` we hold a map of \<asset path : `<data>`>
 
 all `<data>` instances contain the following fields:
-* asset-type `{int}`: corresponds to the LayerType enum
-* display-name `{string}`
-* display-on-load `{boolean}`
-* color-function `{Object}` 
+* assetType `{int}`: corresponds to the LayerType enum
+* displayName `{string}`
+* displayOnLoad `{boolean}`
+* colorFunction `{Object}` 
 
 ### LayerType Enum:
 
@@ -16,7 +16,7 @@ all `<data>` instances contain the following fields:
 * Image Collection: 3
 
 ### Color Functions
-We have three types of coloring schemes: continuous, discrete, and single color. Each has a different schema for the <code>color-function</code> object:
+We have three types of coloring schemes: continuous, discrete, and single color. Each has a different schema for the <code>colorFunction</code> object:
 
 #### ColorStyle Enum:
 
@@ -25,7 +25,7 @@ We have three types of coloring schemes: continuous, discrete, and single color.
 * Single Color: 2
 
 **continuous:**
-* current-style `{enum}`: set to 0
+* currentStyle `{enum}`: set to 0
 * color `{string}`: from set of known colors
 * field `{string}`: name of property we're using to calculate color
 * max `{number}`: max value of field
@@ -33,13 +33,13 @@ We have three types of coloring schemes: continuous, discrete, and single color.
 * opacity `{number}`: opacity level
 
 **discrete:**
-* current-style `{enum}`: set to 1
+* currentStyle `{enum}`: set to 1
 * field `{string}`: name of property we're using to calculate color
 * colors `{Map}`: map of field value `{string}` to color `{string}` (from known colors)
 * opacity `{number}`
 
 **single-color:**
-* current-style `{enum}`: set to 2
+* currentStyle `{enum}`: set to 2
 * color `{string}`: from set of known colors
 * opacity `{number}`
 

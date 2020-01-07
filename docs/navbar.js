@@ -6,6 +6,7 @@ export {loadNavbarWithPicker};
 
 const MANAGE_LAYERS_PAGE = 'import/manage_layers.html';
 const MANAGE_DISASTERS_PAGE = 'import/manage_disaster.html';
+const UPLOAD_IMAGE_COLLECTION_PAGE = 'import/upload_image_collection.html';
 
 /**
  * Loads the navbar and invokes the callback upon load.
@@ -18,6 +19,8 @@ function loadNavbar(callback) {
     $('#manage-layers-a').prop('href', getUrlUnderDocs(MANAGE_LAYERS_PAGE));
     $('#manage-disaster-a')
         .prop('href', getUrlUnderDocs(MANAGE_DISASTERS_PAGE));
+    $('#upload-image-collection-a')
+        .prop('href', getUrlUnderDocs(UPLOAD_IMAGE_COLLECTION_PAGE));
     $('#help-a').prop('href', getHelpUrl());
     callback();
   });

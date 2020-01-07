@@ -1,7 +1,7 @@
 import {eeLegacyPathPrefix} from '../../../docs/ee_paths.js';
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
 import {withColor} from '../../../docs/import/color_function_util.js';
-import {createOptionFrom, createTd, disasterAssets, getAssetsAndPopulateDisasterPicker, onCheck, onDelete, onInputBlur, onListBlur, updateAfterSort, withCheckbox, withInput, withList, withType} from '../../../docs/import/manage_layers.js';
+import {createOptionFrom, createTd, getAssetsAndPopulateDisasterPicker, onCheck, onDelete, onInputBlur, onListBlur, updateAfterSort, withCheckbox, withInput, withList, withType} from '../../../docs/import/manage_layers.js';
 import {setCurrentDisaster} from '../../../docs/import/manage_layers_lib';
 import {disasterData, getCurrentLayers} from '../../../docs/import/manage_layers_lib.js';
 import {getDisaster} from '../../../docs/resources';
@@ -26,7 +26,6 @@ describe('Unit tests for manage_layers page', () => {
     listAssetsStub = cy.stub(ee.data, 'listAssets');
     cy.stub(ee.data, 'createFolder');
 
-    disasterAssets.clear();
     // In prod this would happen in enableWhenReady which would read from
     // firestore.
     disasterData.clear();
@@ -58,12 +57,17 @@ describe('Unit tests for manage_layers page', () => {
         .returns(withNullGeometry);
     featureCollectionStub.withArgs('asset/with/empty/geometry')
         .returns(withEmptyGeometry);
-    cy.wrap(getAssetsAndPopulateDisasterPicker(disaster)).then(() => {
-      const assets = disasterAssets.get(disaster);
-      expect(assets.get('asset/with/geometry').disabled).to.be.false;
-      expect(assets.get('asset/with/null/geometry').disabled).to.be.true;
-      expect(assets.get('asset/with/empty/geometry').disabled).to.be.true;
+    cy.document().then((doc) => {
+      const damageDiv = document.createElement('div');
+      damageDiv.id = 'disaster-asset-picker';
+      doc.body.appendChild(damageDiv);
+      cy.stub(document, 'getElementById')
+          .callsFake((id) => doc.getElementById(id));
     });
+    cy.wrap(getAssetsAndPopulateDisasterPicker(disaster));
+    cy.get('[id="asset/with/geometry"]').should('not.be.disabled');
+    cy.get('[id="asset/with/null/geometry"]').should('be.disabled');
+    cy.get('[id="asset/with/empty/geometry"]').should('be.disabled');
   });
 
   it('has racing disaster asset populates', () => {
@@ -133,15 +137,13 @@ describe('Unit tests for manage_layers page', () => {
 
     const yellow = 'yellow';
     const singleColor = withColor(
-        createTd(), {color: {'current-style': 2, 'color': yellow}}, property,
-        0);
+        createTd(), {color: {'currentStyle': 2, 'color': yellow}}, property, 0);
     expect(singleColor.children('.box').length).to.equal(1);
     expect(singleColor.children().eq(0).css('background-color'))
         .to.equal(yellow);
 
     const baseColor = withColor(
-        createTd(), {color: {'current-style': 0, 'color': yellow}}, property,
-        0);
+        createTd(), {color: {'currentStyle': 0, 'color': yellow}}, property, 0);
     expect(baseColor.children('.box').length).to.equal(1);
     expect(baseColor.children().eq(0).css('background-color')).to.equal(yellow);
 
@@ -149,7 +151,7 @@ describe('Unit tests for manage_layers page', () => {
     const discrete = withColor(
         createTd(), {
           color: {
-            'current-style': 1,
+            'currentStyle': 1,
             'colors': {'squash': yellow, 'tomato': red, 'pepper': red},
           },
         },
