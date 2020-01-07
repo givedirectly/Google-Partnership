@@ -6,6 +6,7 @@ export {
   povertyPercentageTag,
   scoreTag,
   totalHouseholdsTag,
+    isUserProperty,
 };
 
 const blockGroupTag = 'BLOCK GROUP';
@@ -24,3 +25,7 @@ const povertyPercentageTag = 'SNAP PERCENTAGE';
 // TODO(ruthtalbot): Does GD actually want these totals surfaced?
 const povertyHouseholdsTag = 'SNAP HOUSEHOLDS';
 const totalHouseholdsTag = 'TOTAL HOUSEHOLDS';
+
+function isUserProperty(name) {
+  return !name.startsWith('system:');
+}

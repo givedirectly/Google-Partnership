@@ -12,6 +12,7 @@ import {clearStatus} from './manage_layers_lib.js';
 import {ScoreBoundsMap} from './score_bounds_map.js';
 import {updateDataInFirestore} from './update_firestore_disaster.js';
 import {LayerType} from '../firebase_layers.js';
+import {isUserProperty} from '../property_names.js';
 
 export {
   enableWhenReady,
@@ -318,14 +319,31 @@ async function onSetFlexibleDisaster(assetData) {
     attributes.disabled = attributes.type !== LayerType.FEATURE_COLLECTION;
   }
   flexiblePovertyDiv.append($(document.createElement('span')).text('Poverty asset path'));
-  const povertySelect = createAssetDropdown(disasterAssets, ['flexibleData', 'povertyPath'])
-      .prop('id', 'select-' + assetSelectionPrefix + 'flexible-poverty')
-      .on('change', (event) => {
-        verifyAsset()
+  const povertyId = 'select-flexible-poverty';
+  const povertySelect = createAssetDropdownWithNone(disasterAssets, ['flexibleData', 'povertyPath'])
+      .prop('id', povertyId)
+      .on('change', () => {
+        verifyAsset(povertyId, null);
+        const assetName = povertySelect.val();
+        const attributes = disasterAssets.get(assetName);
+        convertEeObjectToPromise(ee.FeatureCollection(assetName).first().propertyNames()).then((properties) => {
+          if (!povertySelect.val() !== assetName) {
+            // If we've switched assets, do nothing.
+            return;
+          }
+          properties = properties.filter(isUserProperty);
+
+          const geoidSelect = createDropdown(properties.map((p) => [p, {disabled: false}]), ['flexibleData', 'povertyGeoid'])
+              .on('change', )
+        });
+        if (!attributes.hasGeometry) {
+
+        }
       });
   flexiblePovertyDiv.append(povertySelect);
 }
 
+function poverty
 function initializeScoreBoundsMapFromAssetData(assetData, states = []) {
   const {scoreBoundsCoordinates} = assetData;
   const scoreBoundsAsLatLng = scoreBoundsCoordinates ? transformGeoPointArrayToLatLng(scoreBoundsCoordinates) : null;
@@ -593,34 +611,41 @@ function initializeStateBasedScoreSelectors(states, stateAssets) {
               ([k, v]) => [k, {disabled: v.disabled || !v.hasGeometry}])) :
           stateAssets[i];
       const statePropertyPath = propertyPath.concat([state]);
+      const selectId = 'select-' + id + '-' + state;
       const select =
-          createAssetDropdown(assets, statePropertyPath)
-              .prop('id', 'select-' + id + '-' + state)
+          createAssetDropdownWithNone(assets, statePropertyPath)
+              .prop('id', selectId)
               .on('change',
-                  (event) => onNonDamageAssetSelect(
-                      event, statePropertyPath, expectedColumns, idStem, state))
+                  () => onNonDamageAssetSelect(statePropertyPath,
+                      expectedColumns, selectId))
               .addClass('with-status-border');
       row.append(createTd().append(select));
-      verifyAsset(idStem + '-' + state, expectedColumns);
+      verifyAsset(selectId, expectedColumns);
     }
   }
 }
 
 const damagePropertyPath = Object.freeze(['damageAssetPath']);
+const DAMAGE_ID = 'damage-asset-select';
 
 /**
  * Initializes the damage selector, given the provided assets.
  * @param {DisasterList} assets List of assets in the disaster folder
  */
 function initializeDamageSelector(assets) {
-  const select = createAssetDropdown(
-      assets, damagePropertyPath, $('#damage-asset-select').empty());
-  select.on('change', (event) => {
-    const val = $(event.target).val();
-    setMapBoundsDiv(val);
+  const select = createAssetDropdownWithNone(
+      assets, damagePropertyPath, $('#' + DAMAGE_ID).empty());
+  select.on('change', () => {
+    const val = select.val();
+    damageConsequences(val);
     handleAssetDataChange(val, damagePropertyPath);
   });
-  setMapBoundsDiv(select.val());
+  damageConsequences(select.val());
+}
+
+function damageConsequences(val) {
+  setMapBoundsDiv(!!val);
+  verifyAsset(DAMAGE_ID, null);
 }
 
 /**
@@ -679,12 +704,15 @@ function removeAllButFirstFromRow(row) {
  *     not given
  * @return {JQuery<HTMLSelectElement>}
  */
-function createAssetDropdown(
+function createAssetDropdownWithNone(
     assets, propertyPath, select = $(document.createElement('select'))) {
   const noneOption = createOptionFrom('None');
   noneOption.val('');
   select.append(noneOption);
+  return createDropdown(assets, propertyPath, select);
+}
 
+function createDropdown(assets, propertyPath, select = $(document.createElement('select'))) {
   const value = getElementFromPath(propertyPath);
   // Add assets to selector and return it.
   for (const [asset, assetInfo] of assets) {
@@ -701,18 +729,15 @@ function createAssetDropdown(
 
 /**
  * Sets off a column verification check and data write.
- * @param {Object} event selector change event
  * @param {Array<string>} propertyPath List of attributes to follow to get
  *     value.
  * @param {Array<string>} expectedColumns
- * @param {string} type
- * @param {string} state
  * @return {Promise<void>} see {@link verifyAsset}
  */
 function onNonDamageAssetSelect(
-    event, propertyPath, expectedColumns, type, state) {
+    propertyPath, expectedColumns, selectId) {
   handleAssetDataChange(newAsset, propertyPath);
-  return verifyAsset(type + '-' + state, expectedColumns);
+  return verifyAsset(selectId, expectedColumns);
 }
 
 // Map of asset picker (represented by a string '<type>-<state>' e.g.
@@ -728,11 +753,11 @@ const lastSelectedAsset = new Map();
  *     Otherwise returns a promise that resolves when existence and column
  *     checking are finished and select border color is updated.
  */
-function verifyAsset(selectStem, expectedColumns) {
+function verifyAsset(selectId, expectedColumns) {
   // TODO: disable or discourage kick off until all green?
-  const select = $('#select-' + assetSelectionPrefix + selectStem);
+  const select = $('#' + selectId);
   const asset = select.val();
-  lastSelectedAsset.set(selectStem, asset);
+  lastSelectedAsset.set(selectId, asset);
   const assetMissingErrorFunction = (err) => {
     const message = err.message || err;
     if (message.includes('\'' + asset + '\' not found.')) {
@@ -754,7 +779,7 @@ function verifyAsset(selectStem, expectedColumns) {
     updateColorAndHover(select, 'yellow', 'Checking columns...');
     return convertEeObjectToPromise(getColumnsStatus(asset, expectedColumns))
         .then((error) => {
-          if (lastSelectedAsset.get(selectStem) === asset) {
+          if (lastSelectedAsset.get(selectId) === asset) {
             if (error) {
               updateColorAndHover(
                   select, 'red',

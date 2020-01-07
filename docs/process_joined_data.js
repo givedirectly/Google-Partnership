@@ -1,4 +1,11 @@
-import {blockGroupTag, damageTag, geoidTag, povertyPercentageTag, scoreTag} from './property_names.js';
+import {
+  blockGroupTag,
+  damageTag,
+  geoidTag,
+  isUserProperty,
+  povertyPercentageTag,
+  scoreTag
+} from './property_names.js';
 
 export {processJoinedData};
 
@@ -85,8 +92,7 @@ function processJoinedData(
               feature, scalingFactor, povertyThreshold, damageThreshold,
               povertyWeight);
           for (const key of Object.keys(feature.properties)) {
-            // Ignore EarthEngine-added internal properties.
-            if (key !== COLOR_TAG && !key.startsWith('system:')) {
+            if (key !== COLOR_TAG && isUserProperty(key)) {
               columnsFound.add(key);
             }
           }
