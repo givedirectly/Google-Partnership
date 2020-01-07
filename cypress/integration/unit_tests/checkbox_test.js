@@ -11,57 +11,57 @@ import {createGoogleMap} from '../../support/test_map';
 const mockData = [{geometry: {type: 'Nonsense'}}];
 
 const colorProperties = {
-  'color': 'yellow',
+  color: 'yellow',
 };
 const mockFirebaseLayers = [
   {
-    'eeName': 'asset0',
-    'assetType': LayerType.FEATURE_COLLECTION,
-    'displayName': 'asset0',
-    'displayOnLoad': true,
-    'colorFunction': colorProperties,
-    'index': 0,
+    eeName: 'asset0',
+    assetType: LayerType.FEATURE_COLLECTION,
+    displayName: 'asset0',
+    displayOnLoad: true,
+    colorFunction: colorProperties,
+    index: 0,
   },
   {
-    'eeName': 'asset1',
-    'assetType': LayerType.FEATURE_COLLECTION,
-    'displayName': 'asset1',
-    'displayOnLoad': false,
-    'colorFunction': colorProperties,
-    'index': 1,
+    eeName: 'asset1',
+    assetType: LayerType.FEATURE_COLLECTION,
+    displayName: 'asset1',
+    displayOnLoad: false,
+    colorFunction: colorProperties,
+    index: 1,
   },
   {
-    'eeName': 'asset2',
-    'assetType': LayerType.FEATURE_COLLECTION,
-    'displayName': 'asset2',
-    'displayOnLoad': false,
-    'colorFunction': colorProperties,
-    'index': 2,
+    eeName: 'asset2',
+    assetType: LayerType.FEATURE_COLLECTION,
+    displayName: 'asset2',
+    displayOnLoad: false,
+    colorFunction: colorProperties,
+    index: 2,
   },
   {
-    'eeName': 'image_asset',
-    'assetType': LayerType.IMAGE,
-    'displayName': 'image',
-    'displayOnLoad': true,
-    'index': 3,
+    eeName: 'image_asset',
+    assetType: LayerType.IMAGE,
+    displayName: 'image',
+    displayOnLoad: true,
+    index: 3,
   },
   {
-    'eeName': 'tile_asset',
-    'assetType': LayerType.MAP_TILES,
-    'urls': ['tile-url1/{X}/{Y}/{Z}', 'tile-url2/{X}/{Y}/{Z}'],
-    'displayName': 'tiles',
-    'displayOnLoad': true,
-    'index': 4,
+    eeName: 'tile_asset',
+    assetType: LayerType.MAP_TILES,
+    urls: ['tile-url1/{X}/{Y}/{Z}', 'tile-url2/{X}/{Y}/{Z}'],
+    displayName: 'tiles',
+    displayOnLoad: true,
+    index: 4,
   },
   {
-    'eeName': 'kml_urls',
-    'assetType': LayerType.KML,
-    'urls': [
+    eeName: 'kml_urls',
+    assetType: LayerType.KML,
+    urls: [
       'https://www.nhc.noaa.gov/storm_graphics/api/AL092017_043adv_CONE.kmz',
     ],
-    'displayName': 'tiles',
-    'displayOnLoad': false,
-    'index': 5,
+    displayName: 'tiles',
+    displayOnLoad: false,
+    index: 5,
   },
 ];
 
@@ -184,12 +184,12 @@ describe('Unit test for toggleLayerOn', () => {
     setUpLayerFailure().then(
         () => addLayer(
             {
-              'eeName': 'asset/does/not/exist',
-              'assetType': LayerType.FEATURE_COLLECTION,
-              'displayName': 'asset1',
-              'displayOnLoad': false,
-              'colorFunction': colorProperties,
-              'index': 3,
+              eeName: 'asset/does/not/exist',
+              assetType: LayerType.FEATURE_COLLECTION,
+              displayName: 'asset1',
+              displayOnLoad: false,
+              colorFunction: colorProperties,
+              index: 3,
             },
             null));
     assertLayerFailure();
@@ -197,23 +197,23 @@ describe('Unit test for toggleLayerOn', () => {
 
   it('fails to toggle on a layer', () => {
     const layer = {
-      'eeName': 'asset/does/not/exist',
-      'assetType': LayerType.FEATURE_COLLECTION,
-      'displayName': 'asset1',
-      'displayOnLoad': false,
-      'colorFunction': colorProperties,
-      'index': failureLayerIndex,
+      eeName: 'asset/does/not/exist',
+      assetType: LayerType.FEATURE_COLLECTION,
+      displayName: 'asset1',
+      displayOnLoad: false,
+      colorFunction: colorProperties,
+      index: failureLayerIndex,
     };
     addNullLayer(layer);
     setUpLayerFailure().then(
         () => toggleLayerOn(
             {
-              'eeName': 'asset/does/not/exist',
-              'assetType': LayerType.FEATURE_COLLECTION,
-              'displayName': 'asset1',
-              'displayOnLoad': false,
-              'colorFunction': colorProperties,
-              'index': failureLayerIndex,
+              eeName: 'asset/does/not/exist',
+              assetType: LayerType.FEATURE_COLLECTION,
+              displayName: 'asset1',
+              displayOnLoad: false,
+              colorFunction: colorProperties,
+              index: failureLayerIndex,
             },
             null));
     assertLayerFailure();
@@ -223,12 +223,12 @@ describe('Unit test for toggleLayerOn', () => {
     setUpLayerFailure().then(
         () => addLayer(
             {
-              'eeName': 'asset/does/not/exist',
-              'assetType': LayerType.IMAGE,
-              'displayName': 'asset1',
-              'displayOnLoad': false,
-              'colorFunction': colorProperties,
-              'index': failureLayerIndex,
+              eeName: 'asset/does/not/exist',
+              assetType: LayerType.IMAGE,
+              displayName: 'asset1',
+              displayOnLoad: false,
+              colorFunction: colorProperties,
+              index: failureLayerIndex,
             },
             null));
     assertLayerFailure();
@@ -579,14 +579,14 @@ describe('Unit test for toggleLayerOn', () => {
     expectNoBlobImages().then(
         () => addLayer(
             {
-              'eeName': 'tile_asset',
-              'assetType': LayerType.MAP_TILES,
-              'urls': [
+              eeName: 'tile_asset',
+              assetType: LayerType.MAP_TILES,
+              urls: [
                 'https://storms.ngs.noaa.gov/storms/tilesd/services/tileserver.php?/20170827-rgb.json',
               ],
-              'displayName': 'tiles',
-              'displayOnLoad': true,
-              'index': 4,
+              displayName: 'tiles',
+              displayOnLoad: true,
+              index: 4,
             },
             map));
     // Experimentally found.
@@ -606,12 +606,12 @@ describe('Unit test for toggleLayerOn', () => {
     cy.stub($, 'getJSON').returns(promise);
     let addLayerPromise = null;
     const layer = {
-      'eeName': 'tile_asset',
-      'assetType': LayerType.MAP_TILES,
-      'urls': ['dummy_url'],
-      'displayName': 'tiles',
-      'displayOnLoad': true,
-      'index': 4,
+      eeName: 'tile_asset',
+      assetType: LayerType.MAP_TILES,
+      urls: ['dummy_url'],
+      displayName: 'tiles',
+      displayOnLoad: true,
+      index: 4,
     };
     expectNoBlobImages().then(() => {
       addLayerPromise = addLayer(layer, map);

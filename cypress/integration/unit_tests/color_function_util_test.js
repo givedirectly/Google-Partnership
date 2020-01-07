@@ -112,9 +112,7 @@ describe('Unit tests for color function utility', () => {
     $('#CONTINUOUS-radio').trigger('change');
     expectOneFirebaseWrite();
     const continuousPropertyPicker = $('#continuous-property-picker');
-    let currentStyle;
-    let color;
-    ({currentStyle, color} = getColorFunction());
+    let {currentStyle, color} = getColorFunction();
     expect(currentStyle).to.equal(0);
     expect(color).to.equal('red');
     expect(continuousPropertyPicker.val()).to.be.null;
