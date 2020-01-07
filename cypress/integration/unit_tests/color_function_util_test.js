@@ -245,8 +245,8 @@ describe('Unit tests for color function utility', () => {
 
   it('switches schemas and writes data', () => {
     const layer = {
-    colorFunction: {
-      currentStyle: 2,
+      colorFunction: {
+        currentStyle: 2,
         lastByPropertyStyle: 0,
         columns: {
           wings: {min: 0, max: 2, values: [0, 1, 2]},
