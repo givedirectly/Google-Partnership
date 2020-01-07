@@ -253,6 +253,7 @@ function withDeleteButton(td) {
 function populateLayersTable() {
   const layers = getCurrentLayers();
   const tableBody = $('#tbody');
+  $('#color-fxn-editor').hide();
   tableBody.empty();
   for (let i = layers.length - 1; i >= 0; i--) {
     const layer = layers[i];
