@@ -218,8 +218,8 @@ function enableWhenFirestoreReady(allDisastersData) {
  * switching from disaster A to B back to A, the first set of promises for A is
  * still valid if they return after we switch back to A.
  */
-let processedCurrentDisasterStateAssets = false;
-let processedCurrentDisasterSelfAssets = false;
+let processedCurrentDisasterPovertySelectors = false;
+let processedCurrentDisasterDamageSelector = false;
 
 /**
  * Function called when current disaster changes. Responsible for displaying the
@@ -227,36 +227,43 @@ let processedCurrentDisasterSelfAssets = false;
  * @return {Promise<void>} Promise that completes when all score parameter
  *     display is done (user can interact with page)
  */
-function onSetDisaster() {
+async function onSetDisaster() {
   const currentDisaster = getDisaster();
   if (!currentDisaster) {
     // We don't expect this to happen, because a disaster should always be
     // returned by getDisaster(), but tolerate.
     return Promise.resolve();
   }
-  processedCurrentDisasterStateAssets = false;
-  processedCurrentDisasterSelfAssets = false;
+  processedCurrentDisasterPovertySelectors = false;
+  processedCurrentDisasterDamageSelector = false;
   const {assetData} = disasterData.get(currentDisaster);
+  // Kick off score asset processing.
   const scorePromise = assetData.flexibleData ? onSetFlexibleDisaster(assetData) : onSetStateBasedDisaster(assetData);
-  const disasterLambda = (assets) => {
-    if (getDisaster() === currentDisaster &&
-        !processedCurrentDisasterSelfAssets) {
-      // Don't do anything unless this is still the right disaster.
-      initializeDamageSelector(assets);
-      processedCurrentDisasterSelfAssets = true;
+  let disasterAssets;
+  try {
+    disasterAssets = await getDisasterAssetsFromEe(currentDisaster);
+  } catch (err) {
+    if (getDisaster() !== currentDisaster || processedCurrentDisasterDamageSelector) {
+      // Don't display errors to user if no longer current disaster.
+      return;
     }
-  };
-  const damagePromise =
-      getDisasterAssetsFromEe(currentDisaster).then(disasterLambda, (err) => {
-        if (err &&
-            err !==
-                'Asset "' + eeLegacyPathPrefix + currentDisaster +
-                    '" not found.') {
-          setStatus(err);
-        }
-        disasterLambda([]);
-      });
-  return Promise.all([scorePromise, damagePromise]).then(validateUserFields);
+    if (err &&
+        err !==
+        'Asset "' + eeLegacyPathPrefix + currentDisaster +
+        '" not found.') {
+      setStatus(err);
+    }
+    disasterAssets = new Map();
+  }
+  if (getDisaster() !== currentDisaster ||
+      processedCurrentDisasterDamageSelector) {
+    // Don't do anything unless this is still the right disaster.
+    return;
+  }
+  initializeDamageSelector(disasterAssets);
+  processedCurrentDisasterDamageSelector = true;
+  await scorePromise;
+  validateUserFields();
 }
 
 async function onSetStateBasedDisaster(assetData) {
@@ -266,19 +273,32 @@ async function onSetStateBasedDisaster(assetData) {
   initializeScoreBoundsMapFromAssetData(assetData, states);
   // getStateAssetsFromEe does internal caching.
   const stateAssets = await Promise.all(states.map(getStateAssetsFromEe));
-  if (getDisaster() === currentDisaster &&
-      !processedCurrentDisasterStateAssets) {
+  if (getDisaster() !== currentDisaster ||
+      processedCurrentDisasterPovertySelectors) {
     // Don't do anything unless this is still the right disaster.
-    initializeStateBasedScoreSelectors(states, stateAssets);
-    processedCurrentDisasterStateAssets = true;
+    return;
   }
+  initializeStateBasedScoreSelectors(states, stateAssets);
+  processedCurrentDisasterPovertySelectors = true;
 }
 
 async function onSetFlexibleDisaster(assetData) {
+  const currentDisaster = getDisaster();
   $('#state-based-disaster-asset-selection-table').hide();
   initializeScoreBoundsMapFromAssetData(assetData);
-  const
-  setStatus('Flexible disasters not yet supported.');
+  // Same promise as waited on above in onSetDisaster, so actually both will
+  // complete before user switches disasters or neither will, but we can still
+  // check in each independently.
+  const disasterAssets = await getDisasterAssetsFromEe(currentDisaster);
+  if (getDisaster() !== currentDisaster ||
+      processedCurrentDisasterPovertySelectors) {
+    // Don't do anything unless this is still the right disaster.
+    return;
+  }
+  // Don't disable anything, all assets are permissible here by default.
+  for (const attributes of disasterAssets.values()) {
+    attributes.disabled = false;
+  }
 
 }
 
