@@ -137,15 +137,13 @@ describe('Unit tests for manage_layers page', () => {
 
     const yellow = 'yellow';
     const singleColor = withColor(
-        createTd(), {color: {'currentStyle': 2, 'color': yellow}}, property,
-        0);
+        createTd(), {color: {'currentStyle': 2, 'color': yellow}}, property, 0);
     expect(singleColor.children('.box').length).to.equal(1);
     expect(singleColor.children().eq(0).css('background-color'))
         .to.equal(yellow);
 
     const baseColor = withColor(
-        createTd(), {color: {'currentStyle': 0, 'color': yellow}}, property,
-        0);
+        createTd(), {color: {'currentStyle': 0, 'color': yellow}}, property, 0);
     expect(baseColor.children('.box').length).to.equal(1);
     expect(baseColor.children().eq(0).css('background-color')).to.equal(yellow);
 

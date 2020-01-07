@@ -467,8 +467,7 @@ function addLayer(layer, map) {
     case LayerType.IMAGE:
       return addImageLayer(map, ee.Image(layer.eeName), layer);
     case LayerType.IMAGE_COLLECTION:
-      return addImageLayer(
-          map, processImageCollection(layer.eeName), layer);
+      return addImageLayer(map, processImageCollection(layer.eeName), layer);
     case LayerType.FEATURE:
     case LayerType.FEATURE_COLLECTION:
       const layerName = layer.eeName;

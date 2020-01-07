@@ -83,8 +83,9 @@ describe('Unit tests for adding layers', () => {
         .then(() => {
           expect(setAclStub).to.be.calledOnce;
           const layer = getCurrentLayers()[0];
-          expect(layer.colorFunction['columns']['flavor']['values'])
-              .to.eql(['vanilla']);
+          expect(layer.colorFunction['columns']['flavor']['values']).to.eql([
+            'vanilla'
+          ]);
         });
   });
 
