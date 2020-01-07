@@ -144,7 +144,7 @@ describe('Unit tests for color function utility', () => {
     td.trigger('click');
     const minMax = $('#min-max');
     expect(minMax).not.to.be.visible;
-    
+
     $('#property-picker').val('wings').trigger('change');
     expectOneFirebaseWrite();
     expect(minMax).to.be.visible;

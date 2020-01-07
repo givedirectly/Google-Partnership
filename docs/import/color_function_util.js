@@ -55,7 +55,8 @@ function populateColorFunctions() {
         populateDiscreteColorPickers(property);
         break;
       case ColorStyle.SINGLE:
-        const error = 'Somehow tried to set property while in single color mode';
+        const error =
+            'Somehow tried to set property while in single color mode';
         showErrorSnackbar(error);
         throw Error(error);
     }
@@ -303,7 +304,8 @@ function onClick(td) {
   globalTd = td;
   selectCurrentRow(true);
   const {currentStyle} = getColorFunction();
-  $('#' + colorStyleTypeStrings.get(currentStyle) + '-radio').prop('checked', true);
+  $('#' + colorStyleTypeStrings.get(currentStyle) + '-radio')
+      .prop('checked', true);
   if (currentStyle !== ColorStyle.SINGLE) {
     $('#property-radio').prop('checked', true);
   }
