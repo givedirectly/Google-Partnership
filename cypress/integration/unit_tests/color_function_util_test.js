@@ -7,7 +7,7 @@ import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 import {readDisasterDocument} from '../../../docs/firestore_document';
 import {ColorStyle, LayerType} from '../../../docs/firebase_layers';
 
-const property = 'colorFunction';
+const property = 'color-function';
 let writeToFirebaseStub;
 
 describe('Unit tests for color function utility', () => {
@@ -26,7 +26,7 @@ describe('Unit tests for color function utility', () => {
           ...makeRadio(doc, 'SINGLE-radio', 'property-or-single'),
           ...makeRadio(doc, 'property-radio', 'property-or-single'));
       colorFunctionEditor.append(colorTypeRadios);
-      const byPropertyDiv = makeTypeDiv(doc, 'by-property', 'color-type-div');
+      const byPropertyDiv = makeTypeDiv(doc, 'by-property');
       const propertyPicker = doc.createElement('select');
       propertyPicker.id = 'property-picker';
       byPropertyDiv.append(
@@ -35,7 +35,7 @@ describe('Unit tests for color function utility', () => {
           ...makeRadio(doc, 'DISCRETE-radio', 'by-property-type'),
           makeTypeDiv(doc, 'continuous'), makeTypeDiv(doc, 'discrete'));
       colorFunctionEditor.append(
-          makeTypeDiv(doc, 'single', 'color-type-div'), byPropertyDiv);
+          makeTypeDiv(doc, 'single'), byPropertyDiv);
       doc.body.appendChild(colorFunctionEditor);
     });
   });
@@ -186,11 +186,10 @@ describe('Unit tests for color function utility', () => {
   it.only('tests against real harvey layer', () => {
     setDisaster('2017-harvey');
     readDisasterDocument().then((doc) => {
-      // TODO(janakr): switch this to 'layers' when that change happens
-      const {layerArray} = doc.data();
+      const {layers} = doc.data();
       let featureCollectionLayer;
-      for (const layer of layerArray) {
-        if (layer.assetType === LayerType.FEATURE_COLLECTION) {
+      for (const layer of layers) {
+        if (layer['asset-type'] === LayerType.FEATURE_COLLECTION) {
           featureCollectionLayer = layer;
           break;
         }
@@ -201,20 +200,47 @@ describe('Unit tests for color function utility', () => {
         return;
       }
 
-      const colorFunction = featureCollectionLayer.colorFunction;
-      const currentStyle = colorFunction.currentStyle;
+      const colorFunction = featureCollectionLayer['color-function'];
+      const color = colorFunction.color;
+      const property = colorFunction.field;
 
       const td = setUpWithLayer(featureCollectionLayer);
-      console.log('here');
-      console.log(td);
       td.trigger('click');
 
-      console.log($('select'));
-
-      switch (currentStyle) {
+      switch (colorFunction['current-style']) {
         case ColorStyle.CONTINUOUS:
+          expect($('#property-picker').val()).to.equal(property);
+          expect($('#continuous-min').val())
+              .to.equal(colorFunction.columns[property].min);
+          expect($('#continuous-max').val())
+              .to.equal(colorFunction.columns[property].max);
+          if (color) {
+            expect($('#continuous-color-picker').val()).to.equal(color);
+          } else {
+            expect($('#continuous-color-picker').val()).to.be.null;
+          }
+          break;
+        case ColorStyle.DISCRETE:
+          const colors = colorFunction.colors;
+          expect($('#property-picker').val()).to.equal(property);
+          $('#discrete-color-pickers')
+              .find('li')
+              .each(/* @this HTMLElement */ function() {
+                // slicing off the ': ' at the end of the label to just get the
+                // property value.
+                const value = $(this).children('label').text().slice(0, -2);
+                const selectedColor = $(this).children('select').val();
+                expect(colors[value]).to.equal(selectedColor);
+              });
+          break;
+        case ColorStyle.SINGLE:
+          if (color) {
+            expect($('#single-color-picker').val()).to.equal(color);
+          } else {
+            expect($('#single-color-picker').val()).to.be.null;
+          }
+          break;
       }
-
     })
   });
 
@@ -350,14 +376,12 @@ function getColorFunction() {
  * Makes one of the type divs (mimicking html in manage_layers.html)
  * @param {HTMLDocument} doc
  * @param {string} id
- * @param {string} className
  * @return {HTMLDivElement}
  */
-function makeTypeDiv(doc, id, className) {
+function makeTypeDiv(doc, id) {
   const div = doc.createElement('div');
   div.id = id;
   div.hidden = true;
-  div.className = className;
   return div;
 }
 

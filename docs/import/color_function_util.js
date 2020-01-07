@@ -1,5 +1,5 @@
 import {colorMap, ColorStyle} from '../firebase_layers.js';
-import {showErrorSnackbar} from '../snackbar';
+import {showErrorSnackbar} from '../snackbar.js';
 
 import {getCurrentLayers, getRowIndex, ILLEGAL_STATE_ERR, setStatus, updateLayersInFirestore} from './manage_layers_lib.js';
 
@@ -267,9 +267,7 @@ function withColor(td, layer, property) {
     default:
       setStatus(ILLEGAL_STATE_ERR + 'unrecognized color function: ' + layer);
   }
-  console.log('about to add on click');
   td.addClass('editable color-td').on('click', () => {
-    console.log('clicked');
     onClick(td)
   });
   return td;
@@ -280,15 +278,12 @@ function withColor(td, layer, property) {
  * @param {JQuery<HTMLElement>} td
  */
 function onClick(td) {
-  console.log('clicked!');
   if ($(td).hasClass('na')) {
     return;
   }
   const colorFunctionDiv = $('#color-fxn-editor');
-  console.log('color fxn div ' + colorFunctionDiv);
   // open -> closed
   if (colorFunctionDiv.is(':visible') && td === globalTd) {
-    console.log('woops, closing');
     maybeDisplayWarningOnClose();
     colorFunctionDiv.hide();
     selectCurrentRow(false);
@@ -296,7 +291,6 @@ function onClick(td) {
   }
   // most recent closed -> open
   if (td === globalTd) {
-    console.log('reopening but weird');
     colorFunctionDiv.show();
     selectCurrentRow(true);
     return;
@@ -305,7 +299,6 @@ function onClick(td) {
   if (colorFunctionDiv.is(':visible')) {
     maybeDisplayWarningOnClose();
   }
-  console.log('here now');
   colorFunctionDiv.show();
   selectCurrentRow(false);
   globalTd = td;
@@ -313,7 +306,6 @@ function onClick(td) {
   const type = getColorFunction()['current-style'];
   $('#' + colorStyleTypeStrings.get(type) + '-radio').prop('checked', true);
   if (type !== ColorStyle.SINGLE) {
-    console.log('is single');
     $('#property-radio').prop('checked', true);
   }
   displaySchema(type);
@@ -376,12 +368,13 @@ function selectCurrentRow(selected) {
  * @return {?Promise<void>} See updateLayersInFirestore doc
  */
 function switchSchema(type) {
-  displaySchema(type);
   const colorFunction = getColorFunction();
   colorFunction['current-style'] = type;
   if (type !== ColorStyle.SINGLE) {
     colorFunction['last-by-property-style'] = type;
   }
+
+  displaySchema(type);
   return updateTdAndFirestore();
 }
 
@@ -390,18 +383,18 @@ function switchSchema(type) {
  * @param {ColorStyle} type
  */
 function displaySchema(type) {
-  console.log('displaying schema ' + type);
-  $('.color-type-div').hide();
   const colorFunction = getColorFunction();
   switch (type) {
     case ColorStyle.SINGLE:
       $('#single-color-picker').val(colorFunction.color);
       $('#single').show();
+      $('#by-property').hide();
       break;
     case ColorStyle.CONTINUOUS:
       $('#continuous-color-picker').val(colorFunction.color);
       populatePropertyPicker($('#property-picker'));
       maybeDisplayMinMax(colorFunction.field);
+      $('#single').hide();
       $('#by-property').show();
       $('#discrete').hide();
       $('#continuous').show();
@@ -409,6 +402,7 @@ function displaySchema(type) {
     case ColorStyle.DISCRETE:
       populatePropertyPicker($('#property-picker'));
       populateDiscreteColorPickers(colorFunction.field);
+      $('#single').hide();
       $('#by-property').show();
       $('#continuous').hide();
       $('#discrete').show();
