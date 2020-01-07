@@ -182,12 +182,12 @@ describe('Unit tests for color function utility', () => {
     expectOneFirebaseWrite();
   });
 
-  it.only('tests against real harvey layer', () => {
+  it('tests against real harvey layer', () => {
     setDisaster('2017-harvey');
     readDisasterDocument().then((doc) => {
-      const {layers} = doc.data();
+      const {layerArray} = doc.data();
       let featureCollectionLayer;
-      for (const layer of layers) {
+      for (const layer of layerArray) {
         if (layer['asset-type'] === LayerType.FEATURE_COLLECTION) {
           featureCollectionLayer = layer;
           break;
@@ -199,9 +199,8 @@ describe('Unit tests for color function utility', () => {
         return;
       }
 
-      const colorFunction = featureCollectionLayer[colorFunction];
-      const color = colorFunction.color;
-      const property = colorFunction.field;
+      const {colorFunction} = featureCollectionLayer;
+      const {color, property, colors} = colorFunction;
 
       const td = setUpWithLayer(featureCollectionLayer);
       td.trigger('click');
@@ -220,7 +219,6 @@ describe('Unit tests for color function utility', () => {
           }
           break;
         case ColorStyle.DISCRETE:
-          const colors = colorFunction.colors;
           expect($('#property-picker').val()).to.equal(property);
           $('#discrete-color-pickers')
               .find('li')

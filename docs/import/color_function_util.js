@@ -47,7 +47,7 @@ function populateColorFunctions() {
   const propertyPicker = $('#property-picker').on('change', () => {
     const property = propertyPicker.val();
     setProperty(property);
-    switch (getColorFunction()['current-style']) {
+    switch (getColorFunction().currentStyle) {
       case ColorStyle.CONTINUOUS:
         maybeDisplayMinMax(property);
         break;
@@ -98,19 +98,19 @@ function updateTdAndFirestore() {
   if (colorFunction.currentStyle === ColorStyle.DISCRETE) {
     createColorBoxesForDiscrete(colorFunction, globalTd);
   } else {
-    globalTd.append(createColorBox(colorFunction['color']));
+    globalTd.append(createColorBox(colorFunction.color));
   }
   return updateLayersInFirestore();
 }
 
 /**
- *  Updates the 'field' property which is shared by the continuous and discrete
+ * Updates the 'field' property which is shared by the continuous and discrete
  * color schemas.
  * @param {string} property
  * @return {?Promise<void>} See updateLayersInFirestore doc
  */
 function setProperty(property) {
-  getColorFunction()['field'] = property;
+  getColorFunction().field = property;
   return updateTdAndFirestore();
 }
 
@@ -127,9 +127,9 @@ function maybeDisplayMinMax(property) {
     return;
   }
   minMaxDiv.show();
-  const stats = getColorFunction()['columns'][property];
-  $('#continuous-min').val(stats['min']);
-  $('#continuous-max').val(stats['max']);
+  const stats = getColorFunction().columns[property];
+  $('#continuous-min').val(stats.min);
+  $('#continuous-max').val(stats.max);
 }
 
 /**
@@ -143,18 +143,18 @@ function maybeDisplayMinMax(property) {
 function updateMinMax(min, propertyPicker) {
   const input = min ? $('#continuous-min') : $('#continuous-max');
   const potentialNewVal = Number(input.val());
-  const propertyStats = getColorFunction()['columns'][propertyPicker.val()];
+  const propertyStats = getColorFunction().columns[propertyPicker.val()];
   let minOrMax;
   const errorDiv = $('#max-min-error');
   if (min) {
     minOrMax = 'min';
-    if (potentialNewVal > propertyStats['max']) {
+    if (potentialNewVal > propertyStats.max) {
       errorDiv.show();
       return null;
     }
   } else {
     minOrMax = 'max';
-    if (potentialNewVal < propertyStats['min']) {
+    if (potentialNewVal < propertyStats.min) {
       errorDiv.show();
       return null;
     }
@@ -171,7 +171,7 @@ function updateMinMax(min, propertyPicker) {
 function setDiscreteColor(picker) {
   const colorFunction = getColorFunction();
   const propertyValue = picker.data(discreteColorPickerDataKey);
-  colorFunction['colors'][propertyValue] = picker.val();
+  colorFunction.colors[propertyValue] = picker.val();
   updateTdAndFirestore();
 }
 
@@ -181,7 +181,7 @@ function setDiscreteColor(picker) {
  * @param {JQuery<HTMLElement>} picker
  */
 function setColor(picker) {
-  getColorFunction()['color'] = picker.val();
+  getColorFunction().color = picker.val();
   updateTdAndFirestore();
 }
 
@@ -253,13 +253,12 @@ function withColor(td, layer, property) {
   if (!colorFunction) {
     return td.text('N/A').addClass('na');
   }
-  const {currentStyle} = colorFunction;
-  switch (currentStyle) {
+  switch (colorFunction.currentStyle) {
     case ColorStyle.SINGLE:
-      td.append(createColorBox(colorFunction['color']));
+      td.append(createColorBox(colorFunction.color));
       break;
     case ColorStyle.CONTINUOUS:
-      td.append(createColorBox(colorFunction['color']));
+      td.append(createColorBox(colorFunction.color));
       break;
     case ColorStyle.DISCRETE:
       createColorBoxesForDiscrete(colorFunction, td);
@@ -301,12 +300,12 @@ function onClick(td) {
   selectCurrentRow(false);
   globalTd = td;
   selectCurrentRow(true);
-  const type = getColorFunction()['current-style'];
+  const {currentStyle} = getColorFunction();
   $('#' + colorStyleTypeStrings.get(type) + '-radio').prop('checked', true);
-  if (type !== ColorStyle.SINGLE) {
+  if (currentStyle !== ColorStyle.SINGLE) {
     $('#property-radio').prop('checked', true);
   }
-  displaySchema(type);
+  displaySchema(currentStyle);
 }
 
 /**
@@ -316,7 +315,7 @@ function onClick(td) {
 function maybeDisplayWarningOnClose() {
   const callShowSnackbar = (missing) => showErrorSnackbar(
       'Warning: Closed layer missing ' + missing + '. May not show up on map.');
-  switch (getColorFunction()['current-style']) {
+  switch (getColorFunction().currentStyle) {
     case ColorStyle.SINGLE:
       if (!$('#single-color-picker').val()) {
         callShowSnackbar('color');
@@ -450,7 +449,7 @@ function populateDiscreteColorPickers() {
     $('#too-many-values').hide();
   }
   const asColorPickers = [];
-  const colors = colorFunction['colors'];
+  const {colors} = colorFunction;
   for (const value of values) {
     const li = $(document.createElement('li'));
     li.append($(document.createElement('label')).text(value + ': '));
@@ -471,17 +470,17 @@ function populateDiscreteColorPickers() {
  * @param {JQuery<HTMLElement>} td cell in which to create the boxes.
  */
 function createColorBoxesForDiscrete(colorFunction, td) {
-  const colorObject = colorFunction['colors'];
+  const {colors} = colorFunction;
   const colorSet = new Set();
-  if (Object.keys(colorObject).length === 0) {
+  if (Object.keys(colors).length === 0) {
     td.append(createColorBox());
     return;
   }
-  Object.keys(colorObject).forEach((propertyValue) => {
-    const color = colorObject[propertyValue];
+  Object.keys(colors).forEach((propertyValue) => {
+    const color = colors[propertyValue];
     if (!colorSet.has(color)) {
       colorSet.add(color);
-      td.append(createColorBox(colorObject[propertyValue]));
+      td.append(createColorBox(colors[propertyValue]));
     }
   });
 }

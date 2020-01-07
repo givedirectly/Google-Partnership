@@ -404,7 +404,7 @@ describe('Unit test for toggleLayerOn', () => {
     let numCalls = 0;
     /** @return {array<deck.GeoJsonLayer>} */
     function getLatestLayer() {
-      return overlaySpy.args[numCalls++][0].layers;
+      return overlaySpy.args[numCalls++][0].layerArray;
     }
 
     let resolveFunction = null;
