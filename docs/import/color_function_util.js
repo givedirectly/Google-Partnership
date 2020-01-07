@@ -366,7 +366,7 @@ function selectCurrentRow(selected) {
  */
 function switchSchema(type) {
   const colorFunction = getColorFunction();
-  getColorFunction().currentStyle = type;
+  colorFunction.currentStyle = type;
   if (type !== ColorStyle.SINGLE) {
     colorFunction.lastByPropertyStyle = type;
   }

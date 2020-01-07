@@ -188,7 +188,7 @@ describe('Unit tests for color function utility', () => {
       const {layerArray} = doc.data();
       let featureCollectionLayer;
       for (const layer of layerArray) {
-        if (layer['asset-type'] === LayerType.FEATURE_COLLECTION) {
+        if (layer.assetType === LayerType.FEATURE_COLLECTION) {
           featureCollectionLayer = layer;
           break;
         }
