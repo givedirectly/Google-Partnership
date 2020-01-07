@@ -41,7 +41,7 @@ describe('Add/delete-related tests for manage_disaster.js', () => {
           expect(createFolderStub).to.be.calledThrice;
           expect(setAclsStub).to.be.calledThrice;
           expect($('#status').is(':visible')).is.false;
-          expect(disasterData.get(id).layers).to.eql([]);
+          expect(disasterData.get(id).layerArray).to.eql([]);
           expect(disasterData.get(id).assetData.stateBasedData)
               .has.property('states', states);
           const disasterPicker = $('#disaster-dropdown');
@@ -78,7 +78,7 @@ describe('Add/delete-related tests for manage_disaster.js', () => {
           const data = doc.data();
           const assetDataClone = deepCopy(stateAssetDataTemplate);
           assetDataClone.stateBasedData.states = states;
-          expect(disasterData.get(id).layers).to.eql([]);
+          expect(disasterData.get(id).layerArray).to.eql([]);
           const {assetData} = data;
           expect(assetData).to.eql(assetDataClone);
           // Sanity-check structure.
@@ -120,7 +120,7 @@ describe('Add/delete-related tests for manage_disaster.js', () => {
         .then((doc) => {
           expect(doc.exists).to.be.true;
           const data = doc.data();
-          expect(data.layers).to.eql([]);
+          expect(data.layerArray).to.eql([]);
           const {assetData} = data;
           expect(assetData).to.eql(flexibleAssetData);
           // Sanity-check structure.
