@@ -455,5 +455,5 @@ function createColorBox(color) {
  */
 function getColorFunction() {
   const index = getRowIndex(globalTd.parents('tr'));
-  return getCurrentLayers()[index]['colorFunction'];
+  return getCurrentLayers()[index].colorFunction;
 }

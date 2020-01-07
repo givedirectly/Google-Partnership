@@ -31,12 +31,12 @@ describe('Unit tests for adding layers', () => {
           expect(setAclStub).to.be.calledOnce;
           const layers = getCurrentLayers();
           expect(layers.length).to.equal(3);
-          const layer = layers[2];
-          expect(layer.assetType).to.equal(LayerType.FEATURE_COLLECTION);
-          expect(layer.eeName).to.equal(mockAsset);
-          expect(layer.displayName).to.be.empty;
-          expect(layer.displayOnLoad).to.be.false;
-          const colorFunction = layer.colorFunction;
+          const {assetType, eeName, displayName, displayOnLoad, colorFunction} =
+              layers[2];
+          expect(assetType).to.equal(LayerType.FEATURE_COLLECTION);
+          expect(eeName).to.equal(mockAsset);
+          expect(displayName).to.be.empty;
+          expect(displayOnLoad).to.be.false;
           expect(colorFunction.currentStyle).to.equal(ColorStyle.SINGLE);
           expect(colorFunction.colors).to.be.empty;
           const scoopsColumn = colorFunction.columns.scoops;
@@ -60,7 +60,7 @@ describe('Unit tests for adding layers', () => {
           const layers = getCurrentLayers();
           expect(layers.length).to.equal(1);
           const layer = layers[0];
-          const colorFunction = layer.colorFunction;
+          const {colorFunction} = layer;
           const scoopsColumn = colorFunction.columns.scoops;
           expect(scoopsColumn.max).to.equal(29);
           expect(scoopsColumn.min).to.equal(0);
@@ -82,10 +82,10 @@ describe('Unit tests for adding layers', () => {
         processNewEeLayer(mockAsset, LayerType.FEATURE_COLLECTION))
         .then(() => {
           expect(setAclStub).to.be.calledOnce;
-          const layer = getCurrentLayers()[0];
-          expect(layer.colorFunction.columns.flavor.values).to.eql([
-            'vanilla',
-          ]);
+          expect(getCurrentLayers()[0].colorFunction.columns.flavor.values)
+              .to.eql([
+                'vanilla',
+              ]);
         });
   });
 
@@ -99,9 +99,9 @@ describe('Unit tests for adding layers', () => {
           expect(setAclStub).to.be.calledOnce;
           const layers = getCurrentLayers();
           expect(layers.length).to.equal(1);
-          const layer = layers[0];
-          expect(layer.assetType).to.equal(LayerType.IMAGE_COLLECTION);
-          expect(layer.colorFunction).to.be.undefined;
+          const {assetType, colorFunction} = layers[0];
+          expect(assetType).to.equal(LayerType.IMAGE_COLLECTION);
+          expect(colorFunction).to.be.undefined;
         });
   });
 
@@ -115,10 +115,10 @@ describe('Unit tests for adding layers', () => {
     ])).then(() => {
       const layers = getCurrentLayers();
       expect(layers.length).to.equal(1);
-      const layer = layers[0];
-      expect(layer.assetType).to.equal(LayerType.KML);
-      expect(layer.colorFunction).to.be.undefined;
-      expect(layer.urls.length).to.equal(2);
+      const {assetType, colorFunction, urls} = layers[0];
+      expect(assetType).to.equal(LayerType.KML);
+      expect(colorFunction).to.be.undefined;
+      expect(urls.length).to.equal(2);
     });
   });
 });
