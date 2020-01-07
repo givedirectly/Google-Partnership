@@ -38,11 +38,11 @@ describe('Unit tests for adding layers', () => {
           expect(layer.displayOnLoad).to.be.false;
           const colorFunction = layer.colorFunction;
           expect(colorFunction.currentStyle).to.equal(ColorStyle.SINGLE);
-          expect(colorFunction['colors']).to.be.empty;
-          const scoopsColumn = colorFunction['columns']['scoops'];
-          expect(scoopsColumn['max']).to.equal(4);
-          expect(scoopsColumn['min']).to.equal(0);
-          expect(scoopsColumn['values']).to.eql(['0', '1', '2', '3', '4']);
+          expect(colorFunction.colors).to.be.empty;
+          const scoopsColumn = colorFunction.columns.scoops;
+          expect(scoopsColumn.max).to.equal(4);
+          expect(scoopsColumn.min).to.equal(0);
+          expect(scoopsColumn.values).to.eql(['0', '1', '2', '3', '4']);
           expect($('#tbody').children('tr').length).to.equal(3);
           expect($('#color-fxn-editor').css('display')).to.equal('block');
         });
@@ -61,10 +61,10 @@ describe('Unit tests for adding layers', () => {
           expect(layers.length).to.equal(1);
           const layer = layers[0];
           const colorFunction = layer.colorFunction;
-          const scoopsColumn = colorFunction['columns']['scoops'];
-          expect(scoopsColumn['max']).to.equal(29);
-          expect(scoopsColumn['min']).to.equal(0);
-          expect(scoopsColumn['values']).to.eql([]);
+          const scoopsColumn = colorFunction.columns.scoops;
+          expect(scoopsColumn.max).to.equal(29);
+          expect(scoopsColumn.min).to.equal(0);
+          expect(scoopsColumn.values).to.eql([]);
         });
   });
 
@@ -83,8 +83,8 @@ describe('Unit tests for adding layers', () => {
         .then(() => {
           expect(setAclStub).to.be.calledOnce;
           const layer = getCurrentLayers()[0];
-          expect(layer.colorFunction['columns']['flavor']['values']).to.eql([
-            'vanilla'
+          expect(layer.colorFunction.columns.flavor.values).to.eql([
+            'vanilla',
           ]);
         });
   });
@@ -118,7 +118,7 @@ describe('Unit tests for adding layers', () => {
       const layer = layers[0];
       expect(layer.assetType).to.equal(LayerType.KML);
       expect(layer.colorFunction).to.be.undefined;
-      expect(layer['urls'].length).to.equal(2);
+      expect(layer.urls.length).to.equal(2);
     });
   });
 });
