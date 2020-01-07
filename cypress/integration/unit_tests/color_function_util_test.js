@@ -240,7 +240,7 @@ describe('Unit tests for color function utility', () => {
           }
           break;
       }
-    })
+    });
   });
 
   it('switches schemas and writes data', () => {
