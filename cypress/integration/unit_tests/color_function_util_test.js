@@ -142,13 +142,12 @@ describe('Unit tests for color function utility', () => {
     };
     const td = setUpWithLayer(layer);
     td.trigger('click');
-    const maxMin = $('#max-min');
-    expect(maxMin.is(':visible')).to.be.false;
-
-    const propertyPicker = $('#property-picker');
-    propertyPicker.val('wings').trigger('change');
+    const minMax = $('#min-max');
+    expect(minMax).not.to.be.visible;
+    
+    $('#property-picker').val('wings').trigger('change');
     expectOneFirebaseWrite();
-    expect(maxMin.is(':visible'));
+    expect(minMax).to.be.visible;
     const maxInput = $('#continuous-max');
     const minInput = $('#continuous-min');
     expect(maxInput.val()).to.equal('100');
@@ -163,7 +162,7 @@ describe('Unit tests for color function utility', () => {
     // make sure new values still there on close and reopen.
     td.trigger('click');
     td.trigger('click');
-    expect(maxMin.is(':visible'));
+    expect(minMax).to.be.visible;
     expect(maxInput.val()).to.equal('20');
     expect(minInput.val()).to.equal('1');
     const wings = getCurrentLayers()[0].colorFunction.columns.wings;
@@ -172,17 +171,17 @@ describe('Unit tests for color function utility', () => {
 
     // try to input a bad val (min < max)
     const errorDiv = $('#max-min-error');
-    expect(errorDiv.is(':visible')).to.be.false;
+    expect(errorDiv).not.to.be.visible;
     minInput.val(30).trigger('blur');
-    expect(errorDiv.is(':visible')).to.be.true;
+    expect(errorDiv).to.be.visible;
     expect(errorDiv.text()).to.equal('Error: min value > max value');
     expect(writeToFirebaseStub).to.not.be.called;
     minInput.val(10).trigger('blur');
-    expect(errorDiv.is(':visible')).to.be.false;
+    expect(errorDiv).not.to.be.visible;
     expectOneFirebaseWrite();
   });
 
-  it('tests against real harvey layer', () => {
+  it.only('tests against real harvey layer', () => {
     setDisaster('2017-harvey');
     readDisasterDocument().then((doc) => {
       const {layerArray} = doc.data();
@@ -200,18 +199,18 @@ describe('Unit tests for color function utility', () => {
       }
 
       const {colorFunction} = featureCollectionLayer;
-      const {color, property, colors} = colorFunction;
+      const {color, field, colors} = colorFunction;
 
       const td = setUpWithLayer(featureCollectionLayer);
       td.trigger('click');
 
       switch (colorFunction.currentStyle) {
         case ColorStyle.CONTINUOUS:
-          expect($('#property-picker').val()).to.equal(property);
+          expect($('#property-picker').val()).to.equal(field);
           expect($('#continuous-min').val())
-              .to.equal(colorFunction.columns[property].min);
+              .to.equal(colorFunction.columns[field].min);
           expect($('#continuous-max').val())
-              .to.equal(colorFunction.columns[property].max);
+              .to.equal(colorFunction.columns[field].max);
           if (color) {
             expect($('#continuous-color-picker').val()).to.equal(color);
           } else {
@@ -219,7 +218,7 @@ describe('Unit tests for color function utility', () => {
           }
           break;
         case ColorStyle.DISCRETE:
-          expect($('#property-picker').val()).to.equal(property);
+          expect($('#property-picker').val()).to.equal(field);
           $('#discrete-color-pickers')
               .find('li')
               .each(/* @this HTMLElement */ function() {
@@ -255,10 +254,10 @@ describe('Unit tests for color function utility', () => {
       },
     };
     const td = setUpWithLayer(layer);
-    expect($(colorFunctionEditor).is(':visible')).to.be.false;
+    expect($(colorFunctionEditor)).not.to.be.visible;
     td.trigger('click');
 
-    expect($(colorFunctionEditor).is(':visible')).to.be.true;
+    expect($(colorFunctionEditor)).to.be.visible;
     expect(writeToFirebaseStub).to.not.be.called;
     expect(getColorFunction().color).to.equal('yellow');
 
@@ -293,13 +292,13 @@ describe('Unit tests for color function utility', () => {
     const discreteRadio = $('#DISCRETE-radio');
     discreteRadio.trigger('change');
     expectOneFirebaseWrite();
-    const discretePropertyPicker = $('#discrete-property-picker');
     let field;
     ({currentStyle, field} = getColorFunction());
     expect(currentStyle).to.equal(1);
-    expect(td.children().length).to.equal(0);
+    // single empty box when no discrete colors have been chosen.
+    expect(td.children().length).to.equal(1);
     expect(field).to.equal('wings');
-    expect(discretePropertyPicker.val()).to.equal('wings');
+    expect(propertyPicker.val()).to.equal('wings');
     const discreteColorPickerList = $('#discrete-color-pickers');
     expect(discreteColorPickerList.children('li').length).to.equal(3);
 
@@ -338,7 +337,7 @@ describe('Unit tests for color function utility', () => {
     expect(discreteRadio.prop('checked')).to.be.true;
 
     td.trigger('click');
-    expect($(colorFunctionEditor).is(':visible')).to.be.false;
+    expect($(colorFunctionEditor)).not.to.be.visible;
     expect(writeToFirebaseStub).to.not.be.called;
   });
 });
@@ -367,7 +366,7 @@ function expectOneFirebaseWrite() {
 }
 
 /**
- * Gets the current color function.Fscore-
+ * Gets the current color function.
  * @return {Object}
  */
 function getColorFunction() {

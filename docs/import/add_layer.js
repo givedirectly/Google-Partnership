@@ -22,7 +22,7 @@ function processNewEeLayer(asset, type) {
   switch (type) {
     case LayerType.IMAGE:
     case LayerType.IMAGE_COLLECTION:
-      return prependToTable(createCommonColorFunctionFields(asset, type));
+      return prependToTable(createCommonEeLayerFields(asset, type));
     case LayerType.FEATURE_COLLECTION:
       const featureCollection = ee.FeatureCollection(asset);
       const properties = featureCollection.first().propertyNames();
@@ -44,7 +44,7 @@ function processNewEeLayer(asset, type) {
                  ee.Dictionary.fromLists(properties, stats))
           .then((columns) => {
             const layer = {
-              ...createCommonColorFunctionFields(asset, type),
+              ...createCommonEeLayerFields(asset, type),
               colorFunction: {
                 columns: columns,
                 currentStyle: 2,
@@ -63,7 +63,7 @@ function processNewEeLayer(asset, type) {
  * @param {LayerType} type
  * @return {Object}
  */
-function createCommonColorFunctionFields(asset, type) {
+function createCommonEeLayerFields(asset, type) {
   return {
     assetType: type,
     eeName: asset,
