@@ -2,10 +2,12 @@ import {populateColorFunctions, withColor} from '../../../docs/import/color_func
 import * as manageLayersLib from '../../../docs/import/manage_layers_lib.js';
 import {getCurrentLayers} from '../../../docs/import/manage_layers_lib.js';
 import * as snackbar from '../../../docs/snackbar.js';
-import {createTrs, setDisasterAndLayers} from '../../support/import_test_util.js';
+import {createTrs, setDisasterAndLayers, setDisaster} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
+import {readDisasterDocument} from '../../../docs/firestore_document';
+import {ColorStyle, LayerType} from '../../../docs/firebase_layers';
 
-const property = 'color-function';
+const property = 'colorFunction';
 let writeToFirebaseStub;
 
 describe('Unit tests for color function utility', () => {
@@ -181,16 +183,39 @@ describe('Unit tests for color function utility', () => {
     expectOneFirebaseWrite();
   });
 
-  it('switches schemas with real harvey data', () => {
-    firebase.firestore()
-        .collection('disaster-metadata')
-        .doc('2017-harvey')
-        .get()
-        .then(
-            (result) => {
-                // insufficient permissions here.
-                // console.log(result);
-            });
+  it.only('tests against real harvey layer', () => {
+    setDisaster('2017-harvey');
+    readDisasterDocument().then((doc) => {
+      // TODO(janakr): switch this to 'layers' when that change happens
+      const {layerArray} = doc.data();
+      let featureCollectionLayer;
+      for (const layer of layerArray) {
+        if (layer.assetType === LayerType.FEATURE_COLLECTION) {
+          featureCollectionLayer = layer;
+          break;
+        }
+      }
+      if (!featureCollectionLayer) {
+        // If harvey ends up with no feature collection-typed layers we
+        // return early. Don't expect this to happen but.
+        return;
+      }
+
+      const colorFunction = featureCollectionLayer.colorFunction;
+      const currentStyle = colorFunction.currentStyle;
+
+      const td = setUpWithLayer(featureCollectionLayer);
+      console.log('here');
+      console.log(td);
+      td.trigger('click');
+
+      console.log($('select'));
+
+      switch (currentStyle) {
+        case ColorStyle.CONTINUOUS:
+      }
+
+    })
   });
 
   it('switches schemas and writes data', () => {

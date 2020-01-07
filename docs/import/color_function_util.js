@@ -267,7 +267,11 @@ function withColor(td, layer, property) {
     default:
       setStatus(ILLEGAL_STATE_ERR + 'unrecognized color function: ' + layer);
   }
-  td.addClass('editable color-td').on('click', () => onClick(td));
+  console.log('about to add on click');
+  td.addClass('editable color-td').on('click', () => {
+    console.log('clicked');
+    onClick(td)
+  });
   return td;
 }
 
@@ -276,12 +280,15 @@ function withColor(td, layer, property) {
  * @param {JQuery<HTMLElement>} td
  */
 function onClick(td) {
+  console.log('clicked!');
   if ($(td).hasClass('na')) {
     return;
   }
   const colorFunctionDiv = $('#color-fxn-editor');
+  console.log('color fxn div ' + colorFunctionDiv);
   // open -> closed
   if (colorFunctionDiv.is(':visible') && td === globalTd) {
+    console.log('woops, closing');
     maybeDisplayWarningOnClose();
     colorFunctionDiv.hide();
     selectCurrentRow(false);
@@ -289,16 +296,16 @@ function onClick(td) {
   }
   // most recent closed -> open
   if (td === globalTd) {
+    console.log('reopening but weird');
     colorFunctionDiv.show();
     selectCurrentRow(true);
     return;
   }
   // open td other than most recent closed
   if (colorFunctionDiv.is(':visible')) {
-    console.log(colorFunctionDiv);
-    console.log('hello');
     maybeDisplayWarningOnClose();
   }
+  console.log('here now');
   colorFunctionDiv.show();
   selectCurrentRow(false);
   globalTd = td;
@@ -306,6 +313,7 @@ function onClick(td) {
   const type = getColorFunction()['current-style'];
   $('#' + colorStyleTypeStrings.get(type) + '-radio').prop('checked', true);
   if (type !== ColorStyle.SINGLE) {
+    console.log('is single');
     $('#property-radio').prop('checked', true);
   }
   displaySchema(type);
@@ -382,6 +390,7 @@ function switchSchema(type) {
  * @param {ColorStyle} type
  */
 function displaySchema(type) {
+  console.log('displaying schema ' + type);
   $('.color-type-div').hide();
   const colorFunction = getColorFunction();
   switch (type) {
