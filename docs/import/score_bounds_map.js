@@ -100,7 +100,7 @@ class ScoreBoundsMap {
     if (polygonCoordinates) {
       this._addPolygon(new google.maps.Polygon(
           this._createPolygonOptions(polygonCoordinates)));
-    } else {
+    } else if (states.length) {
       const stateBounds = ee.FeatureCollection('TIGER/2018/States')
                               .filter(ScoreBoundsMap._createStateFilter(states))
                               .geometry()

@@ -16,7 +16,7 @@ export {
   enableWhenReady,
   onSetDisaster,
   setUpScoreBoundsMap,
-  setUpScoreSelectorTable,
+  setUpStateBasedScoreSelectorTable,
   toggleState,
 };
 /** @VisibleForTesting */
@@ -27,7 +27,7 @@ export {
   deleteDisaster,
   disasterData,
   enableWhenFirestoreReady,
-  scoreAssetTypes,
+  stateBasedScoreAssetTypes,
   scoreBoundsMap,
   updateColorAndHover,
   validateUserFields,
@@ -84,7 +84,7 @@ function validateUserFields() {
   const multistate = states.length > 1;
   const damageAssetPresent = !!$('#damage-asset-select').val();
 
-  for (const {idStem, displayName} of scoreAssetTypes) {
+  for (const {idStem, displayName} of stateBasedScoreAssetTypes) {
     const missingForType = [];
     for (const state of states) {
       if (!$('#select-' + assetSelectionRowPrefix + idStem + '-' + state)
@@ -236,26 +236,8 @@ function onSetDisaster() {
   }
   processedCurrentDisasterStateAssets = false;
   processedCurrentDisasterSelfAssets = false;
-  const scoreBoundsPath = getElementFromPath(scoreCoordinatesPath);
   const {assetData} = disasterData.get(currentDisaster);
-  if (assetData.flexibleData) {
-    setStatus('Flexible disasters not yet supported.');
-    return Promise.resolve();
-  }
-  const {states} = assetData.stateBasedData;
-  scoreBoundsMap.initialize(
-      scoreBoundsPath ? transformGeoPointArrayToLatLng(scoreBoundsPath) : null,
-      states);
-  // getStateAssetsFromEe does internal caching.
-  const scorePromise =
-      Promise.all(states.map(getStateAssetsFromEe)).then((stateAssets) => {
-        if (getDisaster() === currentDisaster &&
-            !processedCurrentDisasterStateAssets) {
-          // Don't do anything unless this is still the right disaster.
-          initializeScoreSelectors(states, stateAssets);
-          processedCurrentDisasterStateAssets = true;
-        }
-      });
+  const scorePromise = assetData.flexibleData ? onSetFlexibleDisaster(assetData) : onSetStateBasedDisaster(assetData);
   const disasterLambda = (assets) => {
     if (getDisaster() === currentDisaster &&
         !processedCurrentDisasterSelfAssets) {
@@ -275,6 +257,35 @@ function onSetDisaster() {
         disasterLambda([]);
       });
   return Promise.all([scorePromise, damagePromise]).then(validateUserFields);
+}
+
+async function onSetStateBasedDisaster(assetData) {
+  const currentDisaster = getDisaster();
+  $('#state-based-disaster-asset-selection-table').show();
+  const {states} = assetData.stateBasedData;
+  initializeScoreBoundsMapFromAssetData(assetData, states);
+  // getStateAssetsFromEe does internal caching.
+  const stateAssets = await Promise.all(states.map(getStateAssetsFromEe));
+  if (getDisaster() === currentDisaster &&
+      !processedCurrentDisasterStateAssets) {
+    // Don't do anything unless this is still the right disaster.
+    initializeStateBasedScoreSelectors(states, stateAssets);
+    processedCurrentDisasterStateAssets = true;
+  }
+}
+
+async function onSetFlexibleDisaster(assetData) {
+  $('#state-based-disaster-asset-selection-table').hide();
+  initializeScoreBoundsMapFromAssetData(assetData);
+  const
+  setStatus('Flexible disasters not yet supported.');
+
+}
+
+function initializeScoreBoundsMapFromAssetData(assetData, states = []) {
+  const {scoreBoundsCoordinates} = assetData;
+  const scoreBoundsAsLatLng = scoreBoundsCoordinates ? transformGeoPointArrayToLatLng(scoreBoundsCoordinates) : null;
+  scoreBoundsMap.initialize(scoreBoundsAsLatLng, states);
 }
 
 /**
@@ -453,7 +464,7 @@ function toggleState(known) {
   }
 }
 
-const scoreAssetTypes = [
+const stateBasedScoreAssetTypes = Object.freeze([
   {
     idStem: 'poverty',
     propertyPath: ['stateBasedData', 'snapData', 'paths'],
@@ -486,18 +497,17 @@ const scoreAssetTypes = [
     expectedColumns: [],
     geometryExpected: true,
   },
-];
-Object.freeze(scoreAssetTypes);
+]);
 
 const assetSelectionRowPrefix = 'asset-selection-row-';
 
 /**
- * Initializes score selector table based on {@link scoreAssetTypes} data. Done
- * as soon as page is ready.
+ * Initializes state-based score selector table based on {@link stateBasedScoreAssetTypes}
+ * data. Done as soon as page is ready.
  */
-function setUpScoreSelectorTable() {
+function setUpStateBasedScoreSelectorTable() {
   const tbody = $('#asset-selection-table-body');
-  for (const {idStem, displayName} of scoreAssetTypes) {
+  for (const {idStem, displayName} of stateBasedScoreAssetTypes) {
     const row = $(document.createElement('tr'));
     row.append(createTd().text(displayName));
     row.prop('id', assetSelectionRowPrefix + idStem);
@@ -506,12 +516,12 @@ function setUpScoreSelectorTable() {
 }
 
 /**
- * Initializes the select interface for score assets.
+ * Initializes the select interface for score assets for a state-based disaster.
  * @param {Array<string>} states array of state (abbreviations)
  * @param {Array<StateList>} stateAssets matching array to the {@code states}
  *     array that holds a map of asset info for each state.
  */
-function initializeScoreSelectors(states, stateAssets) {
+function initializeStateBasedScoreSelectors(states, stateAssets) {
   const headerRow = $('#score-asset-header-row');
 
   // Initialize headers.
@@ -526,7 +536,7 @@ function initializeScoreSelectors(states, stateAssets) {
          propertyPath,
          expectedColumns,
          geometryExpected,
-       } of scoreAssetTypes) {
+       } of stateBasedScoreAssetTypes) {
     const id = assetSelectionRowPrefix + idStem;
     const row = $('#' + id);
     removeAllButFirstFromRow(row);
@@ -671,7 +681,7 @@ const lastSelectedAsset = new Map();
  * Verifies an asset exists and has the expected columns.
  * @param {string} asset
  * @param {string} type values from the first index of each entry in {@code
- *     scoreAssetTypes}
+ *     stateBasedScoreAssetTypes}
  * @param {string} state e.g. 'WA'
  * @param {Array<string>} expectedColumns
  * @return {Promise<void>} returns null if there was no asset to check.

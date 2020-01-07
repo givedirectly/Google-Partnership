@@ -2,7 +2,7 @@ import {addPolygonWithPath} from '../../../docs/basic_map.js';
 import {readDisasterDocument} from '../../../docs/firestore_document.js';
 import {createDisasterData} from '../../../docs/import/create_disaster_lib.js';
 import * as ListEeAssets from '../../../docs/import/list_ee_assets.js';
-import {assetSelectionRowPrefix, disasterData, scoreAssetTypes, scoreBoundsMap, setUpScoreBoundsMap, setUpScoreSelectorTable, validateUserFields} from '../../../docs/import/manage_disaster';
+import {assetSelectionRowPrefix, disasterData, stateBasedScoreAssetTypes, scoreBoundsMap, setUpScoreBoundsMap, setUpStateBasedScoreSelectorTable, validateUserFields} from '../../../docs/import/manage_disaster';
 import {enableWhenFirestoreReady} from '../../../docs/import/manage_disaster.js';
 import {getDisaster} from '../../../docs/resources.js';
 import {cyQueue} from '../../support/commands.js';
@@ -34,10 +34,10 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
       cy.stub(document, 'getElementById')
           .callsFake((id) => doc.getElementById(id));
       if (firstTest) {
-        // setUpScoreSelectorTable gets elements by id, so we have to stub
+        // setUpStateBasedScoreSelectorTable gets elements by id, so we have to stub
         // first, which is harder in a before() hook (since stubs should be set
         // in beforeEach() hooks) but we only want to run it once in this file.
-        setUpScoreSelectorTable();
+        setUpStateBasedScoreSelectorTable();
         firstTest = false;
       }
     });
@@ -241,7 +241,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     cy.get('#process-button')
         .should('have.text', allStateAssetsMissingWithDamageAssetText);
     // Now set all the per-state assets.
-    for (let i = 0; i < scoreAssetTypes.length; i++) {
+    for (let i = 0; i < stateBasedScoreAssetTypes.length; i++) {
       setFirstSelectInScoreRow(i);
     }
     // Yay! We're ready to go.
@@ -638,11 +638,11 @@ function setFirstSelectInScoreRow(rowNum) {
  * Utility function to get the first cell in a "score asset" row, like the
  * Poverty/SVI/Income/Buildings row.
  * @param {number} rowNum index of row, corresponding to its index in {@link
- *     scoreAssetTypes}
+ *     stateBasedScoreAssetTypes}
  * @return {Cypress.Chainable} Cypress promise of the td
  */
 function getFirstTdInScoreRow(rowNum) {
-  return cy.get('#' + assetSelectionRowPrefix + scoreAssetTypes[rowNum].idStem)
+  return cy.get('#' + assetSelectionRowPrefix + stateBasedScoreAssetTypes[rowNum].idStem)
       .find('td')
       .first();
 }
