@@ -392,7 +392,7 @@ function makeTypeDiv(doc, id) {
  * @param {HTMLDocument} doc
  * @param {string} id
  * @param {string} name
- * @return {HTMLInputElement}
+ * @return {Array<HTMLLabelElement, HTMLInputElement>}
  */
 function makeRadio(doc, id, name) {
   const label = doc.createElement('label');
