@@ -89,6 +89,11 @@ h1 {
   color: #545958;
 }
 
+/* Status css */
+.status {
+  color: var(--error-color);
+}
+
 /* Navbar css */
 
 .navbar {
@@ -714,7 +719,7 @@ thead {
 
 table, th, td {
   border-color: grey;
-  
+
 }
 
 .table-header {
