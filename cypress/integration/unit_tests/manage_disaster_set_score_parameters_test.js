@@ -2,7 +2,7 @@ import {addPolygonWithPath} from '../../../docs/basic_map.js';
 import {readDisasterDocument} from '../../../docs/firestore_document.js';
 import {createDisasterData} from '../../../docs/import/create_disaster_lib.js';
 import * as ListEeAssets from '../../../docs/import/list_ee_assets.js';
-import {assetSelectionRowPrefix, disasterData, stateBasedScoreAssetTypes, scoreBoundsMap, setUpScoreBoundsMap, setUpStateBasedScoreSelectorTable, validateUserFields} from '../../../docs/import/manage_disaster';
+import {assetSelectionPrefix, disasterData, stateBasedScoreAssetTypes, scoreBoundsMap, setUpScoreBoundsMap, setUpStateBasedScoreSelectorTable, validateUserFields} from '../../../docs/import/manage_disaster';
 import {enableWhenFirestoreReady} from '../../../docs/import/manage_disaster.js';
 import {getDisaster} from '../../../docs/resources.js';
 import {cyQueue} from '../../support/commands.js';
@@ -642,7 +642,7 @@ function setFirstSelectInScoreRow(rowNum) {
  * @return {Cypress.Chainable} Cypress promise of the td
  */
 function getFirstTdInScoreRow(rowNum) {
-  return cy.get('#' + assetSelectionRowPrefix + stateBasedScoreAssetTypes[rowNum].idStem)
+  return cy.get('#' + assetSelectionPrefix + stateBasedScoreAssetTypes[rowNum].idStem)
       .find('td')
       .first();
 }

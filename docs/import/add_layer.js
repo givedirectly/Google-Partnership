@@ -24,10 +24,10 @@ function processNewEeLayer(asset, type) {
     case LayerType.IMAGE:
     case LayerType.IMAGE_COLLECTION:
       const layer = {
-        'assetType': type,
-        'eeName': asset,
-        'displayName': '',
-        'displayOnLoad': false,
+        assetType: type,
+        eeName: asset,
+        displayName: '',
+        displayOnLoad: false,
       };
       return prependToTable(layer);
     case LayerType.FEATURE_COLLECTION:
@@ -51,15 +51,15 @@ function processNewEeLayer(asset, type) {
                  ee.Dictionary.fromLists(properties, stats))
           .then((columns) => {
             const layer = {
-              'assetType': type,
-              'eeName': asset,
-              'colorFunction': {
-                'columns': columns,
-                'currentStyle': 2,
-                'colors': {},
+              assetType: type,
+              eeName: asset,
+              colorFunction: {
+                columns: columns,
+                currentStyle: 2,
+                colors: {},
               },
-              'displayName': '',
-              'displayOnLoad': false,
+              displayName: '',
+              displayOnLoad: false,
             };
             return prependToTable(layer);
           });
@@ -89,10 +89,10 @@ function prependToTable(layer) {
  */
 function processNonEeLayer(type, urls) {
   const layer = {
-    'displayName': '',
-    'assetType': type,
-    'urls': urls,
-    'displayOnLoad': false,
+    displayName: '',
+    assetType: type,
+    urls: urls,
+    displayOnLoad: false,
   };
   return prependToTable(layer);
 }

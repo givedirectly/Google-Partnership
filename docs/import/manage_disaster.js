@@ -11,6 +11,7 @@ import {getDisasterAssetsFromEe, getStateAssetsFromEe} from './list_ee_assets.js
 import {clearStatus} from './manage_layers_lib.js';
 import {ScoreBoundsMap} from './score_bounds_map.js';
 import {updateDataInFirestore} from './update_firestore_disaster.js';
+import {LayerType} from '../firebase_layers.js';
 
 export {
   enableWhenReady,
@@ -22,7 +23,7 @@ export {
 /** @VisibleForTesting */
 export {
   addDisaster,
-  assetSelectionRowPrefix,
+  assetSelectionPrefix,
   createScoreAssetForStateBasedDisaster,
   deleteDisaster,
   disasterData,
@@ -87,7 +88,7 @@ function validateUserFields() {
   for (const {idStem, displayName} of stateBasedScoreAssetTypes) {
     const missingForType = [];
     for (const state of states) {
-      if (!$('#select-' + assetSelectionRowPrefix + idStem + '-' + state)
+      if (!$('#select-' + assetSelectionPrefix + idStem + '-' + state)
                .val()) {
         missingForType.push(state);
       }
@@ -263,14 +264,29 @@ async function onSetDisaster() {
   initializeDamageSelector(disasterAssets);
   processedCurrentDisasterDamageSelector = true;
   await scorePromise;
-  validateUserFields();
+  // validateUserFields();
 }
 
 async function onSetStateBasedDisaster(assetData) {
   const currentDisaster = getDisaster();
   $('#state-based-disaster-asset-selection-table').show();
+  $('flexible-poverty-data').hide();
   const {states} = assetData.stateBasedData;
   initializeScoreBoundsMapFromAssetData(assetData, states);
+
+  // Clear out old data on disaster switch.
+  const headerRow = $('#score-asset-header-row');
+  // Initialize headers.
+  removeAllButFirstFromRow(headerRow);
+  for (const state of states) {
+    headerRow.append(createTd().text(state + ' Assets'));
+  }
+  for (const {idStem} of stateBasedScoreAssetTypes) {
+    const id = assetSelectionPrefix + idStem;
+    const row = $('#' + id);
+    removeAllButFirstFromRow(row);
+  }
+
   // getStateAssetsFromEe does internal caching.
   const stateAssets = await Promise.all(states.map(getStateAssetsFromEe));
   if (getDisaster() !== currentDisaster ||
@@ -285,6 +301,8 @@ async function onSetStateBasedDisaster(assetData) {
 async function onSetFlexibleDisaster(assetData) {
   const currentDisaster = getDisaster();
   $('#state-based-disaster-asset-selection-table').hide();
+  const flexiblePovertyDiv = $('#flexible-poverty-data');
+  flexiblePovertyDiv.empty().show();
   initializeScoreBoundsMapFromAssetData(assetData);
   // Same promise as waited on above in onSetDisaster, so actually both will
   // complete before user switches disasters or neither will, but we can still
@@ -295,11 +313,17 @@ async function onSetFlexibleDisaster(assetData) {
     // Don't do anything unless this is still the right disaster.
     return;
   }
-  // Don't disable anything, all assets are permissible here by default.
+  // Don't disable any feature collections.
   for (const attributes of disasterAssets.values()) {
-    attributes.disabled = false;
+    attributes.disabled = attributes.type !== LayerType.FEATURE_COLLECTION;
   }
-
+  flexiblePovertyDiv.append($(document.createElement('span')).text('Poverty asset path'));
+  const povertySelect = createAssetDropdown(disasterAssets, ['flexibleData', 'povertyPath'])
+      .prop('id', 'select-' + assetSelectionPrefix + 'flexible-poverty')
+      .on('change', (event) => {
+        verifyAsset()
+      });
+  flexiblePovertyDiv.append(povertySelect);
 }
 
 function initializeScoreBoundsMapFromAssetData(assetData, states = []) {
@@ -519,7 +543,7 @@ const stateBasedScoreAssetTypes = Object.freeze([
   },
 ]);
 
-const assetSelectionRowPrefix = 'asset-selection-row-';
+const assetSelectionPrefix = 'asset-selection-';
 
 /**
  * Initializes state-based score selector table based on {@link stateBasedScoreAssetTypes}
@@ -530,7 +554,7 @@ function setUpStateBasedScoreSelectorTable() {
   for (const {idStem, displayName} of stateBasedScoreAssetTypes) {
     const row = $(document.createElement('tr'));
     row.append(createTd().text(displayName));
-    row.prop('id', assetSelectionRowPrefix + idStem);
+    row.prop('id', assetSelectionPrefix + idStem);
     tbody.append(row);
   }
 }
@@ -557,7 +581,7 @@ function initializeStateBasedScoreSelectors(states, stateAssets) {
          expectedColumns,
          geometryExpected,
        } of stateBasedScoreAssetTypes) {
-    const id = assetSelectionRowPrefix + idStem;
+    const id = assetSelectionPrefix + idStem;
     const row = $('#' + id);
     removeAllButFirstFromRow(row);
     for (const [i, state] of states.entries()) {
@@ -577,7 +601,7 @@ function initializeStateBasedScoreSelectors(states, stateAssets) {
                       event, statePropertyPath, expectedColumns, idStem, state))
               .addClass('with-status-border');
       row.append(createTd().append(select));
-      verifyAsset(select.val(), idStem, state, expectedColumns);
+      verifyAsset(idStem + '-' + state, expectedColumns);
     }
   }
 }
@@ -687,9 +711,8 @@ function createAssetDropdown(
  */
 function onNonDamageAssetSelect(
     event, propertyPath, expectedColumns, type, state) {
-  const newAsset = $(event.target).val();
   handleAssetDataChange(newAsset, propertyPath);
-  return verifyAsset(newAsset, type, state, expectedColumns);
+  return verifyAsset(type + '-' + state, expectedColumns);
 }
 
 // Map of asset picker (represented by a string '<type>-<state>' e.g.
@@ -699,20 +722,17 @@ const lastSelectedAsset = new Map();
 
 /**
  * Verifies an asset exists and has the expected columns.
- * @param {string} asset
- * @param {string} type values from the first index of each entry in {@code
- *     stateBasedScoreAssetTypes}
- * @param {string} state e.g. 'WA'
- * @param {Array<string>} expectedColumns
+ * @param {?Array<string>} expectedColumns Expected column names. If null, does
+ *     no column checking
  * @return {Promise<void>} returns null if there was no asset to check.
  *     Otherwise returns a promise that resolves when existence and column
  *     checking are finished and select border color is updated.
  */
-function verifyAsset(asset, type, state, expectedColumns) {
+function verifyAsset(selectStem, expectedColumns) {
   // TODO: disable or discourage kick off until all green?
-  const tdId = type + '-' + state;
-  const select = $('#select-' + assetSelectionRowPrefix + type + '-' + state);
-  lastSelectedAsset.set(tdId, asset);
+  const select = $('#select-' + assetSelectionPrefix + selectStem);
+  const asset = select.val();
+  lastSelectedAsset.set(selectStem, asset);
   const assetMissingErrorFunction = (err) => {
     const message = err.message || err;
     if (message.includes('\'' + asset + '\' not found.')) {
@@ -730,16 +750,16 @@ function verifyAsset(asset, type, state, expectedColumns) {
     convertEeObjectToPromise(ee.FeatureCollection(asset).first())
         .then(() => updateColorAndHover(select, 'green', 'No expected columns'))
         .catch(assetMissingErrorFunction);
-  } else {
+  } else if (expectedColumns) {
     updateColorAndHover(select, 'yellow', 'Checking columns...');
     return convertEeObjectToPromise(getColumnsStatus(asset, expectedColumns))
         .then((error) => {
-          if (lastSelectedAsset.get(tdId) === asset) {
+          if (lastSelectedAsset.get(selectStem) === asset) {
             if (error) {
               updateColorAndHover(
                   select, 'red',
                   'Error! asset does not have all expected columns: ' +
-                      expectedColumns);
+                  expectedColumns);
             } else {
               updateColorAndHover(
                   select, 'green', 'Success! asset has all expected columns');
@@ -747,6 +767,8 @@ function verifyAsset(asset, type, state, expectedColumns) {
           }
         })
         .catch(assetMissingErrorFunction);
+  } else {
+    updateColorAndHover(select, 'green');
   }
 }
 
@@ -754,10 +776,13 @@ function verifyAsset(asset, type, state, expectedColumns) {
  * Updates the border and hover text of the select.
  * @param {JQuery<HTMLSelectElement>} select
  * @param {string} color
- * @param {string} title
+ * @param {?string} title
  */
-function updateColorAndHover(select, color, title) {
-  select.css('border-color', color).prop('title', title);
+function updateColorAndHover(select, color, title = null) {
+  select.css('border-color', color);
+  if (title) {
+    select.prop('title', title);
+  }
 }
 
 /**

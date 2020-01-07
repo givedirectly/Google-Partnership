@@ -106,6 +106,8 @@ class ScoreBoundsMap {
                               .geometry()
                               .bounds();
       this.stateBoundsPromise = convertEeObjectToPromise(stateBounds);
+    } else {
+      this.stateBoundsPromise = WORLD_MAP_BOUNDS;
     }
   }
 
@@ -197,6 +199,7 @@ ScoreBoundsMap._callbackOnPolygonChange = (polygon, callback) => {
   polygon.addListener('dragstart', () => polygon.removeAllChangeListeners());
 };
 
+const WORLD_MAP_BOUNDS = Promise.resolve({coordinates: [[[-20, -20], [20, -20], [20, 20], [-20, 20]]]});
 /**
  * Polygon path event types:
  * - insert_at: drag the middle of an edge, to create a new corner
