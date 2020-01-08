@@ -83,7 +83,7 @@ describe('Unit tests for color function utility', () => {
     expect(missingFieldsWarning).to.be.visible;
     expect(missingFieldsWarning)
         .to.have.text(
-        'Warning: layer missing property and color. May not show up on map.');
+            'Warning: layer missing property and color. May not show up on map.');
     // discrete with nothing
     checkRadio('DISCRETE-radio');
     expect(missingFieldsWarning).to.be.visible;
@@ -135,8 +135,7 @@ describe('Unit tests for color function utility', () => {
     $('#property-picker').val('wings').trigger('change');
     expect(missingFieldsWarning).to.be.visible;
     expect(missingFieldsWarning)
-        .to.have.text(
-        'Warning: layer missing color. May not show up on map.');
+        .to.have.text('Warning: layer missing color. May not show up on map.');
   });
 
   /**
@@ -224,8 +223,10 @@ describe('Unit tests for color function utility', () => {
       switch (colorFunction.currentStyle) {
         case ColorStyle.CONTINUOUS:
           expect($('#property-picker')).to.have.value(field);
-          expect($('#continuous-min')).to.have.value(colorFunction.columns[field].min);
-          expect($('#continuous-max')).to.have.value(colorFunction.columns[field].max);
+          expect($('#continuous-min'))
+              .to.have.value(colorFunction.columns[field].min);
+          expect($('#continuous-max'))
+              .to.have.value(colorFunction.columns[field].max);
           if (color) {
             expect($('#continuous-color-picker')).to.have.value(color);
           } else {

@@ -16,7 +16,8 @@ export {
 // color function info is currently displayed.
 let globalTd;
 
-const getWarning = (missing) => 'Warning: layer missing ' + missing + '. May not show up on map.';
+const getWarning = (missing) =>
+    'Warning: layer missing ' + missing + '. May not show up on map.';
 
 function maybeDisplayFieldAndColorWarningWithSchema(field, color, colorText) {
   const warning = $('#missing-fields-warning');
@@ -77,11 +78,13 @@ function populateColorFunctions() {
     setProperty(propertyPicker.val());
     switch (getColorFunction().currentStyle) {
       case ColorStyle.CONTINUOUS:
-        maybeDisplayFieldAndColorWarningWithSchema(true, continuousColorPicker.val(), 'color');
+        maybeDisplayFieldAndColorWarningWithSchema(
+            true, continuousColorPicker.val(), 'color');
         maybeDisplayMinMax();
         break;
       case ColorStyle.DISCRETE:
-        maybeDisplayFieldAndColorWarningWithSchema(true, populateDiscreteColorPickersAndCheckMissing(), 'all colors');
+        maybeDisplayFieldAndColorWarningWithSchema(
+            true, populateDiscreteColorPickersAndCheckMissing(), 'all colors');
         break;
       case ColorStyle.SINGLE:
         const error =
@@ -400,7 +403,8 @@ function displaySchema(type) {
       break;
     case ColorStyle.DISCRETE:
       populatePropertyPicker($('#property-picker'));
-      maybeDisplayFieldAndColorWarningWithSchema(field, populateDiscreteColorPickersAndCheckMissing(), 'all colors');
+      maybeDisplayFieldAndColorWarningWithSchema(
+          field, populateDiscreteColorPickersAndCheckMissing(), 'all colors');
       $('#single').hide();
       $('#by-property').show();
       $('#continuous').hide();
@@ -419,10 +423,9 @@ function populatePropertyPicker(picker) {
   const colorFunction = getColorFunction();
   const {columns} = colorFunction;
   const asOptions = [];
-  Object.keys(columns)
-      .forEach(
-          (key) => asOptions.push(
-              $(document.createElement('option')).val(key).text(key)));
+  Object.keys(columns).forEach(
+      (key) => asOptions.push(
+          $(document.createElement('option')).val(key).text(key)));
   picker.append(asOptions).val(colorFunction.field);
 }
 
