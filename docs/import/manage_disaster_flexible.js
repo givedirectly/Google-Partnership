@@ -17,25 +17,36 @@ export {onSetFlexibleDisaster, initializeFlexible, validateFlexibleUserFields};
 
 function validateFlexibleUserFields() {}
 
+const buildingsSameDisasterChecker = new SameDisasterChecker();
+
+const buildingPath = ['flexibleData', 'buildingPath'];
+
+const buildingId = 'select-building-asset'
+
 function initializeFlexible() {
   // Set up radio buttons for flexible buildings source.
   const buildingsSourceBuildings = $('#buildings-source-buildings-div');
   const buildingsSourcePoverty = $('#buildings-source-poverty-div');
   const useDamageForBuildingsPath = ['useDamageForBuildings'];
   $('#buildings-source-damage').on('click', () => {
+    handleAssetDataChange(true, useDamageForBuildingsPath);
     buildingsSourceBuildings.hide();
     buildingsSourcePoverty.hide();
-    handleAssetDataChange(true, useDamageForBuildingsPath);
   });
-  $('#buildings-source-buildings').on('click', () => {
-    buildingsSourceBuildings.show();
-    buildingsSourcePoverty.hide();
+  $('#buildings-source-buildings').on('click', async () => {
     handleAssetDataChange(false, useDamageForBuildingsPath);
+    buildingsSameDisasterChecker.reset();
+    buildingsSourcePoverty.hide();
+    const buildingSelect = await createAllAssetDropdown(buildingsSourceBuildings, 'Buildings asset path', buildingPath, buildingsSameDisasterChecker);
+    buildingSelect
+        .prop('id', buildingId)
+        .on('change', () => onBuildingChange(buildingSelect, buildingsSourceBuildings));
+    return onBuildingChange(buildingSelect, buildingsSourceBuildings, () => getPropertyNames(buildingId));
   });
   $('#buildings-source-poverty').on('click', () => {
+    handleAssetDataChange(false, useDamageForBuildingsPath);
     buildingsSourceBuildings.hide();
     buildingsSourcePoverty.show();
-    handleAssetDataChange(false, useDamageForBuildingsPath);
   });
 }
 
@@ -45,21 +56,38 @@ const povertyId = 'select-flexible-poverty';
 const povertyPath = ['flexibleData', 'povertyPath'];
 
 async function onSetFlexibleDisaster(assetData) {
-  const currentDisaster = getDisaster();
   sameDisasterChecker.reset();
   $('#state-based-disaster-asset-selection-table').hide();
   $('#flexible-data').show();
+  $('#flexible-geography-asset-data').hide();
   initializeScoreBoundsMapFromAssetData(assetData);
   const povertyDiv = $('#flexible-poverty-asset-data');
-  povertyDiv.empty().show();
-  povertyDiv.append($(document.createElement('span')).text('Poverty asset path: '));
-  const pendingSelect = createPendingSelect();
-  povertyDiv.append(pendingSelect);
-  // Same promise as waited on in onSetDisaster. Since getDisasterAssetsFromEe
-  // deduplicates, this is fine.
-  const disasterAssets = await getDisasterAssetsFromEe(currentDisaster);
-  if (!sameDisasterChecker.markDoneIfStillValid()) {
+  const povertySelect = await createAllAssetDropdown(povertyDiv, 'Poverty asset path', povertyPath, sameDisasterChecker);
+  if (!povertySelect) {
     return;
+  }
+  povertySelect.prop('id', povertyId)
+  .on('change', () => onPovertyChange(povertySelect, povertyDiv));
+  const propertyNames = await getPropertyNames(povertyId);
+  if (!propertyNames) {
+    return;
+  }
+  return processPovertyAsset(propertyNames, povertySelect, povertyDiv);
+  // TODO(janakr): we could speed up/precache checking for the geography asset
+  //  here, rather than implicitly chaining inside processPovertyAsset.
+}
+
+async function createAllAssetDropdown(outerDiv, labelText, propertyPath, checker) {
+  outerDiv.empty().show();
+  outerDiv.append($(document.createElement('span')).text(labelText + ': '));
+  const pendingSelect = createPendingSelect();
+  outerDiv.append(pendingSelect);
+  checker.reset();
+  // Same promise as waited on for damage and buildings assets. Since
+  // getDisasterAssetsFromEe deduplicates, this is fine.
+  const disasterAssets = await getDisasterAssetsFromEe(getDisaster());
+  if (!checker.markDoneIfStillValid()) {
+    return null;
   }
   const allEnabledDisasterAssets = new Map();
   // Don't disable any feature collections.
@@ -68,51 +96,56 @@ async function onSetFlexibleDisaster(assetData) {
     newAttributes.disabled = false;
     allEnabledDisasterAssets.set(name, newAttributes);
   }
-  const povertySelect = createAssetDropdownWithNone(allEnabledDisasterAssets, povertyPath)
-      .prop('id', povertyId)
-      .on('change', () => onPovertyChange(disasterAssets, povertySelect, povertyDiv));
+  const select = createAssetDropdownWithNone(allEnabledDisasterAssets, propertyPath);
   pendingSelect.remove();
-  povertyDiv.append(povertySelect);
-  const samePovertyChecker = new SameSelectChecker(povertySelect);
-  const propertyNames = await verifyAsset(povertyId, null);
-  if (!propertyNames || !samePovertyChecker.markDoneIfStillValid()) {
-    return;
-  }
-  processPovertyAsset(propertyNames, disasterAssets, povertySelect, povertyDiv);
-  // TODO(janakr): we could speed up/precache checking for the geography asset
-  //  here, rather than implicitly chaining off of the poverty check.
+  outerDiv.append(select);
+  return select;
 }
 
-async function onPovertyChange(disasterAssets, povertySelect, povertyDiv) {
+async function getPropertyNames(id) {
+  const sameValueChecker = new SameSelectChecker(select);
+  const propertyNames = await verifyAsset(id, null);
+  if (!propertyNames || !sameValueChecker.markDoneIfStillValid()) {
+    return null;
+  }
+  return propertyNames;
+}
+
+async function onPovertyChange(povertySelect, povertyDiv) {
   const samePovertyChecker = new SameSelectChecker(povertySelect);
   const propertyNames = await onNonDamageAssetSelect(povertyPath, null, povertyId);
   if (!propertyNames || !samePovertyChecker.markDoneIfStillValid()) {
     // If we've switched assets, do nothing.
     return;
   }
-  return processPovertyAsset(propertyNames, disasterAssets, povertySelect, povertyDiv);
+  return processPovertyAsset(propertyNames, povertySelect, povertyDiv);
 }
 
 const geographyId = 'select-flexible-geography';
+const geographyPath = ['flexibleData', 'geographyPath'];
 
-async function processPovertyAsset(propertyNames, disasterAssets, povertySelect, povertyDiv) {
+async function processPovertyAsset(propertyNames, povertySelect, povertyDiv) {
   povertyPropertiesProcessor(propertyNames, povertySelect, povertyDiv);
   const geographyDiv = $('#flexible-geography-asset-data');
-  const geographyPath = ['flexibleData', 'geographyPath'];
+  // Should complete instantly since already finished this call earlier.
+  const disasterAssets = await getDisasterAssetsFromEe(getDisaster());
   const attributes = disasterAssets.get(povertySelect.val());
   if (!attributes) {
     geographyDiv.hide();
   } else if (attributes.hasGeometry) {
     if (getElementFromPath(geographyPath)) {
-      // Get rid of geography path if it was set.
+      // Get rid of geography path if it was set. Nothing needs to wait for the
+      // write to finish.
       handleAssetDataChange(null, geographyPath);
     }
     geographyDiv.hide();
   } else {
+    geographyDiv.empty().append($(document.createElement('span')).text('Geography asset path: '));
+
     const geographySelect = createAssetDropdownWithNone(disasterAssets, geographyPath)
         .prop('id', geographyId)
         .on('change', () => onGeographyChange(geographySelect, geographyDiv));
-    geographyDiv.append(geographySelect);
+    geographyDiv.append(geographySelect).show();
     const sameGeographyChecker = new SameSelectChecker(geographySelect);
     const propertyNames = await verifyAsset(geographyId, null);
     if (!propertyNames || !sameGeographyChecker.markDoneIfStillValid()) {
@@ -126,18 +159,46 @@ const geographyAttrUl = 'geography-attr-ul';
 
 async function onGeographyChange(geographySelect, geographyDiv) {
   const sameGeographyChecker = new SameSelectChecker(geographySelect);
-  const propertyNames = await onNonDamageAssetSelect(povertyPath, null, povertyId);
+  const propertyNames = await onNonDamageAssetSelect(geographyPath, null, geographyId);
   if (!propertyNames || !sameGeographyChecker.markDoneIfStillValid()) {
     return;
   }
   processGeographyAsset(propertyNames, geographyDiv);
 }
 
+const districtIdLabel = 'District identifier column (to match with poverty asset\'s)';
+
 function processGeographyAsset(propertyNames, geographyDiv) {
   const geographyAttrList = removeAndCreateUl(geographyAttrUl)
-      .append(createPropertyListItem('Poverty rate column: ', createEnabledProperties(propertyNames), ['flexibleData', 'geographyGeoid']));
+      .append(createPropertyListItem(districtIdLabel, createEnabledProperties(propertyNames), ['flexibleData', 'geographyGeoid']));
   geographyDiv.append(geographyAttrList);
+}
 
+const buildingAttrUl = 'building-attr-ul';
+
+async function onBuildingChange(buildingSelect, buildingDiv, propertyNamesLambda = null) {
+  const writeLambda = propertyNamesLambda ? () => null : () => onNonDamageAssetSelect(buildingPath, null, buildingId);
+  propertyNamesLambda = propertyNamesLambda ? propertyNamesLambda : writeLambda;
+  const assetName = buildingSelect.val();
+  if (!assetName) {
+    // Nothing to be done here besides basic operations.
+    return writeLambda();
+  }
+  // Should complete instantly.
+  const disasterAssets = await getDisasterAssetsFromEe(getDisaster());
+  const attributes = disasterAssets.get(assetName);
+  if (attributes.hasGeometry) {
+    // Buildings have geometry, so we are intersecting them. Nothing to do here.
+    return writeLambda();
+  }
+  const sameBuildingChecker = new SameSelectChecker(buildingSelect);
+  const propertyNames = await propertyNamesLambda();
+  if (!propertyNames || !sameBuildingChecker.markDoneIfStillValid()) {
+    return;
+  }
+  const buildingAttrList = removeAndCreateUl(buildingAttrUl)
+      .append(createPropertyListItem(districtIdLabel, createEnabledProperties(propertyNames), ['flexibleData', 'buildingGeoid']));
+  buildingDiv.append(buildingAttrList);
 }
 
 const povertyAttrsUl = 'poverty-attrs-ul';
@@ -145,9 +206,9 @@ const povertyAttrsUl = 'poverty-attrs-ul';
 function povertyPropertiesProcessor(properties, povertySelect, povertyDiv) {
   const enabledProperties = createEnabledProperties(properties);
   const povertyAttrList = removeAndCreateUl(povertyAttrsUl)
-      .append(createPropertyListItem('Poverty rate column: ', enabledProperties, ['flexibleData', 'povertyRateKey']))
-      .append(createPropertyListItem('District description column (human-readable description of each region): ', enabledProperties, ['flexibleData', 'districtDescriptionKey']))
-      .append(createPropertyListItem('District identifier column (typically numeric/short string): ', enabledProperties, ['flexibleData',
+      .append(createPropertyListItem('Poverty rate column', enabledProperties, ['flexibleData', 'povertyRateKey']))
+      .append(createPropertyListItem('District description column (human-readable description of each region)', enabledProperties, ['flexibleData', 'districtDescriptionKey']))
+      .append(createPropertyListItem('District identifier column (typically numeric/short string)', enabledProperties, ['flexibleData',
     'povertyGeoid']));
   povertyDiv.append(povertyAttrList);
   $('#buildings-poverty-select-span').empty().append(createColumnDropdown(enabledProperties, ['flexibleData', 'buildingKey']));
