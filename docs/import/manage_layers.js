@@ -56,6 +56,7 @@ function enableWhenReady(firebaseDataPromise) {
  * pickers and pulled from firebase.
  */
 function onSetDisaster() {
+  // TODO(juliexxia): add a test that at least runs through populateLayersTable
   const disaster = getDisaster();
   // display layer table
   populateLayersTable();
