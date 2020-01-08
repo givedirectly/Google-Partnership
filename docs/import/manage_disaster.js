@@ -8,7 +8,7 @@ import {
 import {getDisasterAssetsFromEe,} from './list_ee_assets.js';
 import {
   initializeFlexible,
-  onSetFlexibleDisaster
+  onSetFlexibleDisaster, validateFlexibleUserFields
 } from './manage_disaster_flexible.js';
 import {initializeAddDelete} from './manage_disaster_add_delete.js';
 import {

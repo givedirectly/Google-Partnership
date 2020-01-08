@@ -5,7 +5,7 @@ import {
 } from './import_data_keys.js';
 import {incomeKey, snapKey, sviKey, totalKey} from './create_disaster_lib.js';
 import {getDisaster} from '../resources.js';
-import {getStateAssetsFromEe} from './list_ee_assets.js';
+import {createPendingSelect, getStateAssetsFromEe} from './list_ee_assets.js';
 import {
   createAssetDropdownWithNone, damageAssetPresent,
   initializeScoreBoundsMapFromAssetData,
@@ -148,12 +148,6 @@ function setUpStateBasedScoreSelectorTable() {
 function initializeStateBasedScoreSelectors(states, stateAssets) {
   const headerRow = $('#score-asset-header-row');
 
-  // Initialize headers.
-  removeAllButFirstFromRow(headerRow);
-  for (const state of states) {
-    headerRow.append(createTd().text(state + ' Assets'));
-  }
-
   // For each asset type, add select for all assets for each state.
   for (const {
     idStem,
@@ -201,9 +195,8 @@ const sameDisasterChecker = new SameDisasterChecker();
 
 async function onSetStateBasedDisaster(assetData) {
   sameDisasterChecker.reset();
-  const currentDisaster = getDisaster();
   $('#state-based-disaster-asset-selection-table').show();
-  $('flexible-poverty-data').hide();
+  $('#flexible-data').hide();
   const {states} = assetData.stateBasedData;
   initializeScoreBoundsMapFromAssetData(assetData, states);
 
@@ -218,6 +211,9 @@ async function onSetStateBasedDisaster(assetData) {
     const id = assetSelectionPrefix + idStem;
     const row = $('#' + id);
     removeAllButFirstFromRow(row);
+    for (const state of states) {
+      row.append(createTd().append(createPendingSelect()));
+    }
   }
 
   // getStateAssetsFromEe does internal caching.

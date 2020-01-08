@@ -5,7 +5,7 @@ import {convertEeObjectToPromise} from '../ee_promise_cache.js';
 import {updateDataInFirestore} from './update_firestore_disaster.js';
 
 export {setUpScoreBoundsMap, initializeScoreBoundsMapFromAssetData, createAssetDropdownWithNone, onNonDamageAssetSelect,
-SameDisasterChecker, disasterData, handleAssetDataChange, initializeDamageSelector, setProcessButtonText, damageAssetPresent, setValidateFunction, verifyAsset,
+SameDisasterChecker, SameSelectChecker, disasterData, handleAssetDataChange, initializeDamageSelector, setProcessButtonText, damageAssetPresent, setValidateFunction, verifyAsset,
 createDropdown};
 
 // For testing.
@@ -162,9 +162,8 @@ function onNonDamageAssetSelect(
 async function verifyAsset(selectId, expectedColumns) {
   // TODO: disable or discourage kick off until all green?
   const select = $('#' + selectId);
-  const selectStatusChecker = new SameStateChecker(() => select.val());
-  selectStatusChecker.reset();
-  const asset = select.val();
+  const selectStatusChecker = new SameSelectChecker(select);
+  const asset = selectStatusChecker.val();
   const assetMissingErrorFunction = (err) => {
     if (!selectStatusChecker.markDoneIfStillValid()) {
       // Don't show errors if not current asset.
@@ -336,5 +335,16 @@ class SameStateChecker {
 class SameDisasterChecker extends SameStateChecker {
   constructor() {
     super(getDisaster);
+  }
+}
+
+class SameSelectChecker extends SameStateChecker {
+  constructor(selectElement) {
+    super(() => selectElement.val());
+    this.reset();
+  }
+
+  val() {
+    return this.knownValue;
   }
 }
