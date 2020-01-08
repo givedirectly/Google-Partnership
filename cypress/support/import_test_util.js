@@ -6,6 +6,7 @@ export {
   createAndAppend,
   createTrs,
   getConvertEeObjectToPromiseRelease,
+  setDisaster,
   setDisasterAndLayers,
   setUpSavingStubs,
   waitForPromiseAndAssertSaves,
@@ -34,7 +35,15 @@ function createTrs(num) {
 function setDisasterAndLayers(layers) {
   const currentDisaster = '2005-fall';
   disasterData.set(currentDisaster, {layerArray: layers});
-  window.localStorage.setItem('disaster', currentDisaster);
+  setDisaster(currentDisaster);
+}
+
+/**
+ * Sets local storage to the given disaster.
+ * @param {string} disaster
+ */
+function setDisaster(disaster) {
+  window.localStorage.setItem('disaster', disaster);
 }
 
 /**

@@ -1,7 +1,6 @@
 import {eeLegacyPrefix} from '../ee_paths.js';
 import {convertEeObjectToPromise} from '../ee_promise_cache.js';
 import {LayerType} from '../firebase_layers.js';
-
 import {createLayerRow} from './manage_layers.js';
 import {getCurrentLayers, updateLayersInFirestore} from './manage_layers_lib.js';
 
@@ -23,13 +22,7 @@ function processNewEeLayer(asset, type) {
   switch (type) {
     case LayerType.IMAGE:
     case LayerType.IMAGE_COLLECTION:
-      const layer = {
-        assetType: type,
-        eeName: asset,
-        displayName: '',
-        displayOnLoad: false,
-      };
-      return prependToTable(layer);
+      return prependToTable(createCommonEeLayerFields(asset, type));
     case LayerType.FEATURE_COLLECTION:
       const featureCollection = ee.FeatureCollection(asset);
       const properties = featureCollection.first().propertyNames();
@@ -51,19 +44,32 @@ function processNewEeLayer(asset, type) {
                  ee.Dictionary.fromLists(properties, stats))
           .then((columns) => {
             const layer = {
-              assetType: type,
-              eeName: asset,
+              ...createCommonEeLayerFields(asset, type),
               colorFunction: {
                 columns: columns,
                 currentStyle: 2,
+                lastByPropertyStyle: 0,
                 colors: {},
               },
-              displayName: '',
-              displayOnLoad: false,
             };
             return prependToTable(layer);
           });
   }
+}
+
+/**
+ * Create fields that all ee layers have.
+ * @param {string} asset
+ * @param {LayerType} type
+ * @return {Object}
+ */
+function createCommonEeLayerFields(asset, type) {
+  return {
+    assetType: type,
+    eeName: asset,
+    displayName: '',
+    displayOnLoad: false,
+  };
 }
 
 /**
