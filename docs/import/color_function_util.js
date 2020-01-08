@@ -20,9 +20,9 @@ const getWarning = (missing) =>
     'Warning: layer missing ' + missing + '. May not show up on map.';
 
 /**
- * Displays a warning if field or color are missing
- * @param {string|number} field
- * @param {string} color
+ * Displays a warning in color function editor if field or color(s) are missing
+ * @param {string|number|boolean} field
+ * @param {string|boolean} color
  * @param {string} colorText
  */
 function maybeDisplayFieldAndColorWarningWithSchema(
@@ -392,9 +392,7 @@ function displaySchema(type) {
   switch (type) {
     case ColorStyle.SINGLE:
       $('#single-color-picker').val(color);
-      if (!color) {
-        $('#missing-fields-warning').text(getWarning('color')).show();
-      }
+      maybeDisplayFieldAndColorWarningWithSchema(true, color, 'color');
       $('#single').show();
       $('#by-property').hide();
       break;
