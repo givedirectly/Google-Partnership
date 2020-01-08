@@ -25,7 +25,8 @@ const getWarning = (missing) =>
  * @param {string} color
  * @param {string} colorText
  */
-function maybeDisplayFieldAndColorWarningWithSchema(field, color, colorText = '') {
+function maybeDisplayFieldAndColorWarningWithSchema(
+    field, color, colorText = '') {
   const warning = $('#missing-fields-warning');
   warning.hide();
   if (field) {

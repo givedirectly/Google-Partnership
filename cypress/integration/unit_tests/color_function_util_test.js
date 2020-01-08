@@ -81,8 +81,8 @@ describe('Unit tests for color function utility', () => {
     expect(missingFieldsWarning).to.be.visible;
     expect(missingFieldsWarning)
         .to.have.text(
-            'Warning: layer missing property and color. '
-        + 'May not show up on map.');
+            'Warning: layer missing property and color. ' +
+            'May not show up on map.');
     // discrete with nothing
     checkRadio('DISCRETE-radio');
     expect(missingFieldsWarning).to.be.visible;
