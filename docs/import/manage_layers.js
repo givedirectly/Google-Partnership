@@ -56,6 +56,7 @@ function enableWhenReady(firebaseDataPromise) {
  * pickers and pulled from firebase.
  */
 function onSetDisaster() {
+  // TODO(juliexxia): add a test that at least runs through populateLayersTable?
   const disaster = getDisaster();
   // display layer table
   populateLayersTable();
@@ -253,6 +254,7 @@ function withDeleteButton(td) {
 function populateLayersTable() {
   const layers = getCurrentLayers();
   const tableBody = $('#tbody');
+  $('#color-fxn-editor').hide();
   tableBody.empty();
   for (let i = layers.length - 1; i >= 0; i--) {
     const layer = layers[i];
