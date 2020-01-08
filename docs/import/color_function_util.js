@@ -16,32 +16,34 @@ export {
 // color function info is currently displayed.
 let globalTd;
 
-const getWarning = (missing) =>
-    'Warning: layer missing ' + missing + '. May not show up on map.';
-
 /**
  * Displays a warning in color function editor if field or color(s) are missing
  * @param {string|number|boolean} field
- * @param {string|boolean} color
+ * @param {string|boolean} hasColor
  * @param {string} colorText
  */
 function maybeDisplayFieldAndColorWarningWithSchema(
-    field, color, colorText = '') {
-  const warning = $('#missing-fields-warning');
+    field, hasColor, colorText = '') {
+  const warning = $('#warning');
+  const warningText = $('#missing-fields-warning');
   warning.hide();
+  const getWarning = (missing) =>
+      '<b>Warning: layer missing ' + missing + '. May not show up on map.</b>';
   if (field) {
-    if (!color) {
-      warning.text(getWarning(colorText)).show();
+    if (!hasColor) {
+      warningText.html(getWarning(colorText));
+      warning.show();
     }
   } else {
-    if (color) {
-      warning.text(getWarning('property')).show();
+    if (hasColor) {
+      warningText.html(getWarning('property'));
+      warning.show();
     } else {
-      warning.text(getWarning('property and ' + colorText)).show();
+      warningText.html(getWarning('property and ' + colorText));
+      warning.show();
     }
   }
 }
-
 
 /**
  * Fills out the #single #continuous and #discrete divs with the relevant
@@ -60,12 +62,11 @@ function populateColorFunctions() {
         .trigger('change');
   });
 
-  const missingFieldsWarning = $('#missing-fields-warning');
   const propertyPicker = $('#property-picker');
 
   const singleColorPicker = createColorPicker('single-color-picker');
   singleColorPicker.on('change', () => {
-    missingFieldsWarning.hide();
+    $('#warning').hide();
     setColor(singleColorPicker);
   });
   $('#single').append(
@@ -83,15 +84,16 @@ function populateColorFunctions() {
   // TODO: disable discrete if >25 values and add hover text explaining disable
   propertyPicker.on('change', () => {
     setProperty(propertyPicker.val());
-    switch (getColorFunction().currentStyle) {
+    const {color, currentStyle} = getColorFunction();
+    switch (currentStyle) {
       case ColorStyle.CONTINUOUS:
-        maybeDisplayFieldAndColorWarningWithSchema(
-            true, continuousColorPicker.val(), 'color');
+        maybeDisplayFieldAndColorWarningWithSchema(true, color, 'color');
         maybeDisplayMinMax();
         break;
       case ColorStyle.DISCRETE:
         maybeDisplayFieldAndColorWarningWithSchema(
-            true, populateDiscreteColorPickersAndCheckMissing(), 'all colors');
+            true, populateDiscreteColorPickersAndCheckHasAllColors(),
+            'at least one color');
         break;
       case ColorStyle.SINGLE:
         const error =
@@ -208,10 +210,20 @@ function updateMinMax(min, propertyPicker) {
 
 /**
  * Updates an individual color choice for a single value in the discrete schema.
+ * and hides the warning about missing colors if all color boxes are selected.
  * @param {JQuery<HTMLElement>} picker
  */
 function setDiscreteColor(picker) {
-  $('#missing-fields-warning').hide();
+  let hasAllColors = true;
+  $('#discrete-color-pickers').find('select').each(function() {
+    if ($(this).val() === null) {
+      hasAllColors = false;
+      return false;
+    }
+  });
+  if (hasAllColors) {
+    $('#warning').hide();
+  }
   const colorFunction = getColorFunction();
   const propertyValue = picker.data(discreteColorPickerDataKey);
   colorFunction.colors[propertyValue] = picker.val();
@@ -386,7 +398,7 @@ function switchSchema(type) {
  * @param {ColorStyle} type
  */
 function displaySchema(type) {
-  $('#missing-fields-warning').hide();
+  $('#warning').hide();
 
   const {field, color} = getColorFunction();
   switch (type) {
@@ -409,7 +421,8 @@ function displaySchema(type) {
     case ColorStyle.DISCRETE:
       populatePropertyPicker($('#property-picker'));
       maybeDisplayFieldAndColorWarningWithSchema(
-          field, populateDiscreteColorPickersAndCheckMissing(), 'all colors');
+          field, populateDiscreteColorPickersAndCheckHasAllColors(),
+          'at least one color');
       $('#single').hide();
       $('#by-property').show();
       $('#continuous').hide();
@@ -448,10 +461,9 @@ const discreteColorPickerDataKey = 'value';
  * If we haven't selected a property yet or we've calculated there are too
  * many values for discrete colors, don't make any color pickers and return
  * early.
- * @return {boolean} returns false if we have color pickers but none of them
- * have a non-null value.
+ * @return {boolean} returns true if we are missing any colors
  */
-function populateDiscreteColorPickersAndCheckMissing() {
+function populateDiscreteColorPickersAndCheckHasAllColors() {
   const pickerList = $('#discrete-color-pickers').empty();
   const tooManyValuesWarning = $('#too-many-values').hide();
   const colorFunction = getColorFunction();
@@ -466,7 +478,7 @@ function populateDiscreteColorPickersAndCheckMissing() {
   }
   const asColorPickers = [];
   const {colors} = colorFunction;
-  let hasColor = false;
+  let hasAllColors = true;
   for (const value of values) {
     const li = $(document.createElement('li'));
     li.append($(document.createElement('label')).text(value + ': '));
@@ -479,10 +491,10 @@ function populateDiscreteColorPickersAndCheckMissing() {
     li.append(colorPicker);
     asColorPickers.push(li);
 
-    if (color) hasColor = true;
+    if (!color) hasAllColors = false;
   }
   pickerList.append(asColorPickers);
-  return hasColor;
+  return hasAllColors;
 }
 
 /**

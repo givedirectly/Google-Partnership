@@ -35,7 +35,10 @@ describe('Unit tests for color function utility', () => {
       colorFunctionEditor.append(makeTypeDiv(doc, 'single'), byPropertyDiv);
       const missingFieldsWarning = doc.createElement('p');
       missingFieldsWarning.id = 'missing-fields-warning';
-      colorFunctionEditor.append(missingFieldsWarning);
+      const missing = doc.createElement('div');
+      missing.id = 'warning';
+      missing.appendChild(missingFieldsWarning);
+      colorFunctionEditor.append(missing);
       doc.body.appendChild(colorFunctionEditor);
     });
   });
@@ -57,18 +60,16 @@ describe('Unit tests for color function utility', () => {
   });
 
   it('checks correct error messaging for missing fields', () => {
-    const layer = {
+    let td = setUpWithLayer({
       colorFunction: {
-        currentStyle: ColorStyle.CONTINUOUS,
+        currentStyle: ColorStyle.SINGLE,
         lastByPropertyStyle: ColorStyle.CONTINUOUS,
         columns: {
           wings: {min: 0, max: 100, values: [0, 1, 2, 100]},
         },
         colors: {},
       },
-    };
-
-    let td = setUpWithLayer(layer);
+    });
     td.trigger('click');
     const missingFieldsWarning = $('#missing-fields-warning');
 
@@ -100,7 +101,7 @@ describe('Unit tests for color function utility', () => {
     checkRadio('SINGLE-radio');
     expect(missingFieldsWarning).not.to.be.visible;
     // continuous with everything
-    checkRadio('CONTINUOUS-radio');
+    checkRadio('property-radio');
     $('#property-picker').val('wings').trigger('change');
     expect(missingFieldsWarning).not.to.be.visible;
     // discrete with property only
@@ -108,18 +109,33 @@ describe('Unit tests for color function utility', () => {
     expect(missingFieldsWarning).to.be.visible;
     expect(missingFieldsWarning)
         .to.have.text(
-            'Warning: layer missing all colors. May not show up on map.');
-    // discrete with everything
+            'Warning: layer missing at least one color. May not show up on map.');
+    // discrete with a color
     $('#discrete-color-pickers')
         .find('select')
         .first()
         .val('red')
         .trigger('change');
+    expect(missingFieldsWarning).be.visible;
+    expect(missingFieldsWarning)
+        .to.have.text(
+            'Warning: layer missing at least one color. May not show up on map.');
+    // discrete with all the colors
+    $('#discrete-color-pickers').find('select').val('red').trigger('change');
     expect(missingFieldsWarning).not.to.be.visible;
 
-    // user doesn't have a way to set to pickers so need to make a whole new
-    // one for this last bit
-    td = setUpWithLayer(layer);
+    // user doesn't have a way to set to pickers to null, so need to make a
+    // whole new one for this last bit
+    td = setUpWithLayer({
+      colorFunction: {
+        currentStyle: ColorStyle.CONTINUOUS,
+        lastByPropertyStyle: ColorStyle.CONTINUOUS,
+        columns: {
+          wings: {min: 0, max: 100, values: [0, 1, 2, 100]},
+        },
+        colors: {},
+      },
+    });
     td.trigger('click');
     // continuous with property only
     $('#property-picker').val('wings').trigger('change');
@@ -280,7 +296,7 @@ describe('Unit tests for color function utility', () => {
     expectOneFirebaseWrite();
 
     const continuousRadio = $('#CONTINUOUS-radio');
-    expect(continuousRadio).to.have.prop('checked', true);
+    expect(continuousRadio).to.be.checked;
     const propertyPicker = $('#property-picker');
     expect(propertyPicker).to.have.value(null);
     let {currentStyle, color} = getColorFunction();
@@ -339,7 +355,7 @@ describe('Unit tests for color function utility', () => {
     expectOneFirebaseWrite();
     propertyRadio.trigger('change');
     expectOneFirebaseWrite();
-    expect(discreteRadio).to.have.prop('checked', true);
+    expect(discreteRadio).be.checked;
 
     td.trigger('click');
     expect($(colorFunctionEditor)).not.to.be.visible;
