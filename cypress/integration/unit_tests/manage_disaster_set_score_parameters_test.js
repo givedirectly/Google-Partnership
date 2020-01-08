@@ -372,7 +372,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
                      .to.eql(missingSnapPath));
   });
 
-  it('does column verification', () => {
+  it.only('does column verification', () => {
     callEnableWhenReady(setUpDefaultData());
     const goodIncomeBadPovertyFeature = ee.FeatureCollection(
         [ee.Feature(null, {'GEOid2': 'blah', 'HD01_VD01': 'otherBlah'})]);

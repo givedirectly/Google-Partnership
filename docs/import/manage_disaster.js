@@ -122,7 +122,7 @@ async function onSetDisaster() {
   try {
     disasterAssets = await getDisasterAssetsFromEe(currentDisaster);
   } catch (err) {
-    if (!damageStatusChecker.shouldProceed()) {
+    if (!damageStatusChecker.markDoneIfStillValid()) {
       // Don't display errors to user if no longer current disaster.
       return;
     }
@@ -134,7 +134,7 @@ async function onSetDisaster() {
     }
     disasterAssets = new Map();
   }
-  if (!damageStatusChecker.shouldProceed()) {
+  if (!damageStatusChecker.markDoneIfStillValid()) {
     // Don't do anything unless this is still the right disaster.
     return;
   }

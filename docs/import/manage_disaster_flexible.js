@@ -55,7 +55,7 @@ async function onSetFlexibleDisaster(assetData) {
   // complete before user switches disasters or neither will, but we can still
   // check in each independently.
   const disasterAssets = await getDisasterAssetsFromEe(currentDisaster);
-  if (!sameDisasterChecker.shouldProceed()) {
+  if (!sameDisasterChecker.markDoneIfStillValid()) {
     // Don't do anything unless this is still the right disaster.
     return;
   }

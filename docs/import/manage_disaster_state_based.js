@@ -54,7 +54,7 @@ const stateBasedScoreAssetTypes = Object.freeze([
   },
 ]);
 
-const assetSelectionPrefix = 'asset-selection-';
+const assetSelectionPrefix = 'asset-selection-row-';
 
 /**
  * Checks that all mandatory fields that can be entered by the user have
@@ -222,7 +222,7 @@ async function onSetStateBasedDisaster(assetData) {
 
   // getStateAssetsFromEe does internal caching.
   const stateAssets = await Promise.all(states.map(getStateAssetsFromEe));
-  if (sameDisasterChecker.shouldProceed()) {
+  if (sameDisasterChecker.markDoneIfStillValid()) {
     initializeStateBasedScoreSelectors(states, stateAssets);
   }
 }

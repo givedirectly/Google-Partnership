@@ -147,7 +147,7 @@ function createDropdown(assets, propertyPath, select = $(document.createElement(
  */
 function onNonDamageAssetSelect(
     propertyPath, expectedColumns, selectId) {
-  handleAssetDataChange($('#selectId').val(), propertyPath);
+  handleAssetDataChange($('#' + selectId).val(), propertyPath);
   return verifyAsset(selectId, expectedColumns);
 }
 
@@ -162,9 +162,11 @@ function onNonDamageAssetSelect(
 async function verifyAsset(selectId, expectedColumns) {
   // TODO: disable or discourage kick off until all green?
   const select = $('#' + selectId);
+  const selectStatusChecker = new SameStateChecker(() => select.val());
+  selectStatusChecker.reset();
   const asset = select.val();
   const assetMissingErrorFunction = (err) => {
-    if (select.val() !== asset) {
+    if (!selectStatusChecker.markDoneIfStillValid()) {
       // Don't show errors if not current asset.
       return;
     }
@@ -190,7 +192,7 @@ async function verifyAsset(selectId, expectedColumns) {
       assetMissingErrorFunction(err);
       return null;
     }
-    if (select.val() !== asset) {
+    if (!selectStatusChecker.markDoneIfStillValid()) {
       // Don't do anything if not current asset.
       return null;
     }
@@ -205,7 +207,7 @@ async function verifyAsset(selectId, expectedColumns) {
       assetMissingErrorFunction(err);
       return null;
     }
-    if (select.val() !== asset) {
+    if (!selectStatusChecker.markDoneIfStillValid()) {
       // Don't do anything if not current asset.
       return null;
     }
@@ -285,7 +287,7 @@ const OPTIONAL_WARNING_PREFIX = '; warning: created asset will be missing ';
 
 function setProcessButtonText(message, optionalMessage) {
   const hasDamage =
-      damageAssetPresent || getElementFromPath(scoreCoordinatesPath);
+      damageAssetPresent() || getElementFromPath(scoreCoordinatesPath);
   if (message) {
     message = 'Missing asset(s): ' + message;
   }
@@ -322,7 +324,7 @@ class SameStateChecker {
     this.knownValue = this.valueSupplier();
   }
 
-  shouldProceed() {
+  markDoneIfStillValid() {
     if (!this.done && this.knownValue === this.valueSupplier()) {
       this.done = true;
       return true;
