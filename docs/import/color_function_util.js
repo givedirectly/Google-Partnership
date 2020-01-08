@@ -215,12 +215,14 @@ function updateMinMax(min, propertyPicker) {
  */
 function setDiscreteColor(picker) {
   let hasAllColors = true;
-  $('#discrete-color-pickers').find('select').each(function() {
-    if ($(this).val() === null) {
-      hasAllColors = false;
-      return false;
-    }
-  });
+  $('#discrete-color-pickers')
+      .find('select')
+      .each(/* @this HTMLElement */ function() {
+        if ($(this).val() === null) {
+          hasAllColors = false;
+          return false;
+        }
+      });
   if (hasAllColors) {
     $('#warning').hide();
   }

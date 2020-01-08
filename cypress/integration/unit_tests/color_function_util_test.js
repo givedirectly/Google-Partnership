@@ -109,7 +109,8 @@ describe('Unit tests for color function utility', () => {
     expect(missingFieldsWarning).to.be.visible;
     expect(missingFieldsWarning)
         .to.have.text(
-            'Warning: layer missing at least one color. May not show up on map.');
+            'Warning: layer missing at least one color. ' +
+            'May not show up on map.');
     // discrete with a color
     $('#discrete-color-pickers')
         .find('select')
@@ -119,7 +120,8 @@ describe('Unit tests for color function utility', () => {
     expect(missingFieldsWarning).be.visible;
     expect(missingFieldsWarning)
         .to.have.text(
-            'Warning: layer missing at least one color. May not show up on map.');
+            'Warning: layer missing at least one color. ' +
+            'May not show up on map.');
     // discrete with all the colors
     $('#discrete-color-pickers').find('select').val('red').trigger('change');
     expect(missingFieldsWarning).not.to.be.visible;
