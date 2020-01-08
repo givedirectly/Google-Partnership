@@ -135,7 +135,19 @@
           </thead>
           <tbody id="asset-selection-table-body"></tbody>
         </table>
-        <div id="flexible-poverty-data" hidden>
+        <div id="flexible-data" hidden>
+          <div id="flexible-poverty-asset-data"></div>
+          <div id="flexible-geography-asset-data"></div>
+          <div id="flexible-buildings-parameters">
+            Where will building counts come from?<br/>
+            <input type="radio" name="building-source" id="building-source-damage">
+            <label for="building-source-damage">Damage asset has undamaged buildings</label>
+            <input type="radio" name="building-source" id="building-source-buildings">
+            <label for="building-source-buildings">I have a separate buildings asset</label>
+            <input type="radio" name="building-source" id="building-source-poverty">
+            <label for="building-source-poverty">Poverty asset has building count per district</label>
+            <div id="buildings-source-buildings-div" hidden></div>
+            <div id="buildings-source-poverty-div" hidden><span>Column with building count: </span><span id="buildings-poverty-select-span"></span></div></div>
         </div>
       </div>
       <!-- TODO: Make "Damage asset"" a label again? Style it properly if so -->

@@ -3,11 +3,14 @@ import * as ErrorLib from '../../../docs/error.js';
 import * as FirestoreDocument from '../../../docs/firestore_document.js';
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
 import {deepCopy, flexibleAssetData, stateAssetDataTemplate} from '../../../docs/import/create_disaster_lib.js';
-import {disasterData} from '../../../docs/import/manage_disaster';
-import {addDisaster, deleteDisaster, writeNewDisaster} from '../../../docs/import/manage_disaster.js';
+import {disasterData} from '../../../docs/import/manage_disaster_base.js';
 import {createOptionFrom} from '../../../docs/import/manage_layers.js';
 import {createAndAppend} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
+import {
+  addDisaster,
+  deleteDisaster, writeNewDisaster
+} from '../../../docs/import/manage_disaster_add_delete.js';
 
 const KNOWN_STATE = 'WF';
 

@@ -123,6 +123,12 @@ const stateAssetDataTemplate = Object.freeze(
  *     in final score asset. Must have {@link povertyPercentageTag} column.
  * @property {EeColumn} povertyGeoid Column of `povertyPath` that contains
  *     district-identifying string ("district identifier").
+ * @property {EeColumn} povertyRateKey Column of `povertyPath` that
+ *     contains poverty rate, as a number between 0 and 1, for use in score.
+ * @property {EeColumn} districtDescriptionKey Column of `povertyPath` that
+ *     contains human-readable description of each district, for display on map.
+ * @property {EeColumn} povertyGeoid Column of `povertyPath` that contains
+ *     district-identifying string ("district identifier").
  * @property {EeFC} [geographyPath] Contains geometries of districts.
  * @property {EeColumn} [geographyGeoid] Column of `geographyPath` that contains
  *     district identifier.
@@ -139,6 +145,8 @@ const stateAssetDataTemplate = Object.freeze(
  */
 const flexibleDataTemplate = Object.freeze({
   povertyPath: null,
+  povertyRateKey: null,
+  districtDescriptionKey: null,
   povertyGeoid: null,
   geographyPath: null,
   buildingPath: null,

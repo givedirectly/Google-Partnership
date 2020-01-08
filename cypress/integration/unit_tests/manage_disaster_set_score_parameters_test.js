@@ -2,12 +2,18 @@ import {addPolygonWithPath} from '../../../docs/basic_map.js';
 import {readDisasterDocument} from '../../../docs/firestore_document.js';
 import {createDisasterData} from '../../../docs/import/create_disaster_lib.js';
 import * as ListEeAssets from '../../../docs/import/list_ee_assets.js';
-import {assetSelectionPrefix, disasterData, stateBasedScoreAssetTypes, scoreBoundsMap, setUpScoreBoundsMap, setUpStateBasedScoreSelectorTable, validateUserFields} from '../../../docs/import/manage_disaster';
 import {enableWhenFirestoreReady} from '../../../docs/import/manage_disaster.js';
 import {getDisaster} from '../../../docs/resources.js';
 import {cyQueue} from '../../support/commands.js';
 import {getConvertEeObjectToPromiseRelease, setUpSavingStubs} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
+import {setUpScoreBoundsMap, disasterData, scoreBoundsMap} from '../../../docs/import/manage_disaster_base.js';
+import {
+  assetSelectionPrefix,
+  setUpStateBasedScoreSelectorTable,
+  stateBasedScoreAssetTypes,
+  validateStateBasedUserFields
+} from '../../../docs/import/manage_disaster_state_based.js';
 
 // Triangle goes up into Canada, past default map of basic_map.js.
 const scoreBoundsCoordinates = [
@@ -314,7 +320,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
         .find('tr')
         .its('length')
         .should('eq', 5)
-        .then(validateUserFields);
+        .then(validateStateBasedUserFields);
     cy.get('#process-button').should('be.disabled');
     cy.get('#process-button')
         .should(
