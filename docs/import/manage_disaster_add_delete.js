@@ -190,9 +190,11 @@ function notAllLowercase(val) {
  */
 function toggleState(known) {
   if (known) {
+    $('#create-new-disaster').show();
     $('#new-disaster').hide();
     $('#current-disaster-interaction').show();
   } else {
+    $('#create-new-disaster').hide();
     $('#new-disaster').show();
     $('#current-disaster-interaction').hide();
   }
