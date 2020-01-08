@@ -75,7 +75,8 @@ function populateColorFunctions() {
 
   const continuousColorPicker = createColorPicker('continuous-color-picker');
   continuousColorPicker.on('change', () => {
-    maybeDisplayFieldAndColorWarningWithSchema(!!getColorFunction().field, true);
+    maybeDisplayFieldAndColorWarningWithSchema(
+        !!getColorFunction().field, true);
     setColor(continuousColorPicker);
   });
 
