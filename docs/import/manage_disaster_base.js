@@ -6,7 +6,7 @@ import {updateDataInFirestore} from './update_firestore_disaster.js';
 
 export {setUpScoreBoundsMap, initializeScoreBoundsMapFromAssetData, createAssetDropdownWithNone, onNonDamageAssetSelect,
 SameDisasterChecker, SameSelectChecker, disasterData, handleAssetDataChange, initializeDamageSelector, setProcessButtonText, damageAssetPresent, setValidateFunction, verifyAsset,
-createDropdown};
+createDropdown, getElementFromPath};
 
 // For testing.
 export {scoreBoundsMap};
