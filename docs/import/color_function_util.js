@@ -18,18 +18,18 @@ let globalTd;
 
 /**
  * Displays a warning in color function editor if field or color(s) are missing
- * @param {string|number|boolean} field
+ * @param {string|number|boolean} hasField
  * @param {string|boolean} hasColor
  * @param {string} colorText
  */
 function maybeDisplayFieldAndColorWarningWithSchema(
-    field, hasColor, colorText = '') {
+    hasField, hasColor, colorText = '') {
   const warning = $('#warning');
   const warningText = $('#missing-fields-warning');
   warning.hide();
   const getWarning = (missing) =>
       '<b>Warning: layer missing ' + missing + '. May not show up on map.</b>';
-  if (field) {
+  if (hasField) {
     if (!hasColor) {
       warningText.html(getWarning(colorText));
       warning.show();
@@ -75,7 +75,7 @@ function populateColorFunctions() {
 
   const continuousColorPicker = createColorPicker('continuous-color-picker');
   continuousColorPicker.on('change', () => {
-    maybeDisplayFieldAndColorWarningWithSchema(propertyPicker.val(), true);
+    maybeDisplayFieldAndColorWarningWithSchema(getColorFunction().field, true);
     setColor(continuousColorPicker);
   });
 
@@ -218,7 +218,7 @@ function setDiscreteColor(picker) {
   $('#discrete-color-pickers')
       .find('select')
       .each(/* @this HTMLElement */ function() {
-        if ($(this).val() === null) {
+        if (!$(this).val()) {
           hasAllColors = false;
           return false;
         }
@@ -463,7 +463,8 @@ const discreteColorPickerDataKey = 'value';
  * If we haven't selected a property yet or we've calculated there are too
  * many values for discrete colors, don't make any color pickers and return
  * early.
- * @return {boolean} returns true if we are missing any colors
+ * @return {boolean} returns true if we don't have any color pickers or all
+ * color pickers have non-null values.
  */
 function populateDiscreteColorPickersAndCheckHasAllColors() {
   const pickerList = $('#discrete-color-pickers').empty();
