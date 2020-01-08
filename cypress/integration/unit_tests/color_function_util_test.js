@@ -3,7 +3,6 @@ import {readDisasterDocument} from '../../../docs/firestore_document';
 import {populateColorFunctions, withColor} from '../../../docs/import/color_function_util.js';
 import * as manageLayersLib from '../../../docs/import/manage_layers_lib.js';
 import {getCurrentLayers} from '../../../docs/import/manage_layers_lib.js';
-import * as snackbar from '../../../docs/snackbar.js';
 import {createTrs, setDisaster, setDisasterAndLayers} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
@@ -13,7 +12,6 @@ let writeToFirebaseStub;
 describe('Unit tests for color function utility', () => {
   loadScriptsBeforeForUnitTests('ee', 'firebase', 'jquery');
   let colorFunctionEditor;
-  let snackbarStub;
 
   before(() => {
     cy.visit('test_utils/empty.html');
@@ -44,7 +42,6 @@ describe('Unit tests for color function utility', () => {
 
   let first = true;
   beforeEach(() => {
-    snackbarStub = cy.stub(snackbar, 'showErrorSnackbar');
     cy.document().then((doc) => {
       cy.stub(document, 'getElementById')
           .callsFake((id) => doc.getElementById(id));
@@ -60,17 +57,18 @@ describe('Unit tests for color function utility', () => {
   });
 
   it('checks correct error messaging for missing fields', () => {
-    let td = setUpWithLayer({
+    const layer = {
       colorFunction: {
-        currentStyle: ColorStyle.SINGLE,
+        currentStyle: ColorStyle.CONTINUOUS,
         lastByPropertyStyle: ColorStyle.CONTINUOUS,
         columns: {
           wings: {min: 0, max: 100, values: [0, 1, 2, 100]},
         },
         colors: {},
-      }
-    });
+      },
+    };
 
+    let td = setUpWithLayer(layer);
     td.trigger('click');
     const missingFieldsWarning = $('#missing-fields-warning');
 
@@ -83,7 +81,8 @@ describe('Unit tests for color function utility', () => {
     expect(missingFieldsWarning).to.be.visible;
     expect(missingFieldsWarning)
         .to.have.text(
-            'Warning: layer missing property and color. May not show up on map.');
+            'Warning: layer missing property and color. '
+        + 'May not show up on map.');
     // discrete with nothing
     checkRadio('DISCRETE-radio');
     expect(missingFieldsWarning).to.be.visible;
@@ -120,16 +119,7 @@ describe('Unit tests for color function utility', () => {
 
     // user doesn't have a way to set to pickers so need to make a whole new
     // one for this last bit
-    td = setUpWithLayer({
-      colorFunction: {
-        currentStyle: ColorStyle.CONTINUOUS,
-        lastByPropertyStyle: ColorStyle.CONTINUOUS,
-        columns: {
-          wings: {min: 0, max: 100, values: [0, 1, 2, 100]},
-        },
-        colors: {},
-      }
-    });
+    td = setUpWithLayer(layer);
     td.trigger('click');
     // continuous with property only
     $('#property-picker').val('wings').trigger('change');

@@ -19,7 +19,13 @@ let globalTd;
 const getWarning = (missing) =>
     'Warning: layer missing ' + missing + '. May not show up on map.';
 
-function maybeDisplayFieldAndColorWarningWithSchema(field, color, colorText) {
+/**
+ * Displays a warning if field or color are missing
+ * @param {string|number} field
+ * @param {string} color
+ * @param {string} colorText
+ */
+function maybeDisplayFieldAndColorWarningWithSchema(field, color, colorText = '') {
   const warning = $('#missing-fields-warning');
   warning.hide();
   if (field) {
@@ -59,7 +65,7 @@ function populateColorFunctions() {
   const singleColorPicker = createColorPicker('single-color-picker');
   singleColorPicker.on('change', () => {
     missingFieldsWarning.hide();
-    setColor(singleColorPicker)
+    setColor(singleColorPicker);
   });
   $('#single').append(
       createLabelForMandatoryPicker(singleColorPicker, 'color'),
@@ -68,7 +74,7 @@ function populateColorFunctions() {
   const continuousColorPicker = createColorPicker('continuous-color-picker');
   continuousColorPicker.on('change', () => {
     maybeDisplayFieldAndColorWarningWithSchema(propertyPicker.val(), true);
-    setColor(continuousColorPicker)
+    setColor(continuousColorPicker);
   });
 
   // TODO: make an educated guess about if this property should
