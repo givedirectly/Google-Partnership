@@ -126,8 +126,8 @@ describe('Unit tests for color function utility', () => {
     $('#discrete-color-pickers').find('select').val('red').trigger('change');
     expect(missingFieldsWarning).not.to.be.visible;
 
-    // user doesn't have a way to set to pickers to null, so need to make a
-    // whole new one for this last bit
+    // user doesn't have a way to set pickers to null, so need to make a
+    // whole new one to test null color since we've already set above.
     td = setUpWithLayer({
       colorFunction: {
         currentStyle: ColorStyle.CONTINUOUS,

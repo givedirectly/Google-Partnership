@@ -18,8 +18,8 @@ let globalTd;
 
 /**
  * Displays a warning in color function editor if field or color(s) are missing
- * @param {string|number|boolean} hasField
- * @param {string|boolean} hasColor
+ * @param {boolean} hasField
+ * @param {boolean} hasColor
  * @param {string} colorText
  */
 function maybeDisplayFieldAndColorWarningWithSchema(
@@ -75,7 +75,7 @@ function populateColorFunctions() {
 
   const continuousColorPicker = createColorPicker('continuous-color-picker');
   continuousColorPicker.on('change', () => {
-    maybeDisplayFieldAndColorWarningWithSchema(getColorFunction().field, true);
+    maybeDisplayFieldAndColorWarningWithSchema(!!getColorFunction().field, true);
     setColor(continuousColorPicker);
   });
 
@@ -87,12 +87,12 @@ function populateColorFunctions() {
     const {color, currentStyle} = getColorFunction();
     switch (currentStyle) {
       case ColorStyle.CONTINUOUS:
-        maybeDisplayFieldAndColorWarningWithSchema(true, color, 'color');
+        maybeDisplayFieldAndColorWarningWithSchema(true, !!color, 'color');
         maybeDisplayMinMax();
         break;
       case ColorStyle.DISCRETE:
         maybeDisplayFieldAndColorWarningWithSchema(
-            true, populateDiscreteColorPickersAndCheckHasAllColors(),
+            true, !!populateDiscreteColorPickersAndCheckHasAllColors(),
             'at least one color');
         break;
       case ColorStyle.SINGLE:
@@ -406,7 +406,7 @@ function displaySchema(type) {
   switch (type) {
     case ColorStyle.SINGLE:
       $('#single-color-picker').val(color);
-      maybeDisplayFieldAndColorWarningWithSchema(true, color, 'color');
+      maybeDisplayFieldAndColorWarningWithSchema(true, !!color, 'color');
       $('#single').show();
       $('#by-property').hide();
       break;
@@ -414,7 +414,7 @@ function displaySchema(type) {
       $('#continuous-color-picker').val(color);
       populatePropertyPicker($('#property-picker'));
       maybeDisplayMinMax();
-      maybeDisplayFieldAndColorWarningWithSchema(field, color, 'color');
+      maybeDisplayFieldAndColorWarningWithSchema(!!field, !!color, 'color');
       $('#single').hide();
       $('#by-property').show();
       $('#discrete').hide();
@@ -423,7 +423,7 @@ function displaySchema(type) {
     case ColorStyle.DISCRETE:
       populatePropertyPicker($('#property-picker'));
       maybeDisplayFieldAndColorWarningWithSchema(
-          field, populateDiscreteColorPickersAndCheckHasAllColors(),
+          !!field, !!populateDiscreteColorPickersAndCheckHasAllColors(),
           'at least one color');
       $('#single').hide();
       $('#by-property').show();
