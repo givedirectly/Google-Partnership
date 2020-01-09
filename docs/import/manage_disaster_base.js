@@ -3,10 +3,11 @@ import {latLngToGeoPoint, transformGeoPointArrayToLatLng} from '../map_util.js';
 import {ScoreBoundsMap} from './score_bounds_map.js';
 import {convertEeObjectToPromise} from '../ee_promise_cache.js';
 import {updateDataInFirestore} from './update_firestore_disaster.js';
+import {isUserProperty} from '../property_names.js';
 
 export {setUpScoreBoundsMap, initializeScoreBoundsMapFromAssetData, createAssetDropdownWithNone, onNonDamageAssetSelect,
 SameDisasterChecker, SameSelectChecker, disasterData, handleAssetDataChange, initializeDamageSelector, setProcessButtonText, damageAssetPresent, setValidateFunction, verifyAsset,
-createDropdown, getElementFromPath};
+createDropdown, getElementFromPath, getPropertyNames, createColumnDropdown, createEnabledProperties, createPropertyListItem, removeAndCreateUl};
 
 // For testing.
 export {scoreBoundsMap};
@@ -66,15 +67,58 @@ function initializeDamageSelector(assets) {
       assets, damagePropertyPath, $('#' + DAMAGE_ID).empty());
   select.on('change', () => {
     const val = select.val();
-    damageConsequences(val);
     handleAssetDataChange(val, damagePropertyPath);
+    damageConsequences(val);
   });
-  damageConsequences(select.val());
+  return damageConsequences(select.val());
 }
 
-function damageConsequences(val) {
+const DAMAGE_ATTRS_UL = 'damage-attrs-ul';
+
+async function damageConsequences(val) {
   setMapBoundsDiv(!!val);
-  verifyAsset(DAMAGE_ID, null);
+  const propertyNames = await getPropertyNames(DAMAGE_ID);
+  if (!propertyNames) {
+    return;
+  }
+  const noDamageValueInput = $(document.createElement('input'));
+  noDamageValueInput.on('blur', () => handleAssetDataChange(
+      noDamageValueInput.val(), ['noDamageValue']));
+  noDamageValueInput.val(getElementFromPath(['noDamageValue']));
+  $('#damage-asset-div').append(removeAndCreateUl(DAMAGE_ATTRS_UL)
+      .append(createPropertyListItem('Column of asset that can distinguish between damaged and undamaged buildings', createEnabledProperties(propertyNames), ['noDamageKey']))
+      .append($(document.createElement('li')).append('Value in column that identifies undamaged buildings').append(noDamageValueInput)));
+}
+
+async function getPropertyNames(id) {
+  const sameValueChecker = new SameSelectChecker($('#' + id));
+  const propertyNames = await verifyAsset(id, null);
+  if (!propertyNames || !sameValueChecker.markDoneIfStillValid()) {
+    return null;
+  }
+  return propertyNames;
+}
+
+function createEnabledProperties(properties) {
+  properties = properties.filter(isUserProperty);
+
+  // TODO(janakdr): Do async add_layer-style processing so we can warn if
+  //  column not ok for whatever user wants it for?
+  return properties.map((p) => [p, {disabled: false}]);
+}
+
+function createColumnDropdown(properties, path) {
+  const select = createAssetDropdownWithNone(properties, path);
+  return select.on('change', () => handleAssetDataChange(select.val(), path));
+}
+
+function createPropertyListItem(label, enabledProperties, firestorePath) {
+  return $(document.createElement('li')).append(label + ': ').append(createColumnDropdown(enabledProperties, firestorePath));
+}
+
+function removeAndCreateUl(id) {
+  $('#' + id).remove();
+  return $(document.createElement('ul')).prop('id', id);
 }
 
 /**

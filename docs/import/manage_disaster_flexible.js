@@ -4,13 +4,17 @@ import {
   createPendingSelect,
   getDisasterAssetsFromEe
 } from './list_ee_assets.js';
-import {LayerType} from '../firebase_layers.js';
 import {
   createAssetDropdownWithNone,
-  createDropdown, getElementFromPath,
+  createColumnDropdown, createEnabledProperties, createPropertyListItem,
+  getElementFromPath,
+  getPropertyNames,
   handleAssetDataChange,
-  initializeScoreBoundsMapFromAssetData, onNonDamageAssetSelect,
-  SameDisasterChecker, SameSelectChecker, verifyAsset
+  initializeScoreBoundsMapFromAssetData,
+  onNonDamageAssetSelect, removeAndCreateUl,
+  SameDisasterChecker,
+  SameSelectChecker,
+  verifyAsset
 } from './manage_disaster_base.js';
 
 export {onSetFlexibleDisaster, initializeFlexible, validateFlexibleUserFields};
@@ -21,13 +25,14 @@ const buildingsSameDisasterChecker = new SameDisasterChecker();
 
 const buildingPath = ['flexibleData', 'buildingPath'];
 
-const buildingId = 'select-building-asset'
+const buildingId = 'select-building-asset';
 
 function initializeFlexible() {
   // Set up radio buttons for flexible buildings source.
   const buildingsSourceBuildings = $('#buildings-source-buildings-div');
   const buildingsSourcePoverty = $('#buildings-source-poverty-div');
   const useDamageForBuildingsPath = ['useDamageForBuildings'];
+  const 
   $('#buildings-source-damage').on('click', () => {
     handleAssetDataChange(true, useDamageForBuildingsPath);
     buildingsSourceBuildings.hide();
@@ -47,6 +52,9 @@ function initializeFlexible() {
     handleAssetDataChange(false, useDamageForBuildingsPath);
     buildingsSourceBuildings.hide();
     buildingsSourcePoverty.show();
+    if (getElementFromPath(buildingPath)) {
+      handleAssetDataChange(null, buildingPath);
+    }
   });
 }
 
@@ -100,15 +108,6 @@ async function createAllAssetDropdown(outerDiv, labelText, propertyPath, checker
   pendingSelect.remove();
   outerDiv.append(select);
   return select;
-}
-
-async function getPropertyNames(id) {
-  const sameValueChecker = new SameSelectChecker(select);
-  const propertyNames = await verifyAsset(id, null);
-  if (!propertyNames || !sameValueChecker.markDoneIfStillValid()) {
-    return null;
-  }
-  return propertyNames;
 }
 
 async function onPovertyChange(povertySelect, povertyDiv) {
@@ -179,6 +178,7 @@ const buildingAttrUl = 'building-attr-ul';
 async function onBuildingChange(buildingSelect, buildingDiv, propertyNamesLambda = null) {
   const writeLambda = propertyNamesLambda ? () => null : () => onNonDamageAssetSelect(buildingPath, null, buildingId);
   propertyNamesLambda = propertyNamesLambda ? propertyNamesLambda : writeLambda;
+  const buildingAttrList = removeAndCreateUl(buildingAttrUl);
   const assetName = buildingSelect.val();
   if (!assetName) {
     // Nothing to be done here besides basic operations.
@@ -196,8 +196,7 @@ async function onBuildingChange(buildingSelect, buildingDiv, propertyNamesLambda
   if (!propertyNames || !sameBuildingChecker.markDoneIfStillValid()) {
     return;
   }
-  const buildingAttrList = removeAndCreateUl(buildingAttrUl)
-      .append(createPropertyListItem(districtIdLabel, createEnabledProperties(propertyNames), ['flexibleData', 'buildingGeoid']));
+  buildingAttrList.append(createPropertyListItem(districtIdLabel, createEnabledProperties(propertyNames), ['flexibleData', 'buildingGeoid']));
   buildingDiv.append(buildingAttrList);
 }
 
@@ -212,26 +211,4 @@ function povertyPropertiesProcessor(properties, povertySelect, povertyDiv) {
     'povertyGeoid']));
   povertyDiv.append(povertyAttrList);
   $('#buildings-poverty-select-span').empty().append(createColumnDropdown(enabledProperties, ['flexibleData', 'buildingKey']));
-}
-
-function createColumnDropdown(properties, path) {
-  const select = createAssetDropdownWithNone(properties, path);
-  return select.on('change', () => handleAssetDataChange(select.val(), path));
-}
-
-function createEnabledProperties(properties) {
-  properties = properties.filter(isUserProperty);
-
-  // TODO(janakdr): Do async add_layer processing so we can warn if column not
-  //  ok for whatever user wants it for?
-  return properties.map((p) => [p, {disabled: false}]);
-}
-
-function createPropertyListItem(label, enabledProperties, firestorePath) {
-  return $(document.createElement('li')).append(label + ': ').append(createColumnDropdown(enabledProperties, firestorePath));
-}
-
-function removeAndCreateUl(id) {
-  $('#' + id).remove();
-  return $(document.createElement('ul')).prop('id', id);
 }
