@@ -644,7 +644,7 @@ input[type=checkbox]:checked {
   height: 0;
   position: absolute;
   /* The max width of the info window. */
-  width: 200px;
+  width: 300px;
 }
 
 .popup-content {
@@ -661,6 +661,10 @@ input[type=checkbox]:checked {
 
 .popup-calculated-data {
   margin: 6px auto;
+}
+
+.popup-icon {
+  margin-right: 4px;
 }
 
 /** Snackbar css */
