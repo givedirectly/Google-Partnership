@@ -204,8 +204,9 @@ class Authenticator {
             alert(
                 'Error contacting server for access without EarthEngine ' +
                 'whitelisting. Please reload page and log in with an ' +
-                'EarthEngine-whitelisted account or contact website ' +
-                'maintainers with error from JavaScript console.');
+                'EarthEngine-whitelisted account or contact ' +
+                'technology.manager@givedirectly.org ' +
+                'with error from JavaScript console.');
             throw new Error(message);
           }
           return response.json();
