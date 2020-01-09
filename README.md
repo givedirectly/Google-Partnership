@@ -30,9 +30,9 @@ and visit the page at `localhost:8080` (we recommend in Chrome).
 
 * Set up auto-lint: `echo ./pre-push-hook.sh > .git/hooks/pre-push`
 
-* *[Optional]* Run `./lint.sh --fix` to run clang-format and eslint on all relevant files and format in
-place. Clang-format will run automatically on commit and eslint will run automatically on push so
-this just saves you the extra commits. 
+* *[Optional]* Run `./lint.sh --fix` to run clang-format and eslint on all relevant files and (with `--fix`) format in
+place. Clang-format and eslint will run automatically on `git push` (without `--fix`) so this just
+saves you the extra commits. 
 
 ## Running tests
 * A service account secret .json file is used to credential the test
@@ -55,25 +55,15 @@ take effect.
     yarn run cypress run # --browser chrome ## (only needed on Linux) 
     ```
 
-* *[Optional]* Travis CI runs on each push to Github, unless the commit message has
+* *[Optional]* Travis CI runs on each push to a PR, unless the commit message has
 '[skip ci]' inside it. You can trigger a run manually from the [Travis main
 page](https://travis-ci.com/givedirectly/Google-Partnership). Runs are recorded
 to the [Cypress dashboard](https://www.cypress.io/dashboard/).
 
-* *[Optional]* Save and share your personal test results in a web interface using
-[Cypress dashboard](https://www.cypress.io/dashboard/). Ask a collaborator to add
-you to the existing dashboard for this project. The dashboard also provides
-easy access to output files, footage of the test being run, etc. To find the record
-key for this project go to the Google-Partnership project at https://dashboard.cypress.io in the "Runs" tab under "Settings".
-  
-    ```shell
-    yarn run cypress run --record --key <record-key>
-    # or set record key as environment variable
-    export CYPRESS_RECORD_KEY=<record key>
-    yarn run cypress run --record
-    ```
+* *[Optional]* Ask a collaborator to add you to the existing cypress dashboard for this project
+that tracks Travis CI runs. The dashboard also provides easy access to output files, footage of the test being run, etc. 
 
-*  *[Optional]* If you are running on Linux and seeing issues with Chrome, or
+* *[Optional]* If you are running on Linux and seeing issues with Chrome, or
    working on a Google internal machine, install  and use [Chromium](https://www.chromium.org)
 for tests. Install via the usual `apt-get`-style channels. This should be
 relatively straightforward on most systems, but is difficult/impossible on
@@ -93,7 +83,7 @@ engine-friendly formats](https://developers.google.com/earth-engine/asset_manage
 
 ## Helpful Links
 * [git documentation](https://git-scm.com/docs)
-* [cypress test running documentation](https://docs.cypress.io/guides/guides/command-line.html#cypress-run)
+* [cypress test-running documentation](https://docs.cypress.io/guides/guides/command-line.html#cypress-run)
 * [ogr2ogr documentation](https://gdal.org/programs/ogr2ogr.html)
 
 ## License
