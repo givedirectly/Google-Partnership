@@ -304,5 +304,6 @@ function testSave(fxn, property, input, afterVal) {
             .get();
       })
       .then(
-          (doc) => expect(doc.data()['layerArray'][0][property]).to.eql(afterVal));
+          (doc) =>
+              expect(doc.data()['layerArray'][0][property]).to.eql(afterVal));
 }
