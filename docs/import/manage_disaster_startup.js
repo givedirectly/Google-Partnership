@@ -5,9 +5,9 @@ import {loadNavbarWithPicker} from '../navbar.js';
 import {TaskAccumulator} from '../task_accumulator.js';
 
 import {enableWhenReady, onSetDisaster} from './manage_disaster.js';
+import {toggleState} from './manage_disaster_add_delete.js';
 import {setUpScoreBoundsMap} from './manage_disaster_base.js';
 import {setUpStateBasedScoreSelectorTable} from './manage_disaster_state_based.js';
-import {toggleState} from './manage_disaster_add_delete.js';
 
 // Two tasks: EE and page load. Firebase is taken care of in the promise.
 const taskAccumulator =

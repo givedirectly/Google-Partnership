@@ -1,14 +1,38 @@
-import {getDisaster} from '../resources.js';
-import {latLngToGeoPoint, transformGeoPointArrayToLatLng} from '../map_util.js';
-import {ScoreBoundsMap} from './score_bounds_map.js';
 import {convertEeObjectToPromise} from '../ee_promise_cache.js';
-import {updateDataInFirestore} from './update_firestore_disaster.js';
+import {latLngToGeoPoint, transformGeoPointArrayToLatLng} from '../map_util.js';
 import {isUserProperty} from '../property_names.js';
+import {getDisaster} from '../resources.js';
 
-export {setUpScoreBoundsMap, initializeScoreBoundsMapFromAssetData, createAssetDropdownWithNone, onNonDamageAssetSelect,
-SameDisasterChecker, SameSelectChecker, disasterData, handleAssetDataChange, initializeDamageSelector, setProcessButtonText, damageAssetPresent, setValidateFunction, verifyAsset,
-createDropdown, getElementFromPath, getPropertyNames, createColumnDropdown, createEnabledProperties, createPropertyListItem, removeAndCreateUl};
+import {ScoreBoundsMap} from './score_bounds_map.js';
+import {updateDataInFirestore} from './update_firestore_disaster.js';
 
+export {
+  createAssetDropdownWithNone,
+  createColumnDropdown,
+  createDropdown,
+  createEnabledProperties,
+  createPropertyListItem,
+  createSelectFromColumnInfo,
+  DAMAGE_COLUMN_INFO,
+  DAMAGE_NODAMAGE_VALUE_INFO,
+  damageAssetPresent,
+  disasterData,
+  getElementFromPath,
+  getPropertyNames,
+  handleAssetDataChange,
+  initializeDamageSelector,
+  initializeScoreBoundsMapFromAssetData,
+  onNonDamageAssetSelect,
+  removeAndCreateUl,
+  SameDisasterChecker,
+  SameSelectChecker,
+  setProcessButtonText,
+  setUpScoreBoundsMap,
+  setValidateFunction,
+  validateColumnArray,
+  validateColumnSelect,
+  verifyAsset
+};
 // For testing.
 export {scoreBoundsMap};
 
@@ -20,7 +44,7 @@ const disasterData = new Map();
 
 /**
  * Effectively constant {@link ScoreBoundsMap} initialized in {@link
-    * enableWhenReady}.
+ * enableWhenReady}.
  * @type {ScoreBoundsMap}
  */
 let scoreBoundsMap;
@@ -51,7 +75,9 @@ function setUpScoreBoundsMap(div) {
 
 function initializeScoreBoundsMapFromAssetData(assetData, states = []) {
   const {scoreBoundsCoordinates} = assetData;
-  const scoreBoundsAsLatLng = scoreBoundsCoordinates ? transformGeoPointArrayToLatLng(scoreBoundsCoordinates) : null;
+  const scoreBoundsAsLatLng = scoreBoundsCoordinates ?
+      transformGeoPointArrayToLatLng(scoreBoundsCoordinates) :
+      null;
   scoreBoundsMap.initialize(scoreBoundsAsLatLng, states);
 }
 
@@ -74,6 +100,14 @@ function initializeDamageSelector(assets) {
 }
 
 const DAMAGE_ATTRS_UL = 'damage-attrs-ul';
+const DAMAGE_COLUMN_INFO = {
+  label: 'column that can distinguish between damaged and undamaged buildings',
+  path: ['noDamageKey']
+};
+const DAMAGE_NODAMAGE_VALUE_INFO = {
+  label: 'value in column that identifies undamaged buildings',
+  path: ['noDamageValue']
+};
 
 async function damageConsequences(val) {
   setMapBoundsDiv(!!val);
@@ -81,13 +115,21 @@ async function damageConsequences(val) {
   if (!propertyNames) {
     return;
   }
-  const noDamageValueInput = $(document.createElement('input'));
-  noDamageValueInput.on('blur', () => handleAssetDataChange(
-      noDamageValueInput.val(), ['noDamageValue']));
+  const noDamageValueInput =
+      $(document.createElement('input'))
+          .id('id', DAMAGE_NODAMAGE_VALUE_INFO.path.join('-'))
+          .on('blur',
+              () => handleAssetDataChange(
+                  noDamageValueInput.val(), ['noDamageValue']));
   noDamageValueInput.val(getElementFromPath(['noDamageValue']));
-  $('#damage-asset-div').append(removeAndCreateUl(DAMAGE_ATTRS_UL)
-      .append(createPropertyListItem('Column of asset that can distinguish between damaged and undamaged buildings', createEnabledProperties(propertyNames), ['noDamageKey']))
-      .append($(document.createElement('li')).append('Value in column that identifies undamaged buildings').append(noDamageValueInput)));
+  $('#damage-asset-div')
+      .append(
+          removeAndCreateUl(DAMAGE_ATTRS_UL)
+              .append(createSelectFromColumnInfo(
+                  DAMAGE_COLUMN_INFO, createEnabledProperties(propertyNames)))
+              .append($(document.createElement('li'))
+                          .append(createLabel(DAMAGE_NODAMAGE_VALUE_INFO))
+                          .append(noDamageValueInput)));
 }
 
 async function getPropertyNames(id) {
@@ -109,11 +151,32 @@ function createEnabledProperties(properties) {
 
 function createColumnDropdown(properties, path) {
   const select = createAssetDropdownWithNone(properties, path);
-  return select.on('change', () => handleAssetDataChange(select.val(), path));
+  return select.on('change', () => handleAssetDataChange(select.val(), path))
+      .prop('id', path.join('-'));
 }
 
 function createPropertyListItem(label, enabledProperties, firestorePath) {
-  return $(document.createElement('li')).append(label + ': ').append(createColumnDropdown(enabledProperties, firestorePath));
+  return $(document.createElement('li'))
+      .append(label + ': ')
+      .append(createColumnDropdown(enabledProperties, firestorePath));
+}
+
+function createLabel(columnInfo) {
+  return columnInfo.label[0].toUpperCase() + columnInfo.label.slice(1) +
+      (columnInfo.explanation ? ' (' + columnInfo.explanation + ')' : '');
+}
+
+function createSelectFromColumnInfo(columnInfo, properties) {
+  return createPropertyListItem(
+      createLabel(columnInfo), properties, columnInfo.path);
+}
+
+function validateColumnSelect(columnInfo) {
+  return $('#' + columnInfo.path.join('-')).val() ? null : columnInfo.label;
+}
+
+function validateColumnArray(array) {
+  return array.map(validateColumnSelect).filter((c) => c).join(', ');
 }
 
 function removeAndCreateUl(id) {
@@ -167,7 +230,8 @@ function createAssetDropdownWithNone(
   return createDropdown(assets, propertyPath, select);
 }
 
-function createDropdown(assets, propertyPath, select = $(document.createElement('select'))) {
+function createDropdown(
+    assets, propertyPath, select = $(document.createElement('select'))) {
   const value = getElementFromPath(propertyPath);
   // Add assets to selector and return it.
   for (const [asset, assetInfo] of assets) {
@@ -189,8 +253,7 @@ function createDropdown(assets, propertyPath, select = $(document.createElement(
  * @param {Array<string>} expectedColumns
  * @return {Promise<void>} see {@link verifyAsset}
  */
-function onNonDamageAssetSelect(
-    propertyPath, expectedColumns, selectId) {
+function onNonDamageAssetSelect(propertyPath, expectedColumns, selectId) {
   handleAssetDataChange($('#' + selectId).val(), propertyPath);
   return verifyAsset(selectId, expectedColumns);
 }
@@ -199,9 +262,9 @@ function onNonDamageAssetSelect(
  * Verifies an asset exists and has the expected columns.
  * @param {?Array<string>} expectedColumns Expected column names. If null, does
  *     no column checking
- * @return {Promise<?Array<string>>} returns a promise that resolves when existence and column
- *     checking are finished and select border color is updated, and contains
- *     the feature's properties if
+ * @return {Promise<?Array<string>>} returns a promise that resolves when
+ *     existence and column checking are finished and select border color is
+ *     updated, and contains the feature's properties if
  */
 async function verifyAsset(selectId, expectedColumns) {
   // TODO: disable or discourage kick off until all green?
@@ -239,13 +302,15 @@ async function verifyAsset(selectId, expectedColumns) {
       // Don't do anything if not current asset.
       return null;
     }
-    updateColorAndHover(select, 'green', expectedColumns ? 'No expected columns' : null);
+    updateColorAndHover(
+        select, 'green', expectedColumns ? 'No expected columns' : null);
     return result;
   } else if (expectedColumns) {
     updateColorAndHover(select, 'yellow', 'Checking columns...');
     let columnsStatusFailure;
     try {
-      columnsStatusFailure = await convertEeObjectToPromise(getColumnsStatus(asset, expectedColumns));
+      columnsStatusFailure = await convertEeObjectToPromise(
+          getColumnsStatus(asset, expectedColumns));
     } catch (err) {
       assetMissingErrorFunction(err);
       return null;
@@ -258,7 +323,7 @@ async function verifyAsset(selectId, expectedColumns) {
       updateColorAndHover(
           select, 'red',
           'Error! asset does not have all expected columns: ' +
-          expectedColumns);
+              expectedColumns);
     } else {
       updateColorAndHover(
           select, 'green', 'Success! asset has all expected columns');
@@ -329,11 +394,8 @@ const KICK_OFF_TEXT = 'Kick off Data Processing (will take a while!)';
 const OPTIONAL_WARNING_PREFIX = '; warning: created asset will be missing ';
 
 function setProcessButtonText(message, optionalMessage) {
-  const hasDamage =
-      damageAssetPresent() || getElementFromPath(scoreCoordinatesPath);
-  if (message) {
-    message = 'Missing asset(s): ' + message;
-  }
+  const damagePresent = damageAssetPresent();
+  const hasDamage = damagePresent || getElementFromPath(scoreCoordinatesPath);
   if (!hasDamage) {
     message += (message ? ', and m' : 'M') +
         'ust specify either damage asset or map bounds';

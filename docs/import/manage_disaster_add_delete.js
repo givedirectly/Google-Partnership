@@ -1,12 +1,12 @@
-import {disasterCollectionReference} from '../firestore_document.js';
-import {setStatus} from './create_score_asset.js';
-import {showError} from '../error.js';
-import {createDisasterData} from './create_disaster_lib.js';
-import {disasterData} from './manage_disaster_base.js';
 import {eeLegacyPathPrefix, legacyStateDir} from '../ee_paths.js';
+import {showError} from '../error.js';
+import {disasterCollectionReference} from '../firestore_document.js';
 
-export {initializeAddDelete, addDisaster, deleteDisaster, toggleState};
+import {createDisasterData} from './create_disaster_lib.js';
+import {setStatus} from './create_score_asset.js';
+import {disasterData} from './manage_disaster_base.js';
 
+export {addDisaster, deleteDisaster, initializeAddDelete, toggleState};
 // For testing.
 export {writeNewDisaster};
 
@@ -136,12 +136,15 @@ async function writeNewDisaster(disasterId, states) {
   // Comment needed to quiet eslint.
   disasterPicker.children().each(/* @this HTMLElement */ function() {
     if ($(this).val() < disasterId) {
-      $(document.createElement('option')).text(disasterId).insertBefore($(this));
+      $(document.createElement('option'))
+          .text(disasterId)
+          .insertBefore($(this));
       added = true;
       return false;
     }
   });
-  if (!added) disasterPicker.append($(document.createElement('option')).text(disasterId));
+  if (!added)
+    disasterPicker.append($(document.createElement('option')).text(disasterId));
   toggleState(true);
 
   disasterPicker.val(disasterId).trigger('change');

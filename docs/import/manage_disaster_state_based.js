@@ -1,21 +1,16 @@
-import {
-  cdcGeoidKey,
-  censusBlockGroupKey,
-  censusGeoidKey, tigerGeoidKey
-} from './import_data_keys.js';
-import {incomeKey, snapKey, sviKey, totalKey} from './create_disaster_lib.js';
 import {getDisaster} from '../resources.js';
+
+import {incomeKey, snapKey, sviKey, totalKey} from './create_disaster_lib.js';
+import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
 import {createPendingSelect, getStateAssetsFromEe} from './list_ee_assets.js';
-import {
-  createAssetDropdownWithNone, damageAssetPresent,
-  initializeScoreBoundsMapFromAssetData,
-  onNonDamageAssetSelect,
-  SameDisasterChecker, setProcessButtonText,
-  verifyAsset, disasterData,
-} from './manage_disaster_base.js';
+import {createAssetDropdownWithNone, damageAssetPresent, disasterData, initializeScoreBoundsMapFromAssetData, onNonDamageAssetSelect, SameDisasterChecker, setProcessButtonText, verifyAsset,} from './manage_disaster_base.js';
 
-export {setUpStateBasedScoreSelectorTable, initializeStateBasedScoreSelectors, validateStateBasedUserFields, onSetStateBasedDisaster};
-
+export {
+  initializeStateBasedScoreSelectors,
+  onSetStateBasedDisaster,
+  setUpStateBasedScoreSelectorTable,
+  validateStateBasedUserFields
+};
 // For testing.
 export {assetSelectionPrefix, stateBasedScoreAssetTypes};
 
@@ -85,8 +80,7 @@ function validateStateBasedUserFields() {
   for (const {idStem, displayName} of stateBasedScoreAssetTypes) {
     const missingForType = [];
     for (const state of states) {
-      if (!$('#select-' + assetSelectionPrefix + idStem + '-' + state)
-          .val()) {
+      if (!$('#select-' + assetSelectionPrefix + idStem + '-' + state).val()) {
         missingForType.push(state);
       }
     }
@@ -113,7 +107,7 @@ function validateStateBasedUserFields() {
       // tell the user that's what they'll be missing.
       const itemString = buildingsOptional ?
           ('Building counts' +
-              (missingItem.length > 1 ? ' ' + missingItem[1] : '')) :
+           (missingItem.length > 1 ? ' ' + missingItem[1] : '')) :
           missingItem.join(' ');
       if (optional) {
         optionalMessage += (optionalMessage ? ', ' : '') + itemString;
@@ -122,12 +116,15 @@ function validateStateBasedUserFields() {
       }
     }
   }
+  if (message) {
+    message = 'Missing asset(s): ' + message;
+  }
   setProcessButtonText(message, optionalMessage);
 }
 
 /**
- * Initializes state-based score selector table based on {@link stateBasedScoreAssetTypes}
- * data. Done as soon as page is ready.
+ * Initializes state-based score selector table based on {@link
+ * stateBasedScoreAssetTypes} data. Done as soon as page is ready.
  */
 function setUpStateBasedScoreSelectorTable() {
   const tbody = $('#asset-selection-table-body');
@@ -150,11 +147,11 @@ function initializeStateBasedScoreSelectors(states, stateAssets) {
 
   // For each asset type, add select for all assets for each state.
   for (const {
-    idStem,
-    propertyPath,
-    expectedColumns,
-    geometryExpected,
-  } of stateBasedScoreAssetTypes) {
+         idStem,
+         propertyPath,
+         expectedColumns,
+         geometryExpected,
+       } of stateBasedScoreAssetTypes) {
     const id = assetSelectionPrefix + idStem;
     const row = $('#' + id);
     removeAllButFirstFromRow(row);
@@ -168,13 +165,12 @@ function initializeStateBasedScoreSelectors(states, stateAssets) {
           stateAssets[i];
       const statePropertyPath = propertyPath.concat([state]);
       const selectId = 'select-' + id + '-' + state;
-      const select =
-          createAssetDropdownWithNone(assets, statePropertyPath)
-              .prop('id', selectId)
-              .on('change',
-                  () => onNonDamageAssetSelect(statePropertyPath,
-                      expectedColumns, selectId))
-              .addClass('with-status-border');
+      const select = createAssetDropdownWithNone(assets, statePropertyPath)
+                         .prop('id', selectId)
+                         .on('change',
+                             () => onNonDamageAssetSelect(
+                                 statePropertyPath, expectedColumns, selectId))
+                         .addClass('with-status-border');
       row.append(createTd().append(select));
       verifyAsset(selectId, expectedColumns);
     }

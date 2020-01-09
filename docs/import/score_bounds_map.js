@@ -199,7 +199,8 @@ ScoreBoundsMap._callbackOnPolygonChange = (polygon, callback) => {
   polygon.addListener('dragstart', () => polygon.removeAllChangeListeners());
 };
 
-const WORLD_MAP_BOUNDS = Promise.resolve({coordinates: [[[-40, -40], [40, -40], [40, 40], [-40, 40]]]});
+const WORLD_MAP_BOUNDS = Promise.resolve(
+    {coordinates: [[[-40, -40], [40, -40], [40, 40], [-40, 40]]]});
 
 /**
  * Polygon path event types:

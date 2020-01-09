@@ -1,11 +1,4 @@
-import {
-  blockGroupTag,
-  damageTag,
-  geoidTag,
-  isUserProperty,
-  povertyPercentageTag,
-  scoreTag
-} from './property_names.js';
+import {blockGroupTag, damageTag, geoidTag, isUserProperty, povertyPercentageTag, scoreTag} from './property_names.js';
 
 export {processJoinedData};
 

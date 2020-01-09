@@ -1,10 +1,16 @@
 import {eeLegacyPathPrefix, legacyStateDir} from '../ee_paths.js';
 import {convertEeObjectToPromise} from '../ee_promise_cache.js';
 import {LayerType} from '../firebase_layers.js';
+
 import {listEeAssets} from './ee_utils.js';
 import {createOptionFrom} from './manage_layers.js';
 
-export {getDisasterAssetsFromEe, getStateAssetsFromEe, listAndProcessEeAssets, createPendingSelect};
+export {
+  createPendingSelect,
+  getDisasterAssetsFromEe,
+  getStateAssetsFromEe,
+  listAndProcessEeAssets
+};
 
 /**
  * Cache for the results of getStateAssetsFromEe.
@@ -170,6 +176,8 @@ function maybeConvertAssetType(asset) {
 }
 
 function createPendingSelect() {
-  return $(document.createElement('select')).width(200).attr('disabled', true)
-  .append(createOptionFrom('pending...'));
+  return $(document.createElement('select'))
+      .width(200)
+      .attr('disabled', true)
+      .append(createOptionFrom('pending...'));
 }

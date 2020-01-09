@@ -1,32 +1,17 @@
 import {eeLegacyPathPrefix} from '../ee_paths.js';
 import {getDisaster} from '../resources.js';
-import {
-  createScoreAssetForFlexibleDisaster,
-  createScoreAssetForStateBasedDisaster,
-  setStatus
-} from './create_score_asset.js';
+
+import {createScoreAssetForFlexibleDisaster, createScoreAssetForStateBasedDisaster, setStatus} from './create_score_asset.js';
 import {getDisasterAssetsFromEe,} from './list_ee_assets.js';
-import {
-  initializeFlexible,
-  onSetFlexibleDisaster, validateFlexibleUserFields
-} from './manage_disaster_flexible.js';
 import {initializeAddDelete} from './manage_disaster_add_delete.js';
-import {
-  disasterData,
-  initializeDamageSelector,
-  SameDisasterChecker,
-  setValidateFunction
-} from './manage_disaster_base.js';
-import {
-  onSetStateBasedDisaster,
-  validateStateBasedUserFields
-} from './manage_disaster_state_based.js';
+import {disasterData, initializeDamageSelector, SameDisasterChecker, setValidateFunction} from './manage_disaster_base.js';
+import {initializeFlexible, onSetFlexibleDisaster, validateFlexibleUserFields} from './manage_disaster_flexible.js';
+import {onSetStateBasedDisaster, validateStateBasedUserFields} from './manage_disaster_state_based.js';
 
 export {
   enableWhenReady,
   onSetDisaster,
 };
-
 /** @VisibleForTesting */
 export {
   createScoreAssetForStateBasedDisaster,
@@ -112,12 +97,14 @@ async function onSetDisaster() {
   damageStatusChecker.reset();
   const currentData = disasterData.get(currentDisaster);
   const flexible = isFlexible(currentData);
-  const validateFunction = flexible ? validateFlexibleUserFields : validateStateBasedUserFields;
+  const validateFunction =
+      flexible ? validateFlexibleUserFields : validateStateBasedUserFields;
   setValidateFunction(validateFunction);
   const {assetData} = currentData;
 
   // Kick off score asset processing.
-  const scorePromise = flexible ? onSetFlexibleDisaster(assetData) : onSetStateBasedDisaster(assetData);
+  const scorePromise = flexible ? onSetFlexibleDisaster(assetData) :
+                                  onSetStateBasedDisaster(assetData);
   let disasterAssets;
   try {
     disasterAssets = await getDisasterAssetsFromEe(currentDisaster);
@@ -128,8 +115,7 @@ async function onSetDisaster() {
     }
     if (err &&
         err !==
-        'Asset "' + eeLegacyPathPrefix + currentDisaster +
-        '" not found.') {
+            'Asset "' + eeLegacyPathPrefix + currentDisaster + '" not found.') {
       setStatus(err);
     }
     disasterAssets = new Map();

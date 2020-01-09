@@ -1,5 +1,12 @@
 export {createDisasterData};
-export {BUILDING_COUNT_KEY, incomeKey, snapKey, sviKey, totalKey};
+export {
+  BUILDING_COUNT_KEY,
+  BuildingSource,
+  incomeKey,
+  snapKey,
+  sviKey,
+  totalKey
+};
 // For testing
 export {deepCopy, flexibleAssetData, stateAssetDataTemplate};
 
@@ -33,10 +40,6 @@ const BUILDING_COUNT_KEY = 'BUILDING COUNT';
  *     contains undamaged buildings, this must be specified.
  * @property {string} [noDamageValue] The value of `noDamageKey` that indicates
  *     that a building is undamaged.
- * @property {boolean} useDamageForBuildings Whether the damage asset should be
- *     used to compute the total number of buildings. Ignored for state-based
- *     disasters. If specified, `damageAssetPath`, `noDamageKey`,
- *     `noDamageValue` must all be set.
  * @property {Array<firebase.firestore.GeoPoint>} [scoreBoundsCoordinates]
  *     Coordinates of polygon that score asset should be restricted to. Only
  *     used if `damageAssetPath` not specified: if `damageAssetPath` is
@@ -47,7 +50,6 @@ const commonAssetDataTemplate = Object.freeze({
   damageAssetPath: null,
   noDamageKey: null,
   noDamageValue: null,
-  useDamageForBuildings: false,
   scoreBoundsCoordinates: null,
 });
 
@@ -114,6 +116,14 @@ const stateBasedDataTemplate = Object.freeze({
 const stateAssetDataTemplate = Object.freeze(
     {...commonAssetDataTemplate, stateBasedData: stateBasedDataTemplate});
 
+const BuildingSource = {
+  BUILDING: 1,
+  POVERTY: 2,
+  // If specified,
+  //  *     `noDamageKey`, `noDamageValue` must be set if `damageAssetPath` is.
+  DAMAGE: 3,
+};
+
 /**
  * Has data for a "flexible" (non-Census-based) disaster.
  * @type {Readonly<Object>}
@@ -129,6 +139,8 @@ const stateAssetDataTemplate = Object.freeze(
  *     contains human-readable description of each district, for display on map.
  * @property {EeColumn} povertyGeoid Column of `povertyPath` that contains
  *     district-identifying string ("district identifier").
+ * @property {boolean} povertyHasGeometry Whether the poverty asset has
+ *     geometries for its districts. If not, `geographyPath` must be specified.
  * @property {EeFC} [geographyPath] Contains geometries of districts.
  * @property {EeColumn} [geographyGeoid] Column of `geographyPath` that contains
  *     district identifier.
@@ -138,18 +150,26 @@ const stateAssetDataTemplate = Object.freeze(
  *     per-district count of buildings.
  * @property {EeColumn} [buildingGeoid] If `buildingPath` contains per-district
  *     counts of buildings, indicates the column that has district identifier.
- * @property {EeColumn} [buildingKey] If `buildingPath` contains per-district
- *     counts of buildings, indicates the column that has counts. If
- *     `buildingPath` is not specified and `useDamageForBuildings` is false,
- *     indicates the column of `povertyPath` that has counts.
+ * @property {EeColumn} [buildingKey] If `buildingSource` is {@link
+ * BuildingSource.BUILDING}, indicates the column of `buildingPath` that has
+ * counts. If `buildingSource` is {@link BuildingSource.POVERTY}, indicates the
+ * column of `povertyPath` that has counts.
+ * @property {boolean} useDamageForBuildings Whether the damage asset should be
+ *     used to compute the total number of buildings. Ignored for state-based
+ *     disasters. If specified, `damageAssetPath`, `noDamageKey`,
+ *     `noDamageValue` must all be set.
+ * @property {BuildingSource} buildingSource Where the building count comes
+ *     from.
  */
 const flexibleDataTemplate = Object.freeze({
   povertyPath: null,
   povertyRateKey: null,
   districtDescriptionKey: null,
   povertyGeoid: null,
+  povertyHasGeometry: false,
   geographyPath: null,
   buildingPath: null,
+  buildingSource: null,
 });
 
 const flexibleAssetData = Object.freeze(

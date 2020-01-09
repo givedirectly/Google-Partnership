@@ -2,10 +2,7 @@ import {LayerType} from '../firebase_layers.js';
 import {getDisaster} from '../resources.js';
 import {processNewEeLayer, processNonEeLayer} from './add_layer.js';
 import {withColor} from './color_function_util.js';
-import {
-  createPendingSelect,
-  getDisasterAssetsFromEe
-} from './list_ee_assets.js';
+import {createPendingSelect, getDisasterAssetsFromEe} from './list_ee_assets.js';
 import {getCurrentLayers, getRowIndex, ILLEGAL_STATE_ERR, onUpdate, setDisasterData, setStatus, updateLayersInFirestore} from './manage_layers_lib.js';
 
 export {enableWhenReady, updateAfterSort};

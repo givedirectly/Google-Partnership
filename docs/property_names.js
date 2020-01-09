@@ -2,11 +2,11 @@ export {
   blockGroupTag,
   damageTag,
   geoidTag,
+  isUserProperty,
   povertyHouseholdsTag,
   povertyPercentageTag,
   scoreTag,
   totalHouseholdsTag,
-    isUserProperty,
 };
 
 const blockGroupTag = 'BLOCK GROUP';

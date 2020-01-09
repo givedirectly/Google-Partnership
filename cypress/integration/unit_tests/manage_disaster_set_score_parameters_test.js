@@ -3,17 +3,12 @@ import {readDisasterDocument} from '../../../docs/firestore_document.js';
 import {createDisasterData} from '../../../docs/import/create_disaster_lib.js';
 import * as ListEeAssets from '../../../docs/import/list_ee_assets.js';
 import {enableWhenFirestoreReady} from '../../../docs/import/manage_disaster.js';
+import {disasterData, scoreBoundsMap, setUpScoreBoundsMap} from '../../../docs/import/manage_disaster_base.js';
+import {assetSelectionPrefix, setUpStateBasedScoreSelectorTable, stateBasedScoreAssetTypes, validateStateBasedUserFields} from '../../../docs/import/manage_disaster_state_based.js';
 import {getDisaster} from '../../../docs/resources.js';
 import {cyQueue} from '../../support/commands.js';
 import {getConvertEeObjectToPromiseRelease, setUpSavingStubs} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
-import {setUpScoreBoundsMap, disasterData, scoreBoundsMap} from '../../../docs/import/manage_disaster_base.js';
-import {
-  assetSelectionPrefix,
-  setUpStateBasedScoreSelectorTable,
-  stateBasedScoreAssetTypes,
-  validateStateBasedUserFields
-} from '../../../docs/import/manage_disaster_state_based.js';
 
 // Triangle goes up into Canada, past default map of basic_map.js.
 const scoreBoundsCoordinates = [
@@ -40,9 +35,10 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
       cy.stub(document, 'getElementById')
           .callsFake((id) => doc.getElementById(id));
       if (firstTest) {
-        // setUpStateBasedScoreSelectorTable gets elements by id, so we have to stub
-        // first, which is harder in a before() hook (since stubs should be set
-        // in beforeEach() hooks) but we only want to run it once in this file.
+        // setUpStateBasedScoreSelectorTable gets elements by id, so we have to
+        // stub first, which is harder in a before() hook (since stubs should be
+        // set in beforeEach() hooks) but we only want to run it once in this
+        // file.
         setUpStateBasedScoreSelectorTable();
         firstTest = false;
       }
@@ -648,7 +644,9 @@ function setFirstSelectInScoreRow(rowNum) {
  * @return {Cypress.Chainable} Cypress promise of the td
  */
 function getFirstTdInScoreRow(rowNum) {
-  return cy.get('#' + assetSelectionPrefix + stateBasedScoreAssetTypes[rowNum].idStem)
+  return cy
+      .get(
+          '#' + assetSelectionPrefix + stateBasedScoreAssetTypes[rowNum].idStem)
       .find('td')
       .first();
 }

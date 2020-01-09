@@ -1,7 +1,7 @@
 import {blockGroupTag, damageTag, geoidTag, povertyHouseholdsTag, povertyPercentageTag, totalHouseholdsTag} from '../property_names.js';
 import {getBackupScoreAssetPath, getScoreAssetPath} from '../resources.js';
 import {computeAndSaveBounds} from './center.js';
-import {BUILDING_COUNT_KEY} from './create_disaster_lib.js';
+import {BUILDING_COUNT_KEY, BuildingSource} from './create_disaster_lib.js';
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
 
 export {
@@ -385,14 +385,18 @@ function createScoreAssetForFlexibleDisaster(
       calculateDamage(assetData, setMapBoundsInfoFunction);
   const {flexibleData} = assetData;
   let processing = ee.FeatureCollection(flexibleData.povertyPath);
-  const {povertyGeoid, geographyPath, buildingPath, buildingKey} = flexibleData;
-  const {useDamageForBuildings} = assetData;
+  const {povertyGeoid, povertyHasGeometry, buildingSource, buildingKey} =
+      flexibleData;
   // First thing we do is add geographies if necessary and restrict to the
   // damage envelope, so that we can minimize downstream work.
-  if (geographyPath) {
+  if (povertyHasGeometry) {
+    processing = processing.filterBounds(damageEnvelope);
+    processing = renameProperty(processing, povertyGeoid, geoidTag);
+  } else {
     const {geographyGeoid} = flexibleData;
     const geographyCollection = stringifyCollection(
-        ee.FeatureCollection(geographyPath).filterBounds(damageEnvelope),
+        ee.FeatureCollection(flexibleData.geographyPath)
+            .filterBounds(damageEnvelope),
         geographyGeoid);
     processing = stringifyCollection(processing, povertyGeoid, geoidTag);
     processing =
@@ -401,36 +405,40 @@ function createScoreAssetForFlexibleDisaster(
         (f) => ee.Feature(
             ee.Feature(f.get('secondary')).geometry(),
             ee.Feature(f.get('primary')).toDictionary()));
-  } else {
-    processing = processing.filterBounds(damageEnvelope);
-    processing = renameProperty(processing, povertyGeoid, geoidTag);
   }
   // Rename description property so it can be recognized as special.
   processing = renameProperty(
       processing, flexibleData.districtDescriptionKey, blockGroupTag);
 
-  if (buildingPath) {
-    const {buildingGeoid} = flexibleData;
-    const buildingCollection = ee.FeatureCollection(buildingPath);
-    if (buildingGeoid) {
-      // TODO(janakr): Should this be a more expansive join? If some district is
-      //  missing building counts, this will exclude it completely.
-      processing = innerJoin(
-          processing, stringifyCollection(buildingCollection, buildingGeoid),
-          geoidTag, buildingGeoid);
-      processing = processing.map(
-          (f) => combineWithAsset(f, BUILDING_COUNT_KEY, buildingKey));
-    } else {
-      const buildingsHisto =
-          computeBuildingsHisto(buildingCollection, processing);
-      processing = combineWithBuildings(processing, buildingsHisto);
-    }
-  } else if (!useDamageForBuildings) {
-    processing = renameProperty(processing, buildingKey, BUILDING_COUNT_KEY);
+  switch (buildingSource) {
+    case BuildingSource.BUILDING:
+      const {buildingGeoid} = flexibleData;
+      const buildingCollection =
+          ee.FeatureCollection(flexibleData.buildingPath);
+      if (buildingGeoid) {
+        // TODO(janakr): Should this be a more expansive join? If some district
+        // is
+        //  missing building counts, this will exclude it completely.
+        processing = innerJoin(
+            processing, stringifyCollection(buildingCollection, buildingGeoid),
+            geoidTag, buildingGeoid);
+        processing = processing.map(
+            (f) => combineWithAsset(f, BUILDING_COUNT_KEY, buildingKey));
+      } else {
+        const buildingsHisto =
+            computeBuildingsHisto(buildingCollection, processing);
+        processing = combineWithBuildings(processing, buildingsHisto);
+      }
+      break;
+    case BuildingSource.POVERTY:
+      processing = renameProperty(processing, buildingKey, BUILDING_COUNT_KEY);
+      break;
+    case BuildingSource.DAMAGE:
+      break;
   }
   if (damage) {
     const {noDamageKey, noDamageValue} = assetData;
-    if (useDamageForBuildings) {
+    if (buildingSource === BuildingSource.DAMAGE) {
       processing = combineWithDamageAndUseForBuildings(
           processing, damage, noDamageKey, noDamageValue);
     } else {
