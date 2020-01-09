@@ -83,8 +83,8 @@ link, via `sudo ln -s /path/to/file/in/extracted/zip/named/chrome-wrapper
 /usr/bin/chromium` so that Cypress knows how to find it easily.
 
 * *[Optional]* Install `ogr2ogr` command line tool (part of the gdal library) if you ever need to
-convert between geo-data types. This will most often be used to convert geo data to earth
-engine-friendly formats
+convert between geo-data types. This will most often be used to convert geo data to [earth
+engine-friendly formats](https://developers.google.com/earth-engine/asset_manager).
 
     ```shell
     brew install gdal
