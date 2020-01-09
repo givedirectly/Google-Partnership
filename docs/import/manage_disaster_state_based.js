@@ -3,7 +3,7 @@ import {getDisaster} from '../resources.js';
 import {incomeKey, snapKey, sviKey, totalKey} from './create_disaster_lib.js';
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
 import {createPendingSelect, getStateAssetsFromEe} from './list_ee_assets.js';
-import {createAssetDropdownWithNone, damageAssetPresent, disasterData, initializeScoreBoundsMapFromAssetData, onNonDamageAssetSelect, SameDisasterChecker, setProcessButtonText, verifyAsset,} from './manage_disaster_base.js';
+import {createAssetDropdownWithNone, damageAssetPresent, disasterData, initializeScoreBoundsMapFromAssetData, onAssetSelect, SameDisasterChecker, setProcessButtonText, verifyAsset,} from './manage_disaster_base.js';
 
 export {
   initializeStateBasedScoreSelectors,
@@ -168,7 +168,7 @@ function initializeStateBasedScoreSelectors(states, stateAssets) {
       const select = createAssetDropdownWithNone(assets, statePropertyPath)
                          .prop('id', selectId)
                          .on('change',
-                             () => onNonDamageAssetSelect(
+                             () => onAssetSelect(
                                  statePropertyPath, expectedColumns, selectId))
                          .addClass('with-status-border');
       row.append(createTd().append(select));

@@ -124,7 +124,7 @@ async function onSetDisaster() {
     // Don't do anything unless this is still the right disaster.
     return;
   }
-  initializeDamageSelector(disasterAssets);
+  await initializeDamageSelector(disasterAssets);
   processedCurrentDisasterDamageSelector = true;
   await scorePromise;
   validateFunction();

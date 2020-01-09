@@ -1,7 +1,30 @@
 import {getDisaster} from '../resources.js';
+import {BuildingSource} from './create_disaster_lib.js';
 
 import {createPendingSelect, getDisasterAssetsFromEe} from './list_ee_assets.js';
-import {createAssetDropdownWithNone, createColumnDropdown, createEnabledProperties, createPropertyListItem, createSelectFromColumnInfo, DAMAGE_COLUMN_INFO, DAMAGE_NODAMAGE_VALUE_INFO, damageAssetPresent, getElementFromPath, getPropertyNames, handleAssetDataChange, initializeScoreBoundsMapFromAssetData, onNonDamageAssetSelect, removeAndCreateUl, SameDisasterChecker, SameSelectChecker, setProcessButtonText, validateColumnArray, validateColumnSelect, verifyAsset,} from './manage_disaster_base.js';
+import {
+  createAssetDropdownWithNone,
+  createColumnDropdown,
+  createEnabledProperties,
+  createPropertyListItem,
+  createSelectFromColumnInfo,
+  DAMAGE_COLUMN_INFO,
+  DAMAGE_VALUE_INFO,
+  damageAssetPresent,
+  getElementFromPath,
+  getPropertyNames,
+  handleAssetDataChange,
+  initializeScoreBoundsMapFromAssetData,
+  onAssetSelect,
+  removeAndCreateUl,
+  SameDisasterChecker,
+  SameSelectChecker,
+  setProcessButtonText,
+  validateColumnArray,
+  validateColumnSelect,
+  verifyAsset,
+  writeSelectAndGetPropertyNames,
+} from './manage_disaster_base.js';
 
 export {initializeFlexible, onSetFlexibleDisaster, validateFlexibleUserFields};
 
@@ -38,10 +61,10 @@ async function validateFlexibleUserFields() {
         }
       }
     }
-    if (getElementFromPath(useDamageForBuildingsPath)) {
+    if (getElementFromPath(buildingSourcePath)) {
       const hasDamageAsset = damageAssetPresent();
       if (hasDamageAsset) {
-        const missingLabels = [DAMAGE_COLUMN_INFO, DAMAGE_NODAMAGE_VALUE_INFO]
+        const missingLabels = [DAMAGE_COLUMN_INFO, DAMAGE_VALUE_INFO]
                                   .map(validateColumnSelect)
                                   .filter((c) => c);
         if (missingLabels) {
@@ -69,25 +92,25 @@ const buildingPath = ['flexibleData', 'buildingPath'];
 
 const buildingId = 'select-building-asset';
 
-const useDamageForBuildingsPath = Object.freeze(['useDamageForBuildings']);
+const buildingSourcePath = Object.freeze(['flexibleData', 'buildingSource']);
 
 function initializeFlexible() {
   // Set up radio buttons for flexible buildings source.
-  $('#buildings-source-damage').on('click', () => {
-    handleAssetDataChange(true, useDamageForBuildingsPath);
-    processUseDamageForBuildings();
-  });
   $('#buildings-source-buildings').on('click', () => {
-    handleAssetDataChange(false, useDamageForBuildingsPath);
-    processSeparateBuildingsAsset();
+    handleAssetDataChange(BuildingSource.BUILDING, buildingSourcePath);
+    processBuildingSourceBuildings();
   });
   $('#buildings-source-poverty').on('click', () => {
-    handleAssetDataChange(false, useDamageForBuildingsPath);
-    processBuildingsInPoverty();
+    handleAssetDataChange(BuildingSource.POVERTY, buildingSourcePath);
+    processBuildingSourcePoverty();
+  });
+  $('#buildings-source-damage').on('click', () => {
+    handleAssetDataChange(BuildingSource.DAMAGE, buildingSourcePath);
+    processBuildingSourceDamage();
   });
 }
 
-function processUseDamageForBuildings() {
+function processBuildingSourceDamage() {
   const divs = getBuildingsDivs();
   divs.buildingsDiv.hide();
   divs.povertyDiv.hide();
@@ -95,7 +118,7 @@ function processUseDamageForBuildings() {
 
 const buildingsSameDisasterChecker = new SameDisasterChecker();
 
-async function processSeparateBuildingsAsset() {
+async function processBuildingSourceBuildings() {
   const {buildingsDiv, povertyDiv} = getBuildingsDivs();
   povertyDiv.hide();
   const buildingSelect = await createAllAssetDropdown(
@@ -107,7 +130,7 @@ async function processSeparateBuildingsAsset() {
       buildingSelect, buildingsDiv, () => getPropertyNames(buildingId));
 }
 
-function processBuildingsInPoverty() {
+function processBuildingSourcePoverty() {
   const divs = getBuildingsDivs();
   divs.buildingsDiv.hide();
   divs.povertyDiv.show();
@@ -135,15 +158,22 @@ async function onSetFlexibleDisaster(assetData) {
   $('#flexible-geography-asset-data').hide();
   initializeScoreBoundsMapFromAssetData(assetData);
   let buildingsPromise = Promise.resolve();
-  if (getElementFromPath(useDamageForBuildingsPath)) {
-    processUseDamageForBuildings();
-    $('#buildings-source-damage').prop('checked', true);
-  } else if (getElementFromPath(buildingPath)) {
-    buildingsPromise = processSeparateBuildingsAsset();
-    $('#buildings-source-buildings').prop('checked', true);
-  } else {
-    processBuildingsInPoverty();
-    $('#buildings-source-poverty').prop('checked', true);
+  const {buildingSource} = assetData.flexibleData;
+  if (buildingSource !== null) {
+    switch (buildingSource) {
+      case BuildingSource.BUILDING:
+        buildingsPromise = processBuildingSourceBuildings();
+        $('#buildings-source-buildings').prop('checked', true);
+        break;
+      case BuildingSource.POVERTY:
+        processBuildingSourcePoverty();
+        $('#buildings-source-poverty').prop('checked', true);
+        break;
+      case BuildingSource.DAMAGE:
+        processBuildingSourceDamage();
+        $('#buildings-source-damage').prop('checked', true);
+        break;
+    }
   }
   const povertyDiv = $('#flexible-poverty-asset-data');
   const povertySelect = await createAllAssetDropdown(
@@ -195,7 +225,7 @@ async function createAllAssetDropdown(
 async function onPovertyChange(povertySelect, povertyDiv) {
   const samePovertyChecker = new SameSelectChecker(povertySelect);
   const propertyNames =
-      await onNonDamageAssetSelect(povertyPath, null, povertyId);
+      await onAssetSelect(povertyPath, null, povertyId);
   if (!propertyNames || !samePovertyChecker.markDoneIfStillValid()) {
     // If we've switched assets, do nothing.
     return;
@@ -212,17 +242,11 @@ async function processPovertyAsset(propertyNames, povertySelect, povertyDiv) {
   // Should complete instantly since already finished this call earlier.
   const disasterAssets = await getDisasterAssetsFromEe(getDisaster());
   const attributes = disasterAssets.get(povertySelect.val());
-  if (!attributes) {
+  if (!attributes || attributes.hasGeometry) {
     geographyDiv.hide();
-  } else if (attributes.hasGeometry) {
-    if (getElementFromPath(geographyPath)) {
-      // Get rid of geography path if it was set. Nothing needs to wait for the
-      // write to finish.
-      handleAssetDataChange(null, geographyPath);
-    }
-    geographyDiv.hide();
-  } else {
-    geographyDiv.empty().append(
+    return;
+  }
+    geographyDiv.empty().show().append(
         $(document.createElement('span')).text('Geography asset path: '));
 
     const geographySelect =
@@ -230,23 +254,18 @@ async function processPovertyAsset(propertyNames, povertySelect, povertyDiv) {
             .prop('id', geographyId)
             .on('change',
                 () => onGeographyChange(geographySelect, geographyDiv));
-    geographyDiv.append(geographySelect).show();
-    const sameGeographyChecker = new SameSelectChecker(geographySelect);
-    const propertyNames = await verifyAsset(geographyId, null);
-    if (!propertyNames || !sameGeographyChecker.markDoneIfStillValid()) {
-      return;
+    geographyDiv.append(geographySelect);
+    const geographyProps = await getPropertyNames(geographyId);
+    if (geographyProps) {
+      processGeographyAsset(geographyProps, geographyDiv);
     }
-    processGeographyAsset(propertyNames, geographyDiv);
-  }
 }
 
 const geographyAttrUl = 'geography-attr-ul';
 
 async function onGeographyChange(geographySelect, geographyDiv) {
-  const sameGeographyChecker = new SameSelectChecker(geographySelect);
-  const propertyNames =
-      await onNonDamageAssetSelect(geographyPath, null, geographyId);
-  if (!propertyNames || !sameGeographyChecker.markDoneIfStillValid()) {
+  const propertyNames = await writeSelectAndGetPropertyNames(geographySelect, geographyId, geographyDiv);
+  if (!propertyNames) {
     return;
   }
   processGeographyAsset(propertyNames, geographyDiv);
@@ -281,7 +300,7 @@ async function onBuildingChange(
     buildingSelect, buildingDiv, propertyNamesLambda = null) {
   const writeLambda = propertyNamesLambda ?
       () => null :
-      () => onNonDamageAssetSelect(buildingPath, null, buildingId);
+      () => onAssetSelect(buildingPath, null, buildingId);
   propertyNamesLambda = propertyNamesLambda ? propertyNamesLambda : writeLambda;
   const buildingAttrList = removeAndCreateUl(buildingAttrUl);
   const assetName = buildingSelect.val();

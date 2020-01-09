@@ -14,7 +14,7 @@ export {
   createPropertyListItem,
   createSelectFromColumnInfo,
   DAMAGE_COLUMN_INFO,
-  DAMAGE_NODAMAGE_VALUE_INFO,
+  DAMAGE_VALUE_INFO,
   damageAssetPresent,
   disasterData,
   getElementFromPath,
@@ -22,7 +22,7 @@ export {
   handleAssetDataChange,
   initializeDamageSelector,
   initializeScoreBoundsMapFromAssetData,
-  onNonDamageAssetSelect,
+  onAssetSelect,
   removeAndCreateUl,
   SameDisasterChecker,
   SameSelectChecker,
@@ -31,7 +31,8 @@ export {
   setValidateFunction,
   validateColumnArray,
   validateColumnSelect,
-  verifyAsset
+  verifyAsset,
+  writeSelectAndGetPropertyNames,
 };
 // For testing.
 export {scoreBoundsMap};
@@ -88,15 +89,15 @@ const DAMAGE_ID = 'damage-asset-select';
  * Initializes the damage selector, given the provided assets.
  * @param {DisasterList} assets List of assets in the disaster folder
  */
-function initializeDamageSelector(assets) {
+async function initializeDamageSelector(assets) {
   const select = createAssetDropdownWithNone(
       assets, damagePropertyPath, $('#' + DAMAGE_ID).empty());
-  select.on('change', () => {
-    const val = select.val();
-    handleAssetDataChange(val, damagePropertyPath);
-    damageConsequences(val);
+  select.on('change', async () => {
+    const propertyNames =
+        await writeSelectAndGetPropertyNames(select, DAMAGE_ID, damagePropertyPath);
+    damageConsequences(propertyNames, select.val());
   });
-  return damageConsequences(select.val());
+  return damageConsequences(await getPropertyNames(DAMAGE_ID), select.val());
 }
 
 const DAMAGE_ATTRS_UL = 'damage-attrs-ul';
@@ -104,20 +105,19 @@ const DAMAGE_COLUMN_INFO = {
   label: 'column that can distinguish between damaged and undamaged buildings',
   path: ['noDamageKey']
 };
-const DAMAGE_NODAMAGE_VALUE_INFO = {
+const DAMAGE_VALUE_INFO = {
   label: 'value in column that identifies undamaged buildings',
   path: ['noDamageValue']
 };
 
-async function damageConsequences(val) {
+async function damageConsequences(propertyNames, val) {
   setMapBoundsDiv(!!val);
-  const propertyNames = await getPropertyNames(DAMAGE_ID);
   if (!propertyNames) {
     return;
   }
   const noDamageValueInput =
       $(document.createElement('input'))
-          .id('id', DAMAGE_NODAMAGE_VALUE_INFO.path.join('-'))
+          .id('id', DAMAGE_VALUE_INFO.path.join('-'))
           .on('blur',
               () => handleAssetDataChange(
                   noDamageValueInput.val(), ['noDamageValue']));
@@ -128,7 +128,7 @@ async function damageConsequences(val) {
               .append(createSelectFromColumnInfo(
                   DAMAGE_COLUMN_INFO, createEnabledProperties(propertyNames)))
               .append($(document.createElement('li'))
-                          .append(createLabel(DAMAGE_NODAMAGE_VALUE_INFO))
+                          .append(createLabel(DAMAGE_VALUE_INFO))
                           .append(noDamageValueInput)));
 }
 
@@ -136,6 +136,16 @@ async function getPropertyNames(id) {
   const sameValueChecker = new SameSelectChecker($('#' + id));
   const propertyNames = await verifyAsset(id, null);
   if (!propertyNames || !sameValueChecker.markDoneIfStillValid()) {
+    return null;
+  }
+  return propertyNames;
+}
+
+async function writeSelectAndGetPropertyNames(select, id, path) {
+  const sameSelectChecker = new SameSelectChecker(select);
+  const propertyNames =
+      await onAssetSelect(path, null, id);
+  if (!propertyNames || !sameSelectChecker.markDoneIfStillValid()) {
     return null;
   }
   return propertyNames;
@@ -253,7 +263,7 @@ function createDropdown(
  * @param {Array<string>} expectedColumns
  * @return {Promise<void>} see {@link verifyAsset}
  */
-function onNonDamageAssetSelect(propertyPath, expectedColumns, selectId) {
+function onAssetSelect(propertyPath, expectedColumns, selectId) {
   handleAssetDataChange($('#' + selectId).val(), propertyPath);
   return verifyAsset(selectId, expectedColumns);
 }
