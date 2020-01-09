@@ -304,9 +304,5 @@ function testSave(fxn, property, input, afterVal) {
             .get();
       })
       .then(
-          (doc) => {
-            console.log(disasterData);
-            console.log(doc.data());
-            expect(doc.data()['layerArray'][0][property]).to.eql(afterVal)
-          });
+          (doc) => expect(doc.data()['layerArray'][0][property]).to.eql(afterVal));
 }
