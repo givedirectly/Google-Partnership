@@ -4,6 +4,7 @@ import {backUpAssetAndStartTask, createScoreAssetForFlexibleDisaster, createScor
 import * as Resources from '../../../docs/resources.js';
 import {assertFirestoreMapBounds} from '../../support/firestore_map_bounds';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
+import {BuildingSource} from '../../../docs/import/create_disaster_lib.js';
 
 const mockTask = {
   start: () => {},
@@ -229,6 +230,7 @@ describe('Unit tests for create_score_asset.js', () => {
                                   .set(basicFlexiblePovertyAttributes)
                                   .set('GEOid2', null)]);
     flexibleData.povertyGeoid = 'GEOID';
+    flexibleData.povertyHasGeometry = true;
     flexibleData.geographyPath = null;
     expectForFlexibleDisaster();
   });
@@ -241,6 +243,7 @@ describe('Unit tests for create_score_asset.js', () => {
     ]);
     flexibleData.buildingGeoid = 'buildinggeoid';
     flexibleData.buildingKey = 'count';
+    flexibleData.buildingHasGeometry = false;
     expectForFlexibleDisaster();
   });
 
@@ -251,14 +254,15 @@ describe('Unit tests for create_score_asset.js', () => {
     flexibleData.povertyPath = ee.FeatureCollection([
       ee.Feature(null, basicFlexiblePovertyAttributes).set('buildingCount', 3),
     ]);
+    flexibleData.buildingSource = BuildingSource.POVERTY;
     expectForFlexibleDisaster();
   });
 
   it('succeeds for flexible disaster with buildings in damage', () => {
     const flexibleData = setDefaultFlexibleData();
     flexibleData.buildingPath = null;
+    flexibleData.buildingSource = BuildingSource.DAMAGE;
     const {assetData} = testData;
-    assetData.useDamageForBuildings = true;
     const noDamageKey = 'expelliarmus';
     assetData.noDamageKey = noDamageKey;
     assetData.noDamageValue = 'no damage at all';
@@ -283,9 +287,12 @@ describe('Unit tests for create_score_asset.js', () => {
           [ee.Feature(null, basicFlexiblePovertyAttributes)]),
       povertyGeoid: 'GEOid2',
       districtDescriptionKey: 'GEOdescription',
+      povertyHasGeometry: false,
       geographyPath: assetData.stateBasedData.blockGroupAssetPaths.NY,
       geographyGeoid: 'GEOID',
+      buildingSource: BuildingSource.BUILDING,
       buildingPath: assetData.stateBasedData.buildingAssetPaths.NY,
+      buildingHasGeometry: true
     };
     return assetData.flexibleData;
   }

@@ -412,22 +412,22 @@ function createScoreAssetForFlexibleDisaster(
 
   switch (buildingSource) {
     case BuildingSource.BUILDING:
-      const {buildingGeoid} = flexibleData;
+      const {buildingHasGeometry} = flexibleData;
       const buildingCollection =
           ee.FeatureCollection(flexibleData.buildingPath);
-      if (buildingGeoid) {
+      if (buildingHasGeometry) {
+        const buildingsHisto =
+            computeBuildingsHisto(buildingCollection, processing);
+        processing = combineWithBuildings(processing, buildingsHisto);
+      } else {
+        const {buildingGeoid} = flexibleData;
         // TODO(janakr): Should this be a more expansive join? If some district
-        // is
-        //  missing building counts, this will exclude it completely.
+        //  is missing building counts, this will exclude it completely.
         processing = innerJoin(
             processing, stringifyCollection(buildingCollection, buildingGeoid),
             geoidTag, buildingGeoid);
         processing = processing.map(
             (f) => combineWithAsset(f, BUILDING_COUNT_KEY, buildingKey));
-      } else {
-        const buildingsHisto =
-            computeBuildingsHisto(buildingCollection, processing);
-        processing = combineWithBuildings(processing, buildingsHisto);
       }
       break;
     case BuildingSource.POVERTY:

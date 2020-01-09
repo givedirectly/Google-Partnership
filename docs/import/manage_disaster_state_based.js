@@ -3,7 +3,7 @@ import {getDisaster} from '../resources.js';
 import {incomeKey, snapKey, sviKey, totalKey} from './create_disaster_lib.js';
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
 import {createPendingSelect, getStateAssetsFromEe} from './list_ee_assets.js';
-import {createAssetDropdownWithNone, damageAssetPresent, disasterData, initializeScoreBoundsMapFromAssetData, onAssetSelect, SameDisasterChecker, setProcessButtonText, verifyAsset,} from './manage_disaster_base.js';
+import {createAssetDropdownWithNone, damageAssetPresent, disasterData, initializeScoreBoundsMapFromAssetData, onAssetSelect, SameDisasterChecker, showProcessButton, verifyAsset,} from './manage_disaster_base.js';
 
 export {
   initializeStateBasedScoreSelectors,
@@ -119,7 +119,7 @@ function validateStateBasedUserFields() {
   if (message) {
     message = 'Missing asset(s): ' + message;
   }
-  setProcessButtonText(message, optionalMessage);
+  showProcessButton(message, optionalMessage);
 }
 
 /**

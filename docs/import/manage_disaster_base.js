@@ -5,28 +5,36 @@ import {getDisaster} from '../resources.js';
 
 import {ScoreBoundsMap} from './score_bounds_map.js';
 import {updateDataInFirestore} from './update_firestore_disaster.js';
+import {
+  createPendingSelect,
+  getDisasterAssetsFromEe
+} from './list_ee_assets.js';
+import {eeLegacyPathPrefix} from '../ee_paths.js';
+import {setStatus} from './create_score_asset.js';
 
 export {
+  capitalizeFirstLetter,
+    continueMessage,
   createAssetDropdownWithNone,
   createColumnDropdown,
   createDropdown,
   createEnabledProperties,
-  createPropertyListItem,
   createSelectFromColumnInfo,
   DAMAGE_COLUMN_INFO,
   DAMAGE_VALUE_INFO,
   damageAssetPresent,
+    initializeDamageSelector,
   disasterData,
   getElementFromPath,
-  getPropertyNames,
+  verifyAssetAndGetPropertyNames,
   handleAssetDataChange,
-  initializeDamageSelector,
   initializeScoreBoundsMapFromAssetData,
+    makeIdFromPath,
   onAssetSelect,
   removeAndCreateUl,
   SameDisasterChecker,
   SameSelectChecker,
-  setProcessButtonText,
+  showProcessButton,
   setUpScoreBoundsMap,
   setValidateFunction,
   validateColumnArray,
@@ -34,6 +42,43 @@ export {
   verifyAsset,
   writeSelectAndGetPropertyNames,
 };
+
+class SameStateChecker {
+  constructor(valueSupplier) {
+    this.valueSupplier = valueSupplier;
+  }
+
+  reset() {
+    this.done = false;
+    this.knownValue = this.valueSupplier();
+  }
+
+  markDoneIfStillValid() {
+    if (!this.done && this.knownValue === this.valueSupplier()) {
+      this.done = true;
+      return true;
+    }
+    return false;
+  }
+}
+
+class SameDisasterChecker extends SameStateChecker {
+  constructor() {
+    super(getDisaster);
+  }
+}
+
+class SameSelectChecker extends SameStateChecker {
+  constructor(selectElement) {
+    super(() => selectElement.val());
+    this.reset();
+  }
+
+  val() {
+    return this.knownValue;
+  }
+}
+
 // For testing.
 export {scoreBoundsMap};
 
@@ -85,22 +130,58 @@ function initializeScoreBoundsMapFromAssetData(assetData, states = []) {
 const damagePropertyPath = Object.freeze(['damageAssetPath']);
 const DAMAGE_ID = 'damage-asset-select';
 
-/**
- * Initializes the damage selector, given the provided assets.
- * @param {DisasterList} assets List of assets in the disaster folder
- */
-async function initializeDamageSelector(assets) {
+async function initializeDamageSelector() {
+  const pendingSelect = createPendingSelect();
+  $('#damage-asset-div').append(pendingSelect);
+  if (getElementFromPath(damagePropertyPath)) {
+    createDamageItems(null);
+  } else {
+    setMapBoundsDiv(false);
+  }
+  const currentDisaster = getDisaster();
+  let disasterAssets;
+  try {
+    disasterAssets = await getDisasterAssetsFromEe(currentDisaster);
+  } catch (err) {
+    if (currentDisaster !== getDisaster()) {
+      // Don't display errors to user if no longer current disaster.
+      return;
+    }
+    if (err &&
+        err !==
+        'Asset "' + eeLegacyPathPrefix + currentDisaster + '" not found.') {
+      setStatus(err);
+    }
+    disasterAssets = new Map();
+  } finally {
+    pendingSelect.remove();
+  }
+  if (currentDisaster !== getDisaster()) {
+    // Don't do anything unless this is still the right disaster.
+    return;
+  }
   const select = createAssetDropdownWithNone(
-      assets, damagePropertyPath, $('#' + DAMAGE_ID).empty());
-  select.on('change', async () => {
+      disasterAssets, damagePropertyPath).prop('id', DAMAGE_ID)
+  .on('change', async () => {
+    if (select.val()) {
+      createDamageItems(null);
+    } else {
+      removeAndCreateUl('damage');
+    }
     const propertyNames =
         await writeSelectAndGetPropertyNames(select, DAMAGE_ID, damagePropertyPath);
     damageConsequences(propertyNames, select.val());
   });
-  return damageConsequences(await getPropertyNames(DAMAGE_ID), select.val());
+
+  $('#damage-asset-div').append(select);
+  if (select.val()) {
+    createDamageItems(null);
+  } else {
+    removeAndCreateUl('damage');
+  }
+  return damageConsequences(await verifyAsset(DAMAGE_ID, null), select.val());
 }
 
-const DAMAGE_ATTRS_UL = 'damage-attrs-ul';
 const DAMAGE_COLUMN_INFO = {
   label: 'column that can distinguish between damaged and undamaged buildings',
   path: ['noDamageKey']
@@ -115,30 +196,28 @@ async function damageConsequences(propertyNames, val) {
   if (!propertyNames) {
     return;
   }
+  createDamageItems(propertyNames);
+}
+
+function createDamageItems(propertyNames) {
   const noDamageValueInput =
       $(document.createElement('input'))
-          .id('id', DAMAGE_VALUE_INFO.path.join('-'))
+          .prop('id', makeIdFromPath(DAMAGE_VALUE_INFO.path))
           .on('blur',
               () => handleAssetDataChange(
                   noDamageValueInput.val(), ['noDamageValue']));
   noDamageValueInput.val(getElementFromPath(['noDamageValue']));
   $('#damage-asset-div')
       .append(
-          removeAndCreateUl(DAMAGE_ATTRS_UL)
+          removeAndCreateUl('damage')
               .append(createSelectFromColumnInfo(
                   DAMAGE_COLUMN_INFO, createEnabledProperties(propertyNames)))
-              .append($(document.createElement('li'))
-                          .append(createLabel(DAMAGE_VALUE_INFO))
-                          .append(noDamageValueInput)));
+              .append(createListItem(DAMAGE_VALUE_INFO)
+              .append(noDamageValueInput)));
 }
 
-async function getPropertyNames(id) {
-  const sameValueChecker = new SameSelectChecker($('#' + id));
-  const propertyNames = await verifyAsset(id, null);
-  if (!propertyNames || !sameValueChecker.markDoneIfStillValid()) {
-    return null;
-  }
-  return propertyNames;
+async function verifyAssetAndGetPropertyNames(id) {
+  return verifyAsset(id, null);
 }
 
 async function writeSelectAndGetPropertyNames(select, id, path) {
@@ -152,6 +231,9 @@ async function writeSelectAndGetPropertyNames(select, id, path) {
 }
 
 function createEnabledProperties(properties) {
+  if (!properties) {
+    return properties;
+  }
   properties = properties.filter(isUserProperty);
 
   // TODO(janakdr): Do async add_layer-style processing so we can warn if
@@ -160,36 +242,45 @@ function createEnabledProperties(properties) {
 }
 
 function createColumnDropdown(properties, path) {
+  if (!properties) {
+    return createPendingSelect();
+  }
   const select = createAssetDropdownWithNone(properties, path);
   return select.on('change', () => handleAssetDataChange(select.val(), path))
-      .prop('id', path.join('-'));
+      .prop('id', makeIdFromPath(path));
 }
 
-function createPropertyListItem(label, enabledProperties, firestorePath) {
-  return $(document.createElement('li'))
-      .append(label + ': ')
-      .append(createColumnDropdown(enabledProperties, firestorePath));
+function createListItem(columnInfo) {
+  return $(document.createElement('li')).append(createLabel(columnInfo) + ': ');
 }
 
 function createLabel(columnInfo) {
-  return columnInfo.label[0].toUpperCase() + columnInfo.label.slice(1) +
+  return capitalizeFirstLetter(columnInfo.label) +
       (columnInfo.explanation ? ' (' + columnInfo.explanation + ')' : '');
 }
 
+function capitalizeFirstLetter(str) {
+  return str[0].toUpperCase() + str.slice(1);
+}
+
 function createSelectFromColumnInfo(columnInfo, properties) {
-  return createPropertyListItem(
-      createLabel(columnInfo), properties, columnInfo.path);
+  return createListItem(columnInfo).append(createColumnDropdown(properties, columnInfo.path));
 }
 
 function validateColumnSelect(columnInfo) {
-  return $('#' + columnInfo.path.join('-')).val() ? null : columnInfo.label;
+  return $('#' + makeIdFromPath(columnInfo.path)).val() ? null : columnInfo.label;
 }
 
 function validateColumnArray(array) {
   return array.map(validateColumnSelect).filter((c) => c).join(', ');
 }
 
+function makeIdFromPath(path) {
+  return 'id-from-path-' + path.join('-');
+}
+
 function removeAndCreateUl(id) {
+  id += '-attrs-ul-id';
   $('#' + id).remove();
   return $(document.createElement('ul')).prop('id', id);
 }
@@ -204,6 +295,7 @@ function setMapBoundsDiv(hide) {
     mapBoundsDiv.hide();
   } else {
     mapBoundsDiv.show();
+    removeAndCreateUl('damage');
     scoreBoundsMap.onShow();
   }
 }
@@ -314,7 +406,7 @@ async function verifyAsset(selectId, expectedColumns) {
     }
     updateColorAndHover(
         select, 'green', expectedColumns ? 'No expected columns' : null);
-    return result;
+    return result.sort();
   } else if (expectedColumns) {
     updateColorAndHover(select, 'yellow', 'Checking columns...');
     let columnsStatusFailure;
@@ -403,11 +495,11 @@ function damageAssetPresent() {
 const KICK_OFF_TEXT = 'Kick off Data Processing (will take a while!)';
 const OPTIONAL_WARNING_PREFIX = '; warning: created asset will be missing ';
 
-function setProcessButtonText(message, optionalMessage) {
+function showProcessButton(message, optionalMessage) {
   const damagePresent = damageAssetPresent();
   const hasDamage = damagePresent || getElementFromPath(scoreCoordinatesPath);
   if (!hasDamage) {
-    message += (message ? ', and m' : 'M') +
+    message += (message ? '; and m' : 'M') +
         'ust specify either damage asset or map bounds';
   }
   if (message && optionalMessage) {
@@ -429,38 +521,6 @@ function setProcessButtonText(message, optionalMessage) {
   }
 }
 
-class SameStateChecker {
-  constructor(valueSupplier) {
-    this.valueSupplier = valueSupplier;
-  }
-
-  reset() {
-    this.done = false;
-    this.knownValue = this.valueSupplier();
-  }
-
-  markDoneIfStillValid() {
-    if (!this.done && this.knownValue === this.valueSupplier()) {
-      this.done = true;
-      return true;
-    }
-    return false;
-  }
-}
-
-class SameDisasterChecker extends SameStateChecker {
-  constructor() {
-    super(getDisaster);
-  }
-}
-
-class SameSelectChecker extends SameStateChecker {
-  constructor(selectElement) {
-    super(() => selectElement.val());
-    this.reset();
-  }
-
-  val() {
-    return this.knownValue;
-  }
+function continueMessage(message, addition) {
+  return message + (message ? '; ' + addition : capitalizeFirstLetter(addition));
 }

@@ -4,7 +4,11 @@ import {getDisaster} from '../resources.js';
 import {createScoreAssetForFlexibleDisaster, createScoreAssetForStateBasedDisaster, setStatus} from './create_score_asset.js';
 import {getDisasterAssetsFromEe,} from './list_ee_assets.js';
 import {initializeAddDelete} from './manage_disaster_add_delete.js';
-import {disasterData, initializeDamageSelector, SameDisasterChecker, setValidateFunction} from './manage_disaster_base.js';
+import {
+  initializeDamageSelector,
+  disasterData,
+  setValidateFunction
+} from './manage_disaster_base.js';
 import {initializeFlexible, onSetFlexibleDisaster, validateFlexibleUserFields} from './manage_disaster_flexible.js';
 import {onSetStateBasedDisaster, validateStateBasedUserFields} from './manage_disaster_state_based.js';
 
@@ -77,9 +81,6 @@ function enableWhenFirestoreReady(allDisastersData) {
  * switching from disaster A to B back to A, the first set of promises for A is
  * still valid if they return after we switch back to A.
  */
-let processedCurrentDisasterDamageSelector = false;
-
-const damageStatusChecker = new SameDisasterChecker();
 
 /**
  * Function called when current disaster changes. Responsible for displaying the
@@ -94,7 +95,6 @@ async function onSetDisaster() {
     // returned by getDisaster(), but tolerate.
     return Promise.resolve();
   }
-  damageStatusChecker.reset();
   const currentData = disasterData.get(currentDisaster);
   const flexible = isFlexible(currentData);
   const validateFunction =
@@ -105,27 +105,7 @@ async function onSetDisaster() {
   // Kick off score asset processing.
   const scorePromise = flexible ? onSetFlexibleDisaster(assetData) :
                                   onSetStateBasedDisaster(assetData);
-  let disasterAssets;
-  try {
-    disasterAssets = await getDisasterAssetsFromEe(currentDisaster);
-  } catch (err) {
-    if (!damageStatusChecker.markDoneIfStillValid()) {
-      // Don't display errors to user if no longer current disaster.
-      return;
-    }
-    if (err &&
-        err !==
-            'Asset "' + eeLegacyPathPrefix + currentDisaster + '" not found.') {
-      setStatus(err);
-    }
-    disasterAssets = new Map();
-  }
-  if (!damageStatusChecker.markDoneIfStillValid()) {
-    // Don't do anything unless this is still the right disaster.
-    return;
-  }
-  await initializeDamageSelector(disasterAssets);
-  processedCurrentDisasterDamageSelector = true;
+  await initializeDamageSelector();
   await scorePromise;
   validateFunction();
 }
