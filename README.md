@@ -60,10 +60,10 @@ take effect.
 page](https://travis-ci.com/givedirectly/Google-Partnership). Runs are recorded
 to the [Cypress dashboard](https://www.cypress.io/dashboard/).
 
-* *[Optional]* Ask a collaborator to add you to the existing cypress dashboard for this project
-that tracks Travis CI runs. The dashboard also provides easy access to output files, footage of the test being run, etc. 
+* *[Optional]* Ask a collaborator to add you to the existing cypress dashboard for this project. The
+dashboard tracks Travis CI runs and provides easy access to output files, footage of the test being run, etc. 
 
-* *[Optional]* If you are running on Linux and seeing issues with Chrome, or
+*  *[Optional]* If you are running on Linux and seeing issues with Chrome, or
    working on a Google internal machine, install  and use [Chromium](https://www.chromium.org)
 for tests. Install via the usual `apt-get`-style channels. This should be
 relatively straightforward on most systems, but is difficult/impossible on
