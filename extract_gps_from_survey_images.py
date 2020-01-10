@@ -117,10 +117,7 @@ def __get_coords_from_file(filepath):
   except:
     print("Unable to open image file " + filepath)
     return None
-
-  # # Change to SF representation
-  # return {'latitude': float(lat_lon[0]), 'longititude': float(lat_lon[1])}
-
+   
 
 @retry(tries=5, delay=1, backoff=2)
 def __get_attachment(sf, url, filepath):
@@ -210,8 +207,6 @@ def write_coords_to_salesforce(sf, survey_id_to_data):
 
 
 if __name__ == "__main__":
-  """
-  """
   args = __get_args()
 
   os.makedirs(args.outdir, exist_ok=True)
