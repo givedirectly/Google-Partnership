@@ -6,7 +6,8 @@ import {
   getDisasterAssetsFromEe
 } from './list_ee_assets.js';
 import {
-  capitalizeFirstLetter, continueMessage,
+  capitalizeFirstLetter,
+  continueMessage,
   createAssetDropdownWithNone,
   createColumnDropdown,
   createEnabledProperties,
@@ -15,25 +16,27 @@ import {
   DAMAGE_VALUE_INFO,
   damageAssetPresent,
   getElementFromPath,
-  verifyAssetAndGetPropertyNames,
   handleAssetDataChange,
-  initializeScoreBoundsMapFromAssetData, makeIdFromPath,
-  onAssetSelect,
+  initializeScoreBoundsMapFromAssetData,
+  makeIdFromPath,
   removeAndCreateUl,
   SameDisasterChecker,
-  SameSelectChecker,
   validateColumnArray,
-  validateColumnSelect,
-  writeSelectAndGetPropertyNames, verifyAsset, showProcessButton,
+  writeSelectAndGetPropertyNames,
+  verifyAsset,
+  showProcessButtonWithDamage,
+  showProcessButton,
 } from './manage_disaster_base.js';
 
 export {initializeFlexible, onSetFlexibleDisaster, validateFlexibleUserFields};
 
 const MISSING_BUILDINGS_TAIL = ' (choose damage asset as buildings source for now if you don\'t need buildings)';
 
-async function validateFlexibleUserFields() {
-  // Probably needed: just get it once.
-  const disasterAssets = await getDisasterAssetsFromEe(getDisaster());
+function validateFlexibleUserFields() {
+  if (pendingOperations > 0) {
+    showProcessButton('Pending...');
+    return;
+  }
   let message = '';
   let optionalMessage = '';
   const povertyAssetName = $('#' + povertyId).val();
@@ -59,7 +62,7 @@ async function validateFlexibleUserFields() {
       optionalMessage = 'building counts';
     }
   } else {
-    let addOptionalTail = false;
+    let tailAboutBuildingsWorkaround = false;
     switch (buildingSource) {
       case BuildingSource.BUILDING:
         const buildingAssetName = $('#' + buildingId).val();
@@ -69,14 +72,14 @@ async function validateFlexibleUserFields() {
           }
         } else {
           message = continueMessage(message, 'missing buildings asset');
-          addOptionalTail = true;
+          tailAboutBuildingsWorkaround = !hasDamageAsset;
         }
         break;
       case BuildingSource.POVERTY:
         if (!$('#' + makeIdFromPath(BUILDING_KEY_PATH)).val()) {
           message = continueMessage(message,
               'must specify building-count column');
-          addOptionalTail = true;
+          tailAboutBuildingsWorkaround = !hasDamageAsset;
         }
         break;
       case BuildingSource.DAMAGE:
@@ -88,11 +91,11 @@ async function validateFlexibleUserFields() {
         }
         break;
     }
-    if (addOptionalTail) {
+    if (tailAboutBuildingsWorkaround) {
       message += MISSING_BUILDINGS_TAIL;
     }
   }
-  showProcessButton(message, optionalMessage);
+  showProcessButtonWithDamage(message, optionalMessage);
 }
 
 function checkColumns(message, key) {
@@ -139,6 +142,9 @@ async function initializeBuildingSourceBuildings() {
   const {buildingsDiv, povertyDiv} = getBuildingsDivs();
   povertyDiv.hide();
   const pendingSelect = prepareContainerDiv(buildingsDiv, 'buildings');
+  if (getElementFromPath(BUILDING_HAS_GEOMETRY_PATH)) {
+    removeAndCreateUl('buildings');
+  }
   const buildingSelect = await createAssetDropdown(buildingPath);
   pendingSelect.remove();
   if (!buildingSelect) {
@@ -199,7 +205,7 @@ async function onSetFlexibleDisaster(assetData) {
         break;
     }
   }
-  if (getElementFromPath(geographyPath)) {
+  if (!getElementFromPath(POVERTY_HAS_GEOMETRY_PATH)) {
     // If it turns out that geography should be hidden, processPovertyAsset will
     // do that after this has made geography visible, so it will end up hidden.
     initializeGeography();
@@ -235,7 +241,7 @@ const geographyPath = ['flexibleData', 'geographyPath'];
 
 async function processPovertyAsset(propertyNamesPromise, assetName, povertyDiv) {
   const geographyPromise = doGeographyForPoverty(assetName);
-  const propertyNames = await propertyNamesPromise;
+  const propertyNames = assetName ? await propertyNamesPromise : [];
   if (!propertyNames) {
     // If we've switched assets, do nothing.
     return null;
@@ -297,7 +303,9 @@ function showGeographyColumns(propertyNames, geographyDiv) {
 
 async function onBuildingChange(buildingSelect, buildingDiv) {
   const propertyNamesPromise = writeSelectAndGetPropertyNames(buildingSelect, buildingId, buildingPath);
-  if (await shouldDisplayBuildingProperties(buildingSelect.val())) {
+  const noGeometry = await shouldDisplayBuildingProperties(buildingSelect.val());
+  handleAssetDataChange(!noGeometry, BUILDING_HAS_GEOMETRY_PATH);
+  if (noGeometry) {
     showColumns(null, buildingDiv, 'buildings');
     const propertyNames = await propertyNamesPromise;
     if (propertyNames) {
@@ -315,9 +323,7 @@ async function shouldDisplayBuildingProperties(assetName) {
   // Should complete instantly.
   const disasterAssets = await getDisasterAssetsFromEe(getDisaster());
   // Buildings have geometry, so we are intersecting them. No properties if so.
-  const hasGeometry = !disasterAssets.get(assetName).hasGeometry;
-  handleAssetDataChange(hasGeometry, BUILDING_HAS_GEOMETRY_PATH);
-  return hasGeometry;
+  return !disasterAssets.get(assetName).hasGeometry;
 }
 
 const BUILDING_KEY_PATH = ['flexibleData', 'buildingKey'];
@@ -366,6 +372,7 @@ const COLUMNS =
 function showSpecialPovertyColumn(properties) {
   const enabledProperties = createEnabledProperties(properties);
   $('#buildings-poverty-select-span')
+      .show()
       .empty()
       .append(createColumnDropdown(
           enabledProperties, BUILDING_KEY_PATH));
@@ -373,7 +380,9 @@ function showSpecialPovertyColumn(properties) {
 
 async function showRealColumns(div, id, key) {
   showColumns(null, div, key);
+  pendingOperations++;
   const propertyNames = await verifyAsset(id, null);
+  pendingOperations--;
   if (propertyNames) {
     showColumns(propertyNames, div, key);
   }
@@ -401,9 +410,11 @@ function prepareContainerDiv(outerDiv, assetKey) {
 
 async function createAssetDropdown(propertyPath, enableAll = true) {
   const currentDisaster = getDisaster();
+  pendingOperations++;
   // Same promise as waited on for many assets. Since getDisasterAssetsFromEe
   // deduplicates, this is fine.
   const disasterAssets = await getDisasterAssetsFromEe(currentDisaster);
+  pendingOperations--;
   if (currentDisaster !== getDisaster()) {
     return null;
   }
@@ -418,4 +429,3 @@ async function createAssetDropdown(propertyPath, enableAll = true) {
   }
   return createAssetDropdownWithNone(enableAll ? allEnabledDisasterAssets : disasterAssets, propertyPath);
 }
-

@@ -13,6 +13,7 @@ import {eeLegacyPathPrefix} from '../ee_paths.js';
 import {setStatus} from './create_score_asset.js';
 
 export {
+  addPending, pendingDone
   capitalizeFirstLetter,
     continueMessage,
   createAssetDropdownWithNone,
@@ -26,7 +27,6 @@ export {
     initializeDamageSelector,
   disasterData,
   getElementFromPath,
-  verifyAssetAndGetPropertyNames,
   handleAssetDataChange,
   initializeScoreBoundsMapFromAssetData,
     makeIdFromPath,
@@ -34,7 +34,8 @@ export {
   removeAndCreateUl,
   SameDisasterChecker,
   SameSelectChecker,
-  showProcessButton,
+  showProcessButtonWithDamage,
+    showProcessButton,
   setUpScoreBoundsMap,
   setValidateFunction,
   validateColumnArray,
@@ -105,6 +106,8 @@ const scoreCoordinatesPath = Object.freeze(['scoreBoundsCoordinates']);
  * @type {Function}
  */
 let validateFunction;
+
+let pendingOperations = 0;
 
 function setValidateFunction(newValidateFunction) {
   validateFunction = newValidateFunction;
@@ -214,10 +217,6 @@ function createDamageItems(propertyNames) {
                   DAMAGE_COLUMN_INFO, createEnabledProperties(propertyNames)))
               .append(createListItem(DAMAGE_VALUE_INFO)
               .append(noDamageValueInput)));
-}
-
-async function verifyAssetAndGetPropertyNames(id) {
-  return verifyAsset(id, null);
 }
 
 async function writeSelectAndGetPropertyNames(select, id, path) {
@@ -495,7 +494,7 @@ function damageAssetPresent() {
 const KICK_OFF_TEXT = 'Kick off Data Processing (will take a while!)';
 const OPTIONAL_WARNING_PREFIX = '; warning: created asset will be missing ';
 
-function showProcessButton(message, optionalMessage) {
+function showProcessButtonWithDamage(message, optionalMessage) {
   const damagePresent = damageAssetPresent();
   const hasDamage = damagePresent || getElementFromPath(scoreCoordinatesPath);
   if (!hasDamage) {
@@ -505,22 +504,38 @@ function showProcessButton(message, optionalMessage) {
   if (message && optionalMessage) {
     message += OPTIONAL_WARNING_PREFIX + optionalMessage;
   }
-  const processButton = $('#process-button');
-  processButton.show();
   if (message) {
-    processButton.text(message);
-    processButton.attr('disabled', true);
-    processButton.css('background-color', '');
+    showProcessButton(message);
   } else {
-    processButton.text(
+    $('#process-button')
+    .show()
+    .text(
         KICK_OFF_TEXT +
-        (optionalMessage ? OPTIONAL_WARNING_PREFIX + optionalMessage : ''));
-    processButton.attr('disabled', false);
-    processButton.css(
+        (optionalMessage ? OPTIONAL_WARNING_PREFIX + optionalMessage : ''))
+    .attr('disabled', false)
+    .css(
         'background-color', optionalMessage ? 'rgb(150, 150, 0)' : '');
   }
 }
 
+function showProcessButton(message) {
+  $('#process-button')
+  .show()
+  .text(message)
+  .attr('disabled', true)
+  .css('background-color', '');
+}
+
 function continueMessage(message, addition) {
   return message + (message ? '; ' + addition : capitalizeFirstLetter(addition));
+}
+
+function addPending() {
+  pendingOperations++;
+}
+
+function pendingDone() {
+  if (--pendingOperations === 0) {
+    validateFunction();
+  }
 }

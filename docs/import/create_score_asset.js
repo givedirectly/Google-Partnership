@@ -3,6 +3,7 @@ import {getBackupScoreAssetPath, getScoreAssetPath} from '../resources.js';
 import {computeAndSaveBounds} from './center.js';
 import {BUILDING_COUNT_KEY, BuildingSource} from './create_disaster_lib.js';
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
+import {transformEarthEngineFailureMessage} from '../ee_promise_cache.js';
 
 export {
   createScoreAssetForFlexibleDisaster,
@@ -456,52 +457,57 @@ function createScoreAssetForFlexibleDisaster(
  * @return {Promise<!ee.batch.ExportTask>} Promise that resolves with task if
  *     rename dance was successful
  */
-function backUpAssetAndStartTask(featureCollection) {
+async function backUpAssetAndStartTask(featureCollection) {
   const scoreAssetPath = getScoreAssetPath();
   const oldScoreAssetPath = getBackupScoreAssetPath();
   const task = ee.batch.Export.table.toAsset(
       featureCollection,
       scoreAssetPath.substring(scoreAssetPath.lastIndexOf('/') + 1),
       scoreAssetPath);
-  return renameAssetAsPromise(scoreAssetPath, oldScoreAssetPath)
-      .catch((renameErr) => {
-        // These checks aren't perfect detection, but best we can do.
-        if (renameErr.includes('does not exist')) {
-          console.log('Old ' + scoreAssetPath + ' not found, did not move it');
-        } else if (renameErr.includes('Cannot overwrite asset')) {
-          // Delete and try again.
-          return new Promise(
-              (deleteResolve, deleteReject) =>
-                  ee.data.deleteAsset(oldScoreAssetPath, (_, deleteErr) => {
-                    if (deleteErr) {
-                      // Don't try to recover here.
-                      // Don't show deletion error to user, rename error is what
-                      // we'll display, but log deletion error here.
-                      console.error(deleteErr);
-                      const message =
-                          'Error moving old score asset: ' + renameErr;
-                      setStatus(message);
-                      deleteReject(message);
-                    } else {
-                      // Delete succeeded, try again.
-                      deleteResolve(renameAssetAsPromise(
-                          scoreAssetPath, oldScoreAssetPath));
-                    }
-                  }));
-        } else {
-          const message = 'Error moving old score asset: ' + renameErr;
-          setStatus(message);
-          throw renameErr;
-        }
-      })
-      .then(() => {
-        task.start();
-        $('#upload-status')
-            .text(
-                'Check Code Editor console for upload progress. Task: ' +
-                task.id);
-        return task;
-      });
+  try {
+    await renameAssetAsPromise(scoreAssetPath, oldScoreAssetPath);
+  } catch (renameErr) {
+    // These checks aren't perfect detection, but best we can do.
+    if (renameErr.includes('does not exist')) {
+      console.log('Old ' + scoreAssetPath + ' not found, did not move it');
+    } else if (renameErr.includes('Cannot overwrite asset')) {
+      // Delete and try again.
+      await new Promise(
+          (deleteResolve, deleteReject) =>
+              ee.data.deleteAsset(oldScoreAssetPath, (_, deleteErr) => {
+                if (deleteErr) {
+                  // Don't try to recover here.
+                  // Don't show deletion error to user, rename error is what
+                  // we'll display, but log deletion error here.
+                  console.error(deleteErr);
+                  const message =
+                      'Error moving old score asset: ' + renameErr;
+                  setStatus(message);
+                  deleteReject(message);
+                } else {
+                  // Delete succeeded, try again.
+                  deleteResolve(renameAssetAsPromise(
+                      scoreAssetPath, oldScoreAssetPath));
+                }
+              }));
+
+    } else {
+      const message = 'Error moving old score asset: ' + renameErr;
+      setStatus(message);
+      throw renameErr;
+    }
+  }
+  try {
+    task.start();
+  } catch (err) {
+    setStatus('Error starting task: ' + err);
+    throw transformEarthEngineFailureMessage(err);
+  }
+  $('#upload-status')
+      .text(
+          'Check Code Editor console for upload progress. Task: ' +
+          task.id);
+  return task;
 }
 
 /**
