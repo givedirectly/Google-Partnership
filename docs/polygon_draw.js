@@ -461,9 +461,9 @@ async function initializeAndProcessUserRegions(
     // Damage asset may not exist yet, so this is undefined. We tolerate
     // gracefully.
     ({damageAssetPath} = doc.data().assetData);
-    userShapes = userFeatures();
     let querySnapshot;
     try {
+      userShapes = userFeatures();
       querySnapshot = await userShapesPromise;
     } catch (err) {
       handleUserShapesError(err);

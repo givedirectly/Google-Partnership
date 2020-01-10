@@ -1,5 +1,6 @@
 import {addPolygonWithPath} from '../../../docs/basic_map.js';
 import * as ErrorLib from '../../../docs/error.js';
+import {getUserFeatures} from '../../../docs/firestore_document.js';
 import * as Loading from '../../../docs/loading.js';
 import {initializeAndProcessUserRegions, StoredShapeData, transformGeoPointArrayToLatLng, userShapes} from '../../../docs/polygon_draw.js';
 import {setUserFeatureVisibility} from '../../../docs/popup.js';
@@ -91,11 +92,13 @@ describe('Unit test for ShapeData', () => {
         .then((mapResult) => map = mapResult)
         .then(() => {
           userRegionData.clear();
-          return initializeAndProcessUserRegions(map, Promise.resolve({
-            // Normally damageAssetPath is a string, but code tolerates just
-            // putting an ee.FeatureCollection in.
-            data: () => ({assetData: {damageAssetPath: damageCollection}}),
-          }));
+          return initializeAndProcessUserRegions(
+              map, Promise.resolve({
+                // Normally damageAssetPath is a string, but code tolerates just
+                // putting an ee.FeatureCollection in.
+                data: () => ({assetData: {damageAssetPath: damageCollection}}),
+              }),
+              getUserFeatures());
         })
         .then((drawingManagerResult) => drawingManager = drawingManagerResult);
     // Confirm that drawing controls are visible.
@@ -535,9 +538,11 @@ describe('Unit test for ShapeData', () => {
   }
 
   it('Absence of damage asset tolerated', () => {
-    cy.wrap(initializeAndProcessUserRegions(map, Promise.resolve({
-      data: () => ({assetData: {damageAssetPath: null}}),
-    })));
+    cy.wrap(initializeAndProcessUserRegions(
+        map, Promise.resolve({
+          data: () => ({assetData: {damageAssetPath: null}}),
+        }),
+        getUserFeatures()));
     drawPolygon();
     const expectedData = Object.assign({}, defaultData);
     expectedData.damage = 'unknown';
