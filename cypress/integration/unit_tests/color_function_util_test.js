@@ -207,8 +207,7 @@ describe('Unit tests for color function utility', () => {
 
   it('tests against real harvey layer', () => {
     setDisaster('2017-harvey');
-    readDisasterDocument().then((doc) => {
-      const {layerArray} = doc.data();
+    readDisasterDocument().then(({layerArray}) => {
       let featureCollectionLayer;
       for (const layer of layerArray) {
         if (layer.assetType === LayerType.FEATURE_COLLECTION) {

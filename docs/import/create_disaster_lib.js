@@ -5,7 +5,11 @@ export {
   incomeKey,
   snapKey,
   sviKey,
+<<<<<<< HEAD
   totalKey
+=======
+  totalKey,
+>>>>>>> score-columns
 };
 // For testing
 export {deepCopy, flexibleAssetData, stateAssetDataTemplate};
@@ -125,12 +129,35 @@ const BuildingSource = {
 };
 
 /**
+ * Where building count comes from.
+ * @type {Object}
+ * @param {number} BUILDING Indicates that there is a separate buildings asset.
+ *     Asset can contain geometries (in which case each geometry corresponds to
+ *     a building), or just have rows, in which case each row has a building
+ *     count that will be joined to the poverty asset. `buildingGeoid` will
+ *     be the joining column and `buildingKey` the column with the count.
+ * @param {number} POVERTY Indicates that poverty asset already has a building
+ *     count per district. `buildingKey` will identify the column.
+ * @param {number} DAMAGE Indicates that damage asset contains geometries for
+ *     all buildings, not just damaged ones, so the building count can be taken
+ *     from it. If specified, `flexibleData` fields `noDamageKey` and
+ *     `noDamageValue` must be set if `assetData.damageAssetPath` is. (If this
+ *     is set but the damage asset is not specified, the score asset can be
+ *     created, without damage or buildings.)
+ */
+const BuildingSource = {
+  BUILDING: 1,
+  POVERTY: 2,
+  DAMAGE: 3,
+};
+
+/**
  * Has data for a "flexible" (non-Census-based) disaster.
  * @type {Readonly<Object>}
  * @property {EeFC} povertyPath Contains poverty data. May have geometries, in
  *     which case `geographyPath` is not used. May have building counts, in
  *     which case `buildingPath` is not used. All columns from this asset end up
- *     in final score asset. Must have {@link povertyPercentageTag} column.
+ *     in final score asset.
  * @property {EeColumn} povertyGeoid Column of `povertyPath` that contains
  *     district-identifying string ("district identifier").
  * @property {EeColumn} povertyRateKey Column of `povertyPath` that
@@ -139,11 +166,22 @@ const BuildingSource = {
  *     contains human-readable description of each district, for display on map.
  * @property {EeColumn} povertyGeoid Column of `povertyPath` that contains
  *     district-identifying string ("district identifier").
+<<<<<<< HEAD
+ * @property {EeColumn} povertyRateKey Column of `povertyPath` that
+ *     contains poverty rate, as a number between 0 and 1, for use in score.
+ * @property {EeColumn} districtDescriptionKey Column of `povertyPath` that
+ *     contains human-readable description of each district, for display on map.
+ * @property {EeColumn} povertyGeoid Column of `povertyPath` that contains
+ *     district-identifying string ("district identifier").
+=======
+>>>>>>> score-columns
  * @property {boolean} povertyHasGeometry Whether the poverty asset has
  *     geometries for its districts. If not, `geographyPath` must be specified.
  * @property {EeFC} [geographyPath] Contains geometries of districts.
  * @property {EeColumn} [geographyGeoid] Column of `geographyPath` that contains
  *     district identifier.
+ * @property {BuildingSource} buildingSource Where the building count comes
+ *     from.
  * @property {EeFC} [buildingPath] Contains building data. If buildings
  *     have geometries, building counts per district will be computed by
  *     geographic intersection. If there are no geometries, each row is a
@@ -154,12 +192,15 @@ const BuildingSource = {
  * BuildingSource.BUILDING}, indicates the column of `buildingPath` that has
  * counts. If `buildingSource` is {@link BuildingSource.POVERTY}, indicates the
  * column of `povertyPath` that has counts.
+<<<<<<< HEAD
  * @property {boolean} useDamageForBuildings Whether the damage asset should be
  *     used to compute the total number of buildings. Ignored for state-based
  *     disasters. If specified, `damageAssetPath`, `noDamageKey`,
  *     `noDamageValue` must all be set.
  * @property {BuildingSource} buildingSource Where the building count comes
  *     from.
+=======
+>>>>>>> score-columns
  */
 const flexibleDataTemplate = Object.freeze({
   povertyPath: null,
@@ -170,6 +211,10 @@ const flexibleDataTemplate = Object.freeze({
   geographyPath: null,
   buildingPath: null,
   buildingSource: null,
+<<<<<<< HEAD
+=======
+  buildingKey: null,
+>>>>>>> score-columns
 });
 
 const flexibleAssetData = Object.freeze(

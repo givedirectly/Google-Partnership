@@ -8,7 +8,8 @@ export {drawTable};
  * Displays a ranked table of the given features that have non-zero score. Sets
  * up handlers for clicking on the table and highlighting features on the map.
  *
- * @param {Promise} scoredFeaturesAndColumns
+ * @param {Promise<{featuresList: Array<GeoJsonFeature>, columnsFound:
+ *     Array<EeColumn>}>} scoredFeaturesAndColumns
  * @param {google.maps.Map} map
  * @return {Promise<Function>} Promise for a function that takes an iterable of
  *     strings and selects rows in the table whose geoids are those strings. The
