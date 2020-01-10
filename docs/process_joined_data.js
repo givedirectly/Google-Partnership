@@ -62,8 +62,8 @@ function colorAndRate(
  * @param {number} scalingFactor multiplies the raw score, it can be
  *     adjusted to make sure that the values span the desired range of ~0 to
  *     ~100.
- * @param {Promise<ScoreComputationParameters>} scoreComputationParameters
- *     promise
+ * @param {Promise<ScoreComputationParameters>}
+ *     scoreComputationParametersPromise
  * that returns the poverty and damage thresholds and the poverty weight (from
  * which the damage weight is derived).
  * @return {Promise<{featuresList: Array<GeoJsonFeature>, columnsFound:
@@ -79,8 +79,8 @@ function colorAndRate(
  *     generally means alphabetically, since EarthEngine always sorts them.
  */
 function processJoinedData(
-    dataPromise, scalingFactor, scoreComputationParameters) {
-  return Promise.all([dataPromise, scoreComputationParameters])
+    dataPromise, scalingFactor, scoreComputationParametersPromise) {
+  return Promise.all([dataPromise, scoreComputationParametersPromise])
       .then(([
               featuresList,
               {
@@ -96,10 +96,8 @@ function processJoinedData(
               },
             ]) => {
         const hasDamage = !!damageAssetPath;
-        const columnsFound = new Set([geoidTag]);
-        columnsFound.add(districtDescriptionKey);
-        columnsFound.add(scoreTag);
-        columnsFound.add(povertyRateKey);
+        const columnsFound = new Set(
+            [geoidTag, districtDescriptionKey, scoreTag, povertyRateKey]);
         if (hasDamage) {
           columnsFound.add(damageTag);
           columnsFound.add(buildingKey);
