@@ -26,42 +26,39 @@ function loadNavbarWithPicker(data) {
     firebaseDataPromise,
     // fetch of all user shapes - used as a proxy to determine if loading
     // for a privileged user or not
-    userShapesPromise,
+    userShapesPromise: privilegedUserPromise,
   } = data;
   if (!firebaseDataPromise) {
     firebaseDataPromise = firebaseAuthPromise.then(getDisastersData);
   }
-  // On every callsite other than the main map, this will be null but if you're
-  // there and using the nav, you're already on a privileged page.
-  if (!userShapesPromise) {
-    userShapesPromise = firebaseAuthPromise.then(getUserFeatures());
+  // On every page other than the main map, this will be null but if you're
+  // there and using the nav, you're already on a privileged page so we know
+  // this will resolve fine. Simplify?
+  if (!privilegedUserPromise) {
+    privilegedUserPromise = firebaseAuthPromise.then(getUserFeatures);
   }
   $('#navbar').load(getUrlUnderDocs('navbar.html'), async () => {
-    const navInput = $('#nav-input');
-    navInput.prop('disabled', true);
-    $('#map-a').prop('href', getUrlUnderDocs(''));
+    const navToggle = $('#nav-toggle').hide();
+    const navPublic = $('#public').hide();
     $('#nav-left')
         .load(
             getUrlUnderDocs('disaster_picker.html'),
             () => initializeDisasterPicker(
                 firebaseDataPromise, changeDisasterHandler));
     $('#nav-title-header').html(title);
-    $('#help-a').prop('href', getHelpUrl());
+    $('.help-a').prop('href', getHelpUrl());
     try {
-      // could also create a new document with same privileges and then
-      // wouldn't be tied to this.
-      await userShapesPromise;
+      await privilegedUserPromise;
     } catch (err) {
       if (err.code === AUTHENTICATION_ERROR_CODE) {
-        $('#manage-layers-a').hide();
-        $('#manage-disaster-a').hide();
-        $('#upload-image-collection-a').hide();
+        navPublic.show();
       } else {
         showError(err, 'Error populating navbar. Try refreshing page.');
       }
       return;
     }
-    navInput.prop('disabled', false);
+    navToggle.show();
+    $('#map-a').prop('href', getUrlUnderDocs(''));
     $('#manage-layers-a').prop('href', getUrlUnderDocs(MANAGE_LAYERS_PAGE));
     $('#manage-disaster-a')
         .prop('href', getUrlUnderDocs(MANAGE_DISASTERS_PAGE));
