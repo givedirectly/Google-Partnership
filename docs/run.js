@@ -11,7 +11,7 @@ import {initializeAndProcessUserRegions} from './polygon_draw.js';
 import {setUserFeatureVisibility} from './popup.js';
 import {processJoinedData} from './process_joined_data.js';
 import {getBackupScoreAssetPath, getScoreAssetPath} from './resources.js';
-import {setUpScoreParameters} from './update.js';
+import {setUpScoreComputationParameters} from './update.js';
 
 export {createAndDisplayJoinedData, run};
 // For testing.
@@ -80,7 +80,7 @@ function run(map, firebaseAuthPromise, disasterMetadataPromise) {
   disasterMetadataPromise = massageDisasterMetadataPromiseWhenUsingBackupAsset(
       disasterMetadataPromise);
   const initialTogglesValuesPromise =
-      setUpScoreParameters(disasterMetadataPromise, map);
+      setUpScoreComputationParameters(disasterMetadataPromise, map);
   createAndDisplayJoinedData(map, initialTogglesValuesPromise);
   initializeAndProcessUserRegions(map, disasterMetadataPromise);
   disasterMetadataPromise.then(({layerArray}) => addLayers(map, layerArray));

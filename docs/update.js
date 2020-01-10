@@ -7,7 +7,7 @@ export {
   damageThresholdKey,
   povertyThresholdKey,
   povertyWeightKey,
-  setUpScoreParameters,
+  setUpScoreComputationParameters,
   toggles,
 };
 
@@ -76,7 +76,7 @@ let scoreAssetCreationParameters;
  * @param {google.maps.Map} map
  * @return {Promise<Object>} returns all the toggle initial values.
  */
-async function setUpScoreParameters(disasterMetadataPromise, map) {
+async function setUpScoreComputationParameters(disasterMetadataPromise, map) {
   ({scoreAssetCreationParameters} = await disasterMetadataPromise);
   if (!!scoreAssetCreationParameters.damageAssetPath) {
     toggles.set(damageThresholdKey, 0.5);
