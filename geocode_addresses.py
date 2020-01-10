@@ -49,8 +49,8 @@ def __get_args():
 
 
 def __geocode(address):
-  """Send an RPC to the Google Geocoding API, return the single most-confident
-
+  """
+  Send an RPC to the Google Geocoding API, return the single most-confident
   result, or None if there is no parse.
   The googlemaps client library should handle retries appropriately.
   Median latency is around 500ms.
@@ -65,8 +65,8 @@ def __geocode(address):
 
 
 def __get_coords_for_address(address):
-  """Returns a tuple of (lat, long) for the given address, or () if the address
-
+  """
+  Returns a tuple of (lat, long) for the given address, or () if the address
   could not be geocoded.
   """
   response_map = __geocode(address)
@@ -77,8 +77,8 @@ def __get_coords_for_address(address):
 
 
 def get_coords_for_addresses(addresses, pool_size):
-  """Returns a map from address to (lat, long) pair.
-
+  """
+  Returns a map from address to (lat, long) pair.
   Expected throughput of 50 addresses/second.
   """
   with Pool(pool_size) as p:
@@ -90,18 +90,6 @@ def geocode_USDPSD_addresses(limit, pool_size):
   """Fetch a list of un-coded addresses from SF, geocode them, write to SF."""
   sf = Salesforce(
       username=USERNAME, password=PASSWORD, security_token=SECURITY_TOKEN)
-
-  # results = sf.query_all(
-  #     "SELECT Full_Residency_Address__c \
-  #     FROM US_Disaster_Project_Specific_Data__c \
-  #     WHERE Full_Residency_Address__c != null \
-  #     AND Residency_Addr_GPS_Coordinates__Latitude__s = null \
-  #     ")
-  # print("num results:", len(results['records']))
-  # for r in results['records']:
-  #     if r['Full_Residency_Address__c'] == None:
-  #         print(r)
-  # exit(1)
 
   # Note: really, this should include `WHERE Full_Residency_Address__c != null`
   # in the WHERE clause. However, that doesn't seem to do anything, for
@@ -139,6 +127,3 @@ def geocode_USDPSD_addresses(limit, pool_size):
 if __name__ == '__main__':
   args = __get_args()
   geocode_USDPSD_addresses(args.limit, args.pool_size)
-
-  # print(get_coords_for_addresses(
-  #     ['1600 pennslyvania ave', '1600 Amphitheatre Parkway mountain view']))
