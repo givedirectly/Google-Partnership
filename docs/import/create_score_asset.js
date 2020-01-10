@@ -1,7 +1,7 @@
 import {transformEarthEngineFailureMessage} from '../ee_promise_cache.js';
 import {disasterDocumentReference} from '../firestore_document.js';
 import {inProduction} from '../in_test_util.js';
-import {blockGroupTag, damageTag, geoidTag, povertyHouseholdsTag, povertyPercentageTag, totalHouseholdsTag} from '../property_names.js';
+import {damageTag, geoidTag, povertyHouseholdsTag, totalHouseholdsTag} from '../property_names.js';
 import {getBackupScoreAssetPath, getScoreAssetPath} from '../resources.js';
 
 import {computeAndSaveBounds} from './center.js';
@@ -16,10 +16,14 @@ export {
 // For testing.
 export {backUpAssetAndStartTask};
 
+// State-based tags.
+
 const TRACT_TAG = 'TRACT';
 const SVI_TAG = 'SVI';
 // Median household income in the past 12 months.
 const INCOME_TAG = 'MEDIAN INCOME';
+const BLOCK_GROUP_TAG = 'BLOCK GROUP';
+const POVERTY_PERCENTAGE_TAG = 'SNAP PERCENTAGE';
 
 /**
  * Given a dictionary of building counts per district, attach the count to each
@@ -169,13 +173,13 @@ function combineWithSnap(feature, snapKey, totalKey) {
       ee.Feature(feature.get('secondary')).geometry(), ee.Dictionary([
         geoidTag,
         snapFeature.get(censusGeoidKey),
-        blockGroupTag,
+        BLOCK_GROUP_TAG,
         snapFeature.get(censusBlockGroupKey),
         povertyHouseholdsTag,
         snapPop,
         totalHouseholdsTag,
         totalPop,
-        povertyPercentageTag,
+        POVERTY_PERCENTAGE_TAG,
         snapPercentage,
       ]));
 }
@@ -355,8 +359,8 @@ function createScoreAssetForStateBasedDisaster(
   return backUpAssetAndStartTask(
       allStatesProcessing, {
         buildingKey: BUILDING_COUNT_KEY,
-        districtDescriptionKey: blockGroupTag,
-        povertyRateKey: povertyPercentageTag,
+        districtDescriptionKey: BLOCK_GROUP_TAG,
+        povertyRateKey: POVERTY_PERCENTAGE_TAG,
         damageAssetPath: getDamageAssetPath(assetData),
       },
       disasterData.scoreAssetCreationParameters);

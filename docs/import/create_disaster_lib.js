@@ -145,7 +145,7 @@ const BuildingSource = {
  * @property {EeFC} povertyPath Contains poverty data. May have geometries, in
  *     which case `geographyPath` is not used. May have building counts, in
  *     which case `buildingPath` is not used. All columns from this asset end up
- *     in final score asset. Must have {@link povertyPercentageTag} column.
+ *     in final score asset.
  * @property {EeColumn} povertyGeoid Column of `povertyPath` that contains
  *     district-identifying string ("district identifier").
  * @property {EeColumn} povertyRateKey Column of `povertyPath` that
