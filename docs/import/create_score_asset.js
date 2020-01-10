@@ -407,6 +407,7 @@ function createScoreAssetForFlexibleDisaster(
   const {povertyGeoid, povertyHasGeometry, buildingSource} = flexibleData;
   let {buildingKey} = flexibleData;
   if (!buildingKey) {
+    // If buildings have geometries, buildingKey will be null.
     buildingKey = BUILDING_COUNT_KEY;
   }
   // First thing we do is add geographies if necessary and restrict to the
@@ -505,7 +506,7 @@ async function backUpAssetAndStartTask(
     // These checks aren't perfect detection, but best we can do.
     if (renameErr.includes('does not exist')) {
     } else if (renameErr.includes('Cannot overwrite asset')) {
-      // Delete and try again.
+      // Delete existing backup asset and try again.
       await new Promise(
           (deleteResolve, deleteReject) =>
               ee.data.deleteAsset(oldScoreAssetPath, (_, deleteErr) => {

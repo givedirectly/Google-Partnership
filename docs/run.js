@@ -79,9 +79,9 @@ function run(map, firebaseAuthPromise, disasterMetadataPromise) {
   resolveScoreAsset();
   disasterMetadataPromise = massageDisasterMetadataPromiseWhenUsingBackupAsset(
       disasterMetadataPromise);
-  const initialTogglesValuesPromise =
+  const scoreComputationParametersPromise =
       setUpScoreComputationParameters(disasterMetadataPromise, map);
-  createAndDisplayJoinedData(map, initialTogglesValuesPromise);
+  createAndDisplayJoinedData(map, scoreComputationParametersPromise);
   initializeAndProcessUserRegions(map, disasterMetadataPromise);
   disasterMetadataPromise.then(({layerArray}) => addLayers(map, layerArray));
 }
@@ -114,7 +114,8 @@ let featureSelectListener = null;
  * @param {google.maps.Map} map main map
  * @param {Promise<ScoreComputationParameters>} scoreParametersPromise Will
  *     resolve once score asset name is known and Firestore fetch done
- * @return {Promise<void>} Promise that is done when score layer all done
+ * @return {Promise<void>} Promise that is done when score layer rendered on map
+ *     and shown in list
  */
 function createAndDisplayJoinedData(map, scoreParametersPromise) {
   addLoadingElement(tableContainerId);

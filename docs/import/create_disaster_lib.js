@@ -123,7 +123,8 @@ const stateAssetDataTemplate = Object.freeze(
  *     Asset can contain geometries (in which case each geometry corresponds to
  *     a building), or just have rows, in which case each row has a building
  *     count that will be joined to the poverty asset. `buildingGeoid` will
- *     be the joining column and `buildingKey` the column with the count.
+ *     be the joining column to the poverty asset's `povertyGeoid` and
+ *     `buildingKey` the column with the count.
  * @param {number} POVERTY Indicates that poverty asset already has a building
  *     count per district. `buildingKey` will identify the column.
  * @param {number} DAMAGE Indicates that damage asset contains geometries for
@@ -133,11 +134,11 @@ const stateAssetDataTemplate = Object.freeze(
  *     is set but the damage asset is not specified, the score asset can be
  *     created, without damage or buildings.)
  */
-const BuildingSource = {
+const BuildingSource = Object.freeze({
   BUILDING: 1,
   POVERTY: 2,
   DAMAGE: 3,
-};
+});
 
 /**
  * Has data for a "flexible" (non-Census-based) disaster.
@@ -148,17 +149,18 @@ const BuildingSource = {
  *     in final score asset.
  * @property {EeColumn} povertyGeoid Column of `povertyPath` that contains
  *     district-identifying string ("district identifier").
+ *     {@link censusGeoidKey} for Census data.
  * @property {EeColumn} povertyRateKey Column of `povertyPath` that
  *     contains poverty rate, as a number between 0 and 1, for use in score.
+ *     {@link POVERTY_PERCENTAGE_TAG} for Census data.
  * @property {EeColumn} districtDescriptionKey Column of `povertyPath` that
  *     contains human-readable description of each district, for display on map.
- * @property {EeColumn} povertyGeoid Column of `povertyPath` that contains
- *     district-identifying string ("district identifier").
+ *     {@link censusBlockGroupKey} for Census data.
  * @property {boolean} povertyHasGeometry Whether the poverty asset has
  *     geometries for its districts. If not, `geographyPath` must be specified.
  * @property {EeFC} [geographyPath] Contains geometries of districts.
  * @property {EeColumn} [geographyGeoid] Column of `geographyPath` that contains
- *     district identifier.
+ *     district identifier. {@link tigerGeoidKey} for Census data.
  * @property {BuildingSource} buildingSource Where the building count comes
  *     from.
  * @property {EeFC} [buildingPath] Contains building data. If buildings
