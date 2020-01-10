@@ -47,21 +47,25 @@ function colorAndRate(
 }
 
 /**
+ * @typedef {Object} GeoJsonFeature See
+ *     https://macwright.org/2015/03/23/geojson-second-bite.html#features
+ */
+
+/**
  * Processes the provided Promise. The returned Promise has the same underlying
  * data as the original Promise. In other words, this method will mutate the
  * underlying data of the original Promise. This is acceptable, because it only
  * adds/overwrites the computed attributes of score and color. We avoid doing a
  * full copy because it would unnecessarily copy a lot of data.
  *
- * @param {Promise} dataPromise
+ * @param {Promise<Array<GeoJsonFeature>>} dataPromise
  * @param {number} scalingFactor multiplies the raw score, it can be
  *     adjusted to make sure that the values span the desired range of ~0 to
  *     ~100.
- * @param {Promise<Object>} scoreComputationParameters promise
+ * @param {Promise<ScoreComputationParameters>} scoreComputationParameters
+ *     promise
  * that returns the poverty and damage thresholds and the poverty weight (from
  * which the damage weight is derived).
- * @typedef {Object} GeoJsonFeature See
- *     https://macwright.org/2015/03/23/geojson-second-bite.html#features
  * @return {Promise<{featuresList: Array<GeoJsonFeature>, columnsFound:
  *     Array<EeColumn>}>} Resolved scored features, together with all columns
  *     found in features (and the additional {@link scoreTag} and

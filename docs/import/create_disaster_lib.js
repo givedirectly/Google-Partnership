@@ -122,15 +122,16 @@ const stateAssetDataTemplate = Object.freeze(
  * @param {number} BUILDING Indicates that there is a separate buildings asset.
  *     Asset can contain geometries (in which case each geometry corresponds to
  *     a building), or just have rows, in which case each row has a building
- *     count that will be joined to the poverty asset.
- * @param {number} POVERTY Indicates that poverty asset already has building
- *     count.
+ *     count that will be joined to the poverty asset. `buildingGeoid` will
+ *     be the joining column and `buildingKey` the column with the count.
+ * @param {number} POVERTY Indicates that poverty asset already has a building
+ *     count per district. `buildingKey` will identify the column.
  * @param {number} DAMAGE Indicates that damage asset contains geometries for
  *     all buildings, not just damaged ones, so the building count can be taken
  *     from it. If specified, `flexibleData` fields `noDamageKey` and
- *     `noDamageValue` must be set if `assetData.damageAssetPath` is. (If the
- *     damage asset is not specified, the score asset can be created, without
- *     damage or buildings.)
+ *     `noDamageValue` must be set if `assetData.damageAssetPath` is. (If this
+ *     is set but the damage asset is not specified, the score asset can be
+ *     created, without damage or buildings.)
  */
 const BuildingSource = {
   BUILDING: 1,
