@@ -201,7 +201,7 @@ function showDamageColumns(propertyNames) {
 
 async function writeSelectAndGetPropertyNames(select, path) {
   const sameSelectChecker = new SameSelectChecker(select);
-  
+  addPendingOperation();
   const propertyNames = await onAssetSelect(path, null);
   if (!propertyNames || !sameSelectChecker.stillValid()) {
     return null;
@@ -380,7 +380,6 @@ async function verifyAsset(propertyPath, expectedColumns) {
     // TODO: is there a better way to evaluate feature collection existence?
     let result;
     try {
-      addPendingOperation();
       result = await convertEeObjectToPromise(
           ee.FeatureCollection(asset).first().propertyNames());
     } catch (err) {

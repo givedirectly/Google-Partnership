@@ -216,6 +216,8 @@ async function initializeBuildingSourceBuildings() {
   const {buildingsDiv} = getBuildingsDivs();
   const finishLambda = prepareContainerDivAndShowColumns(buildingsDiv, 'buildings');
   if (getElementFromPath(BUILDING_HAS_GEOMETRY_PATH)) {
+    // Hide columns list if we actually expect them not to be shown in the end
+    // because the building asset has geometries.
     removeAndCreateUl('buildings');
   }
   const buildingSelect = await createAssetDropdown(BUILDING_PATH);
