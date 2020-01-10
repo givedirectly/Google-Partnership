@@ -3,8 +3,13 @@ import {readDisasterDocument} from '../../../docs/firestore_document.js';
 import {createDisasterData} from '../../../docs/import/create_disaster_lib.js';
 import * as ListEeAssets from '../../../docs/import/list_ee_assets.js';
 import {enableWhenFirestoreReady} from '../../../docs/import/manage_disaster.js';
-import {disasterData, scoreBoundsMap, setUpScoreBoundsMap} from '../../../docs/import/manage_disaster_base.js';
-import {assetSelectionPrefix, setUpStateBasedScoreSelectorTable, stateBasedScoreAssetTypes, validateStateBasedUserFields} from '../../../docs/import/manage_disaster_state_based.js';
+import {
+  disasterData,
+  makeIdFromPath,
+  scoreBoundsMap,
+  setUpScoreBoundsMap,
+} from '../../../docs/import/manage_disaster_base.js';
+import {setUpStateBasedScoreSelectorTable, stateBasedScoreAssetTypes, validateStateBasedUserFields} from '../../../docs/import/manage_disaster_state_based.js';
 import {getDisaster} from '../../../docs/resources.js';
 import {cyQueue} from '../../support/commands.js';
 import {getConvertEeObjectToPromiseRelease, setUpSavingStubs} from '../../support/import_test_util.js';
@@ -646,7 +651,7 @@ function setFirstSelectInScoreRow(rowNum) {
 function getFirstTdInScoreRow(rowNum) {
   return cy
       .get(
-          '#' + assetSelectionPrefix + stateBasedScoreAssetTypes[rowNum].idStem)
+          '#' + makeIdFromPath(stateBasedScoreAssetTypes[rowNum].propertyPath))
       .find('td')
       .first();
 }

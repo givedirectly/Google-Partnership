@@ -338,9 +338,8 @@ function createScoreAssetForStateBasedDisaster(
     }
 
     if (damage) {
-      // TODO(janakr): Assumes that damage asset does not include undamaged
-      //  buildings. Should probably offer option to filter.
-      processing = combineWithDamage(processing, damage);
+      const {noDamageKey, noDamageValue} = assetData;
+      processing = combineWithDamage(processing, damage, noDamageKey, noDamageValue);
     }
 
     allStatesProcessing = allStatesProcessing.merge(processing);

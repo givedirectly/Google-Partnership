@@ -3,7 +3,15 @@ import {getDisaster} from '../resources.js';
 import {incomeKey, snapKey, sviKey, totalKey} from './create_disaster_lib.js';
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
 import {createPendingSelect, getStateAssetsFromEe} from './list_ee_assets.js';
-import {createAssetDropdownWithNone, damageAssetPresent, disasterData, initializeScoreBoundsMapFromAssetData, onAssetSelect, SameDisasterChecker, showProcessButtonWithDamage, verifyAsset,} from './manage_disaster_base.js';
+import {
+  createAssetDropdownWithNone,
+  damageAssetPresent,
+  disasterData, getDisasterGeneration, getPageValueOfPath,
+  initializeScoreBoundsMapFromAssetData, makeIdFromPath,
+  onAssetSelect,
+  showProcessButtonWithDamage,
+  verifyAsset,
+} from './manage_disaster_base.js';
 
 export {
   initializeStateBasedScoreSelectors,
@@ -12,44 +20,37 @@ export {
   validateStateBasedUserFields
 };
 // For testing.
-export {assetSelectionPrefix, stateBasedScoreAssetTypes};
+export {stateBasedScoreAssetTypes};
 
 const stateBasedScoreAssetTypes = Object.freeze([
   {
-    idStem: 'poverty',
     propertyPath: ['stateBasedData', 'snapData', 'paths'],
     displayName: 'Poverty',
     expectedColumns: [censusGeoidKey, censusBlockGroupKey, snapKey, totalKey],
   },
   {
-    idStem: 'income',
     propertyPath: ['stateBasedData', 'incomeAssetPaths'],
     displayName: 'Income',
     expectedColumns: [censusGeoidKey, incomeKey],
   },
   {
-    idStem: 'svi',
     propertyPath: ['stateBasedData', 'sviAssetPaths'],
     displayName: 'SVI',
     expectedColumns: [cdcGeoidKey, sviKey],
   },
   {
-    idStem: 'tiger',
     propertyPath: ['stateBasedData', 'blockGroupAssetPaths'],
     displayName: 'Census TIGER Shapefiles',
     expectedColumns: [tigerGeoidKey],
     geometryExpected: true,
   },
   {
-    idStem: 'buildings',
     propertyPath: ['stateBasedData', 'buildingAssetPaths'],
     displayName: 'Microsoft Building Shapefiles',
     expectedColumns: [],
     geometryExpected: true,
   },
 ]);
-
-const assetSelectionPrefix = 'asset-selection-row-';
 
 /**
  * Checks that all mandatory fields that can be entered by the user have
@@ -77,10 +78,10 @@ function validateStateBasedUserFields() {
   const missingItems = [];
   const multistate = states.length > 1;
 
-  for (const {idStem, displayName} of stateBasedScoreAssetTypes) {
+  for (const {propertyPath, displayName} of stateBasedScoreAssetTypes) {
     const missingForType = [];
     for (const state of states) {
-      if (!$('#select-' + assetSelectionPrefix + idStem + '-' + state).val()) {
+      if (!getPageValueOfPath(propertyPath.concat([state]))) {
         missingForType.push(state);
       }
     }
@@ -128,10 +129,10 @@ function validateStateBasedUserFields() {
  */
 function setUpStateBasedScoreSelectorTable() {
   const tbody = $('#asset-selection-table-body');
-  for (const {idStem, displayName} of stateBasedScoreAssetTypes) {
+  for (const {propertyPath, displayName} of stateBasedScoreAssetTypes) {
     const row = $(document.createElement('tr'));
     row.append(createTd().text(displayName));
-    row.prop('id', assetSelectionPrefix + idStem);
+    row.prop('id', makeIdFromPath(propertyPath));
     tbody.append(row);
   }
 }
@@ -143,17 +144,13 @@ function setUpStateBasedScoreSelectorTable() {
  *     array that holds a map of asset info for each state.
  */
 function initializeStateBasedScoreSelectors(states, stateAssets) {
-  const headerRow = $('#score-asset-header-row');
-
   // For each asset type, add select for all assets for each state.
   for (const {
-         idStem,
          propertyPath,
          expectedColumns,
          geometryExpected,
        } of stateBasedScoreAssetTypes) {
-    const id = assetSelectionPrefix + idStem;
-    const row = $('#' + id);
+    const row = $('#' + makeIdFromPath(propertyPath));
     removeAllButFirstFromRow(row);
     for (const [i, state] of states.entries()) {
       // Disable FeatureCollections without geometries if desired. Be careful
@@ -164,15 +161,12 @@ function initializeStateBasedScoreSelectors(states, stateAssets) {
               ([k, v]) => [k, {disabled: v.disabled || !v.hasGeometry}])) :
           stateAssets[i];
       const statePropertyPath = propertyPath.concat([state]);
-      const selectId = 'select-' + id + '-' + state;
       const select = createAssetDropdownWithNone(assets, statePropertyPath)
-                         .prop('id', selectId)
                          .on('change',
-                             () => onAssetSelect(
-                                 statePropertyPath, expectedColumns, selectId))
+                             () => onAssetSelect(statePropertyPath, expectedColumns))
                          .addClass('with-status-border');
       row.append(createTd().append(select));
-      verifyAsset(selectId, expectedColumns);
+      verifyAsset(statePropertyPath, expectedColumns);
     }
   }
 }
@@ -187,10 +181,9 @@ function initializeStateBasedScoreSelectors(states, stateAssets) {
  * switching from disaster A to B back to A, the first set of promises for A is
  * still valid if they return after we switch back to A.
  */
-const sameDisasterChecker = new SameDisasterChecker();
 
 async function onSetStateBasedDisaster(assetData) {
-  sameDisasterChecker.reset();
+  const isCurrent = getDisasterGeneration();
   $('#state-based-disaster-asset-selection-table').show();
   $('#flexible-data').hide();
   const {states} = assetData.stateBasedData;
@@ -203,9 +196,8 @@ async function onSetStateBasedDisaster(assetData) {
   for (const state of states) {
     headerRow.append(createTd().text(state + ' Assets'));
   }
-  for (const {idStem} of stateBasedScoreAssetTypes) {
-    const id = assetSelectionPrefix + idStem;
-    const row = $('#' + id);
+  for (const {propertyPath} of stateBasedScoreAssetTypes) {
+    const row = $('#' + makeIdFromPath(propertyPath));
     removeAllButFirstFromRow(row);
     for (const state of states) {
       row.append(createTd().append(createPendingSelect()));
@@ -214,7 +206,7 @@ async function onSetStateBasedDisaster(assetData) {
 
   // getStateAssetsFromEe does internal caching.
   const stateAssets = await Promise.all(states.map(getStateAssetsFromEe));
-  if (sameDisasterChecker.markDoneIfStillValid()) {
+  if (isCurrent()) {
     initializeStateBasedScoreSelectors(states, stateAssets);
   }
 }

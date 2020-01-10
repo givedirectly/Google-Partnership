@@ -7,7 +7,7 @@ import {initializeAddDelete} from './manage_disaster_add_delete.js';
 import {
   initializeDamageSelector,
   disasterData,
-  setValidateFunction
+  setValidateFunction, noteNewDisaster, getDisasterGeneration,
 } from './manage_disaster_base.js';
 import {initializeFlexible, onSetFlexibleDisaster, validateFlexibleUserFields} from './manage_disaster_flexible.js';
 import {onSetStateBasedDisaster, validateStateBasedUserFields} from './manage_disaster_state_based.js';
@@ -72,23 +72,14 @@ function enableWhenFirestoreReady(allDisastersData) {
 }
 
 /**
- * We track whether or not we've already completed the EE asset-fetching
- * promises for the current disaster. This ensures we don't re-initialize if the
- * user switches back and forth to this disaster while still loading: the second
- * set of promises to complete will do nothing.
- *
- * We don't just use a generation counter (cf. snackbar/toast.js) because when
- * switching from disaster A to B back to A, the first set of promises for A is
- * still valid if they return after we switch back to A.
- */
-
-/**
  * Function called when current disaster changes. Responsible for displaying the
  * score selectors and enabling/disabling the kick-off button.
  * @return {Promise<void>} Promise that completes when all score parameter
  *     display is done (user can interact with page)
  */
 async function onSetDisaster() {
+  noteNewDisaster();
+  const isCurrent = getDisasterGeneration();
   const currentDisaster = getDisaster();
   if (!currentDisaster) {
     // We don't expect this to happen, because a disaster should always be
@@ -107,7 +98,9 @@ async function onSetDisaster() {
                                   onSetStateBasedDisaster(assetData);
   await initializeDamageSelector();
   await scorePromise;
-  validateFunction();
+  if (isCurrent()) {
+    validateFunction();
+  }
 }
 
 function isFlexible(disasterData) {

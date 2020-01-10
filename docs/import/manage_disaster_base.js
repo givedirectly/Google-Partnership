@@ -1,28 +1,27 @@
+import {eeLegacyPathPrefix} from '../ee_paths.js';
 import {convertEeObjectToPromise} from '../ee_promise_cache.js';
 import {latLngToGeoPoint, transformGeoPointArrayToLatLng} from '../map_util.js';
 import {isUserProperty} from '../property_names.js';
 import {getDisaster} from '../resources.js';
-
-import {ScoreBoundsMap} from './score_bounds_map.js';
-import {updateDataInFirestore} from './update_firestore_disaster.js';
+import {setStatus} from './create_score_asset.js';
 import {
   createPendingSelect,
-  getDisasterAssetsFromEe
+  getDisasterAssetsFromEe,
 } from './list_ee_assets.js';
-import {eeLegacyPathPrefix} from '../ee_paths.js';
-import {setStatus} from './create_score_asset.js';
+import {ScoreBoundsMap} from './score_bounds_map.js';
+import {updateDataInFirestore} from './update_firestore_disaster.js';
 
 export {
-  addPending, pendingDone, allFinished,
+  addPendingOperation, removePendingOperation, allOperationsFinished,
   capitalizeFirstLetter,
     continueMessage,
   createAssetDropdownWithNone,
   createColumnDropdown,
-  createDropdown,
   createEnabledProperties,
-  createSelectFromColumnInfo,
+  createSelectListItemFromColumnInfo,
   DAMAGE_COLUMN_INFO,
   DAMAGE_VALUE_INFO,
+  getPageValueOfPath,
   damageAssetPresent,
     initializeDamageSelector,
   disasterData,
@@ -32,8 +31,8 @@ export {
     makeIdFromPath,
   onAssetSelect,
   removeAndCreateUl,
-  SameDisasterChecker,
-  SameSelectChecker,
+  getDisasterGeneration,
+  noteNewDisaster,
   showProcessButtonWithDamage,
     showProcessButton,
   setUpScoreBoundsMap,
@@ -43,42 +42,6 @@ export {
   verifyAsset,
   writeSelectAndGetPropertyNames,
 };
-
-class SameStateChecker {
-  constructor(valueSupplier) {
-    this.valueSupplier = valueSupplier;
-  }
-
-  reset() {
-    this.done = false;
-    this.knownValue = this.valueSupplier();
-  }
-
-  markDoneIfStillValid() {
-    if (!this.done && this.knownValue === this.valueSupplier()) {
-      this.done = true;
-      return true;
-    }
-    return false;
-  }
-}
-
-class SameDisasterChecker extends SameStateChecker {
-  constructor() {
-    super(getDisaster);
-  }
-}
-
-class SameSelectChecker extends SameStateChecker {
-  constructor(selectElement) {
-    super(() => selectElement.val());
-    this.reset();
-  }
-
-  val() {
-    return this.knownValue;
-  }
-}
 
 // For testing.
 export {scoreBoundsMap};
@@ -98,6 +61,21 @@ let scoreBoundsMap;
 
 const scoreCoordinatesPath = Object.freeze(['scoreBoundsCoordinates']);
 
+class SameSelectChecker {
+  constructor(selectElement) {
+    this.select = selectElement;
+    this.val = selectElement.val();
+  }
+
+  val() {
+    return this.val;
+  }
+
+  stillValid() {
+    return this.val === this.select.val();
+  }
+}
+
 /**
  * Either {@link validateStateBasedUserFields} or
  * {@link validateFlexibleUserFields}, depending on the type of disaster. We
@@ -106,8 +84,6 @@ const scoreCoordinatesPath = Object.freeze(['scoreBoundsCoordinates']);
  * @type {Function}
  */
 let validateFunction;
-
-let pendingOperations = 0;
 
 function setValidateFunction(newValidateFunction) {
   validateFunction = newValidateFunction;
@@ -131,7 +107,6 @@ function initializeScoreBoundsMapFromAssetData(assetData, states = []) {
 }
 
 const damagePropertyPath = Object.freeze(['damageAssetPath']);
-const DAMAGE_ID = 'damage-asset-select';
 
 async function initializeDamageSelector() {
   const pendingSelect = createPendingSelect();
@@ -164,7 +139,7 @@ async function initializeDamageSelector() {
     return;
   }
   const select = createAssetDropdownWithNone(
-      disasterAssets, damagePropertyPath).prop('id', DAMAGE_ID)
+      disasterAssets, damagePropertyPath)
   .on('change', async () => {
     if (select.val()) {
       createDamageItems(null);
@@ -172,7 +147,7 @@ async function initializeDamageSelector() {
       removeAndCreateUl('damage');
     }
     const propertyNames =
-        await writeSelectAndGetPropertyNames(select, DAMAGE_ID, damagePropertyPath);
+        await writeSelectAndGetPropertyNames(select, damagePropertyPath);
     damageConsequences(propertyNames, select.val());
   });
 
@@ -182,13 +157,14 @@ async function initializeDamageSelector() {
   } else {
     removeAndCreateUl('damage');
   }
-  return damageConsequences(await verifyAsset(DAMAGE_ID, null), select.val());
+  return damageConsequences(await verifyAsset(damagePropertyPath, null), select.val());
 }
 
 const DAMAGE_COLUMN_INFO = {
   label: 'column that can distinguish between damaged and undamaged buildings',
   path: ['noDamageKey']
 };
+
 const DAMAGE_VALUE_INFO = {
   label: 'value in column that identifies undamaged buildings',
   path: ['noDamageValue']
@@ -203,6 +179,10 @@ async function damageConsequences(propertyNames, val) {
 }
 
 function createDamageItems(propertyNames) {
+  // TODO(janakr): do an add_layer-style lookup of the columns of this asset,
+  //  and provide a select with the available values if possible, and an input
+  //  field if there are too many values (for instance, if damage is given by a
+  //  percentage, with 0 meaning undamaged, there might be >25 values).
   const noDamageValueInput =
       $(document.createElement('input'))
           .prop('id', makeIdFromPath(DAMAGE_VALUE_INFO.path))
@@ -210,20 +190,34 @@ function createDamageItems(propertyNames) {
               () => handleAssetDataChange(
                   noDamageValueInput.val(), ['noDamageValue']));
   noDamageValueInput.val(getElementFromPath(['noDamageValue']));
+  const valueSelect = createListItem(DAMAGE_VALUE_INFO)
+  .append(noDamageValueInput);
+  const columnSelectListItem = createSelectListItemFromColumnInfo(
+      DAMAGE_COLUMN_INFO, createEnabledProperties(propertyNames));
+  const columnSelect = columnSelectListItem.children('select');
+  columnSelect.on('change', () => {
+    if (columnSelect.val()) {
+      valueSelect.show();
+    } else {
+      valueSelect.hide();
+    }
+  });
   $('#damage-asset-div')
       .append(
           removeAndCreateUl('damage')
-              .append(createSelectFromColumnInfo(
-                  DAMAGE_COLUMN_INFO, createEnabledProperties(propertyNames)))
-              .append(createListItem(DAMAGE_VALUE_INFO)
-              .append(noDamageValueInput)));
+              .append(columnSelectListItem)
+              .append(valueSelect));
+  if (getElementFromPath(DAMAGE_COLUMN_INFO.path)) {
+    valueSelect.show();
+  } else {
+    valueSelect.hide();
+  }
 }
 
-async function writeSelectAndGetPropertyNames(select, id, path) {
+async function writeSelectAndGetPropertyNames(select, path) {
   const sameSelectChecker = new SameSelectChecker(select);
-  const propertyNames =
-      await onAssetSelect(path, null, id);
-  if (!propertyNames || !sameSelectChecker.markDoneIfStillValid()) {
+  const propertyNames = await onAssetSelect(path, null);
+  if (!propertyNames || !sameSelectChecker.stillValid()) {
     return null;
   }
   return propertyNames;
@@ -262,12 +256,12 @@ function capitalizeFirstLetter(str) {
   return str[0].toUpperCase() + str.slice(1);
 }
 
-function createSelectFromColumnInfo(columnInfo, properties) {
+function createSelectListItemFromColumnInfo(columnInfo, properties) {
   return createListItem(columnInfo).append(createColumnDropdown(properties, columnInfo.path));
 }
 
 function validateColumnSelect(columnInfo) {
-  return $('#' + makeIdFromPath(columnInfo.path)).val() ? null : columnInfo.label;
+  return getPageValueOfPath(columnInfo.path) ? null : columnInfo.label;
 }
 
 function validateColumnArray(array) {
@@ -276,6 +270,10 @@ function validateColumnArray(array) {
 
 function makeIdFromPath(path) {
   return 'id-from-path-' + path.join('-');
+}
+
+function getPageValueOfPath(path) {
+  return $('#' + makeIdFromPath(path)).val();
 }
 
 function removeAndCreateUl(id) {
@@ -300,9 +298,17 @@ function setMapBoundsDiv(hide) {
 }
 
 /**
+ * A "path" to a Firestore item inside the `assetData` field. For instance,
+ * `['damageAssetPath']` would point to the field
+ * `docData.assetData.damageAssetPath`, where `docData` is the document for a
+ * disaster.
+ * @typedef {Array<string>|ReadonlyArray<string>} PropertyPath
+ */
+
+/**
  * Retrieves the object inside the current disaster's assetData, given by the
  * "path" of {@code propertyPath}
- * @param {Array<string>} propertyPath List of attributes to follow
+ * @param {PropertyPath} propertyPath List of attributes to follow
  * @return {*}
  */
 function getElementFromPath(propertyPath) {
@@ -317,7 +323,7 @@ function getElementFromPath(propertyPath) {
  * Initializes a dropdown with assets and the appropriate change handler.
  * @param {Map<string, {disabled: boolean}>} assets map of assets to add to
  *     dropdown
- * @param {Array<string>} propertyPath List of attributes to follow to get
+ * @param {PropertyPath} propertyPath List of attributes to follow to get
  *     value.
  * @param {jQuery<HTMLSelectElement>} select Select element, will be created if
  *     not given
@@ -327,12 +333,7 @@ function createAssetDropdownWithNone(
     assets, propertyPath, select = $(document.createElement('select'))) {
   const noneOption = createOptionFrom('None');
   noneOption.val('');
-  select.append(noneOption);
-  return createDropdown(assets, propertyPath, select);
-}
-
-function createDropdown(
-    assets, propertyPath, select = $(document.createElement('select'))) {
+  select.append(noneOption).prop('id', makeIdFromPath(propertyPath));
   const value = getElementFromPath(propertyPath);
   // Add assets to selector and return it.
   for (const [asset, assetInfo] of assets) {
@@ -349,14 +350,14 @@ function createDropdown(
 
 /**
  * Sets off a column verification check and data write.
- * @param {Array<string>} propertyPath List of attributes to follow to get
+ * @param {PropertyPath} propertyPath List of attributes to follow to get
  *     value.
  * @param {Array<string>} expectedColumns
  * @return {Promise<void>} see {@link verifyAsset}
  */
-function onAssetSelect(propertyPath, expectedColumns, selectId) {
-  handleAssetDataChange($('#' + selectId).val(), propertyPath);
-  return verifyAsset(selectId, expectedColumns);
+function onAssetSelect(propertyPath, expectedColumns) {
+  handleAssetDataChange(getPageValueOfPath(propertyPath), propertyPath);
+  return verifyAsset(propertyPath, expectedColumns);
 }
 
 /**
@@ -367,13 +368,13 @@ function onAssetSelect(propertyPath, expectedColumns, selectId) {
  *     existence and column checking are finished and select border color is
  *     updated, and contains the feature's properties if
  */
-async function verifyAsset(selectId, expectedColumns) {
+async function verifyAsset(propertyPath, expectedColumns) {
   // TODO: disable or discourage kick off until all green?
-  const select = $('#' + selectId);
+  const select = $('#' + makeIdFromPath(propertyPath));
   const selectStatusChecker = new SameSelectChecker(select);
   const asset = selectStatusChecker.val();
   const assetMissingErrorFunction = (err) => {
-    if (!selectStatusChecker.markDoneIfStillValid()) {
+    if (!selectStatusChecker.stillValid()) {
       // Don't show errors if not current asset.
       return;
     }
@@ -393,14 +394,14 @@ async function verifyAsset(selectId, expectedColumns) {
     // TODO: is there a better way to evaluate feature collection existence?
     let result;
     try {
-      addPending();
+      addPendingOperation();
       result = await convertEeObjectToPromise(
           ee.FeatureCollection(asset).first().propertyNames());
     } catch (err) {
       assetMissingErrorFunction(err);
       return null;
     } finally {
-      pendingDone();
+      removePendingOperation();
     }
     if (!selectStatusChecker.markDoneIfStillValid()) {
       // Don't do anything if not current asset.
@@ -465,7 +466,7 @@ function getColumnsStatus(asset, expectedColumns) {
 /**
  * Handles the user entering a value into score-related input
  * @param {?*} val Value of input. empty strings are treated like null (ugh)
- * @param {Array<string>} propertyPath path to property inside asset data. We
+ * @param {PropertyPath} propertyPath path to property inside asset data. We
  *     set this value by setting the parent's attribute to the target's value
  * @return {Promise<void>} Promise that completes when Firestore writes are done
  */
@@ -533,14 +534,27 @@ function continueMessage(message, addition) {
   return message + (message ? '; ' + addition : capitalizeFirstLetter(addition));
 }
 
-function addPending() {
+let pendingOperations = 0;
+
+function addPendingOperation() {
   ++pendingOperations;
 }
 
-function pendingDone() {
-  return --pendingOperations === 0;
+function removePendingOperation() {
+  --pendingOperations;
 }
 
-function allFinished() {
+function allOperationsFinished() {
   return pendingOperations === 0;
+}
+
+let disasterGeneration = 0;
+
+function getDisasterGeneration() {
+  const current = disasterGeneration;
+  return () => current === disasterGeneration;
+}
+
+function noteNewDisaster() {
+  disasterGeneration++;
 }
