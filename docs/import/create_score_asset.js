@@ -1,13 +1,12 @@
+import {transformEarthEngineFailureMessage} from '../ee_promise_cache.js';
+import {disasterDocumentReference} from '../firestore_document.js';
+import {inProduction} from '../in_test_util.js';
 import {blockGroupTag, damageTag, geoidTag, povertyHouseholdsTag, povertyPercentageTag, totalHouseholdsTag} from '../property_names.js';
 import {getBackupScoreAssetPath, getScoreAssetPath} from '../resources.js';
+
 import {computeAndSaveBounds} from './center.js';
 import {BUILDING_COUNT_KEY, BuildingSource} from './create_disaster_lib.js';
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
-import {transformEarthEngineFailureMessage} from '../ee_promise_cache.js';
-import {
-  disasterDocumentReference,
-  readDisasterDocument
-} from '../firestore_document.js';
 
 export {
   createScoreAssetForFlexibleDisaster,
@@ -93,7 +92,8 @@ function combineWithDamageAndUseForBuildings(
             .filterMetadata(noDamageKey, 'not_equals', noDamageValue)
             .size();
     return addDamageTag(
-        f.set(BUILDING_COUNT_KEY, totalBuildings), damagedBuildings, BUILDING_COUNT_KEY);
+        f.set(BUILDING_COUNT_KEY, totalBuildings), damagedBuildings,
+        BUILDING_COUNT_KEY);
   });
 }
 
@@ -345,15 +345,21 @@ function createScoreAssetForStateBasedDisaster(
 
     if (damage) {
       const {noDamageKey, noDamageValue} = assetData;
-      processing = combineWithDamage(processing, damage, BUILDING_COUNT_KEY,
-          noDamageKey, noDamageValue);
+      processing = combineWithDamage(
+          processing, damage, BUILDING_COUNT_KEY, noDamageKey, noDamageValue);
     }
 
     allStatesProcessing = allStatesProcessing.merge(processing);
   }
 
-  return backUpAssetAndStartTask(allStatesProcessing, {buildingKey: BUILDING_COUNT_KEY, districtDescriptionKey: blockGroupTag, povertyRateKey: povertyPercentageTag,
-  damageAssetPath: getDamageAssetPath(assetData)}, disasterData.scoreAssetCreationParameters);
+  return backUpAssetAndStartTask(
+      allStatesProcessing, {
+        buildingKey: BUILDING_COUNT_KEY,
+        districtDescriptionKey: blockGroupTag,
+        povertyRateKey: povertyPercentageTag,
+        damageAssetPath: getDamageAssetPath(assetData),
+      },
+      disasterData.scoreAssetCreationParameters);
 }
 
 /**
@@ -393,8 +399,7 @@ function createScoreAssetForFlexibleDisaster(
       calculateDamage(assetData, setMapBoundsInfoFunction);
   const {flexibleData} = assetData;
   let processing = ee.FeatureCollection(flexibleData.povertyPath);
-  const {povertyGeoid, povertyHasGeometry, buildingSource} =
-      flexibleData;
+  const {povertyGeoid, povertyHasGeometry, buildingSource} = flexibleData;
   let {buildingKey} = flexibleData;
   if (!buildingKey) {
     buildingKey = BUILDING_COUNT_KEY;
@@ -420,8 +425,7 @@ function createScoreAssetForFlexibleDisaster(
   }
 
   if (buildingSource === BuildingSource.BUILDING) {
-    const buildingCollection =
-        ee.FeatureCollection(flexibleData.buildingPath);
+    const buildingCollection = ee.FeatureCollection(flexibleData.buildingPath);
     if (flexibleData.buildingHasGeometry) {
       const buildingsHisto =
           computeBuildingsHisto(buildingCollection, processing);
@@ -433,8 +437,8 @@ function createScoreAssetForFlexibleDisaster(
       processing = innerJoin(
           processing, stringifyCollection(buildingCollection, buildingGeoid),
           geoidTag, buildingGeoid);
-      processing = processing.map(
-          (f) => combineWithAsset(f, buildingKey, buildingKey));
+      processing =
+          processing.map((f) => combineWithAsset(f, buildingKey, buildingKey));
     }
   }
   if (damage) {
@@ -443,23 +447,45 @@ function createScoreAssetForFlexibleDisaster(
       processing = combineWithDamageAndUseForBuildings(
           processing, damage, noDamageKey, noDamageValue);
     } else {
-      processing =
-          combineWithDamage(processing, damage, buildingKey ? buildingKey : BUILDING_COUNT_KEY, noDamageKey,
-              noDamageValue);
+      processing = combineWithDamage(
+          processing, damage, buildingKey ? buildingKey : BUILDING_COUNT_KEY,
+          noDamageKey, noDamageValue);
     }
   }
   const {districtDescriptionKey, povertyRateKey} = flexibleData;
-  return backUpAssetAndStartTask(processing, {buildingKey, districtDescriptionKey, povertyRateKey, damageAssetPath: getDamageAssetPath(assetData)}, disasterData.scoreAssetCreationParameters);
+  return backUpAssetAndStartTask(
+      processing, {
+        buildingKey,
+        districtDescriptionKey,
+        povertyRateKey,
+        damageAssetPath: getDamageAssetPath(assetData),
+      },
+      disasterData.scoreAssetCreationParameters);
 }
 
 /**
+ * Parameters that were used to create the current score asset. See
+ * {@link flexibleDataTemplate} for documentation of most of these fields.
+ * @typedef {Object} ScoreParameters
+ * @param {EeColumn} buildingKey
+ * @param {EeColumn} districtDescriptionKey
+ * @param {EeColumn} povertyRateKey
+ * @param {?EeFC} [damageAssetPath] See {@link commonAssetDataTemplate}
+ */
+
+/**
  * Renames current score asset to backup location, deleting backup if necessary,
- * and kicks off export task.
+ * writes score parameters to Firestore, and kicks off export task.
  * @param {ee.FeatureCollection} featureCollection Collection to export
+ * @param {ScoreParameters} scoreAssetCreationParameters
+ * @param {ScoreParameters} lastScoreAssetCreationParameters Last score asset's
+ *     parameters, to be moved if present
  * @return {Promise<!ee.batch.ExportTask>} Promise that resolves with task if
  *     rename dance was successful
  */
-async function backUpAssetAndStartTask(featureCollection, scoreAssetCreationParameters, lastScoreAssetCreationParameters) {
+async function backUpAssetAndStartTask(
+    featureCollection, scoreAssetCreationParameters,
+    lastScoreAssetCreationParameters) {
   const scoreAssetPath = getScoreAssetPath();
   const oldScoreAssetPath = getBackupScoreAssetPath();
   const task = ee.batch.Export.table.toAsset(
@@ -483,14 +509,13 @@ async function backUpAssetAndStartTask(featureCollection, scoreAssetCreationPara
                   // Don't show deletion error to user, rename error is what
                   // we'll display, but log deletion error here.
                   console.error(deleteErr);
-                  const message =
-                      'Error moving old score asset: ' + renameErr;
+                  const message = 'Error moving old score asset: ' + renameErr;
                   setStatus(message);
                   deleteReject(message);
                 } else {
                   // Delete succeeded, try again.
-                  deleteResolve(renameAssetAsPromise(
-                      scoreAssetPath, oldScoreAssetPath));
+                  deleteResolve(
+                      renameAssetAsPromise(scoreAssetPath, oldScoreAssetPath));
                 }
               }));
       renamed = true;
@@ -502,12 +527,16 @@ async function backUpAssetAndStartTask(featureCollection, scoreAssetCreationPara
   }
   const scoreAssetCreationParametersSet = {scoreAssetCreationParameters};
   if (renamed && lastScoreAssetCreationParameters) {
-    scoreAssetCreationParametersSet.lastScoreAssetCreationParameters = lastScoreAssetCreationParameters;
+    scoreAssetCreationParametersSet.lastScoreAssetCreationParameters =
+        lastScoreAssetCreationParameters;
   }
   try {
-    await disasterDocumentReference().set(scoreAssetCreationParametersSet, {merge: true});
+    await disasterDocumentReference().set(
+        scoreAssetCreationParametersSet, {merge: true});
   } catch (err) {
-    setStatus('Error writing score asset creation parameters to Firestore: ' + err.message);
+    setStatus(
+        'Error writing score asset creation parameters to Firestore: ' +
+        err.message);
     throw err;
   }
   try {
@@ -517,9 +546,7 @@ async function backUpAssetAndStartTask(featureCollection, scoreAssetCreationPara
     throw transformEarthEngineFailureMessage(err);
   }
   $('#upload-status')
-      .text(
-          'Check Code Editor console for upload progress. Task: ' +
-          task.id);
+      .text('Check Code Editor console for upload progress. Task: ' + task.id);
   return task;
 }
 
@@ -644,10 +671,21 @@ function displayGeoNumbers(latLngs) {
       .join(', ');
 }
 
+/**
+ * Gets `damageAssetPath` from `assetData`. Not inlined because some tests pass
+ * a non-string `damageAssetPath`, which Firestore can't accept.
+ * @param {DisasterDocument.assetData} assetData
+ * @return {string}
+ */
 function getDamageAssetPath(assetData) {
   const {damageAssetPath} = assetData;
   if (!damageAssetPath || typeof (damageAssetPath) === 'string') {
     return damageAssetPath;
+  }
+  if (inProduction()) {
+    // Should never happen.
+    setStatus('Error specifying damage asset path ' + damageAssetPath);
+    throw new Error('Non-string damage in ' + damageAssetPath);
   }
   return '[omitted]';
 }

@@ -15,6 +15,7 @@ const povertyThresholdKey = 'poverty threshold';
 const damageThresholdKey = 'damage threshold';
 const povertyWeightKey = 'poverty weight';
 
+/** @type {Map<string, number>} */
 const toggles = new Map([
   [povertyThresholdKey, 0.3],
   [damageThresholdKey, 0.0],
@@ -41,7 +42,8 @@ function update(map) {
   }
 
   removeScoreLayer();
-  createAndDisplayJoinedData(map, Promise.resolve(getScoreComputationParameters()));
+  createAndDisplayJoinedData(
+      map, Promise.resolve(getScoreComputationParameters()));
   // clear old listeners
   google.maps.event.clearListeners(map, 'click');
   google.maps.event.clearListeners(map.data, 'click');
@@ -63,7 +65,7 @@ function getUpdatedValue(toggle) {
 
 /**
  * Set in setUpInitialToggleValues.
- * @type {boolean}
+ * @type {ScoreParameters}
  */
 let scoreAssetCreationParameters;
 
@@ -85,15 +87,27 @@ async function setUpScoreParameters(disasterMetadataPromise, map) {
 }
 
 /**
+ * Contains a {@link ScoreParameters} together with toggles values. These are
+ * the values needed to compute a score for a {@link GeoJsonFeature}.
+ * @typedef {Object} ScoreComputationParameters
+ * @property {number} povertyThreshold
+ * @property {number} damageThreshold 0 if
+ *     `scoreAssetCreationParameters.damageAssetPath` is missing
+ * @property {number} povertyWeight 1 if
+ *     `scoreAssetCreationParameters.damageAssetPath` is missing
+ * @property {ScoreParameters} scoreAssetCreationParameters
+ */
+
+/**
  * Gets all the parameters needed for score computation, as an object.
- * @return {Object}
+ * @return {ScoreComputationParameters}
  */
 function getScoreComputationParameters() {
   return {
     povertyThreshold: toggles.get(povertyThresholdKey),
     damageThreshold: toggles.get(damageThresholdKey),
     povertyWeight: toggles.get(povertyWeightKey),
-    scoreAssetCreationParameters
+    scoreAssetCreationParameters,
   };
 }
 

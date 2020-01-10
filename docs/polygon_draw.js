@@ -446,8 +446,8 @@ function createHelpIcon(url) {
  * Adds a listener to display notes on pop-up. Stores EE path for damage asset.
  *
  * @param {google.maps.Map} map Map to display regions on
- * @param {Promise<DisasterDocument>} firebasePromise Promise with Firebase damage data (also
- *     implies that authentication is complete)
+ * @param {Promise<DisasterDocument>} firebasePromise Promise with Firebase
+ *     damage data (also implies that authentication is complete)
  * @return {Promise<?google.maps.drawing.DrawingManager>} Promise with drawing
  *     manager added to map (only used by tests). Null if there was an error
  */

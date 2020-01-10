@@ -94,8 +94,7 @@ describe('Unit tests for click_feature.js with map and table', () => {
                                                             'OTHER PERCENTAGE',
                                                           ],
                                                         })),
-          Promise.resolve({districtDescriptionKey: blockGroupTag}),
-          map);
+          Promise.resolve({districtDescriptionKey: blockGroupTag}), map);
     });
     cy.wrap(loadingFinishedPromise);
     return assertNoSelection();
@@ -147,7 +146,8 @@ describe('Unit tests for click_feature.js with map and table', () => {
     assertFeatureShownOnMap(missingPropertiesCorners);
     cy.get('#test-map-div').should('contain', 'SCORE: 4');
     cy.get('#test-map-div').should('contain', 'missing properties group');
-    cy.get('#test-map-div').should('contain', 'OTHER PERCENTAGE: (data unavailable)');
+    cy.get('#test-map-div')
+        .should('contain', 'OTHER PERCENTAGE: (data unavailable)');
   });
 
   /**

@@ -21,9 +21,12 @@ const COLOR_TAG = 'color';
  * @param {number} povertyWeight float between 0 and 1 that describes what
  *     percentage of the score should be based on poverty (this is also a proxy
  *     for damageWeight which is 1-this value).
+ * @param {EeColumn} povertyRateKey Property to use for poverty rate
+ * @param {boolean} hasDamage Whether score asset was created with damage
  */
 function colorAndRate(
-    feature, scalingFactor, povertyThreshold, damageThreshold, povertyWeight, povertyRateKey, hasDamage) {
+    feature, scalingFactor, povertyThreshold, damageThreshold, povertyWeight,
+    povertyRateKey, hasDamage) {
   const povertyRatio = feature.properties[povertyRateKey];
   const ratioBuildingsDamaged = hasDamage ? feature.properties[damageTag] : 0;
   let score = 0;
@@ -60,8 +63,16 @@ function colorAndRate(
  * @typedef {Object} GeoJsonFeature See
  *     https://macwright.org/2015/03/23/geojson-second-bite.html#features
  * @return {Promise<{featuresList: Array<GeoJsonFeature>, columnsFound:
- *     Array<string>}>} Resolved scored features, together with all columns
- *     found in features
+ *     Array<EeColumn>}>} Resolved scored features, together with all columns
+ *     found in features (and the additional {@link scoreTag} and
+ *     {@link COLOR_TAG} columns). The first four columns are: {@link geoidTag},
+ *     `districtDescriptionKey` from {@link ScoreParameters},
+ *     {@link scoreTag}, and then `povertyRateKey` from
+ *     {@link ScoreParameters}. If damage is present in the features,
+ *     {@link damageTag} is next, followed by `buildingKey` from
+ *     {@link ScoreParameters}. If damage is absent, `buildingKey` is last.
+ *     Remaining columns are sorted by order encountered in the feature, which
+ *     generally means alphabetically, since EarthEngine always sorts them.
  */
 function processJoinedData(
     dataPromise, scalingFactor, scoreComputationParameters) {
@@ -72,11 +83,12 @@ function processJoinedData(
                 povertyThreshold,
                 damageThreshold,
                 povertyWeight,
-                  scoreAssetCreationParameters: {
+                scoreAssetCreationParameters: {
                   buildingKey,
                   povertyRateKey,
                   districtDescriptionKey,
-                  damageAssetPath}
+                  damageAssetPath,
+                },
               },
             ]) => {
         const hasDamage = !!damageAssetPath;
@@ -102,7 +114,7 @@ function processJoinedData(
         if (!hasDamage) {
           // Put buildings last if damage not present.
           columnsFound.delete(buildingKey);
-          columnsFound.add(buildingKey)
+          columnsFound.add(buildingKey);
         }
         return {
           featuresList,

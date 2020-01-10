@@ -5,7 +5,7 @@ export {
   incomeKey,
   snapKey,
   sviKey,
-  totalKey
+  totalKey,
 };
 // For testing
 export {deepCopy, flexibleAssetData, stateAssetDataTemplate};

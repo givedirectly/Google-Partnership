@@ -59,8 +59,8 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     cy.get('#damage-asset-select').select('asset2').blur();
     cy.get('#map-bounds-div').should('not.be.visible');
     readFirestoreAfterWritesFinish().then(
-        ({assetData}) => expect(assetData)
-            .has.property('damageAssetPath', 'asset2'));
+        ({assetData}) =>
+            expect(assetData).has.property('damageAssetPath', 'asset2'));
   });
 
   it('no map coordinates to start', () => {
@@ -94,8 +94,8 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     cy.get('#damage-asset-select').select('asset2').blur();
     cy.get('#map-bounds-div').should('not.be.visible');
     readFirestoreAfterWritesFinish().then(
-        ({assetData}) => expect(assetData)
-            .has.property('damageAssetPath', 'asset2'));
+        ({assetData}) =>
+            expect(assetData).has.property('damageAssetPath', 'asset2'));
   });
 
   const allMandatoryMissingText =
@@ -362,7 +362,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     // written on a different change shows we're not silently overwriting it.
     readFirestoreAfterWritesFinish().then(
         ({assetData}) => expect(assetData.stateBasedData.snapData.paths.NY)
-                     .to.eql(missingSnapPath));
+                             .to.eql(missingSnapPath));
   });
 
   it('does column verification', () => {

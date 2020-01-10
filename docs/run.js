@@ -77,7 +77,8 @@ function resolveScoreAsset() {
 function run(map, firebaseAuthPromise, disasterMetadataPromise) {
   setMapToDrawLayersOn(map);
   resolveScoreAsset();
-  disasterMetadataPromise = massageDisasterMetadataPromise(disasterMetadataPromise);
+  disasterMetadataPromise = massageDisasterMetadataPromiseWhenUsingBackupAsset(
+      disasterMetadataPromise);
   const initialTogglesValuesPromise =
       setUpScoreParameters(disasterMetadataPromise, map);
   createAndDisplayJoinedData(map, initialTogglesValuesPromise);
@@ -85,11 +86,21 @@ function run(map, firebaseAuthPromise, disasterMetadataPromise) {
   disasterMetadataPromise.then(({layerArray}) => addLayers(map, layerArray));
 }
 
-async function massageDisasterMetadataPromise(disasterMetadataPromise) {
+/**
+ * Modifies the result of `disasterMetadataPromise` in case we are using the
+ * backup score asset, so that the `scoreAssetCreationParameters` are set to
+ * `lastScoreAssetCreationParameters`. This allows downstream consumers to
+ * remain ignorant of which score asset is being used.
+ * @param {Promise<DisasterDocument>}disasterMetadataPromise
+ * @return {Promise<DisasterDocument>}
+ */
+async function massageDisasterMetadataPromiseWhenUsingBackupAsset(
+    disasterMetadataPromise) {
   const disasterMetadata = await disasterMetadataPromise;
   const scoreAsset = await resolvedScoreAsset;
   if (scoreAsset !== getScoreAssetPath()) {
-    disasterMetadata.scoreAssetCreationParameters = disasterMetadata.lastScoreAssetCreationParameters;
+    disasterMetadata.scoreAssetCreationParameters =
+        disasterMetadata.lastScoreAssetCreationParameters;
   }
   return disasterMetadata;
 }
@@ -101,8 +112,9 @@ let featureSelectListener = null;
  * Creates the score overlay and draws the table
  *
  * @param {google.maps.Map} map main map
- * @param {Promise<Object} scoreParametersPromise promise that has parameters
- *     needed for the score asset computation
+ * @param {Promise<ScoreComputationParameters>} scoreParametersPromise Will
+ *     resolve once score asset name is known and Firestore fetch done
+ * @return {Promise<void>} Promise that is done when score layer all done
  */
 function createAndDisplayJoinedData(map, scoreParametersPromise) {
   addLoadingElement(tableContainerId);
@@ -113,8 +125,8 @@ function createAndDisplayJoinedData(map, scoreParametersPromise) {
   dataPromise.catch(
       (err) =>
           showError(err, 'Error retrieving score asset. Try reloading page'));
-  const processedData = processJoinedData(
-      dataPromise, scalingFactor, scoreParametersPromise);
+  const processedData =
+      processJoinedData(dataPromise, scalingFactor, scoreParametersPromise);
   addScoreLayer(processedData.then(({featuresList}) => featuresList));
   maybeCheckScoreCheckbox();
   return drawTableAndSetUpHandlers(processedData, scoreParametersPromise, map);
@@ -123,14 +135,17 @@ function createAndDisplayJoinedData(map, scoreParametersPromise) {
 /**
  * Invokes {@link drawTable} with the appropriate callbacks to set up click
  * handlers for the map.
- * @param {Promise<Array<GeoJsonFeature>>} processedData
+ * @param {Promise<{featuresList: Array<GeoJsonFeature>, columnsFound:
+ *     Array<EeColumn>}>} processedData
+ * @param {Promise<ScoreComputationParameters>} scoreParametersPromise
  * @param {google.maps.Map} map
  */
-async function drawTableAndSetUpHandlers(processedData, scoreParametersPromise, map) {
+async function drawTableAndSetUpHandlers(
+    processedData, scoreParametersPromise, map) {
   const tableSelector = await drawTable(processedData, map);
   const scoreAsset = await resolvedScoreAsset;
   const scoreParameters = await scoreParametersPromise;
-  // Promise will be done when drawTable above is done.
+  // Promise will already be done since drawTable above is done.
   const {columnsFound} = await processedData;
   loadingElementFinished(tableContainerId);
   // every time we get a new table and data, reselect elements in the
@@ -138,13 +153,12 @@ async function drawTableAndSetUpHandlers(processedData, scoreParametersPromise, 
   selectHighlightedFeatures(tableSelector);
   // TODO: handle ctrl+click situations
   const clickFeatureHandler = (event) => clickFeature(
-      event.latLng.lng(), event.latLng.lat(), map, scoreAsset,
-      tableSelector, scoreParameters, columnsFound);
+      event.latLng.lng(), event.latLng.lat(), map, scoreAsset, tableSelector,
+      scoreParameters, columnsFound);
   mapSelectListener = map.addListener('click', clickFeatureHandler);
   // map.data covers clicks to map areas underneath map.data so we need
   // two listeners
-  featureSelectListener =
-      map.data.addListener('click', clickFeatureHandler);
+  featureSelectListener = map.data.addListener('click', clickFeatureHandler);
 }
 
 /**

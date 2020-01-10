@@ -28,14 +28,14 @@ function loadNavbar(callback) {
 
 /**
  * Loads the navbar with a disaster picker.
- * @param {Promise<any>} firebaseAuthPromise Promise that completes when Firebase
- *     login is done
+ * @param {Promise<any>} firebaseAuthPromise Promise that completes when
+ *     Firebase login is done
  * @param {string} title Title of page
  * @param {?Function} changeDisasterHandler Function invoked when disaster is
  *     changed. If not specified, reloads page
- * @param {?Promise<Map<string, DisasterDocument>>} firebaseDataPromise If caller has
- *     already kicked off a fetch of all disasters, pass that Promise in here to
- *     avoid a duplicate fetch
+ * @param {?Promise<Map<string, DisasterDocument>>} firebaseDataPromise If
+ *     caller has already kicked off a fetch of all disasters, pass that Promise
+ *     in here to avoid a duplicate fetch
  */
 function loadNavbarWithPicker(
     firebaseAuthPromise, title, changeDisasterHandler = null,

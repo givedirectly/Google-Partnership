@@ -114,5 +114,6 @@ function setUpDamageAsset() {
   const currentDisaster = '2005-fall';
   disasterData.set(currentDisaster, {assetData: {damageAssetPath: 'foo'}});
   window.localStorage.setItem('disaster', currentDisaster);
-  return cy.wrap(setUpScoreParameters(Promise.resolve({data: getCurrentData}), {}));
+  return cy.wrap(
+      setUpScoreParameters(Promise.resolve({data: getCurrentData}), {}));
 }

@@ -1,6 +1,6 @@
 import {showError} from './error.js';
 import {currentFeatures, highlightFeatures} from './highlight_features.js';
-import {blockGroupTag, geoidTag, scoreTag} from './property_names.js';
+import {geoidTag, scoreTag} from './property_names.js';
 
 export {clickFeature, selectHighlightedFeatures};
 
@@ -14,8 +14,11 @@ export {clickFeature, selectHighlightedFeatures};
  * @param {string|ee.FeatureCollection} featuresAsset asset (path) of features
  *     which could be clicked
  * @param {Function} tableSelector See drawTable
+ * @param {ScoreParameters} scoreParameters Needed for `districtDescriptionKey`
+ * @param {Array<EeColumn>} columns Properties to show on click
  */
-function clickFeature(lng, lat, map, featuresAsset, tableSelector, scoreParameters, columns) {
+function clickFeature(
+    lng, lat, map, featuresAsset, tableSelector, scoreParameters, columns) {
   const point = ee.Geometry.Point(lng, lat);
   const blockGroups = ee.FeatureCollection(featuresAsset).filterBounds(point);
   const selected = blockGroups.first();
@@ -37,7 +40,8 @@ function clickFeature(lng, lat, map, featuresAsset, tableSelector, scoreParamete
       highlightFeatures([feature], map);
       const rowData = tableSelector([geoid]);
       const infoWindow = new google.maps.InfoWindow();
-      infoWindow.setContent(createHtmlForPopup(feature, rowData, scoreParameters, columns));
+      infoWindow.setContent(
+          createHtmlForPopup(feature, rowData, scoreParameters, columns));
       const borderPoint = feature.geometry.coordinates[0][0];
       infoWindow.setPosition(
           new google.maps.LatLng({lat: borderPoint[1], lng: borderPoint[0]}));
@@ -57,6 +61,8 @@ const HIDDEN_PROPERTIES = Object.freeze(new Set([
  * @param {Feature} feature post-evaluate JSON feature
  * @param {?Array<string>} rowData Data from selected row in table for this
  *     feature, if found
+ * @param {ScoreParameters} scoreParameters
+ * @param {Array<EeColumn>} columns
  * @return {HTMLDivElement} Div with information
  */
 function createHtmlForPopup(feature, rowData, scoreParameters, columns) {
@@ -85,7 +91,8 @@ function createHtmlForPopup(feature, rowData, scoreParameters, columns) {
     if (value && column.endsWith(' PERCENTAGE')) {
       value = parseFloat(value).toFixed(3);
     }
-    property.innerText = column + ': ' + (value !== null && value !== undefined ? value : '(data unavailable)');
+    property.innerText = column + ': ' +
+        (value !== null && value !== undefined ? value : '(data unavailable)');
     properties.appendChild(property);
   }
   div.appendChild(heading);
