@@ -9,6 +9,7 @@ export {
 const damageTag = 'DAMAGE PERCENTAGE';
 const geoidTag = 'GEOID';
 const scoreTag = 'SCORE';
-// TODO(ruthtalbot): Does GD actually want these totals surfaced?
+// TODO(janakr): We need some kind of "totals" tags to enable polygon selection
+//  in the flexible disaster case, but they should probably be optional.
 const povertyHouseholdsTag = 'SNAP HOUSEHOLDS';
 const totalHouseholdsTag = 'TOTAL HOUSEHOLDS';
