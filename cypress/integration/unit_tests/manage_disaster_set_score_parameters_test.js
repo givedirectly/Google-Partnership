@@ -59,8 +59,8 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     cy.get('#damage-asset-select').select('asset2').blur();
     cy.get('#map-bounds-div').should('not.be.visible');
     readFirestoreAfterWritesFinish().then(
-        (doc) => expect(doc.data().assetData)
-                     .has.property('damageAssetPath', 'asset2'));
+        ({assetData}) =>
+            expect(assetData).has.property('damageAssetPath', 'asset2'));
   });
 
   it('no map coordinates to start', () => {
@@ -94,8 +94,8 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     cy.get('#damage-asset-select').select('asset2').blur();
     cy.get('#map-bounds-div').should('not.be.visible');
     readFirestoreAfterWritesFinish().then(
-        (doc) => expect(doc.data().assetData)
-                     .has.property('damageAssetPath', 'asset2'));
+        ({assetData}) =>
+            expect(assetData).has.property('damageAssetPath', 'asset2'));
   });
 
   const allMandatoryMissingText =
@@ -293,8 +293,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
                 'or map bounds');
     cy.get('#process-button').should('be.disabled');
     // Validate that score data was correctly written
-    readFirestoreAfterWritesFinish().then((doc) => {
-      const {assetData} = doc.data();
+    readFirestoreAfterWritesFinish().then(({assetData}) => {
       expect(assetData.damageAssetPath).to.be.null;
       expect(assetData.stateBasedData.sviAssetPaths).to.eql({'NY': 'state2'});
       expect(assetData.stateBasedData.snapData.paths).to.eql({'NY': null});
@@ -362,8 +361,8 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     // Data wasn't actually in Firestore before, but checking that it was
     // written on a different change shows we're not silently overwriting it.
     readFirestoreAfterWritesFinish().then(
-        (doc) => expect(doc.data().assetData.stateBasedData.snapData.paths.NY)
-                     .to.eql(missingSnapPath));
+        ({assetData}) => expect(assetData.stateBasedData.snapData.paths.NY)
+                             .to.eql(missingSnapPath));
   });
 
   it('does column verification', () => {

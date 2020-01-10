@@ -91,11 +91,15 @@ describe('Unit test for ShapeData', () => {
         .then((mapResult) => map = mapResult)
         .then(() => {
           userRegionData.clear();
-          return initializeAndProcessUserRegions(map, Promise.resolve({
-            // Normally damageAssetPath is a string, but code tolerates just
-            // putting an ee.FeatureCollection in.
-            data: () => ({assetData: {damageAssetPath: damageCollection}}),
-          }));
+          return initializeAndProcessUserRegions(
+              map,
+              Promise.resolve(
+                  // Normally damageAssetPath is a string, but code tolerates
+                  // just putting an ee.FeatureCollection in.
+                  {
+                    scoreAssetCreationParameters:
+                        {damageAssetPath: damageCollection},
+                  }));
         })
         .then((drawingManagerResult) => drawingManager = drawingManagerResult);
     // Confirm that drawing controls are visible.
@@ -536,7 +540,7 @@ describe('Unit test for ShapeData', () => {
 
   it('Absence of damage asset tolerated', () => {
     cy.wrap(initializeAndProcessUserRegions(map, Promise.resolve({
-      data: () => ({assetData: {damageAssetPath: null}}),
+      scoreAssetCreationParameters: {damageAssetPath: null},
     })));
     drawPolygon();
     const expectedData = Object.assign({}, defaultData);
