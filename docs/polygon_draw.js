@@ -3,7 +3,7 @@ import {getCheckBoxRowId, partiallyHandleBadRowAndReturnCheckbox} from './checkb
 import {mapContainerId} from './dom_constants.js';
 import {convertEeObjectToPromise} from './ee_promise_cache.js';
 import {showError} from './error.js';
-import {getFirestoreRoot} from './firestore_document.js';
+import {userFeatures} from './firestore_document.js';
 import {POLYGON_HELP_URL} from './help.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {latLngToGeoPoint, polygonToGeoPointArray, transformGeoPointArrayToLatLng} from './map_util.js';
@@ -12,6 +12,7 @@ import {povertyHouseholdsTag, totalHouseholdsTag} from './property_names.js';
 import {getScoreAssetPath} from './resources.js';
 import {showSavedToast, showSavingToast, showToastMessage} from './toast.js';
 import {userRegionData} from './user_region_data.js';
+import {AUTHENTICATION_ERROR_CODE} from './firebase_privileges.js';
 
 export {displayCalculatedData, initializeAndProcessUserRegions};
 // For testing.
@@ -363,8 +364,6 @@ function divWithText(text) {
 window.onbeforeunload = () =>
     StoredShapeData.pendingWriteCount > 0 ? true : null;
 
-const collectionName = 'usershapes';
-
 let userShapes = null;
 
 const appearance = {
@@ -451,7 +450,7 @@ function createHelpIcon(url) {
  * @return {Promise<?google.maps.drawing.DrawingManager>} Promise with drawing
  *     manager added to map (only used by tests). Null if there was an error
  */
-async function initializeAndProcessUserRegions(map, firebasePromise) {
+async function initializeAndProcessUserRegions(map, firebasePromise, userShapesPromise) {
   setUpPopup();
   addLoadingElement(mapContainerId);
   try {
@@ -460,10 +459,10 @@ async function initializeAndProcessUserRegions(map, firebasePromise) {
     // Damage asset may not exist yet, so this is undefined. We tolerate
     // gracefully.
     ({damageAssetPath} = doc.data().assetData);
-    userShapes = getFirestoreRoot().collection(collectionName);
+    userShapes = userFeatures();
     let querySnapshot;
     try {
-      querySnapshot = await userShapes.get();
+      querySnapshot = await userShapesPromise;
     } catch (err) {
       handleUserShapesError(err);
       return null;
@@ -475,7 +474,6 @@ async function initializeAndProcessUserRegions(map, firebasePromise) {
   }
 }
 
-const AUTHENTICATION_ERROR_CODE = 'permission-denied';
 const USER_FEATURES_DIALOG =
     '<div>Sign in to authorized account to view user-drawn features</div>';
 

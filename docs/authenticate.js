@@ -5,6 +5,7 @@ import {listEeAssets} from './import/ee_utils.js';
 import {earthEngineTestTokenCookieName, firebaseTestTokenPropertyName, getValueFromLocalStorage, inProduction} from './in_test_util.js';
 import {getBackupScoreAssetPath, getDisaster, getScoreAssetPath} from './resources.js';
 import {SettablePromise} from './settable_promise.js';
+import {showToastMessage} from './toast.js';
 
 export {reloadWithSignIn, trackEeAndFirebase};
 // For testing.
@@ -143,39 +144,21 @@ class Authenticator {
 
   /** Initializes EarthEngine. */
   internalInitializeEE() {
-    initializeEE(this.eeInitializeCallback, (err) => {
-      if (err.message.includes('401') || err.message.includes('404')) {
-        // HTTP code 401 indicates "unauthorized".
-        // 404 shows up when not on Google internal network.
-        // TODO(#340): Maybe don't require EE failure every time, store
-        //  something in localStorage so that we know user needs token. Then
-        //  tests can just set that as well, unifying the codepaths.
-        const dialog = $(eeErrorDialog).dialog({
-          buttons: [
-            {
-              text: 'Sign in with EarthEngine-enabled account',
-              click: () => this.requireSignIn(),
-            },
-            {
-              text: 'Continue without sign-in',
-              click: () => {
-                // Don't trigger close callback, but close dialog.
-                dialog.dialog({close: () => {}});
-                dialog.dialog('close');
-                this.getAndSetEeTokenWithErrorHandling().then(
-                    () => initializeEE(
-                        this.eeInitializeCallback, defaultErrorCallback));
-              },
-            },
-          ],
-          modal: true,
-          width: 600,
-          close: () => this.requireSignIn(),
+    initializeEE(
+        () => {
+          this.eeInitializeCallback();
+        },
+        (err) => {
+          if (err.message.includes('401') || err.message.includes('404')) {
+            showToastMessage('fetching ee token', -1);
+            this.getAndSetEeTokenWithErrorHandling().then(() => {
+              showToastMessage('fetching ee token', -1);
+              initializeEE(this.eeInitializeCallback, defaultErrorCallback)
+            });
+          } else {
+            defaultErrorCallback(err);
+          }
         });
-      } else {
-        defaultErrorCallback(err);
-      }
-    });
   }
 
   /**

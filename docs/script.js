@@ -1,6 +1,6 @@
 import {trackEeAndFirebase} from './authenticate.js';
 import createMap from './create_map.js';
-import {readDisasterDocument} from './firestore_document.js';
+import {readDisasterDocument, getUserFeatures} from './firestore_document.js';
 import {loadNavbarWithPicker} from './navbar.js';
 import {run} from './run.js';
 import {initializeSidebar} from './sidebar.js';
@@ -11,10 +11,11 @@ let map = null;
 
 // Two tasks: EE authentication and page load.
 const taskAccumulator = new TaskAccumulator(
-    2, () => run(map, firebaseAuthPromise, disasterMetadataPromise));
+    2, () => run(map, firebaseAuthPromise, disasterMetadataPromise, userShapesPromise));
 
 const firebaseAuthPromise = trackEeAndFirebase(taskAccumulator);
 const disasterMetadataPromise = firebaseAuthPromise.then(readDisasterDocument);
+const userShapesPromise = firebaseAuthPromise.then(getUserFeatures);
 
 google.charts.load('current', {packages: ['table', 'controls']});
 
@@ -22,6 +23,6 @@ google.charts.load('current', {packages: ['table', 'controls']});
 $(() => {
   initializeSidebar();
   map = createMap(disasterMetadataPromise);
-  loadNavbarWithPicker(firebaseAuthPromise, 'Delphi Map');
+  loadNavbarWithPicker({firebaseAuthPromise, title: 'Delphi Map', userShapesPromise});
   taskAccumulator.taskCompleted();
 });

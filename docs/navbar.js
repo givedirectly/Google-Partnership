@@ -1,30 +1,14 @@
 import {initializeDisasterPicker} from './disaster_picker.js';
-import {getDisastersData} from './firestore_document.js';
+import {getDisastersData, getUserFeatures} from './firestore_document.js';
 import {HELP_DOC_URL, MANAGE_DISASTERS_HELP_URL, MANAGE_LAYERS_HELP_URL} from './help.js';
+import {AUTHENTICATION_ERROR_CODE} from './firebase_privileges.js';
+import {showError} from './error.js';
 
 export {loadNavbarWithPicker};
 
 const MANAGE_LAYERS_PAGE = 'import/manage_layers.html';
 const MANAGE_DISASTERS_PAGE = 'import/manage_disaster.html';
 const UPLOAD_IMAGE_COLLECTION_PAGE = 'import/upload_image_collection.html';
-
-/**
- * Loads the navbar and invokes the callback upon load.
- *
- * @param {Function} callback the callback invoked upon load
- */
-function loadNavbar(callback) {
-  $('#navbar').load(getUrlUnderDocs('navbar.html'), () => {
-    $('#map-a').prop('href', getUrlUnderDocs(''));
-    $('#manage-layers-a').prop('href', getUrlUnderDocs(MANAGE_LAYERS_PAGE));
-    $('#manage-disaster-a')
-        .prop('href', getUrlUnderDocs(MANAGE_DISASTERS_PAGE));
-    $('#upload-image-collection-a')
-        .prop('href', getUrlUnderDocs(UPLOAD_IMAGE_COLLECTION_PAGE));
-    $('#help-a').prop('href', getHelpUrl());
-    callback();
-  });
-}
 
 /**
  * Loads the navbar with a disaster picker.
@@ -37,19 +21,54 @@ function loadNavbar(callback) {
  *     already kicked off a fetch of all disasters, pass that Promise in here to
  *     avoid a duplicate fetch
  */
-function loadNavbarWithPicker(
-    firebaseAuthPromise, title, changeDisasterHandler = null,
-    firebaseDataPromise = null) {
+function loadNavbarWithPicker(data) {
+  let {
+    firebaseAuthPromise,
+    title,
+    changeDisasterHandler,
+    firebaseDataPromise,
+    userShapesPromise
+  } = data;
   if (!firebaseDataPromise) {
     firebaseDataPromise = firebaseAuthPromise.then(getDisastersData);
   }
-  loadNavbar(() => {
+  // On every callsite other than the main map, this will be null but if you're
+  // there and using the nav, you're already on a privileged page.
+  if (!userShapesPromise) {
+    userShapesPromise = firebaseAuthPromise.then(getUserFeatures());
+  }
+  $('#navbar').load(getUrlUnderDocs('navbar.html'), async () => {
+    const navInput = $('#nav-input')
+    navInput.prop('disabled', true);
+    $('#map-a').prop('href', getUrlUnderDocs(''));
     $('#nav-left')
         .load(
             getUrlUnderDocs('disaster_picker.html'),
             () => initializeDisasterPicker(
                 firebaseDataPromise, changeDisasterHandler));
     $('#nav-title-header').html(title);
+    $('#help-a').prop('href', getHelpUrl());
+    try {
+      // could also create a new document with same privileges and then
+      // wouldn't be tied to this.
+      await userShapesPromise;
+    } catch (err) {
+      if (err.code === AUTHENTICATION_ERROR_CODE) {
+        $('#manage-layers-a').hide();
+        $('#manage-disaster-a').hide();
+        $('#upload-image-collection-a').hide();
+      } else {
+        showError(err, 'Error populating navbar. Try refreshing page.');
+        $('#nav-input').hide();
+      }
+      return;
+    }
+    navInput.prop('disabled', false);
+    $('#manage-layers-a').prop('href', getUrlUnderDocs(MANAGE_LAYERS_PAGE));
+    $('#manage-disaster-a')
+        .prop('href', getUrlUnderDocs(MANAGE_DISASTERS_PAGE));
+    $('#upload-image-collection-a')
+        .prop('href', getUrlUnderDocs(UPLOAD_IMAGE_COLLECTION_PAGE));
   });
 }
 

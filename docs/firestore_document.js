@@ -8,6 +8,8 @@ export {
   getDisastersData,
   getFirestoreRoot,
   readDisasterDocument,
+  userFeatures,
+  getUserFeatures,
 };
 
 /**
@@ -46,6 +48,14 @@ function disasterCollectionReference() {
 /** @return {Promise<firebase.firestore.QuerySnapshot>} listing of disasters */
 function getDisasters() {
   return disasterCollectionReference().get();
+}
+
+function userFeatures() {
+  return getFirestoreRoot().collection('usershapes');
+}
+
+function getUserFeatures() {
+  return userFeatures().get();
 }
 
 /** @return {Promise<Map<string, Object>>} data for all disasters */

@@ -14,9 +14,9 @@ const firebaseAuthPromise = trackEeAndFirebase(taskAccumulator, true);
 const firebaseDataPromise = firebaseAuthPromise.then(getDisastersData);
 
 $(() => {
-  loadNavbarWithPicker(
-      firebaseAuthPromise, 'Manage Disaster', onSetDisaster,
-      firebaseDataPromise);
+  loadNavbarWithPicker({
+      firebaseAuthPromise, title: 'Manage Disaster', changeDisasterHandler: onSetDisaster,
+      firebaseDataPromise});
   $('#create-new-disaster').on('click', () => toggleState(false));
   $('#cancel-new-disaster').on('click', () => toggleState(true));
   setUpScoreSelectorTable();

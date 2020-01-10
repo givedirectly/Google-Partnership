@@ -74,13 +74,13 @@ function resolveScoreAsset() {
  * @param {Promise<firebase.firestore.DocumentSnapshot>} disasterMetadataPromise
  *     Promise with disaster metadata for this disaster
  */
-function run(map, firebaseAuthPromise, disasterMetadataPromise) {
+function run(map, firebaseAuthPromise, disasterMetadataPromise, userShapesPromise) {
   setMapToDrawLayersOn(map);
   resolveScoreAsset();
   const initialTogglesValuesPromise =
       setUpToggles(disasterMetadataPromise, map);
   createAndDisplayJoinedData(map, initialTogglesValuesPromise);
-  initializeAndProcessUserRegions(map, disasterMetadataPromise);
+  initializeAndProcessUserRegions(map, disasterMetadataPromise, userShapesPromise);
   disasterMetadataPromise.then((doc) => addLayers(map, doc.data().layerArray));
 }
 
