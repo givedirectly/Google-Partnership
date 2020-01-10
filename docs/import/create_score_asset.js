@@ -13,6 +13,7 @@ export {
   createScoreAssetForStateBasedDisaster,
   setStatus,
 };
+
 // For testing.
 export {backUpAssetAndStartTask};
 
