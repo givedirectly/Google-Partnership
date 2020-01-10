@@ -1,8 +1,8 @@
 import {initializeDisasterPicker} from './disaster_picker.js';
+import {showError} from './error.js';
+import {AUTHENTICATION_ERROR_CODE} from './firebase_privileges.js';
 import {getDisastersData, getUserFeatures} from './firestore_document.js';
 import {HELP_DOC_URL, MANAGE_DISASTERS_HELP_URL, MANAGE_LAYERS_HELP_URL} from './help.js';
-import {AUTHENTICATION_ERROR_CODE} from './firebase_privileges.js';
-import {showError} from './error.js';
 
 export {loadNavbarWithPicker};
 
@@ -12,22 +12,21 @@ const UPLOAD_IMAGE_COLLECTION_PAGE = 'import/upload_image_collection.html';
 
 /**
  * Loads the navbar with a disaster picker.
- * @param {Promise} firebaseAuthPromise Promise that completes when Firebase
- *     login is done
- * @param {string} title Title of page
- * @param {?Function} changeDisasterHandler Function invoked when disaster is
- *     changed. If not specified, reloads page
- * @param {?Promise<Map<string, Object>>} firebaseDataPromise If caller has
- *     already kicked off a fetch of all disasters, pass that Promise in here to
- *     avoid a duplicate fetch
+ * @param {Object} data
  */
 function loadNavbarWithPicker(data) {
   let {
+    // promise that completes when Firebase login is done
     firebaseAuthPromise,
+    // title of the page
     title,
+    // function invoked when disaster is changed, if not specified, reloads page
     changeDisasterHandler,
+    // fetch of all disasters
     firebaseDataPromise,
-    userShapesPromise
+    // fetch of all user shapes - used as a proxy to determine if loading
+    // for a privileged user or not
+    userShapesPromise,
   } = data;
   if (!firebaseDataPromise) {
     firebaseDataPromise = firebaseAuthPromise.then(getDisastersData);
@@ -38,7 +37,7 @@ function loadNavbarWithPicker(data) {
     userShapesPromise = firebaseAuthPromise.then(getUserFeatures());
   }
   $('#navbar').load(getUrlUnderDocs('navbar.html'), async () => {
-    const navInput = $('#nav-input')
+    const navInput = $('#nav-input');
     navInput.prop('disabled', true);
     $('#map-a').prop('href', getUrlUnderDocs(''));
     $('#nav-left')
@@ -59,7 +58,6 @@ function loadNavbarWithPicker(data) {
         $('#upload-image-collection-a').hide();
       } else {
         showError(err, 'Error populating navbar. Try refreshing page.');
-        $('#nav-input').hide();
       }
       return;
     }

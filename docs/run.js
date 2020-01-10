@@ -73,14 +73,18 @@ function resolveScoreAsset() {
  *     Firebase authentication is finished
  * @param {Promise<firebase.firestore.DocumentSnapshot>} disasterMetadataPromise
  *     Promise with disaster metadata for this disaster
+ * @param {Promise<firebase.firestore.DocumentSnapshot>} userShapesPromise
+ *     Promise with user shapes
  */
-function run(map, firebaseAuthPromise, disasterMetadataPromise, userShapesPromise) {
+function run(
+    map, firebaseAuthPromise, disasterMetadataPromise, userShapesPromise) {
   setMapToDrawLayersOn(map);
   resolveScoreAsset();
   const initialTogglesValuesPromise =
       setUpToggles(disasterMetadataPromise, map);
   createAndDisplayJoinedData(map, initialTogglesValuesPromise);
-  initializeAndProcessUserRegions(map, disasterMetadataPromise, userShapesPromise);
+  initializeAndProcessUserRegions(
+      map, disasterMetadataPromise, userShapesPromise);
   disasterMetadataPromise.then((doc) => addLayers(map, doc.data().layerArray));
 }
 

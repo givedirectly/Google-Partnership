@@ -16,7 +16,11 @@ const firebaseDataPromise = firebaseAuthPromise.then(getDisastersData);
 
 $(() => {
   loadNavbarWithPicker({
-      firebaseAuthPromise, title: 'Manage Layers', changeDisasterHandler: onSetDisaster, firebaseDataPromise});
+    firebaseAuthPromise,
+    title: 'Manage Layers',
+    changeDisasterHandler: onSetDisaster,
+    firebaseDataPromise,
+  });
   taskAccumulator.taskCompleted();
 });
 

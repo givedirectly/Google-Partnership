@@ -34,7 +34,8 @@ const TIME_BEFORE_REGENERATION = 40 * ONE_MINUTE_IN_MILLISECONDS;
 // Cope with slight differences between ESM/Node transpilation of googleapis.
 const googleAuth = GoogleAuth.default || GoogleAuth;
 
-const allowedOrigins = new Set(['https://givedirectly.github.io', 'http://localhost:8080']);
+const allowedOrigins =
+    new Set(['https://givedirectly.github.io', 'http://localhost:8080']);
 
 const runningOnGae = !!process.env.GAE_APPLICATION;
 const runningLocally =

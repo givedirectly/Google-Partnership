@@ -40,12 +40,6 @@ const firebaseConfigTest = {
 
 const gdUserEmail = 'gd-earthengine-user@givedirectly.org';
 
-const eeErrorDialog =
-    '<div title="EarthEngine authentication error">You do not appear to be ' +
-    'whitelisted for EarthEngine access. Please whitelist your account at ' +
-    '<a href="https://signup.earthengine.google.com">https://signup.earthengine.google.com</a>' +
-    ' or sign into a whitelisted account after closing this dialog</div>';
-
 const TOKEN_SERVER_URL = 'https://mapping-crisis.appspot.com';
 // For local testing.
 // const TOKEN_SERVER_URL = 'http://localhost:9080';
@@ -144,21 +138,17 @@ class Authenticator {
 
   /** Initializes EarthEngine. */
   internalInitializeEE() {
-    initializeEE(
-        () => {
-          this.eeInitializeCallback();
-        },
-        (err) => {
-          if (err.message.includes('401') || err.message.includes('404')) {
-            showToastMessage('fetching ee token', -1);
-            this.getAndSetEeTokenWithErrorHandling().then(() => {
-              showToastMessage('fetching ee token', -1);
-              initializeEE(this.eeInitializeCallback, defaultErrorCallback)
-            });
-          } else {
-            defaultErrorCallback(err);
-          }
+    initializeEE(this.eeInitializeCallback, (err) => {
+      if (err.message.includes('401') || err.message.includes('404')) {
+        showToastMessage('fetching ee token', -1);
+        this.getAndSetEeTokenWithErrorHandling().then(() => {
+          showToastMessage('fetching ee token', -1);
+          initializeEE(this.eeInitializeCallback, defaultErrorCallback);
         });
+      } else {
+        defaultErrorCallback(err);
+      }
+    });
   }
 
   /**

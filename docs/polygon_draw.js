@@ -3,6 +3,7 @@ import {getCheckBoxRowId, partiallyHandleBadRowAndReturnCheckbox} from './checkb
 import {mapContainerId} from './dom_constants.js';
 import {convertEeObjectToPromise} from './ee_promise_cache.js';
 import {showError} from './error.js';
+import {AUTHENTICATION_ERROR_CODE} from './firebase_privileges.js';
 import {userFeatures} from './firestore_document.js';
 import {POLYGON_HELP_URL} from './help.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
@@ -12,7 +13,6 @@ import {povertyHouseholdsTag, totalHouseholdsTag} from './property_names.js';
 import {getScoreAssetPath} from './resources.js';
 import {showSavedToast, showSavingToast, showToastMessage} from './toast.js';
 import {userRegionData} from './user_region_data.js';
-import {AUTHENTICATION_ERROR_CODE} from './firebase_privileges.js';
 
 export {displayCalculatedData, initializeAndProcessUserRegions};
 // For testing.
@@ -447,10 +447,12 @@ function createHelpIcon(url) {
  * @param {google.maps.Map} map Map to display regions on
  * @param {Promise<any>} firebasePromise Promise with Firebase damage data (also
  *     implies that authentication is complete)
+ * @param {Promise<any>} userShapesPromise Promise with user shapes data
  * @return {Promise<?google.maps.drawing.DrawingManager>} Promise with drawing
  *     manager added to map (only used by tests). Null if there was an error
  */
-async function initializeAndProcessUserRegions(map, firebasePromise, userShapesPromise) {
+async function initializeAndProcessUserRegions(
+    map, firebasePromise, userShapesPromise) {
   setUpPopup();
   addLoadingElement(mapContainerId);
   try {

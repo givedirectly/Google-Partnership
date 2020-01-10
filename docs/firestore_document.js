@@ -7,9 +7,9 @@ export {
   getDisasters,
   getDisastersData,
   getFirestoreRoot,
+  getUserFeatures,
   readDisasterDocument,
   userFeatures,
-  getUserFeatures,
 };
 
 /**
@@ -50,10 +50,14 @@ function getDisasters() {
   return disasterCollectionReference().get();
 }
 
+/**
+ * @return {firebase.firestore.CollectionReference} all usershapes collection
+ */
 function userFeatures() {
   return getFirestoreRoot().collection('usershapes');
 }
 
+/** @return {Promise<firebase.firestore.QuerySnapshot>} all user shapes */
 function getUserFeatures() {
   return userFeatures().get();
 }
