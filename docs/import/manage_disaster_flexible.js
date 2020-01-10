@@ -25,15 +25,25 @@ import {
   writeSelectAndGetPropertyNames,
   verifyAsset,
   showProcessButtonWithDamage,
-  showProcessButton,
+  showProcessButton, pendingDone, addPending, allFinished,
 } from './manage_disaster_base.js';
 
 export {initializeFlexible, onSetFlexibleDisaster, validateFlexibleUserFields};
 
 const MISSING_BUILDINGS_TAIL = ' (choose damage asset as buildings source for now if you don\'t need buildings)';
 
+function startPending() {
+  addPending();
+  validateFlexibleUserFields();
+}
+
+function finishPending() {
+  pendingDone();
+  validateFlexibleUserFields();
+}
+
 function validateFlexibleUserFields() {
-  if (pendingOperations > 0) {
+  if (!allFinished()) {
     showProcessButton('Pending...');
     return;
   }
@@ -141,12 +151,12 @@ function processBuildingSourceDamage() {
 async function initializeBuildingSourceBuildings() {
   const {buildingsDiv, povertyDiv} = getBuildingsDivs();
   povertyDiv.hide();
-  const pendingSelect = prepareContainerDiv(buildingsDiv, 'buildings');
+  const finishLambda = prepareContainerDiv(buildingsDiv, 'buildings');
   if (getElementFromPath(BUILDING_HAS_GEOMETRY_PATH)) {
     removeAndCreateUl('buildings');
   }
   const buildingSelect = await createAssetDropdown(buildingPath);
-  pendingSelect.remove();
+  finishLambda();
   if (!buildingSelect) {
     return;
   }
@@ -215,10 +225,10 @@ async function onSetFlexibleDisaster(assetData) {
 
 async function initializePoverty() {
   const povertyDiv = $('#flexible-poverty-asset-data');
-  const pendingSelect = prepareContainerDiv(povertyDiv, 'poverty');
+  const finishLambda = prepareContainerDiv(povertyDiv, 'poverty');
   showSpecialPovertyColumn(null);
   const povertySelect = await createAssetDropdown(povertyPath);
-  pendingSelect.remove();
+  finishLambda();
   if (!povertySelect) {
     return;
   }
@@ -230,10 +240,11 @@ async function initializePoverty() {
 
 }
 
-function onPovertyChange(povertySelect, povertyDiv) {
+async function onPovertyChange(povertySelect, povertyDiv) {
   const propertyNamesPromise =
       writeSelectAndGetPropertyNames(povertySelect, povertyId, povertyPath);
-  return processPovertyAsset(propertyNamesPromise, povertySelect.val(), povertyDiv);
+  handleAssetDataChange(await povertyHasGeometry(povertySelect.val()), POVERTY_HAS_GEOMETRY_PATH);
+  processPovertyAsset(propertyNamesPromise, povertySelect.val(), povertyDiv);
 }
 
 const geographyId = 'select-flexible-geography';
@@ -241,7 +252,9 @@ const geographyPath = ['flexibleData', 'geographyPath'];
 
 async function processPovertyAsset(propertyNamesPromise, assetName, povertyDiv) {
   const geographyPromise = doGeographyForPoverty(assetName);
+  startPending();
   const propertyNames = assetName ? await propertyNamesPromise : [];
+  finishPending();
   if (!propertyNames) {
     // If we've switched assets, do nothing.
     return null;
@@ -254,24 +267,24 @@ async function processPovertyAsset(propertyNamesPromise, assetName, povertyDiv) 
 const POVERTY_HAS_GEOMETRY_PATH = ['flexibleData', 'povertyHasGeometry'];
 
 async function doGeographyForPoverty(povertyAssetName) {
-  // Should complete instantly since already finished this call earlier.
-  const disasterAssets = await getDisasterAssetsFromEe(getDisaster());
-  const hasGeometry = disasterAssets.get(povertyAssetName).hasGeometry;
-  handleAssetDataChange(hasGeometry, POVERTY_HAS_GEOMETRY_PATH);
-  if (hasGeometry) {
+  if (await povertyHasGeometry(povertyAssetName)) {
     $('#flexible-geography-asset-data').hide();
   } else {
     return initializeGeography();
   }
 }
 
-const geographyAttrUl = 'geography-attr-ul';
+async function povertyHasGeometry(povertyAssetName) {
+  // Should complete instantly since already finished this call earlier.
+  const disasterAssets = await getDisasterAssetsFromEe(getDisaster());
+  return disasterAssets.get(povertyAssetName).hasGeometry;
+}
 
 async function initializeGeography() {
   const geographyDiv = $('#flexible-geography-asset-data');
-  const pendingSelect = prepareContainerDiv(geographyDiv, 'geography');
+  const finishLambda = prepareContainerDiv(geographyDiv, 'geography');
   const geographySelect = (await createAssetDropdown(geographyPath, false));
-  pendingSelect.remove();
+  finishLambda();
   if (!geographySelect) {
     return;
   }
@@ -284,22 +297,16 @@ async function initializeGeography() {
 }
 
 async function onGeographyChange(geographySelect, geographyDiv) {
+  startPending();
   const propertyNames = await writeSelectAndGetPropertyNames(geographySelect, geographyId, geographyDiv);
+  finishPending();
   if (propertyNames) {
-    showGeographyColumns(propertyNames, geographyDiv);
+    showColumns(propertyNames, geographyDiv, 'geography');
   }
 }
 
 const DISTRICT_ID_LABEL = 'district identifier column';
 const DISTRICT_ID_EXPLANATION = 'to match with poverty asset\'s';
-
-function showGeographyColumns(propertyNames, geographyDiv) {
-  const geographyAttrList =
-      removeAndCreateUl(geographyAttrUl)
-          .append(createSelectFromColumnInfo(
-              GEOGRAPHY_GEOID_INFO, createEnabledProperties(propertyNames)));
-  geographyDiv.append(geographyAttrList);
-}
 
 async function onBuildingChange(buildingSelect, buildingDiv) {
   const propertyNamesPromise = writeSelectAndGetPropertyNames(buildingSelect, buildingId, buildingPath);
@@ -307,12 +314,15 @@ async function onBuildingChange(buildingSelect, buildingDiv) {
   handleAssetDataChange(!noGeometry, BUILDING_HAS_GEOMETRY_PATH);
   if (noGeometry) {
     showColumns(null, buildingDiv, 'buildings');
+    startPending();
     const propertyNames = await propertyNamesPromise;
+    finishPending();
     if (propertyNames) {
       showColumns(propertyNames, buildingDiv, 'buildings');
     }
   } else {
     removeAndCreateUl('buildings');
+    validateFlexibleUserFields();
   }
 }
 
@@ -380,9 +390,9 @@ function showSpecialPovertyColumn(properties) {
 
 async function showRealColumns(div, id, key) {
   showColumns(null, div, key);
-  pendingOperations++;
+  startPending();
   const propertyNames = await verifyAsset(id, null);
-  pendingOperations--;
+  finishPending();
   if (propertyNames) {
     showColumns(propertyNames, div, key);
   }
@@ -400,21 +410,22 @@ function showColumns(properties, div, key) {
 }
 
 function prepareContainerDiv(outerDiv, assetKey) {
+  startPending();
   outerDiv.empty().show();
   outerDiv.append($(document.createElement('span')).text(capitalizeFirstLetter(assetKey) + ' asset path: '));
   const pendingSelect = createPendingSelect();
   outerDiv.append(pendingSelect);
   showColumns(null, outerDiv, assetKey);
-  return pendingSelect;
+  return () => {pendingSelect.remove(); finishPending();};
 }
 
 async function createAssetDropdown(propertyPath, enableAll = true) {
   const currentDisaster = getDisaster();
-  pendingOperations++;
   // Same promise as waited on for many assets. Since getDisasterAssetsFromEe
   // deduplicates, this is fine.
+  addPending();
   const disasterAssets = await getDisasterAssetsFromEe(currentDisaster);
-  pendingOperations--;
+  pendingDone();
   if (currentDisaster !== getDisaster()) {
     return null;
   }

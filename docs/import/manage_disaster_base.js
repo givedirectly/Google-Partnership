@@ -13,7 +13,7 @@ import {eeLegacyPathPrefix} from '../ee_paths.js';
 import {setStatus} from './create_score_asset.js';
 
 export {
-  addPending, pendingDone
+  addPending, pendingDone, allFinished,
   capitalizeFirstLetter,
     continueMessage,
   createAssetDropdownWithNone,
@@ -393,11 +393,14 @@ async function verifyAsset(selectId, expectedColumns) {
     // TODO: is there a better way to evaluate feature collection existence?
     let result;
     try {
+      addPending();
       result = await convertEeObjectToPromise(
           ee.FeatureCollection(asset).first().propertyNames());
     } catch (err) {
       assetMissingErrorFunction(err);
       return null;
+    } finally {
+      pendingDone();
     }
     if (!selectStatusChecker.markDoneIfStillValid()) {
       // Don't do anything if not current asset.
@@ -531,11 +534,13 @@ function continueMessage(message, addition) {
 }
 
 function addPending() {
-  pendingOperations++;
+  ++pendingOperations;
 }
 
 function pendingDone() {
-  if (--pendingOperations === 0) {
-    validateFunction();
-  }
+  return --pendingOperations === 0;
+}
+
+function allFinished() {
+  return pendingOperations === 0;
 }
