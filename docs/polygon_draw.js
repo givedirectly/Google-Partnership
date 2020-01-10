@@ -456,7 +456,7 @@ async function initializeAndProcessUserRegions(map, firebasePromise) {
   addLoadingElement(mapContainerId);
   try {
     // Firebase retrieval error handled elsewhere. Let this throw if it throws.
-    ({scoreAssetCreationParameters: damageAssetPath} = await firebasePromise);
+    ({scoreAssetCreationParameters: {damageAssetPath}} = await firebasePromise);
     // Damage asset may not exist yet, so this is undefined. We tolerate
     // gracefully.
     userShapes = getFirestoreRoot().collection(collectionName);
