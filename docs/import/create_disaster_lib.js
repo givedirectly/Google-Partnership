@@ -5,11 +5,7 @@ export {
   incomeKey,
   snapKey,
   sviKey,
-<<<<<<< HEAD
-  totalKey
-=======
   totalKey,
->>>>>>> score-columns
 };
 // For testing
 export {deepCopy, flexibleAssetData, stateAssetDataTemplate};
@@ -120,14 +116,6 @@ const stateBasedDataTemplate = Object.freeze({
 const stateAssetDataTemplate = Object.freeze(
     {...commonAssetDataTemplate, stateBasedData: stateBasedDataTemplate});
 
-const BuildingSource = {
-  BUILDING: 1,
-  POVERTY: 2,
-  // If specified,
-  //  *     `noDamageKey`, `noDamageValue` must be set if `damageAssetPath` is.
-  DAMAGE: 3,
-};
-
 /**
  * Where building count comes from.
  * @type {Object}
@@ -166,15 +154,6 @@ const BuildingSource = {
  *     contains human-readable description of each district, for display on map.
  * @property {EeColumn} povertyGeoid Column of `povertyPath` that contains
  *     district-identifying string ("district identifier").
-<<<<<<< HEAD
- * @property {EeColumn} povertyRateKey Column of `povertyPath` that
- *     contains poverty rate, as a number between 0 and 1, for use in score.
- * @property {EeColumn} districtDescriptionKey Column of `povertyPath` that
- *     contains human-readable description of each district, for display on map.
- * @property {EeColumn} povertyGeoid Column of `povertyPath` that contains
- *     district-identifying string ("district identifier").
-=======
->>>>>>> score-columns
  * @property {boolean} povertyHasGeometry Whether the poverty asset has
  *     geometries for its districts. If not, `geographyPath` must be specified.
  * @property {EeFC} [geographyPath] Contains geometries of districts.
@@ -192,15 +171,6 @@ const BuildingSource = {
  * BuildingSource.BUILDING}, indicates the column of `buildingPath` that has
  * counts. If `buildingSource` is {@link BuildingSource.POVERTY}, indicates the
  * column of `povertyPath` that has counts.
-<<<<<<< HEAD
- * @property {boolean} useDamageForBuildings Whether the damage asset should be
- *     used to compute the total number of buildings. Ignored for state-based
- *     disasters. If specified, `damageAssetPath`, `noDamageKey`,
- *     `noDamageValue` must all be set.
- * @property {BuildingSource} buildingSource Where the building count comes
- *     from.
-=======
->>>>>>> score-columns
  */
 const flexibleDataTemplate = Object.freeze({
   povertyPath: null,
@@ -211,10 +181,7 @@ const flexibleDataTemplate = Object.freeze({
   geographyPath: null,
   buildingPath: null,
   buildingSource: null,
-<<<<<<< HEAD
-=======
   buildingKey: null,
->>>>>>> score-columns
 });
 
 const flexibleAssetData = Object.freeze(

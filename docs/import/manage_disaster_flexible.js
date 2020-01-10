@@ -23,12 +23,12 @@ import {
   validateColumnArray,
   writeSelectAndGetPropertyNames,
   verifyAsset,
-  showProcessButtonWithDamage,
+  checkDamageFieldsAndShowProcessButton,
   showProcessButton,
   removePendingOperation,
   addPendingOperation,
   allOperationsFinished,
-  getPageValueOfPath,
+  getPageValueOfPath, prepareContainerDiv,
 } from './manage_disaster_base.js';
 
 export {initializeFlexible, onSetFlexibleDisaster, validateFlexibleUserFields};
@@ -184,7 +184,7 @@ function validateFlexibleUserFields() {
       message += MISSING_BUILDINGS_TAIL;
     }
   }
-  showProcessButtonWithDamage(message, optionalMessage);
+  checkDamageFieldsAndShowProcessButton(message, optionalMessage);
 }
 
 function checkColumns(message, key) {
@@ -214,7 +214,7 @@ const BUILDING_SOURCE_PATH = Object.freeze(['flexibleData', 'buildingSource']);
  */
 async function initializeBuildingSourceBuildings() {
   const {buildingsDiv} = getBuildingsDivs();
-  const finishLambda = prepareContainerDiv(buildingsDiv, 'buildings');
+  const finishLambda = prepareContainerDivAndShowColumns(buildingsDiv, 'buildings');
   if (getElementFromPath(BUILDING_HAS_GEOMETRY_PATH)) {
     removeAndCreateUl('buildings');
   }
@@ -230,17 +230,16 @@ async function initializeBuildingSourceBuildings() {
     return showRealColumns(buildingsDiv, BUILDING_PATH, 'buildings');
   } else {
     removeAndCreateUl('buildings');
-    validateFlexibleUserFields();
   }
 }
 
 const povertyPath = ['flexibleData', 'povertyPath'];
 
 async function onSetFlexibleDisaster(assetData) {
+  startPending();
   $('#state-based-disaster-asset-selection-table').hide();
   $('#flexible-data').show();
   initializeScoreBoundsMapFromAssetData(assetData);
-  let buildingsPromise = Promise.resolve();
   const {buildingSource} = assetData.flexibleData;
   if (buildingSource !== null) {
     switch (buildingSource) {
@@ -258,15 +257,13 @@ async function onSetFlexibleDisaster(assetData) {
         break;
     }
   }
-  initializeGeography();
   setGeographyDivVisibility(!getElementFromPath(POVERTY_HAS_GEOMETRY_PATH));
-  initializeBuildingSourceBuildings();
-  return Promise.all([buildingsPromise, initializePoverty()]);
+  return Promise.all([initializeGeography(), initializeBuildingSourceBuildings(), initializePoverty()]).then(finishPending);
 }
 
 async function initializePoverty() {
   const povertyDiv = $('#flexible-poverty-asset-data');
-  const finishLambda = prepareContainerDiv(povertyDiv, 'poverty');
+  const finishLambda = prepareContainerDivAndShowColumns(povertyDiv, 'poverty');
   showSpecialPovertyColumn(null);
   const povertySelect = await createAssetDropdown(povertyPath);
   finishLambda();
@@ -278,33 +275,28 @@ async function initializePoverty() {
   povertyDiv.append(povertySelect);
   const propertyNamesPromise = showRealColumns(povertyDiv, povertyPath, 'poverty');
   return processPovertyAsset(propertyNamesPromise, povertySelect.val(), povertyDiv);
-
 }
 
 async function onPovertyChange(povertySelect, povertyDiv) {
-  const propertyNamesPromise =
-      writeSelectAndGetPropertyNames(povertySelect, povertyPath);
   handleAssetDataChange(await povertyHasGeometry(povertySelect.val()), POVERTY_HAS_GEOMETRY_PATH);
-  processPovertyAsset(propertyNamesPromise, povertySelect.val(), povertyDiv);
+  processPovertyAsset(writeSelectAndGetPropertyNames(povertySelect, povertyPath), povertySelect.val(), povertyDiv);
 }
 
 const geographyPath = ['flexibleData', 'geographyPath'];
 
 async function processPovertyAsset(propertyNamesPromise, assetName, povertyDiv) {
   const geographyPromise = doGeographyForPoverty(assetName);
-  startPending();
-  try {
-    const propertyNames = assetName ? await propertyNamesPromise : [];
-    if (!propertyNames) {
-      // If we've switched assets, do nothing.
-      return null;
-    }
-    showColumns(propertyNames, povertyDiv, 'poverty');
-    showSpecialPovertyColumn(propertyNames);
-    return geographyPromise;
-  } finally {
+  const propertyNames = assetName ? await propertyNamesPromise : [];
+  if (!propertyNames) {
+    // If we've switched assets or not a real asset, do nothing.
+    return null;
+  }
+  if (assetName) {
     finishPending();
   }
+  showColumns(propertyNames, povertyDiv, 'poverty');
+  showSpecialPovertyColumn(propertyNames);
+  return geographyPromise;
 }
 
 const POVERTY_HAS_GEOMETRY_PATH = ['flexibleData', 'povertyHasGeometry'];
@@ -334,7 +326,7 @@ async function povertyHasGeometry(povertyAssetName) {
 
 async function initializeGeography() {
   const geographyDiv = getGeographyDiv();
-  const finishLambda = prepareContainerDiv(geographyDiv, 'geography');
+  const finishLambda = prepareContainerDivAndShowColumns(geographyDiv, 'geography');
   const geographySelect = (await createAssetDropdown(geographyPath, false));
   finishLambda();
   if (!geographySelect) {
@@ -348,7 +340,6 @@ async function initializeGeography() {
 }
 
 async function onGeographyChange(geographySelect, geographyDiv) {
-  startPending();
   const propertyNames = await writeSelectAndGetPropertyNames(geographySelect,
       geographyDiv);
   if (propertyNames) {
@@ -358,14 +349,12 @@ async function onGeographyChange(geographySelect, geographyDiv) {
 }
 
 async function onBuildingChange(buildingSelect, buildingDiv) {
-  const propertyNamesPromise = writeSelectAndGetPropertyNames(buildingSelect,
-      BUILDING_PATH);
   const noGeometry = await shouldDisplayBuildingProperties(buildingSelect.val());
   handleAssetDataChange(!noGeometry, BUILDING_HAS_GEOMETRY_PATH);
   if (noGeometry) {
     showColumns(null, buildingDiv, 'buildings');
-    startPending();
-    const propertyNames = await propertyNamesPromise;
+    const propertyNames = await writeSelectAndGetPropertyNames(buildingSelect,
+        BUILDING_PATH);
     if (propertyNames) {
       showColumns(propertyNames, buildingDiv, 'buildings');
     }
@@ -400,13 +389,17 @@ function showSpecialPovertyColumn(properties) {
 
 async function showRealColumns(div, path, key) {
   showColumns(null, div, key);
-  startPending();
   const propertyNames = await verifyAsset(path, null);
   if (propertyNames) {
     showColumns(propertyNames, div, key);
   }
-  finishPending();
   return propertyNames;
+}
+
+function prepareContainerDivAndShowColumns(outerDiv, assetKey) {
+  const result = prepareContainerDiv(outerDiv, assetKey);
+  showColumns(null, outerDiv, assetKey);
+  return result;
 }
 
 function showColumns(properties, div, key) {
@@ -417,15 +410,6 @@ function showColumns(properties, div, key) {
         createSelectListItemFromColumnInfo(columnInfo, enabledProperties));
   }
   div.append(attrList);
-}
-
-function prepareContainerDiv(outerDiv, assetKey) {
-  startPending();
-  const pendingSelect = createPendingSelect();
-  outerDiv.append($(document.createElement('span')).text(capitalizeFirstLetter(assetKey) + ' asset path: '))
-  .append(pendingSelect);
-  showColumns(null, outerDiv, assetKey);
-  return () => {pendingSelect.remove(); finishPending();};
 }
 
 async function createAssetDropdown(propertyPath, enableAll = true) {

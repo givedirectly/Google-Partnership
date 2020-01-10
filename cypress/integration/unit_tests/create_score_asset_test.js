@@ -7,7 +7,6 @@ import {backUpAssetAndStartTask, createScoreAssetForFlexibleDisaster, createScor
 import * as Resources from '../../../docs/resources.js';
 import {assertFirestoreMapBounds} from '../../support/firestore_map_bounds';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
-import {BuildingSource} from '../../../docs/import/create_disaster_lib.js';
 
 const mockTask = {
   start: () => {},

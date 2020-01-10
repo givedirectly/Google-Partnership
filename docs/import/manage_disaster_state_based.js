@@ -6,10 +6,10 @@ import {createPendingSelect, getStateAssetsFromEe} from './list_ee_assets.js';
 import {
   createAssetDropdownWithNone,
   damageAssetPresent,
-  disasterData, getDisasterGeneration, getPageValueOfPath,
+  disasterData, getIsCurrentDisasterChecker, getPageValueOfPath,
   initializeScoreBoundsMapFromAssetData, makeIdFromPath,
   onAssetSelect,
-  showProcessButtonWithDamage,
+  checkDamageFieldsAndShowProcessButton,
   verifyAsset,
 } from './manage_disaster_base.js';
 
@@ -120,7 +120,7 @@ function validateStateBasedUserFields() {
   if (message) {
     message = 'Missing asset(s): ' + message;
   }
-  showProcessButtonWithDamage(message, optionalMessage);
+  checkDamageFieldsAndShowProcessButton(message, optionalMessage);
 }
 
 /**
@@ -183,7 +183,7 @@ function initializeStateBasedScoreSelectors(states, stateAssets) {
  */
 
 async function onSetStateBasedDisaster(assetData) {
-  const isCurrent = getDisasterGeneration();
+  const isCurrent = getIsCurrentDisasterChecker();
   $('#state-based-disaster-asset-selection-table').show();
   $('#flexible-data').hide();
   const {states} = assetData.stateBasedData;

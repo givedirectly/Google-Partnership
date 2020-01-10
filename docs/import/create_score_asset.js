@@ -7,7 +7,6 @@ import {getBackupScoreAssetPath, getScoreAssetPath} from '../resources.js';
 import {computeAndSaveBounds} from './center.js';
 import {BUILDING_COUNT_KEY, BuildingSource} from './create_disaster_lib.js';
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
-import {transformEarthEngineFailureMessage} from '../ee_promise_cache.js';
 
 export {
   createScoreAssetForFlexibleDisaster,
@@ -515,8 +514,7 @@ async function backUpAssetAndStartTask(
                   // Don't show deletion error to user, rename error is what
                   // we'll display, but log deletion error here.
                   console.error(deleteErr);
-                  const message =
-                      'Error moving old score asset: ' + renameErr;
+                  const message = 'Error moving old score asset: ' + renameErr;
                   setStatus(message);
                   deleteReject(message);
                 } else {

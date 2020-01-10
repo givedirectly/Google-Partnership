@@ -1,16 +1,27 @@
-import {eeLegacyPathPrefix} from '../ee_paths.js';
 import {getDisaster} from '../resources.js';
 
-import {createScoreAssetForFlexibleDisaster, createScoreAssetForStateBasedDisaster, setStatus} from './create_score_asset.js';
+import {
+  createScoreAssetForFlexibleDisaster,
+  createScoreAssetForStateBasedDisaster
+} from './create_score_asset.js';
 import {getDisasterAssetsFromEe,} from './list_ee_assets.js';
 import {initializeAddDelete} from './manage_disaster_add_delete.js';
 import {
-  initializeDamageSelector,
   disasterData,
-  setValidateFunction, noteNewDisaster, getDisasterGeneration,
+  getIsCurrentDisasterChecker,
+  initializeDamageSelector,
+  isFlexible,
+  noteNewDisaster,
 } from './manage_disaster_base.js';
-import {initializeFlexible, onSetFlexibleDisaster, validateFlexibleUserFields} from './manage_disaster_flexible.js';
-import {onSetStateBasedDisaster, validateStateBasedUserFields} from './manage_disaster_state_based.js';
+import {
+  initializeFlexible,
+  onSetFlexibleDisaster,
+  validateFlexibleUserFields
+} from './manage_disaster_flexible.js';
+import {
+  onSetStateBasedDisaster,
+  validateStateBasedUserFields
+} from './manage_disaster_state_based.js';
 
 export {
   enableWhenReady,
@@ -79,7 +90,7 @@ function enableWhenFirestoreReady(allDisastersData) {
  */
 async function onSetDisaster() {
   noteNewDisaster();
-  const isCurrent = getDisasterGeneration();
+  const isCurrent = getIsCurrentDisasterChecker();
   const currentDisaster = getDisaster();
   if (!currentDisaster) {
     // We don't expect this to happen, because a disaster should always be
@@ -90,7 +101,6 @@ async function onSetDisaster() {
   const flexible = isFlexible(currentData);
   const validateFunction =
       flexible ? validateFlexibleUserFields : validateStateBasedUserFields;
-  setValidateFunction(validateFunction);
   const {assetData} = currentData;
 
   // Kick off score asset processing.
@@ -98,11 +108,8 @@ async function onSetDisaster() {
                                   onSetStateBasedDisaster(assetData);
   await initializeDamageSelector();
   await scorePromise;
-  if (isCurrent()) {
-    validateFunction();
+  if (isCurrent() && !flexible) {
+    validateStateBasedUserFields();
   }
 }
 
-function isFlexible(disasterData) {
-  return !!disasterData.assetData.flexibleData;
-}

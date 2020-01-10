@@ -10,8 +10,10 @@ import {
 } from './list_ee_assets.js';
 import {ScoreBoundsMap} from './score_bounds_map.js';
 import {updateDataInFirestore} from './update_firestore_disaster.js';
+import {validateStateBasedUserFields} from './manage_disaster_state_based.js';
 
 export {
+  isFlexible,
   addPendingOperation, removePendingOperation, allOperationsFinished,
   capitalizeFirstLetter,
     continueMessage,
@@ -31,16 +33,16 @@ export {
     makeIdFromPath,
   onAssetSelect,
   removeAndCreateUl,
-  getDisasterGeneration,
+  getIsCurrentDisasterChecker,
   noteNewDisaster,
-  showProcessButtonWithDamage,
+  checkDamageFieldsAndShowProcessButton,
     showProcessButton,
   setUpScoreBoundsMap,
-  setValidateFunction,
   validateColumnArray,
   validateColumnSelect,
   verifyAsset,
   writeSelectAndGetPropertyNames,
+    prepareContainerDiv,
 };
 
 // For testing.
@@ -76,19 +78,6 @@ class SameSelectChecker {
   }
 }
 
-/**
- * Either {@link validateStateBasedUserFields} or
- * {@link validateFlexibleUserFields}, depending on the type of disaster. We
- * don't depend explicitly on those functions to avoid having this file depend
- * on disaster-type-specific code.
- * @type {Function}
- */
-let validateFunction;
-
-function setValidateFunction(newValidateFunction) {
-  validateFunction = newValidateFunction;
-}
-
 /** @param {HTMLDivElement} div Div to attach score bounds map to */
 function setUpScoreBoundsMap(div) {
   scoreBoundsMap = new ScoreBoundsMap(
@@ -109,19 +98,16 @@ function initializeScoreBoundsMapFromAssetData(assetData, states = []) {
 const damagePropertyPath = Object.freeze(['damageAssetPath']);
 
 async function initializeDamageSelector() {
-  const pendingSelect = createPendingSelect();
-  $('#damage-asset-div').append(pendingSelect);
-  if (getElementFromPath(damagePropertyPath)) {
-    createDamageItems(null);
-  } else {
-    setMapBoundsDiv(false);
-  }
+  const damageDiv = $('#damage-asset-div');
+  const finishLambda = prepareContainerDiv(damageDiv, null);
+  showHideDamageAndMapDivs(getElementFromPath(damagePropertyPath));
   const currentDisaster = getDisaster();
+  const isCurrent = getIsCurrentDisasterChecker();
   let disasterAssets;
   try {
     disasterAssets = await getDisasterAssetsFromEe(currentDisaster);
   } catch (err) {
-    if (currentDisaster !== getDisaster()) {
+    if (!isCurrent()) {
       // Don't display errors to user if no longer current disaster.
       return;
     }
@@ -132,32 +118,19 @@ async function initializeDamageSelector() {
     }
     disasterAssets = new Map();
   } finally {
-    pendingSelect.remove();
+    finishLambda();
   }
-  if (currentDisaster !== getDisaster()) {
+  if (!isCurrent()) {
     // Don't do anything unless this is still the right disaster.
     return;
   }
   const select = createAssetDropdownWithNone(
       disasterAssets, damagePropertyPath)
-  .on('change', async () => {
-    if (select.val()) {
-      createDamageItems(null);
-    } else {
-      removeAndCreateUl('damage');
-    }
-    const propertyNames =
-        await writeSelectAndGetPropertyNames(select, damagePropertyPath);
-    damageConsequences(propertyNames, select.val());
-  });
+  .on('change', () => damageConsequences(
+      writeSelectAndGetPropertyNames(select, damagePropertyPath), select.val()));
 
-  $('#damage-asset-div').append(select);
-  if (select.val()) {
-    createDamageItems(null);
-  } else {
-    removeAndCreateUl('damage');
-  }
-  return damageConsequences(await verifyAsset(damagePropertyPath, null), select.val());
+  damageDiv.append(select);
+  return damageConsequences(verifyAsset(damagePropertyPath, null), select.val());
 }
 
 const DAMAGE_COLUMN_INFO = {
@@ -170,15 +143,26 @@ const DAMAGE_VALUE_INFO = {
   path: ['noDamageValue']
 };
 
-async function damageConsequences(propertyNames, val) {
-  setMapBoundsDiv(!!val);
+async function damageConsequences(propertyNamesPromise, val) {
+  showHideDamageAndMapDivs(val);
+  const propertyNames = await propertyNamesPromise;
   if (!propertyNames) {
     return;
   }
-  createDamageItems(propertyNames);
+  showDamageColumns(propertyNames);
+  removePendingOperation();
 }
 
-function createDamageItems(propertyNames) {
+function showHideDamageAndMapDivs(val) {
+  if (val) {
+    showDamageColumns(null);
+  } else {
+    removeAndCreateUl('damage');
+  }
+  setMapBoundsDiv(!!val);
+}
+
+function showDamageColumns(propertyNames) {
   // TODO(janakr): do an add_layer-style lookup of the columns of this asset,
   //  and provide a select with the available values if possible, and an input
   //  field if there are too many values (for instance, if damage is given by a
@@ -212,10 +196,12 @@ function createDamageItems(propertyNames) {
   } else {
     valueSelect.hide();
   }
+  removePendingOperation();
 }
 
 async function writeSelectAndGetPropertyNames(select, path) {
   const sameSelectChecker = new SameSelectChecker(select);
+  
   const propertyNames = await onAssetSelect(path, null);
   if (!propertyNames || !sameSelectChecker.stillValid()) {
     return null;
@@ -400,8 +386,6 @@ async function verifyAsset(propertyPath, expectedColumns) {
     } catch (err) {
       assetMissingErrorFunction(err);
       return null;
-    } finally {
-      removePendingOperation();
     }
     if (!selectStatusChecker.markDoneIfStillValid()) {
       // Don't do anything if not current asset.
@@ -478,7 +462,10 @@ function handleAssetDataChange(val, propertyPath) {
   const parentProperty = getElementFromPath(propertyPath.slice(0, -1));
   parentProperty[propertyPath[propertyPath.length - 1]] =
       val !== '' ? val : null;
-  validateFunction();
+  if (!isFlexible()) {
+    // State-based disasters have no delays in validation.
+    validateStateBasedUserFields();
+  }
   return updateDataInFirestore(() => disasterData.get(getDisaster()));
 }
 
@@ -498,7 +485,7 @@ function damageAssetPresent() {
 const KICK_OFF_TEXT = 'Kick off Data Processing (will take a while!)';
 const OPTIONAL_WARNING_PREFIX = '; warning: created asset will be missing ';
 
-function showProcessButtonWithDamage(message, optionalMessage) {
+function checkDamageFieldsAndShowProcessButton(message, optionalMessage) {
   const damagePresent = damageAssetPresent();
   const hasDamage = damagePresent || getElementFromPath(scoreCoordinatesPath);
   if (!hasDamage) {
@@ -550,11 +537,24 @@ function allOperationsFinished() {
 
 let disasterGeneration = 0;
 
-function getDisasterGeneration() {
+function getIsCurrentDisasterChecker() {
   const current = disasterGeneration;
   return () => current === disasterGeneration;
 }
 
 function noteNewDisaster() {
   disasterGeneration++;
+}
+
+function isFlexible() {
+  return !!disasterData.get(getDisaster()).assetData.flexibleData;
+}
+
+
+function prepareContainerDiv(outerDiv, assetKey) {
+  startPending();
+  const pendingSelect = createPendingSelect();
+  outerDiv.append($(document.createElement('span')).text(capitalizeFirstLetter(assetKey) + ' asset path: '))
+      .append(pendingSelect);
+  return () => {pendingSelect.remove(); finishPending();};
 }
