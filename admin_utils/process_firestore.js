@@ -1,4 +1,6 @@
 import firebaseAdmin from 'firebase-admin';
+import {blockGroupTag, povertyPercentageTag} from '../docs/property_names.js';
+import {BUILDING_COUNT_KEY} from '../docs/import/create_disaster_lib.js';
 
 /**
  * General utility script for modifying Firestore database. Currently configured
@@ -50,18 +52,17 @@ async function getDisastersData(adminApp) {
 async function main() {
   const adminApp = await setUpFirebase();
   const disasters = await getDisastersData(adminApp);
-  // Track all modified keys, to notice errors and know what strings to change.
-  const allKeys = new Set();
   for (const [name, data] of disasters) {
-    const mangledKeys = new Set();
-    const camelData = camelCase(data, mangledKeys);
-    console.log('Keys to be modified for ' + name, mangledKeys);
-    adminApp.firestore().doc('disaster-metadata/' + name).set(camelData, {
+    let damageAssetPath = data.assetData ? data.assetData.damageAssetPath : null;
+    if (!damageAssetPath) {
+      damageAssetPath = null;
+    }
+    adminApp.firestore().doc('disaster-metadata/' + name).set({scoreAssetCreationParameters: {damageAssetPath, povertyRateKey: povertyPercentageTag, districtDescriptionKey: blockGroupTag, buildingKey: BUILDING_COUNT_KEY}}, {
       merge: true,
     });
-    mangledKeys.forEach((key) => allKeys.add(key));
+    // mangledKeys.forEach((key) => allKeys.add(key));
   }
-  console.log('All keys modified:', allKeys);
+  // console.log('All keys modified:', allKeys);
 }
 
 /**

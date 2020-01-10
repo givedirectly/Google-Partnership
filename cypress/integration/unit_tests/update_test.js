@@ -2,7 +2,7 @@ import * as ErrorLib from '../../../docs/error.js';
 import {disasterData, getCurrentData} from '../../../docs/import/manage_layers_lib.js';
 import * as LayerUtil from '../../../docs/layer_util.js';
 import * as Run from '../../../docs/run.js';
-import {setUpToggles} from '../../../docs/update.js';
+import {setUpScoreParameters} from '../../../docs/update.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
 describe('Unit test for updates.js', () => {
@@ -28,7 +28,7 @@ describe('Unit test for updates.js', () => {
 
   it('does not have a damage asset', () => {
     const nullData = {assetData: {damageAssetPath: null}};
-    cy.wrap(setUpToggles(Promise.resolve({data: () => nullData}), {}));
+    cy.wrap(setUpScoreParameters(Promise.resolve({data: () => nullData}), {}));
     cy.get('input').should('have.length', 2);
     cy.get('[id="poverty threshold"]').clear().type('0.05');
     cy.get('#update').click().then(() => assertDisplayCalledWith(1, 0.3, 0));
@@ -114,5 +114,5 @@ function setUpDamageAsset() {
   const currentDisaster = '2005-fall';
   disasterData.set(currentDisaster, {assetData: {damageAssetPath: 'foo'}});
   window.localStorage.setItem('disaster', currentDisaster);
-  return cy.wrap(setUpToggles(Promise.resolve({data: getCurrentData}), {}));
+  return cy.wrap(setUpScoreParameters(Promise.resolve({data: getCurrentData}), {}));
 }

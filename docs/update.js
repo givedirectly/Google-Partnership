@@ -7,7 +7,7 @@ export {
   damageThresholdKey,
   povertyThresholdKey,
   povertyWeightKey,
-  setUpToggles,
+  setUpScoreParameters,
   toggles,
 };
 
@@ -33,7 +33,7 @@ function update(map) {
   if (!getUpdatedValue(povertyThresholdKey)) {
     return;
   }
-  if (hasDamageAsset) {
+  if (!!scoreAssetCreationParameters.damageAssetPath) {
     if (!getUpdatedValue(damageThresholdKey) ||
         !getUpdatedValue(povertyWeightKey)) {
       return;
@@ -41,7 +41,7 @@ function update(map) {
   }
 
   removeScoreLayer();
-  createAndDisplayJoinedData(map, Promise.resolve(getToggleValues()));
+  createAndDisplayJoinedData(map, Promise.resolve(getScoreComputationParameters()));
   // clear old listeners
   google.maps.event.clearListeners(map, 'click');
   google.maps.event.clearListeners(map.data, 'click');
@@ -65,37 +65,35 @@ function getUpdatedValue(toggle) {
  * Set in setUpInitialToggleValues.
  * @type {boolean}
  */
-let hasDamageAsset;
+let scoreAssetCreationParameters;
 
 /**
  * Initializes damage-related toggle values based on whether or not we have
  * a damage asset.
- * @param {Promise<Object>} disasterMetadataPromise
+ * @param {Promise<DisasterDocument>} disasterMetadataPromise
  * @param {google.maps.Map} map
  * @return {Promise<Object>} returns all the toggle initial values.
  */
-function setUpToggles(disasterMetadataPromise, map) {
-  return disasterMetadataPromise.then((doc) => {
-    hasDamageAsset = !!doc.data().assetData.damageAssetPath;
-    if (hasDamageAsset) {
-      toggles.set(damageThresholdKey, 0.5);
-      toggles.set(povertyWeightKey, 0.5);
-    }
-    createToggles(map);
-    return getToggleValues();
-  });
+async function setUpScoreParameters(disasterMetadataPromise, map) {
+  ({scoreAssetCreationParameters} = await disasterMetadataPromise);
+  if (!!scoreAssetCreationParameters.damageAssetPath) {
+    toggles.set(damageThresholdKey, 0.5);
+    toggles.set(povertyWeightKey, 0.5);
+  }
+  createToggles(map);
+  return getScoreComputationParameters();
 }
 
 /**
- * Gets all the toggle values as an object.
- * @return {{povertyThreshold: number, damageThreshold: number, povertyWeight:
- *     number}}
+ * Gets all the parameters needed for score computation, as an object.
+ * @return {Object}
  */
-function getToggleValues() {
+function getScoreComputationParameters() {
   return {
     povertyThreshold: toggles.get(povertyThresholdKey),
     damageThreshold: toggles.get(damageThresholdKey),
     povertyWeight: toggles.get(povertyWeightKey),
+    scoreAssetCreationParameters
   };
 }
 
@@ -120,7 +118,7 @@ function createToggles(map) {
   form.appendChild(thresholdTitle);
   form.appendChild(createInput(povertyThresholdKey));
 
-  if (hasDamageAsset) {
+  if (!!scoreAssetCreationParameters.damageAssetPath) {
     form.appendChild(createInput(damageThresholdKey));
 
     // weight toggle
@@ -222,7 +220,7 @@ function createButton(id, onclick) {
 
 /** Updates the displayed weights based on a new poverty weight. */
 function updateWeights() {
-  if (!hasDamageAsset) return;
+  if (!scoreAssetCreationParameters.damageAssetPath) return;
   const newPovertyWeight =
       Number(document.getElementById('poverty weight').value);
   setInnerHtml(povertyWeightValueId, newPovertyWeight.toFixed(2));

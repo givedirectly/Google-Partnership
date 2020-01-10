@@ -1,8 +1,13 @@
 import {blockGroupTag, damageTag, geoidTag, povertyHouseholdsTag, povertyPercentageTag, totalHouseholdsTag} from '../property_names.js';
 import {getBackupScoreAssetPath, getScoreAssetPath} from '../resources.js';
 import {computeAndSaveBounds} from './center.js';
-import {BUILDING_COUNT_KEY} from './create_disaster_lib.js';
+import {BUILDING_COUNT_KEY, BuildingSource} from './create_disaster_lib.js';
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
+import {transformEarthEngineFailureMessage} from '../ee_promise_cache.js';
+import {
+  disasterDocumentReference,
+  readDisasterDocument
+} from '../firestore_document.js';
 
 export {
   createScoreAssetForFlexibleDisaster,
@@ -44,6 +49,7 @@ function combineWithBuildings(featureCollection, buildingsHisto) {
  * @param {ee.FeatureCollection} featureCollection Score asset being created
  * @param {ee.FeatureCollection} damage Damage collection, which may includes
  *     undamaged buildings
+ * @param {string} buildingKey Key to find building count under
  * @param {?string} noDamageKey Property in damage collection whose value
  *     can identify undamaged buildings
  * @param {?string} noDamageValue Value for `noDamageKey` that indicates a
@@ -51,7 +57,7 @@ function combineWithBuildings(featureCollection, buildingsHisto) {
  * @return {ee.FeatureCollection}
  */
 function combineWithDamage(
-    featureCollection, damage, noDamageKey, noDamageValue) {
+    featureCollection, damage, buildingKey, noDamageKey, noDamageValue) {
   return featureCollection.map((f) => {
     let damageForDistrict =
         ee.FeatureCollection(damage).filterBounds(f.geometry());
@@ -59,7 +65,7 @@ function combineWithDamage(
       damageForDistrict = damageForDistrict.filterMetadata(
           noDamageKey, 'not_equals', noDamageValue);
     }
-    return addDamageTag(f, damageForDistrict.size());
+    return addDamageTag(f, damageForDistrict.size(), buildingKey);
   });
 }
 
@@ -87,20 +93,21 @@ function combineWithDamageAndUseForBuildings(
             .filterMetadata(noDamageKey, 'not_equals', noDamageValue)
             .size();
     return addDamageTag(
-        f.set(BUILDING_COUNT_KEY, totalBuildings), damagedBuildings);
+        f.set(BUILDING_COUNT_KEY, totalBuildings), damagedBuildings, BUILDING_COUNT_KEY);
   });
 }
 
 /**
  * Sets {@link damageTag} on `feature` to `damagedBuildings / totalBuildings`,
- * where `totalBuildings` comes from the feature's {@link BUILDING_COUNT_KEY}.
+ * where `totalBuildings` comes from the feature's `buildingKey`.
  * Handles edge case of `totalBuildings` being 0.
  * @param {ee.Feature} feature
  * @param {ee.Number} damagedBuildings
+ * @param {string} buildingKey Key to find building count under
  * @return {ee.Feature}
  */
-function addDamageTag(feature, damagedBuildings) {
-  const totalBuildings = feature.get(BUILDING_COUNT_KEY);
+function addDamageTag(feature, damagedBuildings, buildingKey) {
+  const totalBuildings = feature.get(buildingKey);
   // If no buildings, this is probably spurious. Don't give any damage. We
   // don't expect totalBuildings to be 0 in production, but it's bitten us
   // when working with partial buildings datasets. If this starts showing up
@@ -337,15 +344,16 @@ function createScoreAssetForStateBasedDisaster(
     }
 
     if (damage) {
-      // TODO(janakr): Assumes that damage asset does not include undamaged
-      //  buildings. Should probably offer option to filter.
-      processing = combineWithDamage(processing, damage);
+      const {noDamageKey, noDamageValue} = assetData;
+      processing = combineWithDamage(processing, damage, BUILDING_COUNT_KEY,
+          noDamageKey, noDamageValue);
     }
 
     allStatesProcessing = allStatesProcessing.merge(processing);
   }
 
-  return backUpAssetAndStartTask(allStatesProcessing);
+  return backUpAssetAndStartTask(allStatesProcessing, {buildingKey: BUILDING_COUNT_KEY, districtDescriptionKey: blockGroupTag, povertyRateKey: povertyPercentageTag,
+  damageAssetPath: getDamageAssetPath(assetData)}, disasterData.scoreAssetCreationParameters);
 }
 
 /**
@@ -385,14 +393,22 @@ function createScoreAssetForFlexibleDisaster(
       calculateDamage(assetData, setMapBoundsInfoFunction);
   const {flexibleData} = assetData;
   let processing = ee.FeatureCollection(flexibleData.povertyPath);
-  const {povertyGeoid, geographyPath, buildingPath, buildingKey} = flexibleData;
-  const {useDamageForBuildings} = assetData;
+  const {povertyGeoid, povertyHasGeometry, buildingSource} =
+      flexibleData;
+  let {buildingKey} = flexibleData;
+  if (!buildingKey) {
+    buildingKey = BUILDING_COUNT_KEY;
+  }
   // First thing we do is add geographies if necessary and restrict to the
   // damage envelope, so that we can minimize downstream work.
-  if (geographyPath) {
+  if (povertyHasGeometry) {
+    processing = processing.filterBounds(damageEnvelope);
+    processing = renameProperty(processing, povertyGeoid, geoidTag);
+  } else {
     const {geographyGeoid} = flexibleData;
     const geographyCollection = stringifyCollection(
-        ee.FeatureCollection(geographyPath).filterBounds(damageEnvelope),
+        ee.FeatureCollection(flexibleData.geographyPath)
+            .filterBounds(damageEnvelope),
         geographyGeoid);
     processing = stringifyCollection(processing, povertyGeoid, geoidTag);
     processing =
@@ -401,44 +417,39 @@ function createScoreAssetForFlexibleDisaster(
         (f) => ee.Feature(
             ee.Feature(f.get('secondary')).geometry(),
             ee.Feature(f.get('primary')).toDictionary()));
-  } else {
-    processing = processing.filterBounds(damageEnvelope);
-    processing = renameProperty(processing, povertyGeoid, geoidTag);
   }
-  // Rename description property so it can be recognized as special.
-  processing = renameProperty(
-      processing, flexibleData.districtDescriptionKey, blockGroupTag);
 
-  if (buildingPath) {
-    const {buildingGeoid} = flexibleData;
-    const buildingCollection = ee.FeatureCollection(buildingPath);
-    if (buildingGeoid) {
-      // TODO(janakr): Should this be a more expansive join? If some district is
-      //  missing building counts, this will exclude it completely.
+  if (buildingSource === BuildingSource.BUILDING) {
+    const buildingCollection =
+        ee.FeatureCollection(flexibleData.buildingPath);
+    if (flexibleData.buildingHasGeometry) {
+      const buildingsHisto =
+          computeBuildingsHisto(buildingCollection, processing);
+      processing = combineWithBuildings(processing, buildingsHisto);
+    } else {
+      const {buildingGeoid} = flexibleData;
+      // TODO(janakr): Should this be a more expansive join? If some district
+      //  is missing building counts, this will exclude it completely.
       processing = innerJoin(
           processing, stringifyCollection(buildingCollection, buildingGeoid),
           geoidTag, buildingGeoid);
       processing = processing.map(
-          (f) => combineWithAsset(f, BUILDING_COUNT_KEY, buildingKey));
-    } else {
-      const buildingsHisto =
-          computeBuildingsHisto(buildingCollection, processing);
-      processing = combineWithBuildings(processing, buildingsHisto);
+          (f) => combineWithAsset(f, buildingKey, buildingKey));
     }
-  } else if (!useDamageForBuildings) {
-    processing = renameProperty(processing, buildingKey, BUILDING_COUNT_KEY);
   }
   if (damage) {
     const {noDamageKey, noDamageValue} = assetData;
-    if (useDamageForBuildings) {
+    if (buildingSource === BuildingSource.DAMAGE) {
       processing = combineWithDamageAndUseForBuildings(
           processing, damage, noDamageKey, noDamageValue);
     } else {
       processing =
-          combineWithDamage(processing, damage, noDamageKey, noDamageValue);
+          combineWithDamage(processing, damage, buildingKey ? buildingKey : BUILDING_COUNT_KEY, noDamageKey,
+              noDamageValue);
     }
   }
-  return backUpAssetAndStartTask(processing);
+  const {districtDescriptionKey, povertyRateKey} = flexibleData;
+  return backUpAssetAndStartTask(processing, {buildingKey, districtDescriptionKey, povertyRateKey, damageAssetPath: getDamageAssetPath(assetData)}, disasterData.scoreAssetCreationParameters);
 }
 
 /**
@@ -448,52 +459,68 @@ function createScoreAssetForFlexibleDisaster(
  * @return {Promise<!ee.batch.ExportTask>} Promise that resolves with task if
  *     rename dance was successful
  */
-function backUpAssetAndStartTask(featureCollection) {
+async function backUpAssetAndStartTask(featureCollection, scoreAssetCreationParameters, lastScoreAssetCreationParameters) {
   const scoreAssetPath = getScoreAssetPath();
   const oldScoreAssetPath = getBackupScoreAssetPath();
   const task = ee.batch.Export.table.toAsset(
       featureCollection,
       scoreAssetPath.substring(scoreAssetPath.lastIndexOf('/') + 1),
       scoreAssetPath);
-  return renameAssetAsPromise(scoreAssetPath, oldScoreAssetPath)
-      .catch((renameErr) => {
-        // These checks aren't perfect detection, but best we can do.
-        if (renameErr.includes('does not exist')) {
-          console.log('Old ' + scoreAssetPath + ' not found, did not move it');
-        } else if (renameErr.includes('Cannot overwrite asset')) {
-          // Delete and try again.
-          return new Promise(
-              (deleteResolve, deleteReject) =>
-                  ee.data.deleteAsset(oldScoreAssetPath, (_, deleteErr) => {
-                    if (deleteErr) {
-                      // Don't try to recover here.
-                      // Don't show deletion error to user, rename error is what
-                      // we'll display, but log deletion error here.
-                      console.error(deleteErr);
-                      const message =
-                          'Error moving old score asset: ' + renameErr;
-                      setStatus(message);
-                      deleteReject(message);
-                    } else {
-                      // Delete succeeded, try again.
-                      deleteResolve(renameAssetAsPromise(
-                          scoreAssetPath, oldScoreAssetPath));
-                    }
-                  }));
-        } else {
-          const message = 'Error moving old score asset: ' + renameErr;
-          setStatus(message);
-          throw renameErr;
-        }
-      })
-      .then(() => {
-        task.start();
-        $('#upload-status')
-            .text(
-                'Check Code Editor console for upload progress. Task: ' +
-                task.id);
-        return task;
-      });
+  let renamed = false;
+  try {
+    await renameAssetAsPromise(scoreAssetPath, oldScoreAssetPath);
+    renamed = true;
+  } catch (renameErr) {
+    // These checks aren't perfect detection, but best we can do.
+    if (renameErr.includes('does not exist')) {
+    } else if (renameErr.includes('Cannot overwrite asset')) {
+      // Delete and try again.
+      await new Promise(
+          (deleteResolve, deleteReject) =>
+              ee.data.deleteAsset(oldScoreAssetPath, (_, deleteErr) => {
+                if (deleteErr) {
+                  // Don't try to recover here.
+                  // Don't show deletion error to user, rename error is what
+                  // we'll display, but log deletion error here.
+                  console.error(deleteErr);
+                  const message =
+                      'Error moving old score asset: ' + renameErr;
+                  setStatus(message);
+                  deleteReject(message);
+                } else {
+                  // Delete succeeded, try again.
+                  deleteResolve(renameAssetAsPromise(
+                      scoreAssetPath, oldScoreAssetPath));
+                }
+              }));
+      renamed = true;
+    } else {
+      const message = 'Error moving old score asset: ' + renameErr;
+      setStatus(message);
+      throw renameErr;
+    }
+  }
+  const scoreAssetCreationParametersSet = {scoreAssetCreationParameters};
+  if (renamed && lastScoreAssetCreationParameters) {
+    scoreAssetCreationParametersSet.lastScoreAssetCreationParameters = lastScoreAssetCreationParameters;
+  }
+  try {
+    await disasterDocumentReference().set(scoreAssetCreationParametersSet, {merge: true});
+  } catch (err) {
+    setStatus('Error writing score asset creation parameters to Firestore: ' + err.message);
+    throw err;
+  }
+  try {
+    task.start();
+  } catch (err) {
+    setStatus('Error starting EarthEngine asset-creation task: ' + err);
+    throw transformEarthEngineFailureMessage(err);
+  }
+  $('#upload-status')
+      .text(
+          'Check Code Editor console for upload progress. Task: ' +
+          task.id);
+  return task;
 }
 
 /**
@@ -615,4 +642,12 @@ function displayGeoNumbers(latLngs) {
           (coords) =>
               '(' + coords[1].toFixed(2) + ', ' + coords[0].toFixed(2) + ')')
       .join(', ');
+}
+
+function getDamageAssetPath(assetData) {
+  const {damageAssetPath} = assetData;
+  if (!damageAssetPath || typeof (damageAssetPath) === 'string') {
+    return damageAssetPath;
+  }
+  return '[omitted]';
 }

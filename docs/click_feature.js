@@ -15,7 +15,7 @@ export {clickFeature, selectHighlightedFeatures};
  *     which could be clicked
  * @param {Function} tableSelector See drawTable
  */
-function clickFeature(lng, lat, map, featuresAsset, tableSelector) {
+function clickFeature(lng, lat, map, featuresAsset, tableSelector, scoreParameters, columns) {
   const point = ee.Geometry.Point(lng, lat);
   const blockGroups = ee.FeatureCollection(featuresAsset).filterBounds(point);
   const selected = blockGroups.first();
@@ -37,7 +37,7 @@ function clickFeature(lng, lat, map, featuresAsset, tableSelector) {
       highlightFeatures([feature], map);
       const rowData = tableSelector([geoid]);
       const infoWindow = new google.maps.InfoWindow();
-      infoWindow.setContent(createHtmlForPopup(feature, rowData));
+      infoWindow.setContent(createHtmlForPopup(feature, rowData, scoreParameters, columns));
       const borderPoint = feature.geometry.coordinates[0][0];
       infoWindow.setPosition(
           new google.maps.LatLng({lat: borderPoint[1], lng: borderPoint[0]}));
@@ -49,7 +49,6 @@ function clickFeature(lng, lat, map, featuresAsset, tableSelector) {
 
 const HIDDEN_PROPERTIES = Object.freeze(new Set([
   geoidTag,
-  blockGroupTag,
   scoreTag,
 ]));
 
@@ -60,10 +59,11 @@ const HIDDEN_PROPERTIES = Object.freeze(new Set([
  *     feature, if found
  * @return {HTMLDivElement} Div with information
  */
-function createHtmlForPopup(feature, rowData) {
+function createHtmlForPopup(feature, rowData, scoreParameters, columns) {
   const div = document.createElement('div');
   const heading = document.createElement('h4');
-  heading.innerText = feature.properties[blockGroupTag];
+  const {districtDescriptionKey} = scoreParameters;
+  heading.innerText = feature.properties[districtDescriptionKey];
   const properties = document.createElement('ul');
   properties.style.listStyleType = 'none';
   // We know the score was 0 if the block group isn't in the list
@@ -76,15 +76,16 @@ function createHtmlForPopup(feature, rowData) {
     property.innerText = 'SCORE: ' + rowData[2];
     properties.appendChild(property);
   }
-  for (let [heading, value] of Object.entries(feature.properties)) {
-    if (HIDDEN_PROPERTIES.has(heading)) {
+  for (const column of columns) {
+    if (HIDDEN_PROPERTIES.has(column) || column === districtDescriptionKey) {
       continue;
     }
+    let value = feature.properties[column];
     const property = document.createElement('li');
-    if (heading.endsWith(' PERCENTAGE')) {
+    if (value && column.endsWith(' PERCENTAGE')) {
       value = parseFloat(value).toFixed(3);
     }
-    property.innerText = heading + ': ' + value;
+    property.innerText = column + ': ' + (value !== null && value !== undefined ? value : '(data unavailable)');
     properties.appendChild(property);
   }
   div.appendChild(heading);
