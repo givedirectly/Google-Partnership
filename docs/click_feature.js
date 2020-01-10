@@ -91,8 +91,10 @@ function createHtmlForPopup(feature, rowData, scoreParameters, columns) {
     if (value && column.endsWith(' PERCENTAGE')) {
       value = parseFloat(value).toFixed(3);
     }
-    property.innerText = column + ': ' +
-        (value !== null && value !== undefined ? value : '(data unavailable)');
+    property.innerHTML = column + ': ' +
+        (value !== null && value !== undefined ?
+             value :
+             '<span class="data-unavailable-span">(data unavailable)</span>');
     properties.appendChild(property);
   }
   div.appendChild(heading);

@@ -123,7 +123,8 @@ const stateAssetDataTemplate = Object.freeze(
  *     Asset can contain geometries (in which case each geometry corresponds to
  *     a building), or just have rows, in which case each row has a building
  *     count that will be joined to the poverty asset. `buildingGeoid` will
- *     be the joining column and `buildingKey` the column with the count.
+ *     be the joining column to the poverty asset's `povertyGeoid` and
+ *     `buildingKey` the column with the count.
  * @param {number} POVERTY Indicates that poverty asset already has a building
  *     count per district. `buildingKey` will identify the column.
  * @param {number} DAMAGE Indicates that damage asset contains geometries for
