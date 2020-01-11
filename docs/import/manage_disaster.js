@@ -499,7 +499,7 @@ const assetSelectionRowPrefix = 'asset-selection-row-';
  * as soon as page is ready.
  */
 function setUpScoreSelectorTable() {
-  addLoadingElement('asset-selection-table');
+  addLoadingElement('table-container');
   const tbody = $('#asset-selection-table-body');
   for (const {idStem, displayName} of scoreAssetTypes) {
     const row = $(document.createElement('tr'));
@@ -555,7 +555,7 @@ function initializeScoreSelectors(states, stateAssets) {
     }
   }
 
-  loadingElementFinished('asset-selection-table');
+  loadingElementFinished('table-container');
 }
 
 const damagePropertyPath = Object.freeze(['damageAssetPath']);

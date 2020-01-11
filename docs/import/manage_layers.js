@@ -253,7 +253,7 @@ function withDeleteButton(td) {
 
 /** Populates the layers table with layers of current disaster. */
 function populateLayersTable() {
-  loadingElementFinished('layer-manager');
+  loadingElementFinished('table-container');
 
   const layers = getCurrentLayers();
   const tableBody = $('#tbody');

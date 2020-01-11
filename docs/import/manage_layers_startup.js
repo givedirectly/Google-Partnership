@@ -24,7 +24,7 @@ $(() => {
 $(populateColorFunctions);
 $(() => setUpDisasterPicker(getDisaster()));
 
-$(() => addLoadingElement('layer-manager'));
+$(() => addLoadingElement('table-container'));
 $('#tbody').sortable({
   revert: true,
   update: (event, ui) => updateAfterSort(ui),

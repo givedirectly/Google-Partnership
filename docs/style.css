@@ -84,6 +84,12 @@ h1 {
   margin-top: 10px;
 }
 
+.manage-table-container {
+  position: relative;
+  display: table;
+  min-height: 150px;
+}
+
 /* Help css */
 .help {
   color: #545958;
