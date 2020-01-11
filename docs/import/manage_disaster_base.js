@@ -11,10 +11,14 @@ import {
 import {ScoreBoundsMap} from './score_bounds_map.js';
 import {updateDataInFirestore} from './update_firestore_disaster.js';
 import {validateStateBasedUserFields} from './manage_disaster_state_based.js';
+import {
+  finishPending,
+  startPending,
+  validateFlexibleUserFields
+} from './manage_disaster_flexible.js';
 
 export {
   isFlexible,
-  addPendingOperation, removePendingOperation, allOperationsFinished,
   capitalizeFirstLetter,
     continueMessage,
   createAssetDropdownWithNone,
@@ -69,10 +73,6 @@ class SameSelectChecker {
     this.val = selectElement.val();
   }
 
-  val() {
-    return this.val;
-  }
-
   stillValid() {
     return this.val === this.select.val();
   }
@@ -98,9 +98,11 @@ function initializeScoreBoundsMapFromAssetData(assetData, states = []) {
 const damagePropertyPath = Object.freeze(['damageAssetPath']);
 
 async function initializeDamageSelector() {
+  startPending();
   const damageDiv = $('#damage-asset-div');
   const finishLambda = prepareContainerDiv(damageDiv, null);
-  showHideDamageAndMapDivs(getElementFromPath(damagePropertyPath));
+  setMapBoundsDiv(!!getElementFromPath(damagePropertyPath));
+  showDamageColumns(null);
   const currentDisaster = getDisaster();
   const isCurrent = getIsCurrentDisasterChecker();
   let disasterAssets;
@@ -135,6 +137,7 @@ async function initializeDamageSelector() {
 
 const DAMAGE_COLUMN_INFO = {
   label: 'column that can distinguish between damaged and undamaged buildings',
+  explanation: 'optional unless using damage asset for building count',
   path: ['noDamageKey']
 };
 
@@ -144,21 +147,16 @@ const DAMAGE_VALUE_INFO = {
 };
 
 async function damageConsequences(propertyNamesPromise, val) {
-  showHideDamageAndMapDivs(val);
+  setMapBoundsDiv(!!val);
   const propertyNames = await propertyNamesPromise;
   if (!propertyNames) {
     return;
   }
   showDamageColumns(propertyNames);
-  removePendingOperation();
+  finishPending();
 }
 
 function showHideDamageAndMapDivs(val) {
-  if (val) {
-    showDamageColumns(null);
-  } else {
-    removeAndCreateUl('damage');
-  }
   setMapBoundsDiv(!!val);
 }
 
@@ -175,7 +173,7 @@ function showDamageColumns(propertyNames) {
                   noDamageValueInput.val(), ['noDamageValue']));
   noDamageValueInput.val(getElementFromPath(['noDamageValue']));
   const valueSelect = createListItem(DAMAGE_VALUE_INFO)
-  .append(noDamageValueInput);
+      .append(noDamageValueInput);
   const columnSelectListItem = createSelectListItemFromColumnInfo(
       DAMAGE_COLUMN_INFO, createEnabledProperties(propertyNames));
   const columnSelect = columnSelectListItem.children('select');
@@ -191,17 +189,16 @@ function showDamageColumns(propertyNames) {
           removeAndCreateUl('damage')
               .append(columnSelectListItem)
               .append(valueSelect));
-  if (getElementFromPath(DAMAGE_COLUMN_INFO.path)) {
+  if (columnSelect.val()) {
     valueSelect.show();
   } else {
     valueSelect.hide();
   }
-  removePendingOperation();
 }
 
 async function writeSelectAndGetPropertyNames(select, path) {
   const sameSelectChecker = new SameSelectChecker(select);
-  addPendingOperation();
+  startPending();
   const propertyNames = await onAssetSelect(path, null);
   if (!propertyNames || !sameSelectChecker.stillValid()) {
     return null;
@@ -358,11 +355,11 @@ async function verifyAsset(propertyPath, expectedColumns) {
   // TODO: disable or discourage kick off until all green?
   const select = $('#' + makeIdFromPath(propertyPath));
   const selectStatusChecker = new SameSelectChecker(select);
-  const asset = selectStatusChecker.val();
+  const asset = selectStatusChecker.val;
   const assetMissingErrorFunction = (err) => {
     if (!selectStatusChecker.stillValid()) {
       // Don't show errors if not current asset.
-      return;
+      return null;
     }
     const message = err.message || err;
     if (message.includes('\'' + asset + '\' not found.')) {
@@ -374,7 +371,7 @@ async function verifyAsset(propertyPath, expectedColumns) {
   };
   if (asset === '') {
     updateColorAndHover(select, 'white', '');
-    return null;
+    return [];
   } else if (!expectedColumns || expectedColumns.length === 0) {
     updateColorAndHover(select, 'yellow', 'Checking...');
     // TODO: is there a better way to evaluate feature collection existence?
@@ -386,7 +383,7 @@ async function verifyAsset(propertyPath, expectedColumns) {
       assetMissingErrorFunction(err);
       return null;
     }
-    if (!selectStatusChecker.markDoneIfStillValid()) {
+    if (!selectStatusChecker.stillValid()) {
       // Don't do anything if not current asset.
       return null;
     }
@@ -403,7 +400,7 @@ async function verifyAsset(propertyPath, expectedColumns) {
       assetMissingErrorFunction(err);
       return null;
     }
-    if (!selectStatusChecker.markDoneIfStillValid()) {
+    if (!selectStatusChecker.stillValid()) {
       // Don't do anything if not current asset.
       return null;
     }
@@ -461,7 +458,9 @@ function handleAssetDataChange(val, propertyPath) {
   const parentProperty = getElementFromPath(propertyPath.slice(0, -1));
   parentProperty[propertyPath[propertyPath.length - 1]] =
       val !== '' ? val : null;
-  if (!isFlexible()) {
+  if (isFlexible()) {
+    validateFlexibleUserFields();
+  } else {
     // State-based disasters have no delays in validation.
     validateStateBasedUserFields();
   }
@@ -478,7 +477,7 @@ function createOptionFrom(text) {
 }
 
 function damageAssetPresent() {
-  return !!$('#damage-asset-select').val();
+  return !!getPageValueOfPath(damagePropertyPath);
 }
 
 const KICK_OFF_TEXT = 'Kick off Data Processing (will take a while!)';
@@ -520,20 +519,6 @@ function continueMessage(message, addition) {
   return message + (message ? '; ' + addition : capitalizeFirstLetter(addition));
 }
 
-let pendingOperations = 0;
-
-function addPendingOperation() {
-  ++pendingOperations;
-}
-
-function removePendingOperation() {
-  --pendingOperations;
-}
-
-function allOperationsFinished() {
-  return pendingOperations === 0;
-}
-
 let disasterGeneration = 0;
 
 function getIsCurrentDisasterChecker() {
@@ -551,9 +536,10 @@ function isFlexible() {
 
 
 function prepareContainerDiv(outerDiv, assetKey) {
-  startPending();
   const pendingSelect = createPendingSelect();
-  outerDiv.append($(document.createElement('span')).text(capitalizeFirstLetter(assetKey) + ' asset path: '))
-      .append(pendingSelect);
-  return () => {pendingSelect.remove(); finishPending();};
+  if (assetKey) {
+    outerDiv.append($(document.createElement('span')).text(capitalizeFirstLetter(assetKey) + ' asset path: '));
+  }
+  outerDiv.append(pendingSelect);
+  return () => pendingSelect.remove();
 }

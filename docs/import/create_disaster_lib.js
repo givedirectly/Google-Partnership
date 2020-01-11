@@ -180,6 +180,7 @@ const flexibleDataTemplate = Object.freeze({
   districtDescriptionKey: null,
   povertyGeoid: null,
   povertyHasGeometry: false,
+  // TODO(janakr): povertyBuildingKey? Need 1-1 correspondence with page ids.
   geographyPath: null,
   buildingPath: null,
   buildingSource: null,

@@ -6,7 +6,6 @@ import {
   getDisasterAssetsFromEe
 } from './list_ee_assets.js';
 import {
-  capitalizeFirstLetter,
   continueMessage,
   createAssetDropdownWithNone,
   createColumnDropdown,
@@ -25,13 +24,11 @@ import {
   verifyAsset,
   checkDamageFieldsAndShowProcessButton,
   showProcessButton,
-  removePendingOperation,
-  addPendingOperation,
-  allOperationsFinished,
-  getPageValueOfPath, prepareContainerDiv,
+  getPageValueOfPath, prepareContainerDiv, isFlexible,
 } from './manage_disaster_base.js';
+import {showError} from '../error.js';
 
-export {initializeFlexible, onSetFlexibleDisaster, validateFlexibleUserFields};
+export {initializeFlexible, onSetFlexibleDisaster, validateFlexibleUserFields, startPending, finishPending};
 
 /**
  * Flexible disaster assets have the complication of "triggering" other data's
@@ -111,18 +108,32 @@ const COLUMNS =
 
 const MISSING_BUILDINGS_TAIL = ' (choose damage asset as buildings source for now if you don\'t need buildings)';
 
+let pendingOperations = 0;
+
 function startPending() {
-  addPendingOperation();
-  validateFlexibleUserFields();
+  if (!isFlexible()) {
+    return;
+  }
+  if (pendingOperations++ === 0) {
+    validateFlexibleUserFields();
+  }
 }
 
 function finishPending() {
-  removePendingOperation();
-  validateFlexibleUserFields();
+  if (!isFlexible()) {
+    return;
+  }
+  if (--pendingOperations === 0) {
+    validateFlexibleUserFields();
+  }
+  if (pendingOperations < 0) {
+    // Belt and suspenders, and helpful when debugging.
+    showError('Problem validating inputs. Please reload page');
+  }
 }
 
 function validateFlexibleUserFields() {
-  if (!allOperationsFinished()) {
+  if (pendingOperations > 0) {
     showProcessButton('Pending...');
     return;
   }
@@ -165,7 +176,7 @@ function validateFlexibleUserFields() {
         }
         break;
       case BuildingSource.POVERTY:
-        if (!$('#' + makeIdFromPath(BUILDING_KEY_PATH)).val()) {
+        if (povertyAssetName && !getPageValueOfPath(BUILDING_KEY_PATH)) {
           message = continueMessage(message,
               'must specify building-count column');
           tailAboutBuildingsWorkaround = !hasDamageAsset;
@@ -281,7 +292,8 @@ async function initializePoverty() {
 
 async function onPovertyChange(povertySelect, povertyDiv) {
   handleAssetDataChange(await povertyHasGeometry(povertySelect.val()), POVERTY_HAS_GEOMETRY_PATH);
-  processPovertyAsset(writeSelectAndGetPropertyNames(povertySelect, povertyPath), povertySelect.val(), povertyDiv);
+  await processPovertyAsset(writeSelectAndGetPropertyNames(povertySelect, povertyPath), povertySelect.val(), povertyDiv);
+  finishPending();
 }
 
 const geographyPath = ['flexibleData', 'geographyPath'];
@@ -292,9 +304,6 @@ async function processPovertyAsset(propertyNamesPromise, assetName, povertyDiv) 
   if (!propertyNames) {
     // If we've switched assets or not a real asset, do nothing.
     return null;
-  }
-  if (assetName) {
-    finishPending();
   }
   showColumns(propertyNames, povertyDiv, 'poverty');
   showSpecialPovertyColumn(propertyNames);
@@ -321,6 +330,10 @@ function setGeographyDivVisibility(visible) {
 }
 
 async function povertyHasGeometry(povertyAssetName) {
+  if (!povertyAssetName) {
+    // Use geography asset's presence as hint for whether to show div.
+    return !getPageValueOfPath(geographyPath);
+  }
   // Should complete instantly since already finished this call earlier.
   const disasterAssets = await getDisasterAssetsFromEe(getDisaster());
   return disasterAssets.get(povertyAssetName).hasGeometry;
@@ -343,7 +356,7 @@ async function initializeGeography() {
 
 async function onGeographyChange(geographySelect, geographyDiv) {
   const propertyNames = await writeSelectAndGetPropertyNames(geographySelect,
-      geographyDiv);
+      geographyPath);
   if (propertyNames) {
     showColumns(propertyNames, geographyDiv, 'geography');
   }
@@ -352,19 +365,19 @@ async function onGeographyChange(geographySelect, geographyDiv) {
 
 async function onBuildingChange(buildingSelect, buildingDiv) {
   const noGeometry = await shouldDisplayBuildingProperties(buildingSelect.val());
+  const propertyNamesPromise = writeSelectAndGetPropertyNames(buildingSelect,
+      BUILDING_PATH);
   handleAssetDataChange(!noGeometry, BUILDING_HAS_GEOMETRY_PATH);
   if (noGeometry) {
     showColumns(null, buildingDiv, 'buildings');
-    const propertyNames = await writeSelectAndGetPropertyNames(buildingSelect,
-        BUILDING_PATH);
+    const propertyNames = await propertyNamesPromise;
     if (propertyNames) {
       showColumns(propertyNames, buildingDiv, 'buildings');
     }
-    finishPending();
   } else {
     removeAndCreateUl('buildings');
-    validateFlexibleUserFields();
   }
+  finishPending();
 }
 
 async function shouldDisplayBuildingProperties(assetName) {
@@ -418,9 +431,7 @@ async function createAssetDropdown(propertyPath, enableAll = true) {
   const currentDisaster = getDisaster();
   // Same promise as waited on for many assets. Since getDisasterAssetsFromEe
   // deduplicates, this is fine.
-  addPendingOperation();
   const disasterAssets = await getDisasterAssetsFromEe(currentDisaster);
-  removePendingOperation();
   if (currentDisaster !== getDisaster()) {
     return null;
   }
@@ -450,20 +461,23 @@ function initializeFlexible() {
   $('#buildings-source-buildings').on('click', () => {
     handleAssetDataChange(BuildingSource.BUILDING, BUILDING_SOURCE_PATH);
     showDivsForBuildingSourceBuildings();
+    Promise.resolve().then(validateFlexibleUserFields);
   });
   $('#buildings-source-poverty').on('click', () => {
     handleAssetDataChange(BuildingSource.POVERTY, BUILDING_SOURCE_PATH);
     showDivsForBuildingSourcePoverty();
+    Promise.resolve().then(validateFlexibleUserFields);
   });
   $('#buildings-source-damage').on('click', () => {
     handleAssetDataChange(BuildingSource.DAMAGE, BUILDING_SOURCE_PATH);
     showDivsForBuildingSourceDamage();
+    Promise.resolve().then(validateFlexibleUserFields);
   });
 }
 
 function showDivsForBuildingSourceBuildings() {
   const divs = getBuildingsDivs();
-  divs.buildingsDiv.hide();
+  divs.buildingsDiv.show();
   divs.povertyDiv.hide();
 }
 
