@@ -2,6 +2,7 @@ import {eeLegacyPathPrefix, legacyStateDir} from '../ee_paths.js';
 import {convertEeObjectToPromise} from '../ee_promise_cache.js';
 import {showError} from '../error.js';
 import {disasterCollectionReference} from '../firestore_document.js';
+import {addLoadingElement, loadingElementFinished} from '../loading.js';
 import {latLngToGeoPoint, transformGeoPointArrayToLatLng} from '../map_util.js';
 import {getDisaster} from '../resources.js';
 import {createDisasterData, incomeKey, snapKey, sviKey, totalKey} from './create_disaster_lib.js';
@@ -498,6 +499,7 @@ const assetSelectionRowPrefix = 'asset-selection-row-';
  * as soon as page is ready.
  */
 function setUpScoreSelectorTable() {
+  addLoadingElement('asset-selection-table');
   const tbody = $('#asset-selection-table-body');
   for (const {idStem, displayName} of scoreAssetTypes) {
     const row = $(document.createElement('tr'));
@@ -552,6 +554,8 @@ function initializeScoreSelectors(states, stateAssets) {
       verifyAsset(select.val(), idStem, state, expectedColumns);
     }
   }
+
+  loadingElementFinished('asset-selection-table');
 }
 
 const damagePropertyPath = Object.freeze(['damageAssetPath']);

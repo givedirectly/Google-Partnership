@@ -1,4 +1,5 @@
 import {LayerType} from '../firebase_layers.js';
+import {loadingElementFinished} from '../loading.js';
 import {getDisaster} from '../resources.js';
 import {processNewEeLayer, processNonEeLayer} from './add_layer.js';
 import {withColor} from './color_function_util.js';
@@ -252,6 +253,8 @@ function withDeleteButton(td) {
 
 /** Populates the layers table with layers of current disaster. */
 function populateLayersTable() {
+  loadingElementFinished('layer-manager');
+
   const layers = getCurrentLayers();
   const tableBody = $('#tbody');
   $('#color-fxn-editor').hide();
