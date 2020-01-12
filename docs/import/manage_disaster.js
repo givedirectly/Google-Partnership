@@ -1,27 +1,11 @@
 import {getDisaster} from '../resources.js';
 
-import {
-  createScoreAssetForFlexibleDisaster,
-  createScoreAssetForStateBasedDisaster
-} from './create_score_asset.js';
-import {getDisasterAssetsFromEe,} from './list_ee_assets.js';
+import {createScoreAssetForFlexibleDisaster, createScoreAssetForStateBasedDisaster} from './create_score_asset.js';
+import {getDisasterAssetsFromEe} from './list_ee_assets.js';
 import {initializeAddDelete} from './manage_disaster_add_delete.js';
-import {
-  disasterData,
-  getIsCurrentDisasterChecker,
-  initializeDamageSelector,
-  isFlexible,
-  noteNewDisaster,
-} from './manage_disaster_base.js';
-import {
-  initializeFlexible,
-  onSetFlexibleDisaster,
-  validateFlexibleUserFields
-} from './manage_disaster_flexible.js';
-import {
-  onSetStateBasedDisaster,
-  validateStateBasedUserFields
-} from './manage_disaster_state_based.js';
+import {disasterData, getIsCurrentDisasterChecker, initializeDamage, isFlexible, noteNewDisaster} from './manage_disaster_base.js';
+import {initializeFlexible, onSetFlexibleDisaster} from './manage_disaster_flexible.js';
+import {initializeStateBasedDisaster, validateStateBasedUserFields} from './manage_disaster_state_based.js';
 
 export {
   enableWhenReady,
@@ -101,13 +85,13 @@ async function onSetDisaster() {
   const flexible = isFlexible(currentData);
   const {assetData} = currentData;
 
-  // Kick off score asset processing.
-  const scorePromise = flexible ? onSetFlexibleDisaster(assetData) :
-                                  onSetStateBasedDisaster(assetData);
-  await initializeDamageSelector();
-  await scorePromise;
+  // Kick off damage promise first: flexible disaster needs basics ready.
+  const damagePromise = initializeDamage(assetData);
+  await (
+      flexible ? onSetFlexibleDisaster(assetData) :
+                 initializeStateBasedDisaster(assetData));
+  await damagePromise;
   if (isCurrent() && !flexible) {
     validateStateBasedUserFields();
   }
 }
-

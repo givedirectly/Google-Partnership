@@ -89,8 +89,9 @@ class ScoreBoundsMap {
    * Called when the page's disaster is set: Clears the map and draws the given
    * `polygonCoordinates` on the map.
    * @param {?Array<LatLngLiteral>} polygonCoordinates
-   * @param {Array<string>} states Two-letter abbreviations for affected states/
-   *     territories. Only used if polygon not given, to center/zoom map
+   * @param {?Array<string>} states Two-letter abbreviations for affected
+   *     states/territories. Only used if polygon not given, to center/zoom map.
+   *     If null and polygon not given, will show most of the world.
    */
   initialize(polygonCoordinates, states) {
     if (this.polygon) {
@@ -100,7 +101,7 @@ class ScoreBoundsMap {
     if (polygonCoordinates) {
       this._addPolygon(new google.maps.Polygon(
           this._createPolygonOptions(polygonCoordinates)));
-    } else if (states.length) {
+    } else if (states) {
       const stateBounds = ee.FeatureCollection('TIGER/2018/States')
                               .filter(ScoreBoundsMap._createStateFilter(states))
                               .geometry()

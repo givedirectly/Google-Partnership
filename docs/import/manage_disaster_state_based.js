@@ -3,22 +3,16 @@ import {getDisaster} from '../resources.js';
 import {incomeKey, snapKey, sviKey, totalKey} from './create_disaster_lib.js';
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
 import {getStateAssetsFromEe} from './list_ee_assets.js';
-import {
-  damageAssetPresent,
-  disasterData, getIsCurrentDisasterChecker, getPageValueOfPath,
-  initializeScoreBoundsMapFromAssetData, onAssetSelect,
-  checkDamageFieldsAndShowProcessButton,
-  verifyAsset, createSelect, setOptionsForSelect,
-} from './manage_disaster_base.js';
+import {checkDamageFieldsAndShowProcessButton, createSelect, damageAssetPresent, disasterData, getIsCurrentDisasterChecker, getPageValueOfPath, onAssetSelect, setOptionsForSelect, verifyAsset} from './manage_disaster_base.js';
 
 export {
   initializeStateBasedScoreSelectors,
-  onSetStateBasedDisaster,
+  initializeStateBasedDisaster,
   setUpStateBasedScoreSelectorTable,
-  validateStateBasedUserFields
+  validateStateBasedUserFields,
 };
 // For testing.
-export {stateBasedScoreAssetTypes, assetSelectionRowPrefix};
+export {assetSelectionRowPrefix, stateBasedScoreAssetTypes};
 
 const stateBasedScoreAssetTypes = Object.freeze([
   {
@@ -166,22 +160,16 @@ function initializeStateBasedScoreSelectors(states, stateAssets) {
 }
 
 /**
- * We track whether or not we've already completed the EE asset-fetching
- * promises for the current disaster. This ensures we don't re-initialize if the
- * user switches back and forth to this disaster while still loading: the second
- * set of promises to complete will do nothing.
- *
- * We don't just use a generation counter (cf. snackbar/toast.js) because when
- * switching from disaster A to B back to A, the first set of promises for A is
- * still valid if they return after we switch back to A.
+ * Initializes state-based disaster. Removes any prior state from score asset
+ * table, and creates select elements for each asset type and state. Selects are
+ * in the "pending" state to start, updated when asset listings complete.
+ * @param {AssetData} assetData
+ * @return {Promise<void>} Promise that completes when all data displayed.
  */
-
-async function onSetStateBasedDisaster(assetData) {
-  const isCurrent = getIsCurrentDisasterChecker();
+async function initializeStateBasedDisaster(assetData) {
   $('#state-based-disaster-asset-selection-table').show();
   $('#flexible-data').hide();
   const {states} = assetData.stateBasedData;
-  initializeScoreBoundsMapFromAssetData(assetData, states);
 
   // Clear out old data on disaster switch.
   const headerRow = $('#score-asset-header-row');
@@ -190,19 +178,22 @@ async function onSetStateBasedDisaster(assetData) {
   for (const state of states) {
     headerRow.append(createTd().text(state + ' Assets'));
   }
-  for (const [i, {propertyPath, expectedColumns}] of stateBasedScoreAssetTypes.entries()) {
+  for (const [i, {propertyPath, expectedColumns}] of stateBasedScoreAssetTypes
+           .entries()) {
     const row = $('#' + assetSelectionRowPrefix + i);
     removeAllButFirstFromRow(row);
     for (const state of states) {
       const statePropertyPath = propertyPath.concat([state]);
-      const select = createSelect(statePropertyPath)
-      .on('change',
-          () => onAssetSelect(statePropertyPath, expectedColumns))
-      .addClass('with-status-border');
+      const select =
+          createSelect(statePropertyPath)
+              .on('change',
+                  () => onAssetSelect(statePropertyPath, expectedColumns))
+              .addClass('with-status-border');
       row.append(createTd().append(select));
     }
   }
 
+  const isCurrent = getIsCurrentDisasterChecker();
   // getStateAssetsFromEe does internal caching.
   const stateAssets = await Promise.all(states.map(getStateAssetsFromEe));
   if (isCurrent()) {

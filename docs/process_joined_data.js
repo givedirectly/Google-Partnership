@@ -1,4 +1,4 @@
-import {damageTag, geoidTag, scoreTag, isUserProperty} from './property_names.js';
+import {damageTag, geoidTag, isUserProperty, scoreTag} from './property_names.js';
 
 export {processJoinedData};
 

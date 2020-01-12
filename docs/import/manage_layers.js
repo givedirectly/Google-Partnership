@@ -346,7 +346,7 @@ function populateDisasterAssetPicker(disaster, assets) {
   for (const [name, assetInfo] of assets) {
     const type = layerTypeStrings.get(assetInfo.type);
     assetPicker.append($(document.createElement('option'))
-    .val(name)
+                           .val(name)
                            .text(name + '-' + type)
                            .attr('disabled', assetInfo.disabled));
   }

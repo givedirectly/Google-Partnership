@@ -1,54 +1,46 @@
 import {LayerType} from '../firebase_layers.js';
 import {latLngToGeoPoint, transformGeoPointArrayToLatLng} from '../map_util.js';
 import {getDisaster} from '../resources.js';
-import {
-  getAssetPropertyNames,
-  getColumnsStatus,
-  getDisasterAssetsFromEe,
-} from './list_ee_assets.js';
+import {getAssetPropertyNames, getColumnsStatus, getDisasterAssetsFromEe} from './list_ee_assets.js';
 import {createOptionFrom, stylePendingSelect} from './manage_common.js';
-import {
-  finishPending,
-  startPending,
-  validateFlexibleUserFields,
-} from './manage_disaster_flexible.js';
+import {finishPending, startPending, useDamageForBuildings, validateFlexibleUserFields} from './manage_disaster_flexible.js';
 import {validateStateBasedUserFields} from './manage_disaster_state_based.js';
 import {ScoreBoundsMap} from './score_bounds_map.js';
 import {updateDataInFirestore} from './update_firestore_disaster.js';
 
 export {
-  getAssetsAndSetOptionsForSelect,
-  showListForAsset,
-  createSelect,
-  getInputElementFromPath,
-  setOptionsForSelect,
-  showSelectAsPending,
-  isFlexible,
   capitalizeFirstLetter,
-    continueMessage,
+  checkDamageFieldsAndShowProcessButton,
+  continueMessage,
+  createListForAsset,
+  createSelect,
   createSelectListItemFromColumnInfo,
-  DAMAGE_COLUMN_INFO,
-  DAMAGE_VALUE_INFO,
-  getPageValueOfPath,
+  createSelectWithSimpleWriteOnChange,
   damageAssetPresent,
-    initializeDamageSelector,
   disasterData,
+  getAssetsAndSetOptionsForSelect,
+  getInputElementFromPath,
+  getIsCurrentDisasterChecker,
+  getPageValueOfPath,
   getStoredValueFromPath,
   handleAssetDataChange,
-  initializeScoreBoundsMapFromAssetData,
-    makeInputElementIdFromPath,
-  onAssetSelect,
-  createListForAsset,
-  getIsCurrentDisasterChecker,
+  initializeDamage,
+  isFlexible,
+  makeInputElementIdFromPath,
+  NODAMAGE_COLUMN_INFO,
+  NODAMAGE_VALUE_INFO,
   noteNewDisaster,
-  checkDamageFieldsAndShowProcessButton,
-    showDisabledProcessButton,
+  onAssetSelect,
+  setExplanationSpanTextForColumn,
+  setOptionsForSelect,
   setUpScoreBoundsMap,
+  showDisabledProcessButton,
+  showListForAsset,
+  showSelectAsPending,
   validateColumnPathHasValue,
   verifyAsset,
   writeSelectAndGetPropertyNames,
 };
-
 // For testing.
 export {scoreBoundsMap};
 
@@ -67,16 +59,210 @@ let scoreBoundsMap;
 
 const scoreCoordinatesPath = Object.freeze(['scoreBoundsCoordinates']);
 
+/**
+ * Utility class that checks whether either the disaster has changed or the
+ * value of an input (specified by a {@link PropertyPath}) has changed since it
+ * was created. Useful to prevent a scenario like: user selects asset1, which
+ * has columns A, B, which we want to display to the user in a column dropdown.
+ * However, before we get back from EarthEngine the result that asset1 has
+ * columns A, B, the user changes the selection to asset2, which has columns C,
+ * D, and EarthEngine successfully returns that result, and we display it in the
+ * column dropdown. Then when the first result (A, B) is available, it should
+ * not overwrite the second.
+ *
+ * This will not catch cases where the user switches to asset2 and then back to
+ * asset1. In that situation, the result from asset1 may be processed twice.
+ * Thus, this should only be used when the actions that will be taken if
+ * {@link stillValid} is true are idempotent: performing them multiple times is
+ * equivalent to performing them once.
+ */
 class SameValueChecker {
+  /**
+   * Stores the current page value of path and notes current disaster
+   * @constructor
+   * @param {PropertyPath} path
+   */
   constructor(path) {
     this.path = path;
     this.isCurrent = getIsCurrentDisasterChecker();
     this.val = getPageValueOfPath(this.path);
   }
 
+  /** @return {boolean} If disaster has not changed and page value is same */
   stillValid() {
     return this.isCurrent() && this.val === getPageValueOfPath(this.path);
   }
+}
+
+const DAMAGE_PROPERTY_PATH = Object.freeze(['damageAssetPath']);
+
+/**
+ * Does all initialization for damage asset and related fields. Creates damage
+ * select, no-damage column and value, puts everything in a pending state but
+ * with initial visibility based on Firestore values, and when all data ready,
+ * finishes display.
+ * @param {AssetData} assetData
+ * @return {Promise<void>}
+ */
+async function initializeDamage(assetData) {
+  startPending();
+  if (isFlexible()) {
+    initializeScoreBoundsMapFromAssetData(assetData);
+  } else {
+    initializeScoreBoundsMapFromAssetData(
+        assetData, assetData.stateBasedData.states);
+  }
+  const damageIntroSpan = $('#damage-intro-span');
+  const damageDiv = $('#damage-asset-div').empty().append(damageIntroSpan);
+  const damageSelect =
+      createSelect(DAMAGE_PROPERTY_PATH)
+          .on('change',
+              () => displayDamageRelatedElements(
+                  writeSelectAndGetPropertyNames(DAMAGE_PROPERTY_PATH),
+                  damageSelect.val()));
+  damageDiv.append(damageSelect);
+  createNoDamageColumnAndValueList();
+  showHideDamageAndMapDivs(!!getStoredValueFromPath(DAMAGE_PROPERTY_PATH));
+  if (!await getAssetsAndSetOptionsForSelect(DAMAGE_PROPERTY_PATH, false)) {
+    return;
+  }
+  return displayDamageRelatedElements(
+      verifyAsset(DAMAGE_PROPERTY_PATH, []), damageSelect.val());
+}
+
+
+const NODAMAGE_COLUMN_INFO = {
+  label: 'column that can distinguish between damaged and undamaged buildings',
+  // Actual text on page modified when flexible using setExplanationSpanText.
+  explanation: 'optional',
+  path: ['noDamageKey'],
+};
+
+const NODAMAGE_VALUE_INFO = {
+  label: 'value in column that identifies undamaged buildings',
+  // Actual text on page modified when flexible using setExplanationSpanText.
+  explanation: 'required if column is set',
+  path: ['noDamageValue'],
+};
+
+/**
+ * Displays all damage-related elements based on current value of damage asset
+ * select. Invoked both during initialization and on damage asset change. Will
+ * put no-damage column into a "pending" state until columns available.
+ * @param {Promise<?Array<EeColumn>>} propertyNamesPromise Promise that will
+ *     contain columns of damage asset. Created via {@link verifyAsset} or
+ *     {@link writeSelectAndGetPropertyNames}
+ * @param {?EeFC} damageAsset Value of damage asset, from page
+ * @return {Promise<void>}
+ */
+async function displayDamageRelatedElements(propertyNamesPromise, damageAsset) {
+  setNoDamageColumnAndValue(null);
+  showHideDamageAndMapDivs(!!damageAsset);
+  const propertyNames = await propertyNamesPromise;
+  if (!propertyNames) {
+    return;
+  }
+  setNoDamageColumnAndValue(propertyNames);
+  finishPending();
+}
+
+/**
+ * Creates list associated to the damage asset, with the no-damage column select
+ * and no-damage value input. The list is only shown if there is a damage asset,
+ * and the no-damage value input is only shown if there is a no-damage column
+ * select, since the user can legitimately not choose a no-damage column. See
+ * {@link showNoDamageValueItem} for the exception to this in the flexible
+ * disaster case.
+ */
+function createNoDamageColumnAndValueList() {
+  // TODO(janakr): do an add_layer-style lookup of the columns of this asset,
+  //  and provide a select with the available values if possible, and an input
+  //  field if there are too many values (for instance, if damage is given by a
+  //  percentage, with 0 meaning undamaged, there might be >25 values).
+  const noDamageValueInput =
+      $(document.createElement('input'))
+          .prop('id', makeInputElementIdFromPath(NODAMAGE_VALUE_INFO.path))
+          .on('blur',
+              () => handleAssetDataChange(
+                  noDamageValueInput.val(), NODAMAGE_VALUE_INFO.path));
+  noDamageValueInput.val(getStoredValueFromPath(NODAMAGE_VALUE_INFO.path));
+  const valueSelect =
+      createListItem(NODAMAGE_VALUE_INFO).append(noDamageValueInput);
+  const columnSelectListItem =
+      createSelectListItemFromColumnInfo(NODAMAGE_COLUMN_INFO);
+  const columnSelect = columnSelectListItem.children('select');
+  // Firestore writes will happen with the default change handler, this new one
+  // will run as well.
+  columnSelect.on('change', () => showNoDamageValueItem(columnSelect.val()));
+  $('#damage-asset-div')
+      .append(createListForAsset('damage')
+                  .append(columnSelectListItem)
+                  .append(valueSelect));
+  showNoDamageValueItem(getStoredValueFromPath(NODAMAGE_COLUMN_INFO.path));
+}
+
+/**
+ * Sets options for damage-related column input ({@link NODAMAGE_COLUMN_INFO})
+ * and shows/hides {@link NODAMAGE_VALUE_INFO} if the column is set/unset.
+ * @param {Array<EeColumn>} propertyNames
+ */
+function setNoDamageColumnAndValue(propertyNames) {
+  const columnPath = NODAMAGE_COLUMN_INFO.path;
+  if (propertyNames) {
+    const select = setOptionsForSelect(propertyNames, columnPath);
+    showNoDamageValueItem(!!select.val());
+  } else {
+    showSelectAsPending(columnPath);
+    showNoDamageValueItem(!!getStoredValueFromPath(columnPath));
+  }
+}
+
+/**
+ * Shows/hides the no-damage-value input associated to
+ * {@link NODAMAGE_VALUE_INFO}. Ordinarily, it should only be shown if there is
+ * a no-damage column specified in the select associated to
+ * {@link NODAMAGE_COLUMN_INFO}, since otherwise it is meaningless and the user
+ * doesn't have to set it. However, if a damage asset is specified and this is a
+ * flexible disaster with damage used for buildings, then the user must specify
+ * the column and value, so we show it to give the user more information about
+ * what they'll have to fill in.
+ * @param {boolean} show Whether to show the no-damage value input. Ignored if
+ *     using damage for buildings, in which case this should have the same
+ *     visibility as the overall list (visible if there is a damage asset)
+ */
+function showNoDamageValueItem(show) {
+  const noDamageValueItem =
+      getInputElementFromPath(NODAMAGE_VALUE_INFO.path).parent();
+  if (show || useDamageForBuildings()) {
+    noDamageValueItem.show();
+  } else {
+    noDamageValueItem.hide();
+  }
+}
+
+/**
+ * If damage asset present, shows no-damage list, and hides score-bounds map.
+ * Does the opposite if no damage asset.
+ * @param {boolean} damageAssetPresent
+ */
+function showHideDamageAndMapDivs(damageAssetPresent) {
+  showListForAsset(!!damageAssetPresent, 'damage');
+  setMapBoundsDiv(!!damageAssetPresent);
+}
+
+//                    Score-bounds-map-related functions.
+
+/**
+ * Does initialization for score-bounds map.
+ * @param {AssetData} assetData
+ * @param {?Array<string>} states See {@link ScoreBoundsMap.initialize}
+ */
+function initializeScoreBoundsMapFromAssetData(assetData, states = []) {
+  const {scoreBoundsCoordinates} = assetData;
+  const scoreBoundsAsLatLng = scoreBoundsCoordinates ?
+      transformGeoPointArrayToLatLng(scoreBoundsCoordinates) :
+      null;
+  scoreBoundsMap.initialize(scoreBoundsAsLatLng, states);
 }
 
 /** @param {HTMLDivElement} div Div to attach score bounds map to */
@@ -86,122 +272,6 @@ function setUpScoreBoundsMap(div) {
       (polygonPath) => handleAssetDataChange(
           polygonPath ? polygonPath.map(latLngToGeoPoint) : null,
           scoreCoordinatesPath));
-}
-
-function initializeScoreBoundsMapFromAssetData(assetData, states = []) {
-  const {scoreBoundsCoordinates} = assetData;
-  const scoreBoundsAsLatLng = scoreBoundsCoordinates ?
-      transformGeoPointArrayToLatLng(scoreBoundsCoordinates) :
-      null;
-  scoreBoundsMap.initialize(scoreBoundsAsLatLng, states);
-}
-
-const DAMAGE_PROPERTY_PATH = Object.freeze(['damageAssetPath']);
-
-async function initializeDamageSelector() {
-  startPending();
-  const damageIntroSpan = $('#damage-intro-span');
-  const damageDiv = $('#damage-asset-div').empty().append(damageIntroSpan);
-  const damageSelect = createSelect(DAMAGE_PROPERTY_PATH)
-  .on('change', () => displayDamageRelatedElements(
-      writeSelectAndGetPropertyNames(DAMAGE_PROPERTY_PATH), damageSelect.val()));
-  damageDiv.append(damageSelect);
-  createDamageColumns();
-  showHideDamageAndMapDivs(!!getStoredValueFromPath(DAMAGE_PROPERTY_PATH));
-  if (!await getAssetsAndSetOptionsForSelect(DAMAGE_PROPERTY_PATH, false)) {
-    return;
-  }
-  return displayDamageRelatedElements(verifyAsset(DAMAGE_PROPERTY_PATH, []),  damageSelect.val());
-}
-
-const DAMAGE_COLUMN_INFO = {
-  label: 'column that can distinguish between damaged and undamaged buildings',
-  explanation: 'optional unless using damage asset for building count',
-  path: ['noDamageKey']
-};
-
-const DAMAGE_VALUE_INFO = {
-  label: 'value in column that identifies undamaged buildings',
-  path: ['noDamageValue']
-};
-
-async function displayDamageRelatedElements(propertyNamesPromise, val) {
-  showDamageColumns(null);
-  showHideDamageAndMapDivs(!!val);
-  const propertyNames = await propertyNamesPromise;
-  if (!propertyNames) {
-    return;
-  }
-  showDamageColumns(propertyNames);
-  finishPending();
-}
-
-function showHideDamageAndMapDivs(val) {
-  showListForAsset(!!val, 'damage');
-  setMapBoundsDiv(!!val);
-}
-
-function createDamageColumns() {
-  // TODO(janakr): do an add_layer-style lookup of the columns of this asset,
-  //  and provide a select with the available values if possible, and an input
-  //  field if there are too many values (for instance, if damage is given by a
-  //  percentage, with 0 meaning undamaged, there might be >25 values).
-  const noDamageValueInput =
-      $(document.createElement('input'))
-          .prop('id', makeInputElementIdFromPath(DAMAGE_VALUE_INFO.path))
-          .on('blur',
-              () => handleAssetDataChange(
-                  noDamageValueInput.val(), DAMAGE_VALUE_INFO.path));
-  noDamageValueInput.val(getStoredValueFromPath(DAMAGE_VALUE_INFO.path));
-  const valueSelect = createListItem(DAMAGE_VALUE_INFO)
-      .append(noDamageValueInput);
-  const columnSelectListItem = createSelectListItemFromColumnInfo(
-      DAMAGE_COLUMN_INFO);
-  const columnSelect = columnSelectListItem.children('select');
-  columnSelect.on('change', () => {
-    const val = columnSelect.val();
-    showDamageColumnValue(val);
-    handleAssetDataChange(val, DAMAGE_COLUMN_INFO.path);
-  });
-  $('#damage-asset-div')
-      .append(
-          createListForAsset('damage')
-              .append(columnSelectListItem)
-              .append(valueSelect));
-  showDamageColumnValue(getStoredValueFromPath(DAMAGE_COLUMN_INFO.path));
-}
-
-/**
- * Sets options for damage-related column input ({@link DAMAGE_COLUMN_INFO}) and
- * shows/hides {@link DAMAGE_VALUE_INFO} if the column is set/unset.
- * @param {Array<EeColumn>} propertyNames
- */
-function showDamageColumns(propertyNames) {
-  const columnPath = DAMAGE_COLUMN_INFO.path;
-  if (propertyNames) {
-    const select = setOptionsForSelect(propertyNames, columnPath);
-    showDamageColumnValue(!!select.val());
-  } else {
-    showSelectAsPending(columnPath);
-    showDamageColumnValue(!!getStoredValueFromPath(columnPath))
-  }
-}
-
-/**
- * Shows/hides the no-damage-value input associated to
- * {@link DAMAGE_VALUE_INFO}. Ordinarily, it should only be shown if there is a
- * no-damage column specified in the select associated to
- * {@link DAMAGE_COLUMN_INFO}, since otherwise it is meaningless and the user
- * doesn't have to set it. However, if a damage asset is specified,
- * @param show
- */
-function showDamageColumnValue(show) {
-  const noDamageValueItem = getInputElementFromPath(DAMAGE_VALUE_INFO.path).parent();
-  if (show) {
-    noDamageValueItem.show();
-  } else {
-    noDamageValueItem.hide();
-  }
 }
 
 /**
@@ -218,16 +288,19 @@ function setMapBoundsDiv(hide) {
   }
 }
 
+//                Page-element creation/setting functions.
+
 /**
  * Gets assets for the current disaster from EarthEngine, then sets those
  * disasters as options for the select element given by `propertyPath`.
  * @param {PropertyPath} propertyPath
  * @param {boolean} enableAllFeatureCollections True to enable all Feature
  *     Collections, false to leave the defaults (geometry required).
- * @return {Promise<boolean>}
+ * @return {Promise<boolean>} True if successful, false if disaster changed
+ *     while waiting for asset listing, in which case caller should abort
  */
-async function getAssetsAndSetOptionsForSelect(propertyPath,
-    enableAllFeatureCollections = true) {
+async function getAssetsAndSetOptionsForSelect(
+    propertyPath, enableAllFeatureCollections = true) {
   // Same promise as waited on for many assets. Since getDisasterAssetsFromEe
   // deduplicates, this is fine.
   const isCurrent = getIsCurrentDisasterChecker();
@@ -238,12 +311,27 @@ async function getAssetsAndSetOptionsForSelect(propertyPath,
   let assets = disasterAssets;
   if (enableAllFeatureCollections) {
     assets = new Map();
-    for ([key, attributes] of disasterAssets) {
-      assets.set(key, {disabled: attributes.type !== LayerType.FEATURE_COLLECTION});
+    for (const [key, attributes] of disasterAssets) {
+      assets.set(
+          key, {disabled: attributes.type !== LayerType.FEATURE_COLLECTION});
     }
   }
   setOptionsForSelect(assets, propertyPath);
   return true;
+}
+
+/**
+ * Creates a select element that triggers a simple write to Firestore on change.
+ * If additional actions are desired, additional change handlers can be added.
+ * @param {PropertyPath} propertyPath Path associated to element for writes
+ * @return {JQuery<HTMLSelectElement>}
+ */
+function createSelectWithSimpleWriteOnChange(propertyPath) {
+  const select =
+      createSelect(propertyPath)
+      .on('change',
+          () => handleAssetDataChange(select.val(), propertyPath));
+  return select;
 }
 
 //                          Save-related functions.
@@ -397,8 +485,9 @@ const OPTIONAL_WARNING_PREFIX = '; warning: created asset will be missing ';
  *     attributes
  */
 function checkDamageFieldsAndShowProcessButton(message, optionalMessage) {
-  if (!damageAssetPresent() || getStoredValueFromPath(scoreCoordinatesPath)) {
-    message += continueMessage(message, 'must specify either damage asset or map bounds');
+  if (!damageAssetPresent() && !getStoredValueFromPath(scoreCoordinatesPath)) {
+    message += continueMessage(
+        message, 'must specify either damage asset or map bounds');
   }
   if (message && optionalMessage) {
     message += OPTIONAL_WARNING_PREFIX + optionalMessage;
@@ -407,13 +496,12 @@ function checkDamageFieldsAndShowProcessButton(message, optionalMessage) {
     showDisabledProcessButton(message);
   } else {
     $('#process-button')
-    .show()
-    .text(
-        KICK_OFF_TEXT +
-        (optionalMessage ? OPTIONAL_WARNING_PREFIX + optionalMessage : ''))
-    .attr('disabled', false)
-    .css(
-        'background-color', optionalMessage ? 'rgb(150, 150, 0)' : '');
+        .show()
+        .text(
+            KICK_OFF_TEXT +
+            (optionalMessage ? OPTIONAL_WARNING_PREFIX + optionalMessage : ''))
+        .attr('disabled', false)
+        .css('background-color', optionalMessage ? 'rgb(150, 150, 0)' : '');
   }
 }
 
@@ -423,10 +511,10 @@ function checkDamageFieldsAndShowProcessButton(message, optionalMessage) {
  */
 function showDisabledProcessButton(message) {
   $('#process-button')
-  .show()
-  .text(message)
-  .attr('disabled', true)
-  .css('background-color', '');
+      .show()
+      .text(message)
+      .attr('disabled', true)
+      .css('background-color', '');
 }
 
 /**
@@ -437,7 +525,8 @@ function showDisabledProcessButton(message) {
  * @return {string} Resulting message
  */
 function continueMessage(message, addition) {
-  return message + (message ? '; ' + addition : capitalizeFirstLetter(addition));
+  return message +
+      (message ? '; ' + addition : capitalizeFirstLetter(addition));
 }
 
 /**
@@ -504,7 +593,8 @@ function showSelectAsPending(path) {
  * @return {JQuery<HTMLLIElement>} List item will have label and select
  */
 function createSelectListItemFromColumnInfo(columnInfo) {
-  return createListItem(columnInfo).append(createSelect(columnInfo.path));
+  return createListItem(columnInfo)
+      .append(createSelectWithSimpleWriteOnChange(columnInfo.path));
 }
 
 /**
@@ -513,17 +603,63 @@ function createSelectListItemFromColumnInfo(columnInfo) {
  * @return {JQuery<HTMLLIElement>}
  */
 function createListItem(columnInfo) {
-  return $(document.createElement('li')).append(createLabel(columnInfo) + ': ');
+  return $(document.createElement('li')).append(createLabel(columnInfo));
 }
 
 /**
- * Creates text for `columnInfo`: Label followed by optional (explanation).
+ * Creates text for `columnInfo`: Span with Label followed by optional
+ *     (explanation). Explanation has span with id for later modification.
  * @param {ColumnInfo} columnInfo
  * @return {string} Capitalized `label` with `explanation` in parens if present
  */
 function createLabel(columnInfo) {
-  return capitalizeFirstLetter(columnInfo.label) +
-      (columnInfo.explanation ? ' (' + columnInfo.explanation + ')' : '');
+  const labelSpan = $(document.createElement('span'));
+  labelSpan.append(capitalizeFirstLetter(columnInfo.label))
+      .append(setExplanationTextForSpan(
+          $(document.createElement('span'))
+              .prop('id', makeIdForExplanationSpan(columnInfo)),
+          columnInfo))
+      .append(': ');
+  return labelSpan;
+}
+
+/**
+ * Sets text of explanation span given by `columnInfo`. Useful for context-
+ * sensitive explanation text (mandatory/optional depending on settings).
+ * @param {ColumnInfo} columnInfo If `text` is omitted, span's text will be set
+ *     to `columnInfo.explanation` instead
+ * @param {?string} text
+ */
+function setExplanationSpanTextForColumn(
+    columnInfo, text = columnInfo.explanation) {
+  setExplanationTextForSpan(
+      $('#' + makeIdForExplanationSpan(columnInfo)), columnInfo, text);
+}
+
+/**
+ * Sets text of explanation span.
+ * @param {JQuery<HTMLSpanElement>} explanationSpan
+ * @param {ColumnInfo} columnInfo If `text` is omitted, span's text will be set
+ *     to `columnInfo.explanation` instead
+ * @param {?string} text
+ * @return {JQuery<HTMLSpanElement>} `explanationSpan`, for chaining
+ */
+function setExplanationTextForSpan(
+    explanationSpan, columnInfo, text = columnInfo.explanation) {
+  explanationSpan.empty();
+  if (text) {
+    explanationSpan.text(' (' + text + ')');
+  }
+  return explanationSpan;
+}
+
+/**
+ * Computes document id for explanation span corresponding to `columnInfo`.
+ * @param {ColumnInfo} columnInfo
+ * @return {string}
+ */
+function makeIdForExplanationSpan(columnInfo) {
+  return 'explanation-span-' + makeInputElementIdFromPath(columnInfo.path);
 }
 
 /**
@@ -536,9 +672,11 @@ function createLabel(columnInfo) {
  * @return {JQuery<HTMLSelectElement>}
  */
 function setOptionsForSelect(options, propertyPath) {
-  const select = getInputElementFromPath(propertyPath).empty().attr('disabled', false)
-  .removeClass('just-created-select')
-  .append(createOptionFrom('None').val(''));
+  const select = getInputElementFromPath(propertyPath)
+                     .empty()
+                     .attr('disabled', false)
+                     .removeClass('just-created-select')
+                     .append(createOptionFrom('None').val(''));
   const value = getStoredValueFromPath(propertyPath);
   // Add assets to selector and return it.
   for (let option of options) {
@@ -547,8 +685,7 @@ function setOptionsForSelect(options, propertyPath) {
       disabled = option[1].disabled;
       option = option[0];
     }
-    const selectOption =
-        createOptionFrom(option);
+    const selectOption = createOptionFrom(option);
     if (disabled) {
       selectOption.attr('disabled', true);
     }
@@ -567,11 +704,12 @@ function setOptionsForSelect(options, propertyPath) {
  * @return {JQuery<HTMLSelectElement>}
  */
 function createSelect(propertyPath) {
-  return $(document.createElement('select')).prop('id', makeInputElementIdFromPath(propertyPath))
-  .empty()
-  .attr('disabled', true)
-  .addClass('just-created-select')
-  .append(createOptionFrom('pending...'));
+  return $(document.createElement('select'))
+      .prop('id', makeInputElementIdFromPath(propertyPath))
+      .empty()
+      .attr('disabled', true)
+      .addClass('just-created-select')
+      .append(createOptionFrom('pending...'));
 }
 
 /**
@@ -657,7 +795,7 @@ function getInputElementFromPath(path) {
  * Creates a unique id for `path`, that can be used to go from Firestore data to
  * a page element.
  * @param {PropertyPath} path
- * @returns {string}
+ * @return {string}
  */
 function makeInputElementIdFromPath(path) {
   return 'id-from-path-' + path.join('-');
@@ -679,9 +817,8 @@ function updateColorAndHover(select, color, title = null) {
 /**
  * Capitalizes first letter of `str`.
  * @param {string} str
- * @returns {string}
+ * @return {string}
  */
 function capitalizeFirstLetter(str) {
   return str[0].toUpperCase() + str.slice(1);
 }
-

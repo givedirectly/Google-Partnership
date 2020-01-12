@@ -1,35 +1,18 @@
-import {getDisaster} from '../resources.js';
-import {BuildingSource} from './create_disaster_lib.js';
-
-import {
-  getDisasterAssetsFromEe
-} from './list_ee_assets.js';
-import {
-  continueMessage,
-  createSelectListItemFromColumnInfo,
-  DAMAGE_COLUMN_INFO,
-  DAMAGE_VALUE_INFO,
-  damageAssetPresent,
-  getStoredValueFromPath,
-  handleAssetDataChange,
-  initializeScoreBoundsMapFromAssetData,
-  createListForAsset,
-  writeSelectAndGetPropertyNames,
-  verifyAsset,
-  checkDamageFieldsAndShowProcessButton,
-  showDisabledProcessButton,
-  getPageValueOfPath,
-  isFlexible,
-  setOptionsForSelect,
-  showSelectAsPending,
-  getAssetsAndSetOptionsForSelect,
-  createSelect,
-  showListForAsset,
-  capitalizeFirstLetter, validateColumnPathHasValue,
-} from './manage_disaster_base.js';
 import {showError} from '../error.js';
+import {getDisaster} from '../resources.js';
 
-export {initializeFlexible, onSetFlexibleDisaster, validateFlexibleUserFields, startPending, finishPending};
+import {BuildingSource} from './create_disaster_lib.js';
+import {getDisasterAssetsFromEe} from './list_ee_assets.js';
+import {capitalizeFirstLetter, checkDamageFieldsAndShowProcessButton, continueMessage, createListForAsset, createSelect, createSelectListItemFromColumnInfo, createSelectWithSimpleWriteOnChange, damageAssetPresent, getAssetsAndSetOptionsForSelect, getPageValueOfPath, getStoredValueFromPath, handleAssetDataChange, isFlexible, NODAMAGE_COLUMN_INFO, NODAMAGE_VALUE_INFO, setExplanationSpanTextForColumn, setOptionsForSelect, showDisabledProcessButton, showListForAsset, showSelectAsPending, validateColumnPathHasValue, verifyAsset, writeSelectAndGetPropertyNames,} from './manage_disaster_base.js';
+
+export {
+  finishPending,
+  initializeFlexible,
+  onSetFlexibleDisaster,
+  startPending,
+  useDamageForBuildings,
+  validateFlexibleUserFields,
+};
 
 /**
  * Flexible disaster assets have the complication of "triggering" other data's
@@ -76,53 +59,52 @@ const BUILDING_PATH = Object.freeze(['flexibleData', 'buildingPath']);
  * @property {ColumnInfo} geography
  * @property {ColumnInfo} buildings
  */
-const COMPONENTS_DATA =
-    {
-      poverty: {
-        path: povertyPath,
-        div: null,
-        columns: [
-        {
-          label: 'poverty rate column',
-          path: ['flexibleData', 'povertyRateKey']
-        },
-        {
-          label: 'district description column',
-          explanation: 'human-readable description of each region',
-          path: ['flexibleData', 'districtDescriptionKey']
-        },
-        {
-          label: 'district identifier column',
-          explanation: 'typically a number or short string',
-          path: ['flexibleData', 'povertyGeoid'],
-        },]},
-      geography: {
-        path: geographyPath,
-        div: null,
-        columns: [
-        {
-          label: DISTRICT_ID_LABEL,
-          explanation: DISTRICT_ID_EXPLANATION,
-          path: ['flexibleData', 'geographyGeoid']
-        }
-      ]},
-      buildings: {
-        path: BUILDING_PATH,
-        div: null,
-        columns: [
-        {
-          label: DISTRICT_ID_LABEL,
-          explanation: DISTRICT_ID_EXPLANATION,
-          path: BUILDING_GEOID_PATH
-        },
-        {
-          label: 'building counts column',
-          path: BUILDING_KEY_PATH,
-        }
-      ]}
-    };
+const COMPONENTS_DATA = {
+  poverty: {
+    path: povertyPath,
+    div: null,
+    columns: [
+      {label: 'poverty rate column', path: ['flexibleData', 'povertyRateKey']},
+      {
+        label: 'district description column',
+        explanation: 'human-readable description of each region',
+        path: ['flexibleData', 'districtDescriptionKey'],
+      },
+      {
+        label: 'district identifier column',
+        explanation: 'typically a number or short string',
+        path: ['flexibleData', 'povertyGeoid'],
+      },
+    ]
+  },
+  geography: {
+    path: geographyPath,
+    div: null,
+    columns: [{
+      label: DISTRICT_ID_LABEL,
+      explanation: DISTRICT_ID_EXPLANATION,
+      path: ['flexibleData', 'geographyGeoid']
+    }]
+  },
+  buildings: {
+    path: BUILDING_PATH,
+    div: null,
+    columns: [
+      {
+        label: DISTRICT_ID_LABEL,
+        explanation: DISTRICT_ID_EXPLANATION,
+        path: BUILDING_GEOID_PATH
+      },
+      {
+        label: 'building counts column',
+        path: BUILDING_KEY_PATH,
+      }
+    ]
+  }
+};
 
-const MISSING_BUILDINGS_TAIL = ' (choose damage asset as buildings source for now if you don\'t need buildings)';
+const MISSING_BUILDINGS_TAIL =
+    ' (choose damage asset as buildings source for now if you don\'t need buildings)';
 
 let pendingOperations = 0;
 
@@ -173,7 +155,8 @@ function validateFlexibleUserFields() {
   const hasDamageAsset = damageAssetPresent();
   if (buildingSource === null) {
     if (hasDamageAsset) {
-      message = continueMessage(message, 'missing choice for building count source');
+      message =
+          continueMessage(message, 'missing choice for building count source');
     } else {
       optionalMessage = 'building counts';
     }
@@ -193,15 +176,15 @@ function validateFlexibleUserFields() {
         break;
       case BuildingSource.POVERTY:
         if (povertyAssetName && !getPageValueOfPath(POVERTY_BUILDINGS_PATH)) {
-          message = continueMessage(message,
-              'must specify building-count column');
+          message =
+              continueMessage(message, 'must specify building-count column');
           tailAboutBuildingsWorkaround = !hasDamageAsset;
         }
         break;
       case BuildingSource.DAMAGE:
         if (hasDamageAsset) {
-          message = addColumnArrayErrorsToMessage(message,
-              [DAMAGE_COLUMN_INFO, DAMAGE_VALUE_INFO], 'damage');
+          message = addColumnArrayErrorsToMessage(
+              message, [NODAMAGE_COLUMN_INFO, NODAMAGE_VALUE_INFO], 'damage');
         } else {
           optionalMessage = 'building counts';
         }
@@ -215,13 +198,16 @@ function validateFlexibleUserFields() {
 }
 
 function checkColumns(message, key) {
-  return addColumnArrayErrorsToMessage(message, COMPONENTS_DATA[key].columns, key);
+  return addColumnArrayErrorsToMessage(
+      message, COMPONENTS_DATA[key].columns, key);
 }
 
 function addColumnArrayErrorsToMessage(message, columnInfos, key) {
   const missingLabels = validateColumnArray(columnInfos);
   if (missingLabels) {
-    return continueMessage(message, 'must specify properties from ' + key + ' asset: ' + missingLabels);
+    return continueMessage(
+        message,
+        'must specify properties from ' + key + ' asset: ' + missingLabels);
   }
   return message;
 }
@@ -238,8 +224,9 @@ const BUILDING_SOURCE_PATH = Object.freeze(['flexibleData', 'buildingSource']);
  * @returns {Promise<?Array<string>>} Promise that completes when
  */
 async function initializeBuildingSourceBuildings() {
-  const buildingSelect = createSelectAndColumns('buildings')
-      .on('change', () => onBuildingChange(buildingSelect.val()));
+  const buildingSelect =
+      createSelectAndColumns('buildings')
+          .on('change', () => onBuildingChange(buildingSelect.val()));
   if (getStoredValueFromPath(BUILDING_HAS_GEOMETRY_PATH)) {
     // Hide columns list if we actually expect them not to be shown in the end
     // because the building asset has geometries.
@@ -259,7 +246,6 @@ async function onSetFlexibleDisaster(assetData) {
   startPending();
   $('#state-based-disaster-asset-selection-table').hide();
   $('#flexible-data').show();
-  initializeScoreBoundsMapFromAssetData(assetData);
   const {buildingSource} = assetData.flexibleData;
   if (buildingSource !== null) {
     switch (buildingSource) {
@@ -278,13 +264,19 @@ async function onSetFlexibleDisaster(assetData) {
     }
   }
   setGeographyDivVisibility(!getStoredValueFromPath(POVERTY_HAS_GEOMETRY_PATH));
-  return Promise.all([initializeGeography(), initializeBuildingSourceBuildings(), initializePoverty()]).then(finishPending);
+  return Promise
+      .all([
+        initializeGeography(), initializeBuildingSourceBuildings(),
+        initializePoverty()
+      ])
+      .then(finishPending);
 }
 
 async function initializePoverty() {
-  const select = createSelectAndColumns('poverty')
-      .on('change', () => onPovertyChange(select.val()));
-  createSpecialPovertyColumn();
+  const select = createSelectAndColumns('poverty').on(
+      'change', () => onPovertyChange(select.val()));
+  $('#buildings-poverty-select-span')
+      .append(createSelectWithSimpleWriteOnChange(POVERTY_BUILDINGS_PATH));
   if (!await getAssetsAndSetOptionsForSelect(COMPONENTS_DATA.poverty.path)) {
     return;
   }
@@ -296,7 +288,8 @@ async function initializePoverty() {
 }
 
 async function onPovertyChange(val) {
-  handleAssetDataChange(await povertyHasGeometry(val), POVERTY_HAS_GEOMETRY_PATH);
+  handleAssetDataChange(
+      await povertyHasGeometry(val), POVERTY_HAS_GEOMETRY_PATH);
   await doGeographyForPoverty(val);
   const propertyNames = await onSelectChange('poverty');
   if (!propertyNames) {
@@ -389,13 +382,6 @@ const BUILDING_HAS_GEOMETRY_PATH = ['flexibleData', 'buildingHasGeometry'];
 
 const POVERTY_BUILDINGS_PATH = ['flexibleData', 'povertyBuildingKey'];
 
-function createSpecialPovertyColumn() {
-  const select = createSelect(POVERTY_BUILDINGS_PATH).on('change', () =>  handleAssetDataChange(select.val(), POVERTY_BUILDINGS_PATH));
-  $('#buildings-poverty-select-span')
-  .empty()
-  .append(select);
-}
-
 function setOptionsForPovertyBuildings(properties) {
   setOptionsForSelect(properties, POVERTY_BUILDINGS_PATH);
 }
@@ -412,7 +398,9 @@ async function showRealColumns(key) {
 function createSelectAndColumns(assetKey) {
   const div = COMPONENTS_DATA[assetKey].div;
   const select = createSelect(COMPONENTS_DATA[assetKey].path);
-  div.append($(document.createElement('span')).text(capitalizeFirstLetter(assetKey) + ' asset path: ')).append(select);
+  div.append($(document.createElement('span'))
+                 .text(capitalizeFirstLetter(assetKey) + ' asset path: '))
+      .append(select);
   createColumns(assetKey);
   return select;
 }
@@ -446,18 +434,20 @@ function initializeFlexible() {
   $('#buildings-source-buildings').on('click', () => {
     handleAssetDataChange(BuildingSource.BUILDING, BUILDING_SOURCE_PATH);
     showDivsForBuildingSourceBuildings();
-    Promise.resolve().then(validateFlexibleUserFields);
+    validateFlexibleUserFields();
   });
   $('#buildings-source-poverty').on('click', () => {
     handleAssetDataChange(BuildingSource.POVERTY, BUILDING_SOURCE_PATH);
     showDivsForBuildingSourcePoverty();
-    Promise.resolve().then(validateFlexibleUserFields);
+    validateFlexibleUserFields();
   });
-  $('#buildings-source-damage').on('click', () => {
-    handleAssetDataChange(BuildingSource.DAMAGE, BUILDING_SOURCE_PATH);
-    showDivsForBuildingSourceDamage();
-    Promise.resolve().then(validateFlexibleUserFields);
-  });
+  $('#' +
+    'buildings-source-damage')
+      .on('click', () => {
+        handleAssetDataChange(BuildingSource.DAMAGE, BUILDING_SOURCE_PATH);
+        showDivsForBuildingSourceDamage();
+        validateFlexibleUserFields();
+      });
   COMPONENTS_DATA.poverty.div = $('#flexible-poverty-asset-data');
   COMPONENTS_DATA.geography.div = getGeographyDiv();
   COMPONENTS_DATA.buildings.div = $('#buildings-source-buildings-div');
@@ -467,18 +457,28 @@ function showDivsForBuildingSourceBuildings() {
   const divs = getBuildingsDivs();
   divs.buildingsDiv.show();
   divs.povertyDiv.hide();
+  setExplanationSpanTextForColumn(NODAMAGE_COLUMN_INFO);
+  setExplanationSpanTextForColumn(NODAMAGE_VALUE_INFO);
 }
 
 function showDivsForBuildingSourceDamage() {
   const divs = getBuildingsDivs();
   divs.buildingsDiv.hide();
   divs.povertyDiv.hide();
+  setExplanationSpanTextForColumn(
+      NODAMAGE_COLUMN_INFO,
+      'must be specified since damage contains all buildings');
+  setExplanationSpanTextForColumn(
+      NODAMAGE_VALUE_INFO,
+      'must be specified since damage contains all buildings');
 }
 
 function showDivsForBuildingSourcePoverty() {
   const divs = getBuildingsDivs();
   divs.buildingsDiv.hide();
   divs.povertyDiv.show();
+  setExplanationSpanTextForColumn(NODAMAGE_COLUMN_INFO);
+  setExplanationSpanTextForColumn(NODAMAGE_VALUE_INFO);
 }
 
 function getBuildingsDivs() {
@@ -486,4 +486,8 @@ function getBuildingsDivs() {
     buildingsDiv: $('#buildings-source-buildings-div'),
     povertyDiv: $('#buildings-source-poverty-div')
   };
+}
+
+function useDamageForBuildings() {
+  return getStoredValueFromPath(BUILDING_SOURCE_PATH) === BuildingSource.DAMAGE;
 }

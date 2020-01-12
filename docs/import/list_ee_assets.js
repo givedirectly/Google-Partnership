@@ -7,11 +7,11 @@ import {stylePendingSelect} from './manage_common.js';
 
 export {
   createPendingSelect,
+  getAssetPropertyNames,
+  getColumnsStatus,
   getDisasterAssetsFromEe,
   getStateAssetsFromEe,
   listAndProcessEeAssets,
-  getAssetPropertyNames,
-  getColumnsStatus,
 };
 
 /**

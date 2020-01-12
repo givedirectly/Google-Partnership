@@ -454,8 +454,7 @@ function createScoreAssetForFlexibleDisaster(
           processing, damage, noDamageKey, noDamageValue);
     } else {
       processing = combineWithDamage(
-          processing, damage, buildingCountKey,
-          noDamageKey, noDamageValue);
+          processing, damage, buildingCountKey, noDamageKey, noDamageValue);
     }
   }
   const {districtDescriptionKey, povertyRateKey} = flexibleData;
