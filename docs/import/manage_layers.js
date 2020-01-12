@@ -9,7 +9,6 @@ export {enableWhenReady, updateAfterSort};
 // Visible for testing
 export {
   createLayerRow,
-  createOptionFrom,
   createTd,
   getAssetsAndPopulateDisasterPicker,
   onCheck,
@@ -346,7 +345,8 @@ function populateDisasterAssetPicker(disaster, assets) {
                           .width(200);
   for (const [name, assetInfo] of assets) {
     const type = layerTypeStrings.get(assetInfo.type);
-    assetPicker.append(createOptionFrom(name)
+    assetPicker.append($(document.createElement('option'))
+    .val(name)
                            .text(name + '-' + type)
                            .attr('disabled', assetInfo.disabled));
   }
@@ -360,18 +360,6 @@ function populateDisasterAssetPicker(disaster, assets) {
   assetPickerLabel.append(assetPicker);
   assetPickerLabel.append(addButton);
   div.append(assetPickerLabel);
-}
-
-/**
- * Utility function for creating an option with the same val and innerText.
- * @param {String} innerTextAndValue
- * @return {JQuery<HTMLOptionElement>}
- */
-function createOptionFrom(innerTextAndValue) {
-  return $(document.createElement('option'))
-      .text(innerTextAndValue)
-      .val(innerTextAndValue)
-      .prop('id', innerTextAndValue);
 }
 
 /**

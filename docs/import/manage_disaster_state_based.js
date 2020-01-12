@@ -2,15 +2,13 @@ import {getDisaster} from '../resources.js';
 
 import {incomeKey, snapKey, sviKey, totalKey} from './create_disaster_lib.js';
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
-import {createPendingSelect, getStateAssetsFromEe} from './list_ee_assets.js';
+import {getStateAssetsFromEe} from './list_ee_assets.js';
 import {
-  createAssetDropdownWithNone,
   damageAssetPresent,
   disasterData, getIsCurrentDisasterChecker, getPageValueOfPath,
-  initializeScoreBoundsMapFromAssetData, makeIdFromPath,
-  onAssetSelect,
+  initializeScoreBoundsMapFromAssetData, onAssetSelect,
   checkDamageFieldsAndShowProcessButton,
-  verifyAsset,
+  verifyAsset, createSelect, setOptionsForSelect,
 } from './manage_disaster_base.js';
 
 export {
@@ -20,7 +18,7 @@ export {
   validateStateBasedUserFields
 };
 // For testing.
-export {stateBasedScoreAssetTypes};
+export {stateBasedScoreAssetTypes, assetSelectionRowPrefix};
 
 const stateBasedScoreAssetTypes = Object.freeze([
   {
@@ -123,16 +121,18 @@ function validateStateBasedUserFields() {
   checkDamageFieldsAndShowProcessButton(message, optionalMessage);
 }
 
+const assetSelectionRowPrefix = 'asset-selection-row-';
+
 /**
  * Initializes state-based score selector table based on {@link
  * stateBasedScoreAssetTypes} data. Done as soon as page is ready.
  */
 function setUpStateBasedScoreSelectorTable() {
   const tbody = $('#asset-selection-table-body');
-  for (const {propertyPath, displayName} of stateBasedScoreAssetTypes) {
+  for (const [i, {displayName}] of stateBasedScoreAssetTypes.entries()) {
     const row = $(document.createElement('tr'));
     row.append(createTd().text(displayName));
-    row.prop('id', makeIdFromPath(propertyPath));
+    row.prop('id', assetSelectionRowPrefix + i);
     tbody.append(row);
   }
 }
@@ -144,14 +144,12 @@ function setUpStateBasedScoreSelectorTable() {
  *     array that holds a map of asset info for each state.
  */
 function initializeStateBasedScoreSelectors(states, stateAssets) {
-  // For each asset type, add select for all assets for each state.
+  // For each asset type, add assets to select for each state.
   for (const {
          propertyPath,
          expectedColumns,
          geometryExpected,
        } of stateBasedScoreAssetTypes) {
-    const row = $('#' + makeIdFromPath(propertyPath));
-    removeAllButFirstFromRow(row);
     for (const [i, state] of states.entries()) {
       // Disable FeatureCollections without geometries if desired. Be careful
       // not to modify stateAssets[i]!
@@ -161,11 +159,7 @@ function initializeStateBasedScoreSelectors(states, stateAssets) {
               ([k, v]) => [k, {disabled: v.disabled || !v.hasGeometry}])) :
           stateAssets[i];
       const statePropertyPath = propertyPath.concat([state]);
-      const select = createAssetDropdownWithNone(assets, statePropertyPath)
-                         .on('change',
-                             () => onAssetSelect(statePropertyPath, expectedColumns))
-                         .addClass('with-status-border');
-      row.append(createTd().append(select));
+      setOptionsForSelect(assets, statePropertyPath);
       verifyAsset(statePropertyPath, expectedColumns);
     }
   }
@@ -196,11 +190,16 @@ async function onSetStateBasedDisaster(assetData) {
   for (const state of states) {
     headerRow.append(createTd().text(state + ' Assets'));
   }
-  for (const {propertyPath} of stateBasedScoreAssetTypes) {
-    const row = $('#' + makeIdFromPath(propertyPath));
+  for (const [i, {propertyPath, expectedColumns}] of stateBasedScoreAssetTypes.entries()) {
+    const row = $('#' + assetSelectionRowPrefix + i);
     removeAllButFirstFromRow(row);
     for (const state of states) {
-      row.append(createTd().append(createPendingSelect()));
+      const statePropertyPath = propertyPath.concat([state]);
+      const select = createSelect(statePropertyPath)
+      .on('change',
+          () => onAssetSelect(statePropertyPath, expectedColumns))
+      .addClass('with-status-border');
+      row.append(createTd().append(select));
     }
   }
 

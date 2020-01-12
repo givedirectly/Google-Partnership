@@ -99,8 +99,6 @@ async function onSetDisaster() {
   }
   const currentData = disasterData.get(currentDisaster);
   const flexible = isFlexible(currentData);
-  const validateFunction =
-      flexible ? validateFlexibleUserFields : validateStateBasedUserFields;
   const {assetData} = currentData;
 
   // Kick off score asset processing.

@@ -5,11 +5,15 @@ import * as ListEeAssets from '../../../docs/import/list_ee_assets.js';
 import {enableWhenFirestoreReady} from '../../../docs/import/manage_disaster.js';
 import {
   disasterData,
-  makeIdFromPath,
   scoreBoundsMap,
   setUpScoreBoundsMap,
 } from '../../../docs/import/manage_disaster_base.js';
-import {setUpStateBasedScoreSelectorTable, stateBasedScoreAssetTypes, validateStateBasedUserFields} from '../../../docs/import/manage_disaster_state_based.js';
+import {
+  assetSelectionRowPrefix,
+  setUpStateBasedScoreSelectorTable,
+  stateBasedScoreAssetTypes,
+  validateStateBasedUserFields,
+} from '../../../docs/import/manage_disaster_state_based.js';
 import {getDisaster} from '../../../docs/resources.js';
 import {cyQueue} from '../../support/commands.js';
 import {getConvertEeObjectToPromiseRelease, setUpSavingStubs} from '../../support/import_test_util.js';
@@ -649,8 +653,7 @@ function setFirstSelectInScoreRow(rowNum) {
  */
 function getFirstTdInScoreRow(rowNum) {
   return cy
-      .get(
-          '#' + makeIdFromPath(stateBasedScoreAssetTypes[rowNum].propertyPath))
+      .get('#' + assetSelectionRowPrefix + rowNum)
       .find('td')
       .first();
 }

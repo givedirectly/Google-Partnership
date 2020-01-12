@@ -3,13 +3,15 @@ import {convertEeObjectToPromise} from '../ee_promise_cache.js';
 import {LayerType} from '../firebase_layers.js';
 
 import {listEeAssets} from './ee_utils.js';
-import {createOptionFrom} from './manage_layers.js';
+import {stylePendingSelect} from './manage_common.js';
 
 export {
   createPendingSelect,
   getDisasterAssetsFromEe,
   getStateAssetsFromEe,
-  listAndProcessEeAssets
+  listAndProcessEeAssets,
+  getAssetPropertyNames,
+  getColumnsStatus,
 };
 
 /**
@@ -75,8 +77,9 @@ function getDisasterAssetsFromEe(disaster) {
                      .then((assetMap) => {
                        for (const attributes of assetMap.values()) {
                          attributes.disabled = !attributes.hasGeometry;
+                         Object.freeze(attributes);
                        }
-                       return assetMap;
+                       return Object.freeze(assetMap);
                      });
   disasterAssetPromises.set(disaster, result);
   return result;
@@ -175,9 +178,25 @@ function maybeConvertAssetType(asset) {
   }
 }
 
+function getAssetPropertyNames(assetName) {
+  return convertEeObjectToPromise(
+      ee.FeatureCollection(assetName).first().propertyNames());
+}
+
+/**
+ * Checks if asset's first feature has all columns from `expectedColumns`.
+ * @param {EeFC} asset
+ * @param {Array<EeColumn>} expectedColumns
+ * @return {Promise<number>} Status from column check, 0 if contained all
+ *     columns, 1 if there was an error.
+ */
+function getColumnsStatus(asset, expectedColumns) {
+  return convertEeObjectToPromise(ee.Algorithms.If(
+      ee.FeatureCollection(asset).first().propertyNames().containsAll(
+          ee.List(expectedColumns)),
+      ee.Number(0), ee.Number(1)));
+}
+
 function createPendingSelect() {
-  return $(document.createElement('select'))
-      .width(200)
-      .attr('disabled', true)
-      .append(createOptionFrom('pending...'));
+  return stylePendingSelect($(document.createElement('select')));
 }
