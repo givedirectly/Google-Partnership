@@ -47,9 +47,7 @@ const BUILDING_COUNT_KEY = 'BUILDING COUNT';
  *     the score asset bounds. See {@link calculateDamage}.
  */
 
-/**
- * @type {CommonAssetData}
- */
+/** @type {CommonAssetData} */
 const commonAssetDataTemplate = Object.freeze({
   damageAssetPath: null,
   noDamageKey: null,

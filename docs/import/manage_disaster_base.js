@@ -37,7 +37,7 @@ export {
   setExplanationSpanTextForColumn,
   setOptionsForSelect,
   setUpScoreBoundsMap,
-  showDisabledProcessButton,
+  showDisabledKickoffButton,
   showListForAsset,
   showSelectAsPending,
   startPendingWriteSelectAndGetPropertyNames,
@@ -454,7 +454,7 @@ function handleAssetDataChange(val, propertyPath) {
 //                      Validation-related functions.
 
 
-const KICK_OFF_TEXT = 'Kick off Data Processing (will take a while!)';
+const KICK_OFF_TEXT = 'Kick off score asset creation (will take a while!)';
 const OPTIONAL_WARNING_PREFIX = '; warning: created asset will be missing ';
 
 /**
@@ -477,9 +477,9 @@ function checkDamageFieldsAndShowKickoffButton(message, optionalMessage) {
     message += OPTIONAL_WARNING_PREFIX + optionalMessage;
   }
   if (message) {
-    showDisabledProcessButton(message);
+    showDisabledKickoffButton(message);
   } else {
-    $('#process-button')
+    $('#kickoff-button')
         .show()
         .text(
             KICK_OFF_TEXT +
@@ -493,8 +493,8 @@ function checkDamageFieldsAndShowKickoffButton(message, optionalMessage) {
  * Disables kick-off button, puts `message` on it, and shows it.
  * @param {string} message Error message to show on button
  */
-function showDisabledProcessButton(message) {
-  $('#process-button')
+function showDisabledKickoffButton(message) {
+  $('#kickoff-button')
       .show()
       .text(message)
       .attr('disabled', true)

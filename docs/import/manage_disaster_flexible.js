@@ -3,7 +3,7 @@ import {getDisaster} from '../resources.js';
 
 import {BuildingSource} from './create_disaster_lib.js';
 import {getDisasterAssetsFromEe} from './list_ee_assets.js';
-import {capitalizeFirstLetter, checkDamageFieldsAndShowKickoffButton, continueMessage, createListForAsset, createSelect, createSelectListItemFromColumnInfo, createSelectWithSimpleWriteOnChange, damageAssetPresent, getAssetsAndSetOptionsForSelect, getPageValueOfPath, getStoredValueFromPath, handleAssetDataChange, isFlexible, maybeShowNoDamageValueItem, NODAMAGE_COLUMN_INFO, NODAMAGE_VALUE_INFO, setExplanationSpanTextForColumn, setOptionsForSelect, showDisabledProcessButton, showListForAsset, showSelectAsPending, startPendingWriteSelectAndGetPropertyNames, validateColumnPathHasValue, verifyAsset} from './manage_disaster_base.js';
+import {capitalizeFirstLetter, checkDamageFieldsAndShowKickoffButton, continueMessage, createListForAsset, createSelect, createSelectListItemFromColumnInfo, createSelectWithSimpleWriteOnChange, damageAssetPresent, getAssetsAndSetOptionsForSelect, getPageValueOfPath, getStoredValueFromPath, handleAssetDataChange, isFlexible, maybeShowNoDamageValueItem, NODAMAGE_COLUMN_INFO, NODAMAGE_VALUE_INFO, setExplanationSpanTextForColumn, setOptionsForSelect, showDisabledKickoffButton, showListForAsset, showSelectAsPending, startPendingWriteSelectAndGetPropertyNames, validateColumnPathHasValue, verifyAsset} from './manage_disaster_base.js';
 
 export {
   finishPending,
@@ -78,6 +78,13 @@ export {
  * case, both column and value must be specified, so we show them both, even if
  * the column isn't specified yet. This upholds the principle of showing exactly
  * those fields the user has to fill out.
+ *
+ * ## Async functions in this file
+ * A number of functions are declared async because they wait on the disaster
+ * assets listing. However, once the assets are initially loaded, the listing
+ * will always be instantly available (since it is cached), so those functions
+ * can be called with no fear of actually waiting. They are indicated by their
+ * return type not being a Promise despite being async.
  */
 
 /**
@@ -229,7 +236,7 @@ function finishPending() {
  */
 function validateFlexibleUserFields() {
   if (pendingOperations > 0) {
-    showDisabledProcessButton('Pending...');
+    showDisabledKickoffButton('Pending...');
     return;
   }
   let message = '';

@@ -37,8 +37,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
       if (firstTest) {
         // setUpStateBasedScoreSelectorTable gets elements by id, so we have to
         // stub first, which is harder in a before() hook (since stubs should be
-        // set in beforeEach() hooks) but we only want to run it once in this
-        // file.
+        // set in beforeEach() hooks) but it should only run once in this file.
         setUpStateBasedOnPageLoad();
         firstTest = false;
       }
@@ -215,62 +214,63 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     cy.stub(window, 'confirm').returns(true);
 
     cy.get('.score-bounds-delete-button').click();
-    cy.get('#process-button').should('be.disabled');
-    cy.get('#process-button')
+    cy.get('#kickoff-button').should('be.disabled');
+    cy.get('#kickoff-button')
         .should('have.text', allMissingText)
         .then(
             () => addPolygonWithPath(
                 scoreBoundsMap._createPolygonOptions(scoreBoundsCoordinates),
                 scoreBoundsMap.drawingManager));
 
-    cy.get('#process-button')
+    cy.get('#kickoff-button')
         .should('have.text', allMandatoryMissingText + allOptionalMissing);
     cy.get('.score-bounds-delete-button').click();
-    cy.get('#process-button').should('have.text', allMissingText);
+    cy.get('#kickoff-button').should('have.text', allMissingText);
 
     // Specifying the damage asset works too.
     getDamageSelect().select('asset2').blur();
-    cy.get('#process-button')
+    cy.get('#kickoff-button')
         .should('have.text', allStateAssetsMissingWithDamageAssetText);
 
     // Setting one asset has the expected effect.
     setFirstSelectInScoreRow(0);
-    cy.get('#process-button')
+    cy.get('#kickoff-button')
         .should(
             'have.text',
             'Missing asset(s): Census TIGER Shapefiles, Microsoft ' +
                 'Building Shapefiles; warning: created asset will be missing ' +
                 'Income, SVI');
-    cy.get('#process-button').should('be.disabled');
+    cy.get('#kickoff-button').should('be.disabled');
     // Clear that select: back where we started.
     setFirstSelectInScoreRow(0).select('').blur();
-    cy.get('#process-button')
+    cy.get('#kickoff-button')
         .should('have.text', allStateAssetsMissingWithDamageAssetText);
     // Now set all the per-state assets.
     for (let i = 0; i < stateBasedScoreAssetTypes.length; i++) {
       setFirstSelectInScoreRow(i);
     }
     // Yay! We're ready to go.
-    cy.get('#process-button')
-        .should('have.text', 'Kick off Data Processing (will take a while!)');
-    cy.get('#process-button')
+    cy.get('#kickoff-button')
+        .should(
+            'have.text', 'Kick off score asset creation (will take a while!)');
+    cy.get('#kickoff-button')
         .should('be.enabled')
         .should('have.css', 'background-color')
         .and('eq', 'rgb(0, 128, 0)');
     // Getting rid of income keeps enabled, but warns
     setFirstSelectInScoreRow(1).select('').blur();
-    cy.get('#process-button')
+    cy.get('#kickoff-button')
         .should('be.enabled')
         .should(
             'have.text',
-            'Kick off Data Processing (will take a while!); warning: ' +
+            'Kick off score asset creation (will take a while!); warning: ' +
                 'created asset will be missing Income');
-    cy.get('#process-button')
+    cy.get('#kickoff-button')
         .should('have.css', 'background-color')
         .and('eq', 'rgb(150, 150, 0)');
     // Get rid of score asset.
     setFirstSelectInScoreRow(0).select('').blur();
-    cy.get('#process-button')
+    cy.get('#kickoff-button')
         .should('be.disabled')
         .should('have.css', 'background-color')
         .and('eq', 'rgb(128, 128, 128)');
@@ -278,26 +278,27 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     setFirstSelectInScoreRow(0);
     // Put income back.
     setFirstSelectInScoreRow(1);
-    cy.get('#process-button')
-        .should('have.text', 'Kick off Data Processing (will take a while!)');
-    cy.get('#process-button')
+    cy.get('#kickoff-button')
+        .should(
+            'have.text', 'Kick off score asset creation (will take a while!)');
+    cy.get('#kickoff-button')
         .should('be.enabled')
         .should('have.css', 'background-color')
         .and('eq', 'rgb(0, 128, 0)');
     // Get rid of damage: not ready anymore.
     getDamageSelect().select('').blur();
     // Message is just about damage.
-    cy.get('#process-button')
+    cy.get('#kickoff-button')
         .should('have.text', 'Must specify either damage asset or map bounds');
-    cy.get('#process-button').should('be.disabled');
+    cy.get('#kickoff-button').should('be.disabled');
     // Get rid of score asset.
     setFirstSelectInScoreRow(0).select('').blur();
-    cy.get('#process-button')
+    cy.get('#kickoff-button')
         .should(
             'have.text',
             'Missing asset(s): Poverty; must specify either damage asset or ' +
                 'map bounds');
-    cy.get('#process-button').should('be.disabled');
+    cy.get('#kickoff-button').should('be.disabled');
     // Validate that score data was correctly written
     readFirestoreAfterWritesFinish().then(({assetData}) => {
       expect(assetData.damageAssetPath).to.be.null;
@@ -320,8 +321,8 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
         .its('length')
         .should('eq', 5)
         .then(validateStateBasedUserFields);
-    cy.get('#process-button').should('be.disabled');
-    cy.get('#process-button')
+    cy.get('#kickoff-button').should('be.disabled');
+    cy.get('#kickoff-button')
         .should(
             'have.text',
             'Missing asset(s): Poverty [NY, WY], Census TIGER ' +
@@ -330,7 +331,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
                 ' [NY, WY], SVI [NY, WY], Building counts [NY, WY]');
     // Specifying one state has desired effect.
     setFirstSelectInScoreRow(0);
-    cy.get('#process-button')
+    cy.get('#kickoff-button')
         .should(
             'have.text',
             'Missing asset(s): Poverty [WY], ' +
@@ -342,7 +343,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     // from message.
     setFirstSelectInScoreRow(1);
     getFirstTdInScoreRow(1).next().next().find('select').select('wy1').blur();
-    cy.get('#process-button')
+    cy.get('#kickoff-button')
         .should(
             'have.text',
             'Missing asset(s): Poverty [WY], Census TIGER Shapefiles ' +
@@ -358,11 +359,11 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     data.assetData.stateBasedData.snapData.paths.NY = missingSnapPath;
     data.assetData.scoreBoundsCoordinates = null;
     callEnableWhenReady(data);
-    cy.get('#process-button').should('be.disabled');
+    cy.get('#kickoff-button').should('be.disabled');
     // Everything is missing, even though we have values stored.
-    cy.get('#process-button').should('have.text', allMissingText);
+    cy.get('#kickoff-button').should('have.text', allMissingText);
     getDamageSelect().select('asset1');
-    cy.get('#process-button')
+    cy.get('#kickoff-button')
         .should('have.text', allStateAssetsMissingWithDamageAssetText);
     // Data wasn't actually in Firestore before, but checking that it was
     // written on a different change shows we're not silently overwriting it.
@@ -543,7 +544,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
       tbody.id = 'asset-selection-table-body';
       doc.body.appendChild(tbody);
       const button = doc.createElement('button');
-      button.id = 'process-button';
+      button.id = 'kickoff-button';
       button.disabled = true;
       button.hidden = true;
       doc.body.appendChild(button);
