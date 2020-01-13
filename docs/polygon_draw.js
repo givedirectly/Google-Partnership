@@ -19,7 +19,7 @@ export {displayCalculatedData, initializeAndProcessUserRegions};
 export {
   StoredShapeData,
   transformGeoPointArrayToLatLng,
-  userShapes,
+  userShapesCollection,
 };
 
 let damageAssetPath = null;
@@ -212,10 +212,10 @@ class StoredShapeData {
       calculatedData: this.popup.calculatedData,
     };
     if (this.id) {
-      return userShapes.doc(this.id).set(record).then(
+      return userShapesCollection.doc(this.id).set(record).then(
           () => this.finishWriteAndMaybeWriteAgain());
     } else {
-      return userShapes.add(record).then((docRef) => {
+      return userShapesCollection.add(record).then((docRef) => {
         this.id = docRef.id;
         return this.finishWriteAndMaybeWriteAgain();
       });
@@ -256,7 +256,7 @@ class StoredShapeData {
     // Nothing more needs to be done for this element because it is
     // unreachable and about to be GC'ed.
     try {
-      await userShapes.doc(this.id).delete();
+      await userShapesCollection.doc(this.id).delete();
     } catch (err) {
       showError({err, polygon: this}, 'Error deleting polygon');
       throw err;
@@ -364,7 +364,7 @@ function divWithText(text) {
 window.onbeforeunload = () =>
     StoredShapeData.pendingWriteCount > 0 ? true : null;
 
-let userShapes = null;
+let userShapesCollection = null;
 
 const appearance = {
   fillColor: '#4CEF64',
@@ -447,7 +447,8 @@ function createHelpIcon(url) {
  * @param {google.maps.Map} map Map to display regions on
  * @param {Promise<DisasterDocument>} firebasePromise Promise with Firebase
  *     damage data (also implies that authentication is complete)
- * @param {Promise<any>} userShapesPromise Promise with user shapes data
+ * @param {Promise<Map<string, ShapeDocument>>} userShapesPromise Promise with
+ *     user shapes data
  * @return {Promise<?google.maps.drawing.DrawingManager>} Promise with drawing
  *     manager added to map (only used by tests). Null if there was an error
  */
@@ -460,15 +461,15 @@ async function initializeAndProcessUserRegions(
     ({scoreAssetCreationParameters: {damageAssetPath}} = await firebasePromise);
     // Damage asset may not exist yet, so this is undefined. We tolerate
     // gracefully.
-    let querySnapshot;
+    let shapes;
     try {
-      userShapes = userFeatures();
-      querySnapshot = await userShapesPromise;
+      userShapesCollection = userFeatures();
+      shapes = await userShapesPromise;
     } catch (err) {
       handleUserShapesError(err);
       return null;
     }
-    drawRegionsFromFirestoreQuery(querySnapshot, map);
+    drawRegions(shapes, map);
     return setUpPolygonDrawing(map);
   } finally {
     loadingElementFinished(mapContainerId);
@@ -524,11 +525,11 @@ function handleUserShapesError(err) {
  * Helper function that actually does drawing on map when Firestore query
  * completes.
  *
- * @param {firebase.firestore.QuerySnapshot} querySnapshot result of query
+ * @param {Map<string, ShapeDocument>} shapes user shapes by doc id -> data
  * @param {google.maps.Map} map Map to display regions on
  */
-function drawRegionsFromFirestoreQuery(querySnapshot, map) {
-  querySnapshot.forEach((userDefinedRegion) => {
+function drawRegions(shapes, map) {
+  shapes.forEach((userDefinedRegion, id) => {
     const storedGeometry = userDefinedRegion.get('geometry');
     const coordinates = transformGeoPointArrayToLatLng(storedGeometry);
     let feature;
@@ -547,9 +548,7 @@ function drawRegionsFromFirestoreQuery(querySnapshot, map) {
     const notes = userDefinedRegion.get('notes');
     const popup = createPopup(feature, map, notes, calculatedData);
     userRegionData.set(
-        feature,
-        new StoredShapeData(
-            userDefinedRegion.id, notes, storedGeometry, popup));
+        feature, new StoredShapeData(id, notes, storedGeometry, popup));
     feature.setMap(map);
   });
 }

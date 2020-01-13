@@ -19,7 +19,7 @@ const UPLOAD_IMAGE_COLLECTION_PAGE = 'import/upload_image_collection.html';
  *     for all disasters
  * @param {?Function} changeDisasterHandler Function invoked when current
  *     disaster is changed. location.reload is called if null
- * @param {Promise<any>} privilegedUserPromise Promise with user shapes data *
+ * @param {Promise<any>} privilegedUserPromise Promise with user shapes data
  * @param {string} title Title of the page
  * @return {Promise<void>}
  */
@@ -36,10 +36,8 @@ async function loadNavbar(
   $('#nav-title-header').html(title);
   $('.help-a').prop('href', getHelpUrl());
   try {
-    console.log('trying');
     await privilegedUserPromise;
   } catch (err) {
-    console.log('error');
     if (err.code === AUTHENTICATION_ERROR_CODE) {
       navPublic.show();
     } else {
@@ -47,9 +45,7 @@ async function loadNavbar(
     }
     return;
   }
-  console.log('succeeded');
   navToggle.show();
-  console.log($('#nav-toggle').is(':visible'));
   $('#map-a').prop('href', getUrlUnderDocs(''));
   $('#manage-layers-a').prop('href', getUrlUnderDocs(MANAGE_LAYERS_PAGE));
   $('#manage-disaster-a').prop('href', getUrlUnderDocs(MANAGE_DISASTERS_PAGE));
@@ -59,34 +55,34 @@ async function loadNavbar(
 
 /**
  * Loads the navbar with a disaster picker.
- * @param {Object} data
+ * @param {Promise<void>} firebaseAuthPromise Promise that completes when
+ *     Firebase login is done
+ * @param {string} title Title of the page
+ * @param {?Function} changeDisasterHandler Function invoked when current
+ *     disaster is changed. location.reload is called if null
+ * @param {Promise<Map<string, Object>>} firebaseDataPromise Promise with data
+ *     for all disasters
+ * @param {Promise<any>} privilegedUserPromise Fetch of all user shapes - used
+ *     as a proxy to determine if loading for a privileged user or not
  */
-function loadNavbarWithPicker(data) {
-  let {
-    // promise that completes when Firebase login is done
-    firebaseAuthPromise,
-    // title of the page
-    title,
-    // function invoked when disaster is changed, if not specified, reloads page
-    changeDisasterHandler,
-    // fetch of all disasters
-    firebaseDataPromise,
-    // fetch of all user shapes - used as a proxy to determine if loading
-    // for a privileged user or not
-    userShapesPromise,
-  } = data;
+function loadNavbarWithPicker({
+  firebaseAuthPromise,
+  title,
+  changeDisasterHandler,
+  firebaseDataPromise,
+  privilegedUserPromise,
+}) {
   if (!firebaseDataPromise) {
     firebaseDataPromise = firebaseAuthPromise.then(getDisastersData);
   }
-  // On every page other than the main map, this will be null but if you're
-  // there and using the nav, you're already on a privileged page so we know
-  // this will resolve fine. Simplify?
-  if (!userShapesPromise) {
-    userShapesPromise = firebaseAuthPromise.then(getUserFeatures);
+  // If the caller didn't pass in a privileged user promise, check user shapes
+  // access as a proxy.
+  if (!privilegedUserPromise) {
+    privilegedUserPromise = firebaseAuthPromise.get(getUserFeatures);
   }
   $('#navbar').load(
       getUrlUnderDocs('navbar.html'),
       () => loadNavbar(
-          firebaseDataPromise, changeDisasterHandler, userShapesPromise,
+          firebaseDataPromise, changeDisasterHandler, privilegedUserPromise,
           title));
 }

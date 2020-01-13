@@ -19,6 +19,7 @@ $(() => {
     title: 'Manage Disaster',
     changeDisasterHandler: onSetDisaster,
     firebaseDataPromise,
+    privilegedUserPromise: Promise.resolve(),
   });
   $('#create-new-disaster').on('click', () => toggleState(false));
   $('#cancel-new-disaster').on('click', () => toggleState(true));

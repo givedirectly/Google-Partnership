@@ -140,7 +140,10 @@ class Authenticator {
   internalInitializeEE() {
     initializeEE(this.eeInitializeCallback, (err) => {
       if (err.message.includes('401') || err.message.includes('404')) {
-        showToastMessage('fetching ee token', -1);
+        showToastMessage(
+            'Not whitelisted for EarthEngine access: ' +
+                'trying anonymous access',
+            -1);
         this.getAndSetEeTokenWithErrorHandling().then(() => {
           showToastMessage('fetching ee token', -1);
           initializeEE(this.eeInitializeCallback, defaultErrorCallback);

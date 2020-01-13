@@ -25,7 +25,10 @@ google.charts.load('current', {packages: ['table', 'controls']});
 $(() => {
   initializeSidebar();
   map = createMap(disasterMetadataPromise);
-  loadNavbarWithPicker(
-      {firebaseAuthPromise, title: 'Delphi Map', userShapesPromise});
+  loadNavbarWithPicker({
+    firebaseAuthPromise,
+    title: 'Delphi Map',
+    privilegedUserPromise: userShapesPromise,
+  });
   taskAccumulator.taskCompleted();
 });

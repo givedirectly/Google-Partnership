@@ -13,6 +13,7 @@ const taskAccumulator =
 
 const firebaseAuthPromise = trackEeAndFirebase(taskAccumulator, true);
 const firebaseDataPromise = firebaseAuthPromise.then(getDisastersData);
+firebaseDataPromise.then((stuff) => console.log(stuff));
 
 $(() => {
   loadNavbarWithPicker({
@@ -20,6 +21,7 @@ $(() => {
     title: 'Manage Layers',
     changeDisasterHandler: onSetDisaster,
     firebaseDataPromise,
+    privilegedUserPromise: Promise.resolve(),
   });
   taskAccumulator.taskCompleted();
 });
