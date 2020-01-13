@@ -34,7 +34,7 @@ function createTrs(num) {
  */
 function setDisasterAndLayers(layers) {
   const currentDisaster = '2005-fall';
-  disasterData.set(currentDisaster, {layers: layers});
+  disasterData.set(currentDisaster, {layerArray: layers});
   setDisaster(currentDisaster);
 }
 
