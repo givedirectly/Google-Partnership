@@ -143,9 +143,7 @@ async function writeNewDisaster(disasterId, states) {
       return false;
     }
   });
-  if (!added) {
-    disasterPicker.append(createOptionFrom(disasterId));
-  }
+  if (!added) disasterPicker.append(createOptionFrom(disasterId));
   toggleState(true);
 
   disasterPicker.val(disasterId).trigger('change');
