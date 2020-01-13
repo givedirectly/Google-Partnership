@@ -178,10 +178,9 @@ const COMPONENTS_DATA = {
 
 /**
  * As described above, we cannot do validation until all pending operations are
- * complete.
- * We track pending operations by calling {@link startPending} before doing
- * asynchronous operations. We then call {@link finishPending} when we have
- * displayed all data resulting from that asynchronous operation. Note that
+ * complete. We track pending operations by calling {@link startPending} before
+ * doing asynchronous operations. We then call {@link finishPending} when we
+ * have displayed all data resulting from that asynchronous operation. Note that
  * calling {@link finishPending} right after the asynchronous operation is done
  * would not work: we would attempt to validate user fields that have not yet
  * been set, because the data from the asynchronous operation has not yet been
