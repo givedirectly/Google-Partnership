@@ -13,7 +13,7 @@ export {
  * @return {string}
  */
 function getUrlUnderDocs(pathFragment) {
-  return import.meta.url.replace(/navbar_lib\.js$/, pathFragment)
+  return import.meta.url.replace(/navbar_lib\.js$/, pathFragment);
 }
 
 /**
