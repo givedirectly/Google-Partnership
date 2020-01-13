@@ -288,7 +288,10 @@ function validateFlexibleUserFields() {
         }
         break;
       case BuildingSource.DAMAGE:
-        if (hasDamageAsset) {
+        // Normally there's no error if NODAMAGE_COLUMN_INFO is blank, but we
+        // need it. If it's not blank, checkDamageFieldsAndShowKickoffButton
+        // will display and error if the value is missing, so don't check here.
+        if (hasDamageAsset && !getPageValueOfPath(NODAMAGE_COLUMN_INFO.path)) {
           message = addColumnArrayErrorsToMessage(
               message, [NODAMAGE_COLUMN_INFO, NODAMAGE_VALUE_INFO], 'damage');
         } else {

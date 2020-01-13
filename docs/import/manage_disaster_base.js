@@ -144,7 +144,7 @@ async function displayDamageRelatedElements(propertyNamesPromise, damageAsset) {
  * and no-damage value input. The list is only shown if there is a damage asset,
  * since the user can kick off score asset creation without specifying damage;
  * and the no-damage value input is only shown if there is a no-damage column
- * selection, since the user can legitimately not choose a no-damage column. See
+ * selection, since the user can legitimately omit the no-damage column. See
  * {@link maybeShowNoDamageValueItem} for the exception to this in the flexible
  * disaster case.
  */
@@ -153,13 +153,14 @@ function createNoDamageColumnAndValueList() {
   //  and provide a select with the available values if possible, and an input
   //  field if there are too many values (for instance, if damage is given by a
   //  percentage, with 0 meaning undamaged, there might be >25 values).
+  const noDamageValuPath = NODAMAGE_VALUE_INFO.path;
   const noDamageValueInput =
       $(document.createElement('input'))
-          .prop('id', makeInputElementIdFromPath(NODAMAGE_VALUE_INFO.path))
+          .prop('id', makeInputElementIdFromPath(noDamageValuPath))
           .on('blur',
               () => handleAssetDataChange(
-                  noDamageValueInput.val(), NODAMAGE_VALUE_INFO.path));
-  noDamageValueInput.val(getStoredValueFromPath(NODAMAGE_VALUE_INFO.path));
+                  noDamageValueInput.val(), noDamageValuPath));
+  noDamageValueInput.val(getStoredValueFromPath(noDamageValuPath));
   const valueSelect =
       createListItem(NODAMAGE_VALUE_INFO).append(noDamageValueInput);
   const columnSelectListItem =
@@ -178,7 +179,7 @@ function createNoDamageColumnAndValueList() {
 /**
  * Sets options for damage-related column input ({@link NODAMAGE_COLUMN_INFO})
  * and shows/hides {@link NODAMAGE_VALUE_INFO} if the column is set/unset.
- * @param {Array<EeColumn>} propertyNames
+ * @param {?Array<EeColumn>} propertyNames If null, show "pending" selects
  */
 function setNoDamageColumnAndValue(propertyNames) {
   const columnPath = NODAMAGE_COLUMN_INFO.path;
@@ -268,7 +269,7 @@ function setMapBoundsDiv(hide) {
   }
 }
 
-//                Page-element creation/setting functions.
+//                Page element creation/setting functions.
 
 /**
  * Gets assets for the current disaster from EarthEngine, then sets those
@@ -337,7 +338,7 @@ async function startPendingWriteSelectAndGetPropertyNames(path) {
  * Sets off a column verification check and data write.
  * @param {PropertyPath} propertyPath
  * @param {?Array<EeColumn>} expectedColumns See {@link verifyAsset}
- * @return {Promise<Array<EeColumn>>} See {@link verifyAsset}
+ * @return {?Promise<Array<EeColumn>>} See {@link verifyAsset}
  */
 function onAssetSelect(propertyPath, expectedColumns) {
   handleAssetDataChange(getPageValueOfPath(propertyPath), propertyPath);
@@ -473,6 +474,12 @@ function checkDamageFieldsAndShowKickoffButton(message, optionalMessage) {
     message = continueMessage(
         message, 'must specify either damage asset or map bounds');
   }
+  if (!getPageValueOfPath(NODAMAGE_VALUE_INFO.path) &&
+      getPageValueOfPath(NODAMAGE_COLUMN_INFO.path)) {
+    message = continueMessage(
+        message, 'Must specify no-damage value if no-damage column is set');
+  }
+
   if (message && optionalMessage) {
     message += OPTIONAL_WARNING_PREFIX + optionalMessage;
   }
