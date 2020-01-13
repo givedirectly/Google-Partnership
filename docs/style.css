@@ -441,6 +441,10 @@ input[type=checkbox]:checked {
   transition: background-image 0.2s ease-in-out;
 }
 
+.data-unavailable-span{
+  color: grey;
+}
+
 /* Loading indicator css */
 
 .loader {

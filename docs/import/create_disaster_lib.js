@@ -1,5 +1,12 @@
 export {createDisasterData};
-export {BUILDING_COUNT_KEY, incomeKey, snapKey, sviKey, totalKey};
+export {
+  BUILDING_COUNT_KEY,
+  BuildingSource,
+  incomeKey,
+  snapKey,
+  sviKey,
+  totalKey,
+};
 // For testing
 export {deepCopy, flexibleAssetData, stateAssetDataTemplate};
 
@@ -33,10 +40,6 @@ const BUILDING_COUNT_KEY = 'BUILDING COUNT';
  *     contains undamaged buildings, this must be specified.
  * @property {string} [noDamageValue] The value of `noDamageKey` that indicates
  *     that a building is undamaged.
- * @property {boolean} useDamageForBuildings Whether the damage asset should be
- *     used to compute the total number of buildings. Ignored for state-based
- *     disasters. If specified, `damageAssetPath`, `noDamageKey`,
- *     `noDamageValue` must all be set.
  * @property {Array<firebase.firestore.GeoPoint>} [scoreBoundsCoordinates]
  *     Coordinates of polygon that score asset should be restricted to. Only
  *     used if `damageAssetPath` not specified: if `damageAssetPath` is
@@ -47,7 +50,6 @@ const commonAssetDataTemplate = Object.freeze({
   damageAssetPath: null,
   noDamageKey: null,
   noDamageValue: null,
-  useDamageForBuildings: false,
   scoreBoundsCoordinates: null,
 });
 
@@ -115,33 +117,73 @@ const stateAssetDataTemplate = Object.freeze(
     {...commonAssetDataTemplate, stateBasedData: stateBasedDataTemplate});
 
 /**
+ * Where building count comes from.
+ * @type {Object}
+ * @param {number} BUILDING Indicates that there is a separate buildings asset.
+ *     Asset can contain geometries (in which case each geometry corresponds to
+ *     a building), or just have rows, in which case each row has a building
+ *     count that will be joined to the poverty asset. `buildingGeoid` will
+ *     be the joining column to the poverty asset's `povertyGeoid` and
+ *     `buildingKey` the column with the count.
+ * @param {number} POVERTY Indicates that poverty asset already has a building
+ *     count per district. `buildingKey` will identify the column.
+ * @param {number} DAMAGE Indicates that damage asset contains geometries for
+ *     all buildings, not just damaged ones, so the building count can be taken
+ *     from it. If specified, `flexibleData` fields `noDamageKey` and
+ *     `noDamageValue` must be set if `assetData.damageAssetPath` is. (If this
+ *     is set but the damage asset is not specified, the score asset can be
+ *     created, without damage or buildings.)
+ */
+const BuildingSource = Object.freeze({
+  BUILDING: 1,
+  POVERTY: 2,
+  DAMAGE: 3,
+});
+
+/**
  * Has data for a "flexible" (non-Census-based) disaster.
  * @type {Readonly<Object>}
  * @property {EeFC} povertyPath Contains poverty data. May have geometries, in
  *     which case `geographyPath` is not used. May have building counts, in
  *     which case `buildingPath` is not used. All columns from this asset end up
- *     in final score asset. Must have {@link povertyPercentageTag} column.
+ *     in final score asset.
  * @property {EeColumn} povertyGeoid Column of `povertyPath` that contains
  *     district-identifying string ("district identifier").
+ *     {@link censusGeoidKey} for Census data.
+ * @property {EeColumn} povertyRateKey Column of `povertyPath` that
+ *     contains poverty rate, as a number between 0 and 1, for use in score.
+ *     {@link POVERTY_PERCENTAGE_TAG} for Census data.
+ * @property {EeColumn} districtDescriptionKey Column of `povertyPath` that
+ *     contains human-readable description of each district, for display on map.
+ *     {@link censusBlockGroupKey} for Census data.
+ * @property {boolean} povertyHasGeometry Whether the poverty asset has
+ *     geometries for its districts. If not, `geographyPath` must be specified.
  * @property {EeFC} [geographyPath] Contains geometries of districts.
  * @property {EeColumn} [geographyGeoid] Column of `geographyPath` that contains
- *     district identifier.
+ *     district identifier. {@link tigerGeoidKey} for Census data.
+ * @property {BuildingSource} buildingSource Where the building count comes
+ *     from.
  * @property {EeFC} [buildingPath] Contains building data. If buildings
  *     have geometries, building counts per district will be computed by
  *     geographic intersection. If there are no geometries, each row is a
  *     per-district count of buildings.
  * @property {EeColumn} [buildingGeoid] If `buildingPath` contains per-district
  *     counts of buildings, indicates the column that has district identifier.
- * @property {EeColumn} [buildingKey] If `buildingPath` contains per-district
- *     counts of buildings, indicates the column that has counts. If
- *     `buildingPath` is not specified and `useDamageForBuildings` is false,
- *     indicates the column of `povertyPath` that has counts.
+ * @property {EeColumn} [buildingKey] If `buildingSource` is {@link
+ * BuildingSource.BUILDING}, indicates the column of `buildingPath` that has
+ * counts. If `buildingSource` is {@link BuildingSource.POVERTY}, indicates the
+ * column of `povertyPath` that has counts.
  */
 const flexibleDataTemplate = Object.freeze({
   povertyPath: null,
+  povertyRateKey: null,
+  districtDescriptionKey: null,
   povertyGeoid: null,
+  povertyHasGeometry: false,
   geographyPath: null,
   buildingPath: null,
+  buildingSource: null,
+  buildingKey: null,
 });
 
 const flexibleAssetData = Object.freeze(

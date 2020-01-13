@@ -11,7 +11,7 @@ import {initializeAndProcessUserRegions} from './polygon_draw.js';
 import {setUserFeatureVisibility} from './popup.js';
 import {processJoinedData} from './process_joined_data.js';
 import {getBackupScoreAssetPath, getScoreAssetPath} from './resources.js';
-import {setUpToggles} from './update.js';
+import {setUpScoreComputationParameters} from './update.js';
 
 export {createAndDisplayJoinedData, run};
 // For testing.
@@ -80,12 +80,32 @@ function run(
     map, firebaseAuthPromise, disasterMetadataPromise, userShapesPromise) {
   setMapToDrawLayersOn(map);
   resolveScoreAsset();
-  const initialTogglesValuesPromise =
-      setUpToggles(disasterMetadataPromise, map);
-  createAndDisplayJoinedData(map, initialTogglesValuesPromise);
-  initializeAndProcessUserRegions(
-      map, disasterMetadataPromise, userShapesPromise);
-  disasterMetadataPromise.then((doc) => addLayers(map, doc.data().layerArray));
+  disasterMetadataPromise = massageDisasterMetadataPromiseWhenUsingBackupAsset(
+      disasterMetadataPromise);
+  const scoreComputationParametersPromise =
+      setUpScoreComputationParameters(disasterMetadataPromise, map);
+  createAndDisplayJoinedData(map, scoreComputationParametersPromise);
+  initializeAndProcessUserRegions(map, disasterMetadataPromise, userShapesPromise);
+  disasterMetadataPromise.then(({layerArray}) => addLayers(map, layerArray));
+}
+
+/**
+ * Modifies the result of `disasterMetadataPromise` in case we are using the
+ * backup score asset, so that the `scoreAssetCreationParameters` are set to
+ * `lastScoreAssetCreationParameters`. This allows downstream consumers to
+ * remain ignorant of which score asset is being used.
+ * @param {Promise<DisasterDocument>}disasterMetadataPromise
+ * @return {Promise<DisasterDocument>}
+ */
+async function massageDisasterMetadataPromiseWhenUsingBackupAsset(
+    disasterMetadataPromise) {
+  const disasterMetadata = await disasterMetadataPromise;
+  const scoreAsset = await resolvedScoreAsset;
+  if (scoreAsset !== getScoreAssetPath()) {
+    disasterMetadata.scoreAssetCreationParameters =
+        disasterMetadata.lastScoreAssetCreationParameters;
+  }
+  return disasterMetadata;
 }
 
 let mapSelectListener = null;
@@ -95,11 +115,12 @@ let featureSelectListener = null;
  * Creates the score overlay and draws the table
  *
  * @param {google.maps.Map} map main map
- * @param {Promise<Array<number>>} initialTogglesValuesPromise promise that
- *     returns the poverty and damage thresholds and the poverty weight (from
- *     which the damage weight is derived).
+ * @param {Promise<ScoreComputationParameters>} scoreParametersPromise Will
+ *     resolve once score asset name is known and Firestore fetch done
+ * @return {Promise<void>} Promise that is done when score layer rendered on map
+ *     and shown in list
  */
-function createAndDisplayJoinedData(map, initialTogglesValuesPromise) {
+function createAndDisplayJoinedData(map, scoreParametersPromise) {
   addLoadingElement(tableContainerId);
   // clear old listeners
   google.maps.event.removeListener(mapSelectListener);
@@ -108,36 +129,40 @@ function createAndDisplayJoinedData(map, initialTogglesValuesPromise) {
   dataPromise.catch(
       (err) =>
           showError(err, 'Error retrieving score asset. Try reloading page'));
-  const processedData = processJoinedData(
-      dataPromise, scalingFactor, initialTogglesValuesPromise);
+  const processedData =
+      processJoinedData(dataPromise, scalingFactor, scoreParametersPromise);
   addScoreLayer(processedData.then(({featuresList}) => featuresList));
   maybeCheckScoreCheckbox();
-  drawTableAndSetUpHandlers(processedData, map);
+  return drawTableAndSetUpHandlers(processedData, scoreParametersPromise, map);
 }
 
 /**
  * Invokes {@link drawTable} with the appropriate callbacks to set up click
  * handlers for the map.
- * @param {Promise<Array<GeoJsonFeature>>} processedData
+ * @param {Promise<{featuresList: Array<GeoJsonFeature>, columnsFound:
+ *     Array<EeColumn>}>} processedData
+ * @param {Promise<ScoreComputationParameters>} scoreParametersPromise
  * @param {google.maps.Map} map
  */
-function drawTableAndSetUpHandlers(processedData, map) {
-  Promise.all([resolvedScoreAsset, drawTable(processedData, map)])
-      .then(([scoreAsset, tableSelector]) => {
-        loadingElementFinished(tableContainerId);
-        // every time we get a new table and data, reselect elements in the
-        // table based on {@code currentFeatures} in highlight_features.js.
-        selectHighlightedFeatures(tableSelector);
-        // TODO: handle ctrl+click situations
-        const clickFeatureHandler = (event) => clickFeature(
-            event.latLng.lng(), event.latLng.lat(), map, scoreAsset,
-            tableSelector);
-        mapSelectListener = map.addListener('click', clickFeatureHandler);
-        // map.data covers clicks to map areas underneath map.data so we need
-        // two listeners
-        featureSelectListener =
-            map.data.addListener('click', clickFeatureHandler);
-      });
+async function drawTableAndSetUpHandlers(
+    processedData, scoreParametersPromise, map) {
+  const tableSelector = await drawTable(processedData, map);
+  const scoreAsset = await resolvedScoreAsset;
+  const scoreParameters = await scoreParametersPromise;
+  // Promise will already be done since drawTable above is done.
+  const {columnsFound} = await processedData;
+  loadingElementFinished(tableContainerId);
+  // every time we get a new table and data, reselect elements in the
+  // table based on {@code currentFeatures} in highlight_features.js.
+  selectHighlightedFeatures(tableSelector);
+  // TODO: handle ctrl+click situations
+  const clickFeatureHandler = (event) => clickFeature(
+      event.latLng.lng(), event.latLng.lat(), map, scoreAsset, tableSelector,
+      scoreParameters, columnsFound);
+  mapSelectListener = map.addListener('click', clickFeatureHandler);
+  // map.data covers clicks to map areas underneath map.data so we need
+  // two listeners
+  featureSelectListener = map.data.addListener('click', clickFeatureHandler);
 }
 
 /**

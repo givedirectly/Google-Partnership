@@ -378,7 +378,7 @@ const appearance = {
  * Create a Google Maps Drawing Manager for drawing polygons and markers.
  *
  * @param {google.maps.Map} map
- * @return {google.maps.DrawingManager}
+ * @return {google.maps.drawing.DrawingManager}
  */
 function setUpPolygonDrawing(map) {
   const drawingManager = new google.maps.drawing.DrawingManager({
@@ -445,7 +445,7 @@ function createHelpIcon(url) {
  * Adds a listener to display notes on pop-up. Stores EE path for damage asset.
  *
  * @param {google.maps.Map} map Map to display regions on
- * @param {Promise<any>} firebasePromise Promise with Firebase damage data (also
+ * @param {Promise<DisasterDocument>} firebasePromise Promise with Firebase damage data (also
  *     implies that authentication is complete)
  * @param {Promise<any>} userShapesPromise Promise with user shapes data
  * @return {Promise<?google.maps.drawing.DrawingManager>} Promise with drawing
@@ -457,10 +457,9 @@ async function initializeAndProcessUserRegions(
   addLoadingElement(mapContainerId);
   try {
     // Firebase retrieval error handled elsewhere. Let this throw if it throws.
-    const doc = await firebasePromise;
+    ({scoreAssetCreationParameters: {damageAssetPath}} = await firebasePromise);
     // Damage asset may not exist yet, so this is undefined. We tolerate
     // gracefully.
-    ({damageAssetPath} = doc.data().assetData);
     let querySnapshot;
     try {
       userShapes = userFeatures();

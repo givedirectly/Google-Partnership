@@ -32,12 +32,18 @@ function disasterDocumentReference() {
 }
 
 /**
+ * Object with all Firestore metadata for the current disaster (everything under
+ * `disaster-metadata/2017-harvey`, for instance).
+ * @typedef {Object} DisasterDocument
+ */
+
+/**
  * Fetches the document with all metadata for the current disaster. Should only
  * be called once to avoid excessive fetches.
- * @return {Promise<firebase.firestore.DocumentSnapshot>}
+ * @return {Promise<DisasterDocument>}
  */
 function readDisasterDocument() {
-  return disasterDocumentReference().get();
+  return disasterDocumentReference().get().then((doc) => doc.data());
 }
 
 /** @return {firebase.firestore.CollectionReference} all disasters collection */
@@ -62,7 +68,7 @@ function getUserFeatures() {
   return userFeatures().get();
 }
 
-/** @return {Promise<Map<string, Object>>} data for all disasters */
+/** @return {Promise<Map<string, DisasterDocument>>} data for all disasters */
 function getDisastersData() {
   const disasterData = new Map();
   return getDisasters()
