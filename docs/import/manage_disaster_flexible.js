@@ -196,7 +196,7 @@ let pendingOperations = 0;
  * Notes that a pending operation has started. If no operations were previously
  * pending, calls {@link validateFlexibleUserFields} in order to show the user
  * the new pending status. Called unconditionally by manage_disaster_base.js,
- * even if disaster is not flexible, does nothing in that case.
+ * even if disaster is not flexible, and does nothing in that case.
  */
 function startPending() {
   if (!isFlexible()) {
@@ -356,9 +356,9 @@ function validateColumnArray(columnInfos) {
  * initializes the three {@link ScoreInputType} divs. Calls {@link startPending}
  * before any work is done, and calls {@link finishPending} after all work
  * completed, so that all other initialization work can skip calling those
- * functions, since we are guaranteed to be pending until everything is done.d
+ * functions, since we are guaranteed to be pending until everything is done.
  * @param {AssetData} assetData
- * @return {Promise<*>} Promise that completes when all work is done.
+ * @return {Promise<void>} Promise that completes when all work is done.
  */
 async function initializeFlexibleDisaster(assetData) {
   $('#state-based-disaster-asset-selection-table').hide();
@@ -382,7 +382,7 @@ async function initializeFlexibleDisaster(assetData) {
   }
   startPending();
   try {
-    return await Promise.all([
+    await Promise.all([
       initializeGeography(),
       initializePoverty(),
       initializeBuildings(),
@@ -472,7 +472,8 @@ async function initializeBuildings() {
  * column names for selected asset from EarthEngine, sets column select values
  * to those values (if disaster unchanged), and returns list of column names.
  * @param {ScoreInputType} key
- * @return {Promise<?Array<EeColumn>>} Null if disaster changed
+ * @return {Promise<?Array<EeColumn>>} Null if select value changed, callers
+ *     should abort in that case
  */
 async function setInitialColumnValues(key) {
   setPendingForColumns(key);
@@ -558,7 +559,8 @@ async function onBuildingsChange(buildingsAsset) {
  * {@link startPendingWriteSelectAndGetPropertyNames}, so callers must call
  * {@link finishPending}!
  * @param {ScoreInputType} key
- * @return {Promise<?Array<EeColumn>>} Null if selection no longer current
+ * @return {Promise<?Array<EeColumn>>} Null if selection no longer current,
+ *     callers should abort in that case
  */
 function onAssetSelectChange(key) {
   setPendingForColumns(key);
@@ -693,7 +695,7 @@ function setUpFlexibleOnPageLoad() {
 
 /**
  * Handles "buildings" choice: shows/hides div, sets damage columns' explanation
- * texts to defaults, and computes whether to show damage value item
+ * texts to defaults, and computes whether to show damage value item.
  */
 function onBuildingSourceBuildingsSelected() {
   COMPONENTS_DATA.buildings.div.show();
@@ -714,7 +716,7 @@ function onBuildingSourcePovertySelected() {
 
 /**
  * Similar to {@link onBuildingSourceBuildingsSelected}, but sets text for
- * damage columns to indicate they are mandatory if damage is selected.
+ * damage columns to indicate they are mandatory if damage asset is present.
  */
 function onBuildingSourceDamageSelected() {
   COMPONENTS_DATA.buildings.div.hide();
