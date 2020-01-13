@@ -36,10 +36,9 @@ export {
  * that column A is the "poverty rate column", but then changes poverty assets
  * to asset2, which has no column named 'A', we will correctly say that the
  * poverty rate column needs to be set: in Firestore, 'A' is still the value
- * for
- * the poverty rate column, but on the page, it won't be set because A is not
- * present in asset2's columns, which will be what is shown in the select. See
- * below, "Validation-related functions", for how to track pending operations.
+ * for the poverty rate column, but on the page, it won't be set because A is
+ * not present in asset2's columns, which will be what is shown in the select.
+ * See "Validation-related functions" below for how to track pending operations.
  *
  * ## Building counts
  * Another complication is the four ways that the building count can be
