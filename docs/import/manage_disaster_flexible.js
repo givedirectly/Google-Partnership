@@ -176,6 +176,8 @@ const componentsData = {
   },
 };
 
+let povertyBuildingsDiv;
+
 //                   Validation-related functions.
 
 /**
@@ -693,6 +695,7 @@ function setUpFlexibleOnPageLoad() {
   componentsData.poverty.div = $('#flexible-poverty-asset-data');
   componentsData.geography.div = $('#flexible-geography-asset-data');
   componentsData.buildings.div = $('#buildings-source-buildings-div');
+  povertyBuildingsDiv = $('#buildings-source-poverty-div');
 }
 
 /**
@@ -701,7 +704,7 @@ function setUpFlexibleOnPageLoad() {
  */
 function onBuildingSourceBuildingsSelected() {
   componentsData.buildings.div.show();
-  componentsData.poverty.div.hide();
+  povertyBuildingsDiv.hide();
   setExplanationSpanTextForColumn(NODAMAGE_COLUMN_INFO);
   setExplanationSpanTextForColumn(NODAMAGE_VALUE_INFO);
   maybeShowNoDamageValueItem();
@@ -710,7 +713,7 @@ function onBuildingSourceBuildingsSelected() {
 /** Similar to {@link onBuildingSourceBuildingsSelected}. */
 function onBuildingSourcePovertySelected() {
   componentsData.buildings.div.hide();
-  componentsData.poverty.div.show();
+  povertyBuildingsDiv.show();
   setExplanationSpanTextForColumn(NODAMAGE_COLUMN_INFO);
   setExplanationSpanTextForColumn(NODAMAGE_VALUE_INFO);
   maybeShowNoDamageValueItem();
@@ -722,7 +725,7 @@ function onBuildingSourcePovertySelected() {
  */
 function onBuildingSourceDamageSelected() {
   componentsData.buildings.div.hide();
-  componentsData.poverty.div.hide();
+  povertyBuildingsDiv.hide();
   setExplanationSpanTextForColumn(
       NODAMAGE_COLUMN_INFO,
       'must be specified since damage contains all buildings');
