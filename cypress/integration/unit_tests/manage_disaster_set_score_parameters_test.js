@@ -840,14 +840,14 @@ function getDamageSelect() {
 }
 
 /**
- * @param {number} index Index of desired score asset type in
- *     {@link stateBasedScoreAssetTypes}
- * @param {string} state State, defaults to 'NY'
+ * Gets NY select corresponding to index from {@link stateBasedScoreAssetTypes}.
+ * @param {number} index
+ * @param {Object} options Options for {@code cy.get}
  * @return {Cypress.Chainable<JQuery<HTMLElement>>}
  */
-function getSelectForScoreAssetIndex(index, state = 'NY') {
+function getSelectForScoreAssetIndex(index, options = {}) {
   return getSelectFromPropertyPath(
-      stateBasedScoreAssetTypes[index].propertyPath.concat([state]));
+      stateBasedScoreAssetTypes[index].propertyPath.concat(['NY']), options);
 }
 
 /**
