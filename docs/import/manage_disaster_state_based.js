@@ -3,7 +3,7 @@ import {getDisaster} from '../resources.js';
 import {incomeKey, snapKey, sviKey, totalKey} from './create_disaster_lib.js';
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
 import {getStateAssetsFromEe} from './list_ee_assets.js';
-import {checkDamageFieldsAndShowProcessButton, createSelect, damageAssetPresent, disasterData, getIsCurrentDisasterChecker, getPageValueOfPath, onAssetSelect, setOptionsForSelect, verifyAsset} from './manage_disaster_base.js';
+import {checkDamageFieldsAndShowKickoffButton, createSelect, damageAssetPresent, disasterData, getIsCurrentDisasterChecker, getPageValueOfPath, onAssetSelect, setOptionsForSelect, verifyAsset} from './manage_disaster_base.js';
 
 export {
   initializeStateBasedDisaster,
@@ -112,7 +112,7 @@ function validateStateBasedUserFields() {
   if (message) {
     message = 'Missing asset(s): ' + message;
   }
-  checkDamageFieldsAndShowProcessButton(message, optionalMessage);
+  checkDamageFieldsAndShowKickoffButton(message, optionalMessage);
 }
 
 const assetSelectionRowPrefix = 'asset-selection-row-';

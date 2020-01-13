@@ -12,7 +12,7 @@ import {updateDataInFirestore} from './update_firestore_disaster.js';
 
 export {
   capitalizeFirstLetter,
-  checkDamageFieldsAndShowProcessButton,
+  checkDamageFieldsAndShowKickoffButton,
   continueMessage,
   createListForAsset,
   createSelect,
@@ -45,7 +45,7 @@ export {
   verifyAsset,
 };
 // For testing.
-export {scoreBoundsMap};
+export {DAMAGE_PROPERTY_PATH, scoreBoundsMap};
 
 /**
  * @type {Map<string, Object>} Disaster id to disaster data, corresponding to
@@ -329,13 +329,14 @@ function createSelectWithSimpleWriteOnChange(propertyPath) {
  */
 async function startPendingWriteSelectAndGetPropertyNames(path) {
   startPending();
-  return (await onAssetSelect(path, [])).filter(isUserProperty);
+  const propertyNames = await onAssetSelect(path, null);
+  return propertyNames ? propertyNames.filter(isUserProperty) : null;
 }
 
 /**
  * Sets off a column verification check and data write.
  * @param {PropertyPath} propertyPath
- * @param {Array<EeColumn>} expectedColumns See {@link verifyAsset}
+ * @param {?Array<EeColumn>} expectedColumns See {@link verifyAsset}
  * @return {Promise<Array<EeColumn>>} See {@link verifyAsset}
  */
 function onAssetSelect(propertyPath, expectedColumns) {
@@ -354,8 +355,8 @@ function onAssetSelect(propertyPath, expectedColumns) {
  * is currently true that any computation on a state asset valid for one
  * disaster is valid for any other.
  * @param {PropertyPath} propertyPath
- * @param {Array<EeColumn>} expectedColumns Expected column names. If empty,
- *     checks existence and returns all columns from the first feature
+ * @param {?Array<EeColumn>} expectedColumns Expected column names. If empty or
+ *     null, checks existence and returns all columns from the first feature
  * @return {Promise<?Array<EeColumn>>} Returns a promise that resolves when
  *     existence and column checking are finished and select border color is
  *     updated, and contains the first feature's properties if `expectedColumns`
@@ -396,7 +397,7 @@ async function verifyAsset(propertyPath, expectedColumns) {
       return null;
     }
     updateColorAndHover(
-        select, 'green', expectedColumns ? 'No expected columns' : null);
+        select, 'green', expectedColumns ? 'No expected columns' : '');
     return result.sort();
   } else if (expectedColumns) {
     updateColorAndHover(select, 'yellow', 'Checking columns...');
@@ -466,10 +467,10 @@ const OPTIONAL_WARNING_PREFIX = '; warning: created asset will be missing ';
  * @param {string} optionalMessage Warning message about missing but optional
  *     attributes
  */
-function checkDamageFieldsAndShowProcessButton(message, optionalMessage) {
+function checkDamageFieldsAndShowKickoffButton(message, optionalMessage) {
   if (!damageAssetPresent() &&
       !getStoredValueFromPath(SCORE_COORDINATES_PATH)) {
-    message += continueMessage(
+    message = continueMessage(
         message, 'must specify either damage asset or map bounds');
   }
   if (message && optionalMessage) {
@@ -687,12 +688,10 @@ function setOptionsForSelect(options, propertyPath) {
  * @return {JQuery<HTMLSelectElement>}
  */
 function createSelect(propertyPath) {
-  return $(document.createElement('select'))
-      .prop('id', makeInputElementIdFromPath(propertyPath))
-      .empty()
-      .attr('disabled', true)
-      .addClass('just-created-select')
-      .append(createOptionFrom('pending...'));
+  return stylePendingSelect(
+      $(document.createElement('select'))
+          .prop('id', makeInputElementIdFromPath(propertyPath))
+          .addClass('just-created-select'));
 }
 
 /**
@@ -792,7 +791,7 @@ function makeInputElementIdFromPath(path) {
  */
 function updateColorAndHover(select, color, title = null) {
   select.css('border-color', color);
-  if (title) {
+  if (title !== null) {
     select.prop('title', title);
   }
 }

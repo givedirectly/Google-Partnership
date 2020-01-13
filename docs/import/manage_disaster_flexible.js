@@ -3,7 +3,7 @@ import {getDisaster} from '../resources.js';
 
 import {BuildingSource} from './create_disaster_lib.js';
 import {getDisasterAssetsFromEe} from './list_ee_assets.js';
-import {capitalizeFirstLetter, checkDamageFieldsAndShowProcessButton, continueMessage, createListForAsset, createSelect, createSelectListItemFromColumnInfo, createSelectWithSimpleWriteOnChange, damageAssetPresent, getAssetsAndSetOptionsForSelect, getPageValueOfPath, getStoredValueFromPath, handleAssetDataChange, isFlexible, maybeShowNoDamageValueItem, NODAMAGE_COLUMN_INFO, NODAMAGE_VALUE_INFO, setExplanationSpanTextForColumn, setOptionsForSelect, showDisabledProcessButton, showListForAsset, showSelectAsPending, startPendingWriteSelectAndGetPropertyNames, validateColumnPathHasValue, verifyAsset} from './manage_disaster_base.js';
+import {capitalizeFirstLetter, checkDamageFieldsAndShowKickoffButton, continueMessage, createListForAsset, createSelect, createSelectListItemFromColumnInfo, createSelectWithSimpleWriteOnChange, damageAssetPresent, getAssetsAndSetOptionsForSelect, getPageValueOfPath, getStoredValueFromPath, handleAssetDataChange, isFlexible, maybeShowNoDamageValueItem, NODAMAGE_COLUMN_INFO, NODAMAGE_VALUE_INFO, setExplanationSpanTextForColumn, setOptionsForSelect, showDisabledProcessButton, showListForAsset, showSelectAsPending, startPendingWriteSelectAndGetPropertyNames, validateColumnPathHasValue, verifyAsset} from './manage_disaster_base.js';
 
 export {
   finishPending,
@@ -293,7 +293,7 @@ function validateFlexibleUserFields() {
       message += MISSING_BUILDINGS_TAIL;
     }
   }
-  checkDamageFieldsAndShowProcessButton(message, optionalMessage);
+  checkDamageFieldsAndShowKickoffButton(message, optionalMessage);
 }
 
 /**
@@ -722,5 +722,6 @@ function onBuildingSourceDamageSelected() {
  *     not page data, since they are always in sync for a radio button
  */
 function useDamageForBuildings() {
-  return getStoredValueFromPath(BUILDING_SOURCE_PATH) === BuildingSource.DAMAGE;
+  return isFlexible() &&
+      getStoredValueFromPath(BUILDING_SOURCE_PATH) === BuildingSource.DAMAGE;
 }

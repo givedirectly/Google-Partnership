@@ -3,7 +3,7 @@ import {readDisasterDocument} from '../../../docs/firestore_document.js';
 import {createDisasterData} from '../../../docs/import/create_disaster_lib.js';
 import * as ListEeAssets from '../../../docs/import/list_ee_assets.js';
 import {enableWhenFirestoreReady} from '../../../docs/import/manage_disaster.js';
-import {disasterData, scoreBoundsMap, setUpScoreBoundsMap} from '../../../docs/import/manage_disaster_base.js';
+import {DAMAGE_PROPERTY_PATH, disasterData, makeInputElementIdFromPath, scoreBoundsMap, setUpScoreBoundsMap} from '../../../docs/import/manage_disaster_base.js';
 import {assetSelectionRowPrefix, setUpStateBasedOnPageLoad, stateBasedScoreAssetTypes, validateStateBasedUserFields} from '../../../docs/import/manage_disaster_state_based.js';
 import {getDisaster} from '../../../docs/resources.js';
 import {cyQueue} from '../../support/commands.js';
@@ -55,10 +55,10 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
 
   it('damage asset/map-bounds elements', () => {
     callEnableWhenReady(setUpDefaultData());
-    cy.get('#damage-asset-select').should('have.value', '');
+    getDamageSelect().should('have.value', '');
     cy.get('#map-bounds-div').should('be.visible');
     cy.get('.score-bounds-delete-button').should('be.visible');
-    cy.get('#damage-asset-select').select('asset2').blur();
+    getDamageSelect().select('asset2').blur();
     cy.get('#map-bounds-div').should('not.be.visible');
     readFirestoreAfterWritesFinish().then(
         ({assetData}) =>
@@ -69,7 +69,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     const data = setUpDefaultData();
     data.assetData.scoreBoundsCoordinates = null;
     callEnableWhenReady(data);
-    cy.get('#damage-asset-select').should('have.value', '');
+    getDamageSelect().should('have.value', '');
     cy.get('#map-bounds-div').should('be.visible');
     cy.get('.score-bounds-delete-button').should('not.be.visible');
     // Wait for bounds promise to finish, and wait for the zoom level to
@@ -93,7 +93,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
             lat: 32,
           })).to.be.false;
         });
-    cy.get('#damage-asset-select').select('asset2').blur();
+    getDamageSelect().select('asset2').blur();
     cy.get('#map-bounds-div').should('not.be.visible');
     readFirestoreAfterWritesFinish().then(
         ({assetData}) =>
@@ -108,8 +108,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
   const allStateAssetsMissingWithDamageAssetText = allMandatoryMissingText +
       ', Microsoft Building Shapefiles' + alwaysOptionalMissing;
   const allMissingText = allMandatoryMissingText +
-      ', and must specify either damage asset or map bounds' +
-      allOptionalMissing;
+      '; must specify either damage asset or map bounds' + allOptionalMissing;
 
   it('has some disabled options', () => {
     disasterStub.returns(Promise.resolve(new Map([
@@ -121,11 +120,14 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
       ['state1', {disabled: true}],
     ])));
     callEnableWhenReady(createDisasterData(['NY']));
-    const stateSelector =
-        cy.get('#select-asset-selection-row-poverty-NY > option');
+    const stateSelector = cy.get(
+        '#' +
+        makeInputElementIdFromPath(
+            stateBasedScoreAssetTypes[0].propertyPath.concat(['NY'])) +
+        ' > option');
     stateSelector.eq(2).should('be.disabled');
     stateSelector.eq(1).should('not.be.disabled');
-    const disasterSelector = cy.get('#damage-asset-select > option');
+    const disasterSelector = getDamageSelect().get('option');
     disasterSelector.eq(2).should('be.disabled');
     disasterSelector.eq(1).should('not.be.disabled');
   });
@@ -153,8 +155,9 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     featureCollectionStub.withArgs('asset/with/empty/geometry')
         .returns(withEmptyGeometry);
     callEnableWhenReady(setUpDefaultData());
-    for (const idStem of ['poverty', 'svi', 'income']) {
-      const selector = '#select-asset-selection-row-' + idStem + '-NY > option';
+    for (const {propertyPath} of stateBasedScoreAssetTypes.slice(0, 3)) {
+      const selector = '#' +
+          makeInputElementIdFromPath(propertyPath.concat(['NY'])) + ' > option';
       cy.get(selector).contains('None').should('be.enabled');
       cy.get(selector).contains('asset/with/geometry').should('be.enabled');
       cy.get(selector)
@@ -167,10 +170,11 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     }
 
     // Be a little hacky to avoid repeating ourselves with damage.
-    for (const idStem of ['tiger', 'buildings', 'damage']) {
-      const selector = idStem === 'damage' ?
-          '#damage-asset-select > option' :
-          ('#select-asset-selection-row-' + idStem + '-NY > option');
+    for (const path of stateBasedScoreAssetTypes
+             .filter((elt) => elt.geometryExpected)
+             .map(({propertyPath}) => propertyPath.concat(['NY']))
+             .concat([DAMAGE_PROPERTY_PATH])) {
+      const selector = '#' + makeInputElementIdFromPath(path) + ' > option';
       cy.get(selector).contains('None').should('be.enabled');
       cy.get(selector).contains('asset/with/geometry').should('be.enabled');
       cy.get(selector)
@@ -225,7 +229,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     cy.get('#process-button').should('have.text', allMissingText);
 
     // Specifying the damage asset works too.
-    cy.get('#damage-asset-select').select('asset2').blur();
+    getDamageSelect().select('asset2').blur();
     cy.get('#process-button')
         .should('have.text', allStateAssetsMissingWithDamageAssetText);
 
@@ -281,7 +285,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
         .should('have.css', 'background-color')
         .and('eq', 'rgb(0, 128, 0)');
     // Get rid of damage: not ready anymore.
-    cy.get('#damage-asset-select').select('').blur();
+    getDamageSelect().select('').blur();
     // Message is just about damage.
     cy.get('#process-button')
         .should('have.text', 'Must specify either damage asset or map bounds');
@@ -291,8 +295,8 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     cy.get('#process-button')
         .should(
             'have.text',
-            'Missing asset(s): Poverty, and must specify either damage asset ' +
-                'or map bounds');
+            'Missing asset(s): Poverty; must specify either damage asset or ' +
+                'map bounds');
     cy.get('#process-button').should('be.disabled');
     // Validate that score data was correctly written
     readFirestoreAfterWritesFinish().then(({assetData}) => {
@@ -321,7 +325,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
         .should(
             'have.text',
             'Missing asset(s): Poverty [NY, WY], Census TIGER ' +
-                'Shapefiles [NY, WY], and must specify either damage asset ' +
+                'Shapefiles [NY, WY]; must specify either damage asset ' +
                 'or map bounds; warning: created asset will be missing Income' +
                 ' [NY, WY], SVI [NY, WY], Building counts [NY, WY]');
     // Specifying one state has desired effect.
@@ -330,7 +334,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
         .should(
             'have.text',
             'Missing asset(s): Poverty [WY], ' +
-                'Census TIGER Shapefiles [NY, WY], and must specify either ' +
+                'Census TIGER Shapefiles [NY, WY]; must specify either ' +
                 'damage asset or map bounds; warning: created asset will be ' +
                 'missing Income [NY, WY], SVI [NY, WY], Building counts [NY, ' +
                 'WY]');
@@ -342,7 +346,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
         .should(
             'have.text',
             'Missing asset(s): Poverty [WY], Census TIGER Shapefiles ' +
-                '[NY, WY], and must specify either damage asset or map ' +
+                '[NY, WY]; must specify either damage asset or map ' +
                 'bounds; warning: created asset will be missing ' +
                 'SVI [NY, WY], Building counts [NY, WY]');
   });
@@ -357,7 +361,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     cy.get('#process-button').should('be.disabled');
     // Everything is missing, even though we have values stored.
     cy.get('#process-button').should('have.text', allMissingText);
-    cy.get('#damage-asset-select').select('asset1');
+    getDamageSelect().select('asset1');
     cy.get('#process-button')
         .should('have.text', allStateAssetsMissingWithDamageAssetText);
     // Data wasn't actually in Firestore before, but checking that it was
@@ -367,7 +371,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
                              .to.eql(missingSnapPath));
   });
 
-  it.only('does column verification', () => {
+  it('does column verification', () => {
     callEnableWhenReady(setUpDefaultData());
     const goodIncomeBadPovertyFeature = ee.FeatureCollection(
         [ee.Feature(null, {'GEOid2': 'blah', 'HD01_VD01': 'otherBlah'})]);
@@ -385,85 +389,80 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     featureCollectionStub.withArgs('state2').returns(goodPovertyFeature);
 
     // None -> bad
-    setSelectWithDelayedEvaluate(0, 'state0', 'poverty-NY');
-    checkSelectBorder(
-        '#select-asset-selection-row-poverty-NY', 'rgb(255, 0, 0)');
+    setSelectWithDelayedEvaluate(0, 'state0', 'NY');
+    const povertyPropertyPath =
+        stateBasedScoreAssetTypes[0].propertyPath.concat(['NY']);
+    checkSelectBorder(povertyPropertyPath, 'rgb(255, 0, 0)');
     checkHoverText(
-        '#select-asset-selection-row-poverty-NY',
+        povertyPropertyPath,
         'Error! asset does not have all expected columns: ' +
             'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
 
     // bad -> bad
-    setSelectWithDelayedEvaluate(0, 'state1', 'poverty-NY');
-    checkSelectBorder(
-        '#select-asset-selection-row-poverty-NY', 'rgb(255, 0, 0)');
+    setSelectWithDelayedEvaluate(0, 'state1', 'NY');
+    checkSelectBorder(povertyPropertyPath, 'rgb(255, 0, 0)');
     checkHoverText(
-        '#select-asset-selection-row-poverty-NY',
+        povertyPropertyPath,
         'Error! asset does not have all expected columns: ' +
             'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
 
     // bad -> good
-    setSelectWithDelayedEvaluate(0, 'state2', 'poverty-NY');
-    checkSelectBorder(
-        '#select-asset-selection-row-poverty-NY', 'rgb(0, 128, 0)');
+    setSelectWithDelayedEvaluate(0, 'state2', 'NY');
+    checkSelectBorder(povertyPropertyPath, 'rgb(0, 128, 0)');
     checkHoverText(
-        '#select-asset-selection-row-poverty-NY',
-        'Success! asset has all expected columns');
+        povertyPropertyPath, 'Success! asset has all expected columns');
 
     // good -> bad
-    setSelectWithDelayedEvaluate(0, 'state0', 'poverty-NY');
-    checkSelectBorder(
-        '#select-asset-selection-row-poverty-NY', 'rgb(255, 0, 0)');
+    setSelectWithDelayedEvaluate(0, 'state0', 'NY');
+    checkSelectBorder(povertyPropertyPath, 'rgb(255, 0, 0)');
     checkHoverText(
-        '#select-asset-selection-row-poverty-NY',
+        povertyPropertyPath,
         'Error! asset does not have all expected columns: ' +
             'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
 
     // None -> good columns
-    setSelectWithDelayedEvaluate(1, 'state1', 'income-NY');
-    checkSelectBorder(
-        '#select-asset-selection-row-income-NY', 'rgb(0, 128, 0)');
+    setSelectWithDelayedEvaluate(1, 'state1', 'NY');
+    const incomePropertyPath =
+        stateBasedScoreAssetTypes[1].propertyPath.concat(['NY']);
+    checkSelectBorder(incomePropertyPath, 'rgb(0, 128, 0)');
     checkHoverText(
-        '#select-asset-selection-row-income-NY',
-        'Success! asset has all expected columns');
+        incomePropertyPath, 'Success! asset has all expected columns');
 
     // good -> good
-    setSelectWithDelayedEvaluate(1, 'state0', 'income-NY');
-    checkSelectBorder(
-        '#select-asset-selection-row-income-NY', 'rgb(0, 128, 0)');
+    setSelectWithDelayedEvaluate(1, 'state0', 'NY');
+    checkSelectBorder(incomePropertyPath, 'rgb(0, 128, 0)');
     checkHoverText(
-        '#select-asset-selection-row-income-NY',
-        'Success! asset has all expected columns');
+        incomePropertyPath, 'Success! asset has all expected columns');
 
     // good -> None
     // should return immediately, no release needed.
     setFirstSelectInScoreRowTo(1, 'None');
-    checkSelectBorder(
-        '#select-asset-selection-row-income-NY', 'rgb(255, 255, 255)');
-    checkHoverText('#select-asset-selection-row-income-NY', '');
+    checkSelectBorder(incomePropertyPath, 'rgb(255, 255, 255)');
+    checkHoverText(incomePropertyPath, '');
+
 
     // No expected rows
     featureCollectionStub.withArgs('state4').callsFake(
         () => goodIncomeBadPovertyFeature);
-    setSelectWithDelayedEvaluate(4, 'state0', 'buildings-NY');
-    checkSelectBorder(
-        '#select-asset-selection-row-buildings-NY', 'rgb(0, 128, 0)');
-    checkHoverText(
-        '#select-asset-selection-row-buildings-NY', 'No expected columns');
+    setSelectWithDelayedEvaluate(4, 'state0', 'NY');
+    const buildingsPropertyPath =
+        stateBasedScoreAssetTypes[4].propertyPath.concat(['NY']);
+
+
+    checkSelectBorder(buildingsPropertyPath, 'rgb(0, 128, 0)');
+    checkHoverText(buildingsPropertyPath, 'No expected columns');
     setFirstSelectInScoreRowTo(4, 'None');
-    checkSelectBorder(
-        '#select-asset-selection-row-buildings-NY', 'rgb(255, 255, 255)');
-    checkHoverText('#select-asset-selection-row-buildings-NY', '');
+    checkSelectBorder(buildingsPropertyPath, 'rgb(255, 255, 255)');
+    checkHoverText(buildingsPropertyPath, '');
   });
 
   it('tries to set a missing asset', () => {
     callEnableWhenReady(setUpDefaultData());
-    setSelectWithDelayedEvaluate(0, 'state0', 'poverty-NY');
-    checkSelectBorder(
-        '#select-asset-selection-row-poverty-NY', 'rgb(255, 0, 0)');
-    checkHoverText(
-        '#select-asset-selection-row-poverty-NY',
-        'Error! asset could not be found.');
+    setSelectWithDelayedEvaluate(0, 'state0', 'NY');
+    const propertyPath =
+        stateBasedScoreAssetTypes[0].propertyPath.concat(['NY']);
+    checkSelectBorder(propertyPath, 'rgb(255, 0, 0)');
+    checkHoverText(propertyPath, 'Error! asset could not be found.');
   });
 
   it('has two racing sets on same selector', () => {
@@ -492,16 +491,15 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
             () => secondRelease =
                 getConvertEeObjectToPromiseRelease().releaseLatch);
     setFirstSelectInScoreRowTo(0, 'state1').then(() => firstRelease());
-    checkSelectBorder(
-        '#select-asset-selection-row-poverty-NY', 'rgb(255, 255, 0)');
+    const propertyPath =
+        stateBasedScoreAssetTypes[0].propertyPath.concat(['NY']);
+    checkSelectBorder(propertyPath, 'rgb(255, 255, 0)');
     // release second evaluate and column finishes with results from second.
-    checkHoverText(
-        '#select-asset-selection-row-poverty-NY', 'Checking columns...')
+    checkHoverText(propertyPath, 'Checking columns...')
         .then(() => secondRelease());
-    checkSelectBorder(
-        '#select-asset-selection-row-poverty-NY', 'rgb(255, 0, 0)');
+    checkSelectBorder(propertyPath, 'rgb(255, 0, 0)');
     checkHoverText(
-        '#select-asset-selection-row-poverty-NY',
+        propertyPath,
         'Error! asset does not have all expected columns: ' +
             'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
 
@@ -517,17 +515,15 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
             () => secondRelease =
                 getConvertEeObjectToPromiseRelease().releaseLatch);
     setFirstSelectInScoreRowTo(0, 'state1').then(() => secondRelease());
-    checkSelectBorder(
-        '#select-asset-selection-row-poverty-NY', 'rgb(255, 0, 0)');
+    checkSelectBorder(propertyPath, 'rgb(255, 0, 0)');
     checkHoverText(
-        '#select-asset-selection-row-poverty-NY',
+        propertyPath,
         'Error! asset does not have all expected columns: ' +
             'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01')
         .then(() => firstRelease());
-    checkSelectBorder(
-        '#select-asset-selection-row-poverty-NY', 'rgb(255, 0, 0)');
+    checkSelectBorder(propertyPath, 'rgb(255, 0, 0)');
     checkHoverText(
-        '#select-asset-selection-row-poverty-NY',
+        propertyPath,
         'Error! asset does not have all expected columns: ' +
             'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
   });
@@ -551,9 +547,12 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
       button.disabled = true;
       button.hidden = true;
       doc.body.appendChild(button);
-      const damageSelect = doc.createElement('select');
-      damageSelect.id = 'damage-asset-select';
-      doc.body.appendChild(damageSelect);
+      const damageIntroSpan = doc.createElement('span');
+      damageIntroSpan.id = 'damage-intro-span';
+      doc.body.appendChild(damageIntroSpan);
+      const damageDiv = doc.createElement('div');
+      damageDiv.id = 'damage-asset-div';
+      doc.body.appendChild(damageDiv);
       const boundsDiv = doc.createElement('div');
       doc.body.appendChild(boundsDiv);
       const jBoundsDiv = $(boundsDiv);
@@ -659,24 +658,26 @@ function setFirstSelectInScoreRowTo(rowNum, text) {
 
 /**
  * Asserts that the border around the given selector has the correct color
- * @param {string} selector cypress selector for a select element
+ * @param {PropertyPath} propertyPath identifier for a select element
  * @param {string} rgbString e.g. 'rgb(0, 0, 0)'
  * @return {Cypress.Chainable}
  */
-function checkSelectBorder(selector, rgbString) {
-  return cy.get(selector, {timeout: 5000})
+function checkSelectBorder(propertyPath, rgbString) {
+  return cy.get('#' + makeInputElementIdFromPath(propertyPath), {timeout: 5000})
       .should('have.css', 'border-color')
       .and('eq', rgbString);
 }
 
 /**
- * Asserts on the hover text for the given span.
- * @param {string} selector cypress selector for a span element
+ * Asserts on the hover text for the given select.
+ * @param {PropertyPath} propertyPath identifier for a select element
  * @param {string} text
  * @return {Cypress.Chainable}
  */
-function checkHoverText(selector, text) {
-  return cy.get(selector).invoke('attr', 'title').should('eq', text);
+function checkHoverText(propertyPath, text) {
+  return cy.get('#' + makeInputElementIdFromPath(propertyPath))
+      .invoke('attr', 'title')
+      .should('eq', text);
 }
 
 /**
@@ -684,12 +685,22 @@ function checkHoverText(selector, text) {
  * @param {number} rowNum row number of score asset selector table.
  * @param {string} text text of an option in the select identified by {@code
  *     tdId}
- * @param {string} tdId e.g. 'poverty-NY'
+ * @param {string} state e.g. 'NY'
  */
-function setSelectWithDelayedEvaluate(rowNum, text, tdId) {
+function setSelectWithDelayedEvaluate(rowNum, text, state) {
   const release = getConvertEeObjectToPromiseRelease().releaseLatch;
   setFirstSelectInScoreRowTo(rowNum, text);
-  checkSelectBorder('#select-asset-selection-row-' + tdId, 'rgb(255, 255, 0)');
-  checkHoverText('#select-asset-selection-row-' + tdId, 'Checking columns...');
+  const scoreAssetType = stateBasedScoreAssetTypes[rowNum];
+  const propertyPath = scoreAssetType.propertyPath.concat([state]);
+  checkSelectBorder(propertyPath, 'rgb(255, 255, 0)');
+  checkHoverText(
+      propertyPath,
+      scoreAssetType.expectedColumns.length ? 'Checking columns...' :
+                                              'Checking...');
   release();
+}
+
+/** @return {Cypress.Chainable<JQuery<HTMLSelectElement>>} */
+function getDamageSelect() {
+  return cy.get('#' + makeInputElementIdFromPath(DAMAGE_PROPERTY_PATH));
 }

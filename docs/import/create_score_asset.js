@@ -460,7 +460,7 @@ function createScoreAssetForFlexibleDisaster(
   const {districtDescriptionKey, povertyRateKey} = flexibleData;
   return backUpAssetAndStartTask(
       processing, {
-        buildingKey,
+        buildingCountKey,
         districtDescriptionKey,
         povertyRateKey,
         damageAssetPath: getDamageAssetPath(assetData),
