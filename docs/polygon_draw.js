@@ -530,8 +530,8 @@ function handleUserShapesError(err) {
  */
 function drawRegions(shapes, map) {
   shapes.forEach((userDefinedRegion, id) => {
-    const storedGeometry = userDefinedRegion.get('geometry');
-    const coordinates = transformGeoPointArrayToLatLng(storedGeometry);
+    const {geometry, notes, calculatedData: shapeData} = userDefinedRegion;
+    const coordinates = transformGeoPointArrayToLatLng(geometry);
     let feature;
     let calculatedData = null;
     // We distinguish polygons and markers in Firestore just via the number of
@@ -543,12 +543,11 @@ function drawRegions(shapes, map) {
       const properties = Object.assign({}, appearance);
       properties.paths = coordinates;
       feature = new google.maps.Polygon(properties);
-      calculatedData = userDefinedRegion.get('calculatedData');
+      calculatedData = shapeData;
     }
-    const notes = userDefinedRegion.get('notes');
     const popup = createPopup(feature, map, notes, calculatedData);
     userRegionData.set(
-        feature, new StoredShapeData(id, notes, storedGeometry, popup));
+        feature, new StoredShapeData(id, notes, geometry, popup));
     feature.setMap(map);
   });
 }

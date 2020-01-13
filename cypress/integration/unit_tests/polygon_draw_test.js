@@ -672,7 +672,7 @@ describe('Unit test for ShapeData', () => {
   function assertOnFirestoreAndPopup(path, expectedData = defaultData) {
     cyQueue(() => {
       expect(StoredShapeData.pendingWriteCount).to.eql(0);
-      return userShapes.get();
+      return userShapesCollection.get();
     }).then((querySnapshot) => {
       expect(querySnapshot).to.have.property('size', 1);
       const polygonDoc = querySnapshot.docs[0];
