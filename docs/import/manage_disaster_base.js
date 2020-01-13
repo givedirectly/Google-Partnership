@@ -1,6 +1,8 @@
 import {LayerType} from '../firebase_layers.js';
 import {latLngToGeoPoint, transformGeoPointArrayToLatLng} from '../map_util.js';
+import {isUserProperty} from '../property_names.js';
 import {getDisaster} from '../resources.js';
+
 import {getAssetPropertyNames, getColumnsStatus, getDisasterAssetsFromEe} from './list_ee_assets.js';
 import {createOptionFrom, stylePendingSelect} from './manage_common.js';
 import {finishPending, startPending, useDamageForBuildings, validateFlexibleUserFields} from './manage_disaster_flexible.js';
@@ -27,6 +29,7 @@ export {
   initializeDamage,
   isFlexible,
   makeInputElementIdFromPath,
+  maybeShowNoDamageValueItem,
   NODAMAGE_COLUMN_INFO,
   NODAMAGE_VALUE_INFO,
   noteNewDisaster,
@@ -37,9 +40,9 @@ export {
   showDisabledProcessButton,
   showListForAsset,
   showSelectAsPending,
+  startPendingWriteSelectAndGetPropertyNames,
   validateColumnPathHasValue,
   verifyAsset,
-  writeSelectAndGetPropertyNames,
 };
 // For testing.
 export {scoreBoundsMap};
@@ -57,43 +60,9 @@ const disasterData = new Map();
  */
 let scoreBoundsMap;
 
-const scoreCoordinatesPath = Object.freeze(['scoreBoundsCoordinates']);
+//                       Damage-related functions
 
-/**
- * Utility class that checks whether either the disaster has changed or the
- * value of an input (specified by a {@link PropertyPath}) has changed since it
- * was created. Useful to prevent a scenario like: user selects asset1, which
- * has columns A, B, which we want to display to the user in a column dropdown.
- * However, before we get back from EarthEngine the result that asset1 has
- * columns A, B, the user changes the selection to asset2, which has columns C,
- * D, and EarthEngine successfully returns that result, and we display it in the
- * column dropdown. Then when the first result (A, B) is available, it should
- * not overwrite the second.
- *
- * This will not catch cases where the user switches to asset2 and then back to
- * asset1. In that situation, the result from asset1 may be processed twice.
- * Thus, this should only be used when the actions that will be taken if
- * {@link stillValid} is true are idempotent: performing them multiple times is
- * equivalent to performing them once.
- */
-class SameValueChecker {
-  /**
-   * Stores the current page value of path and notes current disaster
-   * @constructor
-   * @param {PropertyPath} path
-   */
-  constructor(path) {
-    this.path = path;
-    this.isCurrent = getIsCurrentDisasterChecker();
-    this.val = getPageValueOfPath(this.path);
-  }
-
-  /** @return {boolean} If disaster has not changed and page value is same */
-  stillValid() {
-    return this.isCurrent() && this.val === getPageValueOfPath(this.path);
-  }
-}
-
+const SCORE_COORDINATES_PATH = Object.freeze(['scoreBoundsCoordinates']);
 const DAMAGE_PROPERTY_PATH = Object.freeze(['damageAssetPath']);
 
 /**
@@ -114,12 +83,12 @@ async function initializeDamage(assetData) {
   }
   const damageIntroSpan = $('#damage-intro-span');
   const damageDiv = $('#damage-asset-div').empty().append(damageIntroSpan);
-  const damageSelect =
-      createSelect(DAMAGE_PROPERTY_PATH)
-          .on('change',
-              () => displayDamageRelatedElements(
-                  writeSelectAndGetPropertyNames(DAMAGE_PROPERTY_PATH),
-                  damageSelect.val()));
+  const damageSelect = createSelect(DAMAGE_PROPERTY_PATH)
+                           .on('change',
+                               () => displayDamageRelatedElements(
+                                   startPendingWriteSelectAndGetPropertyNames(
+                                       DAMAGE_PROPERTY_PATH),
+                                   damageSelect.val()));
   damageDiv.append(damageSelect);
   createNoDamageColumnAndValueList();
   showHideDamageAndMapDivs(!!getStoredValueFromPath(DAMAGE_PROPERTY_PATH));
@@ -130,7 +99,7 @@ async function initializeDamage(assetData) {
       verifyAsset(DAMAGE_PROPERTY_PATH, []), damageSelect.val());
 }
 
-
+/** @type {ColumnInfo} */
 const NODAMAGE_COLUMN_INFO = {
   label: 'column that can distinguish between damaged and undamaged buildings',
   // Actual text on page modified when flexible using setExplanationSpanText.
@@ -138,6 +107,7 @@ const NODAMAGE_COLUMN_INFO = {
   path: ['noDamageKey'],
 };
 
+/** @type {ColumnInfo} */
 const NODAMAGE_VALUE_INFO = {
   label: 'value in column that identifies undamaged buildings',
   // Actual text on page modified when flexible using setExplanationSpanText.
@@ -151,27 +121,31 @@ const NODAMAGE_VALUE_INFO = {
  * put no-damage column into a "pending" state until columns available.
  * @param {Promise<?Array<EeColumn>>} propertyNamesPromise Promise that will
  *     contain columns of damage asset. Created via {@link verifyAsset} or
- *     {@link writeSelectAndGetPropertyNames}
+ *     {@link startPendingWriteSelectAndGetPropertyNames}
  * @param {?EeFC} damageAsset Value of damage asset, from page
  * @return {Promise<void>}
  */
 async function displayDamageRelatedElements(propertyNamesPromise, damageAsset) {
   setNoDamageColumnAndValue(null);
   showHideDamageAndMapDivs(!!damageAsset);
-  const propertyNames = await propertyNamesPromise;
-  if (!propertyNames) {
-    return;
+  try {
+    const propertyNames = await propertyNamesPromise;
+    if (!propertyNames) {
+      return;
+    }
+    setNoDamageColumnAndValue(propertyNames);
+  } finally {
+    finishPending();
   }
-  setNoDamageColumnAndValue(propertyNames);
-  finishPending();
 }
 
 /**
  * Creates list associated to the damage asset, with the no-damage column select
  * and no-damage value input. The list is only shown if there is a damage asset,
+ * since the user can kick off score asset creation without specifying damage;
  * and the no-damage value input is only shown if there is a no-damage column
- * select, since the user can legitimately not choose a no-damage column. See
- * {@link showNoDamageValueItem} for the exception to this in the flexible
+ * selection, since the user can legitimately not choose a no-damage column. See
+ * {@link maybeShowNoDamageValueItem} for the exception to this in the flexible
  * disaster case.
  */
 function createNoDamageColumnAndValueList() {
@@ -190,15 +164,15 @@ function createNoDamageColumnAndValueList() {
       createListItem(NODAMAGE_VALUE_INFO).append(noDamageValueInput);
   const columnSelectListItem =
       createSelectListItemFromColumnInfo(NODAMAGE_COLUMN_INFO);
-  const columnSelect = columnSelectListItem.children('select');
   // Firestore writes will happen with the default change handler, this new one
   // will run as well.
-  columnSelect.on('change', () => showNoDamageValueItem(columnSelect.val()));
+  columnSelectListItem.children('select').on(
+      'change', maybeShowNoDamageValueItem);
   $('#damage-asset-div')
       .append(createListForAsset('damage')
                   .append(columnSelectListItem)
                   .append(valueSelect));
-  showNoDamageValueItem(getStoredValueFromPath(NODAMAGE_COLUMN_INFO.path));
+  maybeShowNoDamageValueItem();
 }
 
 /**
@@ -209,12 +183,11 @@ function createNoDamageColumnAndValueList() {
 function setNoDamageColumnAndValue(propertyNames) {
   const columnPath = NODAMAGE_COLUMN_INFO.path;
   if (propertyNames) {
-    const select = setOptionsForSelect(propertyNames, columnPath);
-    showNoDamageValueItem(!!select.val());
+    setOptionsForSelect(propertyNames, columnPath);
   } else {
     showSelectAsPending(columnPath);
-    showNoDamageValueItem(!!getStoredValueFromPath(columnPath));
   }
+  maybeShowNoDamageValueItem();
 }
 
 /**
@@ -226,14 +199,21 @@ function setNoDamageColumnAndValue(propertyNames) {
  * flexible disaster with damage used for buildings, then the user must specify
  * the column and value, so we show it to give the user more information about
  * what they'll have to fill in.
- * @param {boolean} show Whether to show the no-damage value input. Ignored if
- *     using damage for buildings, in which case this should have the same
- *     visibility as the overall list (visible if there is a damage asset)
  */
-function showNoDamageValueItem(show) {
+function maybeShowNoDamageValueItem() {
   const noDamageValueItem =
       getInputElementFromPath(NODAMAGE_VALUE_INFO.path).parent();
-  if (show || useDamageForBuildings()) {
+  if (useDamageForBuildings()) {
+    noDamageValueItem.show();
+    return;
+  }
+  const noDamageColumnSelect =
+      getInputElementFromPath(NODAMAGE_COLUMN_INFO.path);
+  const show =
+      (!noDamageColumnSelect.length || noDamageColumnSelect.is(':disabled')) ?
+      getStoredValueFromPath(NODAMAGE_COLUMN_INFO.path) :
+      noDamageColumnSelect.val();
+  if (show) {
     noDamageValueItem.show();
   } else {
     noDamageValueItem.hide();
@@ -271,7 +251,7 @@ function setUpScoreBoundsMap(div) {
       div,
       (polygonPath) => handleAssetDataChange(
           polygonPath ? polygonPath.map(latLngToGeoPoint) : null,
-          scoreCoordinatesPath));
+          SCORE_COORDINATES_PATH));
 }
 
 /**
@@ -329,8 +309,8 @@ async function getAssetsAndSetOptionsForSelect(
 function createSelectWithSimpleWriteOnChange(propertyPath) {
   const select =
       createSelect(propertyPath)
-      .on('change',
-          () => handleAssetDataChange(select.val(), propertyPath));
+          .on('change',
+              () => handleAssetDataChange(select.val(), propertyPath));
   return select;
 }
 
@@ -341,20 +321,15 @@ function createSelectWithSimpleWriteOnChange(propertyPath) {
  * "cascading" effects: other inputs whose values depend on this asset's
  * columns. Notes the start of a pending operation via {@link startPending}. The
  * caller is responsible for ending the operation after the returned columns
- * have been processed.
+ * have been processed. See block comment around {@link startPending} for more.
  * @param {PropertyPath} path
  * @return {Promise<?Array<EeColumn>>} Returns result of {@link onAssetSelect},
- *     unless value of select has changed/disaster has changed, in which case
- *     returns null
+ *     filtering out "system" columns, unless value of select has
+ *     changed/disaster has changed, in which case returns null
  */
-async function writeSelectAndGetPropertyNames(path) {
-  const sameSelectChecker = new SameValueChecker(path);
+async function startPendingWriteSelectAndGetPropertyNames(path) {
   startPending();
-  const propertyNames = await onAssetSelect(path, []);
-  if (!propertyNames || !sameSelectChecker.stillValid()) {
-    return null;
-  }
-  return propertyNames;
+  return (await onAssetSelect(path, [])).filter(isUserProperty);
 }
 
 /**
@@ -369,23 +344,30 @@ function onAssetSelect(propertyPath, expectedColumns) {
 }
 
 /**
- * Verifies an asset exists and has the expected columns.
+ * Verifies an asset specified in a select element exists and has the expected
+ * columns, if any. If we do asynchronous work to fetch the columns, then if the
+ * select's value has changed in the interim, don't perform any actions. This
+ * assumes that if the disaster changes but the select's value does not change,
+ * any follow-on work by the caller of `verifyAsset` is still valid. For
+ * disaster-specific assets, this is clearly correct, since the select cannot
+ * have the same value when the disaster changes. For state-specific assets, it
+ * is currently true that any computation on a state asset valid for one
+ * disaster is valid for any other.
  * @param {PropertyPath} propertyPath
  * @param {Array<EeColumn>} expectedColumns Expected column names. If empty,
  *     checks existence and returns all columns from the first feature
  * @return {Promise<?Array<EeColumn>>} Returns a promise that resolves when
  *     existence and column checking are finished and select border color is
  *     updated, and contains the first feature's properties if `expectedColumns`
- *     is empty
+ *     is empty. Null if select's value changed during asynchronous work
  */
 async function verifyAsset(propertyPath, expectedColumns) {
   // TODO: disable or discourage kick off until all green?
   const select = $('#' + makeInputElementIdFromPath(propertyPath));
-  const selectStatusChecker = new SameValueChecker(propertyPath);
-  const asset = selectStatusChecker.val;
+  const asset = select.val();
   const assetMissingErrorFunction = (err) => {
-    if (!selectStatusChecker.stillValid()) {
-      // Don't show errors if not current asset.
+    if (asset !== select.val()) {
+      // Don't show errors if not current asset or disaster changed.
       return null;
     }
     const message = err.message || err;
@@ -409,7 +391,7 @@ async function verifyAsset(propertyPath, expectedColumns) {
       assetMissingErrorFunction(err);
       return null;
     }
-    if (!selectStatusChecker.stillValid()) {
+    if (asset !== select.val()) {
       // Don't do anything if not current asset.
       return null;
     }
@@ -425,7 +407,7 @@ async function verifyAsset(propertyPath, expectedColumns) {
       assetMissingErrorFunction(err);
       return null;
     }
-    if (!selectStatusChecker.stillValid()) {
+    if (asset !== select.val()) {
       // Don't do anything if not current asset.
       return null;
     }
@@ -485,7 +467,8 @@ const OPTIONAL_WARNING_PREFIX = '; warning: created asset will be missing ';
  *     attributes
  */
 function checkDamageFieldsAndShowProcessButton(message, optionalMessage) {
-  if (!damageAssetPresent() && !getStoredValueFromPath(scoreCoordinatesPath)) {
+  if (!damageAssetPresent() &&
+      !getStoredValueFromPath(SCORE_COORDINATES_PATH)) {
     message += continueMessage(
         message, 'must specify either damage asset or map bounds');
   }

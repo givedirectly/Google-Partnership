@@ -3,10 +3,8 @@ import {convertEeObjectToPromise} from '../ee_promise_cache.js';
 import {LayerType} from '../firebase_layers.js';
 
 import {listEeAssets} from './ee_utils.js';
-import {stylePendingSelect} from './manage_common.js';
 
 export {
-  createPendingSelect,
   getAssetPropertyNames,
   getColumnsStatus,
   getDisasterAssetsFromEe,
@@ -178,6 +176,10 @@ function maybeConvertAssetType(asset) {
   }
 }
 
+/**
+ * @param {EeFC} assetName
+ * @return {Promise<Array<EeColumn>>} All columns of `assetName`'s first feature
+ */
 function getAssetPropertyNames(assetName) {
   return convertEeObjectToPromise(
       ee.FeatureCollection(assetName).first().propertyNames());
@@ -195,8 +197,4 @@ function getColumnsStatus(asset, expectedColumns) {
       ee.FeatureCollection(asset).first().propertyNames().containsAll(
           ee.List(expectedColumns)),
       ee.Number(0), ee.Number(1)));
-}
-
-function createPendingSelect() {
-  return stylePendingSelect($(document.createElement('select')));
 }

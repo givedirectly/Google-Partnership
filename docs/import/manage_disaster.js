@@ -2,9 +2,9 @@ import {getDisaster} from '../resources.js';
 
 import {createScoreAssetForFlexibleDisaster, createScoreAssetForStateBasedDisaster} from './create_score_asset.js';
 import {getDisasterAssetsFromEe} from './list_ee_assets.js';
-import {initializeAddDelete} from './manage_disaster_add_delete.js';
+import {setUpAddDelete} from './manage_disaster_add_delete.js';
 import {disasterData, getIsCurrentDisasterChecker, initializeDamage, isFlexible, noteNewDisaster} from './manage_disaster_base.js';
-import {initializeFlexible, onSetFlexibleDisaster} from './manage_disaster_flexible.js';
+import {initializeFlexibleDisaster, setUpFlexibleOnPageLoad} from './manage_disaster_flexible.js';
 import {initializeStateBasedDisaster, validateStateBasedUserFields} from './manage_disaster_state_based.js';
 
 export {
@@ -47,8 +47,8 @@ function enableWhenFirestoreReady(allDisastersData) {
   for (const [key, val] of allDisastersData) {
     disasterData.set(key, val);
   }
-  initializeAddDelete();
-  initializeFlexible();
+  setUpAddDelete();
+  setUpFlexibleOnPageLoad();
 
   const processButton = $('#process-button');
   processButton.prop('disabled', false);
@@ -88,7 +88,7 @@ async function onSetDisaster() {
   // Kick off damage promise first: flexible disaster needs basics ready.
   const damagePromise = initializeDamage(assetData);
   await (
-      flexible ? onSetFlexibleDisaster(assetData) :
+      flexible ? initializeFlexibleDisaster(assetData) :
                  initializeStateBasedDisaster(assetData));
   await damagePromise;
   if (isCurrent() && !flexible) {

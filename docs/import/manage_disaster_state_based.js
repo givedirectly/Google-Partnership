@@ -6,9 +6,9 @@ import {getStateAssetsFromEe} from './list_ee_assets.js';
 import {checkDamageFieldsAndShowProcessButton, createSelect, damageAssetPresent, disasterData, getIsCurrentDisasterChecker, getPageValueOfPath, onAssetSelect, setOptionsForSelect, verifyAsset} from './manage_disaster_base.js';
 
 export {
-  initializeStateBasedScoreSelectors,
   initializeStateBasedDisaster,
-  setUpStateBasedScoreSelectorTable,
+  initializeStateBasedScoreSelectors,
+  setUpStateBasedOnPageLoad,
   validateStateBasedUserFields,
 };
 // For testing.
@@ -121,7 +121,7 @@ const assetSelectionRowPrefix = 'asset-selection-row-';
  * Initializes state-based score selector table based on {@link
  * stateBasedScoreAssetTypes} data. Done as soon as page is ready.
  */
-function setUpStateBasedScoreSelectorTable() {
+function setUpStateBasedOnPageLoad() {
   const tbody = $('#asset-selection-table-body');
   for (const [i, {displayName}] of stateBasedScoreAssetTypes.entries()) {
     const row = $(document.createElement('tr'));

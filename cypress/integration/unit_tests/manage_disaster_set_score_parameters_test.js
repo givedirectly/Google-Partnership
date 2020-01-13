@@ -3,8 +3,8 @@ import {readDisasterDocument} from '../../../docs/firestore_document.js';
 import {createDisasterData} from '../../../docs/import/create_disaster_lib.js';
 import * as ListEeAssets from '../../../docs/import/list_ee_assets.js';
 import {enableWhenFirestoreReady} from '../../../docs/import/manage_disaster.js';
-import {disasterData, scoreBoundsMap, setUpScoreBoundsMap,} from '../../../docs/import/manage_disaster_base.js';
-import {assetSelectionRowPrefix, setUpStateBasedScoreSelectorTable, stateBasedScoreAssetTypes, validateStateBasedUserFields,} from '../../../docs/import/manage_disaster_state_based.js';
+import {disasterData, scoreBoundsMap, setUpScoreBoundsMap} from '../../../docs/import/manage_disaster_base.js';
+import {assetSelectionRowPrefix, setUpStateBasedOnPageLoad, stateBasedScoreAssetTypes, validateStateBasedUserFields} from '../../../docs/import/manage_disaster_state_based.js';
 import {getDisaster} from '../../../docs/resources.js';
 import {cyQueue} from '../../support/commands.js';
 import {getConvertEeObjectToPromiseRelease, setUpSavingStubs} from '../../support/import_test_util.js';
@@ -39,7 +39,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
         // stub first, which is harder in a before() hook (since stubs should be
         // set in beforeEach() hooks) but we only want to run it once in this
         // file.
-        setUpStateBasedScoreSelectorTable();
+        setUpStateBasedOnPageLoad();
         firstTest = false;
       }
     });

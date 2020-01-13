@@ -469,14 +469,6 @@ function createScoreAssetForFlexibleDisaster(
 }
 
 /**
- *
- * @param {AssetData} assetData
- */
-function test(assetData) {
-  const {flexibleData} = assetData;
-  console.log(flexibleData.povertyPath);
-}
-/**
  * Parameters that were used to create the current score asset. See
  * {@link flexibleDataTemplate} for documentation of most of these fields.
  * @typedef {Object} ScoreParameters

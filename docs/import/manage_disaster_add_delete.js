@@ -6,11 +6,12 @@ import {createDisasterData} from './create_disaster_lib.js';
 import {setStatus} from './create_score_asset.js';
 import {disasterData} from './manage_disaster_base.js';
 
-export {addDisaster, deleteDisaster, initializeAddDelete, toggleState};
+export {addDisaster, deleteDisaster, setUpAddDelete, toggleState};
 // For testing.
 export {writeNewDisaster};
 
-function initializeAddDelete() {
+/** Adds handlers to manage_disaster page. Called when Firestore is ready. */
+function setUpAddDelete() {
   // enable add disaster button.
   const addDisasterButton = $('#add-disaster-button');
   addDisasterButton.prop('disabled', false);
@@ -143,8 +144,9 @@ async function writeNewDisaster(disasterId, states) {
       return false;
     }
   });
-  if (!added)
+  if (!added) {
     disasterPicker.append($(document.createElement('option')).text(disasterId));
+  }
   toggleState(true);
 
   disasterPicker.val(disasterId).trigger('change');

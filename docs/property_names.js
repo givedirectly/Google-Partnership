@@ -15,6 +15,10 @@ const scoreTag = 'SCORE';
 const povertyHouseholdsTag = 'SNAP HOUSEHOLDS';
 const totalHouseholdsTag = 'TOTAL HOUSEHOLDS';
 
+/**
+ * @param {EeColumn} name
+ * @return {boolean} Whether `name` is a user (vs. EarthEngine system) property
+ */
 function isUserProperty(name) {
   return !name.startsWith('system:');
 }
