@@ -187,10 +187,7 @@ const BuildingSource = Object.freeze({
  *     that has counts.
  */
 
-/**
- *
- * @type {FlexibleData}
- */
+/** @type {FlexibleData} */
 const flexibleDataTemplate = Object.freeze({
   povertyPath: null,
   povertyRateKey: null,

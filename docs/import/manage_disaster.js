@@ -44,8 +44,8 @@ function enableWhenReady(allDisastersData) {
  * @return {Promise<void>} See {@link onSetDisaster}
  */
 function enableWhenFirestoreReady(allDisastersData) {
-  for (const [key, val] of allDisastersData) {
-    disasterData.set(key, val);
+  for (const [disasterName, data] of allDisastersData) {
+    disasterData.set(disasterName, data);
   }
   setUpAddDelete();
   setUpFlexibleOnPageLoad();

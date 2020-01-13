@@ -1,23 +1,16 @@
 import {addPolygonWithPath} from '../../../docs/basic_map.js';
+import {LayerType} from '../../../docs/firebase_layers.js';
 import {readDisasterDocument} from '../../../docs/firestore_document.js';
 import {createDisasterData} from '../../../docs/import/create_disaster_lib.js';
 import * as ListEeAssets from '../../../docs/import/list_ee_assets.js';
-import * as UpdateFirestoreDisaster from '../../../docs/import/update_firestore_disaster.js';
 import {enableWhenFirestoreReady} from '../../../docs/import/manage_disaster.js';
-import {
-  DAMAGE_PROPERTY_PATH,
-  disasterData,
-  makeInputElementIdFromPath,
-  NODAMAGE_COLUMN_INFO, NODAMAGE_VALUE_INFO,
-  scoreBoundsMap,
-  setUpScoreBoundsMap
-} from '../../../docs/import/manage_disaster_base.js';
+import {DAMAGE_PROPERTY_PATH, disasterData, makeInputElementIdFromPath, NODAMAGE_COLUMN_INFO, NODAMAGE_VALUE_INFO, scoreBoundsMap, setUpScoreBoundsMap} from '../../../docs/import/manage_disaster_base.js';
 import {assetSelectionRowPrefix, setUpStateBasedOnPageLoad, stateBasedScoreAssetTypes, validateStateBasedUserFields} from '../../../docs/import/manage_disaster_state_based.js';
+import * as UpdateFirestoreDisaster from '../../../docs/import/update_firestore_disaster.js';
 import {getDisaster} from '../../../docs/resources.js';
 import {cyQueue} from '../../support/commands.js';
 import {getConvertEeObjectToPromiseRelease, setUpSavingStubs} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
-import {LayerType} from '../../../docs/firebase_layers.js';
 
 // Triangle goes up into Canada, past default map of basic_map.js.
 const scoreBoundsCoordinates = [
@@ -32,7 +25,11 @@ const SVI_INDEX = 2;
 const TIGER_INDEX = 3;
 const BUILDINGS_INDEX = 4;
 
-const ENABLED_COLLECTION = {type: LayerType.FEATURE_COLLECTION, hasGeometry: true, disabled: false};
+const ENABLED_COLLECTION = {
+  type: LayerType.FEATURE_COLLECTION,
+  hasGeometry: true,
+  disabled: false,
+};
 
 /**
  * The setup for this test is a bit problematic because the Google Maps
@@ -91,7 +88,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     // Wait for bounds promise to finish, and wait for the zoom level to
     // change, so that we can assert that the map has been zoomed to NY state.
     cy.wrap(Promise.all([
-        scoreBoundsMap.stateBoundsPromise,
+        scoreBoundsMap.disasterBoundsPromise,
         new Promise(
             (resolve) => google.maps.event.addListenerOnce(
                 scoreBoundsMap.map, 'zoom_changed', resolve)),
@@ -136,7 +133,8 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
       ['state1', {disabled: true}],
     ])));
     callEnableWhenReady(createDisasterData(['NY']));
-    const stateSelector = getSelectForScoreAssetIndex(POVERTY_INDEX).get('option');
+    const stateSelector =
+        getSelectForScoreAssetIndex(POVERTY_INDEX).get('option');
     stateSelector.eq(2).should('be.disabled');
     stateSelector.eq(1).should('not.be.disabled');
     const disasterSelector = getDamageSelect().get('option');
@@ -182,7 +180,9 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
 
     // Be a little hacky to avoid repeating ourselves with damage.
     for (const i of [TIGER_INDEX, BUILDINGS_INDEX, BUILDINGS_INDEX + 1]) {
-      const selector = (i <= BUILDINGS_INDEX ? getSelectForScoreAssetIndex(i) : getDamageSelect()).get('option');
+      const selector = (i <= BUILDINGS_INDEX ? getSelectForScoreAssetIndex(i) :
+                                               getDamageSelect())
+                           .get('option');
       cy.get(selector).contains('None').should('be.enabled');
       cy.get(selector).contains('asset/with/geometry').should('be.enabled');
       cy.get(selector)
@@ -417,8 +417,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     // bad -> good
     setSelectWithDelayedEvaluate(0, 'state2', 'NY');
     checkSelectBorder(POVERTY_INDEX, 'rgb(0, 128, 0)');
-    checkHoverText(
-        POVERTY_INDEX, 'Success! asset has all expected columns');
+    checkHoverText(POVERTY_INDEX, 'Success! asset has all expected columns');
 
     // good -> bad
     setSelectWithDelayedEvaluate(0, 'state0', 'NY');
@@ -431,14 +430,12 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     // None -> good columns
     setSelectWithDelayedEvaluate(1, 'state1', 'NY');
     checkSelectBorder(INCOME_INDEX, 'rgb(0, 128, 0)');
-    checkHoverText(
-        INCOME_INDEX, 'Success! asset has all expected columns');
+    checkHoverText(INCOME_INDEX, 'Success! asset has all expected columns');
 
     // good -> good
     setSelectWithDelayedEvaluate(1, 'state0', 'NY');
     checkSelectBorder(INCOME_INDEX, 'rgb(0, 128, 0)');
-    checkHoverText(
-        INCOME_INDEX, 'Success! asset has all expected columns');
+    checkHoverText(INCOME_INDEX, 'Success! asset has all expected columns');
 
     // good -> None
     // should return immediately, no release needed.
@@ -527,74 +524,130 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
             'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
   });
 
-  it('shows pending then values for state-based disaster, damage cascades', () => {
-    // Track Firestore updates, so we know we're not accidentally writing on
-    // page load.
-    const updateDisasterSpy = cy.spy(UpdateFirestoreDisaster, 'updateDataInFirestore');
+  it('shows pending then values for state-based disaster, damage cascades',
+     () => {
+       // Track Firestore updates, so we know we're not accidentally writing on
+       // page load.
+       const updateDisasterSpy =
+           cy.spy(UpdateFirestoreDisaster, 'updateDataInFirestore');
 
-    // Delay results until we're ready, for both state and disaster.
-    let stateAssetListingResult;
-    stateStub.returns(new Promise((resolve) => stateAssetListingResult = resolve));
-    const asset1 = ee.FeatureCollection([ee.Feature(null, {'a-key': 0})]);
-    const asset2 = ee.FeatureCollection([ee.Feature(null, {'b-key': 0})]);
+       // Delay results until we're ready, for both state and disaster.
+       let stateAssetListingResult;
+       stateStub.returns(
+           new Promise((resolve) => stateAssetListingResult = resolve));
+       const asset1 = ee.FeatureCollection([ee.Feature(null, {'a-key': 0})]);
+       const asset2 = ee.FeatureCollection([ee.Feature(null, {'b-key': 0})]);
 
-    let disasterAssetListingResult;
-    disasterStub.returns(new Promise((resolve => disasterAssetListingResult = resolve)));
+       let disasterAssetListingResult;
+       disasterStub.returns(
+           new Promise((resolve) => disasterAssetListingResult = resolve));
 
-    // We'll cascade damage asset properties.
-    const featureCollectionStub = cy.stub(ee, 'FeatureCollection');
-    featureCollectionStub.withArgs('asset1').returns(asset1);
-    featureCollectionStub.withArgs('asset2').returns(asset2);
+       // We'll cascade damage asset properties.
+       const featureCollectionStub = cy.stub(ee, 'FeatureCollection');
+       featureCollectionStub.withArgs('asset1').returns(asset1);
+       featureCollectionStub.withArgs('asset2').returns(asset2);
 
-    // Set properties up so that poverty asset will resolve, 
-    const currentData = createDefaultStateBasedFirestoreData();
-    currentData.assetData.stateBasedData.snapData.paths.NY = 'found-asset';
-    currentData.assetData.stateBasedData.incomeAssetPaths.NY = 'missing-asset';
-    currentData.assetData.damageAssetPath = 'missing-asset';
-    currentData.assetData.noDamageKey = 'a-key';
-    currentData.assetData.noDamageValue = 'a-value';
-    const promise =
-        enableWhenFirestoreReady(new Map([[getDisaster(), currentData]]));
-    // Give promise a chance to start running.
-    cy.wait(0);
-    cy.get('#kickoff-button').should('be.disabled');
-    cy.get('#kickoff-button').should('have.text', 'Initializing...');
-    assertSelectPending(getSelectForScoreAssetIndex(POVERTY_INDEX));
-    assertSelectPending(getDamageSelect());
-    assertSelectPending(getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path));
-    getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).should('have.value', 'a-value')
-        .then(() => stateAssetListingResult(new Map([['found-asset', ENABLED_COLLECTION], ['other-asset', ENABLED_COLLECTION]])));
-    getSelectForScoreAssetIndex(POVERTY_INDEX).should('not.be.disabled');
-    getSelectForScoreAssetIndex(POVERTY_INDEX).should('have.value', 'found-asset');
-    getSelectForScoreAssetIndex(INCOME_INDEX).should('not.be.disabled');
-    getSelectForScoreAssetIndex(INCOME_INDEX).should('have.value', '');
-    getSelectForScoreAssetIndex(SVI_INDEX).should('not.be.disabled');
-    getSelectForScoreAssetIndex(SVI_INDEX).should('have.value', '');
-    assertSelectPending(getDamageSelect()).then(() => disasterAssetListingResult(new Map([['asset1', ENABLED_COLLECTION], ['asset2', ENABLED_COLLECTION]])));
-    cy.wrap(promise);
-    getDamageSelect().should('have.value', '');
-    getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path).should('not.be.visible');
-    getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).should('not.be.visible')
-    .then(() => expect(updateDisasterSpy).to.not.be.called);
-    getDamageSelect().select('asset1').blur();
-    getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path).should('be.visible');
-    getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path).should('have.value', 'a-key');
-    getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).should('be.visible');
-    getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).should('have.value', 'a-value')
-        .then(() => expect(updateDisasterSpy).to.be.calledOnce);
-    getDamageSelect().select('asset2').blur();
-    getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path).should('be.visible');
-    getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path).should('have.value', '');
-    getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).should('not.be.visible')
-        .then(() => expect(updateDisasterSpy).to.be.calledTwice);
-    getDamageSelect().select('asset1').blur();
-    getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path).should('be.visible');
-    getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path).should('have.value', 'a-key');
-    getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).should('be.visible');
-    getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).should('have.value', 'a-value')
-        .then(() => expect(updateDisasterSpy).to.be.calledThrice);
-  });
+       // Set properties up so that poverty asset is found, income asset is not
+       // found, and svi is never set.
+       const currentData = createDefaultStateBasedFirestoreData();
+       currentData.assetData.stateBasedData.snapData.paths.NY = 'found-asset';
+       currentData.assetData.stateBasedData.incomeAssetPaths.NY =
+           'missing-asset';
+       currentData.assetData.damageAssetPath = 'missing-asset';
+       currentData.assetData.noDamageKey = 'a-key';
+       currentData.assetData.noDamageValue = 'a-value';
+       const promise =
+           enableWhenFirestoreReady(new Map([[getDisaster(), currentData]]));
+       // Give promise a chance to start running.
+       cy.wait(0);
+       cy.get('#kickoff-button').should('be.disabled');
+       cy.get('#kickoff-button').should('have.text', 'Initializing...');
 
+       assertSelectPending(getSelectForScoreAssetIndex(POVERTY_INDEX));
+       assertSelectPending(getDamageSelect());
+       // Because damage asset is set in Firestore, and column key is also set
+       // in Firestore, we display the no-damage column and no-damage value
+       // while retrieving data from EE.
+       assertSelectPending(
+           getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path));
+       getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path)
+           .should('have.value', 'a-value');
+
+       // Release the state assets.
+       cyQueue(() => stateAssetListingResult(new Map([
+                 ['found-asset', ENABLED_COLLECTION],
+                 ['other-asset', ENABLED_COLLECTION],
+               ])));
+       // Poverty is set as expected.
+       getSelectForScoreAssetIndex(POVERTY_INDEX).should('not.be.disabled');
+       getSelectForScoreAssetIndex(POVERTY_INDEX)
+           .should('have.value', 'found-asset');
+       // Income doesn't have a value because its value was not in asset list.
+       getSelectForScoreAssetIndex(INCOME_INDEX).should('not.be.disabled');
+       getSelectForScoreAssetIndex(INCOME_INDEX).should('have.value', '');
+       // SVI has nothing.
+       getSelectForScoreAssetIndex(SVI_INDEX).should('not.be.disabled');
+       getSelectForScoreAssetIndex(SVI_INDEX).should('have.value', '');
+       // Damage is still pending.
+       assertSelectPending(getDamageSelect());
+       // Release the disaster assets.
+       cyQueue(() => disasterAssetListingResult(new Map([
+                 ['asset1', ENABLED_COLLECTION],
+                 ['asset2', ENABLED_COLLECTION],
+               ])));
+       // Promise can now complete.
+       cy.wrap(promise);
+       // Damage asset was not found.
+       getDamageSelect().should('have.value', '');
+       // Since damage has no value on page, no-damage column/value are hidden.
+       getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path)
+           .should('not.be.visible');
+       getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path)
+           .should('not.be.visible');
+       // There have been no Firestore updates triggered by page load.
+       cyQueue(() => expect(updateDisasterSpy).to.not.be.called);
+
+       // Change the damage asset to one with no-damage column.
+       getDamageSelect().select('asset1').blur();
+       // Column and value both visible now, with correct values.
+       getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path)
+           .should('be.visible');
+       getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path)
+           .should('have.value', 'a-key');
+       getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).should('be.visible');
+       getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path)
+           .should('have.value', 'a-value');
+       // We triggered one write.
+       cyQueue(() => expect(updateDisasterSpy).to.be.calledOnce);
+
+       // Change to an asset without the no-damage column.
+       getDamageSelect().select('asset2').blur();
+       // Since there is an asset, column select is visible.
+       getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path)
+           .should('be.visible');
+       // But it has no selection, and the value input is hidden.
+       getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path)
+           .should('have.value', '');
+       getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path)
+           .should('not.be.visible');
+       cyQueue(() => expect(updateDisasterSpy).to.be.calledTwice);
+
+       // Switch back to asset1: looks the same as before.
+       getDamageSelect().select('asset1').blur();
+       getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path)
+           .should('be.visible');
+       getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path)
+           .should('have.value', 'a-key');
+       getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).should('be.visible');
+       getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path)
+           .should('have.value', 'a-value')
+           .then(() => expect(updateDisasterSpy).to.be.calledThrice);
+     });
+
+  /**
+   * @param {Cypress.Chainable<JQuery<HTMLSelectElement>>} select
+   * @return {Cypress.Chainable<JQuery<HTMLSelectElement>>} Select for chaining
+   */
   function assertSelectPending(select) {
     select.should('be.disabled');
     select.should('have.text', 'pending...');
@@ -656,6 +709,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     return createDefaultStateBasedFirestoreData();
   }
 
+  /** @return {{assetData: AssetData, layerArray: Array<*>}} */
   function createDefaultStateBasedFirestoreData() {
     const currentData = createDisasterData(['NY']);
     currentData.assetData.scoreBoundsCoordinates = scoreBoundsCoordinates.map(
@@ -781,10 +835,22 @@ function getDamageSelect() {
   return getSelectFromPropertyPath(DAMAGE_PROPERTY_PATH);
 }
 
+/**
+ * @param {number} index Index of desired score asset type in
+ *     {@link stateBasedScoreAssetTypes}
+ * @param {string} state State, defaults to 'NY'
+ * @return {Cypress.Chainable<JQuery<HTMLElement>>}
+ */
 function getSelectForScoreAssetIndex(index, state = 'NY') {
-  return getSelectFromPropertyPath(stateBasedScoreAssetTypes[index].propertyPath.concat([state]));
+  return getSelectFromPropertyPath(
+      stateBasedScoreAssetTypes[index].propertyPath.concat([state]));
 }
 
+/**
+ * @param {PropertyPath} path
+ * @param {Object} options Options for {@code cy.get}
+ * @return {Cypress.Chainable<JQuery<HTMLElement>>}
+ */
 function getSelectFromPropertyPath(path, options = {}) {
   return cy.get('#' + makeInputElementIdFromPath(path), options);
 }

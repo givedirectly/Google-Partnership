@@ -105,8 +105,10 @@ export {
 const BUILDING_SOURCE_PATH = Object.freeze(['flexibleData', 'buildingSource']);
 const POVERTY_HAS_GEOMETRY_PATH =
     Object.freeze(['flexibleData', 'povertyHasGeometry']);
-const BUILDING_HAS_GEOMETRY_PATH = ['flexibleData', 'buildingHasGeometry'];
-const POVERTY_BUILDINGS_PATH = ['flexibleData', 'povertyBuildingKey'];
+const BUILDING_HAS_GEOMETRY_PATH =
+    Object.freeze(['flexibleData', 'buildingHasGeometry']);
+const POVERTY_BUILDINGS_PATH =
+    Object.freeze(['flexibleData', 'povertyBuildingKey']);
 
 const DISTRICT_ID_LABEL = 'district identifier column';
 const DISTRICT_ID_EXPLANATION = 'to match with poverty asset\'s';
@@ -324,7 +326,7 @@ function checkColumns(message, key) {
  * @param {string} message Current error message
  * @param {Array<ColumnInfo>} columnInfos
  * @param {string|ScoreInputType} scoreInputType String to display in error
- *     message
+ *     message: normally {@link ScoreInputType} but can also be 'damage'
  * @return {string}
  */
 function addColumnArrayErrorsToMessage(message, columnInfos, scoreInputType) {
@@ -345,7 +347,7 @@ function addColumnArrayErrorsToMessage(message, columnInfos, scoreInputType) {
  */
 function validateColumnArray(columnInfos) {
   return columnInfos.map(validateColumnPathHasValue)
-      .filter((c) => c)
+      .filter((c) => c)  // Filter out null elements
       .join(', ');
 }
 
@@ -559,8 +561,8 @@ async function onBuildingsChange(buildingsAsset) {
  * {@link startPendingWriteSelectAndGetPropertyNames}, so callers must call
  * {@link finishPending}!
  * @param {ScoreInputType} key
- * @return {Promise<?Array<EeColumn>>} Null if selection no longer current,
- *     callers should abort in that case
+ * @return {Promise<?Array<EeColumn>>} Null if value of select associated to
+ *    `key` changed during column retrieval. Callers should abort in that case
  */
 function onAssetSelectChange(key) {
   setPendingForColumns(key);
@@ -611,7 +613,7 @@ async function povertyHasGeometry(povertyAssetName) {
  */
 async function buildingsHasGeometry(assetName) {
   if (!assetName) {
-    // Assume geometry when they finally choose a buildings asset.
+    // No asset yet: assume when they do choose an asset it'll have geometries.
     return true;
   }
   // Should complete instantly.
@@ -630,15 +632,15 @@ function setOptionsForPovertyBuildings(columns) {
  * @return {JQuery<HTMLSelectElement>} Asset select
  */
 function createSelectAndColumns(assetKey) {
-  const scoreInputData = componentsData[assetKey];
-  const div = scoreInputData.div;
-  const select = createSelect(scoreInputData.path);
-  div.append($(document.createElement('span'))
-                 .text(capitalizeFirstLetter(assetKey) + ' asset path: '))
+  const {div, path, columns} = componentsData[assetKey];
+  const select = createSelect(path);
+  div.empty()
+      .append($(document.createElement('span'))
+                  .text(capitalizeFirstLetter(assetKey) + ' asset path: '))
       .append(select);
   // Create columns list.
   const attrList = createListForAsset(assetKey);
-  for (const columnInfo of scoreInputData.columns) {
+  for (const columnInfo of columns) {
     attrList.append(createSelectListItemFromColumnInfo(columnInfo));
   }
   div.append(attrList);

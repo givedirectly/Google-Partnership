@@ -238,7 +238,7 @@ function showHideDamageAndMapDivs(damageAssetPresent) {
  * @param {AssetData} assetData
  * @param {?Array<string>} states See {@link ScoreBoundsMap.initialize}
  */
-function initializeScoreBoundsMapFromAssetData(assetData, states = []) {
+function initializeScoreBoundsMapFromAssetData(assetData, states = null) {
   const {scoreBoundsCoordinates} = assetData;
   const scoreBoundsAsLatLng = scoreBoundsCoordinates ?
       transformGeoPointArrayToLatLng(scoreBoundsCoordinates) :
@@ -275,22 +275,23 @@ function setMapBoundsDiv(hide) {
  * Gets assets for the current disaster from EarthEngine, then sets those
  * disasters as options for the select element given by `propertyPath`.
  * @param {PropertyPath} propertyPath
- * @param {boolean} enableAllFeatureCollections True to enable all Feature
- *     Collections, false to leave the defaults (geometry required).
+ * @param {boolean} allowFeatureCollectionsWithoutGeometries True to enable all
+ *     Feature Collections, false to leave the defaults (geometry required).
  * @return {Promise<boolean>} True if successful, false if disaster changed
  *     while waiting for asset listing, in which case caller should abort
  */
 async function getAssetsAndSetOptionsForSelect(
-    propertyPath, enableAllFeatureCollections = true) {
-  // Same promise as waited on for many assets. Since getDisasterAssetsFromEe
-  // deduplicates, this is fine.
+    propertyPath, allowFeatureCollectionsWithoutGeometries = true) {
+  // The first time this function is called, we'll wait on
+  // getDisasterAssetsFromEe. Every subsequent call will not wait, since
+  // getDisasterAssetsFromEe caches the result.
   const isCurrent = getIsCurrentDisasterChecker();
   const disasterAssets = await getDisasterAssetsFromEe(getDisaster());
   if (!isCurrent()) {
     return false;
   }
   let assets = disasterAssets;
-  if (enableAllFeatureCollections) {
+  if (allowFeatureCollectionsWithoutGeometries) {
     assets = new Map();
     for (const [key, attributes] of disasterAssets) {
       assets.set(
@@ -318,11 +319,13 @@ function createSelectWithSimpleWriteOnChange(propertyPath) {
 //                          Save-related functions.
 
 /**
- * Called on changes to select-type inputs with no required columns, but
- * "cascading" effects: other inputs whose values depend on this asset's
- * columns. Notes the start of a pending operation via {@link startPending}. The
- * caller is responsible for ending the operation after the returned columns
- * have been processed. See block comment around {@link startPending} for more.
+ * Handles a change to a select element with no required columns, but with
+ * "cascading" effects, meaning that there are other inputs whose values depend
+ * on this asset's columns. See the file-level comment of
+ * manage_disaster_flexible.js for an explanation of cascading. Notes the start
+ * of a pending operation via {@link startPending}. The caller is responsible
+ * for ending the operation after the returned columns have been processed.
+ * See block comment around {@link startPending} for more.
  * @param {PropertyPath} path
  * @return {Promise<?Array<EeColumn>>} Returns result of {@link onAssetSelect},
  *     filtering out "system" columns, unless value of select has
@@ -445,9 +448,10 @@ function handleAssetDataChange(val, propertyPath) {
   parentProperty[propertyPath[propertyPath.length - 1]] =
       val !== '' ? val : null;
   if (isFlexible()) {
-    // This will short-circuit if there are any pending checks, which will be
-    // the case for EE asset changes. Column value changes won't have pending
-    // operations, though, since they don't cascade, so this will actually work.
+    // This will immediately display 'Pending...' and exit if there are any
+    // pending checks, which will be the case for EE asset changes. Column value
+    // changes won't have pending operations, though, since they don't cascade,
+    // so this will actually work.
     validateFlexibleUserFields();
   } else {
     // State-based disasters have no delays in validation, will always do work.
@@ -593,8 +597,8 @@ function createSelectListItemFromColumnInfo(columnInfo) {
 }
 
 /**
- * Creates an `li` for `columnInfo`: Span with Label followed by optional
- *     (explanation). Explanation has span with id for later modification.
+ * Creates an `li` for `columnInfo`: Span with "Label (optional explanation): ".
+ * Explanation has span with id for later modification.
  * @param {ColumnInfo} columnInfo
  * @return {JQuery<HTMLLIElement>}
  */

@@ -1,7 +1,6 @@
 import {eeLegacyPathPrefix, legacyStateDir} from '../ee_paths.js';
 import {convertEeObjectToPromise} from '../ee_promise_cache.js';
 import {LayerType} from '../firebase_layers.js';
-
 import {listEeAssets} from './ee_utils.js';
 
 export {
@@ -57,7 +56,8 @@ const disasterAssetPromises = new Map();
  * Gets all assets for the given disaster. Assumes an ee folder has already
  * been created for this disaster. Marks assets with their type and whether or
  * not they should be disabled when put into a select. Here, disabling any
- * feature collections that have a null-looking (see comment below) geometry.
+ * feature collections that have a null-looking (see comment below) geometry,
+ * and also disabling any non-feature collections (since no geometries).
  *
  * De-duplicates requests, so retrying before a fetch completes won't start a
  * new fetch.

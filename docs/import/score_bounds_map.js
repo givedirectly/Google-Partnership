@@ -106,9 +106,9 @@ class ScoreBoundsMap {
                               .filter(ScoreBoundsMap._createStateFilter(states))
                               .geometry()
                               .bounds();
-      this.stateBoundsPromise = convertEeObjectToPromise(stateBounds);
+      this.disasterBoundsPromise = convertEeObjectToPromise(stateBounds);
     } else {
-      this.stateBoundsPromise = WORLD_MAP_BOUNDS;
+      this.disasterBoundsPromise = WORLD_MAP_BOUNDS;
     }
   }
 
@@ -118,8 +118,9 @@ class ScoreBoundsMap {
    * because {@link google.maps.Map} does not like having its bounds set when it
    * is not visible.
    *
-   * If there is no polygon and {@link this.stateBoundsPromise} is not yet set,
-   * will set bounds asynchronously when it is, if user has not already zoomed.
+   * If there is no polygon and {@link this.disasterBoundsPromise} is not yet
+   * set, will set bounds asynchronously when it is, if user has not already
+   * zoomed.
    * @return {?Promise<void>} Promise that completes when bounds are set (or
    *     Promise to calculate bounds is complete but user zoomed map in
    *     meantime), or null if bounds-setting was done synchronously or not
@@ -140,7 +141,7 @@ class ScoreBoundsMap {
       let zoomChangedByUser = false;
       google.maps.event.addListenerOnce(
           this.map, 'zoom_changed', () => zoomChangedByUser = true);
-      return this.stateBoundsPromise.then((resolvedBounds) => {
+      return this.disasterBoundsPromise.then((resolvedBounds) => {
         if (zoomChangedByUser) {
           return;
         }
