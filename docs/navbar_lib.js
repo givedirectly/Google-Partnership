@@ -1,5 +1,4 @@
 import {HELP_DOC_URL, MANAGE_DISASTERS_HELP_URL, MANAGE_LAYERS_HELP_URL} from './help.js';
-import {inProduction} from './in_test_util.js';
 import {MANAGE_DISASTERS_PAGE, MANAGE_LAYERS_PAGE} from './navbar.js';
 
 export {
