@@ -332,13 +332,15 @@ function validateFlexibleUserFields() {
       case BuildingSource.DAMAGE:
         // Normally there's no error if NODAMAGE_COLUMN_INFO is blank, but we
         // need it. If it's not blank, checkDamageFieldsAndShowKickoffButton
-        // will display and error if the value is missing, so don't check here.
-        if (hasDamageAsset && !getPageValueOfPath(NODAMAGE_COLUMN_INFO.path)) {
-          message = addColumnArrayErrorsToMessage(
-              message, [NODAMAGE_COLUMN_INFO, NODAMAGE_VALUE_INFO], 'damage');
-        } else {
-          optionalMessage = 'building counts';
-        }
+        // will display an error if the value is missing, so don't check here.
+          if (!getPageValueOfPath(NODAMAGE_COLUMN_INFO.path)) {
+            if (hasDamageAsset) {
+              message = addColumnArrayErrorsToMessage(
+                  message, [NODAMAGE_COLUMN_INFO, NODAMAGE_VALUE_INFO], 'damage');
+            } else {
+              optionalMessage = 'building counts';
+            }
+          }
         break;
     }
     if (tailAboutBuildingsWorkaround) {

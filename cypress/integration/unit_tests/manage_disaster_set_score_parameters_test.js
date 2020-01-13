@@ -673,8 +673,10 @@ it.only('does basic tests for flexible', () => {
   featureCollectionStub.withArgs('noGeoAsset').returns(noGeoAsset);
 
   const currentData = createDisasterData(null);
-  currentData.assetData.damageAssetPath = 'asset1';
-  const {assetData: flexibleData} = currentData;
+  currentData.assetData.damageAssetPath = 'missing-asset';
+  currentData.assetData.noDamageKey = 'a-key';
+  currentData.assetData.noDamageValue = 'a-value';
+  const {assetData: {flexibleData}} = currentData;
   flexibleData.povertyPath = 'missing-asset';
   flexibleData.povertyHasGeometry = false;
   flexibleData.geographyPath = 'missing-asset';
@@ -704,27 +706,33 @@ it.only('does basic tests for flexible', () => {
   cy.wrap(promise);
   // Damage asset was not found.
   getDamageSelect().should('have.value', '');
-  // // Since damage has no value on page, no-damage column/value are hidden.
-  // getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path)
-  //     .should('not.be.visible');
-  // getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path)
-  //     .should('not.be.visible');
-  // // There have been no Firestore updates triggered by page load.
-  // cyQueue(() => expect(updateDisasterSpy).to.not.be.called);
-  //
-  // // Change the damage asset to one with no-damage column.
-  // getDamageSelect().select('asset1').blur();
-  // // Column and value both visible now, with correct values.
-  // getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path)
-  //     .should('be.visible');
-  // getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path)
-  //     .should('have.value', 'a-key');
-  // getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).should('be.visible');
-  // getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path)
-  //     .should('have.value', 'a-value');
-  // // We triggered one write.
-  // cyQueue(() => expect(updateDisasterSpy).to.be.calledOnce);
-  //
+  // Since damage has no value on page, no-damage column/value are hidden.
+  getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path)
+      .should('not.be.visible');
+  getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path)
+      .should('not.be.visible');
+  // There have been no Firestore updates triggered by page load.
+  cyQueue(() => expect(updateDisasterSpy).to.not.be.called);
+
+  cy.get('#kickoff-button').should('be.disabled');
+  cy.get('#kickoff-button').should('have.text', 'Missing poverty asset; must specify either damage asset or map bounds');
+
+  // Change the damage asset to one with no-damage column.
+  getDamageSelect().select('asset1').blur();
+  // Column and value both visible now, with correct values.
+  getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path)
+      .should('be.visible');
+  getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path)
+      .should('have.value', 'a-key');
+  getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).should('be.visible');
+  getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path)
+      .should('have.value', 'a-value');
+  cy.get('span').contains('must be specified since damage contains all buildings');
+  cy.get('#kickoff-button').should('be.disabled');
+  cy.get('#kickoff-button').should('have.text', 'Missing poverty asset');
+  // We triggered one write.
+  cyQueue(() => expect(updateDisasterSpy).to.be.calledOnce);
+
   // // Change to an asset without the no-damage column.
   // getDamageSelect().select('asset2').blur();
   // // Since there is an asset, column select is visible.
