@@ -166,32 +166,36 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
         .returns(withEmptyGeometry);
     callEnableWhenReady(setUpDefaultData());
     for (const index of [POVERTY_INDEX, INCOME_INDEX, SVI_INDEX]) {
-      const selector = getSelectForScoreAssetIndex(index).get('option');
-      cy.get(selector).contains('None').should('be.enabled');
-      cy.get(selector).contains('asset/with/geometry').should('be.enabled');
-      cy.get(selector)
-          .contains('asset/with/null/geometry')
-          .should('be.enabled');
-      cy.get(selector)
-          .contains('asset/with/empty/geometry')
-          .should('be.enabled');
-      cy.get(selector).contains('asset/image').should('be.disabled');
+      getSelectForScoreAssetIndex(index).within(() => {
+        cy.get('option').contains('None').should('be.enabled');
+        cy.get('option').contains('asset/with/geometry').should('be.enabled');
+        cy.get('option')
+            .contains('asset/with/null/geometry')
+            .should('be.enabled');
+        cy.get('option')
+            .contains('asset/with/empty/geometry')
+            .should('be.enabled');
+        cy.get('option').contains('asset/image').should('be.disabled');
+      });
     }
 
     // Be a little hacky to avoid repeating ourselves with damage.
     for (const i of [TIGER_INDEX, BUILDINGS_INDEX, BUILDINGS_INDEX + 1]) {
-      const selector = (i <= BUILDINGS_INDEX ? getSelectForScoreAssetIndex(i) :
-                                               getDamageSelect())
-                           .get('option');
-      cy.get(selector).contains('None').should('be.enabled');
-      cy.get(selector).contains('asset/with/geometry').should('be.enabled');
-      cy.get(selector)
-          .contains('asset/with/null/geometry')
-          .should('be.disabled');
-      cy.get(selector)
-          .contains('asset/with/empty/geometry')
-          .should('be.disabled');
-      cy.get(selector).contains('asset/image').should('be.disabled');
+      (i <= BUILDINGS_INDEX ? getSelectForScoreAssetIndex(i) :
+                              getDamageSelect())
+          .within(() => {
+            cy.get('option').contains('None').should('be.enabled');
+            cy.get('option')
+                .contains('asset/with/geometry')
+                .should('be.enabled');
+            cy.get('option')
+                .contains('asset/with/null/geometry')
+                .should('be.disabled');
+            cy.get('option')
+                .contains('asset/with/empty/geometry')
+                .should('be.disabled');
+            cy.get('option').contains('asset/image').should('be.disabled');
+          });
     }
   });
 
