@@ -73,6 +73,7 @@ function getRowIndex(row) {
 function onUpdate(event, property, fxn) {
   const input = $(event.target);
   const index = getRowIndex(input.parents('tr'));
+  console.log(getCurrentLayers());
   getCurrentLayers()[index][property] = fxn(input);
   return updateLayersInFirestore();
 }

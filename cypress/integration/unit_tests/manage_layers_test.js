@@ -66,9 +66,11 @@ describe('Unit tests for manage_layers page', () => {
           .callsFake((id) => doc.getElementById(id));
     });
     cy.wrap(getAssetsAndPopulateDisasterPicker(disaster));
-    cy.get('[id="asset/with/geometry"]').should('not.be.disabled');
-    cy.get('[id="asset/with/null/geometry"]').should('be.disabled');
-    cy.get('[id="asset/with/empty/geometry"]').should('be.disabled');
+    cy.get('option').contains('asset/with/geometry').should('not.be.disabled');
+    cy.get('option').contains('asset/with/null/geometry').should('be.disabled');
+    cy.get('option')
+        .contains('asset/with/empty/geometry')
+        .should('be.disabled');
   });
 
   it('has racing disaster asset populates', () => {
