@@ -85,7 +85,8 @@ function run(
   const scoreComputationParametersPromise =
       setUpScoreComputationParameters(disasterMetadataPromise, map);
   createAndDisplayJoinedData(map, scoreComputationParametersPromise);
-  initializeAndProcessUserRegions(map, disasterMetadataPromise, userShapesPromise);
+  initializeAndProcessUserRegions(
+      map, disasterMetadataPromise, userShapesPromise);
   disasterMetadataPromise.then(({layerArray}) => addLayers(map, layerArray));
 }
 

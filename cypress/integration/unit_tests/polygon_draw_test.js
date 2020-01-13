@@ -100,7 +100,8 @@ describe('Unit test for ShapeData', () => {
                   {
                     scoreAssetCreationParameters:
                         {damageAssetPath: damageCollection},
-                  }), getUserFeatures());
+                  }),
+              getUserFeatures());
         })
         .then((drawingManagerResult) => drawingManager = drawingManagerResult);
     // Confirm that drawing controls are visible.
@@ -540,9 +541,11 @@ describe('Unit test for ShapeData', () => {
   }
 
   it('Absence of damage asset tolerated', () => {
-    cy.wrap(initializeAndProcessUserRegions(map, Promise.resolve({
-      scoreAssetCreationParameters: {damageAssetPath: null},
-    }), getUserFeatures()));
+    cy.wrap(initializeAndProcessUserRegions(
+        map, Promise.resolve({
+          scoreAssetCreationParameters: {damageAssetPath: null},
+        }),
+        getUserFeatures()));
     drawPolygon();
     const expectedData = Object.assign({}, defaultData);
     expectedData.damage = 'unknown';
