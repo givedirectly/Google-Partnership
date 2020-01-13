@@ -4,6 +4,7 @@ import {disasterCollectionReference} from '../firestore_document.js';
 
 import {createDisasterData} from './create_disaster_lib.js';
 import {setStatus} from './create_score_asset.js';
+import {createOptionFrom} from './manage_common.js';
 import {disasterData} from './manage_disaster_base.js';
 
 export {addDisaster, deleteDisaster, setUpAddDelete, toggleState};
@@ -137,15 +138,13 @@ async function writeNewDisaster(disasterId, states) {
   // Comment needed to quiet eslint.
   disasterPicker.children().each(/* @this HTMLElement */ function() {
     if ($(this).val() < disasterId) {
-      $(document.createElement('option'))
-          .text(disasterId)
-          .insertBefore($(this));
+      createOptionFrom(disasterId).insertBefore($(this));
       added = true;
       return false;
     }
   });
   if (!added) {
-    disasterPicker.append($(document.createElement('option')).text(disasterId));
+    disasterPicker.append(createOptionFrom(disasterId));
   }
   toggleState(true);
 
