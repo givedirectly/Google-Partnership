@@ -36,7 +36,6 @@ function setUpAllHeaders(authResponse) {
 
 /** Enables the form once all necessary libraries are loaded. */
 function enableWhenReady() {
-  document.getElementById('fileButton').disabled = false;
   document.getElementById('fileButton').onclick = submitFiles;
   updateStatus();
 }
