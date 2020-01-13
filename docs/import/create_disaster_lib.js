@@ -212,7 +212,7 @@ const flexibleAssetData = Object.freeze(
  * disaster if `states` is null.
  * @param {?Array<string>} states array of states (abbreviations) or null if
  *     this is not a state-based disaster
- * @return {Object}
+ * @return {{assetData: AssetData, layerArray: Array<*>}}
  */
 function createDisasterData(states) {
   const result = {layerArray: []};

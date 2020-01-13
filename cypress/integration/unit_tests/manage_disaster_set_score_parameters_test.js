@@ -2,13 +2,22 @@ import {addPolygonWithPath} from '../../../docs/basic_map.js';
 import {readDisasterDocument} from '../../../docs/firestore_document.js';
 import {createDisasterData} from '../../../docs/import/create_disaster_lib.js';
 import * as ListEeAssets from '../../../docs/import/list_ee_assets.js';
+import * as UpdateFirestoreDisaster from '../../../docs/import/update_firestore_disaster.js';
 import {enableWhenFirestoreReady} from '../../../docs/import/manage_disaster.js';
-import {DAMAGE_PROPERTY_PATH, disasterData, makeInputElementIdFromPath, scoreBoundsMap, setUpScoreBoundsMap} from '../../../docs/import/manage_disaster_base.js';
+import {
+  DAMAGE_PROPERTY_PATH,
+  disasterData,
+  makeInputElementIdFromPath,
+  NODAMAGE_COLUMN_INFO, NODAMAGE_VALUE_INFO,
+  scoreBoundsMap,
+  setUpScoreBoundsMap
+} from '../../../docs/import/manage_disaster_base.js';
 import {assetSelectionRowPrefix, setUpStateBasedOnPageLoad, stateBasedScoreAssetTypes, validateStateBasedUserFields} from '../../../docs/import/manage_disaster_state_based.js';
 import {getDisaster} from '../../../docs/resources.js';
 import {cyQueue} from '../../support/commands.js';
 import {getConvertEeObjectToPromiseRelease, setUpSavingStubs} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
+import {LayerType} from '../../../docs/firebase_layers.js';
 
 // Triangle goes up into Canada, past default map of basic_map.js.
 const scoreBoundsCoordinates = [
@@ -16,6 +25,14 @@ const scoreBoundsCoordinates = [
   {lng: -90, lat: 50},
   {lng: -90, lat: 30},
 ];
+
+const POVERTY_INDEX = 0;
+const INCOME_INDEX = 1;
+const SVI_INDEX = 2;
+const TIGER_INDEX = 3;
+const BUILDINGS_INDEX = 4;
+
+const ENABLED_COLLECTION = {type: LayerType.FEATURE_COLLECTION, hasGeometry: true, disabled: false};
 
 /**
  * The setup for this test is a bit problematic because the Google Maps
@@ -119,11 +136,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
       ['state1', {disabled: true}],
     ])));
     callEnableWhenReady(createDisasterData(['NY']));
-    const stateSelector = cy.get(
-        '#' +
-        makeInputElementIdFromPath(
-            stateBasedScoreAssetTypes[0].propertyPath.concat(['NY'])) +
-        ' > option');
+    const stateSelector = getSelectForScoreAssetIndex(POVERTY_INDEX).get('option');
     stateSelector.eq(2).should('be.disabled');
     stateSelector.eq(1).should('not.be.disabled');
     const disasterSelector = getDamageSelect().get('option');
@@ -154,9 +167,8 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     featureCollectionStub.withArgs('asset/with/empty/geometry')
         .returns(withEmptyGeometry);
     callEnableWhenReady(setUpDefaultData());
-    for (const {propertyPath} of stateBasedScoreAssetTypes.slice(0, 3)) {
-      const selector = '#' +
-          makeInputElementIdFromPath(propertyPath.concat(['NY'])) + ' > option';
+    for (const index of [POVERTY_INDEX, INCOME_INDEX, SVI_INDEX]) {
+      const selector = getSelectForScoreAssetIndex(index).get('option');
       cy.get(selector).contains('None').should('be.enabled');
       cy.get(selector).contains('asset/with/geometry').should('be.enabled');
       cy.get(selector)
@@ -169,11 +181,8 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     }
 
     // Be a little hacky to avoid repeating ourselves with damage.
-    for (const path of stateBasedScoreAssetTypes
-             .filter((elt) => elt.geometryExpected)
-             .map(({propertyPath}) => propertyPath.concat(['NY']))
-             .concat([DAMAGE_PROPERTY_PATH])) {
-      const selector = '#' + makeInputElementIdFromPath(path) + ' > option';
+    for (const i of [TIGER_INDEX, BUILDINGS_INDEX, BUILDINGS_INDEX + 1]) {
+      const selector = (i <= BUILDINGS_INDEX ? getSelectForScoreAssetIndex(i) : getDamageSelect()).get('option');
       cy.get(selector).contains('None').should('be.enabled');
       cy.get(selector).contains('asset/with/geometry').should('be.enabled');
       cy.get(selector)
@@ -391,79 +400,70 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
 
     // None -> bad
     setSelectWithDelayedEvaluate(0, 'state0', 'NY');
-    const povertyPropertyPath =
-        stateBasedScoreAssetTypes[0].propertyPath.concat(['NY']);
-    checkSelectBorder(povertyPropertyPath, 'rgb(255, 0, 0)');
+    checkSelectBorder(POVERTY_INDEX, 'rgb(255, 0, 0)');
     checkHoverText(
-        povertyPropertyPath,
+        POVERTY_INDEX,
         'Error! asset does not have all expected columns: ' +
             'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
 
     // bad -> bad
     setSelectWithDelayedEvaluate(0, 'state1', 'NY');
-    checkSelectBorder(povertyPropertyPath, 'rgb(255, 0, 0)');
+    checkSelectBorder(POVERTY_INDEX, 'rgb(255, 0, 0)');
     checkHoverText(
-        povertyPropertyPath,
+        POVERTY_INDEX,
         'Error! asset does not have all expected columns: ' +
             'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
 
     // bad -> good
     setSelectWithDelayedEvaluate(0, 'state2', 'NY');
-    checkSelectBorder(povertyPropertyPath, 'rgb(0, 128, 0)');
+    checkSelectBorder(POVERTY_INDEX, 'rgb(0, 128, 0)');
     checkHoverText(
-        povertyPropertyPath, 'Success! asset has all expected columns');
+        POVERTY_INDEX, 'Success! asset has all expected columns');
 
     // good -> bad
     setSelectWithDelayedEvaluate(0, 'state0', 'NY');
-    checkSelectBorder(povertyPropertyPath, 'rgb(255, 0, 0)');
+    checkSelectBorder(POVERTY_INDEX, 'rgb(255, 0, 0)');
     checkHoverText(
-        povertyPropertyPath,
+        POVERTY_INDEX,
         'Error! asset does not have all expected columns: ' +
             'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
 
     // None -> good columns
     setSelectWithDelayedEvaluate(1, 'state1', 'NY');
-    const incomePropertyPath =
-        stateBasedScoreAssetTypes[1].propertyPath.concat(['NY']);
-    checkSelectBorder(incomePropertyPath, 'rgb(0, 128, 0)');
+    checkSelectBorder(INCOME_INDEX, 'rgb(0, 128, 0)');
     checkHoverText(
-        incomePropertyPath, 'Success! asset has all expected columns');
+        INCOME_INDEX, 'Success! asset has all expected columns');
 
     // good -> good
     setSelectWithDelayedEvaluate(1, 'state0', 'NY');
-    checkSelectBorder(incomePropertyPath, 'rgb(0, 128, 0)');
+    checkSelectBorder(INCOME_INDEX, 'rgb(0, 128, 0)');
     checkHoverText(
-        incomePropertyPath, 'Success! asset has all expected columns');
+        INCOME_INDEX, 'Success! asset has all expected columns');
 
     // good -> None
     // should return immediately, no release needed.
     setFirstSelectInScoreRowTo(1, 'None');
-    checkSelectBorder(incomePropertyPath, 'rgb(255, 255, 255)');
-    checkHoverText(incomePropertyPath, '');
+    checkSelectBorder(INCOME_INDEX, 'rgb(255, 255, 255)');
+    checkHoverText(INCOME_INDEX, '');
 
 
     // No expected rows
     featureCollectionStub.withArgs('state4').callsFake(
         () => goodIncomeBadPovertyFeature);
     setSelectWithDelayedEvaluate(4, 'state0', 'NY');
-    const buildingsPropertyPath =
-        stateBasedScoreAssetTypes[4].propertyPath.concat(['NY']);
 
-
-    checkSelectBorder(buildingsPropertyPath, 'rgb(0, 128, 0)');
-    checkHoverText(buildingsPropertyPath, 'No expected columns');
+    checkSelectBorder(BUILDINGS_INDEX, 'rgb(0, 128, 0)');
+    checkHoverText(BUILDINGS_INDEX, 'No expected columns');
     setFirstSelectInScoreRowTo(4, 'None');
-    checkSelectBorder(buildingsPropertyPath, 'rgb(255, 255, 255)');
-    checkHoverText(buildingsPropertyPath, '');
+    checkSelectBorder(BUILDINGS_INDEX, 'rgb(255, 255, 255)');
+    checkHoverText(BUILDINGS_INDEX, '');
   });
 
   it('tries to set a missing asset', () => {
     callEnableWhenReady(setUpDefaultData());
     setSelectWithDelayedEvaluate(0, 'state0', 'NY');
-    const propertyPath =
-        stateBasedScoreAssetTypes[0].propertyPath.concat(['NY']);
-    checkSelectBorder(propertyPath, 'rgb(255, 0, 0)');
-    checkHoverText(propertyPath, 'Error! asset could not be found.');
+    checkSelectBorder(POVERTY_INDEX, 'rgb(255, 0, 0)');
+    checkHoverText(POVERTY_INDEX, 'Error! asset could not be found.');
   });
 
   it('has two racing sets on same selector', () => {
@@ -492,15 +492,13 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
             () => secondRelease =
                 getConvertEeObjectToPromiseRelease().releaseLatch);
     setFirstSelectInScoreRowTo(0, 'state1').then(() => firstRelease());
-    const propertyPath =
-        stateBasedScoreAssetTypes[0].propertyPath.concat(['NY']);
-    checkSelectBorder(propertyPath, 'rgb(255, 255, 0)');
+    checkSelectBorder(POVERTY_INDEX, 'rgb(255, 255, 0)');
     // release second evaluate and column finishes with results from second.
-    checkHoverText(propertyPath, 'Checking columns...')
+    checkHoverText(POVERTY_INDEX, 'Checking columns...')
         .then(() => secondRelease());
-    checkSelectBorder(propertyPath, 'rgb(255, 0, 0)');
+    checkSelectBorder(POVERTY_INDEX, 'rgb(255, 0, 0)');
     checkHoverText(
-        propertyPath,
+        POVERTY_INDEX,
         'Error! asset does not have all expected columns: ' +
             'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
 
@@ -516,18 +514,92 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
             () => secondRelease =
                 getConvertEeObjectToPromiseRelease().releaseLatch);
     setFirstSelectInScoreRowTo(0, 'state1').then(() => secondRelease());
-    checkSelectBorder(propertyPath, 'rgb(255, 0, 0)');
+    checkSelectBorder(POVERTY_INDEX, 'rgb(255, 0, 0)');
     checkHoverText(
-        propertyPath,
+        POVERTY_INDEX,
         'Error! asset does not have all expected columns: ' +
             'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01')
         .then(() => firstRelease());
-    checkSelectBorder(propertyPath, 'rgb(255, 0, 0)');
+    checkSelectBorder(POVERTY_INDEX, 'rgb(255, 0, 0)');
     checkHoverText(
-        propertyPath,
+        POVERTY_INDEX,
         'Error! asset does not have all expected columns: ' +
             'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
   });
+
+  it('shows pending then values for state-based disaster, damage cascades', () => {
+    // Track Firestore updates, so we know we're not accidentally writing on
+    // page load.
+    const updateDisasterSpy = cy.spy(UpdateFirestoreDisaster, 'updateDataInFirestore');
+
+    // Delay results until we're ready, for both state and disaster.
+    let stateAssetListingResult;
+    stateStub.returns(new Promise((resolve) => stateAssetListingResult = resolve));
+    const asset1 = ee.FeatureCollection([ee.Feature(null, {'a-key': 0})]);
+    const asset2 = ee.FeatureCollection([ee.Feature(null, {'b-key': 0})]);
+
+    let disasterAssetListingResult;
+    disasterStub.returns(new Promise((resolve => disasterAssetListingResult = resolve)));
+
+    // We'll cascade damage asset properties.
+    const featureCollectionStub = cy.stub(ee, 'FeatureCollection');
+    featureCollectionStub.withArgs('asset1').returns(asset1);
+    featureCollectionStub.withArgs('asset2').returns(asset2);
+
+    // Set properties up so that poverty asset will resolve, 
+    const currentData = createDefaultStateBasedFirestoreData();
+    currentData.assetData.stateBasedData.snapData.paths.NY = 'found-asset';
+    currentData.assetData.stateBasedData.incomeAssetPaths.NY = 'missing-asset';
+    currentData.assetData.damageAssetPath = 'missing-asset';
+    currentData.assetData.noDamageKey = 'a-key';
+    currentData.assetData.noDamageValue = 'a-value';
+    const promise =
+        enableWhenFirestoreReady(new Map([[getDisaster(), currentData]]));
+    // Give promise a chance to start running.
+    cy.wait(0);
+    cy.get('#kickoff-button').should('be.disabled');
+    cy.get('#kickoff-button').should('have.text', 'Initializing...');
+    assertSelectPending(getSelectForScoreAssetIndex(POVERTY_INDEX));
+    assertSelectPending(getDamageSelect());
+    assertSelectPending(getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path));
+    getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).should('have.value', 'a-value')
+        .then(() => stateAssetListingResult(new Map([['found-asset', ENABLED_COLLECTION], ['other-asset', ENABLED_COLLECTION]])));
+    getSelectForScoreAssetIndex(POVERTY_INDEX).should('not.be.disabled');
+    getSelectForScoreAssetIndex(POVERTY_INDEX).should('have.value', 'found-asset');
+    getSelectForScoreAssetIndex(INCOME_INDEX).should('not.be.disabled');
+    getSelectForScoreAssetIndex(INCOME_INDEX).should('have.value', '');
+    getSelectForScoreAssetIndex(SVI_INDEX).should('not.be.disabled');
+    getSelectForScoreAssetIndex(SVI_INDEX).should('have.value', '');
+    assertSelectPending(getDamageSelect()).then(() => disasterAssetListingResult(new Map([['asset1', ENABLED_COLLECTION], ['asset2', ENABLED_COLLECTION]])));
+    cy.wrap(promise);
+    getDamageSelect().should('have.value', '');
+    getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path).should('not.be.visible');
+    getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).should('not.be.visible')
+    .then(() => expect(updateDisasterSpy).to.not.be.called);
+    getDamageSelect().select('asset1').blur();
+    getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path).should('be.visible');
+    getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path).should('have.value', 'a-key');
+    getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).should('be.visible');
+    getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).should('have.value', 'a-value')
+        .then(() => expect(updateDisasterSpy).to.be.calledOnce);
+    getDamageSelect().select('asset2').blur();
+    getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path).should('be.visible');
+    getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path).should('have.value', '');
+    getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).should('not.be.visible')
+        .then(() => expect(updateDisasterSpy).to.be.calledTwice);
+    getDamageSelect().select('asset1').blur();
+    getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path).should('be.visible');
+    getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path).should('have.value', 'a-key');
+    getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).should('be.visible');
+    getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).should('have.value', 'a-value')
+        .then(() => expect(updateDisasterSpy).to.be.calledThrice);
+  });
+
+  function assertSelectPending(select) {
+    select.should('be.disabled');
+    select.should('have.text', 'pending...');
+    return select.should('have.value', '');
+  }
 
   /**
    * Sets up fake page. Called only once for this whole test file.
@@ -576,14 +648,18 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
    * @return {Object} equivalent of fetch from Firestore for a single disaster
    */
   function setUpDefaultData() {
-    const currentData = createDisasterData(['NY']);
-    currentData.assetData.scoreBoundsCoordinates = scoreBoundsCoordinates.map(
-        (latlng) => new firebase.firestore.GeoPoint(latlng.lat, latlng.lng));
     const assets = new Map();
     for (let i = 0; i <= 4; i++) {
       assets.set('state' + i, {disabled: false, hasGeometry: true});
     }
     stateStub.withArgs('NY').returns(Promise.resolve(assets));
+    return createDefaultStateBasedFirestoreData();
+  }
+
+  function createDefaultStateBasedFirestoreData() {
+    const currentData = createDisasterData(['NY']);
+    currentData.assetData.scoreBoundsCoordinates = scoreBoundsCoordinates.map(
+        (latlng) => new firebase.firestore.GeoPoint(latlng.lat, latlng.lng));
     return currentData;
   }
 
@@ -659,24 +735,24 @@ function setFirstSelectInScoreRowTo(rowNum, text) {
 
 /**
  * Asserts that the border around the given selector has the correct color
- * @param {PropertyPath} propertyPath identifier for a select element
+ * @param {number} index Index of score asset type
  * @param {string} rgbString e.g. 'rgb(0, 0, 0)'
  * @return {Cypress.Chainable}
  */
-function checkSelectBorder(propertyPath, rgbString) {
-  return cy.get('#' + makeInputElementIdFromPath(propertyPath), {timeout: 5000})
+function checkSelectBorder(index, rgbString) {
+  return getSelectForScoreAssetIndex(index, {timeout: 5000})
       .should('have.css', 'border-color')
       .and('eq', rgbString);
 }
 
 /**
  * Asserts on the hover text for the given select.
- * @param {PropertyPath} propertyPath identifier for a select element
+ * @param {number} index Index of score asset type
  * @param {string} text
  * @return {Cypress.Chainable}
  */
-function checkHoverText(propertyPath, text) {
-  return cy.get('#' + makeInputElementIdFromPath(propertyPath))
+function checkHoverText(index, text) {
+  return getSelectForScoreAssetIndex(index)
       .invoke('attr', 'title')
       .should('eq', text);
 }
@@ -692,10 +768,9 @@ function setSelectWithDelayedEvaluate(rowNum, text, state) {
   const release = getConvertEeObjectToPromiseRelease().releaseLatch;
   setFirstSelectInScoreRowTo(rowNum, text);
   const scoreAssetType = stateBasedScoreAssetTypes[rowNum];
-  const propertyPath = scoreAssetType.propertyPath.concat([state]);
-  checkSelectBorder(propertyPath, 'rgb(255, 255, 0)');
+  checkSelectBorder(rowNum, 'rgb(255, 255, 0)');
   checkHoverText(
-      propertyPath,
+      rowNum,
       scoreAssetType.expectedColumns.length ? 'Checking columns...' :
                                               'Checking...');
   release();
@@ -703,5 +778,13 @@ function setSelectWithDelayedEvaluate(rowNum, text, state) {
 
 /** @return {Cypress.Chainable<JQuery<HTMLSelectElement>>} */
 function getDamageSelect() {
-  return cy.get('#' + makeInputElementIdFromPath(DAMAGE_PROPERTY_PATH));
+  return getSelectFromPropertyPath(DAMAGE_PROPERTY_PATH);
+}
+
+function getSelectForScoreAssetIndex(index, state = 'NY') {
+  return getSelectFromPropertyPath(stateBasedScoreAssetTypes[index].propertyPath.concat([state]));
+}
+
+function getSelectFromPropertyPath(path, options = {}) {
+  return cy.get('#' + makeInputElementIdFromPath(path), options);
 }
