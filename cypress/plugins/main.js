@@ -11,8 +11,10 @@
  *
  * More about Cypress plugins here: https://on.cypress.io/plugins-guide
  */
+import * as browserify from '@cypress/browserify-preprocessor';
 import * as firebase from 'firebase';
 import * as firebaseAdmin from 'firebase-admin';
+
 import {firebaseConfigProd, firebaseConfigTest} from '../../docs/authenticate.js';
 import {generateEarthEngineToken} from '../../token_server/ee_token_creator.js';
 
@@ -58,6 +60,12 @@ function onFunction(on, config) {
       return newArgs;
     }
   });
+  /**
+   * Adds a plugin that allows for import.meta syntax.
+   */
+  const {browserifyOptions: {transform}} = browserify.defaultOptions;
+  transform.push(['babelify', {plugins: ['@babel/plugin-syntax-import-meta']}]);
+  on('file:preprocessor', browserify.default());
   /**
    * Defines "tasks" that can be run using cy.task(). The name of each task is
    * the function name. These tasks are invoked in cypress/support/index.js in a

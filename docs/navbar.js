@@ -4,7 +4,12 @@ import {AUTHENTICATION_ERROR_CODE} from './firebase_privileges.js';
 import {getDisastersData, getUserFeatures} from './firestore_document.js';
 import {getHelpUrl, getUrlUnderDocs} from './navbar_lib.js';
 
-export {loadNavbarWithPicker};
+export {
+  loadNavbarWithPicker,
+  MANAGE_DISASTERS_PAGE,
+  MANAGE_LAYERS_PAGE,
+  UPLOAD_IMAGE_COLLECTION_PAGE,
+};
 // Visible for testing
 export {loadNavbar};
 
