@@ -174,10 +174,6 @@ const COMPONENTS_DATA = {
   },
 };
 
-const MISSING_BUILDINGS_TAIL =
-    ' (choose damage asset as buildings source for now if you don\'t need ' +
-    'buildings)';
-
 //                   Validation-related functions.
 
 /**
@@ -230,6 +226,10 @@ function finishPending() {
     showError('Problem validating inputs. Please reload page');
   }
 }
+
+const MISSING_BUILDINGS_TAIL =
+    ' (choose damage asset as buildings source for now if you don\'t need ' +
+    'buildings)';
 
 /**
  * Validates user fields, and shows result on kick-off button. If there are
