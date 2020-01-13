@@ -14,9 +14,7 @@ export {
  * @return {string}
  */
 function getUrlUnderDocs(pathFragment) {
-  return inProduction() ?
-      import.meta.url.replace(/navbar_lib\.js$/, pathFragment) :
-      pathFragment;
+  return import.meta.url.replace(/navbar_lib\.js$/, pathFragment)
 }
 
 /**
