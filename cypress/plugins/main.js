@@ -14,7 +14,6 @@
 import * as browserify from '@cypress/browserify-preprocessor';
 import * as firebase from 'firebase';
 import * as firebaseAdmin from 'firebase-admin';
-
 import {firebaseConfigProd, firebaseConfigTest} from '../../docs/authenticate.js';
 import {generateEarthEngineToken} from '../../token_server/ee_token_creator.js';
 
@@ -62,6 +61,7 @@ function onFunction(on, config) {
   });
   /**
    * Adds a plugin that allows for import.meta syntax.
+   * https://github.com/cypress-io/cypress-browserify-preprocessor#modifying-default-options
    */
   const {browserifyOptions: {transform}} = browserify.defaultOptions;
   transform.push(['babelify', {plugins: ['@babel/plugin-syntax-import-meta']}]);

@@ -32,10 +32,9 @@ before(() => {
 
 let getUrlStub;
 beforeEach(() => {
-  cy.document().then((doc) => {
-    cy.stub(document, 'getElementById')
-        .callsFake((id) => doc.getElementById(id));
-  });
+  cy.document().then(
+      (doc) => cy.stub(document, 'getElementById')
+                   .callsFake((id) => doc.getElementById(id)));
   // This stub not working properly...
   getUrlStub = cy.stub(NavbarLib, 'getUrlUnderDocs').withArgs('navbar.html');
 });
