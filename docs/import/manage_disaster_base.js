@@ -350,11 +350,15 @@ function onAssetSelect(propertyPath, expectedColumns) {
  * columns, if any. If we do asynchronous work to fetch the columns, then if the
  * select's value has changed in the interim, don't perform any actions. This
  * assumes that if the disaster changes but the select's value does not change,
- * any follow-on work by the caller of `verifyAsset` is still valid. For
- * disaster-specific assets, this is clearly correct, since the select cannot
+ * any follow-on work by the caller of `verifyAsset` is still valid. That work
+ * should definitely be idempotent (have the same effect if done multiple times)
+ * since the user might switch to this select repeatedly before results are
+ * ready.
+ *
+ * For disaster-specific assets, idempotence is enough, since the select cannot
  * have the same value when the disaster changes. For state-specific assets, it
  * is currently true that any computation on a state asset valid for one
- * disaster is valid for any other.
+ * disaster is valid for any other, so the disaster changing is ok.
  * @param {PropertyPath} propertyPath
  * @param {?Array<EeColumn>} expectedColumns Expected column names. If empty or
  *     null, checks existence and returns all columns from the first feature
@@ -369,7 +373,7 @@ async function verifyAsset(propertyPath, expectedColumns) {
   const asset = select.val();
   const assetMissingErrorFunction = (err) => {
     if (asset !== select.val()) {
-      // Don't show errors if not current asset or disaster changed.
+      // Don't show errors if not current asset.
       return null;
     }
     const message = err.message || err;
@@ -589,21 +593,12 @@ function createSelectListItemFromColumnInfo(columnInfo) {
 }
 
 /**
- * Creates an `li` element with {@link createLabel} for `columnInfo`.
+ * Creates an `li` for `columnInfo`: Span with Label followed by optional
+ *     (explanation). Explanation has span with id for later modification.
  * @param {ColumnInfo} columnInfo
  * @return {JQuery<HTMLLIElement>}
  */
 function createListItem(columnInfo) {
-  return $(document.createElement('li')).append(createLabel(columnInfo));
-}
-
-/**
- * Creates text for `columnInfo`: Span with Label followed by optional
- *     (explanation). Explanation has span with id for later modification.
- * @param {ColumnInfo} columnInfo
- * @return {string} Capitalized `label` with `explanation` in parens if present
- */
-function createLabel(columnInfo) {
   const labelSpan = $(document.createElement('span'));
   labelSpan.append(capitalizeFirstLetter(columnInfo.label))
       .append(setExplanationTextForSpan(
@@ -611,7 +606,7 @@ function createLabel(columnInfo) {
               .prop('id', makeIdForExplanationSpan(columnInfo)),
           columnInfo))
       .append(': ');
-  return labelSpan;
+  return $(document.createElement('li')).append(labelSpan);
 }
 
 /**
@@ -772,7 +767,7 @@ function getPageValueOfPath(path) {
  * value for `path` and the returned input element will always be in sync,
  * unless the input is a select and:
  * 1. The Firestore value is not one of the available options;
- * 2. The available options are not yet known.
+ * 2. Or the available options are not yet known.
  * @param {PropertyPath} path
  * @return {JQuery<HTMLInputElement>}
  */
@@ -797,10 +792,7 @@ function makeInputElementIdFromPath(path) {
  * @param {?string} title
  */
 function updateColorAndHover(select, color, title = null) {
-  select.css('border-color', color);
-  if (title !== null) {
-    select.prop('title', title);
-  }
+  select.css('border-color', color).prop('title', title);
 }
 
 /**
