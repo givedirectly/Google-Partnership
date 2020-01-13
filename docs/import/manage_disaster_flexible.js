@@ -41,6 +41,7 @@ export {
  * See "Validation-related functions" below for how to track pending operations.
  *
  * ## Building counts
+ *
  * Another complication is the four ways that the building count can be
  * specified: coming from a buildings asset that has building footprints (like
  * the Microsoft data); coming from an asset that has counts per district (like
@@ -49,6 +50,7 @@ export {
  * the asset CrowdAI provides, with both damaged and undamaged buildings).
 
  * ## Page display
+ *
  * When data is not yet available, select elements will show a "pending" state,
  * but their visibility will be based on the last-known data from Firestore, to
  * minimize page jumpiness. All elements are created eagerly, even if they are
@@ -62,7 +64,7 @@ export {
  * fields in order to kick off score asset creation. Thus, the poverty rate
  * field is always shown because it is always mandatory, even if the poverty
  * asset itself is not specified. If the asset whose columns populate the select
- * is not specified, the select will have just the value 'None'.
+ * is not specified, the select will have just the option 'None'.
  *
  * If the buildings asset does not have geometries, then we must show column
  * selects for it, but we hide those selects if it has geometries. We use the
@@ -79,10 +81,11 @@ export {
  * those fields the user has to fill out.
  *
  * ## Async functions in this file
+ *
  * A number of functions are declared async because they wait on the disaster
  * assets listing. However, once the assets are initially loaded, the listing
  * will always be instantly available (since it is cached), so those functions
- * can be called with no fear of actually waiting. They are indicated by their
+ * can be called with no fear of actually waiting. They are identified by their
  * return type not being a Promise despite being async.
  */
 
@@ -139,7 +142,7 @@ const COMPONENTS_DATA = {
         path: ['flexibleData', 'districtDescriptionKey'],
       },
       {
-        label: 'district identifier column',
+        label: DISTRICT_ID_LABEL,
         explanation: 'typically a number or short string',
         path: ['flexibleData', 'povertyGeoid'],
       },
