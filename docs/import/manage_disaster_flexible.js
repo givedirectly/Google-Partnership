@@ -20,6 +20,40 @@ export {componentsData};
 /**
  * Functions for dealing with a "flexible" (non-state-based) disaster.
  *
+ * ## Structure of a flexible disaster
+ *
+ * A flexible disaster takes more general input assets than a state-based one.
+ * We expect the following (analogs to the state-based case are in parentheses):
+ *
+ * 1. A poverty asset, which must have the following columns:
+ *      a. Poverty rate ('SNAP PERCENTAGE');
+ *      b. District identifier ('GEOid2');
+ *      c. District description ('GEOdisplay-label');
+
+ *    If the poverty asset does not have geometries, then we also need:
+ * 2. A geography asset, which must have geometries, and the following column
+ *    to join to poverty:
+ *      a. District identifier ('GEOID');
+ *
+ *    Before damage is present, that is all. With damage, we also need:
+ * 3. A building-count source to be specified. Either 'buildings', 'poverty', or
+ *    'damage'.
+ * 4. If the source is 'buildings', we need an optional buildings asset. If it
+ *    has geometries, it is assumed to have building footprints (like the
+ *    Microsoft building footprints) and is intersected with district
+ *    geometries. If it does not (like US Census data), it must have columns:
+ *      a. District identifier ('GEOid2' for Census buildings data);
+ *      b. Building counts column;
+ * 5. If the source is 'poverty', the poverty asset must additionally have a
+ *    building-counts column.
+ * 6. If the source is 'damage', the damage asset must have:
+ *      a. A column whose values identify undamaged buildings (like 'descriptio'
+ *         for CrowdAI data);
+ *      b. The value in that column that identifies undamaged buildings (like
+ *         'no-damage' for CrowdAI data).
+ *
+ * ## Fundamental complications of flexible disasters
+ *
  * A flexible disaster has "cascading" values. This means that the value chosen
  * for one input can affect the necessity/visibility of other inputs, or even
  * their potential values. The first case happens when we choose a poverty
@@ -31,7 +65,7 @@ export {componentsData};
  * Note that the damage asset also has this property, where the no-damage
  * column can only be displayed once the damage asset is selected.
  *
- * ## Validation
+ * ### Validation
  *
  * Because of the delay in the second case, we can't validate user inputs
  * immediately when the value changes. Instead, we have to wait for all pending
@@ -43,7 +77,7 @@ export {componentsData};
  * not present in asset2's columns, which will be what is shown in the select.
  * See "Validation-related functions" below for how to track pending operations.
  *
- * ## Building counts
+ * ### Building counts
  *
  * Another complication is the four ways that the building count can be
  * specified: coming from a buildings asset that has building footprints (like
@@ -52,7 +86,7 @@ export {componentsData};
  * approximated by total households); or coming from the damage asset (like
  * the asset CrowdAI provides, with both damaged and undamaged buildings).
 
- * ## Page display
+ * ### Page display
  *
  * When data is not yet available, select elements will show a "pending" state,
  * but their visibility will be based on the last-known data from Firestore, to

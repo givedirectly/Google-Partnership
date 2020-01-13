@@ -652,7 +652,7 @@ it('shows pending then values for state-based disaster, damage cascades',
          .then(() => expect(updateDisasterSpy).to.be.calledThrice);
    });
 
-it.only('does basic tests for pending', () => {
+it.only('does basic tests for flexible', () => {
   // Track Firestore updates, so we know we're not accidentally writing on
   // page load.
   const updateDisasterSpy =
@@ -687,41 +687,23 @@ it.only('does basic tests for pending', () => {
   cy.get('#kickoff-button').should('have.text', 'Pending...');
 
   assertSelectPending(getSelectFromPropertyPath(componentsData.poverty.path));
-  // assertSelectPending(getDamageSelect());
-  // // Because damage asset is set in Firestore, and column key is also set
-  // // in Firestore, we display the no-damage column and no-damage value
-  // // while retrieving data from EE.
-  // assertSelectPending(
-  //     getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path));
-  // getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path)
-  //     .should('have.value', 'a-value');
-  //
-  // // Release the state assets.
-  // cyQueue(() => stateAssetListingResult(new Map([
-  //   ['found-asset', ENABLED_COLLECTION],
-  //   ['other-asset', ENABLED_COLLECTION],
-  // ])));
-  // // Poverty is set as expected.
-  // getSelectForScoreAssetIndex(POVERTY_INDEX).should('not.be.disabled');
-  // getSelectForScoreAssetIndex(POVERTY_INDEX)
-  //     .should('have.value', 'found-asset');
-  // // Income doesn't have a value because its value was not in asset list.
-  // getSelectForScoreAssetIndex(INCOME_INDEX).should('not.be.disabled');
-  // getSelectForScoreAssetIndex(INCOME_INDEX).should('have.value', '');
-  // // SVI has nothing.
-  // getSelectForScoreAssetIndex(SVI_INDEX).should('not.be.disabled');
-  // getSelectForScoreAssetIndex(SVI_INDEX).should('have.value', '');
-  // // Damage is still pending.
-  // assertSelectPending(getDamageSelect());
-  // // Release the disaster assets.
-  // cyQueue(() => disasterAssetListingResult(new Map([
-  //   ['asset1', ENABLED_COLLECTION],
-  //   ['asset2', ENABLED_COLLECTION],
-  // ])));
-  // // Promise can now complete.
-  // cy.wrap(promise);
-  // // Damage asset was not found.
-  // getDamageSelect().should('have.value', '');
+  assertSelectPending(getDamageSelect());
+  // Because damage asset is set in Firestore, and column key is also set
+  // in Firestore, we display the no-damage column and no-damage value
+  // while retrieving data from EE.
+  assertSelectPending(
+      getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path));
+  getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path)
+      .should('have.value', 'a-value');
+  // Release the disaster assets.
+  cyQueue(() => disasterAssetListingResult(new Map([
+    ['asset1', ENABLED_COLLECTION],
+    ['asset2', ENABLED_COLLECTION],
+  ])));
+  // Promise can now complete.
+  cy.wrap(promise);
+  // Damage asset was not found.
+  getDamageSelect().should('have.value', '');
   // // Since damage has no value on page, no-damage column/value are hidden.
   // getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path)
   //     .should('not.be.visible');

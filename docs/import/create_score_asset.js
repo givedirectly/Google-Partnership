@@ -369,27 +369,8 @@ function createScoreAssetForStateBasedDisaster(
 
 /**
  * Performs operation of processing inputs and creating output asset for a
- * disaster whose data is fairly flexible, with few assumptions. We expect:
- * 1. A poverty asset;
- * 2. An optional geography asset, which gives geographies to the districts in
- *    the poverty asset. If it is absent, the poverty asset already has
- *    geometries;
- * 3. An optional buildings asset;
- *      - If it has a "geoid" key, it is a table of building count per district;
- *      - If it does not, it is an {@link ee.FeatureCollection} of polygons
- *        corresponding to buildings, and a count is computed of polygons per
- *        district;
- *      - If it is absent, and `useDamageForBuildings` is false, the poverty
- *        asset already has a building count. If `useDamageForBuildings` is
- *        true, see below;
- * 4. An optional damage asset;
- *      - If `noDamageKey` is present, then undamaged buildings (indicated
- *        by `noDamageValue`) are filtered out of the damage asset when counting
- *        damage points in a district;
- *      - If `useDamageForBuildings` is true, then `noDamageKey` must be
- *        present, and the total number of "damage" points in a district
- *        (including undamaged ones) is used as the total building count.
- *
+ * flexible disaster. See file-level comment in manage_disaster_flexible.js for
+ * documentation of the inputs to a flexible disaster.
  * @param {DisasterDocument} disasterData Data for current disaster coming from
  *     Firestore
  * @param {Function} setMapBoundsInfoFunction Function to be called when map
