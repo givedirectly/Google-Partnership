@@ -14,6 +14,9 @@ export {
   validateFlexibleUserFields,
 };
 
+// For testing.
+export {componentsData};
+
 /**
  * Functions for dealing with a "flexible" (non-state-based) disaster.
  *
@@ -413,6 +416,7 @@ async function initializeGeography() {
   }
 }
 
+const POVERTY_BUILDINGS_TEXT = 'Column with building count: ';
 /**
  * Initializes poverty-related display. In addition to doing the analog of what
  * {@link initializeGeography} does, there are two complications: geography div
@@ -427,8 +431,9 @@ async function initializePoverty() {
   // Take a guess at what geography visibility will be.
   setGeographyDivVisibility(!getStoredValueFromPath(POVERTY_HAS_GEOMETRY_PATH));
   // Create special column select for building-count column.
-  $('#buildings-poverty-select-span')
+  $('#buildings-source-poverty-div')
       .empty()
+      .append(POVERTY_BUILDINGS_TEXT)
       .append(createSelectWithSimpleWriteOnChange(POVERTY_BUILDINGS_PATH));
   if (!await getAssetsAndSetOptionsForSelect(componentsData.poverty.path)) {
     // Disaster changed: abort.
