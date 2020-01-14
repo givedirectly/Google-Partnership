@@ -94,7 +94,11 @@ describe('Unit tests for click_feature.js with map and table', () => {
                                                             'OTHER PERCENTAGE',
                                                           ],
                                                         })),
-          Promise.resolve({districtDescriptionKey: blockGroupTag}), map);
+          Promise.resolve({
+            scoreAssetCreationParameters:
+                {districtDescriptionKey: blockGroupTag},
+          }),
+          map);
     });
     cy.wrap(loadingFinishedPromise);
     return assertNoSelection();
