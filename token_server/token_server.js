@@ -35,7 +35,7 @@ const TIME_BEFORE_REGENERATION = 40 * ONE_MINUTE_IN_MILLISECONDS;
 const googleAuth = GoogleAuth.default || GoogleAuth;
 
 const allowedOrigins =
-    new Set(['https://givedirectly.github.io', 'http://localhost:8080']);
+    new Set(['https://givedirectly.github.io']);
 
 const runningOnGae = !!process.env.GAE_APPLICATION;
 const runningLocally =

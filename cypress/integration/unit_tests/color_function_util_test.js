@@ -15,7 +15,7 @@ describe('Unit tests for color function utility', () => {
 
   before(() => {
     cy.visit('test_utils/empty.html');
-    cy.document().then((doc) => {
+    return cy.document().then((doc) => {
       colorFunctionEditor = doc.createElement('div');
       colorFunctionEditor.id = 'color-fxn-editor';
       colorFunctionEditor.hidden = true;
