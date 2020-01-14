@@ -275,7 +275,7 @@ describe('Unit tests for manage_layers page', () => {
               .get();
         })
         .then((doc) => {
-          const layers = doc.data()['layers'];
+          const layers = doc.data().layerArray;
           expect(layers[0]['initialIndex']).to.equal(1);
           expect(layers[1]['initialIndex']).to.equal(2);
           expect(layers[2]['initialIndex']).to.equal(0);
@@ -304,5 +304,6 @@ function testSave(fxn, property, input, afterVal) {
             .get();
       })
       .then(
-          (doc) => expect(doc.data()['layers'][0][property]).to.eql(afterVal));
+          (doc) =>
+              expect(doc.data()['layerArray'][0][property]).to.eql(afterVal));
 }

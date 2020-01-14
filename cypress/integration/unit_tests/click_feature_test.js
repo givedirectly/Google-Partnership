@@ -2,8 +2,7 @@ import {tableContainerId} from '../../../docs/dom_constants.js';
 import {convertEeObjectToPromise} from '../../../docs/ee_promise_cache.js';
 import {currentFeatures} from '../../../docs/highlight_features';
 import * as loading from '../../../docs/loading.js';
-import {blockGroupTag, geoidTag} from '../../../docs/property_names';
-import {scoreTag} from '../../../docs/property_names.js';
+import {geoidTag, scoreTag} from '../../../docs/property_names.js';
 import * as Resources from '../../../docs/resources.js';
 import {drawTableAndSetUpHandlers, resolveScoreAsset} from '../../../docs/run.js';
 import {cyQueue} from '../../support/commands.js';
@@ -16,6 +15,8 @@ const feature1Corners = [0.25, 0.25, 0.75, 1];
 const feature2Corners = [0.75, 0.25, 1.5, 0.75];
 const zeroScoreCorners = [0, 0, 0.25, 0.25];
 const missingPropertiesCorners = [-0.25, -0.25, 0, 0];
+
+const blockGroupTag = 'district descript';
 
 describe('Unit tests for click_feature.js with map and table', () => {
   loadScriptsBeforeForUnitTests('ee', 'charts', 'maps');
@@ -89,11 +90,11 @@ describe('Unit tests for click_feature.js with map and table', () => {
                                                             geoidTag,
                                                             blockGroupTag,
                                                             scoreTag,
-                                                            'OTHER PERCENTAGE',
                                                             'SOME PROPERTY',
+                                                            'OTHER PERCENTAGE',
                                                           ],
                                                         })),
-          map);
+          Promise.resolve({districtDescriptionKey: blockGroupTag}), map);
     });
     cy.wrap(loadingFinishedPromise);
     return assertNoSelection();
@@ -145,6 +146,8 @@ describe('Unit tests for click_feature.js with map and table', () => {
     assertFeatureShownOnMap(missingPropertiesCorners);
     cy.get('#test-map-div').should('contain', 'SCORE: 4');
     cy.get('#test-map-div').should('contain', 'missing properties group');
+    cy.get('#test-map-div')
+        .should('contain', 'OTHER PERCENTAGE: (data unavailable)');
   });
 
   /**
@@ -181,9 +184,13 @@ describe('Unit tests for click_feature.js with map and table', () => {
     // Rounded because property name ends with 'PERCENTAGE'.
     cy.get('#test-map-div').should('contain', 'OTHER PERCENTAGE: 4.233');
     cy.get('#test-map-div').should('contain', 'SOME PROPERTY: 100');
+    cy.get('#test-map-div').should('not.contain', blockGroupTag);
     cy.get('.google-visualization-table-tr-sel')
         .find('[class="google-visualization-table-td"]')
         .should('have.text', 'my block group');
+    cy.get('.table-header > th').eq(0).should('have.text', blockGroupTag);
+    cy.get('.table-header > th').eq(1).should('have.text', scoreTag);
+    cy.get('.table-header > th').eq(2).should('have.text', 'SOME PROPERTY');
     return assertFeatureShownOnMap(feature1Corners);
   }
 

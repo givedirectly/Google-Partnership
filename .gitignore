@@ -4,3 +4,4 @@ cypress/screenshots
 cypress/videos
 .idea/
 Google-Partnership.iml
+cypress/fixtures/*

@@ -38,6 +38,8 @@ describe('Unit tests for adding layers', () => {
           expect(displayName).to.be.empty;
           expect(displayOnLoad).to.be.false;
           expect(colorFunction.currentStyle).to.equal(ColorStyle.SINGLE);
+          expect(colorFunction.lastByPropertyStyle)
+              .to.equal(ColorStyle.CONTINUOUS);
           expect(colorFunction.colors).to.be.empty;
           const scoopsColumn = colorFunction.columns.scoops;
           expect(scoopsColumn.max).to.equal(4);

@@ -4,8 +4,8 @@ export {initializeDisasterPicker};
 
 /**
  * Initializes the disaster picker.
- * @param {Promise<Map<string, Object>>} firebaseDataPromise Promise with data
- *     for all disasters
+ * @param {Promise<Map<string, DisasterDocument>>} firebaseDataPromise Promise
+ *     with data for all disasters
  * @param {?Function} changeDisasterHandler Function invoked when current
  *     disaster is changed. location.reload is called if null
  */

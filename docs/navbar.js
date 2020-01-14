@@ -1,6 +1,6 @@
 import {initializeDisasterPicker} from './disaster_picker.js';
 import {getDisastersData} from './firestore_document.js';
-import {HELP_DOC_URL, MANAGE_DISASTERS_HELP_URL, MANAGE_LAYERS_HELP_URL} from './help.js';
+import {HELP_DOC_URL, MANAGE_DISASTERS_HELP_URL, MANAGE_LAYERS_HELP_URL, UPLOAD_IMAGE_COLLECTION_HELP_URL} from './help.js';
 
 export {loadNavbarWithPicker};
 
@@ -28,14 +28,14 @@ function loadNavbar(callback) {
 
 /**
  * Loads the navbar with a disaster picker.
- * @param {Promise} firebaseAuthPromise Promise that completes when Firebase
- *     login is done
+ * @param {Promise<any>} firebaseAuthPromise Promise that completes when
+ *     Firebase login is done
  * @param {string} title Title of page
  * @param {?Function} changeDisasterHandler Function invoked when disaster is
  *     changed. If not specified, reloads page
- * @param {?Promise<Map<string, Object>>} firebaseDataPromise If caller has
- *     already kicked off a fetch of all disasters, pass that Promise in here to
- *     avoid a duplicate fetch
+ * @param {?Promise<Map<string, DisasterDocument>>} firebaseDataPromise If
+ *     caller has already kicked off a fetch of all disasters, pass that Promise
+ *     in here to avoid a duplicate fetch
  */
 function loadNavbarWithPicker(
     firebaseAuthPromise, title, changeDisasterHandler = null,
@@ -72,6 +72,8 @@ function getHelpUrl() {
     return MANAGE_LAYERS_HELP_URL;
   } else if (window.location.pathname.endsWith(MANAGE_DISASTERS_PAGE)) {
     return MANAGE_DISASTERS_HELP_URL;
+  } else if (window.location.pathname.endsWith(UPLOAD_IMAGE_COLLECTION_PAGE)) {
+    return UPLOAD_IMAGE_COLLECTION_HELP_URL;
   }
   return HELP_DOC_URL;
 }
