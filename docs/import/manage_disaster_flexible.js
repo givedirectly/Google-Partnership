@@ -3,7 +3,33 @@ import {getDisaster} from '../resources.js';
 
 import {BuildingSource} from './create_disaster_lib.js';
 import {getDisasterAssetsFromEe} from './list_ee_assets.js';
-import {capitalizeFirstLetter, checkDamageFieldsAndShowKickoffButton, continueMessage, createListForAsset, createSelect, createSelectListItemFromColumnInfo, createSelectWithSimpleWriteOnChange, damageAssetPresent, getAssetsAndSetOptionsForSelect, getPageValueOfPath, getStoredValueFromPath, handleAssetDataChange, isFlexible, maybeShowNoDamageValueItem, NODAMAGE_COLUMN_INFO, NODAMAGE_VALUE_INFO, setExplanationSpanTextForColumn, setOptionsForSelect, showDisabledKickoffButton, showListForAsset, showSelectAsPending, startPendingWriteSelectAndGetPropertyNames, validateColumnPathHasValue, verifyAsset} from './manage_disaster_base.js';
+import {
+  capitalizeFirstLetter,
+  checkDamageFieldsAndShowKickoffButton,
+  continueMessage,
+  createListForAsset,
+  createSelect,
+  createSelectListItemFromColumnInfo,
+  createSelectWithSimpleWriteOnChange,
+  damageAssetPresent,
+  getAssetsAndSetOptionsForSelect,
+  getPageValueOfPath,
+  getStoredValueFromPath,
+  handleAssetDataChange,
+  isFlexible,
+  maybeShowNoDamageValueItem,
+  NODAMAGE_COLUMN_INFO,
+  NODAMAGE_VALUE_INFO,
+  setExplanationSpanTextForColumn,
+  setOptionsForSelect,
+  showDisabledKickoffButton,
+  showListForAsset,
+  showSelectAsPending,
+  startPendingWriteSelectAndGetPropertyNames,
+  validateColumnPathHasValue,
+  verifyAsset,
+  writeAssetDataLocally
+} from './manage_disaster_base.js';
 
 export {
   finishPending,
@@ -557,7 +583,7 @@ async function onGeographyChange() {
  * @return {Promise<void>} Promise that completes when all displaying complete
  */
 async function onPovertyChange(povertyAsset) {
-  handleAssetDataChange(
+  writeAssetDataLocally(
       await povertyHasGeometry(povertyAsset), POVERTY_HAS_GEOMETRY_PATH);
   await showGeographyDivBasedOnPoverty(povertyAsset);
   try {
@@ -583,7 +609,7 @@ async function onBuildingsChange(buildingsAsset) {
   const propertyNamesPromise = onAssetSelectChange('buildings');
   try {
     const hasGeometry = await buildingsHasGeometry(buildingsAsset);
-    handleAssetDataChange(hasGeometry, BUILDING_HAS_GEOMETRY_PATH);
+    writeAssetDataLocally(hasGeometry, BUILDING_HAS_GEOMETRY_PATH);
     showListForAsset(!hasGeometry, 'buildings');
     if (!hasGeometry) {
       setPendingForColumns('buildings');

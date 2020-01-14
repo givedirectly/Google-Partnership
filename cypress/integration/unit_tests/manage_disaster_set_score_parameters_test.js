@@ -678,6 +678,8 @@ it.only('does basic tests for flexible', () => {
   currentData.assetData.noDamageValue = 'a-value';
   const {assetData: {flexibleData}} = currentData;
   flexibleData.povertyPath = 'missing-asset';
+  flexibleData.povertyRateKey = 'a-key';
+  flexibleData.districtDescriptionKey = 'missing-key';
   flexibleData.povertyHasGeometry = false;
   flexibleData.geographyPath = 'missing-asset';
   flexibleData.buildingSource = BuildingSource.DAMAGE;
@@ -690,6 +692,8 @@ it.only('does basic tests for flexible', () => {
 
   assertSelectPending(getSelectFromPropertyPath(componentsData.poverty.path));
   assertSelectPending(getDamageSelect());
+  // Data says poverty has no geometry, so geography initially visible.
+  cy.get('#flexible-geography-asset-data').should('be.visible');
   // Because damage asset is set in Firestore, and column key is also set
   // in Firestore, we display the no-damage column and no-damage value
   // while retrieving data from EE.
@@ -701,9 +705,13 @@ it.only('does basic tests for flexible', () => {
   cyQueue(() => disasterAssetListingResult(new Map([
     ['asset1', ENABLED_COLLECTION],
     ['asset2', ENABLED_COLLECTION],
+    ['noGeoAsset', {type: LayerType.FEATURE_COLLECTION, hasGeometry: false, disabled: false}],
   ])));
   // Promise can now complete.
   cy.wrap(promise);
+  getSelectFromPropertyPath(componentsData.poverty.path).should('have.value', '');
+  // Geography select not visible because no valid geography asset found.
+  cy.get('#flexible-geography-asset-data').should('not.be.visible');
   // Damage asset was not found.
   getDamageSelect().should('have.value', '');
   // Since damage has no value on page, no-damage column/value are hidden.
@@ -715,7 +723,7 @@ it.only('does basic tests for flexible', () => {
   cyQueue(() => expect(updateDisasterSpy).to.not.be.called);
 
   cy.get('#kickoff-button').should('be.disabled');
-  cy.get('#kickoff-button').should('have.text', 'Missing poverty asset; must specify either damage asset or map bounds');
+  cy.get('#kickoff-button').should('have.text', 'Missing poverty asset; must specify either damage asset or map bounds; warning: created asset will be missing building counts');
 
   // Change the damage asset to one with no-damage column.
   getDamageSelect().select('asset1').blur();
@@ -732,6 +740,29 @@ it.only('does basic tests for flexible', () => {
   cy.get('#kickoff-button').should('have.text', 'Missing poverty asset');
   // We triggered one write.
   cyQueue(() => expect(updateDisasterSpy).to.be.calledOnce);
+
+  getSelectFromPropertyPath(componentsData.poverty.path).select('asset1');
+  const povertyColumns = componentsData.poverty.columns;
+  getSelectFromPropertyPath(povertyColumns[0].path).within(() => {
+    cy.get('option').should('have.length', 2);
+    cy.get('option').contains('a-key');
+  });
+  // First column's value is now valid. Second's missing, third's was null.
+  getSelectFromPropertyPath(povertyColumns[0].path).should('have.value', 'a-key');
+  getSelectFromPropertyPath(povertyColumns[1].path).should('have.value', '');
+  getSelectFromPropertyPath(povertyColumns[2].path).should('have.value', '');
+
+  cy.get('#flexible-geography-asset-data').should('not.be.visible');
+  cy.get('#kickoff-button').should('have.text', 'Must specify properties from poverty asset: district description column, district identifier column');
+  cyQueue(() => expect(updateDisasterSpy).to.be.calledTwice);
+  getSelectFromPropertyPath(componentsData.poverty.path).select('noGeoAsset');
+  getSelectFromPropertyPath(componentsData.geography.path).within(() => {
+    cy.get('option').should('have.length', 3);
+    cy.get('option').contains('None');
+    cy.get('option').contains('asset1');
+    cy.get('option').contains('asset2');
+
+  })
 
   // // Change to an asset without the no-damage column.
   // getDamageSelect().select('asset2').blur();

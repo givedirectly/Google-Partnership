@@ -11,6 +11,7 @@ import {ScoreBoundsMap} from './score_bounds_map.js';
 import {updateDataInFirestore} from './update_firestore_disaster.js';
 
 export {
+  writeAssetDataLocally,
   capitalizeFirstLetter,
   checkDamageFieldsAndShowKickoffButton,
   continueMessage,
@@ -433,13 +434,13 @@ async function verifyAsset(propertyPath, expectedColumns) {
 }
 
 /**
- * Handles the user entering a value into score-related input
+ * Writes to local copy of data. Does not write to Firestore, so only use if
+ * about to do another write!
  * @param {?*} val Value of input. empty strings are treated like null (ugh)
  * @param {PropertyPath} propertyPath path to property inside asset data. We
  *     set this value by setting the parent's attribute to the target's value
- * @return {Promise<void>} Promise that completes when Firestore writes are done
  */
-function handleAssetDataChange(val, propertyPath) {
+function writeAssetDataLocally(val, propertyPath) {
   // We want to change the value, which means we have to write an expression
   // like "parent[prop] = val". To obtain the parent object, we just follow the
   // same path as the child's, but stop one property short. That last property
@@ -447,6 +448,17 @@ function handleAssetDataChange(val, propertyPath) {
   const parentProperty = getStoredValueFromPath(propertyPath.slice(0, -1));
   parentProperty[propertyPath[propertyPath.length - 1]] =
       val !== '' ? val : null;
+}
+
+/**
+ * Handles the user entering a value into score-related input
+ * @param {?*} val Value of input. empty strings are treated like null (ugh)
+ * @param {PropertyPath} propertyPath path to property inside asset data. We
+ *     set this value by setting the parent's attribute to the target's value
+ * @return {Promise<void>} Promise that completes when Firestore writes are done
+ */
+function handleAssetDataChange(val, propertyPath) {
+  writeAssetDataLocally(val, propertyPath);
   if (isFlexible()) {
     // This will immediately display 'Pending...' and exit if there are any
     // pending checks, which will be the case for EE asset changes. Column value
