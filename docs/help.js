@@ -11,4 +11,5 @@ const HELP_DOC_URL =
 const MANAGE_LAYERS_HELP_URL = HELP_DOC_URL + '#heading=h.av28oflrubsj';
 const MANAGE_DISASTERS_HELP_URL = HELP_DOC_URL + '#heading=h.80g3ki7k34j';
 const POLYGON_HELP_URL = HELP_DOC_URL + '#heading=h.w9yurqtj0dx3';
-const UPLOAD_IMAGE_COLLECTION_HELP_URL = HELP_DOC_URL + '#heading=h.wytpuerrddb8';
+const UPLOAD_IMAGE_COLLECTION_HELP_URL =
+    HELP_DOC_URL + '#heading=h.wytpuerrddb8';
