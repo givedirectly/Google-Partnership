@@ -2,6 +2,7 @@ import {initializeDisasterPicker} from './disaster_picker.js';
 import {showError} from './error.js';
 import {AUTHENTICATION_ERROR_CODE} from './firebase_privileges.js';
 import {getDisastersData} from './firestore_document.js';
+import {HELP_DOC_URL, MANAGE_DISASTERS_HELP_URL, MANAGE_LAYERS_HELP_URL} from './help.js';
 
 export {loadNavbarWithPicker};
 
