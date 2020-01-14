@@ -92,6 +92,9 @@ class Authenticator {
                   const currentUser =
                       gapi.auth2.getAuthInstance().currentUser.get();
                   const basicProfile = currentUser.getBasicProfile();
+                  if (!basicProfile) {
+                    doSignIn();
+                  }
                   const isGdUser =
                       basicProfile && basicProfile.getEmail() === gdUserEmail;
                   if (this.needsGdUser && !isGdUser) {
