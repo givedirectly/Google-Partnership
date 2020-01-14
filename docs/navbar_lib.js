@@ -6,6 +6,9 @@ export {
   getUrlUnderDocs,
 };
 
+let fn;
+const method =
+    'return import.meta.url.replace(/navbar_lib\\.js$/, pathFragment)';
 /**
  * Get url of a file in or below our docs directory by using the path of this
  * current script.
@@ -13,7 +16,8 @@ export {
  * @return {string}
  */
 function getUrlUnderDocs(pathFragment) {
-  return import.meta.url.replace(/navbar_lib\.js$/, pathFragment);
+  if (!fn) fn = new Function('pathFragment', method);
+  return fn(pathFragment);
 }
 
 /**

@@ -1,3 +1,5 @@
+import * as Error from '../../../docs/error.js';
+import {AUTHENTICATION_ERROR_CODE} from '../../../docs/firebase_privileges';
 import {loadNavbar} from '../../../docs/navbar.js';
 import * as NavbarLib from '../../../docs/navbar_lib.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
@@ -31,27 +33,53 @@ before(() => {
 });
 
 let getUrlStub;
+let errorStub;
 beforeEach(() => {
   cy.document().then(
       (doc) => cy.stub(document, 'getElementById')
                    .callsFake((id) => doc.getElementById(id)));
   // This stub not working properly...
-  getUrlStub = cy.stub(NavbarLib, 'getUrlUnderDocs').withArgs('navbar.html');
+  getUrlStub = cy.stub(NavbarLib, 'getUrlUnderDocs');
+  errorStub = cy.stub(Error, 'showError');
 });
 
+const changeDisasterHandler = () => {};
+
 it('loads as privileged user', () => {
-  const changeDisasterHandler = () => {};
-  const firebaseDataPromise = Promise.resolve();
-  const privilegedUserPromise = Promise.resolve();
-  const data = {
-    firebaseDataPromise,
-    changeDisasterHandler,
-    privilegedUserPromise,
-    title: 'MY TITLE',
-  };
-  loadNavbar(data).then(() => {
+  loadNavbarWith(Promise.resolve()).then(() => {
     expect($('#nav-toggle').css('display')).to.equal('block');
     expect($('#public').css('display')).to.equal('none');
-    expect(getUrlStub).to.be.calledOnce;
+    expect(getUrlStub).to.have.callCount(5);
   });
 });
+
+it('loads as a public user',
+   () => {loadNavbarWith(Promise.reject({code: AUTHENTICATION_ERROR_CODE}))
+              .then(() => {
+                expect($('#nav-toggle').css('display')).to.equal('none');
+                expect($('#public').css('display')).to.equal('block');
+                expect(getUrlStub).to.be.calledOnce;
+                expect(errorStub).not.to.be.called;
+              })});
+
+it('fails privileged user promise with unexpected error', () => {
+  loadNavbarWith(Promise.reject({code: 'some other code'})).then(() => {
+    expect($('#nav-toggle').css('display')).to.equal('none');
+    expect($('#public').css('display')).to.equal('block');
+    expect(getUrlStub).to.be.calledOnce;
+    expect(errorStub).to.be.calledOnce;
+  });
+});
+
+it('loads as an unknown user and defaults to public',
+   () => {loadNavbarWith(null).then((something) => {
+     expect($('#nav-toggle').css('display')).to.equal('none');
+     expect($('#public').css('display')).to.equal('block');
+     expect(getUrlStub).to.be.calledOnce;
+   })});
+
+function loadNavbarWith(privilegedUserPromise) {
+  return loadNavbar(
+      Promise.resolve(), changeDisasterHandler, privilegedUserPromise,
+      'MY TITLE')
+}

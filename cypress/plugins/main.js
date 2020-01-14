@@ -60,13 +60,6 @@ function onFunction(on, config) {
     }
   });
   /**
-   * Adds a plugin that allows for import.meta syntax.
-   * https://github.com/cypress-io/cypress-browserify-preprocessor#modifying-default-options
-   */
-  const {browserifyOptions: {transform}} = browserify.defaultOptions;
-  transform.push(['babelify', {plugins: ['@babel/plugin-syntax-import-meta']}]);
-  on('file:preprocessor', browserify.default());
-  /**
    * Defines "tasks" that can be run using cy.task(). The name of each task is
    * the function name. These tasks are invoked in cypress/support/index.js in a
    * "before" hook, but they can theoretically be called anywhere that cy.task()

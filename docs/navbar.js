@@ -1,7 +1,7 @@
 import {initializeDisasterPicker} from './disaster_picker.js';
 import {showError} from './error.js';
 import {AUTHENTICATION_ERROR_CODE} from './firebase_privileges.js';
-import {getDisastersData, getUserFeatures} from './firestore_document.js';
+import {getDisastersData} from './firestore_document.js';
 import {getHelpUrl, getUrlUnderDocs} from './navbar_lib.js';
 
 export {
@@ -24,13 +24,14 @@ const UPLOAD_IMAGE_COLLECTION_PAGE = 'import/upload_image_collection.html';
  *     for all disasters
  * @param {?Function} changeDisasterHandler Function invoked when current
  *     disaster is changed. location.reload is called if null
- * @param {Promise<any>} privilegedUserPromise Promise with user shapes data
+ * @param {?Promise<any>} privilegedUserPromise if resolves without error,
+ *     indicates should load navbar for a privileged user. If null, assumes not
+ *     a privileged user. Often is a fetch of the usershapes collection.
  * @param {string} title Title of the page
  * @return {Promise<void>}
  */
 async function loadNavbar(
     firebaseDataPromise, changeDisasterHandler, privilegedUserPromise, title) {
-  // console.log($('#nav-toggle'));
   const navToggle = $('#nav-toggle').hide();
   const navPublic = $('#public').hide();
   $('#nav-left')
@@ -40,6 +41,10 @@ async function loadNavbar(
               firebaseDataPromise, changeDisasterHandler));
   $('#nav-title-header').html(title);
   $('.help-a').prop('href', getHelpUrl());
+  if (!privilegedUserPromise) {
+    navPublic.show();
+    return;
+  }
   try {
     await privilegedUserPromise;
   } catch (err) {
@@ -65,10 +70,11 @@ async function loadNavbar(
  * @param {string} title Title of the page
  * @param {?Function} changeDisasterHandler Function invoked when current
  *     disaster is changed. location.reload is called if null
- * @param {Promise<Map<string, Object>>} firebaseDataPromise Promise with data
+ * @param {?Promise<Map<string, Object>>} firebaseDataPromise Promise with data
  *     for all disasters
- * @param {Promise<any>} privilegedUserPromise Fetch of all user shapes - used
- *     as a proxy to determine if loading for a privileged user or not
+ * @param {?Promise<any>} privilegedUserPromise if resolves without error,
+ *     indicates should load navbar for a privileged user. If null, assumes not
+ *     a privileged user. Often is a fetch of the usershapes collection.
  */
 function loadNavbarWithPicker({
   firebaseAuthPromise,
@@ -79,11 +85,6 @@ function loadNavbarWithPicker({
 }) {
   if (!firebaseDataPromise) {
     firebaseDataPromise = firebaseAuthPromise.then(getDisastersData);
-  }
-  // If the caller didn't pass in a privileged user promise, check user shapes
-  // access as a proxy.
-  if (!privilegedUserPromise) {
-    privilegedUserPromise = firebaseAuthPromise.get(getUserFeatures);
   }
   $('#navbar').load(
       getUrlUnderDocs('navbar.html'),

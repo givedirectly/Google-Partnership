@@ -145,7 +145,7 @@ class Authenticator {
                 'trying anonymous access',
             -1);
         this.getAndSetEeTokenWithErrorHandling().then(() => {
-          showToastMessage('', -1);
+          showToastMessage('Anonymous access successful', 1000);
           initializeEE(this.eeInitializeCallback, defaultErrorCallback);
         });
       } else {

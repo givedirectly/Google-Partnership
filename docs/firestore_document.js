@@ -79,7 +79,7 @@ function getDisastersData() {
 }
 
 /**
- * Funciton that converts the result of a firestore collection {@code get} into
+ * Function that converts the result of a firestore collection {@code get} into
  * a map of doc ids -> data.
  * @param {Promise<firebase.firestore.QuerySnapshot>} querySnapshot
  * @return {Map<string, object>}
