@@ -99,10 +99,10 @@ async function getScoreAssetComputationParametersPromise(
     disasterMetadataPromise) {
   const disasterMetadata = await disasterMetadataPromise;
   const scoreAsset = await resolvedScoreAsset;
-  if (scoreAsset !== getScoreAssetPath()) {
-    return disasterMetadata.lastScoreAssetCreationParameters;
+  if (scoreAsset === getScoreAssetPath()) {
+    return disasterMetadata.scoreAssetCreationParameters;
   }
-  return disasterMetadata.scoreAssetCreationParameters;
+  return disasterMetadata.lastScoreAssetCreationParameters;
 }
 
 let mapSelectListener = null;
