@@ -77,32 +77,32 @@ function resolveScoreAsset() {
 function run(map, firebaseAuthPromise, disasterMetadataPromise) {
   setMapToDrawLayersOn(map);
   resolveScoreAsset();
-  disasterMetadataPromise = massageDisasterMetadataPromiseWhenUsingBackupAsset(
-      disasterMetadataPromise);
-  const scoreComputationParametersPromise =
-      setUpScoreComputationParameters(disasterMetadataPromise, map);
+  const scoreAssetComputationParametersPromise =
+      getScoreAssetComputationParametersPromise(disasterMetadataPromise);
+  const scoreComputationParametersPromise = setUpScoreComputationParameters(
+      scoreAssetComputationParametersPromise, map);
   createAndDisplayJoinedData(map, scoreComputationParametersPromise);
-  initializeAndProcessUserRegions(map, disasterMetadataPromise);
+  initializeAndProcessUserRegions(map, scoreAssetComputationParametersPromise);
   disasterMetadataPromise.then(({layerArray}) => addLayers(map, layerArray));
 }
 
 /**
- * Modifies the result of `disasterMetadataPromise` in case we are using the
- * backup score asset, so that the `scoreAssetCreationParameters` are set to
+ *
+ * Returns `scoreAssetCreationParameters` unless we are using the backup score
+ * asset, so that the `scoreAssetCreationParameters` are set to
  * `lastScoreAssetCreationParameters`. This allows downstream consumers to
  * remain ignorant of which score asset is being used.
- * @param {Promise<DisasterDocument>}disasterMetadataPromise
- * @return {Promise<DisasterDocument>}
+ * @param {Promise<DisasterDocument>} disasterMetadataPromise
+ * @return {Promise<ScoreParameters>}
  */
-async function massageDisasterMetadataPromiseWhenUsingBackupAsset(
+async function getScoreAssetComputationParametersPromise(
     disasterMetadataPromise) {
   const disasterMetadata = await disasterMetadataPromise;
   const scoreAsset = await resolvedScoreAsset;
   if (scoreAsset !== getScoreAssetPath()) {
-    disasterMetadata.scoreAssetCreationParameters =
-        disasterMetadata.lastScoreAssetCreationParameters;
+    return disasterMetadata.lastScoreAssetCreationParameters;
   }
-  return disasterMetadata;
+  return disasterMetadata.scoreAssetCreationParameters;
 }
 
 let mapSelectListener = null;

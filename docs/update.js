@@ -72,12 +72,12 @@ let scoreAssetCreationParameters;
 /**
  * Initializes damage-related toggle values based on whether or not we have
  * a damage asset.
- * @param {Promise<DisasterDocument>} disasterMetadataPromise
+ * @param {Promise<ScoreParameters>} scoreParametersPromise
  * @param {google.maps.Map} map
  * @return {Promise<Object>} returns all the toggle initial values.
  */
-async function setUpScoreComputationParameters(disasterMetadataPromise, map) {
-  ({scoreAssetCreationParameters} = await disasterMetadataPromise);
+async function setUpScoreComputationParameters(scoreParametersPromise, map) {
+  scoreAssetCreationParameters = await scoreParametersPromise;
   if (!!scoreAssetCreationParameters.damageAssetPath) {
     toggles.set(damageThresholdKey, 0.5);
     toggles.set(povertyWeightKey, 0.5);
