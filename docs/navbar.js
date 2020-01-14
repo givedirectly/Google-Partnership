@@ -2,20 +2,18 @@ import {initializeDisasterPicker} from './disaster_picker.js';
 import {showError} from './error.js';
 import {AUTHENTICATION_ERROR_CODE} from './firebase_privileges.js';
 import {getDisastersData} from './firestore_document.js';
-import {getHelpUrl, getUrlUnderDocs} from './navbar_lib.js';
 
-export {
-  loadNavbarWithPicker,
-  MANAGE_DISASTERS_PAGE,
-  MANAGE_LAYERS_PAGE,
-  UPLOAD_IMAGE_COLLECTION_PAGE,
-};
-// Visible for testing
-export {loadNavbar};
+export {loadNavbarWithPicker};
 
 const MANAGE_LAYERS_PAGE = 'import/manage_layers.html';
 const MANAGE_DISASTERS_PAGE = 'import/manage_disaster.html';
 const UPLOAD_IMAGE_COLLECTION_PAGE = 'import/upload_image_collection.html';
+
+// This page isn't tested because cypress needs the
+// @babel/plugin-syntax-import-meta plugin to parse the import.meta syntax
+// in {@code getUrlUnderDocs}. It does seem possible to make that happen using a
+// terrible hack, but then it breaks in production so we decided to just not
+// test here. It's very sad.
 
 /**
  * Callback function for loading navbar.html that updates the bar based
@@ -91,4 +89,27 @@ function loadNavbarWithPicker({
       () => loadNavbar(
           firebaseDataPromise, changeDisasterHandler, privilegedUserPromise,
           title));
+}
+
+/**
+ * Get url of a file in or below our docs directory by using the path of this
+ * current script.
+ * @param {string} pathFragment path fragment to append to '.../docs/'
+ * @return {string}
+ */
+function getUrlUnderDocs(pathFragment) {
+  return import.meta.url.replace(/navbar\.js$/, pathFragment);
+}
+
+/**
+ * Gets the url for the help section relevant to the current page
+ * @return {string}
+ */
+function getHelpUrl() {
+  if (window.location.pathname.endsWith(MANAGE_LAYERS_PAGE)) {
+    return MANAGE_LAYERS_HELP_URL;
+  } else if (window.location.pathname.endsWith(MANAGE_DISASTERS_PAGE)) {
+    return MANAGE_DISASTERS_HELP_URL;
+  }
+  return HELP_DOC_URL;
 }

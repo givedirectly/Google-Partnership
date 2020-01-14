@@ -11,7 +11,6 @@
  *
  * More about Cypress plugins here: https://on.cypress.io/plugins-guide
  */
-import * as browserify from '@cypress/browserify-preprocessor';
 import * as firebase from 'firebase';
 import * as firebaseAdmin from 'firebase-admin';
 import {firebaseConfigProd, firebaseConfigTest} from '../../docs/authenticate.js';
