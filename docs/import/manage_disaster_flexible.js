@@ -41,7 +41,7 @@ export {
 };
 
 // For testing.
-export {componentsData};
+export {componentsData, POVERTY_BUILDINGS_PATH};
 
 /**
  * Functions for dealing with a "flexible" (non-state-based) disaster.
