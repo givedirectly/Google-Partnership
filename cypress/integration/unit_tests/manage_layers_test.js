@@ -128,7 +128,7 @@ describe('Unit tests for manage_layers page', () => {
     cy.get('#disaster-adder-label').should('not.exist');
   });
 
-  it.only('tests color cell', () => {
+  it('tests color cell', () => {
     const property = 'color';
 
     const noColor = withColor(createTd(), {}, property, 0);
