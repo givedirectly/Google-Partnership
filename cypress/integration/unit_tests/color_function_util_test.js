@@ -1,5 +1,5 @@
-import {ColorStyle, LayerType} from '../../../docs/firebase_layers';
-import {readDisasterDocument} from '../../../docs/firestore_document';
+import {ColorStyle, LayerType} from '../../../docs/firebase_layers.js';
+import {readDisasterDocument} from '../../../docs/firestore_document.js';
 import {populateColorFunctions, withColor} from '../../../docs/import/color_function_util.js';
 import * as manageLayersLib from '../../../docs/import/manage_layers_lib.js';
 import {getCurrentLayers} from '../../../docs/import/manage_layers_lib.js';
