@@ -21,13 +21,16 @@ it('creates the correct linear gradients', () => {
       'color': 'blue',
     },
   };
-  const layer1Gradient = 'linear-gradient(to right, rgb(255, 255, 255), rgb(255, 255, 0))';
+  const layer1Gradient =
+      'linear-gradient(to right, rgb(255,255,255), rgb(255,255,0))';
   expect(getLinearGradient(layer1.colorFunction)).to.equal(layer1Gradient);
 
   const layer2Gradient =
-      'linear-gradient(to right, rgb(255, 255, 0) 0%, rgb(255, 255, 0) 50%, rgb(255, 0, 0) 50%, rgb(255, 0, 0) 100%)';
+      'linear-gradient(to right, rgb(255,255,0) 0%, rgb(255,255,0) ' +
+      '50%, rgb(255,0,0) 50%, rgb(255,0,0) 100%)';
   expect(getLinearGradient(layer2.colorFunction)).to.equal(layer2Gradient);
 
-  const layer3Gradient = 'linear-gradient(to right, rgb(0, 0, 255), rgb(0, 0, 255))';
+  const layer3Gradient =
+      'linear-gradient(to right, rgb(0,0,255), rgb(0,0,255))';
   expect(getLinearGradient(layer3.colorFunction)).to.equal(layer3Gradient);
 });
