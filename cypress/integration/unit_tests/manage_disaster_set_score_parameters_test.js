@@ -44,10 +44,13 @@ before(preparePage);
 
 let stateStub;
 let disasterStub;
-// Reset error stub history at the end of test if it is supposed to be called.
 let errorStub;
 setUpSavingStubs();
 let firstTest = true;
+
+// If error stub is supposed to be called, reset its history at the end of test.
+afterEach(() => expect(errorStub).to.not.be.called);
+
 beforeEach(() => {
   cy.document().then((doc) => {
     cy.stub(document, 'getElementById')
@@ -71,8 +74,6 @@ beforeEach(() => {
 
   disasterData.clear();
 });
-
-afterEach(() => expect(errorStub).to.not.be.called);
 
 it('interacts with damage asset/map-bounds elements', () => {
   callEnableWhenReady(setUpDefaultData());
