@@ -135,7 +135,7 @@ describe('Unit tests for manage_layers page', () => {
     expect(noColor.text()).to.equal('N/A');
     expect(noColor.hasClass('na')).to.be.true;
 
-    const yellow = 'yellow';
+    const yellow = 'rgb(255, 255, 0)';
     const singleColor = withColor(
         createTd(), {color: {'currentStyle': 2, 'color': yellow}}, property, 0);
     expect(singleColor.children('.box').length).to.equal(1);
@@ -147,7 +147,7 @@ describe('Unit tests for manage_layers page', () => {
     expect(baseColor.children('.box').length).to.equal(1);
     expect(baseColor.children().eq(0).css('background-color')).to.equal(yellow);
 
-    const red = 'red';
+    const red = 'rgb(255, 0, 0)';
     const discrete = withColor(
         createTd(), {
           color: {
