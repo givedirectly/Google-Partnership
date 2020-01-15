@@ -424,7 +424,7 @@ it('does column verification', () => {
 
   // bad -> good
   setSelectWithDelayedEvaluate(0, 'state2', 'NY');
-  checkSelectBorder(POVERTY_INDEX, 'rgb(0, 128, 0)');
+  checkSelectBorder(POVERTY_INDEX, 'rgb(0, 255, 0)');
   checkHoverText(POVERTY_INDEX, 'Success! asset has all expected columns');
 
   // good -> bad
@@ -437,12 +437,12 @@ it('does column verification', () => {
 
   // None -> good columns
   setSelectWithDelayedEvaluate(1, 'state1', 'NY');
-  checkSelectBorder(INCOME_INDEX, 'rgb(0, 128, 0)');
+  checkSelectBorder(INCOME_INDEX, 'rgb(0, 255, 0)');
   checkHoverText(INCOME_INDEX, 'Success! asset has all expected columns');
 
   // good -> good
   setSelectWithDelayedEvaluate(1, 'state0', 'NY');
-  checkSelectBorder(INCOME_INDEX, 'rgb(0, 128, 0)');
+  checkSelectBorder(INCOME_INDEX, 'rgb(0, 255, 0)');
   checkHoverText(INCOME_INDEX, 'Success! asset has all expected columns');
 
   // good -> None
@@ -457,7 +457,7 @@ it('does column verification', () => {
       () => goodIncomeBadPovertyFeature);
   setSelectWithDelayedEvaluate(4, 'state0', 'NY');
 
-  checkSelectBorder(BUILDINGS_INDEX, 'rgb(0, 128, 0)');
+  checkSelectBorder(BUILDINGS_INDEX, 'rgb(0, 255, 0)');
   checkHoverText(BUILDINGS_INDEX, 'No expected columns');
   setFirstSelectInScoreRowTo(4, 'None');
   checkSelectBorder(BUILDINGS_INDEX, 'rgb(255, 255, 255)');

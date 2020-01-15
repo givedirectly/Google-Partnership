@@ -1,4 +1,4 @@
-import {LayerType} from '../firebase_layers.js';
+import {colorToRgbString, LayerType} from '../firebase_layers.js';
 import {latLngToGeoPoint, transformGeoPointArrayToLatLng} from '../map_util.js';
 import {isUserProperty} from '../property_names.js';
 import {getDisaster} from '../resources.js';
@@ -815,7 +815,7 @@ function makeInputElementIdFromPath(path) {
  * @param {?string} title
  */
 function updateColorAndHover(select, color, title = null) {
-  select.css('border-color', color).prop('title', title);
+  select.css('border-color', colorToRgbString(color)).prop('title', title);
 }
 
 /**
