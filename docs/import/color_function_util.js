@@ -1,4 +1,4 @@
-import {colorMap, ColorStyle} from '../firebase_layers.js';
+import {colorMap, ColorStyle, colorToRgbString} from '../firebase_layers.js';
 import {showErrorSnackbar} from '../snackbar.js';
 import {getCurrentLayers, getRowIndex, ILLEGAL_STATE_ERR, setStatus, updateLayersInFirestore} from './manage_layers_lib.js';
 
