@@ -40,10 +40,11 @@ const PendingState = Object.freeze({
  * There should be one `PendingChecker` for each operation that must finish
  * before validation can run, but which can be rendered irrelevant by a user
  * action. Thus, each select whose value cascades (poverty, geography, damage,
- * buildings) must have a `PendingChecker`. Similarly initialization as a whole
- * has a `PendingChecker`. This keeps our count of pending operations limited to
- * the types of operations there can be, which is correct: the user can never be
- * waiting on more than one operation of a given type.
+ * buildings) must have a `PendingChecker`. Similarly disaster initialization as
+ * a whole has a `PendingChecker`. This keeps our count of pending operations
+ * limited to the types of operations there can be, which is correct: the user
+ * can never be waiting on more than one operation of a given type (like column
+ * retrieval for the geography asset).
  *
  * A subtle issue arises when a pending value becomes unnecessary: for instance,
  * if the div that needs to be populated is hidden. Then we immediately count
@@ -69,7 +70,9 @@ class PendingChecker {
       case PendingState.PENDING:
         return false;
       case PendingState.PENDING_BUT_INVISIBLE:
-        showError('Error validating inputs: please reload page');
+        showError(
+            'Must call markVisible() on invisible element before pending op',
+            'Error validating inputs: please reload page');
         return false;
     }
   }
@@ -121,23 +124,23 @@ class PendingChecker {
  * We expect the following (analogs to the state-based case are in parentheses):
  *
  * 1. A poverty asset, which must have the following columns:
- *      a. Poverty rate ('SNAP PERCENTAGE');
- *      b. District identifier ('GEOid2');
- *      c. District description ('GEOdisplay-label');
+ *      a. Poverty rate (e.g. 'SNAP PERCENTAGE');
+ *      b. District identifier (e.g. 'GEOid2');
+ *      c. District description (e.g. 'GEOdisplay-label');
 
  *    If the poverty asset does not have geometries, then we also need:
  * 2. A geography asset, which must have geometries, and the following column
  *    to join to poverty:
- *      a. District identifier ('GEOID');
+ *      a. District identifier (e.g. 'GEOID');
  *
  *    Before damage is present, that is all. With damage, we also need:
  * 3. A building-count source to be specified. Either 'buildings', 'poverty', or
  *    'damage'.
- * 4. If the source is 'buildings', we need an optional buildings asset. If it
- *    has geometries, it is assumed to have building footprints (like the
- *    Microsoft building footprints) and is intersected with district
- *    geometries. If it does not (like US Census data), it must have columns:
- *      a. District identifier ('GEOid2' for Census buildings data);
+ * 4. If the source is 'buildings', we need a buildings asset. If it has
+ *    geometries, it is assumed to have building footprints (like the Microsoft
+ *    building footprints, see Data Source Guide) and we count the number in
+ *    each district. If it does not (like US Census data), it must have columns:
+ *      a. District identifier (e.g. 'GEOid2' for Census buildings data);
  *      b. Building counts column;
  * 5. If the source is 'poverty', the poverty asset must additionally have a
  *    building-counts column.
@@ -488,7 +491,7 @@ function validateColumnArray(columnInfos) {
       .join(', ');
 }
 
-//         Initialization functions: called once per disaster.
+//      Initialization functions: called when switching to a disaster.
 
 // We share a single checker for all initialization functions, because they all
 // depend on the same async operation: listing the disaster's assets.
@@ -530,8 +533,8 @@ async function initializeFlexibleDisaster(assetData) {
     initializePoverty(),
     initializeBuildings(),
   ]);
+  // Just check one value to see if it succeeded: others must be the same.
   if (result) {
-    // Just check one value to see if it succeeded: others must be the same.
     initializeChecker.finishPending();
   }
 }
@@ -587,7 +590,7 @@ async function initializePoverty() {
   await showGeographyDivBasedOnPoverty(select.val());
   setInitialColumnValues('poverty').then((propertyNames) => {
     if (propertyNames) {
-      // Do special column setup, if disaster unchanged.
+      // Do special column setup, if disaster and select value unchanged.
       setOptionsForPovertyBuildings(propertyNames);
     }
   });
@@ -630,8 +633,8 @@ async function initializeBuildings() {
  * column names for selected asset from EarthEngine, sets column select values
  * to those values (if disaster unchanged), and returns list of column names.
  * @param {ScoreInputType} key
- * @return {Promise<?Array<EeColumn>>} Null if select value changed, callers
- *     should abort in that case
+ * @return {Promise<?Array<EeColumn>>} Null if disaster/select value changed,
+ *     callers should abort in that case
  */
 async function setInitialColumnValues(key) {
   setPendingForColumns(key);
@@ -706,8 +709,8 @@ async function onBuildingsChange(buildingsAsset) {
  * Starts a pending operation via {@link setPendingForColumns}, so callers must
  * finish it if still valid, typically in {@link setOptionsForColumns}.
  * @param {ScoreInputType} key
- * @return {Promise<?Array<EeColumn>>} Null if value of select associated to
- *    `key` changed during column retrieval. Callers should abort in that case
+ * @return {Promise<?Array<EeColumn>>} Null if disaster or value of select
+ *    associated to `key` changed during retrieval. Callers should abort then
  */
 function onAssetSelectChange(key) {
   setPendingForColumns(key);

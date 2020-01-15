@@ -54,7 +54,7 @@ function enableWhenFirestoreReady(allDisastersData) {
     // Disable button to avoid over-clicking. User can reload page if needed.
     kickoffButton.prop('disabled', true);
     const currentData = disasterData.get(getDisaster());
-    if (isFlexible(currentData)) {
+    if (isFlexible()) {
       createScoreAssetForFlexibleDisaster(currentData);
     } else {
       createScoreAssetForStateBasedDisaster(currentData);
@@ -80,7 +80,7 @@ async function onSetDisaster() {
     return Promise.resolve();
   }
   const currentData = disasterData.get(currentDisaster);
-  const flexible = isFlexible(currentData);
+  const flexible = isFlexible();
   const {assetData} = currentData;
 
   // Kick off damage promise first: flexible disaster needs no-damage column
@@ -91,7 +91,7 @@ async function onSetDisaster() {
       flexible ? initializeFlexibleDisaster(assetData) :
                  initializeStateBasedDisaster(assetData));
   await damagePromise;
-  if (isCurrent() && !isFlexible()) {
+  if (isCurrent() && !flexible) {
     validateStateBasedUserFields();
   }
 }
