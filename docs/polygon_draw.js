@@ -445,7 +445,7 @@ function createHelpIcon(url) {
  * Adds a listener to display notes on pop-up. Stores EE path for damage asset.
  *
  * @param {google.maps.Map} map Map to display regions on
- * @param {Promise<DisasterDocument>} firebasePromise Promise with Firebase
+ * @param {Promise<ScoreParameters>} firebasePromise Promise with Firebase
  *     damage data (also implies that authentication is complete)
  * @param {Promise<Map<string, ShapeDocument>>} userShapesPromise Promise with
  *     user shapes data
@@ -458,7 +458,7 @@ async function initializeAndProcessUserRegions(
   addLoadingElement(mapContainerId);
   try {
     // Firebase retrieval error handled elsewhere. Let this throw if it throws.
-    ({scoreAssetCreationParameters: {damageAssetPath}} = await firebasePromise);
+    ({damageAssetPath} = await firebasePromise);
     // Damage asset may not exist yet, so this is undefined. We tolerate
     // gracefully.
     let shapes;

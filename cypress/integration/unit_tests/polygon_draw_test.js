@@ -94,13 +94,9 @@ describe('Unit test for ShapeData', () => {
           userRegionData.clear();
           return initializeAndProcessUserRegions(
               map,
-              Promise.resolve(
-                  // Normally damageAssetPath is a string, but code tolerates
-                  // just putting an ee.FeatureCollection in.
-                  {
-                    scoreAssetCreationParameters:
-                        {damageAssetPath: damageCollection},
-                  }),
+              // Normally damageAssetPath is a string, but code tolerates
+              // just putting an ee.FeatureCollection in.
+              Promise.resolve({damageAssetPath: damageCollection}),
               getUserFeatures());
         })
         .then((drawingManagerResult) => drawingManager = drawingManagerResult);
@@ -542,10 +538,7 @@ describe('Unit test for ShapeData', () => {
 
   it('Absence of damage asset tolerated', () => {
     cy.wrap(initializeAndProcessUserRegions(
-        map, Promise.resolve({
-          scoreAssetCreationParameters: {damageAssetPath: null},
-        }),
-        getUserFeatures()));
+        map, Promise.resolve({damageAssetPath: null}), getUserFeatures()));
     drawPolygon();
     const expectedData = Object.assign({}, defaultData);
     expectedData.damage = 'unknown';
