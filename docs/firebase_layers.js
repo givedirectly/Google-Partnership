@@ -147,13 +147,13 @@ function getLinearGradient(colorFunction) {
 
 /**
  * Converts a color to a css-recognizable rgb string.
- * @param {string} color
+ * @param {string} color one of the keys of our colorMap or a hex string
+ * for special cases like the user features color or the score color.
  * @return {string}
  */
 function colorToRgbString(color) {
   const rgbArray = colorMap.get(color);
   if (!rgbArray) {
-    // return early if not using a recognized color.
     return color;
   }
   return 'rgb(' + rgbArray[0] + ',' + rgbArray[1] + ',' + rgbArray[2] + ')';
