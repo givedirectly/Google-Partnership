@@ -538,9 +538,7 @@ it('shows pending then values for state-based disaster, damage cascades',
      const updateDisasterSpy =
          cy.spy(UpdateFirestoreDisaster, 'updateDataInFirestore');
      let callCount = 1;
-     /**
-      * Asserts there has been exactly one Firestore update since last call.
-      */
+     /** Asserts there has been exactly one Firestore update since last call. */
      function assertFirestoreUpdate() {
        const expectedCalls = callCount++;
        cyQueue(
