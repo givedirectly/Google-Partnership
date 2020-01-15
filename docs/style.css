@@ -118,9 +118,11 @@ h1 {
 }
 
 #public-title {
+  color: #545958;
   display: inline-block;
   margin: 0;
   line-height: calc(var(--navbar-height) - 8px);
+  vertical-align: middle;
 }
 
 .nav-title {
