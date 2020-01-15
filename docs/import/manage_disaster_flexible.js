@@ -1,47 +1,116 @@
 import {showError} from '../error.js';
 import {getDisaster} from '../resources.js';
-
 import {BuildingSource} from './create_disaster_lib.js';
 import {getDisasterAssetsFromEe} from './list_ee_assets.js';
-import {
-  capitalizeFirstLetter,
-  checkDamageFieldsAndShowKickoffButton,
-  continueMessage,
-  createListForAsset,
-  createSelect,
-  createSelectListItemFromColumnInfo,
-  createSelectWithSimpleWriteOnChange,
-  damageAssetPresent,
-  getAssetsAndSetOptionsForSelect,
-  getPageValueOfPath,
-  getStoredValueFromPath,
-  handleAssetDataChange,
-  isFlexible,
-  maybeShowNoDamageValueItem,
-  NODAMAGE_COLUMN_INFO,
-  NODAMAGE_VALUE_INFO,
-  setExplanationSpanTextForColumn,
-  setOptionsForSelect,
-  showDisabledKickoffButton,
-  showListForAsset,
-  showSelectAsPending,
-  startPendingWriteSelectAndGetPropertyNames,
-  validateColumnPathHasValue,
-  verifyAsset,
-  writeAssetDataLocally
-} from './manage_disaster_base.js';
+import {capitalizeFirstLetter, checkDamageFieldsAndShowKickoffButton, continueMessage, createListForAsset, createSelect, createSelectListItemFromColumnInfo, createSelectWithSimpleWriteOnChange, damageAssetPresent, getAssetsAndSetOptionsForSelect, getPageValueOfPath, getStoredValueFromPath, handleAssetDataChange, isFlexible, maybeShowNoDamageValueItem, NODAMAGE_COLUMN_INFO, NODAMAGE_VALUE_INFO, setExplanationSpanTextForColumn, setOptionsForSelect, showListForAsset, showPendingKickoffButton, showSelectAsPending, validateColumnPathHasValue, verifyAsset, writeAssetDataLocally, writeSelectAndGetPropertyNames} from './manage_disaster_base.js';
 
 export {
-  finishPending,
   initializeFlexibleDisaster,
+  PendingChecker,
   setUpFlexibleOnPageLoad,
-  startPending,
   useDamageForBuildings,
   validateFlexibleUserFields,
 };
-
 // For testing.
 export {componentsData, POVERTY_BUILDINGS_PATH};
+
+const PendingState = Object.freeze({
+  NOT_PENDING: 0,
+  PENDING: 1,
+  PENDING_BUT_INVISIBLE: 2,
+});
+
+/**
+ * Utility to note start/end of asynchronous operations that should delay
+ * validation. Needed because if user switches the disaster or asset value,
+ * currently pending operations may no longer be needed. For instance, if we are
+ * waiting for a disaster listing and the user changes the disaster, we'll
+ * immediately start waiting for the new disaster's listing. The old disaster
+ * listing status is irrelevant. When the first disaster was initialized, we
+ * called {@link maybeStartPending}, which triggered a "pending" status. When
+ * the new disaster initializes, we call it again. Because the first call had
+ * not finished, we don't increment the pending count. Whenever the first call
+ * finishes, it will not call {@link countDownPendingOperations}: only the
+ * current disaster is allowed to do that.
+ *
+ * Similarly, if an asset value changes, we'll immediately kick off a query for
+ * the new values' columns. If the old value column query had not completed, we
+ * don't increment the pending count.
+ *
+ * There should be one `PendingChecker` for each operation that must finish
+ * before validation can run, but which can be rendered irrelevant by a user
+ * action. Thus, each select whose value cascades (poverty, geography, damage,
+ * buildings) must have a `PendingChecker`. Similarly initialization as a whole
+ * has a `PendingChecker`. This keeps our count of pending operations limited to
+ * the types of operations there can be, which is correct: the user can never be
+ * waiting on more than one operation of a given type.
+ *
+ * A subtle issue arises when a pending value becomes unnecessary: for instance,
+ * if the div that needs to be populated is hidden. Then we immediately count
+ * down the pending operations via {@link markInvisible}. But if the div ever
+ * becomes visible again, and the operation has still not finished, we count
+ * pending operations back up using {@link markVisible}. This allows listings to
+ * complete in the background and be ready, even if the user is switching other
+ * options back and forth.
+ */
+class PendingChecker {
+  pending = PendingState.NOT_PENDING;
+
+  /** @return {boolean} False if this checker was already pending */
+  maybeStartPending() {
+    if (!isFlexible()) {
+      return true;
+    }
+    switch (this.pending) {
+      case PendingState.NOT_PENDING:
+        this.pending = PendingState.PENDING;
+        startPendingOperation();
+        return true;
+      case PendingState.PENDING:
+        return false;
+      case PendingState.PENDING_BUT_INVISIBLE:
+        showError('Error validating inputs: please reload page');
+        return false;
+    }
+  }
+
+  /**
+   * Notes that the data source this tracks has finished its pending operation.
+   * Must only be called if the data is still valid. Should be called after
+   * display of the data is done (so, at end of {@link setOptionsForColumns}).
+   */
+  finishPending() {
+    if (!isFlexible()) {
+      return;
+    }
+    switch (this.pending) {
+      case PendingState.NOT_PENDING:
+        showError('Error validating inputs: please reload page');
+        return;
+      case PendingState.PENDING:
+        countDownPendingOperations();
+        // Fall through.
+      case PendingState.PENDING_BUT_INVISIBLE:
+        this.pending = PendingState.NOT_PENDING;
+    }
+  }
+
+  /** See class doc. */
+  markInvisible() {
+    if (this.pending === PendingState.PENDING) {
+      this.pending = PendingState.PENDING_BUT_INVISIBLE;
+      countDownPendingOperations();
+    }
+  }
+
+  /** See class doc. */
+  markVisible() {
+    if (this.pending === PendingState.PENDING_BUT_INVISIBLE) {
+      this.pending = PendingState.PENDING;
+      startPendingOperation();
+    }
+  }
+}
 
 /**
  * Functions for dealing with a "flexible" (non-state-based) disaster.
@@ -184,9 +253,12 @@ const DISTRICT_ID_EXPLANATION = 'to match with poverty asset\'s';
 /**
  * @typedef {Object} ScoreInputData
  * @property {PropertyPath} path Path to the actual asset value.
- * @property {JQuery<HTMLDivElement>} Div where this score input is displayed.
- *     Set in {@link setUpFlexibleOnPageLoad}.
- * @property {Array<ColumnInfo>} Columns associated with this score input.
+ * @property {JQuery<HTMLDivElement>} div Where this score input is displayed.
+ *     Set in {@link setUpFlexibleOnPageLoad}. Do not show/hide this div
+ *     directly. See {@link setVisibilityOfDivForKey}.
+ * @property {Array<ColumnInfo>} columns Columns associated with this score
+ * input.
+ * @property {PendingChecker} columnsPending
  */
 
 /**
@@ -212,6 +284,7 @@ const componentsData = {
         path: ['flexibleData', 'povertyGeoid'],
       },
     ],
+    columnsPending: new PendingChecker(),
   },
   geography: {
     path: ['flexibleData', 'geographyPath'],
@@ -221,6 +294,7 @@ const componentsData = {
       explanation: DISTRICT_ID_EXPLANATION,
       path: ['flexibleData', 'geographyGeoid'],
     }],
+    columnsPending: new PendingChecker(),
   },
   buildings: {
     path: ['flexibleData', 'buildingPath'],
@@ -236,6 +310,7 @@ const componentsData = {
         path: ['flexibleData', 'buildingKey'],
       },
     ],
+    columnsPending: new PendingChecker(),
   },
 };
 
@@ -245,16 +320,19 @@ let povertyBuildingsDiv;
 
 /**
  * As described above, we cannot do validation until all pending operations are
- * complete. We track pending operations by calling {@link startPending} before
- * doing asynchronous operations. We then call {@link finishPending} when we
- * have displayed all data resulting from that asynchronous operation. Note that
- * calling {@link finishPending} right after the asynchronous operation is done
+ * complete. We track pending operations by calling {@link
+ * startPendingOperation} before doing asynchronous operations. We then
+ * call {@link countDownPendingOperations} when we have displayed all data
+ * resulting from that asynchronous operation. Note that calling {@link
+ * countDownPendingOperations} right after the asynchronous operation is done
  * would not work: we would attempt to validate user fields that have not yet
  * been set, because the data from the asynchronous operation has not yet been
- * displayed. {@link startPending} is most often called in
- * {@link startPendingWriteSelectAndGetPropertyNames}, which is invoked by each
- * change handler. {@link finishPending} must be called by each change handler.
- * For safety, we always call {@link finishPending} in a `finally` block.
+ * displayed.
+ *
+ * These functions are only called in {@link PendingChecker} objects, to track
+ * operations on a per-type basis, so that we are never waiting on two
+ * operations of the same type, for instance, if the user switches quickly
+ * between two different poverty assets.
  */
 
 let pendingOperations = 0;
@@ -262,13 +340,9 @@ let pendingOperations = 0;
 /**
  * Notes that a pending operation has started. If no operations were previously
  * pending, calls {@link validateFlexibleUserFields} in order to show the user
- * the new pending status. Called unconditionally by manage_disaster_base.js,
- * even if disaster is not flexible, and does nothing in that case.
+ * the new pending status.
  */
-function startPending() {
-  if (!isFlexible()) {
-    return;
-  }
+function startPendingOperation() {
   if (pendingOperations++ === 0) {
     validateFlexibleUserFields();
   }
@@ -277,13 +351,9 @@ function startPending() {
 /**
  * Notes that a pending operation has finished. If all pending operations are
  * done, calls {@link validateFlexibleUserFields} in order to show the user
- * the new definitive status. Called unconditionally by manage_disaster_base.js,
- * even if disaster is not flexible, does nothing in that case.
+ * the new definitive status.
  */
-function finishPending() {
-  if (!isFlexible()) {
-    return;
-  }
+function countDownPendingOperations() {
   if (--pendingOperations === 0) {
     validateFlexibleUserFields();
   }
@@ -304,7 +374,7 @@ const MISSING_BUILDINGS_TAIL =
  */
 function validateFlexibleUserFields() {
   if (pendingOperations > 0) {
-    showDisabledKickoffButton('Pending...');
+    showPendingKickoffButton();
     return;
   }
   let message = '';
@@ -359,14 +429,14 @@ function validateFlexibleUserFields() {
         // Normally there's no error if NODAMAGE_COLUMN_INFO is blank, but we
         // need it. If it's not blank, checkDamageFieldsAndShowKickoffButton
         // will display an error if the value is missing, so don't check here.
-          if (!getPageValueOfPath(NODAMAGE_COLUMN_INFO.path)) {
-            if (hasDamageAsset) {
-              message = addColumnArrayErrorsToMessage(
-                  message, [NODAMAGE_COLUMN_INFO, NODAMAGE_VALUE_INFO], 'damage');
-            } else {
-              optionalMessage = 'building counts';
-            }
+        if (!getPageValueOfPath(NODAMAGE_COLUMN_INFO.path)) {
+          if (hasDamageAsset) {
+            message = addColumnArrayErrorsToMessage(
+                message, [NODAMAGE_COLUMN_INFO, NODAMAGE_VALUE_INFO], 'damage');
+          } else {
+            optionalMessage = 'building counts';
           }
+        }
         break;
     }
     if (tailAboutBuildingsWorkaround) {
@@ -420,12 +490,17 @@ function validateColumnArray(columnInfos) {
 
 //         Initialization functions: called once per disaster.
 
+// We share a single checker for all initialization functions, because they all
+// depend on the same async operation: listing the disaster's assets.
+const initializeChecker = new PendingChecker();
+
 /**
  * Initializes page: sets up change handlers for building-source radios and
- * initializes the three {@link ScoreInputType} divs. Calls {@link startPending}
- * before any work is done, and calls {@link finishPending} after all work
+ * initializes the three {@link ScoreInputType} divs. Starts pending in
+ * {@link initializeChecker} before any work is done, and finishes when work is
  * completed, so that all other initialization work can skip calling those
- * functions, since we are guaranteed to be pending until everything is done.
+ * functions. This is safe because all initialize* functions are waiting on the
+ * same promise, so they will all succeed or detect a disaster change together.
  * @param {AssetData} assetData
  * @return {Promise<void>} Promise that completes when all work is done.
  */
@@ -449,32 +524,37 @@ async function initializeFlexibleDisaster(assetData) {
         break;
     }
   }
-  startPending();
-  try {
-    await Promise.all([
-      initializeGeography(),
-      initializePoverty(),
-      initializeBuildings(),
-    ]);
-  } finally {
-    finishPending();
+  initializeChecker.maybeStartPending();
+  const [result] = await Promise.all([
+    initializeGeography(),
+    initializePoverty(),
+    initializeBuildings(),
+  ]);
+  if (result) {
+    // Just check one value to see if it succeeded: others must be the same.
+    initializeChecker.finishPending();
   }
 }
 
 /**
  * Initializes geography div setup. Creates the necessary select element and
  * list of columns; waits for the list of assets to populate the select; then
- * waits for the list of columns to populate each column select. This is the
- * simplest initializer, because geography has no special cascading effects. The
- * other initializers {@link initializePoverty} and {@link initializeBuildings}
- * do this as well, but have additional tasks.
- * @return {Promise<*>} Promise that completes when display is complete
+ * kicks off request for the list of columns to populate each column select.
+ * This is the simplest initializer, because geography has no special cascading
+ * effects. The other initializers {@link initializePoverty} and
+ * {@link initializeBuildings} do at least this much, but have additional tasks.
+ * @return {Promise<boolean>} Promise that completes when disaster listing
+ *     finished, false if disaster changed. All initialize* functions have the
+ *     same return value
  */
 async function initializeGeography() {
   createSelectAndColumns('geography').on('change', onGeographyChange);
   if (await getAssetsAndSetOptionsForSelect(
           componentsData.geography.path, false)) {
-    return setInitialColumnValues('geography');
+    setInitialColumnValues('geography');
+    return true;
+  } else {
+    return false;
   }
 }
 
@@ -485,7 +565,9 @@ const POVERTY_BUILDINGS_TEXT = 'Column with building count: ';
  * visibility is based on poverty asset having geometries, and we must
  * initialize a column select (for the building-count column) in a different
  * div from the standard poverty div.
- * @return {Promise<void>} Promise that completes when all display completed
+ * @return {Promise<boolean>} Promise that completes when disaster listing
+ *     finished, false if disaster changed. All initialize* functions have the
+ *     same return value
  */
 async function initializePoverty() {
   const select = createSelectAndColumns('poverty').on(
@@ -499,15 +581,17 @@ async function initializePoverty() {
       .append(createSelectWithSimpleWriteOnChange(POVERTY_BUILDINGS_PATH));
   if (!await getAssetsAndSetOptionsForSelect(componentsData.poverty.path)) {
     // Disaster changed: abort.
-    return;
+    return false;
   }
   // Set actual geography visibility.
   await showGeographyDivBasedOnPoverty(select.val());
-  const propertyNames = await setInitialColumnValues('poverty');
-  if (propertyNames) {
-    // Do special column setup, if disaster unchanged.
-    setOptionsForPovertyBuildings(propertyNames);
-  }
+  setInitialColumnValues('poverty').then((propertyNames) => {
+    if (propertyNames) {
+      // Do special column setup, if disaster unchanged.
+      setOptionsForPovertyBuildings(propertyNames);
+    }
+  });
+  return true;
 }
 
 /**
@@ -517,7 +601,9 @@ async function initializePoverty() {
  * complication that we do not show the list of column selects when the asset
  * has geometries, since then we interpret the asset as a collection of building
  * locations.
- * @return {Promise<void>} Promise that completes when all displayed
+ * @return {Promise<boolean>} Promise that completes when disaster listing
+ *     finished, false if disaster changed. All initialize* functions have the
+ *     same return value
  */
 async function initializeBuildings() {
   const buildingSelect =
@@ -529,13 +615,14 @@ async function initializeBuildings() {
     showListForAsset(false, 'buildings');
   }
   if (!await getAssetsAndSetOptionsForSelect(componentsData.buildings.path)) {
-    return null;
+    return false;
   }
   if (await buildingsHasGeometry(buildingSelect.val())) {
     showListForAsset(false, 'buildings');
   } else {
-    return setInitialColumnValues('buildings');
+    setInitialColumnValues('buildings');
   }
+  return true;
 }
 
 /**
@@ -564,13 +651,9 @@ async function setInitialColumnValues(key) {
  * @return {Promise<void>} Promise that completes when all displaying complete
  */
 async function onGeographyChange() {
-  try {
-    const propertyNames = await onAssetSelectChange('geography');
-    if (propertyNames) {
-      setOptionsForColumns(propertyNames, 'geography');
-    }
-  } finally {
-    finishPending();
+  const propertyNames = await onAssetSelectChange('geography');
+  if (propertyNames) {
+    setOptionsForColumns(propertyNames, 'geography');
   }
 }
 
@@ -586,14 +669,10 @@ async function onPovertyChange(povertyAsset) {
   writeAssetDataLocally(
       await povertyHasGeometry(povertyAsset), POVERTY_HAS_GEOMETRY_PATH);
   await showGeographyDivBasedOnPoverty(povertyAsset);
-  try {
-    const propertyNames = await onAssetSelectChange('poverty');
-    if (propertyNames) {
-      setOptionsForColumns(propertyNames, 'poverty');
-      setOptionsForPovertyBuildings(propertyNames);
-    }
-  } finally {
-    finishPending();
+  const propertyNames = await onAssetSelectChange('poverty');
+  if (propertyNames) {
+    setOptionsForColumns(propertyNames, 'poverty');
+    setOptionsForPovertyBuildings(propertyNames);
   }
 }
 
@@ -607,35 +686,32 @@ async function onPovertyChange(povertyAsset) {
  */
 async function onBuildingsChange(buildingsAsset) {
   const propertyNamesPromise = onAssetSelectChange('buildings');
-  try {
-    const hasGeometry = await buildingsHasGeometry(buildingsAsset);
-    writeAssetDataLocally(hasGeometry, BUILDING_HAS_GEOMETRY_PATH);
-    showListForAsset(!hasGeometry, 'buildings');
-    if (!hasGeometry) {
-      setPendingForColumns('buildings');
-      const propertyNames = await propertyNamesPromise;
-      if (propertyNames) {
-        setOptionsForColumns(propertyNames, 'buildings');
-      }
+  const hasGeometry = await buildingsHasGeometry(buildingsAsset);
+  writeAssetDataLocally(hasGeometry, BUILDING_HAS_GEOMETRY_PATH);
+  showListForAsset(!hasGeometry, 'buildings');
+  if (hasGeometry) {
+    componentsData.buildings.columnsPending.finishPending();
+  } else {
+    setPendingForColumns('buildings');
+    const propertyNames = await propertyNamesPromise;
+    if (propertyNames) {
+      setOptionsForColumns(propertyNames, 'buildings');
     }
-  } finally {
-    finishPending();
   }
 }
 
 /**
  * Handles basic operation of an asset selection change: sets relevant columns
  * to 'pending', writes to Firestore, and returns columns of newly chosen asset.
- * Calls {@link startPending} via
- * {@link startPendingWriteSelectAndGetPropertyNames}, so callers must call
- * {@link finishPending}!
+ * Starts a pending operation via {@link setPendingForColumns}, so callers must
+ * finish it if still valid, typically in {@link setOptionsForColumns}.
  * @param {ScoreInputType} key
  * @return {Promise<?Array<EeColumn>>} Null if value of select associated to
  *    `key` changed during column retrieval. Callers should abort in that case
  */
 function onAssetSelectChange(key) {
   setPendingForColumns(key);
-  return startPendingWriteSelectAndGetPropertyNames(componentsData[key].path);
+  return writeSelectAndGetPropertyNames(componentsData[key].path);
 }
 
 /**
@@ -654,8 +730,10 @@ async function showGeographyDivBasedOnPoverty(povertyAssetName) {
 function setGeographyDivVisibility(visible) {
   if (visible) {
     componentsData.geography.div.show();
+    componentsData.geography.columnsPending.markVisible();
   } else {
     componentsData.geography.div.hide();
+    componentsData.geography.columnsPending.markInvisible();
   }
 }
 
@@ -717,6 +795,7 @@ function createSelectAndColumns(assetKey) {
 }
 
 /**
+ * Sets options for `key`'s column selects, finishes `key`'s pending operation.
  * @param {Array<EeColumn>} properties Column select options
  * @param {ScoreInputType} key
  */
@@ -724,12 +803,35 @@ function setOptionsForColumns(properties, key) {
   for (const columnInfo of componentsData[key].columns) {
     setOptionsForSelect(properties, columnInfo.path);
   }
+  componentsData[key].columnsPending.finishPending();
 }
 
-/** @param {ScoreInputType} key All `key` columns will be set to "pending" */
+/**
+ * Sets all `key` columns to "pending", starts `key`'s pending operation.
+ * @param {ScoreInputType} key
+ */
 function setPendingForColumns(key) {
-  for (const columnInfo of componentsData[key].columns) {
-    showSelectAsPending(columnInfo.path);
+  if (componentsData[key].columnsPending.maybeStartPending()) {
+    for (const columnInfo of componentsData[key].columns) {
+      showSelectAsPending(columnInfo.path);
+    }
+  }
+}
+
+/**
+ * Sets `key`'s div's visibility, and reinstates/removes its pending operation:
+ * invisible divs should not count as pending, even if waiting on data there,
+ * and visible divs should count as pending, even if previously hidden.
+ * @param {ScoreInputType} key
+ * @param {boolean} visible
+ */
+function setVisibilityOfDivForKey(key, visible) {
+  if (visible) {
+    componentsData[key].div.show();
+    componentsData[key].columnsPending.markVisible();
+  } else {
+    componentsData[key].div.hide();
+    componentsData[key].columnsPending.markInvisible();
   }
 }
 
@@ -770,7 +872,7 @@ function setUpFlexibleOnPageLoad() {
  * texts to defaults, and computes whether to show damage value item.
  */
 function onBuildingSourceBuildingsSelected() {
-  componentsData.buildings.div.show();
+  setVisibilityOfDivForKey('buildings', true);
   povertyBuildingsDiv.hide();
   setExplanationSpanTextForColumn(NODAMAGE_COLUMN_INFO);
   setExplanationSpanTextForColumn(NODAMAGE_VALUE_INFO);
@@ -779,7 +881,7 @@ function onBuildingSourceBuildingsSelected() {
 
 /** Similar to {@link onBuildingSourceBuildingsSelected}. */
 function onBuildingSourcePovertySelected() {
-  componentsData.buildings.div.hide();
+  setVisibilityOfDivForKey('buildings', false);
   povertyBuildingsDiv.show();
   setExplanationSpanTextForColumn(NODAMAGE_COLUMN_INFO);
   setExplanationSpanTextForColumn(NODAMAGE_VALUE_INFO);
@@ -791,7 +893,7 @@ function onBuildingSourcePovertySelected() {
  * damage columns to indicate they are mandatory if damage asset is present.
  */
 function onBuildingSourceDamageSelected() {
-  componentsData.buildings.div.hide();
+  setVisibilityOfDivForKey('buildings', false);
   povertyBuildingsDiv.hide();
   setExplanationSpanTextForColumn(
       NODAMAGE_COLUMN_INFO,

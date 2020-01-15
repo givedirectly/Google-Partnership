@@ -3,8 +3,8 @@ import {getDisaster} from '../resources.js';
 import {createScoreAssetForFlexibleDisaster, createScoreAssetForStateBasedDisaster} from './create_score_asset.js';
 import {getDisasterAssetsFromEe} from './list_ee_assets.js';
 import {setUpAddDelete} from './manage_disaster_add_delete.js';
-import {disasterData, getIsCurrentDisasterChecker, initializeDamage, isFlexible, noteNewDisaster, showDisabledKickoffButton} from './manage_disaster_base.js';
-import {initializeFlexibleDisaster, setUpFlexibleOnPageLoad} from './manage_disaster_flexible.js';
+import {disasterData, getIsCurrentDisasterChecker, initializeDamage, isFlexible, noteNewDisaster, showPendingKickoffButton} from './manage_disaster_base.js';
+import {initializeFlexibleDisaster} from './manage_disaster_flexible.js';
 import {initializeStateBasedDisaster, validateStateBasedUserFields} from './manage_disaster_state_based.js';
 
 export {
@@ -48,7 +48,6 @@ function enableWhenFirestoreReady(allDisastersData) {
     disasterData.set(disasterName, data);
   }
   setUpAddDelete();
-  setUpFlexibleOnPageLoad();
 
   const kickoffButton = $('#kickoff-button');
   kickoffButton.on('click', () => {
@@ -72,7 +71,6 @@ function enableWhenFirestoreReady(allDisastersData) {
  *     display is done (user can interact with page)
  */
 async function onSetDisaster() {
-  showDisabledKickoffButton('Initializing...');
   noteNewDisaster();
   const isCurrent = getIsCurrentDisasterChecker();
   const currentDisaster = getDisaster();
@@ -85,13 +83,15 @@ async function onSetDisaster() {
   const flexible = isFlexible(currentData);
   const {assetData} = currentData;
 
-  // Kick off damage promise first: flexible disaster needs basics ready.
+  // Kick off damage promise first: flexible disaster needs no-damage column
+  // and value ready.
+  showPendingKickoffButton();
   const damagePromise = initializeDamage(assetData);
   await (
       flexible ? initializeFlexibleDisaster(assetData) :
                  initializeStateBasedDisaster(assetData));
   await damagePromise;
-  if (isCurrent() && !flexible) {
+  if (isCurrent() && !isFlexible()) {
     validateStateBasedUserFields();
   }
 }

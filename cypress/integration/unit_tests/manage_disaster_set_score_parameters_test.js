@@ -1,23 +1,18 @@
 import {addPolygonWithPath} from '../../../docs/basic_map.js';
+import * as ErrorLib from '../../../docs/error.js'
 import {LayerType} from '../../../docs/firebase_layers.js';
 import {readDisasterDocument} from '../../../docs/firestore_document.js';
-import {
-  BuildingSource,
-  createDisasterData
-} from '../../../docs/import/create_disaster_lib.js';
+import {BuildingSource, createDisasterData} from '../../../docs/import/create_disaster_lib.js';
 import * as ListEeAssets from '../../../docs/import/list_ee_assets.js';
-import {enableWhenFirestoreReady} from '../../../docs/import/manage_disaster.js';
+import {enableWhenFirestoreReady, onSetDisaster} from '../../../docs/import/manage_disaster.js';
 import {DAMAGE_PROPERTY_PATH, disasterData, makeInputElementIdFromPath, NODAMAGE_COLUMN_INFO, NODAMAGE_VALUE_INFO, scoreBoundsMap, setUpScoreBoundsMap} from '../../../docs/import/manage_disaster_base.js';
+import {componentsData, POVERTY_BUILDINGS_PATH, setUpFlexibleOnPageLoad} from '../../../docs/import/manage_disaster_flexible.js';
 import {assetSelectionRowPrefix, setUpStateBasedOnPageLoad, stateBasedScoreAssetTypes, validateStateBasedUserFields} from '../../../docs/import/manage_disaster_state_based.js';
 import * as UpdateFirestoreDisaster from '../../../docs/import/update_firestore_disaster.js';
 import {getDisaster} from '../../../docs/resources.js';
 import {cyQueue} from '../../support/commands.js';
 import {getConvertEeObjectToPromiseRelease, setUpSavingStubs} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
-import {
-  componentsData,
-  POVERTY_BUILDINGS_PATH
-} from '../../../docs/import/manage_disaster_flexible.js';
 
 // Triangle goes up into Canada, past default map of basic_map.js.
 const scoreBoundsCoordinates = [
@@ -49,6 +44,8 @@ before(preparePage);
 
 let stateStub;
 let disasterStub;
+// Reset error stub history at the end of test if it is supposed to be called.
+let errorStub;
 setUpSavingStubs();
 let firstTest = true;
 beforeEach(() => {
@@ -56,24 +53,28 @@ beforeEach(() => {
     cy.stub(document, 'getElementById')
         .callsFake((id) => doc.getElementById(id));
     if (firstTest) {
-      // setUpStateBasedScoreSelectorTable gets elements by id, so we have to
-      // stub first, which is harder in a before() hook (since stubs should be
-      // set in beforeEach() hooks) but it should only run once in this file.
+      // setUp functions get elements by id, so we have to stub first, which is
+      // harder in a before() hook (since stubs should be set in beforeEach()
+      // hooks) but it should only run once in this file.
       setUpStateBasedOnPageLoad();
+      setUpFlexibleOnPageLoad();
       firstTest = false;
     }
   });
   stateStub = cy.stub(ListEeAssets, 'getStateAssetsFromEe');
-  disasterStub = cy.stub(ListEeAssets, 'getDisasterAssetsFromEe')
-                     .returns(Promise.resolve(new Map([
-                       ['asset1', {type: 1, disabled: false}],
-                       ['asset2', {type: 2, disabled: false}],
-                     ])));
+  disasterStub = cy.stub(ListEeAssets, 'getDisasterAssetsFromEe');
+  disasterStub.returns(Promise.resolve(new Map([
+    ['asset1', ENABLED_COLLECTION],
+    ['asset2', ENABLED_COLLECTION],
+  ])));
+  errorStub = cy.stub(ErrorLib, 'showError');
 
   disasterData.clear();
 });
 
-it.only('damage asset/map-bounds elements', () => {
+afterEach(() => expect(errorStub).to.not.be.called);
+
+it('damage asset/map-bounds elements', () => {
   callEnableWhenReady(setUpDefaultData());
   getDamageSelect().should('have.value', '');
   cy.get('#map-bounds-div').should('be.visible');
@@ -188,13 +189,10 @@ it('Handles assets with and without geometries', () => {
 
   // Be a little hacky to avoid repeating ourselves with damage.
   for (const i of [TIGER_INDEX, BUILDINGS_INDEX, BUILDINGS_INDEX + 1]) {
-    (i <= BUILDINGS_INDEX ? getSelectForScoreAssetIndex(i) :
-                            getDamageSelect())
+    (i <= BUILDINGS_INDEX ? getSelectForScoreAssetIndex(i) : getDamageSelect())
         .within(() => {
           cy.get('option').contains('None').should('be.enabled');
-          cy.get('option')
-              .contains('asset/with/geometry')
-              .should('be.enabled');
+          cy.get('option').contains('asset/with/geometry').should('be.enabled');
           cy.get('option')
               .contains('asset/with/null/geometry')
               .should('be.disabled');
@@ -403,8 +401,7 @@ it('does column verification', () => {
       {'GEOid2': 0, 'GEOdisplay-label': 0, 'HD01_VD01': 0, 'HD01_VD02': 0})]);
 
   const featureCollectionStub = cy.stub(ee, 'FeatureCollection');
-  featureCollectionStub.withArgs('state0').returns(
-      goodIncomeBadPovertyFeature);
+  featureCollectionStub.withArgs('state0').returns(goodIncomeBadPovertyFeature);
   featureCollectionStub.withArgs('state1').returns(
       otherGoodIncomeBadPovertyFeature);
   featureCollectionStub.withArgs('state2').returns(goodPovertyFeature);
@@ -542,7 +539,9 @@ it('shows pending then values for state-based disaster, damage cascades',
          cy.spy(UpdateFirestoreDisaster, 'updateDataInFirestore');
      let callCount = 1;
      function expectFirestoreUpdate() {
-       cyQueue(() => expect(updateDisasterSpy).to.have.callCount(callCount++));
+       const expectedCalls = callCount++;
+       cyQueue(
+           () => expect(updateDisasterSpy).to.have.callCount(expectedCalls));
      }
 
      // Delay results until we're ready, for both state and disaster.
@@ -565,8 +564,7 @@ it('shows pending then values for state-based disaster, damage cascades',
      // found, and svi is never set.
      const currentData = createDefaultStateBasedFirestoreData();
      currentData.assetData.stateBasedData.snapData.paths.NY = 'found-asset';
-     currentData.assetData.stateBasedData.incomeAssetPaths.NY =
-         'missing-asset';
+     currentData.assetData.stateBasedData.incomeAssetPaths.NY = 'missing-asset';
      currentData.assetData.damageAssetPath = 'missing-asset';
      currentData.assetData.noDamageKey = 'a-key';
      currentData.assetData.noDamageValue = 'a-value';
@@ -574,16 +572,13 @@ it('shows pending then values for state-based disaster, damage cascades',
          enableWhenFirestoreReady(new Map([[getDisaster(), currentData]]));
      // Give promise a chance to start running.
      cy.wait(0);
-     cy.get('#kickoff-button').should('be.disabled');
-     cy.get('#kickoff-button').should('have.text', 'Initializing...');
 
      assertSelectPending(getSelectForScoreAssetIndex(POVERTY_INDEX));
      assertSelectPending(getDamageSelect());
      // Because damage asset is set in Firestore, and column key is also set
      // in Firestore, we display the no-damage column and no-damage value
      // while retrieving data from EE.
-     assertSelectPending(
-         getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path));
+     assertKickoffAndSelectWithPathPending(NODAMAGE_COLUMN_INFO.path);
      getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path)
          .should('have.value', 'a-value');
 
@@ -624,8 +619,7 @@ it('shows pending then values for state-based disaster, damage cascades',
      // Change the damage asset to one with no-damage column.
      getDamageSelect().select('asset1').blur();
      // Column and value both visible now, with correct values.
-     getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path)
-         .should('be.visible');
+     getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path).should('be.visible');
      getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path)
          .should('have.value', 'a-key');
      getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).should('be.visible');
@@ -636,8 +630,7 @@ it('shows pending then values for state-based disaster, damage cascades',
      // Change to an asset without the no-damage column.
      getDamageSelect().select('asset2').blur();
      // Since there is an asset, column select is visible.
-     getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path)
-         .should('be.visible');
+     getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path).should('be.visible');
      // But it has no selection, and the value input is hidden.
      getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path)
          .should('have.value', '');
@@ -647,8 +640,7 @@ it('shows pending then values for state-based disaster, damage cascades',
 
      // Switch back to asset1: looks the same as before.
      getDamageSelect().select('asset1').blur();
-     getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path)
-         .should('be.visible');
+     getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path).should('be.visible');
      getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path)
          .should('have.value', 'a-key');
      getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).should('be.visible');
@@ -657,187 +649,627 @@ it('shows pending then values for state-based disaster, damage cascades',
      expectFirestoreUpdate();
    });
 
-it('does basic tests for flexible', () => {
-  // Track Firestore updates.
-  const updateDisasterSpy =
-      cy.spy(UpdateFirestoreDisaster, 'updateDataInFirestore');
-  let callCount = 1;
-  function expectFirestoreUpdate() {
-    const expectedCalls = callCount++;
-    cyQueue(() => expect(updateDisasterSpy).to.have.callCount(expectedCalls));
-  }
+describe('Tests for flexible disasters', () => {
+  it('does basic interactions for flexible', () => {
+    // Track Firestore updates.
+    const updateDisasterSpy =
+        cy.spy(UpdateFirestoreDisaster, 'updateDataInFirestore');
+    let callCount = 1;
+    /** Asserts there has been exactly one Firestore update since last call. */
+    function assertFirestoreUpdate() {
+      const expectedCalls = callCount++;
+      cy.wait(0).then(
+          () => expect(updateDisasterSpy).to.have.callCount(expectedCalls));
+    }
 
-  // Delay results until we're ready.
-  const asset1 = ee.FeatureCollection([ee.Feature(null, {'a-key': 0})]);
-  const asset2 = ee.FeatureCollection([ee.Feature(null, {'b-key': 0})]);
-  const noGeoAsset = ee.FeatureCollection([ee.Feature(null, {'a-key': 0, 'b-key': 1})]);
+    // Delay results until we're ready.
+    const asset1 = ee.FeatureCollection([ee.Feature(null, {'a-key': 0})]);
+    const asset2 = ee.FeatureCollection([ee.Feature(null, {'b-key': 0})]);
+    const noGeoAsset =
+        ee.FeatureCollection([ee.Feature(null, {'a-key': 0, 'b-key': 1})]);
 
-  let disasterAssetListingResult;
-  disasterStub.returns(
-      new Promise((resolve) => disasterAssetListingResult = resolve));
+    let disasterAssetListingResult;
+    disasterStub.returns(
+        new Promise((resolve) => disasterAssetListingResult = resolve));
 
-  const featureCollectionStub = cy.stub(ee, 'FeatureCollection');
-  featureCollectionStub.withArgs('asset1').returns(asset1);
-  featureCollectionStub.withArgs('asset2').returns(asset2);
-  featureCollectionStub.withArgs('noGeoAsset').returns(noGeoAsset);
+    const featureCollectionStub = cy.stub(ee, 'FeatureCollection');
+    featureCollectionStub.withArgs('asset1').returns(asset1);
+    featureCollectionStub.withArgs('asset2').returns(asset2);
+    featureCollectionStub.withArgs('noGeoAsset').returns(noGeoAsset);
 
-  const currentData = createDisasterData(null);
-  currentData.assetData.damageAssetPath = 'missing-asset';
-  currentData.assetData.noDamageKey = 'a-key';
-  currentData.assetData.noDamageValue = 'a-value';
-  const {assetData: {flexibleData}} = currentData;
-  flexibleData.povertyPath = 'missing-asset';
-  flexibleData.povertyRateKey = 'a-key';
-  flexibleData.districtDescriptionKey = 'b-key';
-  flexibleData.povertyHasGeometry = false;
-  flexibleData.geographyPath = 'missing-asset';
-  flexibleData.buildingSource = BuildingSource.DAMAGE;
-  const promise =
-      enableWhenFirestoreReady(new Map([[getDisaster(), currentData]]));
-  // Give promise a chance to start running.
-  cy.wait(0);
-  cy.get('#kickoff-button').should('be.disabled');
-  cy.get('#kickoff-button').should('have.text', 'Pending...');
+    const currentData = createDisasterData(null);
+    currentData.assetData.damageAssetPath = 'missing-asset';
+    currentData.assetData.noDamageKey = 'a-key';
+    currentData.assetData.noDamageValue = 'a-value';
+    const {assetData: {flexibleData}} = currentData;
+    flexibleData.povertyPath = 'missing-asset';
+    flexibleData.povertyRateKey = 'a-key';
+    flexibleData.districtDescriptionKey = 'b-key';
+    flexibleData.povertyHasGeometry = false;
+    flexibleData.geographyPath = 'missing-asset';
+    flexibleData.buildingSource = BuildingSource.DAMAGE;
+    const promise =
+        enableWhenFirestoreReady(new Map([[getDisaster(), currentData]]));
+    // Give promise a chance to start running.
+    cy.wait(0);
+    cy.get('#kickoff-button').should('be.disabled');
+    cy.get('#kickoff-button').should('have.text', 'Pending...');
 
-  assertSelectPending(getSelectFromPropertyPath(componentsData.poverty.path));
-  assertSelectPending(getDamageSelect());
-  // Data says poverty has no geometry, so geography initially visible.
-  cy.get('#flexible-geography-asset-data').should('be.visible');
-  // Because damage asset is set in Firestore, and column key is also set
-  // in Firestore, we display the no-damage column and no-damage value
-  // while retrieving data from EE.
-  assertSelectPending(
-      getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path));
-  getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path)
-      .should('have.value', 'a-value');
-  // Release the disaster assets.
-  cyQueue(() => disasterAssetListingResult(new Map([
-    ['asset1', ENABLED_COLLECTION],
-    ['asset2', ENABLED_COLLECTION],
-    ['noGeoAsset', {type: LayerType.FEATURE_COLLECTION, hasGeometry: false, disabled: true}],
-  ])));
-  // Promise can now complete.
-  cy.wrap(promise);
-  getSelectFromPropertyPath(componentsData.poverty.path).should('have.value', '');
-  // Geography select not visible because no valid geography asset found.
-  cy.get('#flexible-geography-asset-data').should('not.be.visible');
-  // Damage asset was not found.
-  getDamageSelect().should('have.value', '');
-  // Since damage has no value on page, no-damage column/value are hidden.
-  getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path)
-      .should('not.be.visible');
-  getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path)
-      .should('not.be.visible');
-  // There have been no Firestore updates triggered by page load.
-  cyQueue(() => expect(updateDisasterSpy).to.not.be.called);
+    assertKickoffAndSelectWithPathPending(componentsData.poverty.path);
+    assertSelectPending(getDamageSelect());
+    // Data says poverty has no geometry, so geography initially visible.
+    cy.get('#flexible-geography-asset-data').should('be.visible');
+    // Because damage asset is set in Firestore, and column key is also set
+    // in Firestore, we display the no-damage column and no-damage value
+    // while retrieving data from EE.
+    assertKickoffAndSelectWithPathPending(NODAMAGE_COLUMN_INFO.path);
+    getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path)
+        .should('have.value', 'a-value');
+    // Release the disaster assets.
+    cyQueue(() => disasterAssetListingResult(new Map([
+              ['asset1', ENABLED_COLLECTION],
+              ['asset2', ENABLED_COLLECTION],
+              [
+                'noGeoAsset', {
+                  type: LayerType.FEATURE_COLLECTION,
+                  hasGeometry: false,
+                  disabled: true
+                }
+              ],
+            ])));
 
-  cy.get('#kickoff-button').should('be.disabled');
-  cy.get('#kickoff-button').should('have.text', 'Missing poverty asset; must specify either damage asset or map bounds; warning: created asset will be missing building counts');
+    // Promise can now complete.
+    cy.wrap(promise);
+    getSelectFromPropertyPath(componentsData.poverty.path)
+        .should('have.value', '');
+    // Geography select not visible because no valid geography asset found.
+    cy.get('#flexible-geography-asset-data').should('not.be.visible');
+    // Damage asset was not found.
+    getDamageSelect().should('have.value', '');
+    // Since damage has no value on page, no-damage column/value are hidden:
+    // building counts do come from damage, but irrelevant if damage missing.
+    getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path)
+        .should('not.be.visible');
+    getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path)
+        .should('not.be.visible');
+    cy.get('#kickoff-button').should('be.disabled');
+    cy.get('#kickoff-button')
+        .should(
+            'have.text',
+            'Missing poverty asset; must specify either damage asset or map bounds; warning: created asset will be missing building counts');
+    // There have been no Firestore updates triggered by page load.
+    cyQueue(() => expect(updateDisasterSpy).to.not.be.called);
 
-  // Change the damage asset to one with no-damage column.
-  getDamageSelect().select('asset1').blur();
-  // Column and value both visible now, with correct values.
-  getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path)
-      .should('be.visible');
-  getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path)
-      .should('have.value', 'a-key');
-  getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).should('be.visible');
-  getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path)
-      .should('have.value', 'a-value');
-  cy.get('span').contains('must be specified since damage contains all buildings');
-  cy.get('#kickoff-button').should('be.disabled');
-  cy.get('#kickoff-button').should('have.text', 'Missing poverty asset');
-  expectFirestoreUpdate();
+    // Check available assets for damage: noGeoAsset is disabled.
+    getDamageSelect().within(() => {
+      cy.get('option').should('have.length', 4);
+      cy.get('option').contains('None').should('be.enabled');
+      cy.get('option').contains('asset1').should('be.enabled');
+      cy.get('option').contains('asset2').should('be.enabled');
+      cy.get('option').contains('noGeoAsset').should('be.disabled');
+    });
+    // Change the damage asset to one with no-damage column.
+    getDamageSelect().select('asset1').blur();
+    assertFirestoreUpdate();
+    // Column and value both visible now, with correct values.
+    getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path).should('be.visible');
+    getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path)
+        .should('have.value', 'a-key');
+    getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).should('be.visible');
+    getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path)
+        .should('have.value', 'a-value');
+    cy.get('span').contains(
+        'must be specified since damage contains all buildings');
+    cy.get('#kickoff-button').should('be.disabled');
+    cy.get('#kickoff-button').should('have.text', 'Missing poverty asset');
 
-  getSelectFromPropertyPath(componentsData.poverty.path).within(() => {
-    cy.get('option').should('have.length', 4);
-    cy.get('option').contains('None').should('be.enabled');
-    cy.get('option').contains('asset1').should('be.enabled');
-    cy.get('option').contains('asset2').should('be.enabled');
-    cy.get('option').contains('noGeoAsset').should('be.enabled');
+    // Check available assets for poverty: everything is allowed.
+    getSelectFromPropertyPath(componentsData.poverty.path).within(() => {
+      cy.get('option').should('have.length', 4);
+      cy.get('option').contains('None').should('be.enabled');
+      cy.get('option').contains('asset1').should('be.enabled');
+      cy.get('option').contains('asset2').should('be.enabled');
+      cy.get('option').contains('noGeoAsset').should('be.enabled');
+    });
+
+    // Choose an asset with geometry, and with one of the expected columns.
+    getSelectFromPropertyPath(componentsData.poverty.path)
+        .select('asset1')
+        .blur();
+    assertFirestoreUpdate();
+    const povertyColumns = componentsData.poverty.columns;
+    getSelectFromPropertyPath(povertyColumns[0].path).within(() => {
+      cy.get('option').should('have.length', 2);
+      cy.get('option').contains('None');
+      cy.get('option').contains('a-key');
+    });
+    // First column's value is now valid. Second's missing, third's was null.
+    getSelectFromPropertyPath(povertyColumns[0].path)
+        .should('have.value', 'a-key');
+    getSelectFromPropertyPath(povertyColumns[1].path).should('have.value', '');
+    getSelectFromPropertyPath(povertyColumns[2].path).should('have.value', '');
+    cy.get('#flexible-geography-asset-data').should('not.be.visible');
+    cy.get('#kickoff-button')
+        .should(
+            'have.text',
+            'Must specify properties from poverty asset: district description column, district identifier column');
+
+    // Choose an asset without geometries, but with a-key and b-key as columns.
+    getSelectFromPropertyPath(componentsData.poverty.path).select('noGeoAsset');
+    assertFirestoreUpdate();
+    getSelectFromPropertyPath(componentsData.geography.path).within(() => {
+      cy.get('option').should('have.length', 4);
+      cy.get('option').contains('None').should('be.enabled');
+      cy.get('option').contains('asset1').should('be.enabled');
+      cy.get('option').contains('asset2').should('be.enabled');
+      cy.get('option').contains('noGeoAsset').should('be.disabled');
+    });
+    // First two columns' values now valid. Third's still missing.
+    getSelectFromPropertyPath(povertyColumns[0].path)
+        .should('have.value', 'a-key');
+    getSelectFromPropertyPath(povertyColumns[1].path)
+        .should('have.value', 'b-key');
+    getSelectFromPropertyPath(povertyColumns[2].path).should('have.value', '');
+    cy.get('#kickoff-button')
+        .should(
+            'have.text',
+            'Must specify properties from poverty asset: district identifier column; missing geography asset');
+
+    // Use buildings asset: damage no longer needed for building counts.
+    cy.get('#buildings-source-buildings').click();
+    assertFirestoreUpdate();
+    cy.get('#kickoff-button')
+        .should(
+            'have.text',
+            'Must specify properties from poverty asset: district identifier column; missing geography asset; missing buildings asset');
+    cy.get('span').contains(
+        'distinguish between damaged and undamaged buildings (optional)');
+    // no-damage value still visible because no-damage column has value.
+    getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).should('be.visible');
+    // Invisible after no-damage column unset.
+    getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path).select('None').blur();
+    assertFirestoreUpdate();
+    getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path)
+        .should('not.be.visible');
+    // No-damage column is hidden if damage not set.
+    getDamageSelect().select('None').blur();
+    assertFirestoreUpdate();
+    getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path)
+        .should('not.be.visible');
+
+    // Change buildings asset to one with geometries and verify columns not
+    // there.
+    getSelectFromPropertyPath(componentsData.buildings.path)
+        .select('asset1')
+        .blur();
+    assertFirestoreUpdate();
+    // With geometries, no required buildings columns.
+    getSelectFromPropertyPath(componentsData.buildings.columns[0].path)
+        .should('not.be.visible');
+    cy.get('#kickoff-button')
+        .should(
+            'have.text',
+            'Must specify properties from poverty asset: district identifier column; missing geography asset; must specify either damage asset or map bounds');
+
+    // Now switch to buildings asset without geometries.
+    getSelectFromPropertyPath(componentsData.buildings.path)
+        .select('noGeoAsset')
+        .blur();
+    assertFirestoreUpdate();
+    cy.get('#kickoff-button')
+        .should(
+            'have.text',
+            'Must specify properties from poverty asset: district identifier column; missing geography asset; must specify properties from buildings asset: district identifier column, building counts column; must specify either damage asset or map bounds');
+
+    // Set columns for buildings.
+    getSelectFromPropertyPath(componentsData.buildings.columns[0].path)
+        .select('a-key')
+        .blur();
+    assertFirestoreUpdate();
+    getSelectFromPropertyPath(componentsData.buildings.columns[1].path)
+        .select('a-key')
+        .blur();
+    assertFirestoreUpdate();
+    cy.get('#kickoff-button')
+        .should(
+            'have.text',
+            'Must specify properties from poverty asset: district identifier column; missing geography asset; must specify either damage asset or map bounds');
+
+    // Switch to poverty for building counts.
+    cy.get('#buildings-source-poverty').click();
+    assertFirestoreUpdate();
+    getSelectFromPropertyPath(componentsData.buildings.path)
+        .should('not.be.visible');
+    cy.get('#kickoff-button')
+        .should(
+            'have.text',
+            'Must specify properties from poverty asset: district identifier column; missing geography asset; must specify building-count column (choose damage asset as buildings source for now if you don\'t need buildings); must specify either damage asset or map bounds');
+    getSelectFromPropertyPath(POVERTY_BUILDINGS_PATH).select('b-key').blur();
+    assertFirestoreUpdate();
+    cy.get('#kickoff-button')
+        .should(
+            'have.text',
+            'Must specify properties from poverty asset: district identifier column; missing geography asset; must specify either damage asset or map bounds');
   });
-  getSelectFromPropertyPath(componentsData.poverty.path).select('asset1');
-  const povertyColumns = componentsData.poverty.columns;
-  getSelectFromPropertyPath(povertyColumns[0].path).within(() => {
-    cy.get('option').should('have.length', 2);
-    cy.get('option').contains('a-key');
+
+  it('switches asset while pending', () => {
+    const propertyNamesStub = cy.stub(ListEeAssets, 'getAssetPropertyNames');
+    let resolve1;
+    let resolve2;
+    propertyNamesStub.withArgs('asset1').returns(
+        new Promise((resolve) => resolve1 = resolve));
+    propertyNamesStub.withArgs('asset2').returns(
+        new Promise((resolve) => resolve2 = resolve));
+    const currentData = createDisasterData(null);
+    currentData.assetData.flexibleData.povertyRateKey = 'c';
+    cy.wrap(enableWhenFirestoreReady(new Map([[getDisaster(), currentData]])));
+    getSelectFromPropertyPath(componentsData.poverty.path)
+        .select('asset1')
+        .blur();
+    assertKickoffAndSelectWithPathPending(
+        componentsData.poverty.columns[0].path);
+    cy.get('#kickoff-button').should('have.text', 'Pending...');
+    getSelectFromPropertyPath(componentsData.poverty.path)
+        .select('asset2')
+        .blur();
+    assertKickoffAndSelectWithPathPending(
+        componentsData.poverty.columns[0].path);
+    cy.get('#kickoff-button')
+        .should('have.text', 'Pending...')
+        .then(() => resolve1(['a', 'b']));
+    assertKickoffAndSelectWithPathPending(
+        componentsData.poverty.columns[0].path);
+    cy.get('#kickoff-button')
+        .should('have.text', 'Pending...')
+        .then(() => resolve2(['c', 'd']));
+    getSelectFromPropertyPath(componentsData.poverty.columns[0].path)
+        .should('be.enabled');
+    getSelectFromPropertyPath(componentsData.poverty.columns[0].path)
+        .should('have.value', 'c');
+    cy.get('#kickoff-button').should('not.have.text', 'Pending...');
   });
-  // First column's value is now valid. Second's missing, third's was null.
-  getSelectFromPropertyPath(povertyColumns[0].path).should('have.value', 'a-key');
-  getSelectFromPropertyPath(povertyColumns[1].path).should('have.value', '');
-  getSelectFromPropertyPath(povertyColumns[2].path).should('have.value', '');
-  cy.get('#flexible-geography-asset-data').should('not.be.visible');
-  cy.get('#kickoff-button').should('have.text', 'Must specify properties from poverty asset: district description column, district identifier column');
-  expectFirestoreUpdate();
 
-  // Choose an asset without geometries, but with a-key and b-key as columns.
-  getSelectFromPropertyPath(componentsData.poverty.path).select('noGeoAsset');
-  getSelectFromPropertyPath(componentsData.geography.path).within(() => {
-    cy.get('option').should('have.length', 4);
-    cy.get('option').contains('None').should('be.enabled');
-    cy.get('option').contains('asset1').should('be.enabled');
-    cy.get('option').contains('asset2').should('be.enabled');
-    cy.get('option').contains('noGeoAsset').should('be.disabled');
+  it('switches asset while pending, then switches back', () => {
+    const propertyNamesStub = cy.stub(ListEeAssets, 'getAssetPropertyNames');
+    let resolve1;
+    let resolve2;
+    propertyNamesStub.withArgs('asset1').returns(
+        new Promise((resolve) => resolve1 = resolve));
+    propertyNamesStub.withArgs('asset2').returns(
+        new Promise((resolve) => resolve2 = resolve));
+    const currentData = createDisasterData(null);
+    currentData.assetData.flexibleData.povertyRateKey = 'a';
+    cy.wrap(enableWhenFirestoreReady(new Map([[getDisaster(), currentData]])));
+    getSelectFromPropertyPath(componentsData.poverty.path)
+        .select('asset1')
+        .blur();
+    assertKickoffAndSelectWithPathPending(
+        componentsData.poverty.columns[0].path);
+    getSelectFromPropertyPath(componentsData.poverty.path)
+        .select('asset2')
+        .blur();
+    assertKickoffAndSelectWithPathPending(
+        componentsData.poverty.columns[0].path);
+    getSelectFromPropertyPath(componentsData.poverty.path)
+        .select('asset1')
+        .blur();
+    assertKickoffAndSelectWithPathPending(
+        componentsData.poverty.columns[0].path)
+        .then(() => resolve2(['c', 'd']));
+    assertKickoffAndSelectWithPathPending(
+        componentsData.poverty.columns[0].path)
+        .then(() => resolve1(['a', 'b']));
+    getSelectFromPropertyPath(componentsData.poverty.columns[0].path)
+        .should('be.enabled');
+    getSelectFromPropertyPath(componentsData.poverty.columns[0].path)
+        .should('have.value', 'a');
+    cy.get('#kickoff-button').should('not.have.text', 'Pending...');
   });
-  // First two columns' values now valid. Third's still missing.
-  getSelectFromPropertyPath(povertyColumns[0].path).should('have.value', 'a-key');
-  getSelectFromPropertyPath(povertyColumns[1].path).should('have.value', 'b-key');
-  getSelectFromPropertyPath(povertyColumns[2].path).should('have.value', '');
-  cy.get('#kickoff-button').should('have.text', 'Must specify properties from poverty asset: district identifier column; missing geography asset');
-  expectFirestoreUpdate();
 
-  // Use buildings: damage no longer needed for building counts.
-  cy.get('#buildings-source-buildings').click();
-  expectFirestoreUpdate();
-  cy.get('#kickoff-button').should('have.text', 'Must specify properties from poverty asset: district identifier column; missing geography asset; missing buildings asset');
-  cy.get('span').contains('distinguish between damaged and undamaged buildings (optional)');
-  // no-damage value still visible because no-damage column has value.
-  getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).should('be.visible');
-  // Invisible after no-damage column unset.
-  getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path).select('None').blur();
-  expectFirestoreUpdate();
-  getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).should('not.be.visible');
-  getDamageSelect().select('None').blur();
-  getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path).should('not.be.visible');
-  expectFirestoreUpdate();
+  it('makes geography unneeded while pending', () => {
+    disasterStub.returns(Promise.resolve(new Map([
+      ['asset1', ENABLED_COLLECTION],
+      ['asset2', ENABLED_COLLECTION],
+      [
+        'noGeoAsset',
+        {type: LayerType.FEATURE_COLLECTION, hasGeometry: false, disabled: true}
+      ],
+    ])));
 
-  // Change buildings asset to one with geometries and verify columns not there.
-  getSelectFromPropertyPath(componentsData.buildings.path).select('asset1').blur();
-  // With geometries, no required buildings columns.
-  getSelectFromPropertyPath(componentsData.buildings.columns[0].path).should('not.be.visible');
-  cy.get('#kickoff-button').should('have.text', 'Must specify properties from poverty asset: district identifier column; missing geography asset; must specify either damage asset or map bounds');
-  expectFirestoreUpdate();
+    const propertyNamesStub = cy.stub(ListEeAssets, 'getAssetPropertyNames');
+    let resolveFunction;
+    propertyNamesStub.withArgs('asset1').returns(Promise.resolve(['a', 'b']));
+    propertyNamesStub.withArgs('noGeoAsset').returns(Promise.resolve([
+      'a', 'b'
+    ]));
+    propertyNamesStub.withArgs('asset2').returns(
+        new Promise((resolve) => resolveFunction = resolve));
+    cy.wrap(enableWhenFirestoreReady(
+        new Map([[getDisaster(), createDisasterData(null)]])));
+    getSelectFromPropertyPath(componentsData.poverty.path)
+        .select('noGeoAsset')
+        .blur();
+    cy.get('#kickoff-button').should('not.have.text', 'Pending...');
+    getSelectFromPropertyPath(componentsData.geography.path)
+        .select('asset2')
+        .blur();
+    assertKickoffAndSelectWithPathPending(
+        componentsData.geography.columns[0].path);
+    getSelectFromPropertyPath(componentsData.poverty.path)
+        .select('asset1')
+        .blur();
+    cy.get('#kickoff-button')
+        .should('not.have.text', 'Pending...')
+        .then(() => resolveFunction(['a', 'b']));
+    getSelectFromPropertyPath(componentsData.poverty.path)
+        .select('noGeoAsset')
+        .blur();
+    getSelectFromPropertyPath(componentsData.geography.columns[0].path)
+        .within(() => cy.get('option').should('have.length', 3))
+  });
 
-  // Now try without geometries.
-  getSelectFromPropertyPath(componentsData.buildings.path).select('noGeoAsset').blur();
-  cy.get('#kickoff-button').should('have.text', 'Must specify properties from poverty asset: district identifier column; missing geography asset; must specify properties from buildings asset: district identifier column, building counts column; must specify either damage asset or map bounds');
-  expectFirestoreUpdate();
+  it('makes geography unneeded while pending, then switches back', () => {
+    disasterStub.returns(Promise.resolve(new Map([
+      ['asset1', ENABLED_COLLECTION],
+      ['asset2', ENABLED_COLLECTION],
+      [
+        'noGeoAsset',
+        {type: LayerType.FEATURE_COLLECTION, hasGeometry: false, disabled: true}
+      ],
+    ])));
 
-  // Set columns for buildings.
-  getSelectFromPropertyPath(componentsData.buildings.columns[0].path).select('a-key').blur();
-  expectFirestoreUpdate();
-  getSelectFromPropertyPath(componentsData.buildings.columns[1].path).select('a-key').blur();
-  expectFirestoreUpdate();
-  cy.get('#kickoff-button').should('have.text', 'Must specify properties from poverty asset: district identifier column; missing geography asset; must specify either damage asset or map bounds');
+    const propertyNamesStub = cy.stub(ListEeAssets, 'getAssetPropertyNames');
+    let resolveFunction;
+    propertyNamesStub.withArgs('asset1').returns(Promise.resolve(['a', 'b']));
+    propertyNamesStub.withArgs('noGeoAsset').returns(Promise.resolve([
+      'a', 'b'
+    ]));
+    propertyNamesStub.withArgs('asset2').returns(
+        new Promise((resolve) => resolveFunction = resolve));
+    cy.wrap(enableWhenFirestoreReady(
+        new Map([[getDisaster(), createDisasterData(null)]])));
+    getSelectFromPropertyPath(componentsData.poverty.path)
+        .select('noGeoAsset')
+        .blur();
+    cy.get('#kickoff-button').should('not.have.text', 'Pending...');
+    getSelectFromPropertyPath(componentsData.geography.path)
+        .select('asset2')
+        .blur();
+    assertKickoffAndSelectWithPathPending(
+        componentsData.geography.columns[0].path);
+    getSelectFromPropertyPath(componentsData.poverty.path)
+        .select('asset1')
+        .blur();
+    cy.get('#kickoff-button').should('not.have.text', 'Pending...');
+    getSelectFromPropertyPath(componentsData.poverty.path)
+        .select('noGeoAsset')
+        .blur();
+    assertKickoffAndSelectWithPathPending(
+        componentsData.geography.columns[0].path)
+        .then(() => resolveFunction(['a', 'b']));
+    cy.get('#kickoff-button').should('not.have.text', 'Pending...');
+    getSelectFromPropertyPath(componentsData.geography.columns[0].path)
+        .within(() => cy.get('option').should('have.length', 3))
+  });
 
-  // Switch to poverty for buildings.
-  cy.get('#buildings-source-poverty').click();
-  getSelectFromPropertyPath(componentsData.buildings.path).should('not.be.visible');
-  cy.get('#kickoff-button').should('have.text', 'Must specify properties from poverty asset: district identifier column; missing geography asset; must specify building-count column (choose damage asset as buildings source for now if you don\'t need buildings); must specify either damage asset or map bounds');
-  expectFirestoreUpdate();
-  getSelectFromPropertyPath(POVERTY_BUILDINGS_PATH).select('b-key').blur();
-  cy.get('#kickoff-button').should('have.text', 'Must specify properties from poverty asset: district identifier column; missing geography asset; must specify either damage asset or map bounds');
-  expectFirestoreUpdate();
+  it('makes buildings unneeded while pending', () => {
+    disasterStub.returns(Promise.resolve(new Map([
+      [
+        'noGeoAsset',
+        {type: LayerType.FEATURE_COLLECTION, hasGeometry: false, disabled: true}
+      ],
+    ])));
+    const propertyNamesStub = cy.stub(ListEeAssets, 'getAssetPropertyNames');
+    let resolveFunction;
+    propertyNamesStub.returns(
+        new Promise((resolve) => resolveFunction = resolve));
+    cy.wrap(enableWhenFirestoreReady(
+        new Map([[getDisaster(), createDisasterData(null)]])));
+    cy.get('#kickoff-button').should('not.have.text', 'Pending...');
+    cy.get('#buildings-source-buildings').click();
+    getSelectFromPropertyPath(componentsData.buildings.path)
+        .select('noGeoAsset')
+        .blur();
+    assertKickoffAndSelectWithPathPending(
+        componentsData.buildings.columns[0].path);
+    cy.get('#buildings-source-poverty').click();
+    cy.get('#kickoff-button')
+        .should('not.have.text', 'Pending...')
+        .then(() => resolveFunction(['a', 'b']));
+    cy.get('#buildings-source-buildings').click();
+    getSelectFromPropertyPath(componentsData.buildings.columns[0].path)
+        .within(() => cy.get('option').should('have.length', 3));
+  });
+
+  it('makes buildings unneeded while pending, then switches back', () => {
+    disasterStub.returns(Promise.resolve(new Map([
+      [
+        'noGeoAsset',
+        {type: LayerType.FEATURE_COLLECTION, hasGeometry: false, disabled: true}
+      ],
+    ])));
+    const propertyNamesStub = cy.stub(ListEeAssets, 'getAssetPropertyNames');
+    let resolveFunction;
+    propertyNamesStub.returns(
+        new Promise((resolve) => resolveFunction = resolve));
+    cy.wrap(enableWhenFirestoreReady(
+        new Map([[getDisaster(), createDisasterData(null)]])));
+    cy.get('#kickoff-button').should('not.have.text', 'Pending...');
+    cy.get('#buildings-source-buildings').click();
+    getSelectFromPropertyPath(componentsData.buildings.path)
+        .select('noGeoAsset')
+        .blur();
+    assertKickoffAndSelectWithPathPending(
+        componentsData.buildings.columns[0].path);
+    cy.get('#buildings-source-poverty').click();
+    cy.get('#kickoff-button').should('not.have.text', 'Pending...');
+    cy.get('#buildings-source-buildings').click();
+    assertKickoffAndSelectWithPathPending(
+        componentsData.buildings.columns[0].path)
+        .then(() => resolveFunction(['a', 'b']));
+    getSelectFromPropertyPath(componentsData.buildings.columns[0].path)
+        .within(() => cy.get('option').should('have.length', 3));
+  });
+
+  it('switches flexible disasters while still pending', () => {
+    // Delay results until we're ready.
+    const asset1 = ee.FeatureCollection([ee.Feature(null, {'a-key': 0})]);
+    const asset2 = ee.FeatureCollection([ee.Feature(null, {'b-key': 0})]);
+    const noGeoAsset =
+        ee.FeatureCollection([ee.Feature(null, {'a-key': 0, 'b-key': 1})]);
+
+    let firstListingResult;
+    let secondListingResult;
+    disasterStub.reset();
+    const firstPromise = new Promise((resolve) => firstListingResult = resolve);
+    disasterStub.withArgs(getDisaster()).returns(firstPromise);
+    const secondPromise =
+        new Promise((resolve) => secondListingResult = resolve);
+    disasterStub.withArgs('otherDisaster').returns(secondPromise);
+
+    const featureCollectionStub = cy.stub(ee, 'FeatureCollection');
+    featureCollectionStub.withArgs('asset1').returns(asset1);
+    featureCollectionStub.withArgs('asset2').returns(asset2);
+    featureCollectionStub.withArgs('noGeoAsset').returns(noGeoAsset);
+
+    const data1 = createDisasterData(null);
+    let {flexibleData} = data1.assetData;
+    flexibleData.povertyPath = 'asset1';
+    flexibleData.povertyRateKey = 'a-key';
+    const data2 = createDisasterData(null);
+    ({flexibleData} = data2.assetData);
+    flexibleData.povertyPath = 'asset2';
+    flexibleData.povertyRateKey = 'b-key';
+    const promise = enableWhenFirestoreReady(
+        new Map([[getDisaster(), data1], ['otherDisaster', data2]]));
+    cy.wait(0);
+    cy.get('#kickoff-button').should('have.text', 'Pending...');
+    let otherPromise;
+    cy.get('div')
+        .contains('Poverty rate column')
+        .should('have.length', 1)
+        .then(() => {
+          // Switch disasters without finishing EE listing.
+          window.localStorage.setItem('disaster', 'otherDisaster');
+          otherPromise = onSetDisaster();
+        });
+    // No duplicate text.
+    cy.get('div').contains('Poverty rate column').should('have.length', 1);
+
+    // Release first call. Nothing about page changes.
+    cyQueue(
+        () => firstListingResult(new Map([['asset1', ENABLED_COLLECTION]])));
+    assertKickoffAndSelectWithPathPending(componentsData.poverty.path);
+    // Confirm that first call really is done, then let second finish.
+    cy.wrap(promise).then(
+        () => secondListingResult(new Map([['asset2', ENABLED_COLLECTION]])));
+    getSelectFromPropertyPath(componentsData.poverty.path).should('be.enabled');
+    getSelectFromPropertyPath(componentsData.poverty.path)
+        .should('have.value', 'asset2');
+    getSelectFromPropertyPath(componentsData.poverty.columns[0].path)
+        .should('have.value', 'b-key');
+  });
+
+  it('switches from state-based to flexible disaster while damage pending',
+     () => {
+       let firstListingResult;
+       let secondListingResult;
+       disasterStub.reset();
+       const firstPromise =
+           new Promise((resolve) => firstListingResult = resolve);
+       disasterStub.withArgs(getDisaster()).returns(firstPromise);
+       const secondPromise =
+           new Promise((resolve) => secondListingResult = resolve);
+       disasterStub.withArgs('otherDisaster').returns(secondPromise);
+
+       const asset2 = ee.FeatureCollection([ee.Feature(null, {'b-key': 0})]);
+       const featureCollectionStub = cy.stub(ee, 'FeatureCollection');
+       featureCollectionStub.withArgs('asset2').returns(asset2);
+
+       const stateBasedData = setUpDefaultData();
+       let {assetData} = stateBasedData;
+       assetData.damageAssetPath = 'asset1';
+       assetData.noDamageKey = 'a-key';
+       const flexibleData = createDisasterData(null);
+       ({assetData} = flexibleData);
+       assetData.damageAssetPath = 'asset2';
+       assetData.noDamageKey = 'b-key';
+       const promise = enableWhenFirestoreReady(new Map(
+           [[getDisaster(), stateBasedData], ['otherDisaster', flexibleData]]));
+       cy.wait(0);
+       let otherPromise;
+       assertSelectPending(getDamageSelect()).then(() => {
+         // Switch disasters without finishing EE listing.
+         window.localStorage.setItem('disaster', 'otherDisaster');
+         otherPromise = onSetDisaster();
+       });
+       // We've switched.
+       cy.get('div').contains('Poverty rate column');
+       // Damage select still pending.
+       assertSelectPending(getDamageSelect());
+
+       // Release first call. Nothing about page changes.
+       cyQueue(
+           () => firstListingResult(new Map([['asset1', ENABLED_COLLECTION]])));
+       assertSelectPending(getDamageSelect());
+       // Confirm that first call really is done, then let second finish.
+       cy.wrap(promise).then(
+           () =>
+               secondListingResult(new Map([['asset2', ENABLED_COLLECTION]])));
+       getDamageSelect().should('be.enabled');
+       getDamageSelect().should('have.value', 'asset2');
+       getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path)
+           .should('have.value', 'b-key');
+     });
+
+  // Sadly this test doesn't actually fail even if production code incorrectly
+  // tries to proceed after the columns are returned: the exception is thrown in
+  // a Promise, so doesn't make it to Cypress. However, there is an error in the
+  // console.
+  it('switches from flexible to state-based while pending', () => {
+    const propertyNamesStub = cy.stub(ListEeAssets, 'getAssetPropertyNames');
+    let resolveColumns;
+    propertyNamesStub.returns(
+        new Promise((resolve) => resolveColumns = resolve));
+
+    const flexibleData = createDisasterData(null);
+    const stateBasedData = setUpDefaultData();
+    cy.wrap(enableWhenFirestoreReady(new Map(
+        [[getDisaster(), flexibleData], ['otherDisaster', stateBasedData]])));
+    getSelectFromPropertyPath(componentsData.poverty.path)
+        .select('asset1')
+        .blur();
+    assertKickoffAndSelectWithPathPending(
+        componentsData.poverty.columns[0].path)
+        .then(() => {
+          // Switch disasters without finishing EE listing.
+          window.localStorage.setItem('disaster', 'otherDisaster');
+          onSetDisaster();
+        });
+    // We've switched. Everything should be done.
+    cy.get('td').contains('SVI');
+    cy.get('#kickoff-button').should('not.contain', 'Pending...');
+    // Release first call. Nothing about page changes.
+    cyQueue(() => resolveColumns(['a', 'b']));
+    cy.get('#kickoff-button').should('not.contain', 'Pending...');
+  });
 });
 
 /**
  * @param {Cypress.Chainable<JQuery<HTMLSelectElement>>} select
- * @return {Cypress.Chainable<JQuery<HTMLSelectElement>>} Select for chaining
+ * @return {Cypress.Chainable<*>} Select for chaining
  */
 function assertSelectPending(select) {
+  // If select pending, kickoff must be too.
   select.should('be.disabled');
   select.should('have.text', 'pending...');
-  return select.should('have.value', '');
+  select.should('have.value', '');
+  cy.get('#kickoff-button').should('have.text', 'Pending...');
+  return cy.get('#kickoff-button').should('be.disabled');
+}
+
+function assertKickoffAndSelectWithPathPending(path) {
+  return assertSelectPending(getSelectFromPropertyPath(path));
 }
 
 /**
@@ -867,18 +1299,25 @@ function preparePage() {
     appendElement('flexible-geography-asset-data', doc);
     appendElement('buildings-source-buildings-div', doc);
     appendElement('buildings-source-poverty-div', doc);
-    appendElement('buildings-source-buildings', doc, 'input').prop('type', 'radio').prop('name', 'buildings');
-    appendElement('buildings-source-poverty', doc, 'input').prop('type', 'radio').prop('name', 'buildings');
-    appendElement('buildings-source-damage', doc, 'input').prop('type', 'radio').prop('name', 'buildings');
+    appendElement('buildings-source-buildings', doc, 'input')
+        .prop('type', 'radio')
+        .prop('name', 'buildings');
+    appendElement('buildings-source-poverty', doc, 'input')
+        .prop('type', 'radio')
+        .prop('name', 'buildings');
+    appendElement('buildings-source-damage', doc, 'input')
+        .prop('type', 'radio')
+        .prop('name', 'buildings');
 
     // Damage.
     appendElement('damage-intro-span', doc, 'span');
     appendElement('damage-asset-div', doc);
-    appendElement('map-bounds-div', doc).hide();
-    const sc
-    const mapDiv = appendElement('score-bounds-map', doc).css('width', '20%')
-    .css('height', '20%')
-    .prop('id', 'score-bounds-map');
+    const boundsDiv = appendElement('map-bounds-div', doc).hide();
+    const mapDiv = $(doc.createElement('div'))
+                       .css('width', '20%')
+                       .css('height', '20%')
+                       .prop('id', 'score-bounds-map');
+    boundsDiv.append(mapDiv);
     setUpScoreBoundsMap(mapDiv[0]);
     return doc;
   });
@@ -921,8 +1360,7 @@ function createDefaultStateBasedFirestoreData() {
  */
 function callEnableWhenReady(currentData) {
   return cyQueue(
-      () =>
-          enableWhenFirestoreReady(new Map([[getDisaster(), currentData]])));
+      () => enableWhenFirestoreReady(new Map([[getDisaster(), currentData]])));
 }
 
 /**
@@ -943,9 +1381,8 @@ function callEnableWhenReady(currentData) {
 function readFirestoreAfterWritesFinish() {
   return cy.get('@savedStub')
       .then(
-          (savedStub) =>
-              new Promise((resolve) => savedStub.callsFake(resolve))
-                  .then(() => savedStub.resetHistory()))
+          (savedStub) => new Promise((resolve) => savedStub.callsFake(resolve))
+                             .then(() => savedStub.resetHistory()))
       .then(readDisasterDocument);
 }
 

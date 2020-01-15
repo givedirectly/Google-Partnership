@@ -5,13 +5,12 @@ import {getDisaster} from '../resources.js';
 
 import {getAssetPropertyNames, getColumnsStatus, getDisasterAssetsFromEe} from './list_ee_assets.js';
 import {createOptionFrom, stylePendingSelect} from './manage_common.js';
-import {finishPending, startPending, useDamageForBuildings, validateFlexibleUserFields} from './manage_disaster_flexible.js';
+import {PendingChecker, useDamageForBuildings, validateFlexibleUserFields} from './manage_disaster_flexible.js';
 import {validateStateBasedUserFields} from './manage_disaster_state_based.js';
 import {ScoreBoundsMap} from './score_bounds_map.js';
 import {updateDataInFirestore} from './update_firestore_disaster.js';
 
 export {
-  writeAssetDataLocally,
   capitalizeFirstLetter,
   checkDamageFieldsAndShowKickoffButton,
   continueMessage,
@@ -40,10 +39,12 @@ export {
   setUpScoreBoundsMap,
   showDisabledKickoffButton,
   showListForAsset,
+  showPendingKickoffButton,
   showSelectAsPending,
-  startPendingWriteSelectAndGetPropertyNames,
   validateColumnPathHasValue,
   verifyAsset,
+  writeAssetDataLocally,
+  writeSelectAndGetPropertyNames,
 };
 // For testing.
 export {DAMAGE_PROPERTY_PATH, scoreBoundsMap};
@@ -66,6 +67,8 @@ let scoreBoundsMap;
 const SCORE_COORDINATES_PATH = Object.freeze(['scoreBoundsCoordinates']);
 const DAMAGE_PROPERTY_PATH = Object.freeze(['damageAssetPath']);
 
+const damageAssetChecker = new PendingChecker();
+
 /**
  * Does all initialization for damage asset and related fields. Creates damage
  * select, no-damage column and value, puts everything in a pending state but
@@ -75,7 +78,7 @@ const DAMAGE_PROPERTY_PATH = Object.freeze(['damageAssetPath']);
  * @return {Promise<void>}
  */
 async function initializeDamage(assetData) {
-  startPending();
+  damageAssetChecker.maybeStartPending();
   if (isFlexible()) {
     initializeScoreBoundsMapFromAssetData(assetData);
   } else {
@@ -84,18 +87,19 @@ async function initializeDamage(assetData) {
   }
   const damageIntroSpan = $('#damage-intro-span');
   const damageDiv = $('#damage-asset-div').empty().append(damageIntroSpan);
-  const damageSelect = createSelect(DAMAGE_PROPERTY_PATH)
-                           .on('change',
-                               () => displayDamageRelatedElements(
-                                   startPendingWriteSelectAndGetPropertyNames(
-                                       DAMAGE_PROPERTY_PATH),
-                                   damageSelect.val()));
+  const damageSelect =
+      createSelect(DAMAGE_PROPERTY_PATH)
+          .on('change',
+              () => displayDamageRelatedElements(
+                  writeSelectAndGetPropertyNames(DAMAGE_PROPERTY_PATH),
+                  damageSelect.val()));
   damageDiv.append(damageSelect);
   createNoDamageColumnAndValueList();
   showHideDamageAndMapDivs(!!getStoredValueFromPath(DAMAGE_PROPERTY_PATH));
   if (!await getAssetsAndSetOptionsForSelect(DAMAGE_PROPERTY_PATH, false)) {
     return;
   }
+  damageAssetChecker.finishPending();
   return displayDamageRelatedElements(
       verifyAsset(DAMAGE_PROPERTY_PATH, []), damageSelect.val());
 }
@@ -122,21 +126,16 @@ const NODAMAGE_VALUE_INFO = {
  * put no-damage column into a "pending" state until columns available.
  * @param {Promise<?Array<EeColumn>>} propertyNamesPromise Promise that will
  *     contain columns of damage asset. Created via {@link verifyAsset} or
- *     {@link startPendingWriteSelectAndGetPropertyNames}
+ *     {@link writeSelectAndGetPropertyNames}
  * @param {?EeFC} damageAsset Value of damage asset, from page
  * @return {Promise<void>}
  */
 async function displayDamageRelatedElements(propertyNamesPromise, damageAsset) {
   setNoDamageColumnAndValue(null);
   showHideDamageAndMapDivs(!!damageAsset);
-  try {
-    const propertyNames = await propertyNamesPromise;
-    if (!propertyNames) {
-      return;
-    }
+  const propertyNames = await propertyNamesPromise;
+  if (propertyNames) {
     setNoDamageColumnAndValue(propertyNames);
-  } finally {
-    finishPending();
   }
 }
 
@@ -177,19 +176,24 @@ function createNoDamageColumnAndValueList() {
   maybeShowNoDamageValueItem();
 }
 
+const damageColumnChecker = new PendingChecker();
+
 /**
  * Sets options for damage-related column input ({@link NODAMAGE_COLUMN_INFO})
  * and shows/hides {@link NODAMAGE_VALUE_INFO} if the column is set/unset.
- * @param {?Array<EeColumn>} propertyNames If null, show "pending" selects
+ * @param {?Array<EeColumn>} propertyNames If null, show "pending" selects if
+ * not already pending.
  */
 function setNoDamageColumnAndValue(propertyNames) {
   const columnPath = NODAMAGE_COLUMN_INFO.path;
   if (propertyNames) {
     setOptionsForSelect(propertyNames, columnPath);
-  } else {
+    maybeShowNoDamageValueItem();
+    damageColumnChecker.finishPending();
+  } else if (damageColumnChecker.maybeStartPending()) {
     showSelectAsPending(columnPath);
+    maybeShowNoDamageValueItem();
   }
-  maybeShowNoDamageValueItem();
 }
 
 /**
@@ -323,17 +327,13 @@ function createSelectWithSimpleWriteOnChange(propertyPath) {
  * Handles a change to a select element with no required columns, but with
  * "cascading" effects, meaning that there are other inputs whose values depend
  * on this asset's columns. See the file-level comment of
- * manage_disaster_flexible.js for an explanation of cascading. Notes the start
- * of a pending operation via {@link startPending}. The caller is responsible
- * for ending the operation after the returned columns have been processed.
- * See block comment around {@link startPending} for more.
+ * manage_disaster_flexible.js for an explanation of cascading.
  * @param {PropertyPath} path
  * @return {Promise<?Array<EeColumn>>} Returns result of {@link onAssetSelect},
  *     filtering out "system" columns, unless value of select has
  *     changed/disaster has changed, in which case returns null
  */
-async function startPendingWriteSelectAndGetPropertyNames(path) {
-  startPending();
+async function writeSelectAndGetPropertyNames(path) {
   const propertyNames = await onAssetSelect(path, null);
   return propertyNames ? propertyNames.filter(isUserProperty) : null;
 }
@@ -375,9 +375,13 @@ async function verifyAsset(propertyPath, expectedColumns) {
   // TODO: disable or discourage kick off until all green?
   const select = $('#' + makeInputElementIdFromPath(propertyPath));
   const asset = select.val();
+  const isCurrent = getIsCurrentDisasterChecker();
+  /** True if disaster or select's value changed, so should abort. */
+  function contextChanged() {
+    return (!isCurrent() || asset !== select.val());
+  }
   const assetMissingErrorFunction = (err) => {
-    if (asset !== select.val()) {
-      // Don't show errors if not current asset.
+    if (contextChanged()) {
       return null;
     }
     const message = err.message || err;
@@ -401,8 +405,7 @@ async function verifyAsset(propertyPath, expectedColumns) {
       assetMissingErrorFunction(err);
       return null;
     }
-    if (asset !== select.val()) {
-      // Don't do anything if not current asset.
+    if (contextChanged()) {
       return null;
     }
     updateColorAndHover(
@@ -417,8 +420,7 @@ async function verifyAsset(propertyPath, expectedColumns) {
       assetMissingErrorFunction(err);
       return null;
     }
-    if (asset !== select.val()) {
-      // Don't do anything if not current asset.
+    if (contextChanged()) {
       return null;
     }
     if (columnsStatusFailure) {
@@ -514,6 +516,11 @@ function checkDamageFieldsAndShowKickoffButton(message, optionalMessage) {
         .attr('disabled', false)
         .css('background-color', optionalMessage ? 'rgb(150, 150, 0)' : '');
   }
+}
+
+/** Disables button, shows 'Pending...': use when validation waiting on EE. */
+function showPendingKickoffButton() {
+  showDisabledKickoffButton('Pending...');
 }
 
 /**
