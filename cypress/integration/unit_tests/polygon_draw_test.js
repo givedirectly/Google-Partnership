@@ -95,9 +95,7 @@ describe('Unit test for ShapeData', () => {
               map,
               // Normally damageAssetPath is a string, but code tolerates
               // just putting an ee.FeatureCollection in.
-              Promise.resolve(
-                  {damageAssetPath: damageCollection},
-                  ));
+              Promise.resolve({damageAssetPath: damageCollection}));
         })
         .then((drawingManagerResult) => drawingManager = drawingManagerResult);
     // Confirm that drawing controls are visible.
