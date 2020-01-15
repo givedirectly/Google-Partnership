@@ -1,6 +1,7 @@
 import {eeLegacyPathPrefix, legacyStateDir} from '../ee_paths.js';
 import {convertEeObjectToPromise} from '../ee_promise_cache.js';
 import {showError} from '../error.js';
+import {colorToRgbString} from '../firebase_layers.js';
 import {disasterCollectionReference} from '../firestore_document.js';
 import {latLngToGeoPoint, transformGeoPointArrayToLatLng} from '../map_util.js';
 import {getDisaster} from '../resources.js';
@@ -729,7 +730,7 @@ function verifyAsset(asset, type, state, expectedColumns) {
  * @param {string} title
  */
 function updateColorAndHover(select, color, title) {
-  select.css('border-color', color).prop('title', title);
+  select.css('border-color', colorToRgbString(color)).prop('title', title);
 }
 
 /**

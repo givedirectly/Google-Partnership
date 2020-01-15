@@ -1,5 +1,5 @@
-import {ColorStyle, LayerType} from '../../../docs/firebase_layers';
-import {readDisasterDocument} from '../../../docs/firestore_document';
+import {ColorStyle, LayerType} from '../../../docs/firebase_layers.js';
+import {readDisasterDocument} from '../../../docs/firestore_document.js';
 import {populateColorFunctions, withColor} from '../../../docs/import/color_function_util.js';
 import * as manageLayersLib from '../../../docs/import/manage_layers_lib.js';
 import {getCurrentLayers} from '../../../docs/import/manage_layers_lib.js';
@@ -289,7 +289,8 @@ describe('Unit tests for color function utility', () => {
     expectOneFirebaseWrite();
     expect(getColorFunction().color).to.equal('red');
     expect(td.children().length).to.equal(1);
-    expect(td.children().first().css('background-color')).to.equal('red');
+    expect(td.children().first().css('background-color'))
+        .to.equal('rgb(255, 0, 0)');
 
     // switch to continuous
     const propertyRadio = $('#property-radio');
@@ -339,7 +340,8 @@ describe('Unit tests for color function utility', () => {
     expectOneFirebaseWrite();
     expect(getColorFunction().colors).to.eql({'0': 'orange'});
     expect(td.children().length).to.equal(1);
-    expect(td.children().first().css('background-color')).to.equal('orange');
+    expect(td.children().first().css('background-color'))
+        .to.equal('rgb(255, 140, 0)');
 
     // update another
     discreteColorPickerList.children()
@@ -349,7 +351,8 @@ describe('Unit tests for color function utility', () => {
         .trigger('change');
     expectOneFirebaseWrite();
     expect(td.children().length).to.equal(2);
-    expect(td.children().eq(1).css('background-color')).to.equal('blue');
+    expect(td.children().eq(1).css('background-color'))
+        .to.equal('rgb(0, 0, 255)');
 
     // switch to single and back to check state was saved
     $('#SINGLE-radio').trigger('change');
