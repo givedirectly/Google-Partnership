@@ -108,7 +108,9 @@ async function initializeDamage(assetData) {
 const NODAMAGE_COLUMN_INFO = {
   label: 'column that can distinguish between damaged and undamaged buildings',
   // Actual text on page modified when flexible using setExplanationSpanText.
-  explanation: 'optional',
+  explanation:
+      'optional: if omitted, all buildings in damage asset are considered ' +
+      'damaged',
   path: ['noDamageKey'],
 };
 

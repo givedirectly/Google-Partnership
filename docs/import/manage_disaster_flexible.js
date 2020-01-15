@@ -528,13 +528,13 @@ async function initializeFlexibleDisaster(assetData) {
     }
   }
   initializeChecker.maybeStartPending();
-  const [result] = await Promise.all([
+  const [geographyResult] = await Promise.all([
     initializeGeography(),
     initializePoverty(),
     initializeBuildings(),
   ]);
   // Just check one value to see if it succeeded: others must be the same.
-  if (result) {
+  if (geographyResult) {
     initializeChecker.finishPending();
   }
 }
