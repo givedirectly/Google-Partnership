@@ -3,7 +3,8 @@ import {getCheckBoxRowId, partiallyHandleBadRowAndReturnCheckbox} from './checkb
 import {mapContainerId} from './dom_constants.js';
 import {convertEeObjectToPromise} from './ee_promise_cache.js';
 import {showError} from './error.js';
-import {getFirestoreRoot} from './firestore_document.js';
+import {AUTHENTICATION_ERROR_CODE} from './firebase_privileges.js';
+import {userFeatures} from './firestore_document.js';
 import {POLYGON_HELP_URL} from './help.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 import {latLngToGeoPoint, polygonToGeoPointArray, transformGeoPointArrayToLatLng} from './map_util.js';
@@ -18,7 +19,7 @@ export {displayCalculatedData, initializeAndProcessUserRegions};
 export {
   StoredShapeData,
   transformGeoPointArrayToLatLng,
-  userShapes,
+  userShapesCollection,
 };
 
 let damageAssetPath = null;
@@ -211,10 +212,10 @@ class StoredShapeData {
       calculatedData: this.popup.calculatedData,
     };
     if (this.id) {
-      return userShapes.doc(this.id).set(record).then(
+      return userShapesCollection.doc(this.id).set(record).then(
           () => this.finishWriteAndMaybeWriteAgain());
     } else {
-      return userShapes.add(record).then((docRef) => {
+      return userShapesCollection.add(record).then((docRef) => {
         this.id = docRef.id;
         return this.finishWriteAndMaybeWriteAgain();
       });
@@ -255,7 +256,7 @@ class StoredShapeData {
     // Nothing more needs to be done for this element because it is
     // unreachable and about to be GC'ed.
     try {
-      await userShapes.doc(this.id).delete();
+      await userShapesCollection.doc(this.id).delete();
     } catch (err) {
       showError({err, polygon: this}, 'Error deleting polygon');
       throw err;
@@ -363,9 +364,7 @@ function divWithText(text) {
 window.onbeforeunload = () =>
     StoredShapeData.pendingWriteCount > 0 ? true : null;
 
-const collectionName = 'usershapes';
-
-let userShapes = null;
+let userShapesCollection = null;
 
 const appearance = {
   fillColor: '#4CEF64',
@@ -448,10 +447,13 @@ function createHelpIcon(url) {
  * @param {google.maps.Map} map Map to display regions on
  * @param {Promise<ScoreParameters>} firebasePromise Promise with Firebase
  *     damage data (also implies that authentication is complete)
+ * @param {Promise<Map<string, ShapeDocument>>} userShapesPromise Promise with
+ *     user shapes data
  * @return {Promise<?google.maps.drawing.DrawingManager>} Promise with drawing
  *     manager added to map (only used by tests). Null if there was an error
  */
-async function initializeAndProcessUserRegions(map, firebasePromise) {
+async function initializeAndProcessUserRegions(
+    map, firebasePromise, userShapesPromise) {
   setUpPopup();
   addLoadingElement(mapContainerId);
   try {
@@ -459,22 +461,21 @@ async function initializeAndProcessUserRegions(map, firebasePromise) {
     ({damageAssetPath} = await firebasePromise);
     // Damage asset may not exist yet, so this is undefined. We tolerate
     // gracefully.
-    userShapes = getFirestoreRoot().collection(collectionName);
-    let querySnapshot;
+    let shapes;
     try {
-      querySnapshot = await userShapes.get();
+      userShapesCollection = userFeatures();
+      shapes = await userShapesPromise;
     } catch (err) {
       handleUserShapesError(err);
       return null;
     }
-    drawRegionsFromFirestoreQuery(querySnapshot, map);
+    drawRegions(shapes, map);
     return setUpPolygonDrawing(map);
   } finally {
     loadingElementFinished(mapContainerId);
   }
 }
 
-const AUTHENTICATION_ERROR_CODE = 'permission-denied';
 const USER_FEATURES_DIALOG =
     '<div>Sign in to authorized account to view user-drawn features</div>';
 
@@ -524,13 +525,13 @@ function handleUserShapesError(err) {
  * Helper function that actually does drawing on map when Firestore query
  * completes.
  *
- * @param {firebase.firestore.QuerySnapshot} querySnapshot result of query
+ * @param {Map<string, ShapeDocument>} shapes user shapes by doc id -> data
  * @param {google.maps.Map} map Map to display regions on
  */
-function drawRegionsFromFirestoreQuery(querySnapshot, map) {
-  querySnapshot.forEach((userDefinedRegion) => {
-    const storedGeometry = userDefinedRegion.get('geometry');
-    const coordinates = transformGeoPointArrayToLatLng(storedGeometry);
+function drawRegions(shapes, map) {
+  shapes.forEach((userDefinedRegion, id) => {
+    const {geometry, notes, calculatedData: shapeData} = userDefinedRegion;
+    const coordinates = transformGeoPointArrayToLatLng(geometry);
     let feature;
     let calculatedData = null;
     // We distinguish polygons and markers in Firestore just via the number of
@@ -542,14 +543,11 @@ function drawRegionsFromFirestoreQuery(querySnapshot, map) {
       const properties = Object.assign({}, appearance);
       properties.paths = coordinates;
       feature = new google.maps.Polygon(properties);
-      calculatedData = userDefinedRegion.get('calculatedData');
+      calculatedData = shapeData;
     }
-    const notes = userDefinedRegion.get('notes');
     const popup = createPopup(feature, map, notes, calculatedData);
     userRegionData.set(
-        feature,
-        new StoredShapeData(
-            userDefinedRegion.id, notes, storedGeometry, popup));
+        feature, new StoredShapeData(id, notes, geometry, popup));
     feature.setMap(map);
   });
 }

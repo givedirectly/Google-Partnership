@@ -73,8 +73,11 @@ function resolveScoreAsset() {
  *     Firebase authentication is finished
  * @param {Promise<firebase.firestore.DocumentSnapshot>} disasterMetadataPromise
  *     Promise with disaster metadata for this disaster
+ * @param {Promise<firebase.firestore.DocumentSnapshot>} userShapesPromise
+ *     Promise with user shapes
  */
-function run(map, firebaseAuthPromise, disasterMetadataPromise) {
+function run(
+    map, firebaseAuthPromise, disasterMetadataPromise, userShapesPromise) {
   setMapToDrawLayersOn(map);
   resolveScoreAsset();
   const scoreAssetComputationParametersPromise =
@@ -82,7 +85,8 @@ function run(map, firebaseAuthPromise, disasterMetadataPromise) {
   const scoreComputationParametersPromise = setUpScoreComputationParameters(
       scoreAssetComputationParametersPromise, map);
   createAndDisplayJoinedData(map, scoreComputationParametersPromise);
-  initializeAndProcessUserRegions(map, scoreAssetComputationParametersPromise);
+  initializeAndProcessUserRegions(
+      map, scoreAssetComputationParametersPromise, userShapesPromise);
   disasterMetadataPromise.then(({layerArray}) => addLayers(map, layerArray));
 }
 

@@ -49,7 +49,7 @@ html, body {
   --background-color-transition: background-color 0.3s ease-in-out;
   --opacity-transition: opacity 0.5s ease-in-out;
 
-  --navbar-height: 48px;
+  --navbar-height: 52px;
 
   --sidebar-min-width: 64px;
   --sidebar-edge-width: 8px;
@@ -89,6 +89,10 @@ h1 {
   color: #545958;
 }
 
+.logogreen {
+    fill: #006837;
+}
+
 /* Navbar css */
 
 .navbar {
@@ -105,18 +109,34 @@ h1 {
   display: inline-block;
   float: left;
   margin: 0;
-  min-width: 250px;
+}
+
+.nav-right {
+  display: inline-block;
+  float: right;
+  padding: 4px 8px;
+}
+
+#public-title {
+  display: inline-block;
+  margin: 0;
+  line-height: calc(var(--navbar-height) - 8px);
 }
 
 .nav-title {
   display: inline-block;
   float: left;
-  margin: 0;
+  margin: 0 15px 0 0;
+  height: 100%;
+  position: relative;
 }
 
 .nav-header {
-  line-height: calc(var(--navbar-height) - 8px);
-  padding: 4px 8px;
+  line-height: calc(var(--navbar-height) - 16px);
+  padding: 4px 8px 0 10px;
+  font-size: 1.5em;
+  font-weight: bold;
+  color: #545958;
 }
 
 #nav-toggle {
@@ -221,12 +241,31 @@ h1 {
   color: var(--green-1);
 }
 
+.google-logo {
+  position: absolute;
+  left: 10px;
+  bottom: 0;
+  width: 50px;
+}
+
+#give-directly-logo {
+  height: 10px;
+  right: 8px;
+  position: absolute;
+  bottom: 5px;
+}
+
+.header-logos {
+  padding: 2px 8px;
+  text-decoration: overline;
+}
+
 /* Disaster Picker css */
 
 .dropdown {
   background: transparent;
   border: none;
-  font-size: 24px;
+  font-size: 22px;
   height: var(--navbar-height);
   padding: 0 8px;
   -webkit-transition: var(--background-color-transition);

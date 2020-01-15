@@ -1,7 +1,8 @@
 import {addPolygonWithPath} from '../../../docs/basic_map.js';
 import * as ErrorLib from '../../../docs/error.js';
+import {getUserFeatures} from '../../../docs/firestore_document.js';
 import * as Loading from '../../../docs/loading.js';
-import {initializeAndProcessUserRegions, StoredShapeData, transformGeoPointArrayToLatLng, userShapes} from '../../../docs/polygon_draw.js';
+import {initializeAndProcessUserRegions, StoredShapeData, transformGeoPointArrayToLatLng, userShapesCollection} from '../../../docs/polygon_draw.js';
 import {setUserFeatureVisibility} from '../../../docs/popup.js';
 import * as resourceGetter from '../../../docs/resources.js';
 import * as Toast from '../../../docs/toast.js';
@@ -95,7 +96,8 @@ describe('Unit test for ShapeData', () => {
               map,
               // Normally damageAssetPath is a string, but code tolerates
               // just putting an ee.FeatureCollection in.
-              Promise.resolve({damageAssetPath: damageCollection}));
+              Promise.resolve(
+                  {damageAssetPath: damageCollection}, getUserFeatures()));
         })
         .then((drawingManagerResult) => drawingManager = drawingManagerResult);
     // Confirm that drawing controls are visible.
@@ -155,7 +157,7 @@ describe('Unit test for ShapeData', () => {
     cy.get('#test-map-div').click();
     cy.get('#test-map-div').should('not.contain', 'damage count');
     waitForWriteToFinish()
-        .then(() => userShapes.get())
+        .then(() => userShapesCollection.get())
         .then((querySnapshot) => {
           expect(querySnapshot).to.have.property('size', 0);
           expect(querySnapshot.docs).to.be.empty;
@@ -215,10 +217,10 @@ describe('Unit test for ShapeData', () => {
       const [, data] = getFirstUserRegionDataEntry();
       // Firestore will return a new document object each time .doc is called.
       // So we can't just stub out the methods on this object.
-      const realDoc = userShapes.doc(data.id);
-      const realDocFunction = userShapes.doc;
+      const realDoc = userShapesCollection.doc(data.id);
+      const realDocFunction = userShapesCollection.doc;
       const fakeDoc = {};
-      cy.stub(userShapes, 'doc').withArgs(data.id).returns(fakeDoc);
+      cy.stub(userShapesCollection, 'doc').withArgs(data.id).returns(fakeDoc);
       fakeDoc.set = (record) => {
         // Unfortunately Cypress can't really handle executing Cypress commands
         // inside an asynchronous callback, so we rely on jquery to modify the
@@ -233,7 +235,7 @@ describe('Unit test for ShapeData', () => {
         // will check this too.
         expect(saveStartedStub).to.be.calledOnce;
         expect(saveFinishedStub).to.not.be.called;
-        userShapes.doc = realDocFunction;
+        userShapesCollection.doc = realDocFunction;
         fakeCalled = true;
         return realDoc.set(record);
       };
@@ -313,7 +315,7 @@ describe('Unit test for ShapeData', () => {
     pressButtonAndWaitForPromise('delete')
         .then(() => {
           expect(StoredShapeData.pendingWriteCount).to.eql(0);
-          return userShapes.get();
+          return userShapesCollection.get();
         })
         .then((querySnapshot) => {
           expect(querySnapshot).to.have.property('size', 0);
@@ -331,7 +333,7 @@ describe('Unit test for ShapeData', () => {
    */
   function assertMarker(position, notes) {
     return cyQueue(() => expect(StoredShapeData.pendingWriteCount).to.eql(0))
-        .then(() => userShapes.get())
+        .then(() => userShapesCollection.get())
         .then((querySnapshot) => {
           expect(querySnapshot).to.have.property('size', 1);
           const markerDoc = querySnapshot.docs[0];
@@ -391,8 +393,8 @@ describe('Unit test for ShapeData', () => {
   /**
    * Draws the default polygon and clicks on it. Then returns spies to observe
    * calculated-data-related calls made to the polygon's popup, and {@link
-   * ee#List} and {@link userShapes#doc} calls. Because EE is finicky about
-   * spying, the `eeSpy` returned is not actually spying on the real
+   * ee#List} and {@link userShapesCollection#doc} calls. Because EE is finicky
+   * about spying, the `eeSpy` returned is not actually spying on the real
    * {@link ee#List} but rather on a dummy object that shadows it, and that we
    * call with the same arguments as the real {@link ee#List}.
    * @typedef {sinon.SinonSpy|sinon.SinonStub} Spy
@@ -409,7 +411,7 @@ describe('Unit test for ShapeData', () => {
       const [, data] = getFirstUserRegionDataEntry();
       popupPendingCalculationSpy = cy.spy(data.popup, 'setPendingCalculation');
       popupCalculatedDataSpy = cy.spy(data.popup, 'setCalculatedData');
-      firestoreSpy = cy.spy(userShapes, 'doc');
+      firestoreSpy = cy.spy(userShapesCollection, 'doc');
       // Wrap ee.List so that we can track that it was called. Sadly cy.spy is
       // not delicate enough for this.
       const oldList = ee.List;
@@ -445,7 +447,7 @@ describe('Unit test for ShapeData', () => {
   });
 
   it('handles Firestore error', () => {
-    const docStub = cy.stub(userShapes, 'doc').returns({
+    const docStub = cy.stub(userShapesCollection, 'doc').returns({
       set: cy.stub().throws(new Error('Some Firebase error')),
     });
     doUnsuccessfulDraw().then(() => docStub.restore());
@@ -453,7 +455,7 @@ describe('Unit test for ShapeData', () => {
   });
 
   it('handles error then other polygon success then success', () => {
-    const docStub = cy.stub(userShapes, 'doc').returns({
+    const docStub = cy.stub(userShapesCollection, 'doc').returns({
       set: cy.stub().throws(new Error('Some Firebase error')),
     });
     const toastStub =
@@ -507,7 +509,7 @@ describe('Unit test for ShapeData', () => {
           saveStartedStub.resetHistory();
           expect(saveFinishedStub).to.not.be.called;
           expect(StoredShapeData.pendingWriteCount).to.eql(0);
-          return userShapes.get();
+          return userShapesCollection.get();
         })
         .then((querySnapshot) => {
           expect(querySnapshot).to.have.property('size', 0);
@@ -536,7 +538,7 @@ describe('Unit test for ShapeData', () => {
 
   it('Absence of damage asset tolerated', () => {
     cy.wrap(initializeAndProcessUserRegions(
-        map, Promise.resolve({damageAssetPath: null})));
+        map, Promise.resolve({damageAssetPath: null}), getUserFeatures()));
     drawPolygon();
     const expectedData = Object.assign({}, defaultData);
     expectedData.damage = 'unknown';
@@ -663,7 +665,7 @@ describe('Unit test for ShapeData', () => {
   function assertOnFirestoreAndPopup(path, expectedData = defaultData) {
     cyQueue(() => {
       expect(StoredShapeData.pendingWriteCount).to.eql(0);
-      return userShapes.get();
+      return userShapesCollection.get();
     }).then((querySnapshot) => {
       expect(querySnapshot).to.have.property('size', 1);
       const polygonDoc = querySnapshot.docs[0];
