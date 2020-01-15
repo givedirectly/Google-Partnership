@@ -7,7 +7,7 @@ import {showError} from './error.js';
 import {getLinearGradient} from './firebase_layers.js';
 import {addLayer, addNullLayer, addScoreLayer, scoreLayerName, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from './layer_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
-import {initializeAndProcessUserRegions} from './polygon_draw.js';
+import {initializeAndProcessUserRegions, userFeaturesColor} from './polygon_draw.js';
 import {setUserFeatureVisibility} from './popup.js';
 import {processJoinedData} from './process_joined_data.js';
 import {getBackupScoreAssetPath, getScoreAssetPath} from './resources.js';
@@ -244,11 +244,15 @@ function updateCheckboxBackground(checkbox, gradient) {
  * @param {div} parentDiv div to attach checkbox to
  */
 function createCheckboxForUserFeatures(parentDiv) {
-  const newBox = createNewCheckbox(
-      'user-features', 'user features', parentDiv,
-      {'color': '#4CEF64', 'currentStyle': 2});
+  const newBox = createNewCheckbox('user-features', 'user features', parentDiv);
+  const linearGradient =
+      getLinearGradient({'color': userFeaturesColor, 'currentStyle': 2});
+  updateCheckboxBackground(newBox, linearGradient);
   newBox.checked = true;
-  newBox.onclick = () => setUserFeatureVisibility(newBox.checked);
+  newBox.onclick = () => {
+    updateCheckboxBackground(newBox, linearGradient);
+    setUserFeatureVisibility(newBox.checked);
+  };
 }
 
 /**
@@ -272,7 +276,7 @@ function addLayers(map, firebaseLayers) {
     }
     createNewCheckboxForLayer(properties, sidebarDiv, map);
   }
-  createCheckboxForUserFeatures(sidebarDiv);
+  createCheckboxForUserFeatures(sidebarDiv, map);
   createNewCheckboxForLayer(
       {
         'displayName': scoreLayerName,

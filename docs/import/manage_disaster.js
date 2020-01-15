@@ -11,6 +11,7 @@ import {getDisasterAssetsFromEe, getStateAssetsFromEe} from './list_ee_assets.js
 import {clearStatus} from './manage_layers_lib.js';
 import {ScoreBoundsMap} from './score_bounds_map.js';
 import {updateDataInFirestore} from './update_firestore_disaster.js';
+import {colorToRgbString} from '../firebase_layers';
 
 export {
   enableWhenReady,
@@ -729,7 +730,7 @@ function verifyAsset(asset, type, state, expectedColumns) {
  * @param {string} title
  */
 function updateColorAndHover(select, color, title) {
-  select.css('border-color', color).prop('title', title);
+  select.css('border-color', colorToRgbString(color)).prop('title', title);
 }
 
 /**

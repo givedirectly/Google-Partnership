@@ -1,6 +1,5 @@
 import {colorMap, ColorStyle} from '../firebase_layers.js';
 import {showErrorSnackbar} from '../snackbar.js';
-
 import {getCurrentLayers, getRowIndex, ILLEGAL_STATE_ERR, setStatus, updateLayersInFirestore} from './manage_layers_lib.js';
 
 export {populateColorFunctions, withColor};
@@ -524,13 +523,14 @@ function createColorBoxesForDiscrete(colorFunction, td) {
 
 /**
  * Creates an instance of the color boxes for the color col.
- * @param {?string} color what color to make the box.
+ * @param {?string} color what color to make the box. If null, transparent.
  * @return {JQuery<HTMLDivElement>}
  */
-function createColorBox(color = 'transparent') {
+function createColorBox(color) {
+  const rgb = color ? colorToRgbString(color) : 'transparent';
   return $(document.createElement('div'))
       .addClass('box')
-      .css('background-color', color);
+      .css('background-color', rgb);
 }
 
 /**

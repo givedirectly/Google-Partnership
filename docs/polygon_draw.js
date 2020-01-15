@@ -13,7 +13,11 @@ import {getScoreAssetPath} from './resources.js';
 import {showSavedToast, showSavingToast, showToastMessage} from './toast.js';
 import {userRegionData} from './user_region_data.js';
 
-export {displayCalculatedData, initializeAndProcessUserRegions};
+export {
+  displayCalculatedData,
+  initializeAndProcessUserRegions,
+  userFeaturesColor,
+};
 // For testing.
 export {
   StoredShapeData,
@@ -367,9 +371,11 @@ const collectionName = 'usershapes';
 
 let userShapes = null;
 
+const userFeaturesColor = '#00FFFF';
+
 const appearance = {
-  fillColor: '#4CEF64',
-  strokeColor: '#4CEF64',
+  fillColor: userFeaturesColor,
+  strokeColor: userFeaturesColor,
   editable: false,
   // Default stroke weight looks to be about 3.
   strokeWeight: 5,
