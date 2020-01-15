@@ -14,6 +14,9 @@
     "googleapis": "^46.0.0",
     "local-web-server": "3.0.7"
   },
+  "scripts": {
+    "postinstall": "node_modules/.bin/electron-rebuild -v 7.1 -o grpc -p"
+  },
   "type": "module",
   "license": "MIT"
 }
