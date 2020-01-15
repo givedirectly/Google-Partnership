@@ -51,7 +51,6 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     disasterData.clear();
   });
 
-  
   it('damage asset/map-bounds elements', () => {
     callEnableWhenReady(setUpDefaultData());
     cy.get('#damage-asset-select').should('have.value', '');
