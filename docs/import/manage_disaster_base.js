@@ -376,7 +376,7 @@ async function verifyAsset(propertyPath, expectedColumns) {
   const select = $('#' + makeInputElementIdFromPath(propertyPath));
   const asset = select.val();
   const isCurrent = getIsCurrentDisasterChecker();
-  /** True if disaster or select's value changed, so should abort. */
+  /** @return {boolean} If disaster/select's value changed, so should abort. */
   function contextChanged() {
     return (!isCurrent() || asset !== select.val());
   }
