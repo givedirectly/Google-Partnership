@@ -850,6 +850,12 @@ describe('Tests for flexible disasters', () => {
         .select('asset1')
         .blur();
     assertFirestoreUpdate();
+    // Data was actually written to Firestore.
+    readFirestoreAfterWritesFinish().then((data) => {
+      const {flexibleData} = data.assetData;
+      expect(flexibleData.buildingHasGeometry).to.be.true;
+      expect(flexibleData.buildingSource).to.eql(BuildingSource.BUILDING);
+    });
     // With geometries, no required buildings columns.
     getSelectFromPropertyPath(componentsData.buildings.columns[0].path)
         .should('not.be.visible');
@@ -1430,7 +1436,7 @@ function callEnableWhenReady(currentData) {
  * complete until after it executes, assuming no `cy.wait` or
  * difficult-to-find element accesses were executed in the meantime.
  *
- * @return {Cypress.Chainable<Object>} Contents of Firestore document
+ * @return {Cypress.Chainable<DisasterDocument>} Contents of Firestore document
  */
 function readFirestoreAfterWritesFinish() {
   return cy.get('@savedStub')

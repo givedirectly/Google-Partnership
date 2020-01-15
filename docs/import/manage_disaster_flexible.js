@@ -685,10 +685,10 @@ async function onPovertyChange(povertyAsset) {
  * @return {Promise<void>} Promise that completes when all displaying complete
  */
 async function onBuildingsChange(buildingsAsset) {
-  const propertyNamesPromise = onAssetSelectChange('buildings');
   const hasGeometry = await buildingsHasGeometry(buildingsAsset);
   writeAssetDataLocally(hasGeometry, BUILDING_HAS_GEOMETRY_PATH);
   showListForAsset(!hasGeometry, 'buildings');
+  const propertyNamesPromise = onAssetSelectChange('buildings');
   if (hasGeometry) {
     componentsData.buildings.columnsPending.finishPending();
   } else {
