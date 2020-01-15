@@ -537,7 +537,6 @@ it('shows pending then values for state-based disaster, damage cascades',
      // Track Firestore updates.
      const updateDisasterSpy =
          cy.spy(UpdateFirestoreDisaster, 'updateDataInFirestore');
-     updateDisasterSpy.resetHistory();
      let callCount = 1;
      /**
       * Asserts there has been exactly one Firestore update since last call.
