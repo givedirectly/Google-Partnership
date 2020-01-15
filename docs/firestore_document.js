@@ -7,7 +7,9 @@ export {
   getDisasters,
   getDisastersData,
   getFirestoreRoot,
+  getUserFeatures,
   readDisasterDocument,
+  userFeatures,
 };
 
 /**
@@ -28,6 +30,11 @@ function getFirestoreRoot() {
 function disasterDocumentReference() {
   return disasterCollectionReference().doc(getDisaster());
 }
+
+/**
+ * Object with all Firestore metadata for a user feature
+ * @typedef {Object} ShapeDocument
+ */
 
 /**
  * Object with all Firestore metadata for the current disaster (everything under
@@ -55,12 +62,31 @@ function getDisasters() {
   return disasterCollectionReference().get();
 }
 
+/**
+ * @return {firebase.firestore.CollectionReference} all usershapes collection
+ */
+function userFeatures() {
+  return getFirestoreRoot().collection('usershapes');
+}
+
+/** @return {Promise<Map<string, ShapeDocument>>} all user shapes */
+function getUserFeatures() {
+  return userFeatures().get().then(convertQuerySnapshotToMap);
+}
+
 /** @return {Promise<Map<string, DisasterDocument>>} data for all disasters */
 function getDisastersData() {
-  const disasterData = new Map();
-  return getDisasters()
-      .then(
-          (querySnapshot) => querySnapshot.forEach(
-              (doc) => disasterData.set(doc.id, doc.data())))
-      .then(() => disasterData);
+  return getDisasters().then(convertQuerySnapshotToMap);
+}
+
+/**
+ * Function that converts the result of a firestore collection {@code get} into
+ * a map of doc ids -> data.
+ * @param {Promise<firebase.firestore.QuerySnapshot>} querySnapshot
+ * @return {Map<string, object>}
+ */
+function convertQuerySnapshotToMap(querySnapshot) {
+  const data = new Map();
+  querySnapshot.forEach((doc) => data.set(doc.id, doc.data()));
+  return data;
 }

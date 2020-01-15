@@ -26,8 +26,8 @@ describe('Unit test for updates.js', () => {
   });
 
   it('does not have a damage asset', () => {
-    const nullData = {scoreAssetCreationParameters: {damageAssetPath: null}};
-    cy.wrap(setUpScoreComputationParameters(Promise.resolve(nullData), {}));
+    cy.wrap(setUpScoreComputationParameters(
+        Promise.resolve({damageAssetPath: null}), {}));
     cy.get('input').should('have.length', 2);
     cy.get('[id="poverty threshold"]').clear().type('0.05');
     cy.get('#update').click().then(() => assertDisplayCalledWith(1, 0.3, 0));
@@ -110,7 +110,6 @@ describe('Unit test for updates.js', () => {
  * @return {Cypress.Chainable<Array<number>>}
  */
 function setUpDamageAsset() {
-  const currentData = {scoreAssetCreationParameters: {damageAssetPath: 'foo'}};
-  return cy.wrap(
-      setUpScoreComputationParameters(Promise.resolve(currentData), {}));
+  return cy.wrap(setUpScoreComputationParameters(
+      Promise.resolve({damageAssetPath: 'foo'}), {}));
 }

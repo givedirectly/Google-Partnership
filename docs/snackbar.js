@@ -37,12 +37,15 @@ function showSnackbar(
     snackbar = document.getElementById('snackbar');
   }
 
+  const icon = document.getElementById('snackbar-icon');
+  snackbar.className = snackbarOriginalClassName;
+  icon.className = iconOriginalClassName;
+
   if (snackbarClasses) {
     snackbarClasses.forEach(
         (snackbarClass) => snackbar.classList.add(snackbarClass));
   }
 
-  const icon = document.getElementById('snackbar-icon');
   if (iconClasses) {
     iconClasses.forEach((iconClass) => icon.classList.add(iconClass));
   }
@@ -57,14 +60,7 @@ function showSnackbar(
     setTimeout(() => {
       // Only clear the snackbar if the current shown snackbar is the latest.
       if (currentShow === showNumber) {
-        $('#snackbar').fadeOut(ANIMATION_DURATION_MS, () => {
-          // In case another snackbar is already being shown again, we don't
-          // want to reset the styles.
-          if (currentShow !== showNumber) return;
-
-          snackbar.className = snackbarOriginalClassName;
-          icon.className = iconOriginalClassName;
-        });
+        $('#snackbar').fadeOut(ANIMATION_DURATION_MS);
       }
     }, duration);
   }
