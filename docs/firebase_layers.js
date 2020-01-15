@@ -148,7 +148,7 @@ function getLinearGradient(colorFunction) {
 /**
  * Converts a color to a css-recognizable rgb string.
  * @param {string} color one of the keys of our colorMap or a hex string
- * for special cases like the user features color or the score color.
+ *     for special cases like the user features color or the score color.
  * @return {string}
  */
 function colorToRgbString(color) {
