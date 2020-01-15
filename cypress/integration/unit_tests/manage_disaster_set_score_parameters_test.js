@@ -835,7 +835,7 @@ describe('Tests for flexible disasters', () => {
                 'column; missing geography asset; missing buildings asset');
     cy.get('span').contains(
         'distinguish between damaged and undamaged buildings (optional: if ' +
-        'omitted, all buildings in damage asset are considered damaged');
+        'omitted, all buildings in damage asset are considered damaged)');
     // no-damage value still visible because no-damage column has value.
     getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).should('be.visible');
     // Invisible after no-damage column unset.
