@@ -93,9 +93,9 @@ describe('Unit test for ShapeData', () => {
           userRegionData.clear();
           return initializeAndProcessUserRegions(
               map,
+              // Normally damageAssetPath is a string, but code tolerates
+              // just putting an ee.FeatureCollection in.
               Promise.resolve(
-                  // Normally damageAssetPath is a string, but code tolerates
-                  // just putting an ee.FeatureCollection in.
                   {damageAssetPath: damageCollection},
                   ));
         })
