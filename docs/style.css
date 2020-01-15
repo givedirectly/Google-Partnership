@@ -142,7 +142,7 @@ h1 {
 #nav-toggle {
   display: block;
   position: relative;
-  padding: 10.5px 16px;
+  padding: 12.5px 16px;
   float: right;
   z-index: 1;
   -webkit-user-select: none;
@@ -757,7 +757,7 @@ thead {
 
 table, th, td {
   border-color: grey;
-  
+
 }
 
 .table-header {
