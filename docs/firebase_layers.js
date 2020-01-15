@@ -125,7 +125,8 @@ function getLinearGradient(colorFunction) {
   let gradientString = 'linear-gradient(to right';
   switch (colorFunction.currentStyle) {
     case ColorStyle.CONTINUOUS:
-      gradientString += ', rgb(255,255,255), ' + colorToRgbString(colorFunction['color']);
+      gradientString +=
+          ', rgb(255,255,255), ' + colorToRgbString(colorFunction['color']);
       break;
     case ColorStyle.DISCRETE:
       const colors = [...(new Set(Object.values(colorFunction['colors'])))];
