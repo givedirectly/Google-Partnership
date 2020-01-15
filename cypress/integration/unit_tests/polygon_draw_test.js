@@ -96,10 +96,8 @@ describe('Unit test for ShapeData', () => {
               Promise.resolve(
                   // Normally damageAssetPath is a string, but code tolerates
                   // just putting an ee.FeatureCollection in.
-                  {
-                    scoreAssetCreationParameters:
-                        {damageAssetPath: damageCollection},
-                  }));
+                  {damageAssetPath: damageCollection},
+                  ));
         })
         .then((drawingManagerResult) => drawingManager = drawingManagerResult);
     // Confirm that drawing controls are visible.
@@ -539,9 +537,8 @@ describe('Unit test for ShapeData', () => {
   }
 
   it('Absence of damage asset tolerated', () => {
-    cy.wrap(initializeAndProcessUserRegions(map, Promise.resolve({
-      scoreAssetCreationParameters: {damageAssetPath: null},
-    })));
+    cy.wrap(initializeAndProcessUserRegions(
+        map, Promise.resolve({damageAssetPath: null})));
     drawPolygon();
     const expectedData = Object.assign({}, defaultData);
     expectedData.damage = 'unknown';
