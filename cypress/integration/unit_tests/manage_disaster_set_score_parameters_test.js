@@ -1036,7 +1036,7 @@ describe('Tests for flexible disasters', () => {
     getSelectFromPropertyPath(componentsData.poverty.path)
         .select('asset1')
         .blur();
-    // Geography no longer relevant (poverty has geometries).
+    // Geography no longer relevant (new poverty asset 'asset1' has geometries).
     cy.get('#kickoff-button')
         .should('not.have.text', 'Pending...')
         .then(() => resolveFunction(['a', 'b']));
