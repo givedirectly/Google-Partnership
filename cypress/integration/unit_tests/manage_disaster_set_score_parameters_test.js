@@ -74,7 +74,7 @@ beforeEach(() => {
 
 afterEach(() => expect(errorStub).to.not.be.called);
 
-it('damage asset/map-bounds elements', () => {
+it('interacts with damage asset/map-bounds elements', () => {
   callEnableWhenReady(setUpDefaultData());
   getDamageSelect().should('have.value', '');
   cy.get('#map-bounds-div').should('be.visible');
@@ -532,11 +532,12 @@ it('has two racing sets on same selector', () => {
           'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
 });
 
-it('shows pending then values for state-based disaster, damage cascades',
+it.only('shows pending then values for state-based disaster, damage cascades',
    () => {
      // Track Firestore updates.
      const updateDisasterSpy =
          cy.spy(UpdateFirestoreDisaster, 'updateDataInFirestore');
+     updateDisasterSpy.resetHistory();
      let callCount = 1;
      /** Asserts there has been exactly one Firestore update since last call. */
      function assertFirestoreUpdate() {
@@ -559,6 +560,7 @@ it('shows pending then values for state-based disaster, damage cascades',
      // We'll cascade damage asset properties.
      const featureCollectionStub = cy.stub(ee, 'FeatureCollection');
      featureCollectionStub.withArgs('asset1').returns(asset1);
+     featureCollectionStub.withArgs('found-asset').returns(asset1);
      featureCollectionStub.withArgs('asset2').returns(asset2);
 
      // Set properties up so that poverty asset is found, income asset is not
