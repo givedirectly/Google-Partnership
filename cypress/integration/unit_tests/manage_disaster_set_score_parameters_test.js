@@ -365,7 +365,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
                              .to.eql(missingSnapPath));
   });
 
-  it('does column verification', () => {
+  it.only('does column verification', () => {
     callEnableWhenReady(setUpDefaultData());
     const goodIncomeBadPovertyFeature = ee.FeatureCollection(
         [ee.Feature(null, {'GEOid2': 'blah', 'HD01_VD01': 'otherBlah'})]);
@@ -403,7 +403,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     // bad -> good
     setSelectWithDelayedEvaluate(0, 'state2', 'poverty-NY');
     checkSelectBorder(
-        '#select-asset-selection-row-poverty-NY', 'rgb(0, 128, 0)');
+        '#select-asset-selection-row-poverty-NY', 'rgb(0, 255, 0)');
     checkHoverText(
         '#select-asset-selection-row-poverty-NY',
         'Success! asset has all expected columns');
@@ -420,7 +420,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     // None -> good columns
     setSelectWithDelayedEvaluate(1, 'state1', 'income-NY');
     checkSelectBorder(
-        '#select-asset-selection-row-income-NY', 'rgb(0, 128, 0)');
+        '#select-asset-selection-row-income-NY', 'rgb(0, 255, 0)');
     checkHoverText(
         '#select-asset-selection-row-income-NY',
         'Success! asset has all expected columns');
@@ -428,7 +428,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
     // good -> good
     setSelectWithDelayedEvaluate(1, 'state0', 'income-NY');
     checkSelectBorder(
-        '#select-asset-selection-row-income-NY', 'rgb(0, 128, 0)');
+        '#select-asset-selection-row-income-NY', 'rgb(0, 255, 0)');
     checkHoverText(
         '#select-asset-selection-row-income-NY',
         'Success! asset has all expected columns');
@@ -445,7 +445,7 @@ describe('Score parameters-related tests for manage_disaster.js', () => {
         () => goodIncomeBadPovertyFeature);
     setSelectWithDelayedEvaluate(4, 'state0', 'buildings-NY');
     checkSelectBorder(
-        '#select-asset-selection-row-buildings-NY', 'rgb(0, 128, 0)');
+        '#select-asset-selection-row-buildings-NY', 'rgb(0, 255, 0)');
     checkHoverText(
         '#select-asset-selection-row-buildings-NY', 'No expected columns');
     setFirstSelectInScoreRowTo(4, 'None');

@@ -276,7 +276,7 @@ function addLayers(map, firebaseLayers) {
     }
     createNewCheckboxForLayer(properties, sidebarDiv, map);
   }
-  createCheckboxForUserFeatures(sidebarDiv, map);
+  createCheckboxForUserFeatures(sidebarDiv);
   createNewCheckboxForLayer(
       {
         'displayName': scoreLayerName,

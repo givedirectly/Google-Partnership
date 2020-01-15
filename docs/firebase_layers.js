@@ -153,6 +153,7 @@ function getLinearGradient(colorFunction) {
 function colorToRgbString(color) {
   const rgbArray = colorMap.get(color);
   if (!rgbArray) {
+    // return early if not using a recognized color.
     return color;
   }
   return 'rgb(' + rgbArray[0] + ',' + rgbArray[1] + ',' + rgbArray[2] + ')';
