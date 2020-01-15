@@ -111,6 +111,18 @@ h1 {
   margin: 0;
 }
 
+.nav-right {
+  display: inline-block;
+  float: right;
+  padding: 4px 8px;
+}
+
+#public-title {
+  display: inline-block;
+  margin: 0;
+  line-height: calc(var(--navbar-height) - 8px);
+}
+
 .nav-title {
   display: inline-block;
   float: left;

@@ -5,6 +5,7 @@ import {listEeAssets} from './import/ee_utils.js';
 import {earthEngineTestTokenCookieName, firebaseTestTokenPropertyName, getValueFromLocalStorage, inProduction} from './in_test_util.js';
 import {getBackupScoreAssetPath, getDisaster, getScoreAssetPath} from './resources.js';
 import {SettablePromise} from './settable_promise.js';
+import {showToastMessage} from './toast.js';
 
 export {reloadWithSignIn, trackEeAndFirebase};
 // For testing.
@@ -38,12 +39,6 @@ const firebaseConfigTest = {
 };
 
 const gdUserEmail = 'gd-earthengine-user@givedirectly.org';
-
-const eeErrorDialog =
-    '<div title="EarthEngine authentication error">You do not appear to be ' +
-    'whitelisted for EarthEngine access. Please whitelist your account at ' +
-    '<a href="https://signup.earthengine.google.com">https://signup.earthengine.google.com</a>' +
-    ' or sign into a whitelisted account after closing this dialog</div>';
 
 const TOKEN_SERVER_URL = 'https://mapping-crisis.appspot.com';
 // For local testing.
@@ -97,6 +92,9 @@ class Authenticator {
                   const currentUser =
                       gapi.auth2.getAuthInstance().currentUser.get();
                   const basicProfile = currentUser.getBasicProfile();
+                  if (!basicProfile) {
+                    doSignIn();
+                  }
                   const isGdUser =
                       basicProfile && basicProfile.getEmail() === gdUserEmail;
                   if (this.needsGdUser && !isGdUser) {
@@ -145,32 +143,13 @@ class Authenticator {
   internalInitializeEE() {
     initializeEE(this.eeInitializeCallback, (err) => {
       if (err.message.includes('401') || err.message.includes('404')) {
-        // HTTP code 401 indicates "unauthorized".
-        // 404 shows up when not on Google internal network.
-        // TODO(#340): Maybe don't require EE failure every time, store
-        //  something in localStorage so that we know user needs token. Then
-        //  tests can just set that as well, unifying the codepaths.
-        const dialog = $(eeErrorDialog).dialog({
-          buttons: [
-            {
-              text: 'Sign in with EarthEngine-enabled account',
-              click: () => this.requireSignIn(),
-            },
-            {
-              text: 'Continue without sign-in',
-              click: () => {
-                // Don't trigger close callback, but close dialog.
-                dialog.dialog({close: () => {}});
-                dialog.dialog('close');
-                this.getAndSetEeTokenWithErrorHandling().then(
-                    () => initializeEE(
-                        this.eeInitializeCallback, defaultErrorCallback));
-              },
-            },
-          ],
-          modal: true,
-          width: 600,
-          close: () => this.requireSignIn(),
+        showToastMessage(
+            'Not whitelisted for EarthEngine access: ' +
+                'trying anonymous access',
+            -1);
+        this.getAndSetEeTokenWithErrorHandling().then(() => {
+          showToastMessage('Anonymous access successful', 1000);
+          initializeEE(this.eeInitializeCallback, defaultErrorCallback);
         });
       } else {
         defaultErrorCallback(err);
