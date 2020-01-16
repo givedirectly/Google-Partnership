@@ -3,10 +3,9 @@ import {createServer} from 'http';
 // TODO(janakr): this is a pretty random package. Maybe find a more popular one.
 import parseBody from 'urlencoded-body-parser';
 
-import {TOKEN_SERVER_ORIGINS} from './origins.js';
-
 import {storeGoogleCredentials} from './aws_get_credentials.js';
 import {generateEarthEngineToken} from './ee_token_creator.js';
+import {TOKEN_SERVER_ORIGINS} from './origins.js';
 
 // TODO(janakr): Elastic Beanstalk doesn't seem to support https without jumping
 //  through additional hoops. Sending tokens in the clear seems like a bad idea,
