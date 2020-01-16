@@ -3,6 +3,7 @@ import {eeLegacyPathPrefix, eeLegacyPrefix} from './ee_paths.js';
 import {showError} from './error.js';
 import {listEeAssets} from './import/ee_utils.js';
 import {earthEngineTestTokenCookieName, firebaseTestTokenPropertyName, getValueFromLocalStorage, inProduction} from './in_test_util.js';
+import {CONTACT, OWNER} from './owner.js';
 import {getBackupScoreAssetPath, getDisaster, getScoreAssetPath} from './resources.js';
 import {SettablePromise} from './settable_promise.js';
 import {showToastMessage} from './toast.js';
@@ -37,8 +38,6 @@ const firebaseConfigTest = {
   messagingSenderId: '340543030947',
   appId: '1:340543030947:web:0cf3235904250687592116',
 };
-
-const gdUserEmail = 'gd-earthengine-user@givedirectly.org';
 
 const TOKEN_SERVER_URL = 'https://mapping-crisis.appspot.com';
 // For local testing.
@@ -96,12 +95,12 @@ class Authenticator {
                     doSignIn();
                   }
                   const isGdUser =
-                      basicProfile && basicProfile.getEmail() === gdUserEmail;
+                      basicProfile && basicProfile.getEmail() === OWNER;
                   if (this.needsGdUser && !isGdUser) {
                     alert(
-                        'You must be signed in as ' + gdUserEmail + ' to ' +
+                        'You must be signed in as ' + OWNER + ' to ' +
                         'access this page. Please open in an incognito window' +
-                        ' or sign in as ' + gdUserEmail +
+                        ' or sign in as ' + OWNER +
                         ' in this window after closing this alert.');
                     this.requireSignIn();
                   } else {
@@ -179,12 +178,12 @@ class Authenticator {
           if (!response.ok) {
             const message = 'Refresh token error: ' + response.status;
             console.error(message, response);
+            const contact = CONTACT ? CONTACT : OWNER;
             // TODO(#395): Find GD contact to list here.
             alert(
                 'Error contacting server for access without EarthEngine ' +
                 'whitelisting. Please reload page and log in with an ' +
-                'EarthEngine-whitelisted account or contact ' +
-                'technology.manager@givedirectly.org ' +
+                'EarthEngine-whitelisted account or contact ' + contact + ' ' +
                 'with error from JavaScript console.');
             throw new Error(message);
           }
