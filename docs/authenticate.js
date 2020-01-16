@@ -7,7 +7,6 @@ import {CONTACT, OWNER} from './owner.js';
 import {getBackupScoreAssetPath, getDisaster, getScoreAssetPath} from './resources.js';
 import {SettablePromise} from './settable_promise.js';
 import {showToastMessage} from './toast.js';
-a
 
 export {reloadWithSignIn, trackEeAndFirebase};
 // For testing.
@@ -179,15 +178,13 @@ class Authenticator {
           if (!response.ok) {
             const message = 'Refresh token error: ' + response.status;
             console.error(message, response);
+            const contact = CONTACT ? CONTACT : OWNER;
             // TODO(#395): Find GD contact to list here.
             alert(
                 'Error contacting server for access without EarthEngine ' +
-                        'whitelisting. Please reload page and log in with an ' +
-                        'EarthEngine-whitelisted account or contact ' +
-                        CONTACT ?
-                    CONTACT :
-                    OWNER + ' ' +
-                        'with error from JavaScript console.');
+                'whitelisting. Please reload page and log in with an ' +
+                'EarthEngine-whitelisted account or contact ' + contact + ' ' +
+                'with error from JavaScript console.');
             throw new Error(message);
           }
           return response.json();
