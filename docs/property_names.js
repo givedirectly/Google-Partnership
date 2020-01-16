@@ -1,6 +1,7 @@
 export {
   damageTag,
   geoidTag,
+  isUserProperty,
   povertyHouseholdsTag,
   scoreTag,
   totalHouseholdsTag,
@@ -13,3 +14,11 @@ const scoreTag = 'SCORE';
 //  in the flexible disaster case, but they should probably be optional.
 const povertyHouseholdsTag = 'SNAP HOUSEHOLDS';
 const totalHouseholdsTag = 'TOTAL HOUSEHOLDS';
+
+/**
+ * @param {EeColumn} name
+ * @return {boolean} Whether `name` is a user (vs. EarthEngine system) property
+ */
+function isUserProperty(name) {
+  return !name.startsWith('system:');
+}

@@ -1,7 +1,8 @@
 import {eeLegacyPathPrefix} from '../../../docs/ee_paths.js';
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
 import {withColor} from '../../../docs/import/color_function_util.js';
-import {createOptionFrom, createTd, getAssetsAndPopulateDisasterPicker, onCheck, onDelete, onInputBlur, onListBlur, updateAfterSort, withCheckbox, withInput, withList, withType} from '../../../docs/import/manage_layers.js';
+import {createOptionFrom} from '../../../docs/import/manage_common.js';
+import {createTd, getAssetsAndPopulateDisasterPicker, onCheck, onDelete, onInputBlur, onListBlur, updateAfterSort, withCheckbox, withInput, withList, withType} from '../../../docs/import/manage_layers.js';
 import {setCurrentDisaster} from '../../../docs/import/manage_layers_lib';
 import {disasterData, getCurrentLayers} from '../../../docs/import/manage_layers_lib.js';
 import {getDisaster} from '../../../docs/resources';
@@ -65,9 +66,11 @@ describe('Unit tests for manage_layers page', () => {
           .callsFake((id) => doc.getElementById(id));
     });
     cy.wrap(getAssetsAndPopulateDisasterPicker(disaster));
-    cy.get('[id="asset/with/geometry"]').should('not.be.disabled');
-    cy.get('[id="asset/with/null/geometry"]').should('be.disabled');
-    cy.get('[id="asset/with/empty/geometry"]').should('be.disabled');
+    cy.get('option').contains('asset/with/geometry').should('not.be.disabled');
+    cy.get('option').contains('asset/with/null/geometry').should('be.disabled');
+    cy.get('option')
+        .contains('asset/with/empty/geometry')
+        .should('be.disabled');
   });
 
   it('has racing disaster asset populates', () => {

@@ -63,7 +63,7 @@
       <input type="radio" name="disaster-type" id="disaster-type-census" checked onclick="document.getElementById('states-select-div').hidden = false">
       <label for="disaster-type-census">U.S. Census data available</label>
       <input type="radio" name="disaster-type" id="disaster-type-flexible" onclick="document.getElementById('states-select-div').hidden = true">
-      <label for="disaster-type-flexible"><b>NOT YET FUNCTIONAL! DO NOT USE</b> No U.S. Census data available; I will provide appropriate datasets.</label>
+      <label for="disaster-type-flexible">No U.S. Census data available; I will provide appropriate datasets.</label>
       </div>
       <div id="states-select-div" class="content-container">
       <!-- TODO(#207): support us territory data sets and add them here -->
@@ -131,19 +131,34 @@
     <div>
       <div class="content-container">
         <div class="content-title">Select Score Data</div>
-        <table id="asset-selection-table">
+        <table id="state-based-disaster-asset-selection-table">
           <thead>
           <tr id="score-asset-header-row"><td>Score Assets</td></tr>
           </thead>
           <tbody id="asset-selection-table-body"></tbody>
         </table>
+        <div id="flexible-data" hidden>
+          <div id="flexible-poverty-asset-data" style="border-style: solid; border-width: thin"></div>
+          <div id="flexible-geography-asset-data" style="border-style: none solid solid solid; border-width: thin"></div>
+          <div style="border-style: none solid solid solid; border-width: thin">
+            Where will building counts come from?<br/>
+            <input type="radio" name="buildings-source" id="buildings-source-buildings">
+            <label for="buildings-source-buildings">I have a separate buildings asset</label>
+            <input type="radio" name="buildings-source" id="buildings-source-poverty">
+            <label for="buildings-source-poverty">Poverty asset has building count per district</label>
+            <input type="radio" name="buildings-source" id="buildings-source-damage">
+            <label for="buildings-source-damage">Damage asset has undamaged buildings</label>
+            <div id="buildings-source-buildings-div" hidden></div>
+            <div id="buildings-source-poverty-div" hidden></div>
+          </div>
+        </div>
       </div>
       <!-- TODO: Make "Damage asset"" a label again? Style it properly if so -->
       <div class="content-container">
-        <div>Damage asset
+        <div><div id="damage-asset-div"><span id="damage-intro-span">Damage asset
           <a href="https://docs.google.com/document/d/1WnjHIexMnlVkn5lqnzYlBVg4aWxh2wVDZI2DBAu-TGI/edit?ts=5de7cd32#bookmark=id.ppvphy5dof7n" target="_blank">
             <i class="help fa fa-question-circle" aria-hidden="true"></i>
-          </a>: <select id="damage-asset-select"></select>
+          </a>:</span></div>
           <div id="map-bounds-div" hidden>
            OR (before damage asset available) draw a region<a href="https://docs.google.com/document/d/1WnjHIexMnlVkn5lqnzYlBVg4aWxh2wVDZI2DBAu-TGI/edit?ts=5de7cd32#bookmark=id.pmr206t53gos" target="_blank"><i class="help fa fa-question-circle" aria-hidden="true"></i></a>:
             <div id="score-bounds-map" class="map"></div>
@@ -152,7 +167,7 @@
       </div>
     </div>
 
-    <button disabled hidden id="process-button"></button>
+    <button disabled hidden id="kickoff-button"></button>
   </div>
   <div class="g-sign-in hidden">
   <span class="label">Sign in with:</span>

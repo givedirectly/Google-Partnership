@@ -59,3 +59,11 @@ table, th, td {
 .mandatory {
   color: red;
 }
+
+/*
+ * Used to give a default width to new selects. After the select has options,
+ * remove this class and the select will be the right size for its options.
+ */
+.just-created-select {
+  width: 200px
+}

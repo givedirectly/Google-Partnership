@@ -40,6 +40,7 @@ function disasterDocumentReference() {
  * Object with all Firestore metadata for the current disaster (everything under
  * `disaster-metadata/2017-harvey`, for instance).
  * @typedef {Object} DisasterDocument
+ * @property {AssetData} assetData The asset data.
  */
 
 /**
