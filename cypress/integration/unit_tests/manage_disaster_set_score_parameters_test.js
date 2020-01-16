@@ -684,7 +684,7 @@ describe('Tests for flexible disasters', () => {
     currentData.assetData.damageAssetPath = 'missing-asset';
     currentData.assetData.noDamageKey = 'a-key';
     currentData.assetData.noDamageValue = 'a-value';
-    const {assetData: {flexibleData}} = currentData;
+    const {flexibleData} = currentData.assetData;
     flexibleData.povertyPath = 'missing-asset';
     flexibleData.povertyRateKey = 'a-key';
     flexibleData.districtDescriptionKey = 'b-key';
@@ -959,6 +959,55 @@ describe('Tests for flexible disasters', () => {
     cy.get('#kickoff-button').should('not.have.text', 'Pending...');
   });
 
+  it('switches asset while pending, finishes second listing first', () => {
+    const propertyNamesStub = cy.stub(ListEeAssets, 'getAssetPropertyNames');
+    let resolve1;
+    let resolve2;
+    propertyNamesStub.withArgs('asset1').returns(
+        new Promise((resolve) => resolve1 = resolve));
+    propertyNamesStub.withArgs('asset2').returns(
+        new Promise((resolve) => resolve2 = resolve));
+    const currentData = createDisasterData(null);
+    currentData.assetData.flexibleData.povertyRateKey = 'c';
+    cy.wrap(enableWhenFirestoreReady(new Map([[getDisaster(), currentData]])));
+    // Select asset1: waiting on columns for asset1.
+    getSelectFromPropertyPath(componentsData.poverty.path)
+        .select('asset1')
+        .blur();
+    assertKickoffAndSelectWithPathPending(
+        componentsData.poverty.columns[0].path);
+    cy.get('#kickoff-button').should('have.text', 'Pending...');
+    // Switch to asset2. Still pending, but will resolve soon.
+    getSelectFromPropertyPath(componentsData.poverty.path)
+        .select('asset2')
+        .blur();
+    assertKickoffAndSelectWithPathPending(
+        componentsData.poverty.columns[0].path);
+    cy.get('#kickoff-button')
+        .should('have.text', 'Pending...')
+        .then(() => resolve2(['c', 'd']));
+    // We're resolved! We have values, and no pending operations left.
+    getSelectFromPropertyPath(componentsData.poverty.columns[0].path)
+        .should('be.enabled');
+    getSelectFromPropertyPath(componentsData.poverty.columns[0].path)
+        .should('have.value', 'c');
+    cy.get('#kickoff-button').should('not.have.text', 'Pending...');
+    // Switch back. This will start a new pending operation.
+    getSelectFromPropertyPath(componentsData.poverty.path)
+        .select('asset1')
+        .blur();
+    // Check that pending, and then resolve.
+    assertKickoffAndSelectWithPathPending(
+        componentsData.poverty.columns[0].path)
+        .then(() => resolve1(['a', 'b']));
+    // Page has no more pending elements.
+    getSelectFromPropertyPath(componentsData.poverty.columns[0].path)
+        .should('be.enabled');
+    getSelectFromPropertyPath(componentsData.poverty.columns[0].path)
+        .should('have.value', '');
+    cy.get('#kickoff-button').should('not.have.text', 'Pending...');
+  });
+
   it('switches asset while pending, then switches back', () => {
     const propertyNamesStub = cy.stub(ListEeAssets, 'getAssetPropertyNames');
     let resolve1;
@@ -1012,11 +1061,9 @@ describe('Tests for flexible disasters', () => {
 
     const propertyNamesStub = cy.stub(ListEeAssets, 'getAssetPropertyNames');
     let resolveFunction;
-    propertyNamesStub.withArgs('asset1').returns(Promise.resolve(['a', 'b']));
-    propertyNamesStub.withArgs('noGeoAsset').returns(Promise.resolve([
-      'a',
-      'b',
-    ]));
+    const simpleListingPromise = Promise.resolve(['a', 'b']);
+    propertyNamesStub.withArgs('asset1').returns(simpleListingPromise);
+    propertyNamesStub.withArgs('noGeoAsset').returns(simpleListingPromise);
     propertyNamesStub.withArgs('asset2').returns(
         new Promise((resolve) => resolveFunction = resolve));
     cy.wrap(enableWhenFirestoreReady(
@@ -1063,11 +1110,9 @@ describe('Tests for flexible disasters', () => {
 
     const propertyNamesStub = cy.stub(ListEeAssets, 'getAssetPropertyNames');
     let resolveFunction;
-    propertyNamesStub.withArgs('asset1').returns(Promise.resolve(['a', 'b']));
-    propertyNamesStub.withArgs('noGeoAsset').returns(Promise.resolve([
-      'a',
-      'b',
-    ]));
+    const simpleListingPromise = Promise.resolve(['a', 'b']);
+    propertyNamesStub.withArgs('asset1').returns(simpleListingPromise);
+    propertyNamesStub.withArgs('noGeoAsset').returns(simpleListingPromise);
     propertyNamesStub.withArgs('asset2').returns(
         new Promise((resolve) => resolveFunction = resolve));
     cy.wrap(enableWhenFirestoreReady(
@@ -1197,18 +1242,18 @@ describe('Tests for flexible disasters', () => {
     ({flexibleData} = data2.assetData);
     flexibleData.povertyPath = 'asset2';
     flexibleData.povertyRateKey = 'b-key';
-    const promise = enableWhenFirestoreReady(
+    const initializeFirstDone = enableWhenFirestoreReady(
         new Map([[getDisaster(), data1], ['otherDisaster', data2]]));
     cy.wait(0);
     cy.get('#kickoff-button').should('have.text', 'Pending...');
-    let otherPromise;
+    let initializeSecondDone;
     cy.get('div')
         .contains('Poverty rate column')
         .should('have.length', 1)
         .then(() => {
           // Switch disasters without finishing EE listing.
           window.localStorage.setItem('disaster', 'otherDisaster');
-          otherPromise = onSetDisaster();
+          initializeSecondDone = onSetDisaster();
         });
     // No duplicate text.
     cy.get('div').contains('Poverty rate column').should('have.length', 1);
@@ -1218,10 +1263,11 @@ describe('Tests for flexible disasters', () => {
         () => firstListingResult(new Map([['asset1', ENABLED_COLLECTION]])));
     assertKickoffAndSelectWithPathPending(componentsData.poverty.path);
     // Confirm that first call really is done, then let second finish.
-    cy.wrap(promise).then(
-        () => secondListingResult(new Map([['asset2', ENABLED_COLLECTION]])));
+    cy.wrap(initializeFirstDone).then(() => secondListingResult(new Map([
+                                        ['asset2', ENABLED_COLLECTION],
+                                      ])));
     // Second one is done.
-    cy.wrap(otherPromise);
+    cy.wrap(initializeSecondDone);
     getSelectFromPropertyPath(componentsData.poverty.path).should('be.enabled');
     getSelectFromPropertyPath(componentsData.poverty.path)
         .should('have.value', 'asset2');
@@ -1245,22 +1291,22 @@ describe('Tests for flexible disasters', () => {
        const featureCollectionStub = cy.stub(ee, 'FeatureCollection');
        featureCollectionStub.withArgs('asset2').returns(asset2);
 
-       const stateBasedData = setUpDefaultData();
-       let {assetData} = stateBasedData;
+       const stateBased = setUpDefaultData();
+       let {assetData} = stateBased;
        assetData.damageAssetPath = 'asset1';
        assetData.noDamageKey = 'a-key';
-       const flexibleData = createDisasterData(null);
-       ({assetData} = flexibleData);
+       const flexible = createDisasterData(null);
+       ({assetData} = flexible);
        assetData.damageAssetPath = 'asset2';
        assetData.noDamageKey = 'b-key';
-       const promise = enableWhenFirestoreReady(new Map(
-           [[getDisaster(), stateBasedData], ['otherDisaster', flexibleData]]));
+       const initializeStateBasedDone = enableWhenFirestoreReady(
+           new Map([[getDisaster(), stateBased], ['otherDisaster', flexible]]));
        cy.wait(0);
-       let otherPromise;
+       let initializeFlexibleDone;
        assertKickoffAndSelectPending(getDamageSelect()).then(() => {
          // Switch disasters without finishing EE listing.
          window.localStorage.setItem('disaster', 'otherDisaster');
-         otherPromise = onSetDisaster();
+         initializeFlexibleDone = onSetDisaster();
        });
        // We've switched.
        cy.get('div').contains('Poverty rate column');
@@ -1272,10 +1318,11 @@ describe('Tests for flexible disasters', () => {
            () => firstListingResult(new Map([['asset1', ENABLED_COLLECTION]])));
        assertKickoffAndSelectPending(getDamageSelect());
        // Confirm that first call really is done, then let second finish.
-       cy.wrap(promise).then(
-           () =>
-               secondListingResult(new Map([['asset2', ENABLED_COLLECTION]])));
-       cy.wrap(otherPromise);
+       cy.wrap(initializeStateBasedDone)
+           .then(
+               () => secondListingResult(
+                   new Map([['asset2', ENABLED_COLLECTION]])));
+       cy.wrap(initializeFlexibleDone);
        getDamageSelect().should('be.enabled');
        getDamageSelect().should('have.value', 'asset2');
        getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path)

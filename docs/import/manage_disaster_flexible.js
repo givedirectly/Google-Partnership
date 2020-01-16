@@ -88,7 +88,9 @@ class PendingChecker {
     }
     switch (this.pending) {
       case PendingState.NOT_PENDING:
-        showError('Error validating inputs: please reload page');
+        // This can happen if a select's value changed and then changed back
+        // before its column listing finished. We must be idempotent then, so we
+        // do nothing if there are multiple finish calls.
         return;
       case PendingState.PENDING:
         countDownPendingOperations();
@@ -192,8 +194,8 @@ class PendingChecker {
  * not visible. This means that the buildings asset select, for instance, is
  * created and initialized (and its column selects are initialized), even if
  * that is not the current source of data for building counts. This normally
- * does not slow the page down, because if no buildings asset is specified, the
- * column selects will not be either.
+ * does not slow the page down, because if no buildings asset is specified, we
+ * won't do any EarthEngine requests to list its columns.
  *
  * Fields are shown if they have to be specified given the other currently set
  * fields in order to kick off score asset creation. Thus, the poverty rate

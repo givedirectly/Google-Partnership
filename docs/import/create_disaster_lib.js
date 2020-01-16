@@ -116,8 +116,8 @@ const stateBasedDataTemplate = Object.freeze({
 
 /**
  * @typedef {CommonAssetData} AssetData
- * @property {FlexibleData} [flexibleData]
- * @property {StateBasedData} [stateBasedData]
+ * @property {?FlexibleData} [flexibleData]
+ * @property {?StateBasedData} [stateBasedData]
  */
 
 // Has all the basic fields needed for a state-based score asset to be created:

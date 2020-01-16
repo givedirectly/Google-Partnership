@@ -353,18 +353,13 @@ function onAssetSelect(propertyPath, expectedColumns) {
 
 /**
  * Verifies an asset specified in a select element exists and has the expected
- * columns, if any. If we do asynchronous work to fetch the columns, then if the
- * select's value has changed in the interim, don't perform any actions. This
- * assumes that if the disaster changes but the select's value does not change,
- * any follow-on work by the caller of `verifyAsset` is still valid. That work
- * should definitely be idempotent (have the same effect if done multiple times)
- * since the user might switch to this select repeatedly before results are
- * ready.
- *
- * For disaster-specific assets, idempotence is enough, since the select cannot
- * have the same value when the disaster changes. For state-specific assets, it
- * is currently true that any computation on a state asset valid for one
- * disaster is valid for any other, so the disaster changing is ok.
+ * columns, if any. If we do asynchronous work to fetch the columns, then if any
+ * disaster switching has happened in the iterim, or the select's value is
+ * different, don't perform any actions. This assumes that if the select's value
+ * changes then changes back, any follow-on work by the caller of `verifyAsset`
+ * is still valid. That work should therefore be idempotent (have the same
+ * effect if done multiple times) since the user might switch to this select
+ * repeatedly before results are ready.
  * @param {PropertyPath} propertyPath
  * @param {?Array<EeColumn>} expectedColumns Expected column names. If empty or
  *     null, checks existence and returns all columns from the first feature
@@ -791,8 +786,8 @@ function getPageValueOfPath(path) {
  * Gets the input element corresponding to `path`. The value of the Firestore
  * value for `path` and the returned input element will always be in sync,
  * unless the input is a select and:
- * 1. The Firestore value is not one of the available options;
- * 2. Or the available options are not yet known.
+ * 1. The Firestore value is not one of the available options, or;
+ * 2. The available options are not yet known.
  * @param {PropertyPath} path
  * @return {JQuery<HTMLInputElement>}
  */
