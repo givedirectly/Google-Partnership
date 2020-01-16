@@ -1,7 +1,3 @@
-export {
-  DEFAULT_DISASTER
-}
-
 /**
  * The default disaster that will show up the very first time a user visits
  * the web app. In order to update which disaster users land on the first time,
@@ -12,3 +8,5 @@ export {
  * and always reopen that one.
  */
 const DEFAULT_DISASTER = '2017-harvey';
+
+export {DEFAULT_DISASTER};

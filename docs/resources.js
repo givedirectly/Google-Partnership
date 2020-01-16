@@ -8,7 +8,7 @@ export {getBackupScoreAssetPath, getDisaster, getScoreAssetPath};
  * @return {string} current disaster
  */
 function getDisaster() {
-  if (localSgtorage.getItem('disaster')) {
+  if (localStorage.getItem('disaster')) {
     return localStorage.getItem('disaster');
   }
   localStorage.setItem('disaster', DEFAULT_DISASTER);
