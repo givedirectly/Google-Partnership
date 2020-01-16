@@ -46,7 +46,8 @@ request).
     additional work is to create a service account that is whitelisted for
     EarthEngine access (currently `earthengine-token-provider`) and give it the
     "Service Account Token Creator" role in the
-    [IAM page](https://console.developers.google.com/iam-admin/iam?project=mapping-crisis).
+    IAM page ([here](https://console.developers.google.com/iam-admin/iam?project=mapping-crisis)
+    for GiveDirectly).
 
 *   If you are serving tokens from Google App Engine, and not from Amazon, then
     you should also give the default AppEngine service account (for
@@ -98,12 +99,12 @@ request).
         [aws_get_credentials.js](./aws_get_credentials.js)!
 
     To make the secret readable by the server, you will have to have the server
-    run as a user with permissions to read the secret: -
-    [Instructions for creating the user](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/iam-instanceprofile.html#iam-instanceprofile-create). -
-    [Give access only to this secret](https://docs.aws.amazon.com/secretsmanager/latest/userguide/auth-and-access_identity-based-policies.html#permissions_grant-limited-resources). -
-    After deploying the app, in the Elastic Beanstalk console, go to
-    Configuration > Security > Modify and choose the IAM instance profile you
-    created above.
+    run as a user with permissions to read the secret: 
+    -   [Instructions for creating the user](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/iam-instanceprofile.html#iam-instanceprofile-create).
+    -   [Give access only to this secret](https://docs.aws.amazon.com/secretsmanager/latest/userguide/auth-and-access_identity-based-policies.html#permissions_grant-limited-resources). 
+    -   After deploying the app, in the Elastic Beanstalk console, go to
+        Configuration > Security > Modify and choose the IAM instance profile you
+        created above.
 
 ## Start locally, for testing only
 
