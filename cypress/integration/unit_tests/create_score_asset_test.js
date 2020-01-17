@@ -130,7 +130,7 @@ describe('Unit tests for create_score_asset.js', () => {
             'BLOCK GROUP': 'Some state, group 361',
             'BUILDING COUNT': 3,
             'DAMAGE PERCENTAGE': 0.3333333333333333,
-            'GEOID': '361',
+            'GD_GOOGLE_DELPHI_GEOID': '361',
             'MEDIAN INCOME': 37,
             'SNAP HOUSEHOLDS': 10,
             'SNAP PERCENTAGE': 0.6666666666666666,
@@ -172,7 +172,7 @@ describe('Unit tests for create_score_asset.js', () => {
           expect(feature.properties).to.eql({
             'BLOCK GROUP': 'Some state, group 361',
             'BUILDING COUNT': 3,
-            'GEOID': '361',
+            'GD_GOOGLE_DELPHI_GEOID': '361',
             'MEDIAN INCOME': 37,
             'SNAP HOUSEHOLDS': 10,
             'SNAP PERCENTAGE': 0.6666666666666666,
@@ -201,7 +201,7 @@ describe('Unit tests for create_score_asset.js', () => {
         .then(() => {
           expect(taskStartStub).to.be.calledOnce;
           return convertEeObjectToPromise(
-              exportStub.firstCall.args[0].sort('GEOID'));
+              exportStub.firstCall.args[0].sort('GD_GOOGLE_DELPHI_GEOID'));
         })
         .then((result) => {
           const features = result.features;
@@ -342,7 +342,7 @@ describe('Unit tests for create_score_asset.js', () => {
     const promise = createScoreAssetForFlexibleDisaster(testData);
     expect(promise).to.not.be.null;
     const expectedValue = {
-      'GEOID': '361',
+      'GD_GOOGLE_DELPHI_GEOID': '361',
       'GEOdescription': 'A nice place to live',
       'DAMAGE PERCENTAGE': 0.3333333333333333,
       'OTHER FIELD': 'blah',

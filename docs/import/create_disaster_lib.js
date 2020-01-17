@@ -1,19 +1,15 @@
+import {incomeKey, snapKey, sviKey, totalKey} from './state_based_key_names.js';
+
 export {createDisasterData};
 export {
   BUILDING_COUNT_KEY,
   BuildingSource,
-  incomeKey,
-  snapKey,
-  sviKey,
-  totalKey,
+
+
 };
 // For testing
 export {deepCopy, flexibleAssetData, stateAssetDataTemplate};
 
-const snapKey = 'HD01_VD02';
-const totalKey = 'HD01_VD01';
-const sviKey = 'RPL_THEMES';
-const incomeKey = 'HD01_VD01';
 const BUILDING_COUNT_KEY = 'BUILDING COUNT';
 
 /**
@@ -80,19 +76,11 @@ const commonAssetDataTemplate = Object.freeze({
  * @property {StateAssetMap} snapData.paths Census SNAP data. Assumed to have a
  *     {@link censusGeoidKey} column giving the block group. Assumed to have a
  *     {@link censusBlockGroupKey} column describing the block group.
- * @property {EeColumn} snapKey Column of SNAP data that contains number of
- *     households on SNAP. Currently hard-coded to {@link snapKey}.
- * @property {EeColumn} totalKey Column of SNAP data that contains total number
- *     of housholds. Currently hard-coded to {@link totalKey}.
  * @property {StateAssetMap} [sviAssetPaths] SVI datasets, from CDC. Assumed to
  *     be at the Census tract level, with tract identifier {@link cdcGeoidKey}.
- * @property {EeColumn} [sviKey] Column of SVI data that contains SVI for Census
- *     tract. Currently hard-coded to {@link sviKey}.
  * @property {StateAssetMap} [incomeAssetPaths] Median income datasets at the
  *     block-group level, from Census. Assumed to have a {@link censusGeoidKey}
  *     column giving the block group.
- * @property {EeColumn} [incomeKey] Column of data that contains median income
- *     for Census block group. Currently hard-coded to {@link incomeKey}.
  * @property {StateAssetMap} buildingAssetPaths All buildings, as geometries (so
  *     that they can be intersected with block groups to get total building
  *     counts).
@@ -104,13 +92,9 @@ const stateBasedDataTemplate = Object.freeze({
   blockGroupAssetPaths: {},
   snapData: {
     paths: {},
-    snapKey,
-    totalKey,
   },
   sviAssetPaths: {},
-  sviKey,
   incomeAssetPaths: {},
-  incomeKey,
   buildingAssetPaths: {},
 });
 

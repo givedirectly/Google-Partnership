@@ -8,7 +8,8 @@ export {
 };
 
 const damageTag = 'DAMAGE PERCENTAGE';
-const geoidTag = 'GEOID';
+// Unique name to avoid clashing with user-given columns.
+const geoidTag = 'GD_GOOGLE_DELPHI_GEOID';
 const scoreTag = 'SCORE';
 // TODO(janakr): We need some kind of "totals" tags to enable polygon selection
 //  in the flexible disaster case, but they should probably be optional.

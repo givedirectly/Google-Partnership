@@ -6,7 +6,13 @@ import {getBackupScoreAssetPath, getScoreAssetPath} from '../resources.js';
 
 import {computeAndSaveBounds} from './center.js';
 import {BUILDING_COUNT_KEY, BuildingSource} from './create_disaster_lib.js';
-import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
+import {
+  cdcGeoidKey,
+  censusBlockGroupKey,
+  censusGeoidKey, incomeKey,
+  snapKey, sviKey,
+  tigerGeoidKey, totalKey,
+} from './state_based_key_names.js';
 
 export {
   createScoreAssetForFlexibleDisaster,
@@ -155,11 +161,9 @@ function convertToNumber(value) {
  * Post-processes the join of snap data and tiger geometries to form a single
  * feature with SNAP data (including percentage).
  * @param {ee.Feature} feature
- * @param {string} snapKey
- * @param {string} totalKey
  * @return {ee.Feature}
  */
-function combineWithSnap(feature, snapKey, totalKey) {
+function combineWithSnap(feature) {
   const snapFeature = ee.Feature(feature.get('primary'));
   const snapPop = convertToNumber(snapFeature.get(snapKey));
   const totalPop = convertToNumber(ee.Number.parse(snapFeature.get(totalKey)));
@@ -299,12 +303,10 @@ function createScoreAssetForStateBasedDisaster(
     blockGroupAssetPaths,
     snapData,
     sviAssetPaths,
-    sviKey,
     incomeAssetPaths,
-    incomeKey,
     buildingAssetPaths,
   } = stateBasedData;
-  const {paths: snapPaths, snapKey, totalKey} = snapData;
+  const snapPaths = snapData.paths;
   const {damage, damageEnvelope} =
       calculateDamage(assetData, setMapBoundsInfoFunction);
   let allStatesProcessing = ee.FeatureCollection([]);
@@ -324,7 +326,7 @@ function createScoreAssetForStateBasedDisaster(
     // Join snap stats to block group geometries.
     processing =
         innerJoin(processing, stateGroups, censusGeoidKey, tigerGeoidKey);
-    processing = processing.map((f) => combineWithSnap(f, snapKey, totalKey));
+    processing = processing.map((f) => combineWithSnap(f));
     if (incomePath) {
       // Join with income.
       processing = innerJoin(processing, incomePath, geoidTag, censusGeoidKey);

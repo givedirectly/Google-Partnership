@@ -396,10 +396,11 @@ async function verifyAsset(propertyPath, expectedColumns) {
     updateColorAndHover(select, 'white', '');
     return [];
   } else {
-    if (!expectedColumns || expectedColumns.length === 0) {
-      updateColorAndHover(select, 'yellow', 'Checking...');
-    } else {
+    const checkingColumns = expectedColumns && expectedColumns.length > 0;
+    if (checkingColumns) {
       updateColorAndHover(select, 'yellow', 'Checking columns...');
+    } else {
+      updateColorAndHover(select, 'yellow', 'Checking...');
     }
     let result;
     try {
@@ -412,7 +413,7 @@ async function verifyAsset(propertyPath, expectedColumns) {
       return null;
     }
     result = result.sort();
-    if (!expectedColumns || expectedColumns.length === 0) {
+    if (!checkingColumns) {
       updateColorAndHover(
           select, 'green', expectedColumns ? 'No expected columns' : '');
       return result;
@@ -435,7 +436,7 @@ async function verifyAsset(propertyPath, expectedColumns) {
           'Error! asset does not have all expected columns: ' +
           expectedColumns.join(', or '));
     } else {
-      for (const column of columns) {
+      for (const column of expectedColumns) {
         if (!presentColumns.has(column)) {
           updateColorAndHover(
               select, 'red',
