@@ -4,7 +4,7 @@ import * as Resources from '../../../docs/resources.js';
 import {resolveScoreAsset} from '../../../docs/run.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
-const waitForPromiseToResolve = 6000;
+const waitForPromiseToResolve = 3000;
 
 describe('Unit test for run.js', () => {
   loadScriptsBeforeForUnitTests('ee');
