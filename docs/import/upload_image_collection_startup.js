@@ -26,7 +26,6 @@ $(() => {
     }
   };
   document.getElementById('files').onchange = (event) => {
-    console.log(event.target.files.length);
     filesLength = event.target.files.length;
     if (nameLength > 0 && filesLength > 0) {
       document.getElementById('fileButton').disabled = false;
