@@ -1,0 +1,12 @@
+<html>
+<head>
+  <script src="external_libs/ee_api_js_debug-0.1.210.js"></script>
+</head>
+<body>
+<script>
+  const CLIENT_ID =
+      '38420505624-boghq4foqi5anc9kc5c5tsq82ar9k4n0.apps.googleusercontent.com';
+  ee.data.authenticateViaOauth(CLIENT_ID, () => console.log('success'), console.error, []);
+</script>
+</body>
+</html>
