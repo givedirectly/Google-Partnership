@@ -21,7 +21,7 @@ const scoreBoundsCoordinates = [
   {lng: -90, lat: 30},
 ];
 
-const POVERTY_INDEX = 0;
+const SNAP_INDEX = 0;
 const INCOME_INDEX = 1;
 const SVI_INDEX = 2;
 const TIGER_INDEX = 3;
@@ -123,7 +123,7 @@ it('no map coordinates to start', () => {
 });
 
 const allMandatoryMissingText =
-    'Missing asset(s): Poverty, Census TIGER Shapefiles';
+    'Missing asset(s): SNAP, Census TIGER Shapefiles';
 const alwaysOptionalMissing =
     '; warning: created asset will be missing Income, SVI';
 const allOptionalMissing = alwaysOptionalMissing + ', Building counts';
@@ -143,7 +143,7 @@ it('has some disabled options', () => {
   ])));
   callEnableWhenReady(createDisasterData(['NY']));
   const stateSelector =
-      getSelectForScoreAssetIndex(POVERTY_INDEX).get('option');
+      getSelectForScoreAssetIndex(SNAP_INDEX).get('option');
   stateSelector.eq(2).should('be.disabled');
   stateSelector.eq(1).should('not.be.disabled');
   const disasterSelector = getDamageSelect().get('option');
@@ -174,7 +174,7 @@ it('Handles assets with and without geometries', () => {
   featureCollectionStub.withArgs('asset/with/empty/geometry')
       .returns(withEmptyGeometry);
   callEnableWhenReady(setUpDefaultData());
-  for (const index of [POVERTY_INDEX, INCOME_INDEX, SVI_INDEX]) {
+  for (const index of [SNAP_INDEX, INCOME_INDEX, SVI_INDEX]) {
     getSelectForScoreAssetIndex(index).within(() => {
       cy.get('option').contains('None').should('be.enabled');
       cy.get('option').contains('asset/with/geometry').should('be.enabled');
@@ -315,7 +315,7 @@ it('validates asset data', () => {
   cy.get('#kickoff-button')
       .should(
           'have.text',
-          'Missing asset(s): Poverty; must specify either damage asset or ' +
+          'Missing asset(s): SNAP; must specify either damage asset or ' +
               'map bounds');
   cy.get('#kickoff-button').should('be.disabled');
   // Validate that score data was correctly written
@@ -344,7 +344,7 @@ it('multistate displays properly', () => {
   cy.get('#kickoff-button')
       .should(
           'have.text',
-          'Missing asset(s): Poverty [NY, WY], Census TIGER ' +
+          'Missing asset(s): SNAP [NY, WY], Census TIGER ' +
               'Shapefiles [NY, WY]; must specify either damage asset ' +
               'or map bounds; warning: created asset will be missing Income' +
               ' [NY, WY], SVI [NY, WY], Building counts [NY, WY]');
@@ -353,7 +353,7 @@ it('multistate displays properly', () => {
   cy.get('#kickoff-button')
       .should(
           'have.text',
-          'Missing asset(s): Poverty [WY], ' +
+          'Missing asset(s): SNAP [WY], ' +
               'Census TIGER Shapefiles [NY, WY]; must specify either ' +
               'damage asset or map bounds; warning: created asset will be ' +
               'missing Income [NY, WY], SVI [NY, WY], Building counts [NY, ' +
@@ -365,7 +365,7 @@ it('multistate displays properly', () => {
   cy.get('#kickoff-button')
       .should(
           'have.text',
-          'Missing asset(s): Poverty [WY], Census TIGER Shapefiles ' +
+          'Missing asset(s): SNAP [WY], Census TIGER Shapefiles ' +
               '[NY, WY]; must specify either damage asset or map ' +
               'bounds; warning: created asset will be missing ' +
               'SVI [NY, WY], Building counts [NY, WY]');
@@ -393,46 +393,46 @@ it('nonexistent asset not ok', () => {
 
 it('does column verification', () => {
   callEnableWhenReady(setUpDefaultData());
-  const goodIncomeBadPovertyFeature = ee.FeatureCollection(
+  const goodIncomeBadSnapFeature = ee.FeatureCollection(
       [ee.Feature(null, {'GEOid2': 'blah', 'HD01_VD01': 'otherBlah'})]);
-  const otherGoodIncomeBadPovertyFeature = ee.FeatureCollection(
+  const otherGoodIncomeBadSnapFeature = ee.FeatureCollection(
       [ee.Feature(null, {'GEOid2': 'blah', 'HD01_VD01': 'otherBlah'})]);
-  const goodPovertyFeature = ee.FeatureCollection([ee.Feature(
+  const goodSnapFeature = ee.FeatureCollection([ee.Feature(
       null,
       {'GEOid2': 0, 'GEOdisplay-label': 0, 'HD01_VD01': 0, 'HD01_VD02': 0})]);
 
   const featureCollectionStub = cy.stub(ee, 'FeatureCollection');
-  featureCollectionStub.withArgs('state0').returns(goodIncomeBadPovertyFeature);
+  featureCollectionStub.withArgs('state0').returns(goodIncomeBadSnapFeature);
   featureCollectionStub.withArgs('state1').returns(
-      otherGoodIncomeBadPovertyFeature);
-  featureCollectionStub.withArgs('state2').returns(goodPovertyFeature);
+      otherGoodIncomeBadSnapFeature);
+  featureCollectionStub.withArgs('state2').returns(goodSnapFeature);
 
   // None -> bad
   setSelectWithDelayedEvaluate(0, 'state0', 'NY');
-  checkSelectBorder(POVERTY_INDEX, 'rgb(255, 0, 0)');
+  checkSelectBorder(SNAP_INDEX, 'rgb(255, 0, 0)');
   checkHoverText(
-      POVERTY_INDEX,
+      SNAP_INDEX,
       'Error! asset does not have all expected columns: ' +
           'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
 
   // bad -> bad
   setSelectWithDelayedEvaluate(0, 'state1', 'NY');
-  checkSelectBorder(POVERTY_INDEX, 'rgb(255, 0, 0)');
+  checkSelectBorder(SNAP_INDEX, 'rgb(255, 0, 0)');
   checkHoverText(
-      POVERTY_INDEX,
+      SNAP_INDEX,
       'Error! asset does not have all expected columns: ' +
           'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
 
   // bad -> good
   setSelectWithDelayedEvaluate(0, 'state2', 'NY');
-  checkSelectBorder(POVERTY_INDEX, 'rgb(0, 255, 0)');
-  checkHoverText(POVERTY_INDEX, 'Success! asset has all expected columns');
+  checkSelectBorder(SNAP_INDEX, 'rgb(0, 255, 0)');
+  checkHoverText(SNAP_INDEX, 'Success! asset has all expected columns');
 
   // good -> bad
   setSelectWithDelayedEvaluate(0, 'state0', 'NY');
-  checkSelectBorder(POVERTY_INDEX, 'rgb(255, 0, 0)');
+  checkSelectBorder(SNAP_INDEX, 'rgb(255, 0, 0)');
   checkHoverText(
-      POVERTY_INDEX,
+      SNAP_INDEX,
       'Error! asset does not have all expected columns: ' +
           'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
 
@@ -455,7 +455,7 @@ it('does column verification', () => {
 
   // No expected rows
   featureCollectionStub.withArgs('state4').callsFake(
-      () => goodIncomeBadPovertyFeature);
+      () => goodIncomeBadSnapFeature);
   setSelectWithDelayedEvaluate(4, 'state0', 'NY');
 
   checkSelectBorder(BUILDINGS_INDEX, 'rgb(0, 255, 0)');
@@ -468,21 +468,21 @@ it('does column verification', () => {
 it('tries to set a missing asset', () => {
   callEnableWhenReady(setUpDefaultData());
   setSelectWithDelayedEvaluate(0, 'state0', 'NY');
-  checkSelectBorder(POVERTY_INDEX, 'rgb(255, 0, 0)');
-  checkHoverText(POVERTY_INDEX, 'Error! asset could not be found.');
+  checkSelectBorder(SNAP_INDEX, 'rgb(255, 0, 0)');
+  checkHoverText(SNAP_INDEX, 'Error! asset could not be found.');
 });
 
 it('has two racing sets on same selector', () => {
   callEnableWhenReady(setUpDefaultData());
-  const goodPovertyFeature = ee.FeatureCollection([ee.Feature(
+  const goodSnapFeature = ee.FeatureCollection([ee.Feature(
       null,
       {'GEOid2': 0, 'GEOdisplay-label': 0, 'HD01_VD01': 0, 'HD01_VD02': 0})]);
-  const badPovertyFeature = ee.FeatureCollection(
+  const badSnapFeature = ee.FeatureCollection(
       [ee.Feature(null, {'GEOid2': 'blah', 'HD01_VD01': 'otherBlah'})]);
 
   const featureCollectionStub = cy.stub(ee, 'FeatureCollection');
-  featureCollectionStub.withArgs('state0').returns(goodPovertyFeature);
-  featureCollectionStub.withArgs('state1').returns(badPovertyFeature);
+  featureCollectionStub.withArgs('state0').returns(goodSnapFeature);
+  featureCollectionStub.withArgs('state1').returns(badSnapFeature);
 
   let firstRelease;
   let firstStart;
@@ -498,13 +498,13 @@ it('has two racing sets on same selector', () => {
           () => secondRelease =
               getConvertEeObjectToPromiseRelease().releaseLatch);
   setFirstSelectInScoreRowTo(0, 'state1').then(() => firstRelease());
-  checkSelectBorder(POVERTY_INDEX, 'rgb(255, 255, 0)');
+  checkSelectBorder(SNAP_INDEX, 'rgb(255, 255, 0)');
   // release second evaluate and column finishes with results from second.
-  checkHoverText(POVERTY_INDEX, 'Checking columns...')
+  checkHoverText(SNAP_INDEX, 'Checking columns...')
       .then(() => secondRelease());
-  checkSelectBorder(POVERTY_INDEX, 'rgb(255, 0, 0)');
+  checkSelectBorder(SNAP_INDEX, 'rgb(255, 0, 0)');
   checkHoverText(
-      POVERTY_INDEX,
+      SNAP_INDEX,
       'Error! asset does not have all expected columns: ' +
           'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
 
@@ -520,15 +520,15 @@ it('has two racing sets on same selector', () => {
           () => secondRelease =
               getConvertEeObjectToPromiseRelease().releaseLatch);
   setFirstSelectInScoreRowTo(0, 'state1').then(() => secondRelease());
-  checkSelectBorder(POVERTY_INDEX, 'rgb(255, 0, 0)');
+  checkSelectBorder(SNAP_INDEX, 'rgb(255, 0, 0)');
   checkHoverText(
-      POVERTY_INDEX,
+      SNAP_INDEX,
       'Error! asset does not have all expected columns: ' +
           'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01')
       .then(() => firstRelease());
-  checkSelectBorder(POVERTY_INDEX, 'rgb(255, 0, 0)');
+  checkSelectBorder(SNAP_INDEX, 'rgb(255, 0, 0)');
   checkHoverText(
-      POVERTY_INDEX,
+      SNAP_INDEX,
       'Error! asset does not have all expected columns: ' +
           'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
 });
@@ -576,7 +576,7 @@ it('shows pending then values for state-based disaster, damage cascades',
      // Give promise a chance to start running.
      cy.wait(0);
 
-     assertKickoffAndSelectPending(getSelectForScoreAssetIndex(POVERTY_INDEX));
+     assertKickoffAndSelectPending(getSelectForScoreAssetIndex(SNAP_INDEX));
      assertKickoffAndSelectPending(getDamageSelect());
      // Because damage asset is set in Firestore, and column key is also set
      // in Firestore, we display the no-damage column and no-damage value
@@ -590,9 +590,9 @@ it('shows pending then values for state-based disaster, damage cascades',
                ['found-asset', ENABLED_COLLECTION],
                ['other-asset', ENABLED_COLLECTION],
              ])));
-     // Poverty is set as expected.
-     getSelectForScoreAssetIndex(POVERTY_INDEX).should('not.be.disabled');
-     getSelectForScoreAssetIndex(POVERTY_INDEX)
+     // SNAP is set as expected.
+     getSelectForScoreAssetIndex(SNAP_INDEX).should('not.be.disabled');
+     getSelectForScoreAssetIndex(SNAP_INDEX)
          .should('have.value', 'found-asset');
      // Income doesn't have a value because its value was not in asset list.
      getSelectForScoreAssetIndex(INCOME_INDEX).should('not.be.disabled');
@@ -1518,7 +1518,7 @@ function setFirstSelectInScoreRow(rowNum) {
 
 /**
  * Utility function to get the first cell in a "score asset" row, like the
- * Poverty/SVI/Income/Buildings row.
+ * SNAP/SVI/Income/Buildings row.
  * @param {number} rowNum index of row, corresponding to its index in {@link
  *     stateBasedScoreAssetTypes}
  * @return {Cypress.Chainable} Cypress promise of the td

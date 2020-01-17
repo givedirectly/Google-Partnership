@@ -3,7 +3,7 @@ import {latLngToGeoPoint, transformGeoPointArrayToLatLng} from '../map_util.js';
 import {isUserProperty} from '../property_names.js';
 import {getDisaster} from '../resources.js';
 
-import {getAssetPropertyNames, getColumnsStatus, getDisasterAssetsFromEe} from './list_ee_assets.js';
+import {getAssetPropertyNames, getDisasterAssetsFromEe} from './list_ee_assets.js';
 import {createOptionFrom, stylePendingSelect} from './manage_common.js';
 import {PendingChecker, useDamageForBuildings, validateFlexibleUserFields} from './manage_disaster_flexible.js';
 import {validateStateBasedUserFields} from './manage_disaster_state_based.js';
