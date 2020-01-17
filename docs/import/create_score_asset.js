@@ -244,10 +244,13 @@ function setGeoid(censusTable) {
   return ee.FeatureCollection(censusTable).map((f) => {
     // Starts with 150000000US, indicating block groups.
     // https://www.census.gov/programs-surveys/geography/guidance/geo-identifiers.html
+    const geoid =
+        ee.String(getKeyOrBackup(f, censusGeoidKey, backupCensusGeoidKey));
     return f.set(
         geoidTag,
-        ee.String(getKeyOrBackup(f, censusGeoidKey, backupCensusGeoidKey))
-            .slice(9));
+        // If too short, null out: can happen with header rows.
+        // Prefix of 9 + 15 digits for block group.
+        ee.Algorithms.If(geoid.length().gt(9), geoid.slice(9), null));
   });
 }
 
