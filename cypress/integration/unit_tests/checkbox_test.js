@@ -219,7 +219,7 @@ describe('Unit test for toggleLayerOn', () => {
     assertLayerFailure();
   });
 
-  it.only('fails to load an image layer', () => {
+  it('fails to load an image layer', () => {
     setUpLayerFailure().then(
         () => addLayer(
             {
