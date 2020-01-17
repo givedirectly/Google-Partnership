@@ -90,7 +90,12 @@ h1 {
 }
 
 .logogreen {
-    fill: #006837;
+  fill: #006837;
+}
+
+/* Status css */
+.status {
+  color: var(--error-color);
 }
 
 /* Navbar css */
@@ -759,7 +764,6 @@ thead {
 
 table, th, td {
   border-color: grey;
-
 }
 
 .table-header {
