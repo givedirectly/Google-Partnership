@@ -2,22 +2,10 @@ import {transformEarthEngineFailureMessage} from '../ee_promise_cache.js';
 import {disasterDocumentReference} from '../firestore_document.js';
 import {inProduction} from '../in_test_util.js';
 import {damageTag, geoidTag, povertyHouseholdsTag, totalHouseholdsTag} from '../property_names.js';
-import {
-  getBackupScoreAssetPath,
-  getDisaster,
-  getScoreAssetPath,
-} from '../resources.js';
+import {getBackupScoreAssetPath, getDisaster, getScoreAssetPath} from '../resources.js';
 import {computeAndSaveBounds} from './center.js';
 import {BUILDING_COUNT_KEY, BuildingSource} from './create_disaster_lib.js';
-import {
-  backupCensusBlockGroupKey,
-  backupCensusGeoidKey, backupIncomeKey, backupSnapKey, backupTotalKey,
-  cdcGeoidKey,
-  censusBlockGroupKey,
-  censusGeoidKey, incomeKey,
-  snapKey, sviKey,
-  tigerGeoidKey, totalKey,
-} from './state_based_key_names.js';
+import {backupCensusBlockGroupKey, backupCensusGeoidKey, backupIncomeKey, backupSnapKey, backupTotalKey, cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, incomeKey, snapKey, sviKey, tigerGeoidKey, totalKey} from './state_based_key_names.js';
 
 export {
   createScoreAssetForFlexibleDisaster,
@@ -170,8 +158,10 @@ function convertToNumber(value) {
  */
 function combineWithSnap(feature) {
   const snapFeature = ee.Feature(feature.get('primary'));
-  const snapPop = convertToNumber(getKeyOrBackup(snapFeature, snapKey, backupSnapKey));
-  const totalPop = convertToNumber(getKeyOrBackup(snapFeature, totalKey, backupTotalKey));
+  const snapPop =
+      convertToNumber(getKeyOrBackup(snapFeature, snapKey, backupSnapKey));
+  const totalPop =
+      convertToNumber(getKeyOrBackup(snapFeature, totalKey, backupTotalKey));
   const badData = null;
   const snapPercentage = ee.Algorithms.If(
       totalPop,
@@ -184,7 +174,8 @@ function combineWithSnap(feature) {
         geoidTag,
         snapFeature.get(geoidTag),
         BLOCK_GROUP_TAG,
-        getKeyOrBackup(snapFeature, censusBlockGroupKey, backupCensusBlockGroupKey),
+        getKeyOrBackup(
+            snapFeature, censusBlockGroupKey, backupCensusBlockGroupKey),
         povertyHouseholdsTag,
         snapPop,
         totalHouseholdsTag,
@@ -194,9 +185,16 @@ function combineWithSnap(feature) {
       ]));
 }
 
+/**
+ * @param {ee.Feature} feature
+ * @param {EeColumn} key
+ * @param {EeColumn} backupKey
+ * @return {*} `feature.get(key)`, or if null, `feature.get(backupKey)`
+ */
 function getKeyOrBackup(feature, key, backupKey) {
   const val = feature.get(key);
-  return ee.Algorithms.If(ee.Algorithms.IsEqual(val, null), feature.get(backupKey), val);
+  return ee.Algorithms.If(
+      ee.Algorithms.IsEqual(val, null), feature.get(backupKey), val);
 }
 
 /**
@@ -235,13 +233,21 @@ function stringifyCollection(
   });
 }
 
+/**
+ * Sets the {@link geoidTag} for features in `censusTable`. Looks for both known
+ * geoid keys.
+ * @param {EeFC} censusTable Table downloaded from Census (income or SNAP)
+ * @return {ee.FeatureCollection} Processed collection
+ */
 function setGeoid(censusTable) {
-  return censusTable.map((f) => {
+  return ee.FeatureCollection(censusTable).map((f) => {
     // Starts with 150000000US, indicating block groups.
     // https://www.census.gov/programs-surveys/geography/guidance/geo-identifiers.html
-    return f.set(geoidTag,
-        ee.String(getKeyOrBackup(f, censusGeoidKey, backupCensusGeoidKey)).slice(9));
-  })
+    return f.set(
+        geoidTag,
+        ee.String(getKeyOrBackup(f, censusGeoidKey, backupCensusGeoidKey))
+            .slice(9));
+  });
 }
 
 /**
@@ -340,22 +346,17 @@ function createScoreAssetForStateBasedDisaster(
     const stateGroups =
         ee.FeatureCollection(blockGroupPath).filterBounds(damageEnvelope);
 
-    let processing = setGeoid(ee.FeatureCollection(snapPath));
+    let processing = setGeoid(snapPath);
 
     // Join snap stats to block group geometries.
-    processing =
-        innerJoin(processing, stateGroups, geoidTag, tigerGeoidKey);
-    getKeyOrBackup(processing.first(), snapKey, backupSnapKey).evaluate(console.log);
-    console.log(backupSnapKey);
-    processing.first().evaluate(console.log);
-    processing.first().get(backupSnapKey).evaluate(console.log);
+    processing = innerJoin(processing, stateGroups, geoidTag, tigerGeoidKey);
     processing = processing.map((f) => combineWithSnap(f));
     if (incomePath) {
-      const income = setGeoid(ee.FeatureCollection(incomePath));
+      const income = setGeoid(incomePath);
       // Join with income.
       processing = innerJoin(processing, income, geoidTag, geoidTag);
-      processing =
-          processing.map((f) => combineWithAsset(f, INCOME_TAG, incomeKey, backupIncomeKey));
+      processing = processing.map(
+          (f) => combineWithAsset(f, INCOME_TAG, incomeKey, backupIncomeKey));
     }
     if (sviPath) {
       // Join with SVI (data is at the tract level).
@@ -369,7 +370,8 @@ function createScoreAssetForStateBasedDisaster(
 
     if (buildingPath) {
       // Get building count by block group.
-      const buildingsHisto = computeBuildingsHisto(buildingPath, stateGroups, tigerGeoidKey);
+      const buildingsHisto =
+          computeBuildingsHisto(buildingPath, stateGroups, tigerGeoidKey);
       processing = combineWithBuildings(processing, buildingsHisto);
     }
 
@@ -501,7 +503,8 @@ async function backUpAssetAndStartTask(
   const oldScoreAssetPath = getBackupScoreAssetPath();
   const task = ee.batch.Export.table.toAsset(
       featureCollection,
-      getDisaster() + '-' + scoreAssetPath.substring(scoreAssetPath.lastIndexOf('/') + 1),
+      getDisaster() + '-' +
+          scoreAssetPath.substring(scoreAssetPath.lastIndexOf('/') + 1),
       scoreAssetPath);
   let renamed = false;
   try {
@@ -640,6 +643,7 @@ function calculateDamage(assetData, setMapBoundsInfo) {
  * instead of previously computed building data.
  * @param {EeFC} buildingPath location of buildings asset in EE
  * @param {ee.FeatureCollection} geographies Collection with districts
+ * @param {EeColumn} geoidKey Column with geoids in `geographies`
  * @return {ee.Dictionary} Number of buildings per district
  */
 function computeBuildingsHisto(buildingPath, geographies, geoidKey) {

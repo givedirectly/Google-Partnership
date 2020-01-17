@@ -3,23 +3,8 @@ import {convertEeObjectToPromise} from '../../../docs/ee_promise_cache.js';
 import * as FirestoreDocument from '../../../docs/firestore_document.js';
 import {readDisasterDocument} from '../../../docs/firestore_document.js';
 import {BuildingSource} from '../../../docs/import/create_disaster_lib.js';
-import {
-  backUpAssetAndStartTask,
-  createScoreAssetForFlexibleDisaster,
-  createScoreAssetForStateBasedDisaster,
-  renameProperty,
-} from '../../../docs/import/create_score_asset.js';
-import {
-  backupCensusBlockGroupKey,
-  backupCensusGeoidKey,
-  backupIncomeKey,
-  backupSnapKey,
-  backupTotalKey,
-  censusBlockGroupKey,
-  censusGeoidKey, incomeKey,
-  snapKey,
-  totalKey,
-} from '../../../docs/import/state_based_key_names.js';
+import {backUpAssetAndStartTask, createScoreAssetForFlexibleDisaster, createScoreAssetForStateBasedDisaster, renameProperty} from '../../../docs/import/create_score_asset.js';
+import {backupCensusBlockGroupKey, backupCensusGeoidKey, backupIncomeKey, backupSnapKey, backupTotalKey, censusBlockGroupKey, censusGeoidKey, incomeKey, snapKey, totalKey} from '../../../docs/import/state_based_key_names.js';
 import * as Resources from '../../../docs/resources.js';
 import {assertFirestoreMapBounds} from '../../support/firestore_map_bounds';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
@@ -121,57 +106,62 @@ describe('Unit tests for create_score_asset.js', () => {
     };
   });
 
+  /** Does basic test. */
   function basicTest() {
-      const {boundsPromise, mapBoundsCallback} =
-          makeCallbackForTextAndPromise('Found bounds');
-      const promise =
-          createScoreAssetForStateBasedDisaster(testData, mapBoundsCallback);
-      expect(promise).to.not.be.null;
-      cy.wrap(promise)
-      .then(() => {
-        expect(exportStub).to.be.calledOnce;
-        expect(taskStartStub).to.be.calledOnce;
-        expect(renameStub).to.be.calledOnce;
-        return convertEeObjectToPromise(exportStub.firstCall.args[0]);
-      })
-      .then((result) => {
-        const features = result.features;
-        expect(features).to.have.length(1);
-        const [feature] = features;
-        console.log(feature);
-        expect(feature.properties).to.eql({
-          'BLOCK GROUP': 'Some state, group 361',
-          'BUILDING COUNT': 3,
-          'DAMAGE PERCENTAGE': 0.3333333333333333,
-          '___GD_GOOGLE_DELPHI_GEOID': '361',
-          'MEDIAN INCOME': 37,
-          'SNAP HOUSEHOLDS': 10,
-          'SNAP PERCENTAGE': 0.6666666666666666,
-          'SVI': 0.5,
-          'TOTAL HOUSEHOLDS': 15,
-        });
-        return readDisasterDocument();
-      })
-      .then(
-          (data) => expect(data.scoreAssetCreationParameters)
-          .to.eql(STATE_SCORE_ASSET_CREATION_PARAMETERS));
-      cy.wrap(boundsPromise);
-      assertFirestoreMapBounds(
-          {sw: {lng: 0.4, lat: 0.5}, ne: {lng: 10, lat: 12}});
+    const {boundsPromise, mapBoundsCallback} =
+        makeCallbackForTextAndPromise('Found bounds');
+    const promise =
+        createScoreAssetForStateBasedDisaster(testData, mapBoundsCallback);
+    expect(promise).to.not.be.null;
+    cy.wrap(promise)
+        .then(() => {
+          expect(exportStub).to.be.calledOnce;
+          expect(taskStartStub).to.be.calledOnce;
+          expect(renameStub).to.be.calledOnce;
+          return convertEeObjectToPromise(exportStub.firstCall.args[0]);
+        })
+        .then((result) => {
+          const features = result.features;
+          expect(features).to.have.length(1);
+          const [feature] = features;
+          console.log(feature);
+          expect(feature.properties).to.eql({
+            'BLOCK GROUP': 'Some state, group 361',
+            'BUILDING COUNT': 3,
+            'DAMAGE PERCENTAGE': 0.3333333333333333,
+            '___GD_GOOGLE_DELPHI_GEOID': '361',
+            'MEDIAN INCOME': 37,
+            'SNAP HOUSEHOLDS': 10,
+            'SNAP PERCENTAGE': 0.6666666666666666,
+            'SVI': 0.5,
+            'TOTAL HOUSEHOLDS': 15,
+          });
+          return readDisasterDocument();
+        })
+        .then(
+            (data) => expect(data.scoreAssetCreationParameters)
+                          .to.eql(STATE_SCORE_ASSET_CREATION_PARAMETERS));
+    cy.wrap(boundsPromise);
+    assertFirestoreMapBounds(
+        {sw: {lng: 0.4, lat: 0.5}, ne: {lng: 10, lat: 12}});
   }
 
   it('Basic test', basicTest);
 
   it('handles new column names', () => {
     const {stateBasedData} = testData.assetData;
-    for (const [oldProp, newProp] of [[backupCensusGeoidKey, censusGeoidKey],
-    [backupCensusBlockGroupKey, censusBlockGroupKey],
-    [backupSnapKey, snapKey], [backupTotalKey, totalKey]]) {
-      stateBasedData.snapData.paths.NY = renameProperty(stateBasedData.snapData.paths.NY, oldProp, newProp);
+    for (const [oldProp, newProp] of [
+             [backupCensusGeoidKey, censusGeoidKey],
+             [backupCensusBlockGroupKey, censusBlockGroupKey],
+             [backupSnapKey, snapKey], [backupTotalKey, totalKey]]) {
+      stateBasedData.snapData.paths.NY =
+          renameProperty(stateBasedData.snapData.paths.NY, oldProp, newProp);
     }
-    for (const [oldProp, newProp] of [[backupCensusGeoidKey, censusGeoidKey],
-      [backupIncomeKey, incomeKey]]) {
-      stateBasedData.incomeAssetPaths.NY = renameProperty(stateBasedData.incomeAssetPaths.NY, oldProp, newProp);
+    for (const [oldProp, newProp] of [
+             [backupCensusGeoidKey, censusGeoidKey],
+             [backupIncomeKey, incomeKey]]) {
+      stateBasedData.incomeAssetPaths.NY =
+          renameProperty(stateBasedData.incomeAssetPaths.NY, oldProp, newProp);
     }
     basicTest();
   });
@@ -607,7 +597,7 @@ function makeSviTract(svi) {
  * @return {ee.Feature}
  */
 function makeIncomeGroup(id, income) {
-  return ee.Feature(null, {'HD01_VD01': income, GEOid: '1500000US' + id});
+  return ee.Feature(null, {'HD01_VD01': income, 'GEOid': '1500000US' + id});
 }
 
 /**

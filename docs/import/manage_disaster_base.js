@@ -420,28 +420,27 @@ async function verifyAsset(propertyPath, expectedColumns) {
     }
     const presentColumns = new Set(result);
     if (Array.isArray(expectedColumns[0])) {
-      outerLoop:
-        for (const columns of expectedColumns) {
-          for (const column of columns) {
-            if (!presentColumns.has(column)) {
-              continue outerLoop;
-            }
+      outerLoop: for (const columns of expectedColumns) {
+        for (const column of columns) {
+          if (!presentColumns.has(column)) {
+            continue outerLoop;
           }
-          updateColorAndHover(
-              select, 'green', 'Success! asset has all expected columns');
-          return result;
+        }
+        updateColorAndHover(
+            select, 'green', 'Success! asset has all expected columns');
+        return result;
       }
       updateColorAndHover(
           select, 'red',
           'Error! asset does not have all expected columns: ' +
-          '[' + expectedColumns.join('] or [') + ']');
+              '[' + expectedColumns.join('] or [') + ']');
     } else {
       for (const column of expectedColumns) {
         if (!presentColumns.has(column)) {
           updateColorAndHover(
               select, 'red',
               'Error! asset does not have all expected columns: ' +
-              expectedColumns);
+                  expectedColumns);
           return result;
         }
       }

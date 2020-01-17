@@ -1,16 +1,8 @@
 import {getDisaster} from '../resources.js';
 
-import {
-  backupCensusBlockGroupKey,
-  backupCensusGeoidKey, backupIncomeKey, backupSnapKey, backupTotalKey,
-  cdcGeoidKey,
-  censusBlockGroupKey,
-  censusGeoidKey,
-  incomeKey, snapKey, sviKey,
-  tigerGeoidKey, totalKey,
-} from './state_based_key_names.js';
 import {getStateAssetsFromEe} from './list_ee_assets.js';
 import {checkDamageFieldsAndShowKickoffButton, createSelect, damageAssetPresent, disasterData, getIsCurrentDisasterChecker, getPageValueOfPath, onAssetSelect, setOptionsForSelect, verifyAsset} from './manage_disaster_base.js';
+import {backupCensusBlockGroupKey, backupCensusGeoidKey, backupIncomeKey, backupSnapKey, backupTotalKey, cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, incomeKey, snapKey, sviKey, tigerGeoidKey, totalKey} from './state_based_key_names.js';
 
 export {
   initializeStateBasedDisaster,
@@ -26,17 +18,22 @@ const stateBasedScoreAssetTypes = Object.freeze([
     propertyPath: ['stateBasedData', 'snapData', 'paths'],
     displayName: 'SNAP',
     expectedColumns: [
-        [censusGeoidKey, censusBlockGroupKey, snapKey, totalKey],
-        [backupCensusGeoidKey, backupCensusBlockGroupKey, backupSnapKey, backupTotalKey],
-        ]
+      [censusGeoidKey, censusBlockGroupKey, snapKey, totalKey],
+      [
+        backupCensusGeoidKey,
+        backupCensusBlockGroupKey,
+        backupSnapKey,
+        backupTotalKey,
+      ],
+    ],
   },
   {
     propertyPath: ['stateBasedData', 'incomeAssetPaths'],
     displayName: 'Income',
     expectedColumns: [
-        [censusGeoidKey, incomeKey],
-        [backupCensusGeoidKey, backupIncomeKey],
-        ],
+      [censusGeoidKey, incomeKey],
+      [backupCensusGeoidKey, backupIncomeKey],
+    ],
   },
   {
     propertyPath: ['stateBasedData', 'sviAssetPaths'],

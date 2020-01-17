@@ -142,8 +142,7 @@ it('has some disabled options', () => {
     ['state1', {disabled: true}],
   ])));
   callEnableWhenReady(createDisasterData(['NY']));
-  const stateSelector =
-      getSelectForScoreAssetIndex(SNAP_INDEX).get('option');
+  const stateSelector = getSelectForScoreAssetIndex(SNAP_INDEX).get('option');
   stateSelector.eq(2).should('be.disabled');
   stateSelector.eq(1).should('not.be.disabled');
   const disasterSelector = getDamageSelect().get('option');
@@ -401,13 +400,11 @@ it('does column verification', () => {
       null,
       {'GEOid': 0, 'GEOdisplay-label': 0, 'HD01_VD01': 0, 'HD01_VD02': 0})]);
   const goodNewSnapFeature = ee.FeatureCollection([ee.Feature(
-      null,
-      {'GEO_ID': 0, 'NAME': 0, 'B22010_001E': 0, 'B22010_002E': 0})]);
+      null, {'GEO_ID': 0, 'NAME': 0, 'B22010_001E': 0, 'B22010_002E': 0})]);
 
   const featureCollectionStub = cy.stub(ee, 'FeatureCollection');
   featureCollectionStub.withArgs('state0').returns(goodIncomeBadSnapFeature);
-  featureCollectionStub.withArgs('state1').returns(
-      goodNewIncomeBadSnapFeature);
+  featureCollectionStub.withArgs('state1').returns(goodNewIncomeBadSnapFeature);
   featureCollectionStub.withArgs('state2').returns(goodSnapFeature);
   featureCollectionStub.withArgs('state3').returns(goodNewSnapFeature);
 
@@ -417,7 +414,8 @@ it('does column verification', () => {
   checkHoverText(
       SNAP_INDEX,
       'Error! asset does not have all expected columns: ' +
-      '[GEO_ID,NAME,B22010_002E,B22010_001E] or [GEOid,GEOdisplay-label,HD01_VD02,HD01_VD01]');
+          '[GEO_ID,NAME,B22010_002E,B22010_001E] or ' +
+          '[GEOid,GEOdisplay-label,HD01_VD02,HD01_VD01]');
 
   // bad -> bad
   setSelectWithDelayedEvaluate(0, 'state1', 'NY');
@@ -425,7 +423,8 @@ it('does column verification', () => {
   checkHoverText(
       SNAP_INDEX,
       'Error! asset does not have all expected columns: ' +
-          '[GEO_ID,NAME,B22010_002E,B22010_001E] or [GEOid,GEOdisplay-label,HD01_VD02,HD01_VD01]');
+          '[GEO_ID,NAME,B22010_002E,B22010_001E] or ' +
+          '[GEOid,GEOdisplay-label,HD01_VD02,HD01_VD01]');
 
   // bad -> good
   setSelectWithDelayedEvaluate(0, 'state2', 'NY');
@@ -438,7 +437,8 @@ it('does column verification', () => {
   checkHoverText(
       SNAP_INDEX,
       'Error! asset does not have all expected columns: ' +
-      '[GEO_ID,NAME,B22010_002E,B22010_001E] or [GEOid,GEOdisplay-label,HD01_VD02,HD01_VD01]');
+          '[GEO_ID,NAME,B22010_002E,B22010_001E] or ' +
+          '[GEOid,GEOdisplay-label,HD01_VD02,HD01_VD01]');
 
   // new good
   setSelectWithDelayedEvaluate(0, 'state3', 'NY');
@@ -509,13 +509,13 @@ it('has two racing sets on same selector', () => {
   setFirstSelectInScoreRowTo(0, 'state1').then(() => firstRelease());
   checkSelectBorder(SNAP_INDEX, 'rgb(255, 255, 0)');
   // release second evaluate and column finishes with results from second.
-  checkHoverText(SNAP_INDEX, 'Checking columns...')
-      .then(() => secondRelease());
+  checkHoverText(SNAP_INDEX, 'Checking columns...').then(() => secondRelease());
   checkSelectBorder(SNAP_INDEX, 'rgb(255, 0, 0)');
   checkHoverText(
       SNAP_INDEX,
       'Error! asset does not have all expected columns: ' +
-      '[GEO_ID,NAME,B22010_002E,B22010_001E] or [GEOid,GEOdisplay-label,HD01_VD02,HD01_VD01]');
+          '[GEO_ID,NAME,B22010_002E,B22010_001E] or ' +
+          '[GEOid,GEOdisplay-label,HD01_VD02,HD01_VD01]');
 
   // now do opposite order
   cyQueue(() => {
@@ -533,13 +533,15 @@ it('has two racing sets on same selector', () => {
   checkHoverText(
       SNAP_INDEX,
       'Error! asset does not have all expected columns: ' +
-      '[GEO_ID,NAME,B22010_002E,B22010_001E] or [GEOid,GEOdisplay-label,HD01_VD02,HD01_VD01]')
+          '[GEO_ID,NAME,B22010_002E,B22010_001E] or ' +
+          '[GEOid,GEOdisplay-label,HD01_VD02,HD01_VD01]')
       .then(() => firstRelease());
   checkSelectBorder(SNAP_INDEX, 'rgb(255, 0, 0)');
   checkHoverText(
       SNAP_INDEX,
       'Error! asset does not have all expected columns: ' +
-      '[GEO_ID,NAME,B22010_002E,B22010_001E] or [GEOid,GEOdisplay-label,HD01_VD02,HD01_VD01]');
+          '[GEO_ID,NAME,B22010_002E,B22010_001E] or ' +
+          '[GEOid,GEOdisplay-label,HD01_VD02,HD01_VD01]');
 });
 
 it('shows pending then values for state-based disaster, damage cascades',
@@ -1272,11 +1274,13 @@ describe('Tests for flexible disasters', () => {
         () => firstListingResult(new Map([['asset1', ENABLED_COLLECTION]])));
     assertKickoffAndSelectWithPathPending(componentsData.poverty.path);
     // Confirm that first call really is done, then let second finish.
-    cy.wrap(initializeFirstDone).then(() => secondListingResult(new Map([
-                                        ['asset2', ENABLED_COLLECTION],
-                                      ])));
-    // Second one is done.
-    cy.wrap(initializeSecondDone);
+    cy.wrap(initializeFirstDone).then(() => {
+      secondListingResult(new Map([
+        ['asset2', ENABLED_COLLECTION],
+      ]));
+      // Second one is done.
+      return initializeSecondDone;
+    });
     getSelectFromPropertyPath(componentsData.poverty.path).should('be.enabled');
     getSelectFromPropertyPath(componentsData.poverty.path)
         .should('have.value', 'asset2');
@@ -1327,11 +1331,10 @@ describe('Tests for flexible disasters', () => {
            () => firstListingResult(new Map([['asset1', ENABLED_COLLECTION]])));
        assertKickoffAndSelectPending(getDamageSelect());
        // Confirm that first call really is done, then let second finish.
-       cy.wrap(initializeStateBasedDone)
-           .then(
-               () => secondListingResult(
-                   new Map([['asset2', ENABLED_COLLECTION]])));
-       cy.wrap(initializeFlexibleDone);
+       cy.wrap(initializeStateBasedDone).then(() => {
+         secondListingResult(new Map([['asset2', ENABLED_COLLECTION]]));
+         return initializeFlexibleDone;
+       });
        getDamageSelect().should('be.enabled');
        getDamageSelect().should('have.value', 'asset2');
        getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path)

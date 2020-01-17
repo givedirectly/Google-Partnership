@@ -1,5 +1,3 @@
-import {incomeKey, snapKey, sviKey, totalKey} from './state_based_key_names.js';
-
 export {createDisasterData};
 export {
   BUILDING_COUNT_KEY,
