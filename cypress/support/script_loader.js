@@ -66,8 +66,8 @@ const scriptMap = new Map([
     'jqueryUi',
     {
       script: libUrl + 'jquery-ui-1.12.1.min.js',
-      callback: () =>
-          scriptMap.jquery.callback() && typeof ($().dialog) !== 'undefined',
+      callback: () => scriptMap.get('jquery').callback() &&
+          typeof ($().dialog) !== 'undefined',
     },
   ],
   [
