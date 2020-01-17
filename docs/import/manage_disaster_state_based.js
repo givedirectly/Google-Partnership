@@ -17,7 +17,7 @@ export {assetSelectionRowPrefix, stateBasedScoreAssetTypes};
 const stateBasedScoreAssetTypes = Object.freeze([
   {
     propertyPath: ['stateBasedData', 'snapData', 'paths'],
-    displayName: 'Poverty',
+    displayName: 'SNAP',
     expectedColumns: [censusGeoidKey, censusBlockGroupKey, snapKey, totalKey],
   },
   {
