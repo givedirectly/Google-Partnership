@@ -1,14 +1,10 @@
 <html>
 <head>
-  <script src="external_libs/ee_api_js_debug.js"></script>
+  <script src="external_libs/ee_api_js_debug-0.1.210.js"></script>
 </head>
 <body>
 <script>
   const CLIENT_ID =
-          // '971145646525-crtb2gr8p3fg4lbg6ohv1mi4jtbbouct.apps.googleusercontent.com'; // corp
-      '38420505624-r5qmu7ip7916jefnhfngulls3a5lf2r7.apps.googleusercontent.com';
-      // '38420505624-0dn0tqdo0d88asr5t7pslfp1u9lm7gkb.apps.googleusercontent.com';
-      // '340543030947-nt6fd4pslin03qihq937g1j20f3hgght.apps.googleusercontent.com';
       '38420505624-boghq4foqi5anc9kc5c5tsq82ar9k4n0.apps.googleusercontent.com';
   ee.data.authenticateViaOauth(CLIENT_ID, () => console.log('success'), console.error, []);
 </script>
