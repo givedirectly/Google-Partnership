@@ -1,7 +1,8 @@
 import {eeLegacyPathPrefix} from '../../../docs/ee_paths.js';
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
 import {withColor} from '../../../docs/import/color_function_util.js';
-import {createOptionFrom, createTd, getAssetsAndPopulateDisasterPicker, onCheck, onDelete, onInputBlur, onListBlur, updateAfterSort, withCheckbox, withInput, withList, withType} from '../../../docs/import/manage_layers.js';
+import {createOptionFrom} from '../../../docs/import/manage_common.js';
+import {createTd, getAssetsAndPopulateDisasterPicker, onCheck, onDelete, onInputBlur, onListBlur, updateAfterSort, withCheckbox, withInput, withList, withType} from '../../../docs/import/manage_layers.js';
 import {setCurrentDisaster} from '../../../docs/import/manage_layers_lib';
 import {disasterData, getCurrentLayers} from '../../../docs/import/manage_layers_lib.js';
 import {getDisaster} from '../../../docs/resources';
@@ -65,9 +66,11 @@ describe('Unit tests for manage_layers page', () => {
           .callsFake((id) => doc.getElementById(id));
     });
     cy.wrap(getAssetsAndPopulateDisasterPicker(disaster));
-    cy.get('[id="asset/with/geometry"]').should('not.be.disabled');
-    cy.get('[id="asset/with/null/geometry"]').should('be.disabled');
-    cy.get('[id="asset/with/empty/geometry"]').should('be.disabled');
+    cy.get('option').contains('asset/with/geometry').should('not.be.disabled');
+    cy.get('option').contains('asset/with/null/geometry').should('be.disabled');
+    cy.get('option')
+        .contains('asset/with/empty/geometry')
+        .should('be.disabled');
   });
 
   it('has racing disaster asset populates', () => {
@@ -135,7 +138,7 @@ describe('Unit tests for manage_layers page', () => {
     expect(noColor.text()).to.equal('N/A');
     expect(noColor.hasClass('na')).to.be.true;
 
-    const yellow = 'yellow';
+    const yellow = 'rgb(255, 255, 0)';
     const singleColor = withColor(
         createTd(), {color: {'currentStyle': 2, 'color': yellow}}, property, 0);
     expect(singleColor.children('.box').length).to.equal(1);
@@ -147,7 +150,7 @@ describe('Unit tests for manage_layers page', () => {
     expect(baseColor.children('.box').length).to.equal(1);
     expect(baseColor.children().eq(0).css('background-color')).to.equal(yellow);
 
-    const red = 'red';
+    const red = 'rgb(255, 0, 0)';
     const discrete = withColor(
         createTd(), {
           color: {

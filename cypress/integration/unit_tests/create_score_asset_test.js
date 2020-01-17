@@ -284,7 +284,7 @@ describe('Unit tests for create_score_asset.js', () => {
   it('succeeds for basic flexible disaster with poverty buildings', () => {
     const flexibleData = setDefaultFlexibleData();
     flexibleData.buildingPath = null;
-    flexibleData.buildingKey = 'buildingCount';
+    flexibleData.povertyBuildingKey = 'buildingCount';
     flexibleData.povertyPath = ee.FeatureCollection([
       ee.Feature(null, basicFlexiblePovertyAttributes).set('buildingCount', 3),
     ]);
@@ -351,7 +351,7 @@ describe('Unit tests for create_score_asset.js', () => {
     };
     const scoreAssetCreationParameters =
         Object.assign({}, FLEXIBLE_SCORE_ASSET_CREATION_PARAMETERS);
-    scoreAssetCreationParameters.buildingKey = buildingCountKey;
+    scoreAssetCreationParameters.buildingCountKey = buildingCountKey;
     expectedValue[buildingCountKey] = 3;
     cy.wrap(promise)
         .then(() => {

@@ -30,22 +30,24 @@ const BUILDING_COUNT_KEY = 'BUILDING COUNT';
  * Contains Firestore fields that are common to both state-based and flexible
  * disasters. Currently only damage-related.
  *
- * @type {Readonly<Object>}
- * @property {EeFC} [damageAssetPath] Damage data. If not specified, the score
+ * @typedef {Readonly<Object>} CommonAssetData
+ * @property {?EeFC} [damageAssetPath] Damage data. If not specified, the score
  *     asset will not have any damage data. One of this or
  *     `scoreBoundsCoordinates` must be specified for score asset creation. See
  *     {@link calculateDamage}.
- * @property {EeColumn} [noDamageKey] The column of the damage asset that can
+ * @property {?EeColumn} [noDamageKey] The column of the damage asset that can
  *     distinguish between damaged and undamaged buildings. If damage asset
  *     contains undamaged buildings, this must be specified.
- * @property {string} [noDamageValue] The value of `noDamageKey` that indicates
+ * @property {?string} [noDamageValue] The value of `noDamageKey` that indicates
  *     that a building is undamaged.
- * @property {Array<firebase.firestore.GeoPoint>} [scoreBoundsCoordinates]
+ * @property {?Array<firebase.firestore.GeoPoint>} [scoreBoundsCoordinates]
  *     Coordinates of polygon that score asset should be restricted to. Only
  *     used if `damageAssetPath` not specified: if `damageAssetPath` is
  *     specified, an "envelope" around the damage points is used for
  *     the score asset bounds. See {@link calculateDamage}.
  */
+
+/** @type {CommonAssetData} */
 const commonAssetDataTemplate = Object.freeze({
   damageAssetPath: null,
   noDamageKey: null,
@@ -65,7 +67,7 @@ const commonAssetDataTemplate = Object.freeze({
  * Contains Firestore fields that are used for state-based (U.S. Census
  * data-sourced) disasters.
  *
- * @type {Readonly<Object>}
+ * @typedef {Readonly<Object>} StateBasedData
  * @property {Array<string>} states List of states that disaster affected, as
  *     two-letter standard abbreviations. Cannot be modified after disaster is
  *     created. For objects below that have state-based asset paths, all states'
@@ -94,6 +96,8 @@ const commonAssetDataTemplate = Object.freeze({
  * @property {StateAssetMap} buildingAssetPaths All buildings, as geometries (so
  *     that they can be intersected with block groups to get total building
  *     counts).
+ *
+ * @type {StateBasedData}
  */
 const stateBasedDataTemplate = Object.freeze({
   states: null,
@@ -109,6 +113,12 @@ const stateBasedDataTemplate = Object.freeze({
   incomeKey,
   buildingAssetPaths: {},
 });
+
+/**
+ * @typedef {CommonAssetData} AssetData
+ * @property {?FlexibleData} [flexibleData]
+ * @property {?StateBasedData} [stateBasedData]
+ */
 
 // Has all the basic fields needed for a state-based score asset to be created:
 // SNAP, SVI, and income together with the columns of each, and optional damage
@@ -142,44 +152,49 @@ const BuildingSource = Object.freeze({
 
 /**
  * Has data for a "flexible" (non-Census-based) disaster.
- * @type {Readonly<Object>}
- * @property {EeFC} povertyPath Contains poverty data. May have geometries, in
+ * @typedef {Readonly<Object>} FlexibleData
+ * @property {?EeFC} povertyPath Contains poverty data. May have geometries, in
  *     which case `geographyPath` is not used. May have building counts, in
  *     which case `buildingPath` is not used. All columns from this asset end up
  *     in final score asset.
- * @property {EeColumn} povertyGeoid Column of `povertyPath` that contains
+ * @property {?EeColumn} povertyGeoid Column of `povertyPath` that contains
  *     district-identifying string ("district identifier").
  *     {@link censusGeoidKey} for Census data.
- * @property {EeColumn} povertyRateKey Column of `povertyPath` that
+ * @property {?EeColumn} povertyRateKey Column of `povertyPath` that
  *     contains poverty rate, as a number between 0 and 1, for use in score.
  *     {@link POVERTY_PERCENTAGE_TAG} for Census data.
- * @property {EeColumn} districtDescriptionKey Column of `povertyPath` that
+ * @property {?EeColumn} districtDescriptionKey Column of `povertyPath` that
  *     contains human-readable description of each district, for display on map.
  *     {@link censusBlockGroupKey} for Census data.
  * @property {boolean} povertyHasGeometry Whether the poverty asset has
  *     geometries for its districts. If not, `geographyPath` must be specified.
- * @property {EeFC} [geographyPath] Contains geometries of districts.
- * @property {EeColumn} [geographyGeoid] Column of `geographyPath` that contains
- *     district identifier. {@link tigerGeoidKey} for Census data.
- * @property {BuildingSource} buildingSource Where the building count comes
+ * @property {?EeColumn} [povertyBuildingKey]  If `buildingSource` is
+ *     {@link BuildingSource.POVERTY}, indicates the column of `povertyPath`
+ *     that has counts.
+ * @property {?EeFC} [geographyPath] Contains geometries of districts.
+ * @property {?EeColumn} [geographyGeoid] Column of `geographyPath` that
+ *     contains district identifier. {@link tigerGeoidKey} for Census data.
+ * @property {?BuildingSource} buildingSource Where the building count comes
  *     from.
- * @property {EeFC} [buildingPath] Contains building data. If buildings
+ * @property {?EeFC} [buildingPath] Contains building data. If buildings
  *     have geometries, building counts per district will be computed by
  *     geographic intersection. If there are no geometries, each row is a
  *     per-district count of buildings.
- * @property {EeColumn} [buildingGeoid] If `buildingPath` contains per-district
+ * @property {?EeColumn} [buildingGeoid] If `buildingPath` contains per-district
  *     counts of buildings, indicates the column that has district identifier.
- * @property {EeColumn} [buildingKey] If `buildingSource` is {@link
- * BuildingSource.BUILDING}, indicates the column of `buildingPath` that has
- * counts. If `buildingSource` is {@link BuildingSource.POVERTY}, indicates the
- * column of `povertyPath` that has counts.
+ * @property {?EeColumn} [buildingKey] If `buildingSource` is
+ *     {@link BuildingSource.BUILDING}, indicates the column of `buildingPath`
+ *     that has counts.
  */
+
+/** @type {FlexibleData} */
 const flexibleDataTemplate = Object.freeze({
   povertyPath: null,
   povertyRateKey: null,
   districtDescriptionKey: null,
   povertyGeoid: null,
   povertyHasGeometry: false,
+  povertyBuildingKey: null,
   geographyPath: null,
   buildingPath: null,
   buildingSource: null,
@@ -194,7 +209,7 @@ const flexibleAssetData = Object.freeze(
  * disaster if `states` is null.
  * @param {?Array<string>} states array of states (abbreviations) or null if
  *     this is not a state-based disaster
- * @return {Object}
+ * @return {{assetData: AssetData, layerArray: Array<*>}}
  */
 function createDisasterData(states) {
   const result = {layerArray: []};

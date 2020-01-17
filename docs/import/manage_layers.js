@@ -4,13 +4,13 @@ import {getDisaster} from '../resources.js';
 import {processNewEeLayer, processNonEeLayer} from './add_layer.js';
 import {withColor} from './color_function_util.js';
 import {getDisasterAssetsFromEe} from './list_ee_assets.js';
+import {stylePendingSelect} from './manage_common.js';
 import {getCurrentLayers, getRowIndex, ILLEGAL_STATE_ERR, onUpdate, setDisasterData, setStatus, updateLayersInFirestore} from './manage_layers_lib.js';
 
 export {enableWhenReady, updateAfterSort};
 // Visible for testing
 export {
   createLayerRow,
-  createOptionFrom,
   createTd,
   getAssetsAndPopulateDisasterPicker,
   onCheck,
@@ -326,9 +326,8 @@ function getAssetsAndPopulateDisasterPicker(disaster) {
  */
 function setUpDisasterPicker(disaster) {
   const div = $('#disaster-asset-picker').empty();
-  const assetPicker =
-      $(document.createElement('select')).width(200).attr('disabled', true);
-  assetPicker.append(createOptionFrom('pending...'));
+  const assetPicker = stylePendingSelect(
+      $(document.createElement('select')).addClass('just-created-select'));
   const assetPickerLabel = $(document.createElement('label'))
                                .text('Add layer from ' + disaster + ': ')
                                .attr('id', disaster + '-adder-label')
@@ -352,7 +351,8 @@ function populateDisasterAssetPicker(disaster, assets) {
                           .width(200);
   for (const [name, assetInfo] of assets) {
     const type = layerTypeStrings.get(assetInfo.type);
-    assetPicker.append(createOptionFrom(name)
+    assetPicker.append($(document.createElement('option'))
+                           .val(name)
                            .text(name + '-' + type)
                            .attr('disabled', assetInfo.disabled));
   }
@@ -366,18 +366,6 @@ function populateDisasterAssetPicker(disaster, assets) {
   assetPickerLabel.append(assetPicker);
   assetPickerLabel.append(addButton);
   div.append(assetPickerLabel);
-}
-
-/**
- * Utility function for creating an option with the same val and innerText.
- * @param {String} innerTextAndValue
- * @return {JQuery<HTMLOptionElement>}
- */
-function createOptionFrom(innerTextAndValue) {
-  return $(document.createElement('option'))
-      .text(innerTextAndValue)
-      .val(innerTextAndValue)
-      .prop('id', innerTextAndValue);
 }
 
 /**

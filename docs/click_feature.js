@@ -68,7 +68,7 @@ const HIDDEN_PROPERTIES = Object.freeze(new Set([
 function createHtmlForPopup(feature, rowData, scoreParameters, columns) {
   const div = document.createElement('div');
   const heading = document.createElement('h4');
-  const {districtDescriptionKey} = scoreParameters;
+  const {districtDescriptionKey} = scoreParameters.scoreAssetCreationParameters;
   heading.innerText = feature.properties[districtDescriptionKey];
   const properties = document.createElement('ul');
   properties.style.listStyleType = 'none';

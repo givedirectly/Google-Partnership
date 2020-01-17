@@ -7,7 +7,7 @@ import {showError} from './error.js';
 import {getLinearGradient} from './firebase_layers.js';
 import {addLayer, addNullLayer, addScoreLayer, scoreLayerName, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from './layer_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
-import {initializeAndProcessUserRegions} from './polygon_draw.js';
+import {initializeAndProcessUserRegions, userFeaturesColor} from './polygon_draw.js';
 import {setUserFeatureVisibility} from './popup.js';
 import {processJoinedData} from './process_joined_data.js';
 import {getBackupScoreAssetPath, getScoreAssetPath} from './resources.js';
@@ -73,36 +73,40 @@ function resolveScoreAsset() {
  *     Firebase authentication is finished
  * @param {Promise<firebase.firestore.DocumentSnapshot>} disasterMetadataPromise
  *     Promise with disaster metadata for this disaster
+ * @param {Promise<firebase.firestore.DocumentSnapshot>} userShapesPromise
+ *     Promise with user shapes
  */
-function run(map, firebaseAuthPromise, disasterMetadataPromise) {
+function run(
+    map, firebaseAuthPromise, disasterMetadataPromise, userShapesPromise) {
   setMapToDrawLayersOn(map);
   resolveScoreAsset();
-  disasterMetadataPromise = massageDisasterMetadataPromiseWhenUsingBackupAsset(
-      disasterMetadataPromise);
-  const scoreComputationParametersPromise =
-      setUpScoreComputationParameters(disasterMetadataPromise, map);
+  const scoreAssetComputationParametersPromise =
+      getScoreAssetComputationParametersPromise(disasterMetadataPromise);
+  const scoreComputationParametersPromise = setUpScoreComputationParameters(
+      scoreAssetComputationParametersPromise, map);
   createAndDisplayJoinedData(map, scoreComputationParametersPromise);
-  initializeAndProcessUserRegions(map, disasterMetadataPromise);
+  initializeAndProcessUserRegions(
+      map, scoreAssetComputationParametersPromise, userShapesPromise);
   disasterMetadataPromise.then(({layerArray}) => addLayers(map, layerArray));
 }
 
 /**
- * Modifies the result of `disasterMetadataPromise` in case we are using the
- * backup score asset, so that the `scoreAssetCreationParameters` are set to
+ *
+ * Returns `scoreAssetCreationParameters` unless we are using the backup score
+ * asset, so that the `scoreAssetCreationParameters` are set to
  * `lastScoreAssetCreationParameters`. This allows downstream consumers to
  * remain ignorant of which score asset is being used.
- * @param {Promise<DisasterDocument>}disasterMetadataPromise
- * @return {Promise<DisasterDocument>}
+ * @param {Promise<DisasterDocument>} disasterMetadataPromise
+ * @return {Promise<ScoreParameters>}
  */
-async function massageDisasterMetadataPromiseWhenUsingBackupAsset(
+async function getScoreAssetComputationParametersPromise(
     disasterMetadataPromise) {
   const disasterMetadata = await disasterMetadataPromise;
   const scoreAsset = await resolvedScoreAsset;
-  if (scoreAsset !== getScoreAssetPath()) {
-    disasterMetadata.scoreAssetCreationParameters =
-        disasterMetadata.lastScoreAssetCreationParameters;
+  if (scoreAsset === getScoreAssetPath()) {
+    return disasterMetadata.scoreAssetCreationParameters;
   }
-  return disasterMetadata;
+  return disasterMetadata.lastScoreAssetCreationParameters;
 }
 
 let mapSelectListener = null;
@@ -244,11 +248,15 @@ function updateCheckboxBackground(checkbox, gradient) {
  * @param {div} parentDiv div to attach checkbox to
  */
 function createCheckboxForUserFeatures(parentDiv) {
-  const newBox = createNewCheckbox(
-      'user-features', 'user features', parentDiv,
-      {'color': '#4CEF64', 'currentStyle': 2});
+  const newBox = createNewCheckbox('user-features', 'user features', parentDiv);
+  const linearGradient =
+      getLinearGradient({'color': userFeaturesColor, 'currentStyle': 2});
+  updateCheckboxBackground(newBox, linearGradient);
   newBox.checked = true;
-  newBox.onclick = () => setUserFeatureVisibility(newBox.checked);
+  newBox.onclick = () => {
+    updateCheckboxBackground(newBox, linearGradient);
+    setUserFeatureVisibility(newBox.checked);
+  };
 }
 
 /**
