@@ -1,6 +1,8 @@
 import {getDisaster} from '../resources.js';
 
 import {
+  backupCensusBlockGroupKey,
+  backupCensusGeoidKey, backupIncomeKey, backupSnapKey, backupTotalKey,
   cdcGeoidKey,
   censusBlockGroupKey,
   censusGeoidKey,
@@ -23,12 +25,18 @@ const stateBasedScoreAssetTypes = Object.freeze([
   {
     propertyPath: ['stateBasedData', 'snapData', 'paths'],
     displayName: 'SNAP',
-    expectedColumns: [censusGeoidKey, censusBlockGroupKey, snapKey, totalKey],
+    expectedColumns: [
+        [censusGeoidKey, censusBlockGroupKey, snapKey, totalKey],
+        [backupCensusGeoidKey, backupCensusBlockGroupKey, backupSnapKey, backupTotalKey],
+        ]
   },
   {
     propertyPath: ['stateBasedData', 'incomeAssetPaths'],
     displayName: 'Income',
-    expectedColumns: [censusGeoidKey, incomeKey],
+    expectedColumns: [
+        [censusGeoidKey, incomeKey],
+        [backupCensusGeoidKey, backupIncomeKey],
+        ],
   },
   {
     propertyPath: ['stateBasedData', 'sviAssetPaths'],

@@ -1,7 +1,7 @@
 import {processJoinedData} from '../../../docs/process_joined_data.js';
 
 const featureProperties = {
-  'GD_GOOGLE_DELPHI_GEOID': '45',
+  '___GD_GOOGLE_DELPHI_GEOID': '45',
   'SNAP HOUSEHOLDS': 2,
   'TOTAL HOUSEHOLDS': 4,
   'poverty rate': 0.5,
@@ -39,7 +39,7 @@ describe('Unit test for processed_joined_data.js', () => {
                 Promise.resolve(SCORE_COMPUTATION_PARAMETERS)))
         .then(({featuresList, columnsFound}) => {
           expect(columnsFound).to.eql([
-            'GD_GOOGLE_DELPHI_GEOID',
+            '___GD_GOOGLE_DELPHI_GEOID',
             'district descript',
             'SCORE',
             'poverty rate',
@@ -123,7 +123,7 @@ describe('Unit test for processed_joined_data.js', () => {
                 })))
         .then(({featuresList, columnsFound}) => {
           expect(columnsFound).to.eql([
-            'GD_GOOGLE_DELPHI_GEOID',
+            '___GD_GOOGLE_DELPHI_GEOID',
             'district descript',
             'SCORE',
             'poverty rate',

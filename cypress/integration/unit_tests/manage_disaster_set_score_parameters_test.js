@@ -394,18 +394,22 @@ it('nonexistent asset not ok', () => {
 it('does column verification', () => {
   callEnableWhenReady(setUpDefaultData());
   const goodIncomeBadSnapFeature = ee.FeatureCollection(
-      [ee.Feature(null, {'GEOid2': 'blah', 'HD01_VD01': 'otherBlah'})]);
-  const otherGoodIncomeBadSnapFeature = ee.FeatureCollection(
-      [ee.Feature(null, {'GEOid2': 'blah', 'HD01_VD01': 'otherBlah'})]);
+      [ee.Feature(null, {'GEOid': 'blah', 'HD01_VD01': 'otherBlah'})]);
+  const goodNewIncomeBadSnapFeature = ee.FeatureCollection(
+      [ee.Feature(null, {'GEO_ID': 'blah', 'B19013_001E': 'otherBlah'})]);
   const goodSnapFeature = ee.FeatureCollection([ee.Feature(
       null,
-      {'GEOid2': 0, 'GEOdisplay-label': 0, 'HD01_VD01': 0, 'HD01_VD02': 0})]);
+      {'GEOid': 0, 'GEOdisplay-label': 0, 'HD01_VD01': 0, 'HD01_VD02': 0})]);
+  const goodNewSnapFeature = ee.FeatureCollection([ee.Feature(
+      null,
+      {'GEO_ID': 0, 'NAME': 0, 'B22010_001E': 0, 'B22010_002E': 0})]);
 
   const featureCollectionStub = cy.stub(ee, 'FeatureCollection');
   featureCollectionStub.withArgs('state0').returns(goodIncomeBadSnapFeature);
   featureCollectionStub.withArgs('state1').returns(
-      otherGoodIncomeBadSnapFeature);
+      goodNewIncomeBadSnapFeature);
   featureCollectionStub.withArgs('state2').returns(goodSnapFeature);
+  featureCollectionStub.withArgs('state3').returns(goodNewSnapFeature);
 
   // None -> bad
   setSelectWithDelayedEvaluate(0, 'state0', 'NY');
@@ -413,7 +417,7 @@ it('does column verification', () => {
   checkHoverText(
       SNAP_INDEX,
       'Error! asset does not have all expected columns: ' +
-          'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
+      '[GEO_ID,NAME,B22010_002E,B22010_001E] or [GEOid,GEOdisplay-label,HD01_VD02,HD01_VD01]');
 
   // bad -> bad
   setSelectWithDelayedEvaluate(0, 'state1', 'NY');
@@ -421,7 +425,7 @@ it('does column verification', () => {
   checkHoverText(
       SNAP_INDEX,
       'Error! asset does not have all expected columns: ' +
-          'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
+          '[GEO_ID,NAME,B22010_002E,B22010_001E] or [GEOid,GEOdisplay-label,HD01_VD02,HD01_VD01]');
 
   // bad -> good
   setSelectWithDelayedEvaluate(0, 'state2', 'NY');
@@ -434,17 +438,22 @@ it('does column verification', () => {
   checkHoverText(
       SNAP_INDEX,
       'Error! asset does not have all expected columns: ' +
-          'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
+      '[GEO_ID,NAME,B22010_002E,B22010_001E] or [GEOid,GEOdisplay-label,HD01_VD02,HD01_VD01]');
+
+  // new good
+  setSelectWithDelayedEvaluate(0, 'state3', 'NY');
+  checkSelectBorder(SNAP_INDEX, 'rgb(0, 255, 0)');
+  checkHoverText(SNAP_INDEX, 'Success! asset has all expected columns');
 
   // None -> good columns
   setSelectWithDelayedEvaluate(1, 'state1', 'NY');
   checkSelectBorder(INCOME_INDEX, 'rgb(0, 255, 0)');
   checkHoverText(INCOME_INDEX, 'Success! asset has all expected columns');
 
-  // good -> good
-  setSelectWithDelayedEvaluate(1, 'state0', 'NY');
-  checkSelectBorder(INCOME_INDEX, 'rgb(0, 255, 0)');
-  checkHoverText(INCOME_INDEX, 'Success! asset has all expected columns');
+  // good -> new good
+  setSelectWithDelayedEvaluate(1, 'state2', 'NY');
+  checkSelectBorder(SNAP_INDEX, 'rgb(0, 255, 0)');
+  checkHoverText(SNAP_INDEX, 'Success! asset has all expected columns');
 
   // good -> None
   // should return immediately, no release needed.
@@ -476,9 +485,9 @@ it('has two racing sets on same selector', () => {
   callEnableWhenReady(setUpDefaultData());
   const goodSnapFeature = ee.FeatureCollection([ee.Feature(
       null,
-      {'GEOid2': 0, 'GEOdisplay-label': 0, 'HD01_VD01': 0, 'HD01_VD02': 0})]);
+      {'GEOid': 0, 'GEOdisplay-label': 0, 'HD01_VD01': 0, 'HD01_VD02': 0})]);
   const badSnapFeature = ee.FeatureCollection(
-      [ee.Feature(null, {'GEOid2': 'blah', 'HD01_VD01': 'otherBlah'})]);
+      [ee.Feature(null, {'GEOid': 'blah', 'HD01_VD01': 'otherBlah'})]);
 
   const featureCollectionStub = cy.stub(ee, 'FeatureCollection');
   featureCollectionStub.withArgs('state0').returns(goodSnapFeature);
@@ -506,7 +515,7 @@ it('has two racing sets on same selector', () => {
   checkHoverText(
       SNAP_INDEX,
       'Error! asset does not have all expected columns: ' +
-          'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
+      '[GEO_ID,NAME,B22010_002E,B22010_001E] or [GEOid,GEOdisplay-label,HD01_VD02,HD01_VD01]');
 
   // now do opposite order
   cyQueue(() => {
@@ -524,13 +533,13 @@ it('has two racing sets on same selector', () => {
   checkHoverText(
       SNAP_INDEX,
       'Error! asset does not have all expected columns: ' +
-          'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01')
+      '[GEO_ID,NAME,B22010_002E,B22010_001E] or [GEOid,GEOdisplay-label,HD01_VD02,HD01_VD01]')
       .then(() => firstRelease());
   checkSelectBorder(SNAP_INDEX, 'rgb(255, 0, 0)');
   checkHoverText(
       SNAP_INDEX,
       'Error! asset does not have all expected columns: ' +
-          'GEOid2,GEOdisplay-label,HD01_VD02,HD01_VD01');
+      '[GEO_ID,NAME,B22010_002E,B22010_001E] or [GEOid,GEOdisplay-label,HD01_VD02,HD01_VD01]');
 });
 
 it('shows pending then values for state-based disaster, damage cascades',

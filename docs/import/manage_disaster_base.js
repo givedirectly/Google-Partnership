@@ -434,7 +434,7 @@ async function verifyAsset(propertyPath, expectedColumns) {
       updateColorAndHover(
           select, 'red',
           'Error! asset does not have all expected columns: ' +
-          expectedColumns.join(', or '));
+          '[' + expectedColumns.join('] or [') + ']');
     } else {
       for (const column of expectedColumns) {
         if (!presentColumns.has(column)) {

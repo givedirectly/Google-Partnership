@@ -68,5 +68,5 @@ describe('Unit test for highlight_features.js', () => {
  * @return {Object}
  */
 function makeFeature(geoid, geometry) {
-  return {properties: {'GD_GOOGLE_DELPHI_GEOID': geoid}, geometry: geometry};
+  return {properties: {'___GD_GOOGLE_DELPHI_GEOID': geoid}, geometry: geometry};
 }

@@ -2,11 +2,16 @@ import {transformEarthEngineFailureMessage} from '../ee_promise_cache.js';
 import {disasterDocumentReference} from '../firestore_document.js';
 import {inProduction} from '../in_test_util.js';
 import {damageTag, geoidTag, povertyHouseholdsTag, totalHouseholdsTag} from '../property_names.js';
-import {getBackupScoreAssetPath, getScoreAssetPath} from '../resources.js';
-
+import {
+  getBackupScoreAssetPath,
+  getDisaster,
+  getScoreAssetPath,
+} from '../resources.js';
 import {computeAndSaveBounds} from './center.js';
 import {BUILDING_COUNT_KEY, BuildingSource} from './create_disaster_lib.js';
 import {
+  backupCensusBlockGroupKey,
+  backupCensusGeoidKey, backupIncomeKey, backupSnapKey, backupTotalKey,
   cdcGeoidKey,
   censusBlockGroupKey,
   censusGeoidKey, incomeKey,
@@ -21,7 +26,7 @@ export {
 };
 
 // For testing.
-export {backUpAssetAndStartTask};
+export {backUpAssetAndStartTask, renameProperty};
 
 // State-based tags.
 
@@ -59,8 +64,8 @@ function combineWithBuildings(featureCollection, buildingsHisto) {
  * @param {ee.FeatureCollection} featureCollection Score asset being created
  * @param {ee.FeatureCollection} damage Damage collection, which may includes
  *     undamaged buildings
- * @param {string} buildingKey Key to find building count under
- * @param {?string} noDamageKey Property in damage collection whose value
+ * @param {EeColumn} buildingKey Key to find building count under
+ * @param {?EeColumn} noDamageKey Property in damage collection whose value
  *     can identify undamaged buildings
  * @param {?string} noDamageValue Value for `noDamageKey` that indicates a
  *     building is undamaged
@@ -86,9 +91,9 @@ function combineWithDamage(
  * @param {ee.FeatureCollection} featureCollection Score asset being created
  * @param {ee.FeatureCollection} damage Damage collection, which includes all
  *     buildings
- * @param {string} noDamageKey Property in damage collection whose value can
+ * @param {EeColumn} noDamageKey Property in damage collection whose value can
  *     identify undamaged buildings
- * @param {string} noDamageValue Value for `noDamageKey` that indicates a
+ * @param {EeColumn} noDamageValue Value for `noDamageKey` that indicates a
  *     building is undamaged
  * @return {ee.FeatureCollection}
  */
@@ -114,7 +119,7 @@ function combineWithDamageAndUseForBuildings(
  * Handles edge case of `totalBuildings` being 0.
  * @param {ee.Feature} feature
  * @param {ee.Number} damagedBuildings
- * @param {string} buildingKey Key to find building count under
+ * @param {EeColumn} buildingKey Key to find building count under
  * @return {ee.Feature}
  */
 function addDamageTag(feature, damagedBuildings, buildingKey) {
@@ -165,8 +170,8 @@ function convertToNumber(value) {
  */
 function combineWithSnap(feature) {
   const snapFeature = ee.Feature(feature.get('primary'));
-  const snapPop = convertToNumber(snapFeature.get(snapKey));
-  const totalPop = convertToNumber(ee.Number.parse(snapFeature.get(totalKey)));
+  const snapPop = convertToNumber(getKeyOrBackup(snapFeature, snapKey, backupSnapKey));
+  const totalPop = convertToNumber(getKeyOrBackup(snapFeature, totalKey, backupTotalKey));
   const badData = null;
   const snapPercentage = ee.Algorithms.If(
       totalPop,
@@ -177,9 +182,9 @@ function combineWithSnap(feature) {
   return ee.Feature(
       ee.Feature(feature.get('secondary')).geometry(), ee.Dictionary([
         geoidTag,
-        snapFeature.get(censusGeoidKey),
+        snapFeature.get(geoidTag),
         BLOCK_GROUP_TAG,
-        snapFeature.get(censusBlockGroupKey),
+        getKeyOrBackup(snapFeature, censusBlockGroupKey, backupCensusBlockGroupKey),
         povertyHouseholdsTag,
         snapPop,
         totalHouseholdsTag,
@@ -189,18 +194,24 @@ function combineWithSnap(feature) {
       ]));
 }
 
+function getKeyOrBackup(feature, key, backupKey) {
+  const val = feature.get(key);
+  return ee.Algorithms.If(ee.Algorithms.IsEqual(val, null), feature.get(backupKey), val);
+}
+
 /**
  * Post-process the join to another asset to form a single feature.
  * @param {ee.Feature} feature
- * @param {string} tag column where value will be stored
- * @param {string} key original column name
+ * @param {EeColumn} tag column where value will be stored
+ * @param {EeColumn} key original column name
+ * @param {EeColumn} backupKey original column name if `key` is missing
  * @return {ee.Feature}
  */
-function combineWithAsset(feature, tag, key) {
+function combineWithAsset(feature, tag, key, backupKey = key) {
   const featureWithNewData = ee.Feature(feature.get('secondary'));
   return ee.Feature(feature.get('primary')).set(ee.Dictionary([
     tag,
-    convertToNumber(featureWithNewData.get(key)),
+    convertToNumber(getKeyOrBackup(featureWithNewData, key, backupKey)),
   ]));
 }
 
@@ -209,8 +220,8 @@ function combineWithAsset(feature, tag, key) {
  * {@link ee.String}. If `newProperty` is given, also effectively renames
  * `property` to `newProperty`.
  * @param {ee.FeatureCollection} featureCollection
- * @param {string} property
- * @param {string} newProperty Defaults to `property`
+ * @param {EeColumn} property
+ * @param {EeColumn} newProperty Defaults to `property`
  * @return {ee.FeatureCollection}
  */
 function stringifyCollection(
@@ -224,13 +235,22 @@ function stringifyCollection(
   });
 }
 
+function setGeoid(censusTable) {
+  return censusTable.map((f) => {
+    // Starts with 150000000US, indicating block groups.
+    // https://www.census.gov/programs-surveys/geography/guidance/geo-identifiers.html
+    return f.set(geoidTag,
+        ee.String(getKeyOrBackup(f, censusGeoidKey, backupCensusGeoidKey)).slice(9));
+  })
+}
+
 /**
  * For each {@link ee.Feature}, sets `newProperty` to the value of `property`
  * for that feature, and sets `property` to null, effectively removing its value
  * from every feature.
  * @param {ee.FeatureCollection} featureCollection
- * @param {string} property old name
- * @param {string} newProperty new name
+ * @param {EeColumn} property old name
+ * @param {EeColumn} newProperty new name
  * @return {ee.FeatureCollection}
  */
 function renameProperty(featureCollection, property, newProperty) {
@@ -320,18 +340,22 @@ function createScoreAssetForStateBasedDisaster(
     const stateGroups =
         ee.FeatureCollection(blockGroupPath).filterBounds(damageEnvelope);
 
-    let processing =
-        stringifyCollection(ee.FeatureCollection(snapPath), censusGeoidKey);
+    let processing = setGeoid(ee.FeatureCollection(snapPath));
 
     // Join snap stats to block group geometries.
     processing =
-        innerJoin(processing, stateGroups, censusGeoidKey, tigerGeoidKey);
+        innerJoin(processing, stateGroups, geoidTag, tigerGeoidKey);
+    getKeyOrBackup(processing.first(), snapKey, backupSnapKey).evaluate(console.log);
+    console.log(backupSnapKey);
+    processing.first().evaluate(console.log);
+    processing.first().get(backupSnapKey).evaluate(console.log);
     processing = processing.map((f) => combineWithSnap(f));
     if (incomePath) {
+      const income = setGeoid(ee.FeatureCollection(incomePath));
       // Join with income.
-      processing = innerJoin(processing, incomePath, geoidTag, censusGeoidKey);
+      processing = innerJoin(processing, income, geoidTag, geoidTag);
       processing =
-          processing.map((f) => combineWithAsset(f, INCOME_TAG, incomeKey));
+          processing.map((f) => combineWithAsset(f, INCOME_TAG, incomeKey, backupIncomeKey));
     }
     if (sviPath) {
       // Join with SVI (data is at the tract level).
@@ -345,8 +369,7 @@ function createScoreAssetForStateBasedDisaster(
 
     if (buildingPath) {
       // Get building count by block group.
-      const buildingsHisto =
-          computeBuildingsHisto(buildingPath, stateGroups, geoidTag);
+      const buildingsHisto = computeBuildingsHisto(buildingPath, stateGroups, tigerGeoidKey);
       processing = combineWithBuildings(processing, buildingsHisto);
     }
 
@@ -414,7 +437,7 @@ function createScoreAssetForFlexibleDisaster(
     const buildingCollection = ee.FeatureCollection(flexibleData.buildingPath);
     if (flexibleData.buildingHasGeometry) {
       const buildingsHisto =
-          computeBuildingsHisto(buildingCollection, processing);
+          computeBuildingsHisto(buildingCollection, processing, geoidTag);
       processing = combineWithBuildings(processing, buildingsHisto);
     } else {
       const {buildingGeoid, buildingKey} = flexibleData;
@@ -478,7 +501,7 @@ async function backUpAssetAndStartTask(
   const oldScoreAssetPath = getBackupScoreAssetPath();
   const task = ee.batch.Export.table.toAsset(
       featureCollection,
-      scoreAssetPath.substring(scoreAssetPath.lastIndexOf('/') + 1),
+      getDisaster() + '-' + scoreAssetPath.substring(scoreAssetPath.lastIndexOf('/') + 1),
       scoreAssetPath);
   let renamed = false;
   try {
@@ -615,11 +638,11 @@ function calculateDamage(assetData, setMapBoundsInfo) {
  *
  * This method will go away or be greatly changed if we're using CrowdAI data
  * instead of previously computed building data.
- * @param {string} buildingPath location of buildings asset in EE
+ * @param {EeFC} buildingPath location of buildings asset in EE
  * @param {ee.FeatureCollection} geographies Collection with districts
  * @return {ee.Dictionary} Number of buildings per district
  */
-function computeBuildingsHisto(buildingPath, geographies) {
+function computeBuildingsHisto(buildingPath, geographies, geoidKey) {
   const buildings = ee.FeatureCollection(buildingPath);
   const field = 'fieldToSaveDistrictUnder';
   const withBlockGroup =
@@ -627,7 +650,7 @@ function computeBuildingsHisto(buildingPath, geographies) {
           .apply(
               buildings, geographies,
               ee.Filter.intersects({leftField: '.geo', rightField: '.geo'}))
-          .map((f) => f.set(geoidTag, ee.Feature(f.get(field)).get(geoidTag)));
+          .map((f) => f.set(geoidTag, ee.Feature(f.get(field)).get(geoidKey)));
   return ee.Dictionary(withBlockGroup.aggregate_histogram(geoidTag));
 }
 
@@ -636,8 +659,8 @@ function computeBuildingsHisto(buildingPath, geographies) {
  * {@code collection2} if necessary), on the given keys.
  * @param {ee.FeatureCollection} collection1
  * @param {ee.FeatureCollection|string} collection2
- * @param {string} key1
- * @param {string} key2
+ * @param {EeColumn} key1
+ * @param {EeColumn} key2
  * @return {ee.FeatureCollection}
  */
 function innerJoin(collection1, collection2, key1, key2) {
