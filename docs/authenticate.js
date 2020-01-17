@@ -119,7 +119,7 @@ class Authenticator {
    */
   eeAuthenticate(failureCallback) {
     ee.data.authenticateViaOauth(
-        CLIENT_ID, () => this.internalInitializeEE(), failureCallback, []);
+        CLIENT_ID, () => this.internalInitializeEE(), console.error, []);
   }
 
   /**
