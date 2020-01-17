@@ -231,10 +231,8 @@ function addScriptToDocument(scriptUrl) {
  */
 function waitForCallback(callback) {
   if (!callback()) {
-    cy.task('logg', 'Waiting some more for ' + callback);
-    return cy.wait(10).then(() => waitForCallback(callback));
+    return cy.wait(1).then(() => waitForCallback(callback));
   }
-  cy.task('finished', 'callbak ' + callback);
   // If callback is true, return a Cypress Chainable so that we can chain work
   // off of this function.
   return cy.wait(0);
