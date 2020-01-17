@@ -186,6 +186,7 @@ function combineWithSnap(feature) {
 }
 
 /**
+ * Used to handle Census key name changes: returns whichever one is there.
  * @param {ee.Feature} feature
  * @param {EeColumn} key
  * @param {EeColumn} backupKey

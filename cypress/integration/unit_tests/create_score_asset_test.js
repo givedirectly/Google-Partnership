@@ -124,7 +124,6 @@ describe('Unit tests for create_score_asset.js', () => {
           const features = result.features;
           expect(features).to.have.length(1);
           const [feature] = features;
-          console.log(feature);
           expect(feature.properties).to.eql({
             'BLOCK GROUP': 'Some state, group 361',
             'BUILDING COUNT': 3,
@@ -150,6 +149,7 @@ describe('Unit tests for create_score_asset.js', () => {
 
   it('handles new column names', () => {
     const {stateBasedData} = testData.assetData;
+    // Rename columns instead of recreating assets from scratch.
     for (const [oldProp, newProp] of [
              [backupCensusGeoidKey, censusGeoidKey],
              [backupCensusBlockGroupKey, censusBlockGroupKey],
