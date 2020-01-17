@@ -187,6 +187,7 @@ class Authenticator {
                 'with error from JavaScript console.');
             throw new Error(message);
           }
+          
           return response.json();
         })
         .then(
