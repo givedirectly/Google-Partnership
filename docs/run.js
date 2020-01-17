@@ -2,7 +2,7 @@ import {getCheckBoxId, getCheckBoxRowId} from './checkbox_util.js';
 import {clickFeature, selectHighlightedFeatures} from './click_feature.js';
 import {sidebarDatasetsId, tableContainerId} from './dom_constants.js';
 import {drawTable} from './draw_table.js';
-import {AssetNotFoundError, getEePromiseForFeatureCollection} from './ee_promise_cache.js';
+import {AssetNotFoundError, convertEeObjectToPromise, getEePromiseForFeatureCollection} from './ee_promise_cache.js';
 import {showError} from './error.js';
 import {getLinearGradient} from './firebase_layers.js';
 import {addLayer, addNullLayer, addScoreLayer, scoreLayerName, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from './layer_util.js';
@@ -32,12 +32,22 @@ let resolvedScoreAsset;
  * Seeds {@link Promise} cache with `eeAsset`, and returns {@link Promise} whose
  * value is `eeAsset`. Caller can then wait on returned {@link Promise} to see
  * if `eeAsset` is valid asset.
+ *
+ * In case asset takes a long time to retrieve from EarthEngine, also retrieves
+ * asset's size (which should be quick), and returns value on first one to
+ * resolve or throws if first one rejects.
  * @param {string} eeAsset
  * @return {Promise<string>} {@link Promise} with `eeAsset` once {@link
- *     ee.FeatureCollection} with path `eeAsset` has been downloaded
+ *     ee.FeatureCollection} with path `eeAsset` has been downloaded/verified to
+ *     exist.
  */
 function createPromiseWithPathIfSuccessful(eeAsset) {
-  return getEePromiseForFeatureCollection(eeAsset).then(() => eeAsset);
+  return Promise
+      .race([
+        getEePromiseForFeatureCollection(eeAsset),
+        convertEeObjectToPromise(ee.FeatureCollection(eeAsset).size()),
+      ])
+      .then(() => eeAsset);
 }
 
 /**

@@ -224,7 +224,6 @@ function trackEeAndFirebase(
     taskAccumulator, needsGdUser = false, additionalScopes = []) {
   let authenticator;
   const eeInitializeCallback = () => {
-    ee.data.setCloudApiEnabled(true);
     taskAccumulator.taskCompleted();
     if (!authenticator) {
       return;
