@@ -39,7 +39,7 @@ async function loadNavbar(
           () => initializeDisasterPicker(
               firebaseDataPromise, changeDisasterHandler));
   $('#nav-title-header').html(title);
-  $('.help-a').prop('href', getHelpUrl());
+  $('#help-a').prop('href', getHelpUrl());
   if (!privilegedUserPromise) {
     navPublic.show();
     return;
