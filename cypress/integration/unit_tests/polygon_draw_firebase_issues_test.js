@@ -11,7 +11,7 @@ import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 import {createGoogleMap} from '../../support/test_map.js';
 
 describe('Tests for polygon_draw.js with Firebase issues', () => {
-  loadScriptsBeforeForUnitTests('firebase', 'jquery', 'jqueryUi', 'maps');
+  loadScriptsBeforeForUnitTests('firebase', 'jqueryWIthUi', 'maps');
 
   let loadingStartedStub;
   let loadingFinishedStub;
