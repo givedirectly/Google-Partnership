@@ -164,6 +164,9 @@ function setUpPopup() {
         const saveButton = document.createElement('button');
         saveButton.className = 'popup-button';
         saveButton.innerHTML = 'save';
+        const saveIcon = document.createElement('i');
+        saveIcon.className = 'popup-icon fa fa-save';
+        saveButton.prepend(saveIcon);
         saveButton.onclick = () => this.saveNewData(notesForm.value);
 
         content.insertBefore(saveButton, closeButton);
