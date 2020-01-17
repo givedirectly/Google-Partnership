@@ -4,6 +4,7 @@ import {createServer} from 'http';
 import parseBody from 'urlencoded-body-parser';
 import {storeGoogleCredentials} from './aws_get_credentials.js';
 import {generateEarthEngineToken} from './ee_token_creator.js';
+import {TOKEN_SERVER_ORIGINS} from './origins.js';
 
 // TODO(janakr): Elastic Beanstalk doesn't seem to support https without jumping
 //  through additional hoops. Sending tokens in the clear seems like a bad idea,
@@ -34,7 +35,7 @@ const TIME_BEFORE_REGENERATION = 40 * ONE_MINUTE_IN_MILLISECONDS;
 // Cope with slight differences between ESM/Node transpilation of googleapis.
 const googleAuth = GoogleAuth.default || GoogleAuth;
 
-const allowedOrigins = new Set(['https://givedirectly.github.io']);
+const allowedOrigins = new Set(TOKEN_SERVER_ORIGINS);
 
 const runningOnGae = !!process.env.GAE_APPLICATION;
 const runningLocally =

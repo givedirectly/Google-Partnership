@@ -11,9 +11,8 @@ export {assertFirestoreMapBounds, expectLatLngBoundsWithin};
  */
 function assertFirestoreMapBounds(expectedLatLngBounds) {
   // Make sure we don't call readDisasterDocument until Cypress is ready.
-  cyQueue(readDisasterDocument).then((doc) => {
+  cyQueue(readDisasterDocument).then(({mapBounds}) => {
     // Expect that result retrieved from Firestore is correct.
-    const {mapBounds} = doc.data();
     expectLatLngBoundsWithin(
         {
           sw: makeLatLngFromGeoPoint(mapBounds.sw),

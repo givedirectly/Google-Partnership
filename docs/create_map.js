@@ -13,15 +13,13 @@ const placeIconParams = {
 /**
  * Creates, initializes and returns a map with search box and drawing tools.
  *
- * @param {Promise<firebase.firestore.DocumentSnapshot>} firebasePromise Promise
- *     with disaster metadata
+ * @param {Promise<DisasterDocument>} firebasePromise
  * @return {google.maps.Map}
  */
 function createMap(firebasePromise) {
   const {map, searchBox} = createBasicMap(document.getElementById('map'));
 
-  firebasePromise.then((doc) => {
-    const {mapBounds} = doc.data();
+  firebasePromise.then(({mapBounds}) => {
     map.fitBounds(new google.maps.LatLngBounds(
         new google.maps.LatLng(geoPointToLatLng(mapBounds.sw)),
         new google.maps.LatLng(geoPointToLatLng(mapBounds.ne))));

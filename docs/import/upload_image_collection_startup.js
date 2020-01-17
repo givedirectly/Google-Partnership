@@ -35,6 +35,11 @@ $(() => {
     }
   };
 
-  loadNavbarWithPicker(firebaseAuthPromise, 'Upload Image Collection');
+  loadNavbarWithPicker({
+    firebaseAuthPromise,
+    title: 'Upload Image Collection',
+    privilegedUserPromise: Promise.resolve(),
+  });
+
   taskAccumulator.taskCompleted();
 });

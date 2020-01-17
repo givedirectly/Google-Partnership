@@ -3,6 +3,7 @@ import {getCheckBoxRowId} from '../../../docs/checkbox_util.js';
 import {mapContainerId} from '../../../docs/dom_constants.js';
 import * as ErrorLibrary from '../../../docs/error.js';
 import * as FirestoreDocument from '../../../docs/firestore_document.js';
+import {getUserFeatures} from '../../../docs/firestore_document.js';
 import * as Loading from '../../../docs/loading.js';
 import {initializeAndProcessUserRegions} from '../../../docs/polygon_draw.js';
 import {cyQueue} from '../../support/commands.js';
@@ -34,7 +35,8 @@ describe('Tests for polygon_draw.js with Firebase issues', () => {
     cy.wrap(firebase.auth().signOut());
     setUpDocumentAndReturnMap().then(
         (map) => initializeAndProcessUserRegions(
-            map, Promise.resolve({data: () => ({assetData: {}})})));
+            map, Promise.resolve({scoreAssetCreationParameters: {}}),
+            getUserFeatures()));
     cy.get('[title="Draw a shape"]').should('not.exist');
     cy.get('#' + getCheckBoxRowId('user-features'))
         .should('have.css', 'text-decoration')
@@ -65,20 +67,15 @@ describe('Tests for polygon_draw.js with Firebase issues', () => {
                 'Error retrieving user-drawn features. Try refreshing page');
     const error = new Error();
     error.code = 'not a code we know';
-    const getStub = cy.stub().throws();
-    const collectionStub = cy.stub().returns({get: getStub});
     const getFirestoreStub =
-        cy.stub(FirestoreDocument, 'getFirestoreRoot').returns({
-          collection: collectionStub,
-        });
+        cy.stub(FirestoreDocument, 'userFeatures').throws(error);
     setUpDocumentAndReturnMap()
         .then(
             (map) => initializeAndProcessUserRegions(
-                map, Promise.resolve({data: () => ({assetData: {}})})))
+                map, Promise.resolve({scoreAssetCreationParameters: {}}),
+                getUserFeatures()))
         .then(() => {
           expect(getFirestoreStub).to.be.calledOnce;
-          expect(collectionStub).to.be.calledOnce;
-          expect(getStub).to.be.calledOnce;
           expect(errorStub).to.be.calledOnce;
         });
     cy.get('[title="Draw a shape"]').should('not.exist');
@@ -90,7 +87,8 @@ describe('Tests for polygon_draw.js with Firebase issues', () => {
   it('Initial Firebase error just throws', () => {
     const errorStub = cy.stub(ErrorLibrary, 'showError');
     const error = new Error('bork');
-    cy.wrap(initializeAndProcessUserRegions(null, Promise.reject(error))
+    cy.wrap(initializeAndProcessUserRegions(
+                null, Promise.reject(error), getUserFeatures())
                 .catch((err) => expect(err).to.equal(error)))
         .then(() => expect(errorStub).to.not.be.called);
     cy.get('[title="Draw a shape"]').should('not.exist');
