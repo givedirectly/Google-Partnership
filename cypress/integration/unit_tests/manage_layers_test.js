@@ -1,7 +1,8 @@
 import {eeLegacyPathPrefix} from '../../../docs/ee_paths.js';
 import {getFirestoreRoot} from '../../../docs/firestore_document.js';
 import {withColor} from '../../../docs/import/color_function_util.js';
-import {createOptionFrom, createTd, getAssetsAndPopulateDisasterPicker, onCheck, onDelete, onInputBlur, onListBlur, updateAfterSort, withCheckbox, withInput, withList, withType} from '../../../docs/import/manage_layers.js';
+import {createOptionFrom} from '../../../docs/import/manage_common.js';
+import {createTd, getAssetsAndPopulateDisasterPicker, onCheck, onDelete, onInputBlur, onListBlur, updateAfterSort, withCheckbox, withInput, withList, withType} from '../../../docs/import/manage_layers.js';
 import {setCurrentDisaster} from '../../../docs/import/manage_layers_lib';
 import {disasterData, getCurrentLayers} from '../../../docs/import/manage_layers_lib.js';
 import {getDisaster} from '../../../docs/resources';
@@ -65,9 +66,11 @@ describe('Unit tests for manage_layers page', () => {
           .callsFake((id) => doc.getElementById(id));
     });
     cy.wrap(getAssetsAndPopulateDisasterPicker(disaster));
-    cy.get('[id="asset/with/geometry"]').should('not.be.disabled');
-    cy.get('[id="asset/with/null/geometry"]').should('be.disabled');
-    cy.get('[id="asset/with/empty/geometry"]').should('be.disabled');
+    cy.get('option').contains('asset/with/geometry').should('not.be.disabled');
+    cy.get('option').contains('asset/with/null/geometry').should('be.disabled');
+    cy.get('option')
+        .contains('asset/with/empty/geometry')
+        .should('be.disabled');
   });
 
   it('has racing disaster asset populates', () => {
@@ -135,25 +138,23 @@ describe('Unit tests for manage_layers page', () => {
     expect(noColor.text()).to.equal('N/A');
     expect(noColor.hasClass('na')).to.be.true;
 
-    const yellow = 'yellow';
+    const yellow = 'rgb(255, 255, 0)';
     const singleColor = withColor(
-        createTd(), {color: {'current-style': 2, 'color': yellow}}, property,
-        0);
+        createTd(), {color: {'currentStyle': 2, 'color': yellow}}, property, 0);
     expect(singleColor.children('.box').length).to.equal(1);
     expect(singleColor.children().eq(0).css('background-color'))
         .to.equal(yellow);
 
     const baseColor = withColor(
-        createTd(), {color: {'current-style': 0, 'color': yellow}}, property,
-        0);
+        createTd(), {color: {'currentStyle': 0, 'color': yellow}}, property, 0);
     expect(baseColor.children('.box').length).to.equal(1);
     expect(baseColor.children().eq(0).css('background-color')).to.equal(yellow);
 
-    const red = 'red';
+    const red = 'rgb(255, 0, 0)';
     const discrete = withColor(
         createTd(), {
           color: {
-            'current-style': 1,
+            'currentStyle': 1,
             'colors': {'squash': yellow, 'tomato': red, 'pepper': red},
           },
         },
@@ -277,7 +278,7 @@ describe('Unit tests for manage_layers page', () => {
               .get();
         })
         .then((doc) => {
-          const layers = doc.data()['layers'];
+          const layers = doc.data().layerArray;
           expect(layers[0]['initialIndex']).to.equal(1);
           expect(layers[1]['initialIndex']).to.equal(2);
           expect(layers[2]['initialIndex']).to.equal(0);
@@ -306,5 +307,6 @@ function testSave(fxn, property, input, afterVal) {
             .get();
       })
       .then(
-          (doc) => expect(doc.data()['layers'][0][property]).to.eql(afterVal));
+          (doc) =>
+              expect(doc.data()['layerArray'][0][property]).to.eql(afterVal));
 }

@@ -1,4 +1,4 @@
-import {showSnackbar} from './snackbar.js';
+import {showErrorSnackbar} from './snackbar.js';
 
 export {showError};
 
@@ -16,7 +16,5 @@ function showError(msg, snackbarMsg = null) {
     console.error(msg);
     snackbarMsg = msg;
   }
-  showSnackbar(
-      snackbarMsg, ['snackbar-error'],
-      ['fa', 'fa-exclamation-circle', 'fa-2x']);
+  showErrorSnackbar(snackbarMsg);
 }

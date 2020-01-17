@@ -7,11 +7,11 @@ import {showError} from './error.js';
 import {getLinearGradient} from './firebase_layers.js';
 import {addLayer, addNullLayer, addScoreLayer, scoreLayerName, setMapToDrawLayersOn, toggleLayerOff, toggleLayerOn} from './layer_util.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
-import {initializeAndProcessUserRegions} from './polygon_draw.js';
+import {initializeAndProcessUserRegions, userFeaturesColor} from './polygon_draw.js';
 import {setUserFeatureVisibility} from './popup.js';
 import {processJoinedData} from './process_joined_data.js';
 import {getBackupScoreAssetPath, getScoreAssetPath} from './resources.js';
-import {setUpToggles} from './update.js';
+import {setUpScoreComputationParameters} from './update.js';
 
 export {createAndDisplayJoinedData, run};
 // For testing.
@@ -73,15 +73,40 @@ function resolveScoreAsset() {
  *     Firebase authentication is finished
  * @param {Promise<firebase.firestore.DocumentSnapshot>} disasterMetadataPromise
  *     Promise with disaster metadata for this disaster
+ * @param {Promise<firebase.firestore.DocumentSnapshot>} userShapesPromise
+ *     Promise with user shapes
  */
-function run(map, firebaseAuthPromise, disasterMetadataPromise) {
+function run(
+    map, firebaseAuthPromise, disasterMetadataPromise, userShapesPromise) {
   setMapToDrawLayersOn(map);
   resolveScoreAsset();
-  const initialTogglesValuesPromise =
-      setUpToggles(disasterMetadataPromise, map);
-  createAndDisplayJoinedData(map, initialTogglesValuesPromise);
-  initializeAndProcessUserRegions(map, disasterMetadataPromise);
-  disasterMetadataPromise.then((doc) => addLayers(map, doc.data().layers));
+  const scoreAssetComputationParametersPromise =
+      getScoreAssetComputationParametersPromise(disasterMetadataPromise);
+  const scoreComputationParametersPromise = setUpScoreComputationParameters(
+      scoreAssetComputationParametersPromise, map);
+  createAndDisplayJoinedData(map, scoreComputationParametersPromise);
+  initializeAndProcessUserRegions(
+      map, scoreAssetComputationParametersPromise, userShapesPromise);
+  disasterMetadataPromise.then(({layerArray}) => addLayers(map, layerArray));
+}
+
+/**
+ *
+ * Returns `scoreAssetCreationParameters` unless we are using the backup score
+ * asset, so that the `scoreAssetCreationParameters` are set to
+ * `lastScoreAssetCreationParameters`. This allows downstream consumers to
+ * remain ignorant of which score asset is being used.
+ * @param {Promise<DisasterDocument>} disasterMetadataPromise
+ * @return {Promise<ScoreParameters>}
+ */
+async function getScoreAssetComputationParametersPromise(
+    disasterMetadataPromise) {
+  const disasterMetadata = await disasterMetadataPromise;
+  const scoreAsset = await resolvedScoreAsset;
+  if (scoreAsset === getScoreAssetPath()) {
+    return disasterMetadata.scoreAssetCreationParameters;
+  }
+  return disasterMetadata.lastScoreAssetCreationParameters;
 }
 
 let mapSelectListener = null;
@@ -91,11 +116,12 @@ let featureSelectListener = null;
  * Creates the score overlay and draws the table
  *
  * @param {google.maps.Map} map main map
- * @param {Promise<Array<number>>} initialTogglesValuesPromise promise that
- *     returns the poverty and damage thresholds and the poverty weight (from
- *     which the damage weight is derived).
+ * @param {Promise<ScoreComputationParameters>} scoreParametersPromise Will
+ *     resolve once score asset name is known and Firestore fetch done
+ * @return {Promise<void>} Promise that is done when score layer rendered on map
+ *     and shown in list
  */
-function createAndDisplayJoinedData(map, initialTogglesValuesPromise) {
+function createAndDisplayJoinedData(map, scoreParametersPromise) {
   addLoadingElement(tableContainerId);
   // clear old listeners
   google.maps.event.removeListener(mapSelectListener);
@@ -104,36 +130,40 @@ function createAndDisplayJoinedData(map, initialTogglesValuesPromise) {
   dataPromise.catch(
       (err) =>
           showError(err, 'Error retrieving score asset. Try reloading page'));
-  const processedData = processJoinedData(
-      dataPromise, scalingFactor, initialTogglesValuesPromise);
+  const processedData =
+      processJoinedData(dataPromise, scalingFactor, scoreParametersPromise);
   addScoreLayer(processedData.then(({featuresList}) => featuresList));
   maybeCheckScoreCheckbox();
-  drawTableAndSetUpHandlers(processedData, map);
+  return drawTableAndSetUpHandlers(processedData, scoreParametersPromise, map);
 }
 
 /**
  * Invokes {@link drawTable} with the appropriate callbacks to set up click
  * handlers for the map.
- * @param {Promise<Array<GeoJsonFeature>>} processedData
+ * @param {Promise<{featuresList: Array<GeoJsonFeature>, columnsFound:
+ *     Array<EeColumn>}>} processedData
+ * @param {Promise<ScoreComputationParameters>} scoreParametersPromise
  * @param {google.maps.Map} map
  */
-function drawTableAndSetUpHandlers(processedData, map) {
-  Promise.all([resolvedScoreAsset, drawTable(processedData, map)])
-      .then(([scoreAsset, tableSelector]) => {
-        loadingElementFinished(tableContainerId);
-        // every time we get a new table and data, reselect elements in the
-        // table based on {@code currentFeatures} in highlight_features.js.
-        selectHighlightedFeatures(tableSelector);
-        // TODO: handle ctrl+click situations
-        const clickFeatureHandler = (event) => clickFeature(
-            event.latLng.lng(), event.latLng.lat(), map, scoreAsset,
-            tableSelector);
-        mapSelectListener = map.addListener('click', clickFeatureHandler);
-        // map.data covers clicks to map areas underneath map.data so we need
-        // two listeners
-        featureSelectListener =
-            map.data.addListener('click', clickFeatureHandler);
-      });
+async function drawTableAndSetUpHandlers(
+    processedData, scoreParametersPromise, map) {
+  const tableSelector = await drawTable(processedData, map);
+  const scoreAsset = await resolvedScoreAsset;
+  const scoreParameters = await scoreParametersPromise;
+  // Promise will already be done since drawTable above is done.
+  const {columnsFound} = await processedData;
+  loadingElementFinished(tableContainerId);
+  // every time we get a new table and data, reselect elements in the
+  // table based on {@code currentFeatures} in highlight_features.js.
+  selectHighlightedFeatures(tableSelector);
+  // TODO: handle ctrl+click situations
+  const clickFeatureHandler = (event) => clickFeature(
+      event.latLng.lng(), event.latLng.lat(), map, scoreAsset, tableSelector,
+      scoreParameters, columnsFound);
+  mapSelectListener = map.addListener('click', clickFeatureHandler);
+  // map.data covers clicks to map areas underneath map.data so we need
+  // two listeners
+  featureSelectListener = map.data.addListener('click', clickFeatureHandler);
 }
 
 /**
@@ -178,9 +208,9 @@ function createNewCheckbox(index, displayName, parentDiv) {
  */
 function createNewCheckboxForLayer(layer, parentDiv, map) {
   const index = layer['index'];
-  const newBox = createNewCheckbox(index, layer['display-name'], parentDiv);
-  const linearGradient = getLinearGradient(layer['color-function']);
-  newBox.checked = !!layer['display-on-load'];
+  const newBox = createNewCheckbox(index, layer.displayName, parentDiv);
+  const linearGradient = getLinearGradient(layer.colorFunction);
+  newBox.checked = !!layer.displayOnLoad;
   updateCheckboxBackground(newBox, linearGradient);
 
   newBox.onclick = () => {
@@ -218,11 +248,15 @@ function updateCheckboxBackground(checkbox, gradient) {
  * @param {div} parentDiv div to attach checkbox to
  */
 function createCheckboxForUserFeatures(parentDiv) {
-  const newBox = createNewCheckbox(
-      'user-features', 'user features', parentDiv,
-      {'color': '#4CEF64', 'current-style': 2});
+  const newBox = createNewCheckbox('user-features', 'user features', parentDiv);
+  const linearGradient =
+      getLinearGradient({'color': userFeaturesColor, 'currentStyle': 2});
+  updateCheckboxBackground(newBox, linearGradient);
   newBox.checked = true;
-  newBox.onclick = () => setUserFeatureVisibility(newBox.checked);
+  newBox.onclick = () => {
+    updateCheckboxBackground(newBox, linearGradient);
+    setUserFeatureVisibility(newBox.checked);
+  };
 }
 
 /**
@@ -239,7 +273,7 @@ function addLayers(map, firebaseLayers) {
   for (let i = 0; i < firebaseLayers.length; i++) {
     const properties = firebaseLayers[i];
     properties['index'] = i;
-    if (properties['display-on-load']) {
+    if (properties.displayOnLoad) {
       addLayer(properties, map);
     } else {
       addNullLayer(properties);
@@ -249,10 +283,10 @@ function addLayers(map, firebaseLayers) {
   createCheckboxForUserFeatures(sidebarDiv);
   createNewCheckboxForLayer(
       {
-        'display-name': scoreLayerName,
+        'displayName': scoreLayerName,
         'index': scoreLayerName,
-        'display-on-load': true,
-        'color-function': {'color': '#ff00ff', 'current-style': 0},
+        'displayOnLoad': true,
+        'colorFunction': {'color': '#ff00ff', 'currentStyle': 0},
       },
       sidebarDiv, map);
 }

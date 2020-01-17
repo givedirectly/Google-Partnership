@@ -1,5 +1,5 @@
-import {colorMap, ColorStyle} from '../firebase_layers.js';
-
+import {colorMap, ColorStyle, colorToRgbString} from '../firebase_layers.js';
+import {showErrorSnackbar} from '../snackbar.js';
 import {getCurrentLayers, getRowIndex, ILLEGAL_STATE_ERR, setStatus, updateLayersInFirestore} from './manage_layers_lib.js';
 
 export {populateColorFunctions, withColor};
@@ -8,7 +8,6 @@ export {
   setColor,
   setDiscreteColor,
   setProperty,
-  switchSchema,
 };
 
 // At any given point in time, the color function div is displaying info
@@ -17,35 +16,99 @@ export {
 let globalTd;
 
 /**
+ * Displays a warning in color function editor if field or color(s) are missing
+ * @param {boolean} hasField
+ * @param {boolean} hasColor
+ * @param {string} colorText
+ */
+function maybeDisplayFieldAndColorWarningWithSchema(
+    hasField, hasColor, colorText = '') {
+  const warning = $('#warning');
+  const warningText = $('#missing-fields-warning');
+  warning.hide();
+  const getWarning = (missing) =>
+      '<b>Warning: layer missing ' + missing + '. May not show up on map.</b>';
+  if (hasField) {
+    if (!hasColor) {
+      warningText.html(getWarning(colorText));
+      warning.show();
+    }
+  } else {
+    if (hasColor) {
+      warningText.html(getWarning('property'));
+      warning.show();
+    } else {
+      warningText.html(getWarning('property and ' + colorText));
+      warning.show();
+    }
+  }
+}
+
+/**
  * Fills out the #single #continuous and #discrete divs with the relevant
  * DOM elements with attached on-change handlers.
  */
 function populateColorFunctions() {
-  const colorFunctionDiv = $('#color-fxn-editor');
-  colorFunctionDiv.prepend(createRadioFor(ColorStyle.SINGLE));
-  colorFunctionDiv.prepend(createRadioFor(ColorStyle.DISCRETE));
-  colorFunctionDiv.prepend(createRadioFor(ColorStyle.CONTINUOUS));
+  colorStyleTypeStrings.forEach(
+      (typeAsString, colorStyle) =>
+          $('#' + typeAsString + '-radio')
+              .on('change', () => switchSchema(colorStyle)));
+  $('#property-radio').on('change', () => {
+    const lastByPropertyType =
+        colorStyleTypeStrings.get(getColorFunction().lastByPropertyStyle);
+    $('#' + lastByPropertyType + '-radio')
+        .prop('checked', true)
+        .trigger('change');
+  });
+
+  const propertyPicker = $('#property-picker');
 
   const singleColorPicker = createColorPicker('single-color-picker');
-  singleColorPicker.on('change', () => setColor(singleColorPicker));
+  singleColorPicker.on('change', () => {
+    $('#warning').hide();
+    setColor(singleColorPicker);
+  });
   $('#single').append(
-      createLabelFor(singleColorPicker, 'color'), singleColorPicker);
+      createLabelForMandatoryPicker(singleColorPicker, 'color'),
+      singleColorPicker);
 
   const continuousColorPicker = createColorPicker('continuous-color-picker');
-  continuousColorPicker.on('change', () => setColor(continuousColorPicker));
-  const continuousPropertyPicker =
-      $(document.createElement('select'))
-          .prop('id', 'continuous-property-picker');
-  continuousPropertyPicker.on('change', () => {
-    setProperty(continuousPropertyPicker);
-    maybeDisplayMinMax(continuousPropertyPicker);
+  continuousColorPicker.on('change', () => {
+    maybeDisplayFieldAndColorWarningWithSchema(
+        !!getColorFunction().field, true);
+    setColor(continuousColorPicker);
   });
+
+  // TODO: make an educated guess about if this property should
+  // be continuous or discrete (based on # distinct vals?)
+  // TODO: disable discrete if >25 values and add hover text explaining disable
+  propertyPicker.on('change', () => {
+    setProperty(propertyPicker.val());
+    const {color, currentStyle} = getColorFunction();
+    switch (currentStyle) {
+      case ColorStyle.CONTINUOUS:
+        maybeDisplayFieldAndColorWarningWithSchema(true, !!color, 'color');
+        maybeDisplayMinMax();
+        break;
+      case ColorStyle.DISCRETE:
+        maybeDisplayFieldAndColorWarningWithSchema(
+            true, !!populateDiscreteColorPickersAndCheckHasAllColors(),
+            'at least one color');
+        break;
+      case ColorStyle.SINGLE:
+        const error =
+            'Somehow tried to set property while in single color mode';
+        showErrorSnackbar(error);
+        throw Error(error);
+    }
+  });
+
   const minMaxDiv =
       $(document.createElement('div'))
           .prop('id', 'min-max')
           .append([
-            createMinOrMaxInputForContinuous(true, continuousPropertyPicker),
-            createMinOrMaxInputForContinuous(false, continuousPropertyPicker),
+            createMinOrMaxInputForContinuous(true, propertyPicker),
+            createMinOrMaxInputForContinuous(false, propertyPicker),
             $(document.createElement('p'))
                 .prop('id', 'max-min-error')
                 .text('Error: min value > max value')
@@ -53,30 +116,19 @@ function populateColorFunctions() {
           ])
           .hide();
   $('#continuous').append([
-    createLabelFor(continuousColorPicker, 'base color'),
+    createLabelForMandatoryPicker(continuousColorPicker, 'base color'),
     continuousColorPicker,
     $(document.createElement('br')),
-    createLabelFor(continuousPropertyPicker, 'property'),
-    continuousPropertyPicker,
     minMaxDiv,
   ]);
 
-  const discretePropertyPicker = $(document.createElement('select'))
-                                     .prop('id', 'discrete-property-picker');
-  discretePropertyPicker.on('change', () => {
-    setProperty(discretePropertyPicker);
-    populateDiscreteColorPickers();
-  });
   const tooManyValuesWarning = $(document.createElement('p'))
                                    .prop('id', 'too-many-values')
                                    .text('Too many values to color discretely')
                                    .hide();
   const discreteColorPickers =
       $(document.createElement('ul')).prop('id', 'discrete-color-pickers');
-  $('#discrete')
-      .append(
-          createLabelFor(discretePropertyPicker, 'property'),
-          discretePropertyPicker, tooManyValuesWarning, discreteColorPickers);
+  $('#discrete').append(tooManyValuesWarning, discreteColorPickers);
 }
 
 /**
@@ -86,12 +138,11 @@ function populateColorFunctions() {
  */
 function updateTdAndFirestore() {
   const colorFunction = getColorFunction();
-  const style = colorFunction['current-style'];
   globalTd.empty();
-  if (style === ColorStyle.DISCRETE) {
+  if (colorFunction.currentStyle === ColorStyle.DISCRETE) {
     createColorBoxesForDiscrete(colorFunction, globalTd);
   } else {
-    globalTd.append(createColorBox(colorFunction['color']));
+    globalTd.append(createColorBox(colorFunction.color));
   }
   return updateLayersInFirestore();
 }
@@ -99,56 +150,55 @@ function updateTdAndFirestore() {
 /**
  * Updates the 'field' property which is shared by the continuous and discrete
  * color schemas.
- * @param {JQuery<HTMLElement>} picker
+ * @param {string} property
+ * @return {?Promise<void>} See updateLayersInFirestore doc
  */
-function setProperty(picker) {
-  getColorFunction()['field'] = picker.val();
-  updateTdAndFirestore();
+function setProperty(property) {
+  getColorFunction().field = property;
+  return updateTdAndFirestore();
 }
 
 /**
  * If there's a set property, ('field' in firestore,) shows the min-max div and
  * fills it in with the currently picked property's max and min. Else, hides
  * the min and max and returns early.
- * @param {JQuery<HTMLElement>} picker
  */
-function maybeDisplayMinMax(picker) {
-  const property = picker.val();
+function maybeDisplayMinMax() {
+  const property = getColorFunction().field;
   const minMaxDiv = $('#min-max');
   if (!property) {
     minMaxDiv.hide();
     return;
   }
   minMaxDiv.show();
-  const stats = getColorFunction()['columns'][property];
-  $('#continuous-min').val(stats['min']);
-  $('#continuous-max').val(stats['max']);
+  const stats = getColorFunction().columns[property];
+  $('#continuous-min').val(stats.min);
+  $('#continuous-max').val(stats.max);
 }
 
 /**
  * Validates the given min or max value is valid and writes it.
  * @param {boolean} min
- * @param {JQuery<HTMLElement>} continuousPropertyPicker
+ * @param {JQuery<HTMLElement>} propertyPicker
  * @return {?Promise<void>} Returns when finished writing or null if it just
  * queued a write and doesn't know when that will finish. Also returns null
  * if the new max or min value was bad.
  */
-function updateMinMax(min, continuousPropertyPicker) {
-  const property = continuousPropertyPicker.val();
+function updateMinMax(min, propertyPicker) {
   const input = min ? $('#continuous-min') : $('#continuous-max');
   const potentialNewVal = Number(input.val());
-  const propertyStats = getColorFunction()['columns'][property];
+  const propertyStats = getColorFunction().columns[propertyPicker.val()];
   let minOrMax;
   const errorDiv = $('#max-min-error');
   if (min) {
     minOrMax = 'min';
-    if (potentialNewVal > propertyStats['max']) {
+    if (potentialNewVal > propertyStats.max) {
       errorDiv.show();
       return null;
     }
   } else {
     minOrMax = 'max';
-    if (potentialNewVal < propertyStats['min']) {
+    if (potentialNewVal < propertyStats.min) {
       errorDiv.show();
       return null;
     }
@@ -160,12 +210,25 @@ function updateMinMax(min, continuousPropertyPicker) {
 
 /**
  * Updates an individual color choice for a single value in the discrete schema.
+ * and hides the warning about missing colors if all color boxes are selected.
  * @param {JQuery<HTMLElement>} picker
  */
 function setDiscreteColor(picker) {
+  let hasAllColors = true;
+  $('#discrete-color-pickers')
+      .find('select')
+      .each(/* @this HTMLElement */ function() {
+        if (!$(this).val()) {
+          hasAllColors = false;
+          return false;
+        }
+      });
+  if (hasAllColors) {
+    $('#warning').hide();
+  }
   const colorFunction = getColorFunction();
   const propertyValue = picker.data(discreteColorPickerDataKey);
-  colorFunction['colors'][propertyValue] = picker.val();
+  colorFunction.colors[propertyValue] = picker.val();
   updateTdAndFirestore();
 }
 
@@ -175,27 +238,27 @@ function setDiscreteColor(picker) {
  * @param {JQuery<HTMLElement>} picker
  */
 function setColor(picker) {
-  getColorFunction()['color'] = picker.val();
+  getColorFunction().color = picker.val();
   updateTdAndFirestore();
 }
 
 /**
  *
  * @param {boolean} min if true, creating for min, else for max
- * @param {JQuery<HTMLElement>} continuousPropertyPicker
+ * @param {JQuery<HTMLElement>} propertyPicker
  * @return {JQuery<HTMLLabelElement>} containing the relevant input
  */
-function createMinOrMaxInputForContinuous(min, continuousPropertyPicker) {
+function createMinOrMaxInputForContinuous(min, propertyPicker) {
   const minOrMax = min ? 'min' : 'max';
-  const input =
-      $(document.createElement('input'))
-          .prop('id', 'continuous-' + minOrMax)
-          .on('blur', () => updateMinMax(min, continuousPropertyPicker));
+  const input = $(document.createElement('input'))
+                    .prop('id', 'continuous-' + minOrMax)
+                    .on('blur', () => updateMinMax(min, propertyPicker));
   // TODO: add padding to all labels and take out spaces in label text.
   return $(document.createElement('label')).text(minOrMax + ': ').append(input);
 }
 
 const colorList = Array.from(colorMap.keys());
+
 /**
  * Creates a picker with our known colors.
  * @param {?string} id
@@ -220,28 +283,8 @@ for (const t in ColorStyle) {
   }
 }
 
-/**
- * Creates a radio button in the color schema set.
- * @param {enum} colorType
- * @return {[JQuery<HTMLSelectElement>]}
- */
-function createRadioFor(colorType) {
-  const buttonAndLabel = [];
-  const type = colorStyleTypeStrings.get(colorType);
-  buttonAndLabel.push($(document.createElement('input'))
-                          .attr({
-                            name: 'color-type',
-                            type: 'radio',
-                            id: type + '-radio',
-                            value: colorType,
-                          })
-                          .on('change', () => switchSchema(colorType)));
-  buttonAndLabel.push($(document.createElement('label'))
-                          .prop('for', colorType + 'radio')
-                          .text(type));
-  buttonAndLabel.push($(document.createElement('span')).text('  '));
-  return buttonAndLabel;
-}
+/** An asterisk that gets styled to be red to help mark fields as mandatory. */
+const mandatory = '<span class="mandatory">*</span>';
 
 /**
  * Utility function - helps create a label for the given element.
@@ -249,10 +292,10 @@ function createRadioFor(colorType) {
  * @param {string} text
  * @return {JQuery<HTMLLabelElement>}
  */
-function createLabelFor(element, text) {
+function createLabelForMandatoryPicker(element, text) {
   return $(document.createElement('label'))
       .prop('for', element.prop('id'))
-      .text(text.concat(': '));
+      .html(text.concat(mandatory + ': '));
 }
 
 /**
@@ -267,12 +310,12 @@ function withColor(td, layer, property) {
   if (!colorFunction) {
     return td.text('N/A').addClass('na');
   }
-  switch (colorFunction['current-style']) {
+  switch (colorFunction.currentStyle) {
     case ColorStyle.SINGLE:
-      td.append(createColorBox(colorFunction['color']));
+      td.append(createColorBox(colorFunction.color));
       break;
     case ColorStyle.CONTINUOUS:
-      td.append(createColorBox(colorFunction['color']));
+      td.append(createColorBox(colorFunction.color));
       break;
     case ColorStyle.DISCRETE:
       createColorBoxesForDiscrete(colorFunction, td);
@@ -280,36 +323,46 @@ function withColor(td, layer, property) {
     default:
       setStatus(ILLEGAL_STATE_ERR + 'unrecognized color function: ' + layer);
   }
-  td.addClass('editable color-td')
-      .on('click', () => onClick(td, colorFunction['current-style']));
+  td.addClass('editable color-td').on('click', () => onClick(td));
   return td;
 }
 
 /**
  * On click function for color tds - updates the globalTd.
  * @param {JQuery<HTMLElement>} td
- * @param {enum} type
  */
-function onClick(td, type) {
+function onClick(td) {
   if ($(td).hasClass('na')) {
     return;
   }
+
   const colorFunctionDiv = $('#color-fxn-editor');
+  // open -> closed
   if (colorFunctionDiv.is(':visible') && td === globalTd) {
     colorFunctionDiv.hide();
     selectCurrentRow(false);
     return;
   }
-  colorFunctionDiv.show();
+
+  // most recent closed -> open
   if (td === globalTd) {
+    colorFunctionDiv.show();
     selectCurrentRow(true);
     return;
   }
+
+  // open td other than most recent closed
+  colorFunctionDiv.show();
   selectCurrentRow(false);
   globalTd = td;
   selectCurrentRow(true);
-  $('#' + colorStyleTypeStrings.get(type) + '-radio').prop('checked', true);
-  displaySchema(type);
+  const {currentStyle} = getColorFunction();
+  $('#' + colorStyleTypeStrings.get(currentStyle) + '-radio')
+      .prop('checked', true);
+  if (currentStyle !== ColorStyle.SINGLE) {
+    $('#property-radio').prop('checked', true);
+  }
+  displaySchema(currentStyle);
 }
 
 /**
@@ -332,34 +385,49 @@ function selectCurrentRow(selected) {
  * @return {?Promise<void>} See updateLayersInFirestore doc
  */
 function switchSchema(type) {
+  const colorFunction = getColorFunction();
+  colorFunction.currentStyle = type;
+  if (type !== ColorStyle.SINGLE) {
+    colorFunction.lastByPropertyStyle = type;
+  }
+
   displaySchema(type);
-  getColorFunction()['current-style'] = type;
   return updateTdAndFirestore();
 }
 
 /**
  * Displays the given schema in the color editor box.
- * @param {enum} type
+ * @param {ColorStyle} type
  */
 function displaySchema(type) {
-  const colorFunction = getColorFunction();
-  $('.color-type-div').hide();
+  $('#warning').hide();
+
+  const {field, color} = getColorFunction();
   switch (type) {
     case ColorStyle.SINGLE:
-      $('#single-color-picker').val(colorFunction['color']);
+      $('#single-color-picker').val(color);
+      maybeDisplayFieldAndColorWarningWithSchema(true, !!color, 'color');
       $('#single').show();
+      $('#by-property').hide();
       break;
     case ColorStyle.CONTINUOUS:
-      $('#continuous-color-picker').val(colorFunction['color']);
-      const picker = $('#continuous-property-picker');
-      populatePropertyPicker(picker);
-      maybeDisplayMinMax(picker);
+      $('#continuous-color-picker').val(color);
+      populatePropertyPicker($('#property-picker'));
+      maybeDisplayMinMax();
+      maybeDisplayFieldAndColorWarningWithSchema(!!field, !!color, 'color');
+      $('#single').hide();
+      $('#by-property').show();
+      $('#discrete').hide();
       $('#continuous').show();
       break;
     case ColorStyle.DISCRETE:
-      const propertyPicker = $('#discrete-property-picker');
-      populatePropertyPicker(propertyPicker);
-      populateDiscreteColorPickers();
+      populatePropertyPicker($('#property-picker'));
+      maybeDisplayFieldAndColorWarningWithSchema(
+          !!field, !!populateDiscreteColorPickersAndCheckHasAllColors(),
+          'at least one color');
+      $('#single').hide();
+      $('#by-property').show();
+      $('#continuous').hide();
       $('#discrete').show();
       break;
   }
@@ -373,13 +441,12 @@ function displaySchema(type) {
 function populatePropertyPicker(picker) {
   picker.empty();
   const colorFunction = getColorFunction();
-  const properties = colorFunction['columns'];
+  const {columns} = colorFunction;
   const asOptions = [];
-  Object.keys(properties)
-      .forEach(
-          (key) => asOptions.push(
-              $(document.createElement('option')).val(key).text(key)));
-  picker.append(asOptions).val(colorFunction['field']);
+  Object.keys(columns).forEach(
+      (key) => asOptions.push(
+          $(document.createElement('option')).val(key).text(key)));
+  picker.append(asOptions).val(colorFunction.field);
 }
 
 // The key for the data in each discrete schema color select to know which
@@ -392,34 +459,45 @@ const discreteColorPickerDataKey = 'value';
  *
  * We add a piece of data to each of these pickers so they know what property
  * they're attached to.
+ *
+ * If we haven't selected a property yet or we've calculated there are too
+ * many values for discrete colors, don't make any color pickers and return
+ * early.
+ * @return {boolean} returns true if we don't have any color pickers or all
+ * color pickers have non-null values.
  */
-function populateDiscreteColorPickers() {
+function populateDiscreteColorPickersAndCheckHasAllColors() {
   const pickerList = $('#discrete-color-pickers').empty();
+  const tooManyValuesWarning = $('#too-many-values').hide();
   const colorFunction = getColorFunction();
-  if (!colorFunction['field']) {
-    return;
+  const field = colorFunction.field;
+  if (!field) {
+    return true;
   }
-  const values =
-      colorFunction['columns'][$('#discrete-property-picker').val()]['values'];
+  const values = colorFunction['columns'][field]['values'];
   if (values.length === 0) {
-    $('#too-many-values').show();
-  } else {
-    $('#too-many-values').hide();
+    tooManyValuesWarning.show();
+    return true;
   }
   const asColorPickers = [];
-  const colors = colorFunction['colors'];
+  const {colors} = colorFunction;
+  let hasAllColors = true;
   for (const value of values) {
     const li = $(document.createElement('li'));
     li.append($(document.createElement('label')).text(value + ': '));
+    const color = colors[value];
     const colorPicker =
         createColorPicker()
             .on('change', (event) => setDiscreteColor($(event.target)))
             .data(discreteColorPickerDataKey, value)
-            .val(colors[value]);
+            .val(color);
     li.append(colorPicker);
     asColorPickers.push(li);
+
+    if (!color) hasAllColors = false;
   }
   pickerList.append(asColorPickers);
+  return hasAllColors;
 }
 
 /**
@@ -428,26 +506,31 @@ function populateDiscreteColorPickers() {
  * @param {JQuery<HTMLElement>} td cell in which to create the boxes.
  */
 function createColorBoxesForDiscrete(colorFunction, td) {
-  const colorObject = colorFunction['colors'];
+  const {colors} = colorFunction;
   const colorSet = new Set();
-  Object.keys(colorObject).forEach((propertyValue) => {
-    const color = colorObject[propertyValue];
+  if (Object.keys(colors).length === 0) {
+    td.append(createColorBox());
+    return;
+  }
+  Object.keys(colors).forEach((propertyValue) => {
+    const color = colors[propertyValue];
     if (!colorSet.has(color)) {
       colorSet.add(color);
-      td.append(createColorBox(colorObject[propertyValue]));
+      td.append(createColorBox(colors[propertyValue]));
     }
   });
 }
 
 /**
  * Creates an instance of the color boxes for the color col.
- * @param {string} color what color to make the box.
+ * @param {?string} color what color to make the box. If null, transparent.
  * @return {JQuery<HTMLDivElement>}
  */
 function createColorBox(color) {
+  const rgb = color ? colorToRgbString(color) : 'transparent';
   return $(document.createElement('div'))
       .addClass('box')
-      .css('background-color', color);
+      .css('background-color', rgb);
 }
 
 /**
@@ -456,5 +539,5 @@ function createColorBox(color) {
  */
 function getColorFunction() {
   const index = getRowIndex(globalTd.parents('tr'));
-  return getCurrentLayers()[index]['color-function'];
+  return getCurrentLayers()[index].colorFunction;
 }

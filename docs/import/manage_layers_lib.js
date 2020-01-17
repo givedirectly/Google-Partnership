@@ -42,7 +42,7 @@ function getCurrentData() {
  * @return {Array<Object>}
  */
 function getCurrentLayers() {
-  return getCurrentData()['layers'];
+  return getCurrentData().layerArray;
 }
 
 /**
@@ -83,7 +83,7 @@ function onUpdate(event, property, fxn) {
  * queued a write and doesn't know when that will finish.
  */
 function updateLayersInFirestore() {
-  return updateDataInFirestore(() => ({layers: getCurrentLayers()}));
+  return updateDataInFirestore(() => ({layerArray: getCurrentLayers()}));
 }
 
 /**

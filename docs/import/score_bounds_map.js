@@ -89,8 +89,9 @@ class ScoreBoundsMap {
    * Called when the page's disaster is set: Clears the map and draws the given
    * `polygonCoordinates` on the map.
    * @param {?Array<LatLngLiteral>} polygonCoordinates
-   * @param {Array<string>} states Two-letter abbreviations for affected states/
-   *     territories. Only used if polygon not given, to center/zoom map
+   * @param {?Array<string>} states Two-letter abbreviations for affected
+   *     states/territories. Only used if polygon not given, to center/zoom map.
+   *     If null and polygon not given, will show most of the world.
    */
   initialize(polygonCoordinates, states) {
     if (this.polygon) {
@@ -100,12 +101,14 @@ class ScoreBoundsMap {
     if (polygonCoordinates) {
       this._addPolygon(new google.maps.Polygon(
           this._createPolygonOptions(polygonCoordinates)));
-    } else {
+    } else if (states) {
       const stateBounds = ee.FeatureCollection('TIGER/2018/States')
                               .filter(ScoreBoundsMap._createStateFilter(states))
                               .geometry()
                               .bounds();
-      this.stateBoundsPromise = convertEeObjectToPromise(stateBounds);
+      this.disasterBoundsPromise = convertEeObjectToPromise(stateBounds);
+    } else {
+      this.disasterBoundsPromise = WORLD_MAP_BOUNDS;
     }
   }
 
@@ -115,8 +118,9 @@ class ScoreBoundsMap {
    * because {@link google.maps.Map} does not like having its bounds set when it
    * is not visible.
    *
-   * If there is no polygon and {@link this.stateBoundsPromise} is not yet set,
-   * will set bounds asynchronously when it is, if user has not already zoomed.
+   * If there is no polygon and {@link this.disasterBoundsPromise} is not yet
+   * set, will set bounds asynchronously when it is, if user has not already
+   * zoomed.
    * @return {?Promise<void>} Promise that completes when bounds are set (or
    *     Promise to calculate bounds is complete but user zoomed map in
    *     meantime), or null if bounds-setting was done synchronously or not
@@ -137,7 +141,7 @@ class ScoreBoundsMap {
       let zoomChangedByUser = false;
       google.maps.event.addListenerOnce(
           this.map, 'zoom_changed', () => zoomChangedByUser = true);
-      return this.stateBoundsPromise.then((resolvedBounds) => {
+      return this.disasterBoundsPromise.then((resolvedBounds) => {
         if (zoomChangedByUser) {
           return;
         }
@@ -196,6 +200,9 @@ ScoreBoundsMap._callbackOnPolygonChange = (polygon, callback) => {
   };
   polygon.addListener('dragstart', () => polygon.removeAllChangeListeners());
 };
+
+const WORLD_MAP_BOUNDS = Promise.resolve(
+    {coordinates: [[[-40, -40], [40, -40], [40, 40], [-40, 40]]]});
 
 /**
  * Polygon path event types:

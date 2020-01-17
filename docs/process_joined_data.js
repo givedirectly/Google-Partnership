@@ -1,4 +1,4 @@
-import {blockGroupTag, damageTag, geoidTag, povertyPercentageTag, scoreTag} from './property_names.js';
+import {damageTag, geoidTag, isUserProperty, scoreTag} from './property_names.js';
 
 export {processJoinedData};
 
@@ -10,7 +10,7 @@ const COLOR_TAG = 'color';
  * Processes a feature corresponding to a geographic area and sets the score,
  * poverty and damage ratios, and color.
  *
- * @param {GeoJSON} feature GeoJSON Feature
+ * @param {GeoJsonFeature} feature
  * @param {number} scalingFactor multiplies the raw score, it can be
  *     adjusted to make sure that the values span the desired range of ~0 to
  *     ~100.
@@ -21,12 +21,14 @@ const COLOR_TAG = 'color';
  * @param {number} povertyWeight float between 0 and 1 that describes what
  *     percentage of the score should be based on poverty (this is also a proxy
  *     for damageWeight which is 1-this value).
+ * @param {EeColumn} povertyRateKey Property to use for poverty rate
+ * @param {boolean} hasDamage Whether score asset was created with damage
  */
 function colorAndRate(
-    feature, scalingFactor, povertyThreshold, damageThreshold, povertyWeight) {
-  const povertyRatio = feature.properties[povertyPercentageTag];
-  // If damage tag is absent, treat as 0.
-  const ratioBuildingsDamaged = feature.properties[damageTag] || 0;
+    feature, scalingFactor, povertyThreshold, damageThreshold, povertyWeight,
+    povertyRateKey, hasDamage) {
+  const povertyRatio = feature.properties[povertyRateKey];
+  const ratioBuildingsDamaged = hasDamage ? feature.properties[damageTag] : 0;
   let score = 0;
   if (povertyRatio >= povertyThreshold &&
       ratioBuildingsDamaged >= damageThreshold) {
@@ -44,9 +46,10 @@ function colorAndRate(
   feature.properties[COLOR_TAG] = [255, 0, 255, opacity];
 }
 
-// We put these keys here because adding them to the set first guarantees they
-// will be the first three columns in the table.
-const ALWAYS_PRESENT_KEYS = Object.freeze([geoidTag, blockGroupTag, scoreTag]);
+/**
+ * @typedef {Object} GeoJsonFeature See
+ *     https://macwright.org/2015/03/23/geojson-second-bite.html#features
+ */
 
 /**
  * Processes the provided Promise. The returned Promise has the same underlying
@@ -55,41 +58,64 @@ const ALWAYS_PRESENT_KEYS = Object.freeze([geoidTag, blockGroupTag, scoreTag]);
  * adds/overwrites the computed attributes of score and color. We avoid doing a
  * full copy because it would unnecessarily copy a lot of data.
  *
- * @param {Promise} dataPromise
+ * @param {Promise<Array<GeoJsonFeature>>} dataPromise
  * @param {number} scalingFactor multiplies the raw score, it can be
  *     adjusted to make sure that the values span the desired range of ~0 to
  *     ~100.
- * @param {Promise<Object>} initialTogglesValuesPromise promise
+ * @param {Promise<ScoreComputationParameters>}
+ *     scoreComputationParametersPromise
  * that returns the poverty and damage thresholds and the poverty weight (from
  * which the damage weight is derived).
- * @typedef {Object} GeoJsonFeature See
- *     https://macwright.org/2015/03/23/geojson-second-bite.html#features
  * @return {Promise<{featuresList: Array<GeoJsonFeature>, columnsFound:
- *     Array<string>}>} Resolved scored features, together with all columns
- *     found in features
+ *     Array<EeColumn>}>} Resolved scored features, together with all columns
+ *     found in features (and the additional {@link scoreTag} and
+ *     {@link COLOR_TAG} columns). The first four columns are: {@link geoidTag},
+ *     `districtDescriptionKey` from {@link ScoreParameters},
+ *     {@link scoreTag}, and then `povertyRateKey` from
+ *     {@link ScoreParameters}. If damage is present in the features,
+ *     {@link damageTag} is next, followed by `buildingKey` from
+ *     {@link ScoreParameters}. If damage is absent, `buildingKey` is last.
+ *     Remaining columns are sorted by order encountered in the feature, which
+ *     generally means alphabetically, since EarthEngine always sorts them.
  */
 function processJoinedData(
-    dataPromise, scalingFactor, initialTogglesValuesPromise) {
-  return Promise.all([dataPromise, initialTogglesValuesPromise])
+    dataPromise, scalingFactor, scoreComputationParametersPromise) {
+  return Promise.all([dataPromise, scoreComputationParametersPromise])
       .then(([
               featuresList,
               {
                 povertyThreshold,
                 damageThreshold,
                 povertyWeight,
+                scoreAssetCreationParameters: {
+                  buildingKey,
+                  povertyRateKey,
+                  districtDescriptionKey,
+                  damageAssetPath,
+                },
               },
             ]) => {
-        const columnsFound = new Set(ALWAYS_PRESENT_KEYS);
+        const hasDamage = !!damageAssetPath;
+        const columnsFound = new Set(
+            [geoidTag, districtDescriptionKey, scoreTag, povertyRateKey]);
+        if (hasDamage) {
+          columnsFound.add(damageTag);
+          columnsFound.add(buildingKey);
+        }
         for (const feature of featuresList) {
           colorAndRate(
               feature, scalingFactor, povertyThreshold, damageThreshold,
-              povertyWeight);
+              povertyWeight, povertyRateKey, hasDamage);
           for (const key of Object.keys(feature.properties)) {
-            // Ignore EarthEngine-added internal properties.
-            if (key !== COLOR_TAG && !key.startsWith('system:')) {
+            if (key !== COLOR_TAG && isUserProperty(key)) {
               columnsFound.add(key);
             }
           }
+        }
+        if (!hasDamage) {
+          // Put buildings last if damage not present.
+          columnsFound.delete(buildingKey);
+          columnsFound.add(buildingKey);
         }
         return {
           featuresList,

@@ -7,7 +7,7 @@ export {
   damageThresholdKey,
   povertyThresholdKey,
   povertyWeightKey,
-  setUpToggles,
+  setUpScoreComputationParameters,
   toggles,
 };
 
@@ -15,6 +15,7 @@ const povertyThresholdKey = 'poverty threshold';
 const damageThresholdKey = 'damage threshold';
 const povertyWeightKey = 'poverty weight';
 
+/** @type {Map<string, number>} */
 const toggles = new Map([
   [povertyThresholdKey, 0.3],
   [damageThresholdKey, 0.0],
@@ -33,7 +34,7 @@ function update(map) {
   if (!getUpdatedValue(povertyThresholdKey)) {
     return;
   }
-  if (hasDamageAsset) {
+  if (!!scoreAssetCreationParameters.damageAssetPath) {
     if (!getUpdatedValue(damageThresholdKey) ||
         !getUpdatedValue(povertyWeightKey)) {
       return;
@@ -41,7 +42,8 @@ function update(map) {
   }
 
   removeScoreLayer();
-  createAndDisplayJoinedData(map, Promise.resolve(getToggleValues()));
+  createAndDisplayJoinedData(
+      map, Promise.resolve(getScoreComputationParameters()));
   // clear old listeners
   google.maps.event.clearListeners(map, 'click');
   google.maps.event.clearListeners(map.data, 'click');
@@ -63,39 +65,49 @@ function getUpdatedValue(toggle) {
 
 /**
  * Set in setUpInitialToggleValues.
- * @type {boolean}
+ * @type {ScoreParameters}
  */
-let hasDamageAsset;
+let scoreAssetCreationParameters;
 
 /**
  * Initializes damage-related toggle values based on whether or not we have
  * a damage asset.
- * @param {Promise<Object>} disasterMetadataPromise
+ * @param {Promise<ScoreParameters>} scoreParametersPromise
  * @param {google.maps.Map} map
  * @return {Promise<Object>} returns all the toggle initial values.
  */
-function setUpToggles(disasterMetadataPromise, map) {
-  return disasterMetadataPromise.then((doc) => {
-    hasDamageAsset = !!doc.data().assetData.damageAssetPath;
-    if (hasDamageAsset) {
-      toggles.set(damageThresholdKey, 0.5);
-      toggles.set(povertyWeightKey, 0.5);
-    }
-    createToggles(map);
-    return getToggleValues();
-  });
+async function setUpScoreComputationParameters(scoreParametersPromise, map) {
+  scoreAssetCreationParameters = await scoreParametersPromise;
+  if (!!scoreAssetCreationParameters.damageAssetPath) {
+    toggles.set(damageThresholdKey, 0.5);
+    toggles.set(povertyWeightKey, 0.5);
+  }
+  createToggles(map);
+  return getScoreComputationParameters();
 }
 
 /**
- * Gets all the toggle values as an object.
- * @return {{povertyThreshold: number, damageThreshold: number, povertyWeight:
- *     number}}
+ * Contains a {@link ScoreParameters} together with toggles values. These are
+ * the values needed to compute a score for a {@link GeoJsonFeature}.
+ * @typedef {Object} ScoreComputationParameters
+ * @property {number} povertyThreshold
+ * @property {number} damageThreshold 0 if
+ *     `scoreAssetCreationParameters.damageAssetPath` is missing
+ * @property {number} povertyWeight 1 if
+ *     `scoreAssetCreationParameters.damageAssetPath` is missing
+ * @property {ScoreParameters} scoreAssetCreationParameters
  */
-function getToggleValues() {
+
+/**
+ * Gets all the parameters needed for score computation, as an object.
+ * @return {ScoreComputationParameters}
+ */
+function getScoreComputationParameters() {
   return {
     povertyThreshold: toggles.get(povertyThresholdKey),
     damageThreshold: toggles.get(damageThresholdKey),
     povertyWeight: toggles.get(povertyWeightKey),
+    scoreAssetCreationParameters,
   };
 }
 
@@ -120,7 +132,7 @@ function createToggles(map) {
   form.appendChild(thresholdTitle);
   form.appendChild(createInput(povertyThresholdKey));
 
-  if (hasDamageAsset) {
+  if (!!scoreAssetCreationParameters.damageAssetPath) {
     form.appendChild(createInput(damageThresholdKey));
 
     // weight toggle
@@ -222,7 +234,7 @@ function createButton(id, onclick) {
 
 /** Updates the displayed weights based on a new poverty weight. */
 function updateWeights() {
-  if (!hasDamageAsset) return;
+  if (!scoreAssetCreationParameters.damageAssetPath) return;
   const newPovertyWeight =
       Number(document.getElementById('poverty weight').value);
   setInnerHtml(povertyWeightValueId, newPovertyWeight.toFixed(2));

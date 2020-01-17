@@ -51,3 +51,19 @@ table, th, td {
   font-style: italic;
   color: #888888;
 }
+
+.radio-label {
+  margin-left: 5px;
+}
+
+.mandatory {
+  color: red;
+}
+
+/*
+ * Used to give a default width to new selects. After the select has options,
+ * remove this class and the select will be the right size for its options.
+ */
+.just-created-select {
+  width: 200px
+}

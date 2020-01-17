@@ -1,6 +1,7 @@
 export {
   colorMap,
   ColorStyle,
+  colorToRgbString,
   createStyleFunction,
   getLinearGradient,
   LayerType,
@@ -33,9 +34,9 @@ const opacity = 200;
  */
 function createStyleFunction(colorFunctionProperties) {
   const field = colorFunctionProperties['field'];
-  switch (colorFunctionProperties['current-style']) {
+  switch (colorFunctionProperties.currentStyle) {
     case ColorStyle.SINGLE:
-      const color = colorMap.get(colorFunctionProperties['color']);
+      const color = colorMap.get(colorFunctionProperties.color);
       return () => color;
     case ColorStyle.CONTINUOUS:
       return createContinuousFunction(
@@ -43,7 +44,7 @@ function createStyleFunction(colorFunctionProperties) {
           colorFunctionProperties['columns'][field]['max'],
           colorFunctionProperties['color']);
     case ColorStyle.DISCRETE:
-      return createDiscreteFunction(field, colorFunctionProperties['colors']);
+      return createDiscreteFunction(field, colorFunctionProperties.colors);
   }
 }
 
@@ -121,24 +122,39 @@ function getLinearGradient(colorFunction) {
   if (!colorFunction) {
     return '';
   }
-  const currentStyle = colorFunction['current-style'];
   let gradientString = 'linear-gradient(to right';
-  switch (currentStyle) {
-    case 0:
-      gradientString += ', white, ' + colorFunction['color'];
+  switch (colorFunction.currentStyle) {
+    case ColorStyle.CONTINUOUS:
+      gradientString +=
+          ', rgb(255,255,255), ' + colorToRgbString(colorFunction['color']);
       break;
-    case 1:
+    case ColorStyle.DISCRETE:
       const colors = [...(new Set(Object.values(colorFunction['colors'])))];
       const percent = 100 / colors.length;
       for (let i = 1; i <= colors.length; i++) {
-        gradientString += ', ' + colors[i - 1] + ' ' + (i * percent - percent) +
-            '%, ' + colors[i - 1] + ' ' + i * percent + '%';
+        const rgb = colorToRgbString(colors[i - 1]);
+        gradientString += ', ' + rgb + ' ' + (i * percent - percent) + '%, ' +
+            rgb + ' ' + i * percent + '%';
       }
       break;
-    case 2:
-      gradientString +=
-          ', ' + colorFunction['color'] + ', ' + colorFunction['color'];
+    case ColorStyle.SINGLE:
+      const rgb = colorToRgbString(colorFunction['color']);
+      gradientString += ', ' + rgb + ', ' + rgb;
       break;
   }
   return gradientString + ')';
+}
+
+/**
+ * Converts a color to a css-recognizable rgb string.
+ * @param {string} color one of the keys of our colorMap or a hex string
+ *     for special cases like the user features color or the score color.
+ * @return {string}
+ */
+function colorToRgbString(color) {
+  const rgbArray = colorMap.get(color);
+  if (!rgbArray) {
+    return color;
+  }
+  return 'rgb(' + rgbArray[0] + ',' + rgbArray[1] + ',' + rgbArray[2] + ')';
 }

@@ -1,15 +1,16 @@
 import {processJoinedData} from '../../../docs/process_joined_data.js';
 
 const featureProperties = {
+  'GEOID': '45',
   'SNAP HOUSEHOLDS': 2,
   'TOTAL HOUSEHOLDS': 4,
-  'SNAP PERCENTAGE': 0.5,
-  'BUILDING COUNT': 27,
-  'BLOCK GROUP': 'block group',
+  'poverty rate': 0.5,
+  'building count key': 27,
+  'district descript': 'block group',
   'no-damage': 12,
   'minor-damage': 10,
-  'major-damage': 5,
   'DAMAGE PERCENTAGE': 15 / 27,
+  'major-damage': 5,
 };
 const feature = {};
 feature.properties = featureProperties;
@@ -18,23 +19,48 @@ feature.geometry = geometryObject;
 const joinedDataPromise = {};
 joinedDataPromise.then = (lambda) => lambda([feature]);
 
+const scoreAssetCreationParameters = {
+  povertyRateKey: 'poverty rate',
+  districtDescriptionKey: 'district descript',
+  buildingKey: 'building count key',
+  damageAssetPath: 'damage asset',
+};
+const SCORE_COMPUTATION_PARAMETERS = {
+  povertyThreshold: 0.3,
+  damageThreshold: 0.5,
+  povertyWeight: 0.5,
+  scoreAssetCreationParameters,
+};
+
 describe('Unit test for processed_joined_data.js', () => {
   it('Processes an above threshold block group', () => {
-    processJoinedData(
-        joinedDataPromise, 100 /* scalingFactor */,
-        Promise.resolve(
-            {povertyThreshold: 0.3, damageThreshold: 0.5, povertyWeight: 0.5}))
-        .then((result) => {
-          expect(result).to.be.an('array');
-          expect(result.length).to.equal(1);
-          const returnedFeature = result[0];
+    cy.wrap(processJoinedData(
+                joinedDataPromise, 100 /* scalingFactor */,
+                Promise.resolve(SCORE_COMPUTATION_PARAMETERS)))
+        .then(({featuresList, columnsFound}) => {
+          expect(columnsFound).to.eql([
+            'GEOID',
+            'district descript',
+            'SCORE',
+            'poverty rate',
+            'DAMAGE PERCENTAGE',
+            'building count key',
+            'SNAP HOUSEHOLDS',
+            'TOTAL HOUSEHOLDS',
+            'no-damage',
+            'minor-damage',
+            'major-damage',
+          ]);
+          expect(featuresList).to.be.an('array');
+          expect(featuresList.length).to.equal(1);
+          const [returnedFeature] = featuresList;
           expect(returnedFeature).to.have.property('geometry', geometryObject);
           expect(returnedFeature).to.haveOwnProperty('properties');
           const resultProperties = returnedFeature.properties;
           // We modify the properties in place.
           expect(resultProperties).to.equal(featureProperties);
           expect(resultProperties)
-              .to.have.property('BLOCK GROUP', 'block group');
+              .to.have.property('district descript', 'block group');
           expect(resultProperties)
               .to.have.property(
                   'SCORE',
@@ -44,19 +70,22 @@ describe('Unit test for processed_joined_data.js', () => {
   });
 
   it('Processes uneven weights', () => {
-    processJoinedData(
-        joinedDataPromise, 100 /* scalingFactor */,
-        Promise.resolve(
-            {povertyThreshold: 0.3, damageThreshold: 0.5, povertyWeight: 0.9}))
-        .then((result) => {
-          expect(result).to.be.an('array');
-          expect(result.length).to.equal(1);
-          const returnedFeature = result[0];
+    cy.wrap(processJoinedData(
+                joinedDataPromise, 100 /* scalingFactor */, Promise.resolve({
+                  povertyThreshold: 0.3,
+                  damageThreshold: 0.5,
+                  povertyWeight: 0.9,
+                  scoreAssetCreationParameters,
+                })))
+        .then(({featuresList}) => {
+          expect(featuresList).to.be.an('array');
+          expect(featuresList.length).to.equal(1);
+          const [returnedFeature] = featuresList;
           expect(returnedFeature).to.have.property('geometry', geometryObject);
           expect(returnedFeature).to.haveOwnProperty('properties');
           const resultProperties = returnedFeature.properties;
           expect(resultProperties)
-              .to.have.property('BLOCK GROUP', 'block group');
+              .to.have.property('district descript', 'block group');
           expect(resultProperties)
               .to.have.property(
                   'SCORE',
@@ -66,14 +95,48 @@ describe('Unit test for processed_joined_data.js', () => {
   });
 
   it('Processes a below threshold block group', () => {
-    processJoinedData(
-        joinedDataPromise, 100 /* scalingFactor */,
-        Promise.resolve(
-            {povertyThreshold: 0.9, damageThreshold: 0.5, povertyWeight: 0.5}))
-        .then((result) => {
-          const resultProperties = result[0].properties;
+    cy.wrap(processJoinedData(
+                joinedDataPromise, 100 /* scalingFactor */, Promise.resolve({
+                  povertyThreshold: 0.9,
+                  damageThreshold: 0.5,
+                  povertyWeight: 0.5,
+                  scoreAssetCreationParameters,
+                })))
+        .then(({featuresList}) => {
+          const resultProperties = featuresList[0].properties;
           expect(resultProperties).to.have.property('SCORE', 0);
           assertColorAndOpacity(resultProperties, 0);
+        });
+  });
+
+  it('Handles no damage', () => {
+    const noDamageScoreAssetCreationParameters =
+        Object.assign({}, scoreAssetCreationParameters);
+    noDamageScoreAssetCreationParameters.damageAssetPath = null;
+    cy.wrap(processJoinedData(
+                joinedDataPromise, 100 /* scalingFactor */, Promise.resolve({
+                  povertyThreshold: 0.4,
+                  damageThreshold: 0.0,
+                  povertyWeight: 1.0,
+                  scoreAssetCreationParameters:
+                      noDamageScoreAssetCreationParameters,
+                })))
+        .then(({featuresList, columnsFound}) => {
+          expect(columnsFound).to.eql([
+            'GEOID',
+            'district descript',
+            'SCORE',
+            'poverty rate',
+            'SNAP HOUSEHOLDS',
+            'TOTAL HOUSEHOLDS',
+            'no-damage',
+            'minor-damage',
+            'DAMAGE PERCENTAGE',
+            'major-damage',
+            'building count key',
+          ]);
+          const [returnedFeature] = featuresList;
+          expect(returnedFeature.properties).to.have.property('SCORE', 50);
         });
   });
 
@@ -85,6 +148,6 @@ describe('Unit test for processed_joined_data.js', () => {
    */
   function assertColorAndOpacity(resultProperties, opacity) {
     expect(resultProperties).to.have.property('color');
-    expect(resultProperties['color']).to.eqls([255, 0, 255, opacity]);
+    expect(resultProperties.color).to.eqls([255, 0, 255, opacity]);
   }
 });

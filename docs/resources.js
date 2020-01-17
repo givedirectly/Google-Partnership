@@ -1,3 +1,4 @@
+import {DEFAULT_DISASTER} from './default_disaster.js';
 import {gdEePathPrefix} from './ee_paths.js';
 
 export {getBackupScoreAssetPath, getDisaster, getScoreAssetPath};
@@ -10,8 +11,8 @@ function getDisaster() {
   if (localStorage.getItem('disaster')) {
     return localStorage.getItem('disaster');
   }
-  localStorage.setItem('disaster', defaultDisaster);
-  return defaultDisaster;
+  localStorage.setItem('disaster', DEFAULT_DISASTER);
+  return DEFAULT_DISASTER;
 }
 
 /**
@@ -37,6 +38,3 @@ function getScoreAssetPath() {
 function getBackupScoreAssetPath() {
   return gdEePathPrefix + getDisaster() + '/score-asset-previous-version';
 }
-
-/** The default disaster. */
-const defaultDisaster = '2017-harvey';

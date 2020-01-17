@@ -31,18 +31,20 @@ describe('Unit tests for adding layers', () => {
           expect(setAclStub).to.be.calledOnce;
           const layers = getCurrentLayers();
           expect(layers.length).to.equal(3);
-          const layer = layers[2];
-          expect(layer['asset-type']).to.equal(LayerType.FEATURE_COLLECTION);
-          expect(layer['ee-name']).to.equal(mockAsset);
-          expect(layer['display-name']).to.be.empty;
-          expect(layer['display-on-load']).to.be.false;
-          const colorFunction = layer['color-function'];
-          expect(colorFunction['current-style']).to.equal(ColorStyle.SINGLE);
-          expect(colorFunction['colors']).to.be.empty;
-          const scoopsColumn = colorFunction['columns']['scoops'];
-          expect(scoopsColumn['max']).to.equal(4);
-          expect(scoopsColumn['min']).to.equal(0);
-          expect(scoopsColumn['values']).to.eql(['0', '1', '2', '3', '4']);
+          const {assetType, eeName, displayName, displayOnLoad, colorFunction} =
+              layers[2];
+          expect(assetType).to.equal(LayerType.FEATURE_COLLECTION);
+          expect(eeName).to.equal(mockAsset);
+          expect(displayName).to.be.empty;
+          expect(displayOnLoad).to.be.false;
+          expect(colorFunction.currentStyle).to.equal(ColorStyle.SINGLE);
+          expect(colorFunction.lastByPropertyStyle)
+              .to.equal(ColorStyle.CONTINUOUS);
+          expect(colorFunction.colors).to.be.empty;
+          const scoopsColumn = colorFunction.columns.scoops;
+          expect(scoopsColumn.max).to.equal(4);
+          expect(scoopsColumn.min).to.equal(0);
+          expect(scoopsColumn.values).to.eql(['0', '1', '2', '3', '4']);
           expect($('#tbody').children('tr').length).to.equal(3);
           expect($('#color-fxn-editor').css('display')).to.equal('block');
         });
@@ -60,11 +62,11 @@ describe('Unit tests for adding layers', () => {
           const layers = getCurrentLayers();
           expect(layers.length).to.equal(1);
           const layer = layers[0];
-          const colorFunction = layer['color-function'];
-          const scoopsColumn = colorFunction['columns']['scoops'];
-          expect(scoopsColumn['max']).to.equal(29);
-          expect(scoopsColumn['min']).to.equal(0);
-          expect(scoopsColumn['values']).to.eql([]);
+          const {colorFunction} = layer;
+          const scoopsColumn = colorFunction.columns.scoops;
+          expect(scoopsColumn.max).to.equal(29);
+          expect(scoopsColumn.min).to.equal(0);
+          expect(scoopsColumn.values).to.eql([]);
         });
   });
 
@@ -82,9 +84,10 @@ describe('Unit tests for adding layers', () => {
         processNewEeLayer(mockAsset, LayerType.FEATURE_COLLECTION))
         .then(() => {
           expect(setAclStub).to.be.calledOnce;
-          const layer = getCurrentLayers()[0];
-          expect(layer['color-function']['columns']['flavor']['values'])
-              .to.eql(['vanilla']);
+          expect(getCurrentLayers()[0].colorFunction.columns.flavor.values)
+              .to.eql([
+                'vanilla',
+              ]);
         });
   });
 
@@ -98,9 +101,9 @@ describe('Unit tests for adding layers', () => {
           expect(setAclStub).to.be.calledOnce;
           const layers = getCurrentLayers();
           expect(layers.length).to.equal(1);
-          const layer = layers[0];
-          expect(layer['asset-type']).to.equal(LayerType.IMAGE_COLLECTION);
-          expect(layer['color-function']).to.be.undefined;
+          const {assetType, colorFunction} = layers[0];
+          expect(assetType).to.equal(LayerType.IMAGE_COLLECTION);
+          expect(colorFunction).to.be.undefined;
         });
   });
 
@@ -114,10 +117,10 @@ describe('Unit tests for adding layers', () => {
     ])).then(() => {
       const layers = getCurrentLayers();
       expect(layers.length).to.equal(1);
-      const layer = layers[0];
-      expect(layer['asset-type']).to.equal(LayerType.KML);
-      expect(layer['color-function']).to.be.undefined;
-      expect(layer['urls'].length).to.equal(2);
+      const {assetType, colorFunction, urls} = layers[0];
+      expect(assetType).to.equal(LayerType.KML);
+      expect(colorFunction).to.be.undefined;
+      expect(urls.length).to.equal(2);
     });
   });
 });

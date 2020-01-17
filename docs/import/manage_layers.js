@@ -3,13 +3,13 @@ import {getDisaster} from '../resources.js';
 import {processNewEeLayer, processNonEeLayer} from './add_layer.js';
 import {withColor} from './color_function_util.js';
 import {getDisasterAssetsFromEe} from './list_ee_assets.js';
+import {stylePendingSelect} from './manage_common.js';
 import {getCurrentLayers, getRowIndex, ILLEGAL_STATE_ERR, onUpdate, setDisasterData, setStatus, updateLayersInFirestore} from './manage_layers_lib.js';
 
 export {enableWhenReady, updateAfterSort};
 // Visible for testing
 export {
   createLayerRow,
-  createOptionFrom,
   createTd,
   getAssetsAndPopulateDisasterPicker,
   onCheck,
@@ -56,6 +56,7 @@ function enableWhenReady(firebaseDataPromise) {
  * pickers and pulled from firebase.
  */
 function onSetDisaster() {
+  // TODO(juliexxia): add a test that at least runs through populateLayersTable?
   const disaster = getDisaster();
   // display layer table
   populateLayersTable();
@@ -253,6 +254,7 @@ function withDeleteButton(td) {
 function populateLayersTable() {
   const layers = getCurrentLayers();
   const tableBody = $('#tbody');
+  $('#color-fxn-editor').hide();
   tableBody.empty();
   for (let i = layers.length - 1; i >= 0; i--) {
     const layer = layers[i];
@@ -272,11 +274,11 @@ function createLayerRow(layer, index) {
   // index
   row.append(createTd().text(index).addClass('index-td'));
   // display name
-  row.append(withInput(createTd(), layer, 'display-name'));
+  row.append(withInput(createTd(), layer, 'displayName'));
   // asset path/url sample
   const assetOrUrl = createTd();
-  if (layer['ee-name']) {
-    withText(assetOrUrl, layer, 'ee-name');
+  if (layer['eeName']) {
+    withText(assetOrUrl, layer, 'eeName');
   } else if (layer['urls']) {
     withList(assetOrUrl, layer, 'urls');
   } else {
@@ -284,11 +286,11 @@ function createLayerRow(layer, index) {
   }
   row.append(assetOrUrl);
   // type
-  row.append(withType(createTd(), layer, 'asset-type'));
+  row.append(withType(createTd(), layer, 'assetType'));
   // display on load
-  row.append(withCheckbox(createTd(), layer, 'display-on-load'));
+  row.append(withCheckbox(createTd(), layer, 'displayOnLoad'));
   // color
-  row.append(withColor(createTd(), layer, 'color-function'));
+  row.append(withColor(createTd(), layer, 'colorFunction'));
   row.append(withDeleteButton(createTd()));
   return row;
 }
@@ -321,9 +323,8 @@ function getAssetsAndPopulateDisasterPicker(disaster) {
  */
 function setUpDisasterPicker(disaster) {
   const div = $('#disaster-asset-picker').empty();
-  const assetPicker =
-      $(document.createElement('select')).width(200).attr('disabled', true);
-  assetPicker.append(createOptionFrom('pending...'));
+  const assetPicker = stylePendingSelect(
+      $(document.createElement('select')).addClass('just-created-select'));
   const assetPickerLabel = $(document.createElement('label'))
                                .text('Add layer from ' + disaster + ': ')
                                .attr('id', disaster + '-adder-label')
@@ -347,7 +348,8 @@ function populateDisasterAssetPicker(disaster, assets) {
                           .width(200);
   for (const [name, assetInfo] of assets) {
     const type = layerTypeStrings.get(assetInfo.type);
-    assetPicker.append(createOptionFrom(name)
+    assetPicker.append($(document.createElement('option'))
+                           .val(name)
                            .text(name + '-' + type)
                            .attr('disabled', assetInfo.disabled));
   }
@@ -361,18 +363,6 @@ function populateDisasterAssetPicker(disaster, assets) {
   assetPickerLabel.append(assetPicker);
   assetPickerLabel.append(addButton);
   div.append(assetPickerLabel);
-}
-
-/**
- * Utility function for creating an option with the same val and innerText.
- * @param {String} innerTextAndValue
- * @return {JQuery<HTMLOptionElement>}
- */
-function createOptionFrom(innerTextAndValue) {
-  return $(document.createElement('option'))
-      .text(innerTextAndValue)
-      .val(innerTextAndValue)
-      .prop('id', innerTextAndValue);
 }
 
 /**
