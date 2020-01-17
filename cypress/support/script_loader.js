@@ -71,6 +71,7 @@ const scriptMap = new Map([
     },
   ],
   [
+      
     'charts',
     {
       script: 'https://www.gstatic.com/charts/loader.js',
