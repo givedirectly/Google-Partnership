@@ -58,15 +58,16 @@ const scriptMap = new Map([
     {
       script:
           'https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js',
-      callback: () => typeof ($) !== 'undefined',
+      callback: () =>
+          typeof ($) !== 'undefined' && typeof (jQuery) != 'undefined',
     },
   ],
   [
-    'jquery-ui',
+    'jqueryUi',
     {
       script: libUrl + 'jquery-ui-1.12.1.min.js',
       callback: () =>
-          typeof ($) !== 'undefined' && typeof ($().dialog) !== 'undefined',
+          scriptMap.jquery.callback() && typeof ($().dialog) !== 'undefined',
     },
   ],
   [
