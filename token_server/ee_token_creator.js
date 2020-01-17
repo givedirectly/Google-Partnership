@@ -19,10 +19,10 @@ let authAndClientPromise;
  *
  * Using our service account, we request an access token with the
  * `earthengine.readonly` scope.
- *
+ * @param {boolean} readonly Whether token should only allow read-only access.
  * @return {Promise<{accessToken: string, expireTime: string}>}
  */
-function generateEarthEngineToken() {
+function generateEarthEngineToken(readonly = true) {
   if (!authAndClientPromise) {
     // This is the scope needed to use iamcredentials:
     // https://developers.google.com/identity/protocols/googlescopes#iamcredentialsv1
@@ -31,7 +31,8 @@ function generateEarthEngineToken() {
     authAndClientPromise = {auth, client: auth.getClient()};
   }
   return authAndClientPromise.client.then(
-      (client) => createTokenPromise(authAndClientPromise.auth, client));
+      (client) =>
+          createTokenPromise(authAndClientPromise.auth, client, readonly));
 }
 
 /**
@@ -39,28 +40,30 @@ function generateEarthEngineToken() {
  * token and returning it.
  * @param {google.auth.GoogleAuth} auth Authenticated `GoogleAuth` object
  * @param {google.auth.JWT} client Client retrieved from `auth`
+ * @param {boolean} readonly Whether token should only allow read-only access.
  * @return {Promise<{accessToken: string, expireTime: string}>} Promise with
  *     token result: access token and expiration time
  */
-function createTokenPromise(auth, client) {
+function createTokenPromise(auth, client, readonly) {
   return new Promise(
-      (resolve, reject) => requestToken(auth, client, (error, response) => {
-        // See
-        // https://github.com/googleapis/nodejs-googleapis-common/blob/5cf2732a39b3c5d56dd377293e500ad82de62663/src/api.ts#L69
-        if (error) {
-          // Error is actually a GaxiosError.
-          // https://github.com/googleapis/gaxios/blob/d21e08d2aada980d39bc5ca7093d54452be2d646/src/common.ts#L20
-          reject(error);
-          return;
-        }
-        // Response is a GaxiosResponse.
-        // https://github.com/googleapis/gaxios/blob/d21e08d2aada980d39bc5ca7093d54452be2d646/src/common.ts#L45
-        if (response.status === 200 && response.data &&
-            response.data.accessToken) {
-          resolve(response.data);
-        }
-        reject(new Error(response.statusText + ' \n(' + response + ')'));
-      }));
+      (resolve, reject) =>
+          requestToken(auth, client, readonly, (error, response) => {
+            // See
+            // https://github.com/googleapis/nodejs-googleapis-common/blob/5cf2732a39b3c5d56dd377293e500ad82de62663/src/api.ts#L69
+            if (error) {
+              // Error is actually a GaxiosError.
+              // https://github.com/googleapis/gaxios/blob/d21e08d2aada980d39bc5ca7093d54452be2d646/src/common.ts#L20
+              reject(error);
+              return;
+            }
+            // Response is a GaxiosResponse.
+            // https://github.com/googleapis/gaxios/blob/d21e08d2aada980d39bc5ca7093d54452be2d646/src/common.ts#L45
+            if (response.status === 200 && response.data &&
+                response.data.accessToken) {
+              resolve(response.data);
+            }
+            reject(new Error(response.statusText + ' \n(' + response + ')'));
+          }));
 }
 
 /**
@@ -68,11 +71,13 @@ function createTokenPromise(auth, client) {
  * https://googleapis.dev/nodejs/googleapis/latest/iamcredentials/classes/Resource$Projects$Serviceaccounts.html#generateAccessToken
  * @param {google.auth.GoogleAuth} auth See {@link createTokenPromise}
  * @param {google.auth.JWT} client See {@link createTokenPromise}
- * @param {Function} callback Callback to call when request completes. Given two
+ * @param {boolean} readonly Whether token should only allow read-only access.
+ * @param {Function} callback Callback to call when request completes. Given
+ *     two
  *     arguments, a {@link GaxiosError} and a {@link GaxiosResponse}, exactly
  *     one of which will be null.
  */
-function requestToken(auth, client, callback) {
+function requestToken(auth, client, readonly, callback) {
   // On Google App Engine, client email not available. Running locally, the
   // .json file used for tests has an email. We can't use the same account for
   // both without developers having the prod private key on their machines,
@@ -92,7 +97,9 @@ function requestToken(auth, client, callback) {
             // non-write tasks.
             requestBody: {
               scope: [
-                'https://www.googleapis.com/auth/earthengine.readonly',
+                readonly ?
+                    'https://www.googleapis.com/auth/earthengine.readonly' :
+                    'https://www.googleapis.com/auth/earthengine',
               ],
             },
           },
