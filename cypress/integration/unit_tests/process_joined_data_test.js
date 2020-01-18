@@ -12,10 +12,10 @@ const featureProperties = {
   'DAMAGE PERCENTAGE': 15 / 27,
   'major-damage': 5,
 };
-const feature = {};
-feature.properties = featureProperties;
-const geometryObject = {};
-feature.geometry = geometryObject;
+
+const geometryObject = Object.freeze({});
+const feature =
+    Object.freeze({properties: featureProperties, geometry: geometryObject});
 const joinedDataPromise = {};
 joinedDataPromise.then = (lambda) => lambda([feature]);
 
@@ -134,6 +134,41 @@ describe('Unit test for processed_joined_data.js', () => {
             'DAMAGE PERCENTAGE',
             'major-damage',
             'building count key',
+          ]);
+          const [returnedFeature] = featuresList;
+          expect(returnedFeature.properties).to.have.property('SCORE', 50);
+        });
+  });
+
+  it('Handles no damage without building count', () => {
+    const noDamageScoreAssetCreationParameters =
+        Object.assign({}, scoreAssetCreationParameters);
+    noDamageScoreAssetCreationParameters.damageAssetPath = null;
+    // Not present in data: 'building count key' now not special.
+    noDamageScoreAssetCreationParameters.buildingKey = 'BUILDING_COUNT_KEY';
+    const joinedDataPromise = {};
+    joinedDataPromise.then = (lambda) => lambda([feature]);
+    cy.wrap(processJoinedData(
+                joinedDataPromise, 100 /* scalingFactor */, Promise.resolve({
+                  povertyThreshold: 0.4,
+                  damageThreshold: 0.0,
+                  povertyWeight: 1.0,
+                  scoreAssetCreationParameters:
+                      noDamageScoreAssetCreationParameters,
+                })))
+        .then(({featuresList, columnsFound}) => {
+          expect(columnsFound).to.eql([
+            '___GD_GOOGLE_DELPHI_GEOID',
+            'district descript',
+            'SCORE',
+            'poverty rate',
+            'SNAP HOUSEHOLDS',
+            'TOTAL HOUSEHOLDS',
+            'building count key',
+            'no-damage',
+            'minor-damage',
+            'DAMAGE PERCENTAGE',
+            'major-damage',
           ]);
           const [returnedFeature] = featuresList;
           expect(returnedFeature.properties).to.have.property('SCORE', 50);
