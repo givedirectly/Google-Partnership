@@ -112,12 +112,10 @@ function processJoinedData(
             }
           }
         }
-        if (!hasDamage) {
+        if (!hasDamage && columnsFound.has(buildingKey)) {
           // Put buildings last if damage not present.
-          if (columnsFound.has(buildingKey)) {
-            columnsFound.delete(buildingKey);
-            columnsFound.add(buildingKey);
-          }
+          columnsFound.delete(buildingKey);
+          columnsFound.add(buildingKey);
         }
         return {
           featuresList,
