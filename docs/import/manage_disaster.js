@@ -1,7 +1,7 @@
+import {addLoadingElement} from '../loading.js';
 import {getDisaster} from '../resources.js';
 
 import {createScoreAssetForFlexibleDisaster, createScoreAssetForStateBasedDisaster} from './create_score_asset.js';
-import {addLoadingElement} from '../loading.js';
 import {getDisasterAssetsFromEe} from './list_ee_assets.js';
 import {setUpAddDelete} from './manage_disaster_add_delete.js';
 import {disasterData, getIsCurrentDisasterChecker, initializeDamage, isFlexible, noteNewDisaster, showPendingKickoffButton} from './manage_disaster_base.js';
@@ -29,8 +29,6 @@ export {
  * @return {Promise<void>} See {@link enableWhenFirestoreReady}
  */
 function enableWhenReady(allDisastersData) {
-  addLoadingElement('table-container');
-
   // Eagerly kick off current disaster asset listing before Firestore finishes.
   const currentDisaster = getDisaster();
   if (currentDisaster) {
@@ -74,6 +72,7 @@ function enableWhenFirestoreReady(allDisastersData) {
  *     display is done (user can interact with page)
  */
 async function onSetDisaster() {
+  addLoadingElement('table-container');
   noteNewDisaster();
   const isCurrent = getIsCurrentDisasterChecker();
   const currentDisaster = getDisaster();

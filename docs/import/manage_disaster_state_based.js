@@ -1,8 +1,8 @@
+import {loadingElementFinished} from '../loading.js';
 import {getDisaster} from '../resources.js';
 
 import {incomeKey, snapKey, sviKey, totalKey} from './create_disaster_lib.js';
 import {cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, tigerGeoidKey} from './import_data_keys.js';
-import {loadingElementFinished} from '../loading.js';
 import {getStateAssetsFromEe} from './list_ee_assets.js';
 import {checkDamageFieldsAndShowKickoffButton, createSelect, damageAssetPresent, disasterData, getIsCurrentDisasterChecker, getPageValueOfPath, onAssetSelect, setOptionsForSelect, verifyAsset} from './manage_disaster_base.js';
 

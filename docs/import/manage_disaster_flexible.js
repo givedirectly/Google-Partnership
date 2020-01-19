@@ -1,5 +1,7 @@
 import {showError} from '../error.js';
+import {loadingElementFinished} from '../loading.js';
 import {getDisaster} from '../resources.js';
+
 import {BuildingSource} from './create_disaster_lib.js';
 import {getDisasterAssetsFromEe} from './list_ee_assets.js';
 import {capitalizeFirstLetter, checkDamageFieldsAndShowKickoffButton, continueMessage, createListForAsset, createSelect, createSelectListItemFromColumnInfo, createSelectWithSimpleWriteOnChange, damageAssetPresent, getAssetsAndSetOptionsForSelect, getPageValueOfPath, getStoredValueFromPath, handleAssetDataChange, isFlexible, maybeShowNoDamageValueItem, NODAMAGE_COLUMN_INFO, NODAMAGE_VALUE_INFO, setExplanationSpanTextForColumn, setOptionsForSelect, showListForAsset, showPendingKickoffButton, showSelectAsPending, validateColumnPathHasValue, verifyAsset, writeAssetDataLocally, writeSelectAndGetPropertyNames} from './manage_disaster_base.js';
@@ -539,6 +541,8 @@ async function initializeFlexibleDisaster(assetData) {
   if (geographyResult) {
     initializeChecker.finishPending();
   }
+
+  loadingElementFinished('table-container');
 }
 
 /**
