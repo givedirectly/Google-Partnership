@@ -2,7 +2,7 @@
  * We want to depend on our standard module-based code in this file. However,
  * because Node 12 does not enable modules by default, we have to run
  * module-based code through Babel. Thus, this file becomes just an entry point,
- * with `main.js` doing the real work.
+ * with `main.js` doing the real work. See comment there for more details.
  *
  * Cypress uses `require` to include this file, which means that we cannot just
  * upgrade to Node 13, which has modules enabled by default, because 13 also
