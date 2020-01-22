@@ -80,7 +80,17 @@ class Authenticator {
    *     is finished
    */
   start() {
-    this.eeAuthenticate(() => this.navigateToSignInPage());
+    this.eeAuthenticate((err) => {
+      if (err === 'server_error') {
+        // Google.com corp accounts appear to not allow EarthEngine access from
+        // third-party apps. Use the token server in that case.
+        showToastMessage(
+            'Error authenticating to EarthEngine, trying anonymous access', -1);
+        this.gapiInitDone.then(() => this.getEeTokenAndInitialize());
+      } else {
+        this.navigateToSignInPage();
+      }
+    });
     const gapiSettings = Object.assign({}, gapiTemplate);
     gapiSettings.scope = this.additionalScopes.join(' ');
     return new Promise(
@@ -146,10 +156,7 @@ class Authenticator {
             'Not whitelisted for EarthEngine access: ' +
                 'trying anonymous access',
             -1);
-        this.getAndSetEeTokenWithErrorHandling().then(() => {
-          showToastMessage('Anonymous access successful', 1000);
-          initializeEE(this.eeInitializeCallback, defaultErrorCallback);
-        });
+        this.getEeTokenAndInitialize();
       } else {
         defaultErrorCallback(err);
       }
@@ -159,52 +166,46 @@ class Authenticator {
   /**
    * Requests EE token from token server, then sets it locally, and sets itself
    * up to run again 5 minutes before token expires. Passes user's id token to
-   * server so server can verify these aren't totally anonymous requests.
+   * server so server can verify these aren't totally anonymous requests. Calls
+   * ee.initialize now that we have a token.
    * @return {Promise<void>} Promise that resolves when token has been set
    */
-  getAndSetEeTokenWithErrorHandling() {
+  async getEeTokenAndInitialize() {
     // To get here, we must already have logged into Google via gapi, even if
     // not with an EE-enabled account, so Google user id token available.
     const idToken = gapi.auth2.getAuthInstance()
                         .currentUser.get()
                         .getAuthResponse()
                         .id_token;
-    return fetch(TOKEN_SERVER_URL, {
-             method: 'POST',
-             body: $.param({idToken}),
-             headers: {'Content-type': 'application/x-www-form-urlencoded'},
-           })
-        .then((response) => {
-          if (!response.ok) {
-            const message = 'Refresh token error: ' + response.status;
-            console.error(message, response);
-            const contact = CONTACT ? CONTACT : OWNER;
-            // TODO(#395): Find GD contact to list here.
-            alert(
-                'Error contacting server for access without EarthEngine ' +
-                'whitelisting. Please reload page and log in with an ' +
-                'EarthEngine-whitelisted account or contact ' + contact + ' ' +
-                'with error from JavaScript console.');
-            throw new Error(message);
-          }
-          return response.json();
-        })
-        .then(
-            ({accessToken, expireTime}) =>
-                new Promise(
-                    (resolve) => ee.data.setAuthToken(
-                        CLIENT_ID, 'Bearer', accessToken,
-                        Math.floor(
-                            getMillisecondsToDateString(expireTime) / 1000),
-                        /* extraScopes */[], resolve,
-                        /* updateAuthLibrary */ false))
-                    .then(
-                        () => setTimeout(
-                            () => this.getAndSetEeTokenWithErrorHandling(),
-                            Math.max(
-                                getMillisecondsToDateString(expireTime) -
-                                    TOKEN_EXPIRE_BUFFER,
-                                0))));
+    const response = await fetch(TOKEN_SERVER_URL, {
+      method: 'POST',
+      body: $.param({idToken}),
+      headers: {'Content-type': 'application/x-www-form-urlencoded'},
+    });
+    if (!response.ok) {
+      const message = 'Refresh token error: ' + response.status;
+      console.error(message, response);
+      const contact = CONTACT ? CONTACT : OWNER;
+      alert(
+          'Error contacting server for access without EarthEngine ' +
+          'whitelisting. Please reload page and log in with an ' +
+          'EarthEngine-whitelisted account or contact ' + contact + ' with ' +
+          'error from JavaScript console.');
+      throw new Error(message);
+    }
+    const {accessToken, expireTime} = response.json();
+    await new Promise(
+        (resolve) => ee.data.setAuthToken(
+            CLIENT_ID, 'Bearer', accessToken,
+            Math.floor(getMillisecondsToDateString(expireTime) / 1000),
+            /* extraScopes */[], resolve,
+            /* updateAuthLibrary */ false));
+    setTimeout(
+        () => this.getEeTokenAndInitialize(),
+        Math.max(
+            getMillisecondsToDateString(expireTime) - TOKEN_EXPIRE_BUFFER, 0));
+    showToastMessage('Anonymous access successful', 1000);
+    initializeEE(this.eeInitializeCallback, defaultErrorCallback);
   }
 }
 
