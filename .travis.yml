@@ -42,6 +42,8 @@ before_script:
 - yarn run ws --directory docs --port 8080 &
 script:
 - ./lint.sh
-- yarn run cypress run --env ON_TRAVIS=1 --record --browser=electron --group Unit --spec 'cypress/integration/unit_tests/*.js'
+# Recording disabled because of Cypress dashboard quota issues. Add --record to
+# this or next line if you need screenshots to debug a Travis failure.
+- yarn run cypress run --env ON_TRAVIS=1 --browser=electron --group Unit --spec 'cypress/integration/unit_tests/*.js'
 # Chrome/Chromium video recording not working on xvfb with gpu acceleration
-- yarn run cypress run --env ON_TRAVIS=1 --record --browser=chrome --group Integration --config video=false --spec 'cypress/integration/integration_tests/*.js'
+- yarn run cypress run --env ON_TRAVIS=1 --browser=chrome --group Integration --config video=false --spec 'cypress/integration/integration_tests/*.js'
