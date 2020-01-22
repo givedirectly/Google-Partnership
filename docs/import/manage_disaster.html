@@ -44,6 +44,8 @@
 <div id="navbar"></div>
 <div class="wrapper">
 <div class="main-content">
+  <div id="compute-status" class="status"></div>
+  <div id="upload-status" class="status"></div>
   <div>
   <button type="button" id="create-new-disaster">Create New Disaster</button>
   </div>
@@ -132,25 +134,30 @@
     <div>
       <div class="content-container">
         <div class="content-title">Select Score Data</div>
-        <table id="state-based-disaster-asset-selection-table">
-          <thead>
-          <tr id="score-asset-header-row"><td>Score Assets</td></tr>
-          </thead>
-          <tbody id="asset-selection-table-body"></tbody>
-        </table>
-        <div id="flexible-data" hidden>
-          <div id="flexible-poverty-asset-data" style="border-style: solid; border-width: thin"></div>
-          <div id="flexible-geography-asset-data" style="border-style: none solid solid solid; border-width: thin"></div>
-          <div style="border-style: none solid solid solid; border-width: thin">
-            Where will building counts come from?<br/>
-            <input type="radio" name="buildings-source" id="buildings-source-buildings">
-            <label for="buildings-source-buildings">I have a separate buildings asset</label>
-            <input type="radio" name="buildings-source" id="buildings-source-poverty">
-            <label for="buildings-source-poverty">Poverty asset has building count per district</label>
-            <input type="radio" name="buildings-source" id="buildings-source-damage">
-            <label for="buildings-source-damage">Damage asset has undamaged buildings</label>
-            <div id="buildings-source-buildings-div" hidden></div>
-            <div id="buildings-source-poverty-div" hidden></div>
+        <div class="manage-table-container" id="table-container">
+          <table id="state-based-disaster-asset-selection-table">
+            <thead>
+            <tr id="score-asset-header-row"><td>Score Assets</td></tr>
+            </thead>
+            <tbody id="asset-selection-table-body"></tbody>
+          </table>
+          <div id="flexible-data" hidden>
+            <div id="flexible-poverty-asset-data" style="border-style: solid; border-width: thin"></div>
+            <div id="flexible-geography-asset-data" style="border-style: none solid solid solid; border-width: thin"></div>
+            <div style="border-style: none solid solid solid; border-width: thin">
+              Where will building counts come from?<br/>
+              <input type="radio" name="buildings-source" id="buildings-source-buildings">
+              <label for="buildings-source-buildings">I have a separate buildings asset</label>
+              <input type="radio" name="buildings-source" id="buildings-source-poverty">
+              <label for="buildings-source-poverty">Poverty asset has building count per district</label>
+              <input type="radio" name="buildings-source" id="buildings-source-damage">
+              <label for="buildings-source-damage">Damage asset has undamaged buildings</label>
+              <div id="buildings-source-buildings-div" hidden></div>
+              <div id="buildings-source-poverty-div" hidden></div>
+            </div>
+          </div>
+          <div class="loader" id="table-container-loader">
+            <div class="ellipsis"><div></div><div></div><div></div><div></div></div>
           </div>
         </div>
       </div>
@@ -178,8 +185,6 @@
   </div>
   </div>
   </div>
-<div id="compute-status"></div>
-<div id="upload-status"></div>
 </div>
 </div>
 </body>

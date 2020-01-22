@@ -1,5 +1,6 @@
 import {trackEeAndFirebase} from '../authenticate.js';
 import {getDisastersData} from '../firestore_document.js';
+import {addLoadingElement} from '../loading.js';
 import {loadNavbarWithPicker} from '../navbar.js';
 import {getDisaster} from '../resources.js';
 import {TaskAccumulator} from '../task_accumulator.js';
@@ -28,6 +29,7 @@ $(() => {
 $(populateColorFunctions);
 $(() => setUpDisasterPicker(getDisaster()));
 
+$(() => addLoadingElement('table-container'));
 $('#tbody').sortable({
   revert: true,
   update: (event, ui) => updateAfterSort(ui),

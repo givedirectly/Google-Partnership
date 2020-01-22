@@ -1,3 +1,4 @@
+import {loadingElementFinished} from '../loading.js';
 import {getDisaster} from '../resources.js';
 
 import {incomeKey, snapKey, sviKey, totalKey} from './create_disaster_lib.js';
@@ -199,6 +200,8 @@ async function initializeStateBasedDisaster(assetData) {
   if (isCurrent()) {
     initializeStateBasedScoreSelectors(states, stateAssets);
   }
+
+  loadingElementFinished('table-container');
 }
 
 /**

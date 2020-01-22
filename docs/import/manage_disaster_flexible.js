@@ -1,4 +1,5 @@
 import {showError} from '../error.js';
+import {loadingElementFinished} from '../loading.js';
 import {getDisaster} from '../resources.js';
 import {BuildingSource} from './create_disaster_lib.js';
 import {getDisasterAssetsFromEe} from './list_ee_assets.js';
@@ -539,6 +540,8 @@ async function initializeFlexibleDisaster(assetData) {
   if (geographyResult) {
     initializeChecker.finishPending();
   }
+
+  loadingElementFinished('table-container');
 }
 
 /**

@@ -6,7 +6,9 @@ export {loadScriptsBeforeForUnitTests};
 
 // Getting the scripts from local disk seems to cause flaky failures, so go via
 // server.
-const libUrl = Cypress.config().baseUrl + 'external_libs/';
+const LIB_URL = Cypress.config().baseUrl + 'external_libs/';
+
+const JQUERY_URL = LIB_URL + 'jquery-3.4.1.min.js';
 
 /**
  * Scripts that unit tests may want to load. Values have script and callback
@@ -28,7 +30,7 @@ const scriptMap = new Map([
   [
     'deck',
     {
-      script: libUrl + 'deck-8.0.2.min.js',
+      script: LIB_URL + 'deck-8.0.2.min.js',
       callback: () => typeof (deck) !== 'undefined',
     },
   ],
@@ -42,11 +44,11 @@ const scriptMap = new Map([
   [
     'firebase',
     {
-      script: libUrl + 'firebase-app-7.6.1.js',
+      script: LIB_URL + 'firebase-app-7.6.1.js',
       callback: () => typeof (firebase) != 'undefined',
       extraScripts: [
-        libUrl + 'firebase-firestore-7.6.1.js',
-        libUrl + 'firebase-auth-7.6.1.js',
+        LIB_URL + 'firebase-firestore-7.6.1.js',
+        LIB_URL + 'firebase-auth-7.6.1.js',
       ],
       extraCallback: () => typeof (firebase.firestore) != 'undefined' &&
           typeof (firebase.auth) != 'undefined',
@@ -55,17 +57,18 @@ const scriptMap = new Map([
   [
     'jquery',
     {
-      script:
-          'https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js',
-      callback: () => typeof ($) !== 'undefined',
+      script: JQUERY_URL,
+      callback: () =>
+          typeof ($) !== 'undefined' && typeof (jQuery) != 'undefined',
     },
   ],
   [
-    'jquery-ui',
+    'jqueryWithUi',
     {
-      script: libUrl + 'jquery-ui-1.12.1.min.js',
-      callback: () =>
-          typeof ($) !== 'undefined' && typeof ($().dialog) !== 'undefined',
+      script: JQUERY_URL,
+      callback: () => scriptMap.get('jquery').callback(),
+      extraScripts: [LIB_URL + 'jquery-ui-1.12.1.min.js'],
+      extraCallback: () => typeof ($().dialog) !== 'undefined',
     },
   ],
   [
