@@ -80,10 +80,7 @@ class Authenticator {
    *     is finished
    */
   start() {
-    this.eeAuthenticate((err) => {
-      console.log(err);
-      // this.navigateToSignInPage()
-    });
+    this.eeAuthenticate(() => this.navigateToSignInPage());
     const gapiSettings = Object.assign({}, gapiTemplate);
     gapiSettings.scope = this.additionalScopes.join(' ');
     return new Promise(
