@@ -82,9 +82,9 @@ class Authenticator {
   start() {
     this.eeAuthenticate((err) => {
       if (err === 'server_error') {
-        // Google.com corp accounts appear to not allow EarthEngine access from
-        // third-party apps, and show this error. Use the token server in that
-        // case.
+        // EarthEngine now requests full Google Compute Engine access. Some
+        // organizations (Google.com, for instance) will not allow their users
+        // to grant this permission. Use the token server in that case.
         showToastMessage(
             'Error authenticating to EarthEngine, trying anonymous access', -1);
         this.getEeTokenAndInitialize();
@@ -165,6 +165,18 @@ class Authenticator {
   }
 
   /**
+   * Calls {@link getAndSetEeTokenWithErrorHandling}, then informs user of
+   * success and calls ee.initialize now that we have a token.
+   * @return {Promise<void>} Promise that resolves when token has been set and
+   *     initialization has started
+   */
+  async getEeTokenAndInitialize() {
+    await this.getAndSetEeTokenWithErrorHandling();
+    showToastMessage('Anonymous access successful', 1000);
+    initializeEE(this.eeInitializeCallback, defaultErrorCallback);
+  }
+
+  /**
    * Requests EE token from token server, then sets it locally, and sets itself
    * up to run again 5 minutes before token expires. Passes user's id token to
    * server so server can verify these aren't totally anonymous requests.
@@ -175,9 +187,9 @@ class Authenticator {
     // redirected to sign-in page.
     await this.gapiInitDone.getPromise();
     const idToken = gapi.auth2.getAuthInstance()
-        .currentUser.get()
-        .getAuthResponse()
-        .id_token;
+                        .currentUser.get()
+                        .getAuthResponse()
+                        .id_token;
     const response = await fetch(TOKEN_SERVER_URL, {
       method: 'POST',
       body: $.param({idToken}),
@@ -202,21 +214,9 @@ class Authenticator {
             /* extraScopes */[], resolve,
             /* updateAuthLibrary */ false));
     setTimeout(
-        () => this.getEeTokenAndInitialize(),
+        () => this.getAndSetEeTokenWithErrorHandling(),
         Math.max(
             getMillisecondsToDateString(expireTime) - TOKEN_EXPIRE_BUFFER, 0));
-  }
-
-  /**
-   * Calls {@link getAndSetEeTokenWithErrorHandling}, then informs user of
-   * success and calls ee.initialize now that we have a token.
-   * @return {Promise<void>} Promise that resolves when token has been set and
-   *     initialization has started
-   */
-  async getEeTokenAndInitialize() {
-    await this.getAndSetEeTokenWithErrorHandling();
-    showToastMessage('Anonymous access successful', 1000);
-    initializeEE(this.eeInitializeCallback, defaultErrorCallback);
   }
 }
 
