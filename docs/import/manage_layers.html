@@ -41,20 +41,25 @@
   <div id="selected-disaster">
     <div class="content-container">
       <div class="content-title">Current Layers</div>
-      <table id="layer-manager" class="table table-bordered pagin-table">
-        <thead>
-          <tr>
-            <th style="width:20px"></th>
-            <th style="width:200px">Layer Name</th>
-            <th style="width:600px">EE Path/URL</th>
-            <th>Type</th>
-            <th>Display on Load</th>
-            <th>Color</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody id="tbody"></tbody>
-      </table>
+      <div class="manage-table-container" id="table-container">
+        <table id="layer-manager" class="table table-bordered pagin-table">
+          <thead>
+            <tr>
+              <th style="width:20px"></th>
+              <th style="width:200px">Layer Name</th>
+              <th style="width:600px">EE Path/URL</th>
+              <th>Type</th>
+              <th>Display on Load</th>
+              <th>Color</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+        <div class="loader" id="table-container-loader">
+          <div class="ellipsis"><div></div><div></div><div></div><div></div></div>
+        </div>
+      </div>
     </div>
     <div id="color-fxn-editor" class="editor content-container" hidden="true">
       <div>

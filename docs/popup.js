@@ -125,6 +125,9 @@ function setUpPopup() {
       const deleteButton = document.createElement('button');
       deleteButton.className = 'popup-button';
       deleteButton.innerHTML = 'delete';
+      const deleteIcon = document.createElement('i');
+      deleteIcon.className = 'popup-icon fa fa-trash';
+      deleteButton.prepend(deleteIcon);
       deleteButton.onclick = () => {
         if (window.confirm('Delete feature?')) {
           mapFeature.setMap(null);
@@ -136,6 +139,9 @@ function setUpPopup() {
       const editButton = document.createElement('button');
       editButton.className = 'popup-button';
       editButton.innerHTML = 'edit';
+      const editIcon = document.createElement('i');
+      editIcon.className = 'popup-icon fa fa-edit';
+      editButton.prepend(editIcon);
       editButton.onclick = () => {
         this.updateState(false);
 
@@ -158,6 +164,9 @@ function setUpPopup() {
         const saveButton = document.createElement('button');
         saveButton.className = 'popup-button';
         saveButton.innerHTML = 'save';
+        const saveIcon = document.createElement('i');
+        saveIcon.className = 'popup-icon fa fa-save';
+        saveButton.prepend(saveIcon);
         saveButton.onclick = () => this.saveNewData(notesForm.value);
 
         content.insertBefore(saveButton, closeButton);
@@ -168,6 +177,9 @@ function setUpPopup() {
       const closeButton = document.createElement('button');
       closeButton.className = 'popup-button';
       closeButton.innerHTML = 'close';
+      const closeIcon = document.createElement('i');
+      closeIcon.className = 'popup-icon fa fa-times';
+      closeButton.prepend(closeIcon);
       closeButton.onclick = () => {
         if (this.saved) {
           this.closeCleanup();

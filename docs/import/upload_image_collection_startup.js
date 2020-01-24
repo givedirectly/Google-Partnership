@@ -12,11 +12,33 @@ const taskAccumulator =
 const firebaseAuthPromise =
     trackEeAndFirebase(taskAccumulator, true, [storageScope]);
 
+let nameLength = 0;
+let filesLength = 0;
+
 $(() => {
+  // Enable the file button when appropriate.
+  document.getElementById('collectionName').oninput = (event) => {
+    nameLength = event.target.value.length;
+    if (nameLength > 0 && filesLength > 0) {
+      document.getElementById('fileButton').disabled = false;
+    } else {
+      document.getElementById('fileButton').disabled = true;
+    }
+  };
+  document.getElementById('files').onchange = (event) => {
+    filesLength = event.target.files.length;
+    if (nameLength > 0 && filesLength > 0) {
+      document.getElementById('fileButton').disabled = false;
+    } else {
+      document.getElementById('fileButton').disabled = true;
+    }
+  };
+
   loadNavbarWithPicker({
     firebaseAuthPromise,
     title: 'Upload Image Collection',
     privilegedUserPromise: Promise.resolve(),
   });
+
   taskAccumulator.taskCompleted();
 });

@@ -2,7 +2,7 @@ import {initializeDisasterPicker} from './disaster_picker.js';
 import {showError} from './error.js';
 import {AUTHENTICATION_ERROR_CODE} from './firebase_privileges.js';
 import {getDisastersData} from './firestore_document.js';
-import {HELP_DOC_URL, MANAGE_DISASTERS_HELP_URL, MANAGE_LAYERS_HELP_URL} from './help.js';
+import {HELP_DOC_URL, MANAGE_DISASTERS_HELP_URL, MANAGE_LAYERS_HELP_URL, UPLOAD_IMAGE_COLLECTION_HELP_URL} from './help.js';
 
 export {loadNavbarWithPicker};
 
@@ -39,7 +39,7 @@ async function loadNavbar(
           () => initializeDisasterPicker(
               firebaseDataPromise, changeDisasterHandler));
   $('#nav-title-header').html(title);
-  $('.help-a').prop('href', getHelpUrl());
+  $('#help-a').prop('href', getHelpUrl());
   if (!privilegedUserPromise) {
     navPublic.show();
     return;
@@ -111,6 +111,8 @@ function getHelpUrl() {
     return MANAGE_LAYERS_HELP_URL;
   } else if (window.location.pathname.endsWith(MANAGE_DISASTERS_PAGE)) {
     return MANAGE_DISASTERS_HELP_URL;
+  } else if (window.location.pathname.endsWith(UPLOAD_IMAGE_COLLECTION_PAGE)) {
+    return UPLOAD_IMAGE_COLLECTION_HELP_URL;
   }
   return HELP_DOC_URL;
 }
