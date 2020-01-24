@@ -5,7 +5,6 @@ import {listEeAssets} from './ee_utils.js';
 
 export {
   getAssetPropertyNames,
-  getColumnsStatus,
   getDisasterAssetsFromEe,
   getStateAssetsFromEe,
   listAndProcessEeAssets,
@@ -185,18 +184,4 @@ function maybeConvertAssetType(asset) {
 function getAssetPropertyNames(assetName) {
   return convertEeObjectToPromise(
       ee.FeatureCollection(assetName).first().propertyNames());
-}
-
-/**
- * Checks if asset's first feature has all columns from `expectedColumns`.
- * @param {EeFC} asset
- * @param {Array<EeColumn>} expectedColumns
- * @return {Promise<number>} Status from column check, 0 if contained all
- *     columns, 1 if there was an error.
- */
-function getColumnsStatus(asset, expectedColumns) {
-  return convertEeObjectToPromise(ee.Algorithms.If(
-      ee.FeatureCollection(asset).first().propertyNames().containsAll(
-          ee.List(expectedColumns)),
-      ee.Number(0), ee.Number(1)));
 }

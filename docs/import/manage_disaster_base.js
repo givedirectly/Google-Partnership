@@ -3,7 +3,7 @@ import {latLngToGeoPoint, transformGeoPointArrayToLatLng} from '../map_util.js';
 import {isUserProperty} from '../property_names.js';
 import {getDisaster} from '../resources.js';
 
-import {getAssetPropertyNames, getColumnsStatus, getDisasterAssetsFromEe} from './list_ee_assets.js';
+import {getAssetPropertyNames, getDisasterAssetsFromEe} from './list_ee_assets.js';
 import {createOptionFrom, stylePendingSelect} from './manage_common.js';
 import {PendingChecker, useDamageForBuildings, validateFlexibleUserFields} from './manage_disaster_flexible.js';
 import {validateStateBasedUserFields} from './manage_disaster_state_based.js';
@@ -344,7 +344,8 @@ async function writeSelectAndGetPropertyNames(path) {
 /**
  * Sets off a column verification check and data write.
  * @param {PropertyPath} propertyPath
- * @param {?Array<EeColumn>} expectedColumns See {@link verifyAsset}
+ * @param {?Array<EeColumn|Array<EeColumn>>} expectedColumns See
+ *     {@link verifyAsset}
  * @return {?Promise<Array<EeColumn>>} See {@link verifyAsset}
  */
 function onAssetSelect(propertyPath, expectedColumns) {
@@ -362,12 +363,14 @@ function onAssetSelect(propertyPath, expectedColumns) {
  * effect if done multiple times) since the user might switch to this select
  * repeatedly before results are ready.
  * @param {PropertyPath} propertyPath
- * @param {?Array<EeColumn>} expectedColumns Expected column names. If empty or
- *     null, checks existence and returns all columns from the first feature
+ * @param {?Array<EeColumn|Array<EeColumn>>} expectedColumns Expected column
+ *     names. If empty or null, checks existence and returns all columns from
+ *     the first feature. If this is an array of arrays, checks if all of one
+ *     array's columns are present
  * @return {Promise<?Array<EeColumn>>} Returns a promise that resolves when
  *     existence and column checking are finished and select border color is
- *     updated, and contains the first feature's properties if `expectedColumns`
- *     is empty. Null if select's value changed during asynchronous work
+ *     updated, and contains the first feature's properties if it exists. Null
+ *     if select's value changed during asynchronous work
  */
 async function verifyAsset(propertyPath, expectedColumns) {
   // TODO: disable or discourage kick off until all green?
@@ -393,11 +396,15 @@ async function verifyAsset(propertyPath, expectedColumns) {
   if (asset === '') {
     updateColorAndHover(select, 'white', '');
     return [];
-  } else if (!expectedColumns || expectedColumns.length === 0) {
-    updateColorAndHover(select, 'yellow', 'Checking...');
+  } else {
+    const checkingColumns = expectedColumns && expectedColumns.length > 0;
+    if (checkingColumns) {
+      updateColorAndHover(select, 'yellow', 'Checking columns...');
+    } else {
+      updateColorAndHover(select, 'yellow', 'Checking...');
+    }
     let result;
     try {
-      // TODO: is there a better way to evaluate feature collection existence?
       result = await getAssetPropertyNames(asset);
     } catch (err) {
       assetMissingErrorFunction(err);
@@ -406,29 +413,41 @@ async function verifyAsset(propertyPath, expectedColumns) {
     if (contextChanged()) {
       return null;
     }
-    updateColorAndHover(
-        select, 'green', expectedColumns ? 'No expected columns' : '');
-    return result.sort();
-  } else if (expectedColumns) {
-    updateColorAndHover(select, 'yellow', 'Checking columns...');
-    let columnsStatusFailure;
-    try {
-      columnsStatusFailure = await getColumnsStatus(asset, expectedColumns);
-    } catch (err) {
-      assetMissingErrorFunction(err);
-      return null;
+    result = result.sort();
+    if (!checkingColumns) {
+      updateColorAndHover(
+          select, 'green', expectedColumns ? 'No expected columns' : '');
+      return result;
     }
-    if (contextChanged()) {
-      return null;
-    }
-    if (columnsStatusFailure) {
+    const presentColumns = new Set(result);
+    if (Array.isArray(expectedColumns[0])) {
+      outerLoop: for (const columns of expectedColumns) {
+        for (const column of columns) {
+          if (!presentColumns.has(column)) {
+            continue outerLoop;
+          }
+        }
+        updateColorAndHover(
+            select, 'green', 'Success! asset has all expected columns');
+        return result;
+      }
       updateColorAndHover(
           select, 'red',
           'Error! asset does not have all expected columns: ' +
-              expectedColumns);
+              '[' + expectedColumns.join('] or [') + ']');
     } else {
+      for (const column of expectedColumns) {
+        if (!presentColumns.has(column)) {
+          updateColorAndHover(
+              select, 'red',
+              'Error! asset does not have all expected columns: ' +
+                  expectedColumns);
+          return result;
+        }
+      }
       updateColorAndHover(
           select, 'green', 'Success! asset has all expected columns');
+      return result;
     }
   }
 }
