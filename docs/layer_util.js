@@ -224,9 +224,8 @@ function addImageLayer(map, imageAsset, layer) {
           visParams: imgStyles,
           callback: (layerId, failure) => {
             if (layerId) {
-              const overlay = new ee.MapLayerOverlay(
-                  'https://earthengine.googleapis.com/map', layerId.mapid,
-                  layerId.token, {});
+              const overlay = new ee.layers.ImageOverlay(
+                  new ee.layers.EarthEngineTileSource(layerId));
               layerDisplayData.overlay = overlay;
               // Check in case the status has changed before this callback was
               // invoked by getMap.
@@ -298,7 +297,7 @@ function resolveOnEeTilesFinished(layerDisplayData, resolve) {
  */
 function createTileCallback(layerDisplayData, resolve) {
   return (tileEvent) => {
-    if (tileEvent.count === 0) {
+    if (tileEvent.loadingTileCount === 0) {
       if (resolve) {
         // This is the first time we've finished loading, so inform caller.
         resolve();
@@ -465,9 +464,9 @@ function showColor(color) {
 function addLayer(layer, map) {
   switch (layer.assetType) {
     case LayerType.IMAGE:
-      return addImageLayer(map, ee.Image.constant(0), layer);
+      return addImageLayer(map, ee.Image(layer.eeName), layer);
     case LayerType.IMAGE_COLLECTION:
-      return addImageLayer(map, ee.Image.constant(0), layer);
+      return addImageLayer(map, processImageCollection(layer.eeName), layer);
     case LayerType.FEATURE:
     case LayerType.FEATURE_COLLECTION:
       const layerName = layer.eeName;
