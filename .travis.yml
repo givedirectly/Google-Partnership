@@ -12,16 +12,14 @@ addons:
       # Ubuntu 16+ does not install this dependency by default, so we need to install it ourselves
       - libgconf-2-4
 cache:
-  # Don't cache yarn dependencies, just install clean.
-  yarn: false
+  yarn: true
   npm: false
-  # Instead of caching yarn dependencies or the Cypress binary here, we build
-  # from scratch every time. Experimentally this saves ~25 seconds over
-  # downloading the cache, at the cost of a message saying that this is our
-  # first Cypress run. Even just caching the Cypress binary costs 10 seconds.
+  directories:
+    # Cache folder with Cypress binary
+    - ~/.cache
+    - node_modules
 env:
   global:
-    - CYPRESS_CACHE_FOLDER='~/.cypresscache'
     - GOOGLE_APPLICATION_CREDENTIALS=$TRAVIS_BUILD_DIR/service_account.json
     # Generated using
     # `travis encrypt CYPRESS_RECORD_KEY=<cypress-dashboard-record-key>`
