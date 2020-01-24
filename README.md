@@ -88,6 +88,10 @@ Repository to store the work done by Google Fellows during 2019
     /path/to/file/in/extracted/zip/named/chrome-wrapper /usr/bin/chromium` so
     that Cypress knows how to find it easily.
 
+*   For more details on our testing setup, see the [README](cypress/README.md).
+
+## Other tools
+
 *   *[Optional]* Install `ogr2ogr` command line tool (part of the gdal library)
     if you ever need to convert between geo-data types. This will most often be
     used to convert geo data to

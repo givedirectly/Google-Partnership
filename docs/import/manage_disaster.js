@@ -1,3 +1,4 @@
+import {HELP_DOC_URL} from '../help.js';
 import {addLoadingElement} from '../loading.js';
 import {getDisaster} from '../resources.js';
 
@@ -65,6 +66,10 @@ function enableWhenFirestoreReady(allDisastersData) {
   return onSetDisaster();
 }
 
+const HELP_URL_BASE = HELP_DOC_URL + '#heading=h.';
+
+const STATE_BASED_SECTION = 'k60yrxbthpft';
+const FLEXIBLE_SECTION = 'cr1jgwd4pclm';
 /**
  * Function called when current disaster changes. Responsible for displaying the
  * score selectors and enabling/disabling the kick-off button.
@@ -83,6 +88,10 @@ async function onSetDisaster() {
   }
   const currentData = disasterData.get(currentDisaster);
   const flexible = isFlexible();
+  $('#score-data-help-link')
+      .prop(
+          'href',
+          HELP_URL_BASE + (flexible ? FLEXIBLE_SECTION : STATE_BASED_SECTION));
   const {assetData} = currentData;
 
   // Kick off damage promise first: flexible disaster needs no-damage column
