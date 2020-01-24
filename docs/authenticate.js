@@ -214,6 +214,7 @@ class Authenticator {
           'whitelisting. Please reload page and log in with an ' +
           'EarthEngine-whitelisted account or contact ' + contact + ' with ' +
           'error from JavaScript console.');
+      showError('Error contacting server for anonymous EarthEngine access');
       throw new Error(message);
     }
     const {accessToken, expireTime} = response.json();
