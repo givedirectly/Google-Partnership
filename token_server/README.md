@@ -60,9 +60,8 @@ request).
 *   Deploy using
     [these instructions](https://aws.amazon.com/getting-started/tutorials/deploy-app-command-line-elastic-beanstalk/).
     Since the project already exists on Amazon Elastic Beanstalk, you just need
-    to run `eb deploy` after running `eb init` in order to log in.
-
-*   The server URL will be entered here once we have GiveDirectly's account.
+    to run `eb deploy` after running `eb init` in order to log in. (The server 
+    URL will be entered here once we have GiveDirectly's account.)
 
 *   See the [console](https://console.aws.amazon.com/) for more information. We
     are using Elastic Beanstalk.
