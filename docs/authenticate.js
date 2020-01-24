@@ -93,7 +93,13 @@ class Authenticator {
       }
     });
     const gapiSettings = Object.assign({}, gapiTemplate);
-    gapiSettings.scope = this.additionalScopes.join(' ');
+    // TODO(janakr): We could make do with read-only access, but GD user needs
+    //  to have full access, and we don't know at this stage whether it's the GD
+    //  user or not. Doubtful people will complain about overly broad scope.
+    gapiSettings.scope =
+        this.additionalScopes
+            .concat(['https://www.googleapis.com/auth/earthengine'])
+            .join(' ');
     return new Promise(
         (resolve, reject) => gapi.load(
             'auth2',
@@ -152,7 +158,11 @@ class Authenticator {
   /** Initializes EarthEngine. */
   internalInitializeEE() {
     initializeEE(this.eeInitializeCallback, (err) => {
-      if (err.message.includes('401') || err.message.includes('404')) {
+      // 401 happens on Google-internal, 404 happens without proper scopes
+      // (shouldn't happen anymore), and 'Permission denied' happens when user
+      // not actually whitelisted for EarthEngine.
+      if (err.message.includes('401') || err.message.includes('404') ||
+          err.message.includes('Permission denied')) {
         showToastMessage(
             'Not whitelisted for EarthEngine access: ' +
                 'trying anonymous access',
