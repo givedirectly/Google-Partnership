@@ -297,13 +297,15 @@ async function getAssetsAndSetOptionsForSelect(
   if (!isCurrent()) {
     return false;
   }
-  let assets = disasterAssets;
+  const assets = new Map();
+  for (const [key, attributes] of disasterAssets) {
+    // Only enable FCs, and optionally only those with geometries.
+    const enabled = attributes.type === LayerType.FEATURE_COLLECTION && (allowFeatureCollectionsWithoutGeometries || attributes.hasGeometry);
+    const newAttributes = Object.assign({}, attributes);
+    newAttributes.disabled = !enabled;
+    assets.set(key, newAttributes);
+  }
   if (allowFeatureCollectionsWithoutGeometries) {
-    assets = new Map();
-    for (const [key, attributes] of disasterAssets) {
-      assets.set(
-          key, {disabled: attributes.type !== LayerType.FEATURE_COLLECTION});
-    }
   }
   setOptionsForSelect(assets, propertyPath);
   return true;
