@@ -306,8 +306,6 @@ async function getAssetsAndSetOptionsForSelect(
     newAttributes.disabled = !enabled;
     assets.set(key, newAttributes);
   }
-  if (allowFeatureCollectionsWithoutGeometries) {
-  }
   setOptionsForSelect(assets, propertyPath);
   return true;
 }
