@@ -465,9 +465,9 @@ function showColor(color) {
 function addLayer(layer, map) {
   switch (layer.assetType) {
     case LayerType.IMAGE:
-      return addImageLayer(map, ee.Image(layer.eeName), layer);
+      return addImageLayer(map, ee.Image.constant(0), layer);
     case LayerType.IMAGE_COLLECTION:
-      return addImageLayer(map, processImageCollection(layer.eeName), layer);
+      return addImageLayer(map, ee.Image.constant(0), layer);
     case LayerType.FEATURE:
     case LayerType.FEATURE_COLLECTION:
       const layerName = layer.eeName;
