@@ -1,3 +1,4 @@
+import {addLoadingElement} from '../loading.js';
 import {getDisaster} from '../resources.js';
 
 import {createScoreAssetForFlexibleDisaster, createScoreAssetForStateBasedDisaster} from './create_score_asset.js';
@@ -71,6 +72,7 @@ function enableWhenFirestoreReady(allDisastersData) {
  *     display is done (user can interact with page)
  */
 async function onSetDisaster() {
+  addLoadingElement('table-container');
   noteNewDisaster();
   const isCurrent = getIsCurrentDisasterChecker();
   const currentDisaster = getDisaster();

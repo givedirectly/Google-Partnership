@@ -1,3 +1,4 @@
+import {loadingElementFinished} from '../loading.js';
 import {getDisaster} from '../resources.js';
 
 import {getStateAssetsFromEe} from './list_ee_assets.js';
@@ -209,6 +210,8 @@ async function initializeStateBasedDisaster(assetData) {
   if (isCurrent()) {
     initializeStateBasedScoreSelectors(states, stateAssets);
   }
+
+  loadingElementFinished('table-container');
 }
 
 /**
