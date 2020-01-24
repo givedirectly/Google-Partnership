@@ -74,7 +74,9 @@ function getDisasterAssetsFromEe(disaster) {
                      .then((assetMap) => {
                        for (const attributes of assetMap.values()) {
                          // Disable all FCs without geometries.
-                         attributes.disabled = attributes.type === LayerType.FEATURE_COLLECTION && !attributes.hasGeometry;
+                         attributes.disabled =
+                             attributes.type === LayerType.FEATURE_COLLECTION &&
+                             !attributes.hasGeometry;
                          Object.freeze(attributes);
                        }
                        return Object.freeze(assetMap);

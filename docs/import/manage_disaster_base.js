@@ -300,7 +300,8 @@ async function getAssetsAndSetOptionsForSelect(
   const assets = new Map();
   for (const [key, attributes] of disasterAssets) {
     // Only enable FCs, and optionally only those with geometries.
-    const enabled = attributes.type === LayerType.FEATURE_COLLECTION && (allowFeatureCollectionsWithoutGeometries || attributes.hasGeometry);
+    const enabled = attributes.type === LayerType.FEATURE_COLLECTION &&
+        (allowFeatureCollectionsWithoutGeometries || attributes.hasGeometry);
     const newAttributes = Object.assign({}, attributes);
     newAttributes.disabled = !enabled;
     assets.set(key, newAttributes);
