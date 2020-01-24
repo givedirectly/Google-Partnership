@@ -248,7 +248,8 @@ function setGeoid(censusTable) {
         ee.String(getKeyOrBackup(f, censusGeoidKey, backupCensusGeoidKey));
     return f.set(
         geoidTag,
-        // If too short, null out: can happen with header rows.
+        // If too short, null out: can happen with Census header rows. These
+        // weird rows won't match any TIGER block groups, so they'll be dropped.
         // Prefix of 9 + 15 digits for block group.
         ee.Algorithms.If(geoid.length().gt(9), geoid.slice(9), null));
   });

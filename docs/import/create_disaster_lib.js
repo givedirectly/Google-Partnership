@@ -1,10 +1,5 @@
 export {createDisasterData};
-export {
-  BUILDING_COUNT_KEY,
-  BuildingSource,
-
-
-};
+export {BUILDING_COUNT_KEY, BuildingSource};
 // For testing
 export {deepCopy, flexibleAssetData, stateAssetDataTemplate};
 

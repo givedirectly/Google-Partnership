@@ -8,7 +8,7 @@ export {
 };
 
 const damageTag = 'DAMAGE PERCENTAGE';
-// Unique name to avoid clashing with user-given columns.
+// Unique name to avoid clashing with user-given columns, never shown to user.
 const geoidTag = '___GD_GOOGLE_DELPHI_GEOID';
 const scoreTag = 'SCORE';
 // TODO(janakr): We need some kind of "totals" tags to enable polygon selection
