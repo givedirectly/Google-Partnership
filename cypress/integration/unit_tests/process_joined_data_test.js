@@ -158,7 +158,7 @@ describe('Unit test for processed_joined_data.js', () => {
                 })))
         .then(({featuresList, columnsFound}) => {
           expect(columnsFound).to.eql([
-            'GEOID',
+            '___GD_GOOGLE_DELPHI_GEOID',
             'district descript',
             'SCORE',
             'poverty rate',
