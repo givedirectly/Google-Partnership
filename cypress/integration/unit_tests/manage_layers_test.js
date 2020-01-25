@@ -45,6 +45,7 @@ describe('Unit tests for manage_layers page', () => {
             {id: 'asset/with/geometry', type: 'TABLE'},
             {id: 'asset/with/null/geometry', type: 'TABLE'},
             {id: 'asset/with/empty/geometry', type: 'TABLE'},
+            {id: 'image/asset', type: 'IMAGE'},
           ],
         }));
     const withGeometry =
@@ -71,6 +72,7 @@ describe('Unit tests for manage_layers page', () => {
     cy.get('option')
         .contains('asset/with/empty/geometry')
         .should('be.disabled');
+    cy.get('option').contains('image/asset').should('not.be.disabled');
   });
 
   it('has racing disaster asset populates', () => {

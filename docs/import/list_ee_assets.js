@@ -5,7 +5,6 @@ import {listEeAssets} from './ee_utils.js';
 
 export {
   getAssetPropertyNames,
-  getColumnsStatus,
   getDisasterAssetsFromEe,
   getStateAssetsFromEe,
   listAndProcessEeAssets,
@@ -56,8 +55,7 @@ const disasterAssetPromises = new Map();
  * Gets all assets for the given disaster. Assumes an ee folder has already
  * been created for this disaster. Marks assets with their type and whether or
  * not they should be disabled when put into a select. Here, disabling any
- * feature collections that have a null-looking (see comment below) geometry,
- * and also disabling any non-feature collections (since no geometries).
+ * feature collections that have a null-looking (see comment below) geometry.
  *
  * De-duplicates requests, so retrying before a fetch completes won't start a
  * new fetch.
@@ -74,7 +72,10 @@ function getDisasterAssetsFromEe(disaster) {
                      listAndProcessEeAssets(eeLegacyPathPrefix + disaster))
                      .then((assetMap) => {
                        for (const attributes of assetMap.values()) {
-                         attributes.disabled = !attributes.hasGeometry;
+                         // Disable all FCs without geometries.
+                         attributes.disabled =
+                             attributes.type === LayerType.FEATURE_COLLECTION &&
+                             !attributes.hasGeometry;
                          Object.freeze(attributes);
                        }
                        return Object.freeze(assetMap);
@@ -183,18 +184,4 @@ function maybeConvertAssetType(asset) {
 function getAssetPropertyNames(assetName) {
   return convertEeObjectToPromise(
       ee.FeatureCollection(assetName).first().propertyNames());
-}
-
-/**
- * Checks if asset's first feature has all columns from `expectedColumns`.
- * @param {EeFC} asset
- * @param {Array<EeColumn>} expectedColumns
- * @return {Promise<number>} Status from column check, 0 if contained all
- *     columns, 1 if there was an error.
- */
-function getColumnsStatus(asset, expectedColumns) {
-  return convertEeObjectToPromise(ee.Algorithms.If(
-      ee.FeatureCollection(asset).first().propertyNames().containsAll(
-          ee.List(expectedColumns)),
-      ee.Number(0), ee.Number(1)));
 }
