@@ -282,7 +282,7 @@ describe('Unit test for toggleLayerOn', () => {
   // 2. Sub in trivial image, and control the #getMap method of that image so
   // that we can delay the callback until we're ready.
   // 3. Stub the loading elements, so we can check when loading starts/ends.
-  it('caches computed image overlay and starts loading on EE request', () => {
+  it.only('caches computed image overlay and starts loading on EE request', () => {
     const latch = stubOutImageAndGetLatch();
     const loadingStartedStub = cy.stub(loading, 'addLoadingElement');
     const loadingFinishedStub = cy.stub(loading, 'loadingElementFinished');

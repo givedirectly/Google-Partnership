@@ -24431,6 +24431,7 @@ ee.layers.AbstractOverlay.prototype.releaseTile = function(tileDiv) {
 ee.layers.AbstractOverlay.prototype.registerStatusChangeListener_ = function(tile) {
   this.handler.listen(tile, ee.layers.AbstractTile.EventType.STATUS_CHANGED, function() {
     var Status = ee.layers.AbstractTile.Status;
+    console.log('here', tile.getStatus());
     switch(tile.getStatus()) {
       case Status.LOADED:
         this.stats.addTileStats(tile.loadingStartTs_, (new Date).getTime(), tile.zoom);

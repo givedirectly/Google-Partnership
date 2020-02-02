@@ -183,6 +183,10 @@ class CompositeImageMapType {
       this.eventTarget.dispatchEvent(event);
     }
   }
+
+  getLoadingTilesCount() {
+    return this.tileMap.size;
+  }
 }
 
 /**
