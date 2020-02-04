@@ -42,7 +42,7 @@ describe('Unit test for generating style functions', () => {
       'color': 'blue',
     });
     const trueBlue = fxn({});
-    const blue = [0, 0, 255];
+    const blue = [0, 0, 255, 200];
     expect(trueBlue).to.eql(blue);
   });
 });

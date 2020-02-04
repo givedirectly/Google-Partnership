@@ -39,8 +39,7 @@ function createStyleFunction(colorFunctionProperties) {
   const field = colorFunctionProperties['field'];
   switch (colorFunctionProperties.currentStyle) {
     case ColorStyle.SINGLE:
-      // Drop opacity for single-color.
-      const color = colorMap.get(colorFunctionProperties.color).slice(0, 3);
+      const color = colorMap.get(colorFunctionProperties.color);
       return () => color;
     case ColorStyle.CONTINUOUS:
       return createContinuousFunction(
