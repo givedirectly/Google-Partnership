@@ -4,8 +4,7 @@ import {mapContainerId} from './dom_constants.js';
 import {terrainStyle} from './earth_engine_asset.js';
 import {AssetNotFoundError, getEePromiseForFeatureCollection, transformEarthEngineFailureMessage} from './ee_promise_cache.js';
 import {showError} from './error.js';
-import {SOLID_BLACK} from './firebase_layers';
-import {createStyleFunction, LayerType} from './firebase_layers.js';
+import {createStyleFunction, LayerType, SOLID_BLACK} from './firebase_layers.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 
 export {
