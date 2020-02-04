@@ -4,7 +4,7 @@ import {mapContainerId} from './dom_constants.js';
 import {terrainStyle} from './earth_engine_asset.js';
 import {AssetNotFoundError, getEePromiseForFeatureCollection, transformEarthEngineFailureMessage} from './ee_promise_cache.js';
 import {showError} from './error.js';
-import {colorMap, createStyleFunction, LayerType} from './firebase_layers.js';
+import {createStyleFunction, LayerType, SOLID_BLACK} from './firebase_layers.js';
 import {addLoadingElement, loadingElementFinished} from './loading.js';
 
 export {
@@ -453,7 +453,7 @@ function addLayerFromFeatures(layerDisplayData, index) {
  * @return {Array} RGBA color specification as an array
  */
 function showColor(color) {
-  return color ? color : colorMap.get('black');
+  return color ? color : SOLID_BLACK;
 }
 
 /**
