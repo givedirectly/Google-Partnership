@@ -1,4 +1,4 @@
-import {colorMap, createStyleFunction} from '../../../docs/firebase_layers.js';
+import {createStyleFunction} from '../../../docs/firebase_layers.js';
 
 describe('Unit test for generating style functions', () => {
   it('calculates a discrete function', () => {
@@ -11,11 +11,13 @@ describe('Unit test for generating style functions', () => {
       },
     });
     const cherry = fxn({'properties': {'flavor': 'cherry'}});
-    const expectedCherry = colorMap.get('red');
+    const expectedCherry = [255, 0, 0, 200];
     expect(cherry).to.eql(expectedCherry);
     const banana = fxn({'properties': {'flavor': 'banana'}});
-    const expectedBanana = colorMap.get('yellow');
+    const expectedBanana = [255, 255, 0, 200];
     expect(banana).to.eql(expectedBanana);
+    const secondBanana = fxn({'properties': {'flavor': 'banana'}});
+    expect(secondBanana).to.eql(expectedBanana);
   });
 
   it('calculates a continuous function', () => {
@@ -40,7 +42,7 @@ describe('Unit test for generating style functions', () => {
       'color': 'blue',
     });
     const trueBlue = fxn({});
-    const blue = colorMap.get('blue');
+    const blue = [0, 0, 255];
     expect(trueBlue).to.eql(blue);
   });
 });
