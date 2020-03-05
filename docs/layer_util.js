@@ -223,7 +223,6 @@ function addImageLayer(map, imageAsset, layer) {
         imageAsset.getMap({
           visParams: imgStyles,
           callback: (layerId, failure) => {
-            console.log(layerId, failure);
             if (layerId) {
               const overlay = new ee.layers.ImageOverlay(
                   new ee.layers.EarthEngineTileSource(layerId));
@@ -309,8 +308,7 @@ function resolveOnEeTilesFinished(layerDisplayData, resolve) {
  *     ee.MapLayerOverlay.addTileCallback
  */
 function createTileCallback(layerDisplayData, resolve) {
-  return (event) => {
-    // console.log(event);
+  return () => {
     if (layerDisplayData.overlay.getLoadingTilesCount() === 0) {
       if (resolve) {
         // This is the first time we've finished loading, so inform caller.
