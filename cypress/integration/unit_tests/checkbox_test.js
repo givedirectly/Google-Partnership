@@ -321,8 +321,7 @@ describe('Unit test for toggleLayerOn', () => {
         .then(() => {
           const nextOverlay = map.overlayMapTypes.getAt(3);
           expect(nextOverlay).is.not.null;
-          // We got the exact same object! Note that
-          // expect({}).not.equals({}).
+          // We got the exact same object! Note that expect({}).not.equals({}).
           expect(nextOverlay).equals(overlay);
         });
   });
