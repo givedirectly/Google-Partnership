@@ -275,10 +275,14 @@ function resolveOnEeTilesFinished(layerDisplayData, resolve) {
   }
   layerDisplayData.tileCallbackId = [];
   const tileCallback = createTileCallback(layerDisplayData, resolve);
-  layerDisplayData.tileCallbackId.push(layerDisplayData.overlay.addTileCallback(
-      tileCallback));
-  for (const eventType of [ee.layers.AbstractOverlay.EventType.TILE_ABORT, ee.layers.AbstractOverlay.EventType.TILE_FAIL, ee.layers.AbstractOverlay.EventType.TILE_START]) {
-    layerDisplayData.tileCallbackId.push(goog.events.listen(layerDisplayData.overlay, eventType, tileCallback));
+  layerDisplayData.tileCallbackId.push(
+      layerDisplayData.overlay.addTileCallback(tileCallback));
+  for (const eventType
+           of [ee.layers.AbstractOverlay.EventType.TILE_ABORT,
+               ee.layers.AbstractOverlay.EventType.TILE_FAIL,
+               ee.layers.AbstractOverlay.EventType.TILE_START]) {
+    layerDisplayData.tileCallbackId.push(
+        goog.events.listen(layerDisplayData.overlay, eventType, tileCallback));
   }
 }
 

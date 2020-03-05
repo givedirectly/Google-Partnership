@@ -282,47 +282,49 @@ describe('Unit test for toggleLayerOn', () => {
   // 2. Sub in trivial image, and control the #getMap method of that image so
   // that we can delay the callback until we're ready.
   // 3. Stub the loading elements, so we can check when loading starts/ends.
-  it.only('caches computed image overlay and starts loading on EE request', () => {
-    const latch = stubOutImageAndGetLatch();
-    const loadingStartedStub = cy.stub(loading, 'addLoadingElement');
-    const loadingFinishedStub = cy.stub(loading, 'loadingElementFinished');
+  it.only(
+      'caches computed image overlay and starts loading on EE request', () => {
+        const latch = stubOutImageAndGetLatch();
+        const loadingStartedStub = cy.stub(loading, 'addLoadingElement');
+        const loadingFinishedStub = cy.stub(loading, 'loadingElementFinished');
 
-    let overlay = null;
-    let map = null;
-    createGoogleMap()
-        .then((returnedMap) => {
-          map = returnedMap;
-          const promise = addLayer(mockFirebaseLayers[3], map);
-          expect(promise).to.not.be.null;
-          expect(loadingStartedStub).to.be.calledOnce;
-          // Loading can't finish until EE evaluation finishes, which we've
-          // frozen.
-          expect(loadingFinishedStub).to.not.be.called;
-          expect(map.overlayMapTypes).to.have.length(0);
-          // Release evaluation.
-          latch.release();
-          return promise;
-        })
-        .then(() => {
-          expect(loadingFinishedStub).to.be.calledOnce;
-          overlay = map.overlayMapTypes.getAt(3);
-          expect(overlay).is.not.null;
-          // Turn layer off: disappears from map.
-          toggleLayerOff(3, map);
-          expect(map.overlayMapTypes.getAt(3)).is.null;
+        let overlay = null;
+        let map = null;
+        createGoogleMap()
+            .then((returnedMap) => {
+              map = returnedMap;
+              const promise = addLayer(mockFirebaseLayers[3], map);
+              expect(promise).to.not.be.null;
+              expect(loadingStartedStub).to.be.calledOnce;
+              // Loading can't finish until EE evaluation finishes, which we've
+              // frozen.
+              expect(loadingFinishedStub).to.not.be.called;
+              expect(map.overlayMapTypes).to.have.length(0);
+              // Release evaluation.
+              latch.release();
+              return promise;
+            })
+            .then(() => {
+              expect(loadingFinishedStub).to.be.calledOnce;
+              overlay = map.overlayMapTypes.getAt(3);
+              expect(overlay).is.not.null;
+              // Turn layer off: disappears from map.
+              toggleLayerOff(3, map);
+              expect(map.overlayMapTypes.getAt(3)).is.null;
 
-          // Turn overlay back on.
-          const togglePromise = toggleLayerOn(mockFirebaseLayers[3], map);
-          expect(togglePromise).to.not.be.null;
-          return togglePromise;
-        })
-        .then(() => {
-          const nextOverlay = map.overlayMapTypes.getAt(3);
-          expect(nextOverlay).is.not.null;
-          // We got the exact same object! Note that expect({}).not.equals({}).
-          expect(nextOverlay).equals(overlay);
-        });
-  });
+              // Turn overlay back on.
+              const togglePromise = toggleLayerOn(mockFirebaseLayers[3], map);
+              expect(togglePromise).to.not.be.null;
+              return togglePromise;
+            })
+            .then(() => {
+              const nextOverlay = map.overlayMapTypes.getAt(3);
+              expect(nextOverlay).is.not.null;
+              // We got the exact same object! Note that
+              // expect({}).not.equals({}).
+              expect(nextOverlay).equals(overlay);
+            });
+      });
 
   it('toggles off computed image overlay before EE finishes', () => {
     const latch = stubOutImageAndGetLatch();

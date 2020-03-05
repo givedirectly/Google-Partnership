@@ -184,6 +184,7 @@ class CompositeImageMapType {
     }
   }
 
+  /** @return {number} The number of currently loading tiles */
   getLoadingTilesCount() {
     return this.tileMap.size;
   }

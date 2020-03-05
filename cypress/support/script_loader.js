@@ -37,8 +37,7 @@ const scriptMap = new Map([
   [
     'ee',
     {
-      script:
-          'https://rawcdn.githack.com/google/earthengine-api/3bb86bfc4f3d9eed98220f3d225b414982915b86/javascript/build/ee_api_js_debug.js',
+      script: LIB_URL + 'ee_api_js_debug-0.1.214.js',
       callback: () => typeof (ee) !== 'undefined',
     },
   ],
@@ -85,16 +84,17 @@ const scriptMap = new Map([
 let earthEngineCustomToken = null;
 
 /**
- * Load genuine scripts into local document. This gives unit tests the ability
- * to use actual external objects. That makes them a bit less "unit"-y, but
- * they're still fast, and can be much more faithful to the external interfaces.
+ * Load genuine scripts into local document. This gives unit tests the
+ * ability to use actual external objects. That makes them a bit less
+ * "unit"-y, but they're still fast, and can be much more faithful to the
+ * external interfaces.
  *
- * Integration tests cannot use this because then the same script would be on
- * the page multiple times, from this and from the actual site, which can cause
- * confusion.
+ * Integration tests cannot use this because then the same script would be
+ * on the page multiple times, from this and from the actual site, which
+ * can cause confusion.
  *
- * @param {...string} scriptKeys keys from scriptMap above. These will be the
- *     scripts that are loaded.
+ * @param {...string} scriptKeys keys from scriptMap above. These will be
+ *     the scripts that are loaded.
  */
 function loadScriptsBeforeForUnitTests(...scriptKeys) {
   const scriptsSet = new Set(scriptKeys);
@@ -115,16 +115,16 @@ function loadScriptsBeforeForUnitTests(...scriptKeys) {
         });
       }
     }
-    // waitForCallback may return before the callback is actually ready, just
-    // enqueuing itself to run again on a different thread, so this loop
-    // finishing does not mean that all the callbacks are true. But we've done
-    // our job enqueuing work that will not terminate until all the callbacks
-    // are true, which will keep Cypress from proceeding until all that work is
-    // done.
+    // waitForCallback may return before the callback is actually ready,
+    // just enqueuing itself to run again on a different thread, so this
+    // loop finishing does not mean that all the callbacks are true. But
+    // we've done our job enqueuing work that will not terminate until all
+    // the callbacks are true, which will keep Cypress from proceeding
+    // until all that work is done.
     for (const callback of callbacks) {
       const cypressPromise = waitForCallback(callback);
-      // If this script had dependent scripts, load them when this script has
-      // been loaded, and add the callback for those scripts in.
+      // If this script had dependent scripts, load them when this script
+      // has been loaded, and add the callback for those scripts in.
       const scriptsAndCallbacks = extraScripts.get(callback);
       if (scriptsAndCallbacks) {
         cypressPromise.then(() => {
@@ -164,9 +164,9 @@ function loadScriptsBeforeForUnitTests(...scriptKeys) {
 
 const testPrefix = new Date().getTime() + '-';
 /**
- * Adds all necessary hooks to set up Firebase, for either unit or integration
- * tests. Populates test Firestore database. Integration tests need to also set
- * the appropriate values in `window.localStorage`.
+ * Adds all necessary hooks to set up Firebase, for either unit or
+ * integration tests. Populates test Firestore database. Integration tests
+ * need to also set the appropriate values in `window.localStorage`.
  */
 function addFirebaseHooks() {
   before(() => {
@@ -189,7 +189,8 @@ function addFirebaseHooks() {
 
 /**
  * Performs task of creating EarthEngine token and setting it to
- * earthEngineCustomToken variable. Should be called inside a before() hook.
+ * earthEngineCustomToken variable. Should be called inside a before()
+ * hook.
  * @return {Cypress.Chainable<any>}
  */
 function doServerEeSetup() {
@@ -212,12 +213,12 @@ if (Cypress.spec.relative.startsWith('cypress/integration/integration_tests')) {
 }
 
 /**
- * Loads a script dynamically into Cypress's test-only "document". The script's
- * symbols will be available inside all Cypress functions, but are not available
- * during file loading, so bare statements outside of functions like
- * "const elt = deck.property" in production files will still result in errors.
- * To get around this, keep all such statements within functions that are called
- * at runtime.
+ * Loads a script dynamically into Cypress's test-only "document". The
+ * script's symbols will be available inside all Cypress functions, but
+ * are not available during file loading, so bare statements outside of
+ * functions like "const elt = deck.property" in production files will
+ * still result in errors. To get around this, keep all such statements
+ * within functions that are called at runtime.
  * @param {string} scriptUrl
  */
 function addScriptToDocument(scriptUrl) {
@@ -228,8 +229,8 @@ function addScriptToDocument(scriptUrl) {
 }
 
 /**
- * Function that repeatedly calls a callback until it returns true, waiting 1 ms
- * after each failuire.
+ * Function that repeatedly calls a callback until it returns true,
+ * waiting 1 ms after each failuire.
  * @param {Function} callback
  * @return {Cypress.Chainable} Cypress promise that can be chained off of
  */
@@ -237,8 +238,8 @@ function waitForCallback(callback) {
   if (!callback()) {
     return cy.wait(1).then(() => waitForCallback(callback));
   }
-  // If callback is true, return a Cypress Chainable so that we can chain work
-  // off of this function.
+  // If callback is true, return a Cypress Chainable so that we can chain
+  // work off of this function.
   return cy.wait(0);
 }
 
