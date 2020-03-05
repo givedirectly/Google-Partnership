@@ -24382,7 +24382,7 @@ ee.layers.AbstractOverlay = function(tileSource, opt_options) {
   this.alt = null;
 };
 goog.inherits(ee.layers.AbstractOverlay, goog.events.EventTarget);
-ee.layers.AbstractOverlay.EventType = {TILE_FAIL:"tile-fail", TILE_THROTTLE:"tile-throttle", TILE_LOAD:"tile-load"};
+ee.layers.AbstractOverlay.EventType = {TILE_FAIL:"tile-fail", TILE_THROTTLE:"tile-throttle", TILE_LOAD:"tile-load", TILE_START:"tile-start"};
 ee.layers.AbstractOverlay.DEFAULT_TILE_EDGE_LENGTH = 256;
 ee.layers.AbstractOverlay.prototype.addTileCallback = function(callback) {
   return goog.events.listen(this, ee.layers.AbstractOverlay.EventType.TILE_LOAD, callback);
@@ -24420,6 +24420,9 @@ ee.layers.AbstractOverlay.prototype.getTile = function(coord, zoom, ownerDocumen
   goog.style.setOpacity(tile.div, this.opacity);
   this.tilesById.set(uniqueId, tile);
   this.registerStatusChangeListener_(tile);
+    // Notify listeners that the tile has been created.
+    this.dispatchEvent(new ee.layers.TileStartEvent(this.getLoadingTilesCount()));
+
   this.tileSource.loadTile(tile, (new Date).getTime() / 1000);
   return tile.div;
 };
@@ -24431,7 +24434,6 @@ ee.layers.AbstractOverlay.prototype.releaseTile = function(tileDiv) {
 ee.layers.AbstractOverlay.prototype.registerStatusChangeListener_ = function(tile) {
   this.handler.listen(tile, ee.layers.AbstractTile.EventType.STATUS_CHANGED, function() {
     var Status = ee.layers.AbstractTile.Status;
-    console.log('here', tile.getStatus());
     switch(tile.getStatus()) {
       case Status.LOADED:
         this.stats.addTileStats(tile.loadingStartTs_, (new Date).getTime(), tile.zoom);
@@ -24468,6 +24470,21 @@ ee.layers.TileLoadEvent = function(loadingTileCount) {
   this.loadingTileCount = loadingTileCount;
 };
 goog.inherits(ee.layers.TileLoadEvent, goog.events.Event);
+/**
+ * An event dispatched when a tile is created.
+ * @param {number} loadingTileCount The number of outstanding tile requests.
+ * @constructor
+ * @extends {goog.events.Event}
+ */
+ee.layers.TileStartEvent = function(loadingTileCount) {
+  goog.events.Event.call(this, ee.layers.AbstractOverlay.EventType.TILE_START);
+
+  /** @const {number} The number of outstanding tile requests. */
+  this.loadingTileCount = loadingTileCount;
+};
+goog.inherits(ee.layers.TileStartEvent, goog.events.Event);
+
+
 ee.layers.TileThrottleEvent = function(tileUrl) {
   goog.events.Event.call(this, ee.layers.AbstractOverlay.EventType.TILE_THROTTLE);
   this.tileUrl = tileUrl;

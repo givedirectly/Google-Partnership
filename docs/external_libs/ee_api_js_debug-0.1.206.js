@@ -24372,7 +24372,7 @@ ee.layers.AbstractOverlay = function(tileSource, opt_options) {
   this.alt = null;
 };
 goog.inherits(ee.layers.AbstractOverlay, goog.events.EventTarget);
-ee.layers.AbstractOverlay.EventType = {TILE_FAIL:"tile-fail", TILE_ABORT:"tile-abort", TILE_THROTTLE:"tile-throttle", TILE_LOAD:"tile-load"};
+ee.layers.AbstractOverlay.EventType = {TILE_FAIL:"tile-fail", TILE_ABORT:"tile-abort", TILE_THROTTLE:"tile-throttle", TILE_LOAD:"tile-load",TILE_START: 'tile-start'};
 ee.layers.AbstractOverlay.DEFAULT_TILE_EDGE_LENGTH = 256;
 ee.layers.AbstractOverlay.prototype.addTileCallback = function(callback) {
   return goog.events.listen(this, ee.layers.AbstractOverlay.EventType.TILE_LOAD, callback);
@@ -24410,6 +24410,9 @@ ee.layers.AbstractOverlay.prototype.getTile = function(coord, zoom, ownerDocumen
   goog.style.setOpacity(tile.div, this.opacity);
   this.tilesById.set(uniqueId, tile);
   this.registerStatusChangeListener_(tile);
+  // Notify listeners that the tile has been created.
+  this.dispatchEvent(new ee.layers.TileStartEvent(this.getLoadingTilesCount()));
+
   this.tileSource.loadTile(tile, (new Date).getTime() / 1000);
   return tile.div;
 };
@@ -24464,6 +24467,19 @@ ee.layers.TileLoadEvent = function(loadingTileCount) {
   this.loadingTileCount = loadingTileCount;
 };
 goog.inherits(ee.layers.TileLoadEvent, goog.events.Event);
+/**
+ * An event dispatched when a tile is created.
+ * @param {number} loadingTileCount The number of outstanding tile requests.
+ * @constructor
+ * @extends {goog.events.Event}
+ */
+ee.layers.TileStartEvent = function(loadingTileCount) {
+  goog.events.Event.call(this, ee.layers.AbstractOverlay.EventType.TILE_START);
+
+  /** @const {number} The number of outstanding tile requests. */
+  this.loadingTileCount = loadingTileCount;
+};
+goog.inherits(ee.layers.TileStartEvent, goog.events.Event);
 ee.layers.TileThrottleEvent = function(tileUrl) {
   goog.events.Event.call(this, ee.layers.AbstractOverlay.EventType.TILE_THROTTLE);
   this.tileUrl = tileUrl;
@@ -24506,7 +24522,8 @@ ee.layers.AbstractTile = function(coord, zoom, ownerDocument, uniqueId) {
 };
 goog.inherits(ee.layers.AbstractTile, goog.events.EventTarget);
 ee.layers.AbstractTile.EventType = {STATUS_CHANGED:"status-changed"};
-ee.layers.AbstractTile.Status = {NEW:"new", LOADING:"loading", THROTTLED:"throttled", LOADED:"loaded", FAILED:"failed", ABORTED:"aborted"};
+ee.layers.AbstractTile.Status = {NEW:"new", LOADING:"loading", THROTTLED:"throttled", LOADED:"loaded", FAILED:"failed", ABORTED:"aborted",
+  REMOVED: 'removed'};
 ee.layers.AbstractTile.prototype.startLoad = function() {
   if (!this.isRetrying_ && this.getStatus() == ee.layers.AbstractTile.Status.LOADING) {
     throw Error("startLoad() can only be invoked once. Use retryLoad() after the first attempt.");

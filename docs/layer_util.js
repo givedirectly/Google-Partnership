@@ -277,7 +277,7 @@ function resolveOnEeTilesFinished(layerDisplayData, resolve) {
   const tileCallback = createTileCallback(layerDisplayData, resolve);
   layerDisplayData.tileCallbackId.push(layerDisplayData.overlay.addTileCallback(
       tileCallback));
-  for (const eventType of [ee.layers.AbstractOverlay.EventType.TILE_ABORT, ee.layers.AbstractOverlay.EventType.TILE_FAIL]) {
+  for (const eventType of [ee.layers.AbstractOverlay.EventType.TILE_ABORT, ee.layers.AbstractOverlay.EventType.TILE_FAIL, ee.layers.AbstractOverlay.EventType.TILE_START]) {
     layerDisplayData.tileCallbackId.push(goog.events.listen(layerDisplayData.overlay, eventType, tileCallback));
   }
 }
@@ -306,6 +306,7 @@ function resolveOnEeTilesFinished(layerDisplayData, resolve) {
  */
 function createTileCallback(layerDisplayData, resolve) {
   return (event) => {
+    // console.log(event);
     if (layerDisplayData.overlay.getLoadingTilesCount() === 0) {
       if (resolve) {
         // This is the first time we've finished loading, so inform caller.
