@@ -5,6 +5,7 @@ export {
   createStyleFunction,
   getLinearGradient,
   LayerType,
+  SOLID_BLACK,
 };
 
 const LayerType = {
@@ -24,7 +25,9 @@ const ColorStyle = {
 };
 Object.freeze(ColorStyle);
 
-const opacity = 200;
+const OPACITY = 200;
+
+const SOLID_BLACK = [0, 0, 0];
 
 /**
  * Creates the style function for the given properties. Caller should cache to
@@ -77,7 +80,7 @@ function createContinuousFunction(field, minVal, maxVal, color) {
       rgba.push(
           white[i] + (colorRgb[i] - white[i]) * ((value - minVal) / range));
     }
-    rgba.push(opacity);
+    rgba.push(OPACITY);
     return rgba;
   };
 }
@@ -93,24 +96,22 @@ function createDiscreteFunction(field, colors) {
   return (feature) => {
     const value = feature['properties'][field];
     if (value === null) return transparent;
-    const rgba = colorMap.get(colors[value]);
-    rgba.push(opacity);
-    return rgba;
+    return colorMap.get(colors[value]);
   };
 }
 
-const transparent = [0, 0, 0, 0];
+const transparent = Object.freeze([0, 0, 0, 0]);
 
-const colorMap = new Map([
-  ['red', [255, 0, 0]],
-  ['orange', [255, 140, 0]],
-  ['yellow', [255, 255, 0]],
-  ['green', [0, 255, 0]],
-  ['blue', [0, 0, 255]],
-  ['purple', [128, 0, 128]],
-  ['black', [0, 0, 0]],
-  ['white', [255, 255, 255]],
-]);
+const colorMap = Object.freeze(new Map([
+  ['red', Object.freeze([255, 0, 0, OPACITY])],
+  ['orange', Object.freeze([255, 140, 0, OPACITY])],
+  ['yellow', Object.freeze([255, 255, 0, OPACITY])],
+  ['green', Object.freeze([0, 255, 0, OPACITY])],
+  ['blue', Object.freeze([0, 0, 255, OPACITY])],
+  ['purple', Object.freeze([128, 0, 128, OPACITY])],
+  ['black', Object.freeze([0, 0, 0, OPACITY])],
+  ['white', Object.freeze([255, 255, 255, OPACITY])],
+]));
 
 /**
  * Gets the linear gradient of the colors for the legend.
