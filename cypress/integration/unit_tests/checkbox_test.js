@@ -307,7 +307,7 @@ describe('Unit test for toggleLayerOn', () => {
           expect(loadingFinishedStub).to.be.calledOnce;
           expect(map.overlayMapTypes).to.have.length(4);
           overlay = map.overlayMapTypes.getAt(3);
-          expect(overlay).is.not.null;
+          expect(overlay).to.not.be.null;
           expect(overlay).to.not.be.undefined;
           // Turn layer off: disappears from map.
           toggleLayerOff(3, map);

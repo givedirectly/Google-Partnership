@@ -19,6 +19,7 @@ async function listEeAssets(path) {
     let assets;
     const listResult =
         await ee.data.listAssets(path, {page_token: nextPageToken}, () => {});
+    console.log(listResult.assets);
     if (!listResult) {
       // Might only happen in tests?
       break;
