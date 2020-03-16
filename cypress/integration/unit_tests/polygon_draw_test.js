@@ -384,7 +384,8 @@ describe('Unit test for ShapeData', () => {
     pressButtonAndWaitForPromise('save').then(() => {
       expect(this.spyResult.popupPendingCalculationSpy).to.be.calledOnce;
       expect(this.spyResult.popupCalculatedDataSpy).to.be.calledOnce;
-      expect(this.spyResult.eeSpy).to.be.calledOnce;
+      // Can't assert on number of calls since EE makes calls under the covers.
+      expect(this.spyResult.eeSpy).to.be.called;
       expect(this.spyResult.firestoreSpy).to.be.calledOnce;
     });
     assertOnFirestoreAndPopup(newPath);

@@ -106,7 +106,7 @@ function onFunction(on, config) {
     },
 
     getEarthEngineToken() {
-      return generateEarthEngineToken().then((data) => data.accessToken);
+      return generateEarthEngineToken(false).then((data) => data.accessToken);
     },
 
     /**

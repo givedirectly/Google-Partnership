@@ -80,7 +80,18 @@ class Authenticator {
    *     is finished
    */
   start() {
-    this.eeAuthenticate(() => this.navigateToSignInPage());
+    this.eeAuthenticate((err) => {
+      if (err === 'server_error') {
+        // EarthEngine now requests full Google Compute Engine access. Some
+        // organizations (Google.com, for instance) will not allow their users
+        // to grant this permission. Use the token server in that case.
+        showToastMessage(
+            'Error authenticating to EarthEngine, trying anonymous access', -1);
+        this.getEeTokenAndInitialize();
+      } else {
+        this.navigateToSignInPage();
+      }
+    });
     const gapiSettings = Object.assign({}, gapiTemplate);
     // TODO(janakr): We could make do with read-only access, but GD user needs
     //  to have full access, and we don't know at this stage whether it's the GD
@@ -156,14 +167,23 @@ class Authenticator {
             'Not whitelisted for EarthEngine access: ' +
                 'trying anonymous access',
             -1);
-        this.getAndSetEeTokenWithErrorHandling().then(() => {
-          showToastMessage('Anonymous access successful', 1000);
-          initializeEE(this.eeInitializeCallback, defaultErrorCallback);
-        });
+        this.getEeTokenAndInitialize();
       } else {
         defaultErrorCallback(err);
       }
     });
+  }
+
+  /**
+   * Calls {@link getAndSetEeTokenWithErrorHandling}, then informs user of
+   * success and calls ee.initialize now that we have a token.
+   * @return {Promise<void>} Promise that resolves when token has been set and
+   *     initialization has started
+   */
+  async getEeTokenAndInitialize() {
+    await this.getAndSetEeTokenWithErrorHandling();
+    showToastMessage('Anonymous access successful', 1000);
+    initializeEE(this.eeInitializeCallback, defaultErrorCallback);
   }
 
   /**
@@ -172,49 +192,42 @@ class Authenticator {
    * server so server can verify these aren't totally anonymous requests.
    * @return {Promise<void>} Promise that resolves when token has been set
    */
-  getAndSetEeTokenWithErrorHandling() {
-    // To get here, we must already have logged into Google via gapi, even if
-    // not with an EE-enabled account, so Google user id token available.
+  async getAndSetEeTokenWithErrorHandling() {
+    // Make sure we're logged in. If there is no login, user will have been
+    // redirected to sign-in page.
+    await this.gapiInitDone.getPromise();
     const idToken = gapi.auth2.getAuthInstance()
                         .currentUser.get()
                         .getAuthResponse()
                         .id_token;
-    return fetch(TOKEN_SERVER_URL, {
-             method: 'POST',
-             body: $.param({idToken}),
-             headers: {'Content-type': 'application/x-www-form-urlencoded'},
-           })
-        .then((response) => {
-          if (!response.ok) {
-            const message = 'Refresh token error: ' + response.status;
-            console.error(message, response);
-            const contact = CONTACT ? CONTACT : OWNER;
-            // TODO(#395): Find GD contact to list here.
-            alert(
-                'Error contacting server for access without EarthEngine ' +
-                'whitelisting. Please reload page and log in with an ' +
-                'EarthEngine-whitelisted account or contact ' + contact + ' ' +
-                'with error from JavaScript console.');
-            throw new Error(message);
-          }
-          return response.json();
-        })
-        .then(
-            ({accessToken, expireTime}) =>
-                new Promise(
-                    (resolve) => ee.data.setAuthToken(
-                        CLIENT_ID, 'Bearer', accessToken,
-                        Math.floor(
-                            getMillisecondsToDateString(expireTime) / 1000),
-                        /* extraScopes */[], resolve,
-                        /* updateAuthLibrary */ false))
-                    .then(
-                        () => setTimeout(
-                            () => this.getAndSetEeTokenWithErrorHandling(),
-                            Math.max(
-                                getMillisecondsToDateString(expireTime) -
-                                    TOKEN_EXPIRE_BUFFER,
-                                0))));
+    const response = await fetch(TOKEN_SERVER_URL, {
+      method: 'POST',
+      body: $.param({idToken}),
+      headers: {'Content-type': 'application/x-www-form-urlencoded'},
+    });
+    if (!response.ok) {
+      const message = 'Refresh token error: ' + response.status;
+      console.error(message, response);
+      const contact = CONTACT ? CONTACT : OWNER;
+      alert(
+          'Error contacting server for access without EarthEngine ' +
+          'whitelisting. Please reload page and log in with an ' +
+          'EarthEngine-whitelisted account or contact ' + contact + ' with ' +
+          'error from JavaScript console.');
+      showError('Error contacting server for anonymous EarthEngine access');
+      throw new Error(message);
+    }
+    const {accessToken, expireTime} = response.json();
+    await new Promise(
+        (resolve) => ee.data.setAuthToken(
+            CLIENT_ID, 'Bearer', accessToken,
+            Math.floor(getMillisecondsToDateString(expireTime) / 1000),
+            /* extraScopes */[], resolve,
+            /* updateAuthLibrary */ false));
+    setTimeout(
+        () => this.getAndSetEeTokenWithErrorHandling(),
+        Math.max(
+            getMillisecondsToDateString(expireTime) - TOKEN_EXPIRE_BUFFER, 0));
   }
 }
 
@@ -234,7 +247,6 @@ function trackEeAndFirebase(
     taskAccumulator, needsGdUser = false, additionalScopes = []) {
   let authenticator;
   const eeInitializeCallback = () => {
-    ee.data.setCloudApiEnabled(true);
     taskAccumulator.taskCompleted();
     if (!authenticator) {
       return;

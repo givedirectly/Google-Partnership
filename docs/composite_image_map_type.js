@@ -179,9 +179,14 @@ class CompositeImageMapType {
   maybeSendEvent(adding) {
     if (!this.tileMap.size) {
       const event = new Event('tile');
-      event.count = adding ? 1 : 0;
+      event.loadingTileCount = adding ? 1 : 0;
       this.eventTarget.dispatchEvent(event);
     }
+  }
+
+  /** @return {number} The number of currently loading tiles */
+  getLoadingTilesCount() {
+    return this.tileMap.size;
   }
 }
 

@@ -224,9 +224,8 @@ function addImageLayer(map, imageAsset, layer) {
           visParams: imgStyles,
           callback: (layerId, failure) => {
             if (layerId) {
-              const overlay = new ee.MapLayerOverlay(
-                  'https://earthengine.googleapis.com/map', layerId.mapid,
-                  layerId.token, {});
+              const overlay = new ee.layers.ImageOverlay(
+                  new ee.layers.EarthEngineTileSource(layerId));
               layerDisplayData.overlay = overlay;
               // Check in case the status has changed before this callback was
               // invoked by getMap.
@@ -259,23 +258,35 @@ function showOverlayLayer(overlay, index, map) {
 }
 
 /**
- * Wrapper for adding {@link createTileCallback} to the given ee.OverlayMapData
- * layer.
- * @param {LayerDisplayData} layerDisplayData containing an ee.OverlayMapData
+ * Adds {@link createTileCallback} to the given ee.layers.ImageOverlay,
+ * triggering it on every type of event ee.layers.ImageOverlay emits.
+ * @param {LayerDisplayData} layerDisplayData containing ee.layers.ImageOverlay
  * @param {Function} resolve Function to be called the first time this layer
  *     finishes rendering
  */
 function resolveOnEeTilesFinished(layerDisplayData, resolve) {
   if (layerDisplayData.tileCallbackId) {
     layerDisplayData.overlay.removeTileCallback(
-        layerDisplayData.tileCallbackId);
+        layerDisplayData.tileCallbackId[0]);
+    for (const key of layerDisplayData.tileCallbackId.slice(1)) {
+      goog.events.unlistenByKey(key);
+    }
   }
-  layerDisplayData.tileCallbackId = layerDisplayData.overlay.addTileCallback(
-      createTileCallback(layerDisplayData, resolve));
+  layerDisplayData.tileCallbackId = [];
+  const tileCallback = createTileCallback(layerDisplayData, resolve);
+  layerDisplayData.tileCallbackId.push(
+      layerDisplayData.overlay.addTileCallback(tileCallback));
+  for (const eventType
+           of [ee.layers.AbstractOverlay.EventType.TILE_ABORT,
+               ee.layers.AbstractOverlay.EventType.TILE_FAIL,
+               ee.layers.AbstractOverlay.EventType.TILE_START]) {
+    layerDisplayData.tileCallbackId.push(
+        goog.events.listen(layerDisplayData.overlay, eventType, tileCallback));
+  }
 }
 
 /**
- * Creates a callback to be registered with either an ee.MapLayerOverlay or
+ * Creates a callback to be registered with either an ee.layer.ImageOverlay or
  * CompositeImageMapType. The callback enables/disables the loading status
  * indefinitely (on map pan/zoom), but will call the given resolve function the
  * first time loading completes, so that the application can be notified that
@@ -288,7 +299,7 @@ function resolveOnEeTilesFinished(layerDisplayData, resolve) {
  * Loading completion will be triggered if the layer is toggled off from the map
  * (verified experimentally, and also through reading code: when the layer is
  * toggled off, releaseTile() is called on all of its tiles, enabling the
- * relevant TileEvent to be sent).
+ * relevant Tile*Event to be sent).
  * @param {LayerDisplayData} layerDisplayData
  * @param {Function} resolve Function to be called the first time this layer
  *     finishes rendering
@@ -297,8 +308,8 @@ function resolveOnEeTilesFinished(layerDisplayData, resolve) {
  *     ee.MapLayerOverlay.addTileCallback
  */
 function createTileCallback(layerDisplayData, resolve) {
-  return (tileEvent) => {
-    if (tileEvent.count === 0) {
+  return () => {
+    if (layerDisplayData.overlay.getLoadingTilesCount() === 0) {
       if (resolve) {
         // This is the first time we've finished loading, so inform caller.
         resolve();
