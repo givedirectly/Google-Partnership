@@ -39,9 +39,9 @@ const firebaseConfigTest = {
   appId: '1:340543030947:web:0cf3235904250687592116',
 };
 
-// const TOKEN_SERVER_URL = 'https://mapping-crisis.appspot.com';
+const TOKEN_SERVER_URL = 'https://mapping-crisis.appspot.com';
 // For local testing.
-const TOKEN_SERVER_URL = 'http://localhost:9080';
+// const TOKEN_SERVER_URL = 'http://localhost:9080';
 
 // Request a new token with 5 minutes of validity remaining on our current token
 // to leave time for any slowness.
