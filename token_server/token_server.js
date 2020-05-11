@@ -104,6 +104,7 @@ function generateTokenPeriodically() {
   createServer(async (req, res) => {
     const origin = req.headers['origin'];
     if (!allowedOrigins.has(origin)) {
+      console.warn("Bad origin", origin);
       fail(res);
       return;
     }
@@ -112,6 +113,7 @@ function generateTokenPeriodically() {
       const {idToken} = await parseBody(req);
       await client.verifyIdToken({idToken: idToken, audience: CLIENT_ID});
     } catch (err) {
+      console.warn("Error verifying id token", err, idToken);
       fail(res);
       return;
     }
