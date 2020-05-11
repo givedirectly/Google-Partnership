@@ -217,7 +217,7 @@ class Authenticator {
       showError('Error contacting server for anonymous EarthEngine access');
       throw new Error(message);
     }
-    const {accessToken, expireTime} = response.json();
+    const {accessToken, expireTime} = await response.json();
     await new Promise(
         (resolve) => ee.data.setAuthToken(
             CLIENT_ID, 'Bearer', accessToken,
