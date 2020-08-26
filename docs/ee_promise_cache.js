@@ -8,8 +8,9 @@ export {
 // For testing only.
 export {clearPromiseCacheForTesting};
 
-// 250M objects in a FeatureCollection ought to be enough for anyone.
-const maxNumFeaturesExpected = 250000000;
+// 6M objects in a FeatureCollection: seems to be an EE bug that larger numbers
+// trip it up.
+const maxNumFeaturesExpected = 6000000;
 
 const cache = new Map();
 
