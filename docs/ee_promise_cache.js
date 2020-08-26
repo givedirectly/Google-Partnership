@@ -9,7 +9,7 @@ export {
 export {clearPromiseCacheForTesting};
 
 // 6M objects in a FeatureCollection: seems to be an EE bug that larger numbers
-// trip it up.
+// trip it up. Was originally 250M.
 const maxNumFeaturesExpected = 6000000;
 
 const cache = new Map();
