@@ -108,8 +108,10 @@ describe('Unit test for toggleLayerOn', () => {
 
   it('displays a layer', () => {
     createGoogleMap().then((map) => {
-      const promise = addLayer(  {
-            eeName: ee.FeatureCollection([ee.Feature(ee.Geometry.Point([0, 0]))]),
+      const promise = addLayer(
+          {
+            eeName:
+                ee.FeatureCollection([ee.Feature(ee.Geometry.Point([0, 0]))]),
             assetType: LayerType.FEATURE_COLLECTION,
             displayName: 'asset0',
             displayOnLoad: true,
@@ -123,8 +125,7 @@ describe('Unit test for toggleLayerOn', () => {
         expect(layerArray[0].pendingPromise).to.be.null;
         expect(layerArray[0].data).to.have.length(1);
       });
-
-    })
+    });
   });
 
   it('displays a hidden but loaded layer', () => {
