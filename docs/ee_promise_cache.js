@@ -8,8 +8,9 @@ export {
 // For testing only.
 export {clearPromiseCacheForTesting};
 
-// 6M objects in a FeatureCollection: seems to be an EE bug that larger numbers
-// trip it up. Was originally 250M.
+// 6M objects in a FeatureCollection should be enough: if this number is too
+// big, EarthEngine won't construct a list even if the FeatureCollection itself
+// doesn't have that many elements.
 const maxNumFeaturesExpected = 6000000;
 
 const cache = new Map();
