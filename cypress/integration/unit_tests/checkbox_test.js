@@ -106,6 +106,28 @@ describe('Unit test for toggleLayerOn', () => {
     });
   });
 
+  it('displays a layer', () => {
+    createGoogleMap().then((map) => {
+      const promise = addLayer(
+          {
+            eeName:
+                ee.FeatureCollection([ee.Feature(ee.Geometry.Point([0, 0]))]),
+            assetType: LayerType.FEATURE_COLLECTION,
+            displayName: 'asset0',
+            displayOnLoad: true,
+            colorFunction: colorProperties,
+            index: 0,
+          },
+          map);
+      expect(promise).to.not.be.null;
+      cy.wrap(promise).then(() => {
+        expect(layerArray[0].displayed).to.be.true;
+        expect(layerArray[0].pendingPromise).to.be.null;
+        expect(layerArray[0].data).to.have.length(1);
+      });
+    });
+  });
+
   it('displays a hidden but loaded layer', () => {
     expect(layerArray[1].displayed).to.be.false;
     expect(layerArray[1].data).to.not.be.null;
