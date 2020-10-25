@@ -71,6 +71,7 @@ function createBasicMap(div, additionalOptions = {}) {
  * @param {google.maps.drawing.DrawingManager} drawingManager
  */
 function addPolygonWithPath(polygonOptions, drawingManager) {
+  console.log('in path', ee.List)
   const event = new Event('overlaycomplete');
   event.overlay = new google.maps.Polygon(polygonOptions);
   google.maps.event.trigger(drawingManager, 'overlaycomplete', event);

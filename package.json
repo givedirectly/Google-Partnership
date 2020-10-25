@@ -14,5 +14,8 @@
     "local-web-server": "3.0.7"
   },
   "type": "module",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "ee": "^0.1.0"
+  }
 }

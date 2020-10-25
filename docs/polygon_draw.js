@@ -95,6 +95,7 @@ class StoredShapeData {
    *     complete.
    */
   update() {
+    console.log('wrapper', ee.List);
     if (this.state !== StoredShapeData.State.SAVED) {
       this.state = StoredShapeData.State.QUEUED_WRITE;
       return null;
@@ -112,6 +113,7 @@ class StoredShapeData {
    *     call started are complete.
    */
   async updateWithoutStatusChange() {
+    console.log('start update', ee.List);
     const feature = this.popup.mapFeature;
     this.state = StoredShapeData.State.WRITING;
     if (!feature.getMap()) {
@@ -134,6 +136,7 @@ class StoredShapeData {
 
       return Promise.resolve();
     }
+    console.log('after resolve', ee.List);
     this.featureGeoPoints = newGeometry;
     if (isMarker(feature)) {
       // No calculated data for a marker.
@@ -141,12 +144,17 @@ class StoredShapeData {
     }
     this.popup.setPendingCalculation();
 
+    console.log('med update', ee.List);
     const points = [];
     feature.getPath().forEach((elt) => points.push(elt.lng(), elt.lat()));
+    console.log('med update', ee.List);
     const polygon = ee.Geometry.Polygon(points);
+    console.log('med update', ee.List);
     const numDamagePoints = StoredShapeData.prepareDamageCalculation(polygon);
+    console.log('med update', ee.List);
     const intersectingBlockGroups =
         StoredShapeData.getIntersectingBlockGroups(polygon);
+    console.log('med update', ee.List);
     // TODO(janakr): with arbitrary data, only a "poverty percentage" may be
     //  available, as opposed to underlying totals. This won't work then.
     const weightedSnapHouseholds = StoredShapeData.calculateWeightedTotal(

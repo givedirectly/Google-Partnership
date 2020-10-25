@@ -182,7 +182,7 @@ describe('Unit tests for click_feature.js with map and table', () => {
    * @return {Cypress.Chainable}
    */
   function clickAndVerifyBlockGroup() {
-    cy.get('#test-map-div').click(0, 0);
+    cy.get('#test-map-div').click(500, 200);
     cy.get('#test-map-div').should('contain', 'SCORE: 1');
     cy.get('#test-map-div').should('contain', 'my block group');
     // Rounded because property name ends with 'PERCENTAGE'.
