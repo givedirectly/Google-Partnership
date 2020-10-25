@@ -49,7 +49,7 @@ function onFunction(on, config) {
    * acceleration for Chromium and make sure developer console is open so errors
    * are visible.
    */
-  on('before:browser:launch', (browser, args) => {
+  on('before:browser:launch', (browser = {}, args) => {
     if (browser.name === 'chromium' || browser.name === 'chrome') {
       const newArgs = args.filter((arg) => arg !== '--disable-gpu');
       newArgs.push('--ignore-gpu-blacklist');
