@@ -15,7 +15,5 @@
   },
   "type": "module",
   "license": "MIT",
-  "dependencies": {
-    "ee": "^0.1.0"
-  }
+  "dependencies": {}
 }

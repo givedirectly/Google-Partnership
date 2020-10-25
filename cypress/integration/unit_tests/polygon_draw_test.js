@@ -435,7 +435,8 @@ describe('Unit test for ShapeData', () => {
   }
 
   it('handles EarthEngine error', () => {
-    const promiseStub = cy.stub(EePromiseCache, 'convertEeObjectToPromise').rejects(new Error('Error evaluating list'));
+    const promiseStub = cy.stub(EePromiseCache, 'convertEeObjectToPromise')
+                            .rejects(new Error('Error evaluating list'));
     doUnsuccessfulDraw().then(() => promiseStub.restore());
     doSuccessfulDrawAfterFailure();
   });
@@ -489,7 +490,6 @@ describe('Unit test for ShapeData', () => {
   function doUnsuccessfulDraw() {
     const errorStub = cy.stub(ErrorLib, 'showError');
     cy.wrap(errorStub).as('errorStub');
-    console.log('we have ee.list', ee.List);
     return drawPolygon()
         .then(
             () => currentUpdatePromise.then(
