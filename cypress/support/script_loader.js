@@ -37,7 +37,7 @@ const scriptMap = new Map([
   [
     'ee',
     {
-      script: LIB_URL + 'ee_api_js_debug-0.1.214.js',
+      script: LIB_URL + 'ee_api_js_debug-0.1.232.js',
       callback: () => typeof (ee) !== 'undefined',
     },
   ],

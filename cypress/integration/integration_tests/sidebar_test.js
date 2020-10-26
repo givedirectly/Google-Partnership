@@ -40,7 +40,7 @@ describe('Integration test for the sidebar', () => {
 function assertSidebarWidth() {
   cy.get('#sidebar').should('have.css', 'width').and((width) => {
     expect(width).to.have.string('px');
-    const val = width.substring(0, width.length - 2);
+    const val = parseInt(width.substring(0, width.length - 2));
     expect(val).to.be.within(271, 275);
   });
 }

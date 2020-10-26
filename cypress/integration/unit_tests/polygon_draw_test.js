@@ -1,4 +1,5 @@
 import {addPolygonWithPath} from '../../../docs/basic_map.js';
+import * as EePromiseCache from '../../../docs/ee_promise_cache.js';
 import * as ErrorLib from '../../../docs/error.js';
 import {getUserFeatures} from '../../../docs/firestore_document.js';
 import * as Loading from '../../../docs/loading.js';
@@ -434,16 +435,9 @@ describe('Unit test for ShapeData', () => {
   }
 
   it('handles EarthEngine error', () => {
-    // Wrap ee.List so that we can throw when it evaluates.
-    const oldList = ee.List;
-    ee.List = (list) => {
-      ee.List = oldList;
-      const returnValue = ee.List(list);
-      cy.stub(returnValue, 'evaluate')
-          .callsFake((callback) => callback(null, 'Error evaluating list'));
-      return returnValue;
-    };
-    doUnsuccessfulDraw();
+    const promiseStub = cy.stub(EePromiseCache, 'convertEeObjectToPromise')
+                            .rejects(new Error('Error evaluating list'));
+    doUnsuccessfulDraw().then(() => promiseStub.restore());
     doSuccessfulDrawAfterFailure();
   });
 
