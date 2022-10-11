@@ -157,6 +157,7 @@ class CompositeImageMapType {
     img.style.position = 'absolute';
     // Clear blob from memory as soon as it is loaded.
     img.onload = () => URL.revokeObjectURL(url);
+    img.onerror = () => img.style.display = 'none';
     tileDiv.appendChild(img);
   }
 
@@ -180,13 +181,18 @@ class CompositeImageMapType {
     if (!this.tileMap.size) {
       const event = new Event('tile');
       event.loadingTileCount = adding ? 1 : 0;
+      this.isAdding = adding;
       this.eventTarget.dispatchEvent(event);
     }
   }
 
-  /** @return {number} The number of currently loading tiles */
+  /**
+   * Function to copy EarthEngine ImageOverlay interface to indicate if tiles
+   * have just started fetching (non-zero loading count) or just finished.
+   * @return {number} 1 if tile loading is started, 0 if finished.
+   */
   getLoadingTilesCount() {
-    return this.tileMap.size;
+    return this.isAdding ? 1 : 0;
   }
 }
 
@@ -240,6 +246,12 @@ async function fetchWithBackoff(url, signal) {
       response = await fetch(url, {signal: signal});
       if (response.ok === true) {
         const blob = await response.blob();
+        if (blob.type == 'text/html') {
+          // Filter out "404 not found" error pages that nominally returned "ok"
+          // in the response. Type of images should be 'binary/octet-stream',
+          // definitely not text.
+          return null;
+        }
         return URL.createObjectURL(blob);
       }
       if (response.status === TOO_MANY_REQUESTS_STATUS_CODE) {
