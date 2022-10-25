@@ -41,11 +41,6 @@ Repository to store the work done by Google Fellows during 2019
 
 ## Running tests
 
-*   [Node](https://nodejs.org/) 12 is required to run tests. You can install it
-    on Macs in various ways. The [nvm](https://github.com/nvm-sh/nvm) manager is
-    recommended. Be sure to use Node 12, not Node 13 or higher! Our test runner
-    Cypress is not compatible with Node 13.
-
 *   A service account secret .json file is used to credential the test runner.
     Get the file either from a collaborator or by logging into the
     [Service Accounts page](https://console.cloud.google.com/iam-admin/serviceaccounts?project=mapping-test-data)
