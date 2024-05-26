@@ -24,6 +24,7 @@ describe('Unit tests for click_feature.js with map and table', () => {
   let features;
   let scoredFeatures;
   let map;
+  const elementsCreated = new Set();
 
   before(() => {
     const feature1 = createFeatureFromCorners(...feature1Corners)
@@ -50,6 +51,14 @@ describe('Unit tests for click_feature.js with map and table', () => {
       zeroFeature.set(scoreTag, 0),
       missingPropertiesFeature.set(scoreTag, 4),
     ]);
+    const oldHasInstance = HTMLElement[Symbol.hasInstance];
+    Object.defineProperty(HTMLElement, Symbol.hasInstance, {
+      value: (elt) => {
+      if (elementsCreated.has(elt)) {
+        return true;
+      }
+      return oldHasInstance(elt);
+    }});
   });
 
   beforeEach(() => {
@@ -75,7 +84,12 @@ describe('Unit tests for click_feature.js with map and table', () => {
       cy.stub(document, 'getElementById')
           .callsFake((id) => doc.getElementById(id));
       cy.stub(document, 'createElement')
-          .callsFake((tag) => doc.createElement(tag));
+          .callsFake((tag) => {
+            const result =  doc.createElement(tag);
+            elementsCreated.add(result);
+            // result.prototype = document.createElement(tag).prototype;
+            return result;
+          });
       const containerDiv = doc.createElement('div');
       containerDiv.id = 'tableContainer';
       doc.body.appendChild(containerDiv);
@@ -206,6 +220,7 @@ describe('Unit tests for click_feature.js with map and table', () => {
    * @return {Cypress.Chainable}
    */
   function assertFeatureShownOnMap(expectedFeatureCorners) {
+    cy.wait(500);
     return getDataFeatures().then((features) => {
       expect(features).to.have.length(1);
       const feature = features[0];

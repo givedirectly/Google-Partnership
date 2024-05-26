@@ -14,13 +14,12 @@ import {cyQueue} from '../../support/commands.js';
 import {getConvertEeObjectToPromiseRelease, setUpSavingStubs} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 
-// Triangle goes up into Canada, past default map of basic_map.js.
-const scoreBoundsCoordinates = [
-  {lng: -95, lat: 30},
-  {lng: -90, lat: 50},
-  {lng: -90, lat: 30},
-];
-
+const defaultScoreBoundsCoordinates = [
+    {lng: -95, lat: 30},
+    {lng: -90, lat: 31},
+    {lng: -90, lat: 30},
+  ];
+  
 const SNAP_INDEX = 0;
 const INCOME_INDEX = 1;
 const SVI_INDEX = 2;
@@ -142,12 +141,12 @@ it('has some disabled options', () => {
     ['state1', {disabled: true}],
   ])));
   callEnableWhenReady(createDisasterData(['NY']));
-  const stateSelector = getSelectForScoreAssetIndex(SNAP_INDEX).get('option');
-  stateSelector.eq(2).should('be.disabled');
-  stateSelector.eq(1).should('not.be.disabled');
-  const disasterSelector = getDamageSelect().get('option');
-  disasterSelector.eq(2).should('be.disabled');
-  disasterSelector.eq(1).should('not.be.disabled');
+  getSelectForScoreAssetIndex(SNAP_INDEX).get('option')
+    .eq(2).should('be.disabled')
+    .prev().should('not.be.disabled');
+  getDamageSelect().get('option')
+    .eq(2).should('be.disabled')
+    .prev().should('not.be.disabled');
 });
 
 it('Handles assets with and without geometries', () => {
@@ -211,7 +210,13 @@ it('validates asset data', () => {
       resolve();
     });
   });
-  callEnableWhenReady(setUpDefaultData());
+  // Triangle goes up into Canada, past default map of basic_map.js.
+  const scoreBoundsCoordinates = [
+      {lng: -95, lat: 30},
+      {lng: -90, lat: 50},
+      {lng: -90, lat: 30},
+  ];
+  callEnableWhenReady(setUpDefaultData(scoreBoundsCoordinates));
   // Check table is properly initialized, then do validation.
   cy.get('#asset-selection-table-body')
       .find('tr')
@@ -1466,17 +1471,17 @@ function appendElement(id, doc, tag = 'div') {
  * returns default data to be passed to {@link callEnableWhenReady}.
  * @return {Object} equivalent of fetch from Firestore for a single disaster
  */
-function setUpDefaultData() {
+function setUpDefaultData(scoreBoundsCoordinates = defaultScoreBoundsCoordinates) {
   const assets = new Map();
   for (let i = 0; i <= 4; i++) {
     assets.set('state' + i, {disabled: false, hasGeometry: true});
   }
   stateStub.withArgs('NY').returns(Promise.resolve(assets));
-  return createDefaultStateBasedFirestoreData();
+  return createDefaultStateBasedFirestoreData(scoreBoundsCoordinates);
 }
 
 /** @return {{assetData: AssetData, layerArray: Array<*>}} */
-function createDefaultStateBasedFirestoreData() {
+function createDefaultStateBasedFirestoreData(scoreBoundsCoordinates = defaultScoreBoundsCoordinates) {
   const currentData = createDisasterData(['NY']);
   currentData.assetData.scoreBoundsCoordinates = scoreBoundsCoordinates.map(
       (latlng) => new firebase.firestore.GeoPoint(latlng.lat, latlng.lng));

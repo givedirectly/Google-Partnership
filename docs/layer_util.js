@@ -387,7 +387,14 @@ function addTileLayer(map, layer) {
  * @return {Promise<Array<string>>}
  */
 function extractFromJson(jsonUrl) {
-  return Promise.resolve($.getJSON(jsonUrl, null)).then((json) => json.tiles);
+  return Promise.resolve($.getJSON(jsonUrl, null)).then((json) => {
+    if (!Array.isArray(json)) {
+      return json.tiles;
+    }
+    let tiles = [];
+    json.forEach((entry) => tiles = tiles.concat(entry.tiles));
+    return tiles;
+  });
 }
 
 /**
