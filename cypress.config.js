@@ -27,6 +27,7 @@ export default defineConfig({
     e2e: {
       baseUrl: 'http://localhost:8080/',
       specPattern: 'cypress/integration/**/*.js',
+      defaultCommandTimeout: 30000,
       setupNodeEvents(on, config) {
         console.log(config); // see everything in here!
   

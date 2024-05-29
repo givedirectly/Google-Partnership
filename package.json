@@ -14,5 +14,8 @@
     "local-web-server": "3.0.7"
   },
   "type": "module",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "yarn": "^1.22.22"
+  }
 }
