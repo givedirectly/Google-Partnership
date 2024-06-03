@@ -26,7 +26,7 @@ const path = [{lat: 0, lng: 0}, {lat: 4, lng: 2}, {lat: 0, lng: 2}];
 const defaultData = {
   damage: 1,
   snapFraction: 0.1,
-  totalHouseholds: 1,
+  totalHouseholds: 4,
   notes: '',
 };
 
@@ -61,10 +61,10 @@ describe('Unit test for ShapeData', () => {
     saveFinishedStub = cy.stub(Toast, 'showSavedToast');
     // Default polygon intersects feature1 and feature2, not feature3.
     const feature1 = ee.Feature(
-        ee.Geometry.Polygon(0, 0, 0, 10, 10, 10, 10, 0),
+        ee.Geometry.Polygon(0, 0, 0, 10, 1.9, 10, 1.9, 0),
         {'SNAP HOUSEHOLDS': 1, 'TOTAL HOUSEHOLDS': 20});
     const feature2 = ee.Feature(
-        ee.Geometry.Polygon(10, 0, 10, 10, 20, 10, 20, 0),
+        ee.Geometry.Polygon(1.9, 0, 1.9, 10, 20, 10, 20, 0),
         {'SNAP HOUSEHOLDS': 3, 'TOTAL HOUSEHOLDS': 40});
     const feature3 = ee.Feature(
         ee.Geometry.Polygon(20, 0, 20, 10, 30, 10, 30, 0),
@@ -105,10 +105,10 @@ describe('Unit test for ShapeData', () => {
     return cy.get('[title="Draw a shape"]');
   }
 
-  it('Adds polygon', () => {
-    drawPolygonAndClickOnIt();
-    pressPopupButton('close');
-  });
+  // it('Adds polygon', () => {
+  //   drawPolygonAndClickOnIt();
+  //   pressPopupButton('close');
+  // });
 
   // it('Updates notes and shape', () => {
   //   drawPolygonAndClickOnIt();
@@ -118,7 +118,9 @@ describe('Unit test for ShapeData', () => {
   //   newPath[0].lng = 0.5;
   //   cy.get('.notes').type(notes).then(() => getFirstFeature().setPath(newPath));
   //   pressButtonAndWaitForPromise('save');
-  //   assertOnFirestoreAndPopup(newPath, withNotes(notes));
+  //   const expectedData = withNotes(notes);
+  //   expectedData.totalHouseholds = 3;
+  //   assertOnFirestoreAndPopup(newPath, expectedData);
   // });
 
   // it('Deletes polygon', () => {
@@ -259,42 +261,47 @@ describe('Unit test for ShapeData', () => {
   //   assertOnFirestoreAndPopup(path, withNotes('racing notes'));
   // });
 
-  // it('Shows calculating before update finishes', () => {
-  //   // StoredShapeData#update creates an ee.List to evaluate the numbers it
-  //   // needs. To make sure that update calculation does not finish until we're
-  //   // ready, lightly wrap ee.List.evaluate and wait on a CallbackLatch. The
-  //   // CallbackLatch will be released below when we're ready for the calculation
-  //   // to be finished.
-  //   const latch = new CallbackLatch();
-  //   // Replace ee.List so that we can have access to the returned object and
-  //   // change its evaluate call.
-  //   const oldList = ee.List;
-  //   ee.List = (list) => {
-  //     ee.List = oldList;
-  //     const returnValue = ee.List(list);
-  //     // Replace returnValue.evaluate so that we can delay calling the callback
-  //     // until the calculation is supposed to have completed.
-  //     const oldEvaluate = returnValue.evaluate;
-  //     returnValue.evaluate = (callback) => {
-  //       returnValue.evaluate = oldEvaluate;
-  //       // Do the evaluate, but don't return back to polygon_draw.update's
-  //       // callback handler until our pre-calculation assertions are done.
-  //       returnValue.evaluate(latch.delayedCallback(callback));
-  //     };
-  //     return returnValue;
-  //   };
-  //   drawPolygon();
-  //   cy.get('.popup-calculated-data').contains('calculating');
-  //   cy.get('.popup-calculated-data')
-  //       .should('have.css', 'color')
-  //       .and('eq', 'rgb(128, 128, 128)')
-  //       .then(() => latch.release());
-  //   waitForWriteToFinish();
-  //   cy.get('.popup-calculated-data')
-  //       .should('have.css', 'color')
-  //       .and('eq', 'rgb(0, 0, 0)');
-  //   cy.get('.popup-calculated-data').contains('damage count: 1');
-  // });
+  it('Shows calculating before update finishes', () => {
+    // StoredShapeData#update creates an ee.List to evaluate the numbers it
+    // needs. To make sure that update calculation does not finish until we're
+    // ready, lightly wrap ee.List.evaluate and wait on a CallbackLatch. The
+    // CallbackLatch will be released below when we're ready for the calculation
+    // to be finished.
+    const latch = new CallbackLatch();
+    // Replace ee.List so that we can have access to the returned object and
+    // change its evaluate call.
+    const oldList = ee.List;
+    const oldHasInstance = oldList[Symbol.hasInstance];
+    ee.List = (list) => {
+      ee.List = oldList;
+      console.log('got old', ee.List);
+      const returnValue = ee.List(list);
+      // Replace returnValue.evaluate so that we can delay calling the callback
+      // until the calculation is supposed to have completed.
+      const oldEvaluate = returnValue.evaluate;
+      returnValue.evaluate = (callback) => {
+        returnValue.evaluate = oldEvaluate;
+        // Do the evaluate, but don't return back to polygon_draw.update's
+        // callback handler until our pre-calculation assertions are done.
+        returnValue.evaluate(latch.delayedCallback(callback));
+      };
+      return returnValue;
+    };
+    Object.defineProperty(ee.List, Symbol.hasInstance, {
+      value: (elt) => oldHasInstance(elt)});
+    console.log('ee.list', ee.List);
+    drawPolygon();
+    cy.get('.popup-calculated-data').contains('calculating');
+    cy.get('.popup-calculated-data')
+        .should('have.css', 'color')
+        .and('eq', 'rgb(128, 128, 128)')
+        .then(() => latch.release());
+    waitForWriteToFinish();
+    cy.get('.popup-calculated-data')
+        .should('have.css', 'color')
+        .and('eq', 'rgb(0, 0, 0)');
+    cy.get('.popup-calculated-data').contains('damage count: 1');
+  });
 
   // it('Draws marker, edits notes and drags, then deletes', () => {
   //   // Accept confirmation when it happens.

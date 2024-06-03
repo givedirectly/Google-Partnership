@@ -146,6 +146,7 @@ class StoredShapeData {
     feature.getPath().forEach((elt) => points.push(elt.lng(), elt.lat()));
     const polygon = ee.Geometry.Polygon(points);
     const numDamagePoints = StoredShapeData.prepareDamageCalculation(polygon);
+    console.log('damage', await convertEeObjectToPromise(numDamagePoints));
     const intersectingBlockGroups =
         StoredShapeData.getIntersectingBlockGroups(polygon);
     console.log('intersecting', await convertEeObjectToPromise(intersectingBlockGroups));
