@@ -60,6 +60,7 @@ class AssetNotFoundError extends Error {
  * @return {Error}
  */
 function transformEarthEngineFailureMessage(error) {
+  console.log('We have error', error, error instanceof Error, typeof(error) === 'string');
   if (error instanceof Error) {
     // Useful if this is called recursively. EarthEngine never passes Errors.
     return error;

@@ -289,7 +289,8 @@ describe('Unit test for toggleLayerOn', () => {
     cy.get('#' + getCheckBoxId(failureLayerIndex)).should('be.disabled');
     cy.get('#' + getCheckBoxId(failureLayerIndex)).should('not.be.checked');
     cy.get('#' + getCheckBoxRowId(failureLayerIndex))
-        .should('have.attr', 'title').and('match', /is there, try refreshing the page/);
+        .should('have.attr', 'title')
+        .and('match', /is there, try refreshing the page/);
     cy.get('#' + getCheckBoxRowId(failureLayerIndex))
         .should('have.css', 'text-decoration')
         .and('contains', 'line-through');
@@ -597,12 +598,15 @@ describe('Unit test for toggleLayerOn', () => {
                 new google.maps.LatLng({lat: 26, lng: -97.4}),
                 new google.maps.LatLng({lat: 27.62, lng: -97.1}))));
 
-    expectNoBlobImages().then({timeout: 30000},
+    expectNoBlobImages().then(
+        {timeout: 30000},
         () => addLayer(
             {
               eeName: 'tile_asset',
               assetType: LayerType.MAP_TILES,
-              urls: ['https://storms.ngs.noaa.gov/storms/nicole/services/index.json'],
+              urls: [
+                'https://storms.ngs.noaa.gov/storms/nicole/services/index.json'
+              ],
               displayName: 'tiles',
               displayOnLoad: true,
               index: 4,

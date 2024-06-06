@@ -54,11 +54,12 @@ describe('Unit tests for click_feature.js with map and table', () => {
     const oldHasInstance = HTMLElement[Symbol.hasInstance];
     Object.defineProperty(HTMLElement, Symbol.hasInstance, {
       value: (elt) => {
-      if (elementsCreated.has(elt)) {
-        return true;
+        if (elementsCreated.has(elt)) {
+          return true;
+        }
+        return oldHasInstance(elt);
       }
-      return oldHasInstance(elt);
-    }});
+    });
   });
 
   beforeEach(() => {
@@ -83,13 +84,12 @@ describe('Unit tests for click_feature.js with map and table', () => {
       // Lightly fake out prod document access.
       cy.stub(document, 'getElementById')
           .callsFake((id) => doc.getElementById(id));
-      cy.stub(document, 'createElement')
-          .callsFake((tag) => {
-            const result =  doc.createElement(tag);
-            elementsCreated.add(result);
-            // result.prototype = document.createElement(tag).prototype;
-            return result;
-          });
+      cy.stub(document, 'createElement').callsFake((tag) => {
+        const result = doc.createElement(tag);
+        elementsCreated.add(result);
+        // result.prototype = document.createElement(tag).prototype;
+        return result;
+      });
       const containerDiv = doc.createElement('div');
       containerDiv.id = 'tableContainer';
       doc.body.appendChild(containerDiv);

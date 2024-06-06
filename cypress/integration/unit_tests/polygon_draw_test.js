@@ -30,6 +30,13 @@ const defaultData = {
   notes: '',
 };
 
+const modifiedData = {
+  damage: 1,
+  snapFraction: 0.1,
+  totalHouseholds: 3,
+  notes: '',
+};
+
 describe('Unit test for ShapeData', () => {
   loadScriptsBeforeForUnitTests('ee', 'maps', 'firebase', 'jquery');
   let damageCollection;
@@ -105,161 +112,161 @@ describe('Unit test for ShapeData', () => {
     return cy.get('[title="Draw a shape"]');
   }
 
-  // it('Adds polygon', () => {
-  //   drawPolygonAndClickOnIt();
-  //   pressPopupButton('close');
-  // });
+  it('Adds polygon', () => {
+    drawPolygonAndClickOnIt();
+    pressPopupButton('close');
+  });
 
-  // it('Updates notes and shape', () => {
-  //   drawPolygonAndClickOnIt();
-  //   pressPopupButton('edit');
-  //   // Clone path and edit.
-  //   const newPath = JSON.parse(JSON.stringify(path));
-  //   newPath[0].lng = 0.5;
-  //   cy.get('.notes').type(notes).then(() => getFirstFeature().setPath(newPath));
-  //   pressButtonAndWaitForPromise('save');
-  //   const expectedData = withNotes(notes);
-  //   expectedData.totalHouseholds = 3;
-  //   assertOnFirestoreAndPopup(newPath, expectedData);
-  // });
+  it('Updates notes and shape', () => {
+    drawPolygonAndClickOnIt();
+    pressPopupButton('edit');
+    // Clone path and edit.
+    const newPath = JSON.parse(JSON.stringify(path));
+    newPath[0].lng = 0.5;
+    cy.get('.notes').type(notes).then(() => getFirstFeature().setPath(newPath));
+    pressButtonAndWaitForPromise('save');
+    const expectedData = withNotes(notes);
+    expectedData.totalHouseholds = 3;
+    assertOnFirestoreAndPopup(newPath, expectedData);
+  });
 
-  // it('Deletes polygon', () => {
-  //   drawPolygonAndClickOnIt();
-  //   deletePolygon(cy.stub(window, 'confirm').returns(true));
-  // });
+  it('Deletes polygon', () => {
+    drawPolygonAndClickOnIt();
+    deletePolygon(cy.stub(window, 'confirm').returns(true));
+  });
 
-  // it('Almost deletes, then deletes', () => {
-  //   drawPolygonAndClickOnIt();
-  //   let confirmValue = false;
-  //   const confirmStub =
-  //       cy.stub(window, 'confirm').callsFake(() => confirmValue);
-  //   pressPopupButton('delete').then(() => {
-  //     expect(confirmStub).to.be.calledOnce;
-  //     confirmStub.resetHistory();
-  //   });
-  //   assertOnFirestoreAndPopup(path);
-  //   // Reload the page: polygon should still be there.
-  //   setUpPage();
-  //   assertOnFirestoreAndPopup(path);
-  //   pressPopupButton('delete').then(() => {
-  //     expect(confirmStub).to.be.calledOnce;
-  //     confirmValue = true;
-  //     confirmStub.resetHistory();
-  //   });
-  //   assertOnFirestoreAndPopup(path);
-  //   deletePolygon(confirmStub);
-  // });
+  it('Almost deletes, then deletes', () => {
+    drawPolygonAndClickOnIt();
+    let confirmValue = false;
+    const confirmStub =
+        cy.stub(window, 'confirm').callsFake(() => confirmValue);
+    pressPopupButton('delete').then(() => {
+      expect(confirmStub).to.be.calledOnce;
+      confirmStub.resetHistory();
+    });
+    assertOnFirestoreAndPopup(path);
+    // Reload the page: polygon should still be there.
+    setUpPage();
+    assertOnFirestoreAndPopup(path);
+    pressPopupButton('delete').then(() => {
+      expect(confirmStub).to.be.calledOnce;
+      confirmValue = true;
+      confirmStub.resetHistory();
+    });
+    assertOnFirestoreAndPopup(path);
+    deletePolygon(confirmStub);
+  });
 
-  // /**
-  //  * Presses a visible 'delete' button, checks that `confirmStub` was called,
-  //  * and that the polygon is gone and there is no data in Firestore.
-  //  * @param {Spy} confirmStub
-  //  */
-  // function deletePolygon(confirmStub) {
-  //   pressPopupButton('delete').then(() => expect(confirmStub).to.be.calledOnce);
-  //   cy.get('#test-map-div').click();
-  //   cy.get('#test-map-div').should('not.contain', 'damage count');
-  //   waitForWriteToFinish()
-  //       .then(() => userShapesCollection.get())
-  //       .then((querySnapshot) => {
-  //         expect(querySnapshot).to.have.property('size', 0);
-  //         expect(querySnapshot.docs).to.be.empty;
-  //       });
-  // }
+  /**
+   * Presses a visible 'delete' button, checks that `confirmStub` was called,
+   * and that the polygon is gone and there is no data in Firestore.
+   * @param {Spy} confirmStub
+   */
+  function deletePolygon(confirmStub) {
+    pressPopupButton('delete').then(() => expect(confirmStub).to.be.calledOnce);
+    cy.get('#test-map-div').click();
+    cy.get('#test-map-div').should('not.contain', 'damage count');
+    waitForWriteToFinish()
+        .then(() => userShapesCollection.get())
+        .then((querySnapshot) => {
+          expect(querySnapshot).to.have.property('size', 0);
+          expect(querySnapshot.docs).to.be.empty;
+        });
+  }
 
-  // it('Draws a polygon, clicks it, closes its info box', () => {
-  //   drawPolygonAndClickOnIt();
-  //   pressPopupButton('close');
-  //   cy.get('#test-map-div').contains('damage count');
-  //   cy.get('#test-map-div').contains('damage count').should('not.be.visible');
-  // });
+  it('Draws a polygon, clicks it, closes its info box', () => {
+    drawPolygonAndClickOnIt();
+    pressPopupButton('close');
+    cy.get('#test-map-div').contains('damage count');
+    cy.get('#test-map-div').contains('damage count').should('not.be.visible');
+  });
 
-  // it('Draws a polygon, almost closes while editing', () => {
-  //   const confirmStub = cy.stub(window, 'confirm').returns(false);
-  //   drawPolygonAndClickOnIt();
-  //   pressPopupButton('edit');
-  //   cy.get('.notes').type(notes);
-  //   pressPopupButton('close').then(() => expect(confirmStub).to.be.calledOnce);
-  //   pressPopupButton('save');
-  //   cy.get('#test-map-div').contains(notes).should('be.visible');
-  //   waitForWriteToFinish();
-  //   assertOnFirestoreAndPopup(path, withNotes(notes));
-  // });
+  it('Draws a polygon, almost closes while editing', () => {
+    const confirmStub = cy.stub(window, 'confirm').returns(false);
+    drawPolygonAndClickOnIt();
+    pressPopupButton('edit');
+    cy.get('.notes').type(notes);
+    pressPopupButton('close').then(() => expect(confirmStub).to.be.calledOnce);
+    pressPopupButton('save');
+    cy.get('#test-map-div').contains(notes).should('be.visible');
+    waitForWriteToFinish();
+    assertOnFirestoreAndPopup(path, withNotes(notes));
+  });
 
-  // it('Draws a polygon, closes while editing', () => {
-  //   const confirmStub = cy.stub(window, 'confirm').returns(true);
-  //   drawPolygonAndClickOnIt();
-  //   pressPopupButton('edit');
-  //   cy.get('.notes').type(notes);
-  //   pressPopupButton('close').then(() => expect(confirmStub).to.be.calledOnce);
-  //   cy.get('#test-map-div').should('not.contain', notes);
-  //   cy.get('#test-map-div').contains('damage count');
-  //   cy.get('#test-map-div').contains('damage count').should('not.be.visible');
-  //   assertOnFirestoreAndPopup(path);
-  // });
+  it('Draws a polygon, closes while editing', () => {
+    const confirmStub = cy.stub(window, 'confirm').returns(true);
+    drawPolygonAndClickOnIt();
+    pressPopupButton('edit');
+    cy.get('.notes').type(notes);
+    pressPopupButton('close').then(() => expect(confirmStub).to.be.calledOnce);
+    cy.get('#test-map-div').should('not.contain', notes);
+    cy.get('#test-map-div').contains('damage count');
+    cy.get('#test-map-div').contains('damage count').should('not.be.visible');
+    assertOnFirestoreAndPopup(path);
+  });
 
-  // it('Closes while editing reverts polygon changes', () => {
-  //   const newPath = JSON.parse(JSON.stringify(path));
-  //   newPath[0].lng = 0.5;
-  //   const confirmStub = cy.stub(window, 'confirm').returns(true);
-  //   drawPolygonAndClickOnIt().then(() => currentUpdatePromise = null);
-  //   pressPopupButton('edit').then(() => getFirstFeature().setPath(newPath));
-  //   pressPopupButton('close').then(() => {
-  //     expect(confirmStub).to.be.calledOnce;
-  //     expect(currentUpdatePromise).to.be.null;
-  //     expect(saveStartedStub).to.not.be.called;
-  //     expect(convertPathToLatLng(getFirstFeature().getPath())).to.eql(path);
-  //   });
-  //   assertOnFirestoreAndPopup(path);
-  // });
+  it('Closes while editing reverts polygon changes', () => {
+    const newPath = JSON.parse(JSON.stringify(path));
+    newPath[0].lng = 0.5;
+    const confirmStub = cy.stub(window, 'confirm').returns(true);
+    drawPolygonAndClickOnIt().then(() => currentUpdatePromise = null);
+    pressPopupButton('edit').then(() => getFirstFeature().setPath(newPath));
+    pressPopupButton('close').then(() => {
+      expect(confirmStub).to.be.calledOnce;
+      expect(currentUpdatePromise).to.be.null;
+      expect(saveStartedStub).to.not.be.called;
+      expect(convertPathToLatLng(getFirstFeature().getPath())).to.eql(path);
+    });
+    assertOnFirestoreAndPopup(path);
+  });
 
-  // it('Updates while update pending', () => {
-  //   let fakeCalled = false;
-  //   drawPolygonAndClickOnIt().then(() => {
-  //     currentUpdatePromise = null;
-  //     const [, data] = getFirstUserRegionDataEntry();
-  //     // Firestore will return a new document object each time .doc is called.
-  //     // So we can't just stub out the methods on this object.
-  //     const realDoc = userShapesCollection.doc(data.id);
-  //     const realDocFunction = userShapesCollection.doc;
-  //     const fakeDoc = {};
-  //     cy.stub(userShapesCollection, 'doc').withArgs(data.id).returns(fakeDoc);
-  //     fakeDoc.set = (record) => {
-  //       // Unfortunately Cypress can't really handle executing Cypress commands
-  //       // inside an asynchronous callback, so we rely on jquery to modify the
-  //       // DOM. Works out ok.
-  //       $('button:contains("edit")').trigger('click');
-  //       $('.notes').val('racing notes');
-  //       $('button:contains("save")').trigger('click');
-  //       expect(currentUpdatePromise).to.be.null;
-  //       expect(data.state).to.eql(StoredShapeData.State.QUEUED_WRITE);
-  //       expect(StoredShapeData.pendingWriteCount).to.eql(1);
-  //       // Don't reset history after this assertion: waitForWriteToFinish
-  //       // will check this too.
-  //       expect(saveStartedStub).to.be.calledOnce;
-  //       expect(saveFinishedStub).to.not.be.called;
-  //       userShapesCollection.doc = realDocFunction;
-  //       fakeCalled = true;
-  //       return realDoc.set(record);
-  //     };
-  //   });
-  //   cy.document().then((doc) => {
-  //     // Lightly fake out prod document access for jquery.
-  //     cy.stub(document, 'getElementsByTagName')
-  //         .callsFake((id) => doc.getElementsByTagName(id));
-  //     cy.stub(document, 'getElementsByClassName')
-  //         .callsFake((id) => doc.getElementsByClassName(id));
-  //   });
-  //   pressPopupButton('edit');
-  //   cy.get('.notes').type('new notes');
-  //   pressPopupButton('save');
-  //   // This is where the above faked-out set() gets called, triggering a new
-  //   // write.
-  //   assertOnPopup(withNotes('racing notes'));
-  //   pressPopupButton('close');
-  //   waitForWriteToFinish().then(() => expect(fakeCalled).to.be.true);
-  //   assertOnFirestoreAndPopup(path, withNotes('racing notes'));
-  // });
+  it('Updates while update pending', () => {
+    let fakeCalled = false;
+    drawPolygonAndClickOnIt().then(() => {
+      currentUpdatePromise = null;
+      const [, data] = getFirstUserRegionDataEntry();
+      // Firestore will return a new document object each time .doc is called.
+      // So we can't just stub out the methods on this object.
+      const realDoc = userShapesCollection.doc(data.id);
+      const realDocFunction = userShapesCollection.doc;
+      const fakeDoc = {};
+      cy.stub(userShapesCollection, 'doc').withArgs(data.id).returns(fakeDoc);
+      fakeDoc.set = (record) => {
+        // Unfortunately Cypress can't really handle executing Cypress commands
+        // inside an asynchronous callback, so we rely on jquery to modify the
+        // DOM. Works out ok.
+        $('button:contains("edit")').trigger('click');
+        $('.notes').val('racing notes');
+        $('button:contains("save")').trigger('click');
+        expect(currentUpdatePromise).to.be.null;
+        expect(data.state).to.eql(StoredShapeData.State.QUEUED_WRITE);
+        expect(StoredShapeData.pendingWriteCount).to.eql(1);
+        // Don't reset history after this assertion: waitForWriteToFinish
+        // will check this too.
+        expect(saveStartedStub).to.be.calledOnce;
+        expect(saveFinishedStub).to.not.be.called;
+        userShapesCollection.doc = realDocFunction;
+        fakeCalled = true;
+        return realDoc.set(record);
+      };
+    });
+    cy.document().then((doc) => {
+      // Lightly fake out prod document access for jquery.
+      cy.stub(document, 'getElementsByTagName')
+          .callsFake((id) => doc.getElementsByTagName(id));
+      cy.stub(document, 'getElementsByClassName')
+          .callsFake((id) => doc.getElementsByClassName(id));
+    });
+    pressPopupButton('edit');
+    cy.get('.notes').type('new notes');
+    pressPopupButton('save');
+    // This is where the above faked-out set() gets called, triggering a new
+    // write.
+    assertOnPopup(withNotes('racing notes'));
+    pressPopupButton('close');
+    waitForWriteToFinish().then(() => expect(fakeCalled).to.be.true);
+    assertOnFirestoreAndPopup(path, withNotes('racing notes'));
+  });
 
   it('Shows calculating before update finishes', () => {
     // StoredShapeData#update creates an ee.List to evaluate the numbers it
@@ -271,10 +278,8 @@ describe('Unit test for ShapeData', () => {
     // Replace ee.List so that we can have access to the returned object and
     // change its evaluate call.
     const oldList = ee.List;
-    const oldHasInstance = oldList[Symbol.hasInstance];
-    ee.List = (list) => {
+    function List(list) {
       ee.List = oldList;
-      console.log('got old', ee.List);
       const returnValue = ee.List(list);
       // Replace returnValue.evaluate so that we can delay calling the callback
       // until the calculation is supposed to have completed.
@@ -286,10 +291,8 @@ describe('Unit test for ShapeData', () => {
         returnValue.evaluate(latch.delayedCallback(callback));
       };
       return returnValue;
-    };
-    Object.defineProperty(ee.List, Symbol.hasInstance, {
-      value: (elt) => oldHasInstance(elt)});
-    console.log('ee.list', ee.List);
+    }
+    ee.List = List;
     drawPolygon();
     cy.get('.popup-calculated-data').contains('calculating');
     cy.get('.popup-calculated-data')
@@ -303,336 +306,336 @@ describe('Unit test for ShapeData', () => {
     cy.get('.popup-calculated-data').contains('damage count: 1');
   });
 
-  // it('Draws marker, edits notes and drags, then deletes', () => {
-  //   // Accept confirmation when it happens.
-  //   const confirmStub = cy.stub(window, 'confirm').returns(true);
-  //   const event = new Event('overlaycomplete');
-  //   const position = {lat: 0, lng: 0};
-  //   const newPosition = {lat: 0, lng: 1};
-  //   event.overlay = new google.maps.Marker({map: map, position: position});
-  //   google.maps.event.trigger(drawingManager, 'overlaycomplete', event);
-  //   waitForWriteToFinish();
-  //   assertMarker(position, '');
-  //   // Found through unpleasant trial and error.
-  //   cy.get('#test-map-div').click(310, 435);
-  //   pressPopupButton('edit');
-  //   cy.get('.notes').type(notes).then(
-  //       () => getFirstFeature().setPosition(newPosition));
-  //   pressButtonAndWaitForPromise('save');
-  //   assertMarker(newPosition, notes);
-  //   pressButtonAndWaitForPromise('delete')
-  //       .then(() => {
-  //         expect(StoredShapeData.pendingWriteCount).to.eql(0);
-  //         return userShapesCollection.get();
-  //       })
-  //       .then((querySnapshot) => {
-  //         expect(querySnapshot).to.have.property('size', 0);
-  //         expect(querySnapshot.docs).to.be.empty;
-  //         expect(confirmStub).to.be.calledOnce;
-  //       });
-  // });
+  it('Draws marker, edits notes and drags, then deletes', () => {
+    // Accept confirmation when it happens.
+    const confirmStub = cy.stub(window, 'confirm').returns(true);
+    const event = new Event('overlaycomplete');
+    const position = {lat: 0, lng: 0};
+    const newPosition = {lat: 0, lng: 1};
+    event.overlay = new google.maps.Marker({map: map, position: position});
+    google.maps.event.trigger(drawingManager, 'overlaycomplete', event);
+    waitForWriteToFinish();
+    assertMarker(position, '');
+    // Found through unpleasant trial and error.
+    cy.get('#test-map-div').click(310, 435);
+    pressPopupButton('edit');
+    cy.get('.notes').type(notes).then(
+        () => getFirstFeature().setPosition(newPosition));
+    pressButtonAndWaitForPromise('save');
+    assertMarker(newPosition, notes);
+    pressButtonAndWaitForPromise('delete')
+        .then(() => {
+          expect(StoredShapeData.pendingWriteCount).to.eql(0);
+          return userShapesCollection.get();
+        })
+        .then((querySnapshot) => {
+          expect(querySnapshot).to.have.property('size', 0);
+          expect(querySnapshot.docs).to.be.empty;
+          expect(confirmStub).to.be.calledOnce;
+        });
+  });
 
-  // /**
-  //  * Asserts that Firestore contains data for a marker at the expected position
-  //  * and with the expected notes.
-  //  * @param {LatLngLiteral} position
-  //  * @param {string} notes
-  //  * @return {Cypress.Chainable}
-  //  */
-  // function assertMarker(position, notes) {
-  //   return cyQueue(() => expect(StoredShapeData.pendingWriteCount).to.eql(0))
-  //       .then(() => userShapesCollection.get())
-  //       .then((querySnapshot) => {
-  //         expect(querySnapshot).to.have.property('size', 1);
-  //         const markerDoc = querySnapshot.docs[0];
-  //         const firestoreId = markerDoc.id;
-  //         expect(transformGeoPointArrayToLatLng(markerDoc.get('geometry')))
-  //             .to.eql([
-  //               position,
-  //             ]);
-  //         expect(markerDoc.get('notes')).to.eql(notes);
-  //         expect(userRegionData).to.have.property('size', 1);
-  //         const [storedMarker, shapeData] = getFirstUserRegionDataEntry();
-  //         expect(storedMarker.getMap()).to.eql(map);
-  //         expect(convertGoogleLatLngToObject(storedMarker.getPosition()))
-  //             .to.eql(position);
-  //         expect(shapeData).to.have.property('id', firestoreId);
-  //       });
-  // }
+  /**
+   * Asserts that Firestore contains data for a marker at the expected position
+   * and with the expected notes.
+   * @param {LatLngLiteral} position
+   * @param {string} notes
+   * @return {Cypress.Chainable}
+   */
+  function assertMarker(position, notes) {
+    return cyQueue(() => expect(StoredShapeData.pendingWriteCount).to.eql(0))
+        .then(() => userShapesCollection.get())
+        .then((querySnapshot) => {
+          expect(querySnapshot).to.have.property('size', 1);
+          const markerDoc = querySnapshot.docs[0];
+          const firestoreId = markerDoc.id;
+          expect(transformGeoPointArrayToLatLng(markerDoc.get('geometry')))
+              .to.eql([
+                position,
+              ]);
+          expect(markerDoc.get('notes')).to.eql(notes);
+          expect(userRegionData).to.have.property('size', 1);
+          const [storedMarker, shapeData] = getFirstUserRegionDataEntry();
+          expect(storedMarker.getMap()).to.eql(map);
+          expect(convertGoogleLatLngToObject(storedMarker.getPosition()))
+              .to.eql(position);
+          expect(shapeData).to.have.property('id', firestoreId);
+        });
+  }
 
-  // it('Skips update if nothing changed', /* @this Context */ function() {
-  //   drawPolygonAndSetUpSpies().as('spyResult');
-  //   pressButtonAndWaitForPromise('save').then(() => {
-  //     expect(this.spyResult.popupPendingCalculationSpy).to.not.be.called;
-  //     expect(this.spyResult.popupCalculatedDataSpy).to.not.be.called;
-  //     expect(this.spyResult.eeSpy).to.not.be.called;
-  //     expect(this.spyResult.firestoreSpy).to.not.be.called;
-  //     assertOnFirestoreAndPopup(path);
-  //   });
-  // });
+  it('Skips update if nothing changed', /* @this Context */ function() {
+    drawPolygonAndSetUpSpies().as('spyResult');
+    pressButtonAndWaitForPromise('save').then(() => {
+      expect(this.spyResult.popupPendingCalculationSpy).to.not.be.called;
+      expect(this.spyResult.popupCalculatedDataSpy).to.not.be.called;
+      expect(this.spyResult.eeSpy).to.not.be.called;
+      expect(this.spyResult.firestoreSpy).to.not.be.called;
+      assertOnFirestoreAndPopup(path);
+    });
+  });
 
-  // it('Skips recalculate if geometry unchanged', /* @this Context */ function() {
-  //   drawPolygonAndSetUpSpies().as('spyResult');
-  //   cy.get('.notes').type(notes);
-  //   pressButtonAndWaitForPromise('save').then(() => {
-  //     expect(this.spyResult.popupPendingCalculationSpy).to.not.be.called;
-  //     expect(this.spyResult.popupCalculatedDataSpy).to.not.be.called;
-  //     expect(this.spyResult.eeSpy).to.not.be.called;
-  //     expect(this.spyResult.firestoreSpy).to.be.calledOnce;
-  //     assertOnFirestoreAndPopup(path, withNotes(notes));
-  //   });
-  // });
+  it('Skips recalculate if geometry unchanged', /* @this Context */ function() {
+    drawPolygonAndSetUpSpies().as('spyResult');
+    cy.get('.notes').type(notes);
+    pressButtonAndWaitForPromise('save').then(() => {
+      expect(this.spyResult.popupPendingCalculationSpy).to.not.be.called;
+      expect(this.spyResult.popupCalculatedDataSpy).to.not.be.called;
+      expect(this.spyResult.eeSpy).to.not.be.called;
+      expect(this.spyResult.firestoreSpy).to.be.calledOnce;
+      assertOnFirestoreAndPopup(path, withNotes(notes));
+    });
+  });
 
-  // it('Dragged polygon triggers recalculation', /* @this Context */ function() {
-  //   // Clone path and edit.
-  //   const newPath = JSON.parse(JSON.stringify(path));
-  //   newPath[0].lng = 0.5;
-  //   drawPolygonAndSetUpSpies()
-  //           .as('spyResult').then(() => getFirstFeature().setPath(newPath));
-  //   pressButtonAndWaitForPromise('save').then(() => {
-  //     expect(this.spyResult.popupPendingCalculationSpy).to.be.calledOnce;
-  //     expect(this.spyResult.popupCalculatedDataSpy).to.be.calledOnce;
-  //     // Can't assert on number of calls since EE makes calls under the covers.
-  //     expect(this.spyResult.eeSpy).to.be.called;
-  //     expect(this.spyResult.firestoreSpy).to.be.calledOnce;
-  //   });
-  //   assertOnFirestoreAndPopup(newPath);
-  // });
+  it('Dragged polygon triggers recalculation', /* @this Context */ function() {
+    // Clone path and edit.
+    const newPath = JSON.parse(JSON.stringify(path));
+    newPath[0].lng = 0.5;
+    drawPolygonAndSetUpSpies()
+            .as('spyResult').then(() => getFirstFeature().setPath(newPath));
+    pressButtonAndWaitForPromise('save').then(() => {
+      expect(this.spyResult.popupPendingCalculationSpy).to.be.calledOnce;
+      expect(this.spyResult.popupCalculatedDataSpy).to.be.calledOnce;
+      // Can't assert on number of calls since EE makes calls under the covers.
+      expect(this.spyResult.eeSpy).to.be.called;
+      expect(this.spyResult.firestoreSpy).to.be.calledOnce;
+    });
+    assertOnFirestoreAndPopup(newPath, modifiedData);
+  });
 
-  // /**
-  //  * Draws the default polygon and clicks on it. Then returns spies to observe
-  //  * calculated-data-related calls made to the polygon's popup, and {@link
-  //  * ee#List} and {@link userShapesCollection#doc} calls. Because EE is finicky
-  //  * about spying, the `eeSpy` returned is not actually spying on the real
-  //  * {@link ee#List} but rather on a dummy object that shadows it, and that we
-  //  * call with the same arguments as the real {@link ee#List}.
-  //  * @typedef {sinon.SinonSpy|sinon.SinonStub} Spy
-  //  * @return {Cypress.Chainable<{popupPendingCalculationSpy: Spy,
-  //  *     popupCalculatedDataSpy: Spy, eeSpy: Spy, firestoreSpy: Spy}>}
-  //  */
-  // function drawPolygonAndSetUpSpies() {
-  //   let popupPendingCalculationSpy;
-  //   let popupCalculatedDataSpy;
-  //   let firestoreSpy;
-  //   const dummyObjectForSpyAssertions = {eeListCall: () => {}};
-  //   const eeSpy = cy.spy(dummyObjectForSpyAssertions, 'eeListCall');
-  //   drawPolygonAndClickOnIt().then(() => {
-  //     const [, data] = getFirstUserRegionDataEntry();
-  //     popupPendingCalculationSpy = cy.spy(data.popup, 'setPendingCalculation');
-  //     popupCalculatedDataSpy = cy.spy(data.popup, 'setCalculatedData');
-  //     firestoreSpy = cy.spy(userShapesCollection, 'doc');
-  //     // Wrap ee.List so that we can track that it was called. Sadly cy.spy is
-  //     // not delicate enough for this.
-  //     const oldList = ee.List;
-  //     const trackingFunction = (list) => {
-  //       ee.List = oldList;
-  //       dummyObjectForSpyAssertions.eeListCall(list);
-  //       const returnValue = ee.List(list);
-  //       ee.List = trackingFunction;
-  //       return returnValue;
-  //     };
-  //     ee.List = trackingFunction;
-  //   });
-  //   return pressPopupButton('edit').then(() => ({
-  //                                          popupPendingCalculationSpy,
-  //                                          popupCalculatedDataSpy,
-  //                                          eeSpy,
-  //                                          firestoreSpy,
-  //                                        }));
-  // }
+  /**
+   * Draws the default polygon and clicks on it. Then returns spies to observe
+   * calculated-data-related calls made to the polygon's popup, and {@link
+   * ee#List} and {@link userShapesCollection#doc} calls. Because EE is finicky
+   * about spying, the `eeSpy` returned is not actually spying on the real
+   * {@link ee#List} but rather on a dummy object that shadows it, and that we
+   * call with the same arguments as the real {@link ee#List}.
+   * @typedef {sinon.SinonSpy|sinon.SinonStub} Spy
+   * @return {Cypress.Chainable<{popupPendingCalculationSpy: Spy,
+   *     popupCalculatedDataSpy: Spy, eeSpy: Spy, firestoreSpy: Spy}>}
+   */
+  function drawPolygonAndSetUpSpies() {
+    let popupPendingCalculationSpy;
+    let popupCalculatedDataSpy;
+    let firestoreSpy;
+    const dummyObjectForSpyAssertions = {eeListCall: () => {}};
+    const eeSpy = cy.spy(dummyObjectForSpyAssertions, 'eeListCall');
+    drawPolygonAndClickOnIt().then(() => {
+      const [, data] = getFirstUserRegionDataEntry();
+      popupPendingCalculationSpy = cy.spy(data.popup, 'setPendingCalculation');
+      popupCalculatedDataSpy = cy.spy(data.popup, 'setCalculatedData');
+      firestoreSpy = cy.spy(userShapesCollection, 'doc');
+      // Wrap ee.List so that we can track that it was called. Sadly cy.spy is
+      // not delicate enough for this.
+      const oldList = ee.List;
+      function List(list) {
+        ee.List = oldList;
+        dummyObjectForSpyAssertions.eeListCall(list);
+        const returnValue = ee.List(list);
+        ee.List = List;
+        return returnValue;
+      };
+      ee.List = List;
+    });
+    return pressPopupButton('edit').then(() => ({
+                                           popupPendingCalculationSpy,
+                                           popupCalculatedDataSpy,
+                                           eeSpy,
+                                           firestoreSpy,
+                                         }));
+  }
 
-  // it('handles EarthEngine error', () => {
-  //   const promiseStub = cy.stub(EePromiseCache, 'convertEeObjectToPromise')
-  //                           .rejects(new Error('Error evaluating list'));
-  //   doUnsuccessfulDraw().then(() => promiseStub.restore());
-  //   doSuccessfulDrawAfterFailure();
-  // });
+  it('handles EarthEngine error', () => {
+    const promiseStub = cy.stub(EePromiseCache, 'convertEeObjectToPromise')
+                            .rejects(new Error('Error evaluating list'));
+    doUnsuccessfulDraw().then(() => promiseStub.restore());
+    doSuccessfulDrawAfterFailure();
+  });
 
-  // it('handles Firestore error', () => {
-  //   const docStub = cy.stub(userShapesCollection, 'doc').returns({
-  //     set: cy.stub().throws(new Error('Some Firebase error')),
-  //   });
-  //   doUnsuccessfulDraw().then(() => docStub.restore());
-  //   doSuccessfulDrawAfterFailure();
-  // });
+  it('handles Firestore error', () => {
+    const docStub = cy.stub(userShapesCollection, 'doc').returns({
+      set: cy.stub().throws(new Error('Some Firebase error')),
+    });
+    doUnsuccessfulDraw().then(() => docStub.restore());
+    doSuccessfulDrawAfterFailure();
+  });
 
-  // it('handles error then other polygon success then success', () => {
-  //   const docStub = cy.stub(userShapesCollection, 'doc').returns({
-  //     set: cy.stub().throws(new Error('Some Firebase error')),
-  //   });
-  //   const toastStub =
-  //       cy.stub(Toast, 'showToastMessage')
-  //           .withArgs(
-  //               'Latest save succeeded, but there are still 1 feature(s) not ' +
-  //               'saved');
-  //   const confirmStub = cy.stub(window, 'confirm').returns(true);
-  //   doUnsuccessfulDraw().then(() => docStub.restore());
-  //   // Draw a new polygon. It saves successfully, but doesn't say everything ok.
-  //   drawPolygon(
-  //       [{lat: -0.5, lng: -0.5}, {lat: 0, lng: 0}, {lat: -0.5, lng: 0}]);
-  //   assertWriteStartedAndGetPromise().then(() => {
-  //     expect(toastStub).to.be.calledOnce;
-  //     toastStub.resetHistory();
-  //   });
-  //   // Now delete second polygon, as an extra test and to make later assertions
-  //   // about Firestore contents true :)
-  //   // Found through unpleasant trial and error.
-  //   cy.get('#test-map-div').click(300, 470);
-  //   pressPopupButton('delete');
-  //   assertWriteStartedAndGetPromise().then(() => {
-  //     expect(toastStub).to.be.calledOnce;
-  //     expect(confirmStub).to.be.calledOnce;
-  //   });
-  //   // Page can jump around, give it time to settle. Passed with this >30 times
-  //   // in a row, without it, failed ~1/20 times.
-  //   cy.wait(100);
-  //   // Try to save first polygon again: succeeds.
-  //   doSuccessfulDrawAfterFailure();
-  // });
+  it('handles error then other polygon success then success', () => {
+    const docStub = cy.stub(userShapesCollection, 'doc').returns({
+      set: cy.stub().throws(new Error('Some Firebase error')),
+    });
+    const toastStub =
+        cy.stub(Toast, 'showToastMessage')
+            .withArgs(
+                'Latest save succeeded, but there are still 1 feature(s) not ' +
+                'saved');
+    const confirmStub = cy.stub(window, 'confirm').returns(true);
+    doUnsuccessfulDraw().then(() => docStub.restore());
+    // Draw a new polygon. It saves successfully, but doesn't say everything ok.
+    drawPolygon(
+        [{lat: -0.5, lng: -0.5}, {lat: 0, lng: 0}, {lat: -0.5, lng: 0}]);
+    assertWriteStartedAndGetPromise().then(() => {
+      expect(toastStub).to.be.calledOnce;
+      toastStub.resetHistory();
+    });
+    // Now delete second polygon, as an extra test and to make later assertions
+    // about Firestore contents true :)
+    // Found through unpleasant trial and error.
+    cy.get('#test-map-div').click(300, 470);
+    pressPopupButton('delete');
+    assertWriteStartedAndGetPromise().then(() => {
+      expect(toastStub).to.be.calledOnce;
+      expect(confirmStub).to.be.calledOnce;
+    });
+    // Page can jump around, give it time to settle. Passed with this >30 times
+    // in a row, without it, failed ~1/20 times.
+    cy.wait(100);
+    // Try to save first polygon again: succeeds.
+    doSuccessfulDrawAfterFailure();
+  });
 
-  // /**
-  //  * Tries to draw a polygon, expects failure on the save.
-  //  * @return {Cypress.Chainable<void>}
-  //  */
-  // function doUnsuccessfulDraw() {
-  //   const errorStub = cy.stub(ErrorLib, 'showError');
-  //   cy.wrap(errorStub).as('errorStub');
-  //   return drawPolygon()
-  //       .then(
-  //           () => currentUpdatePromise.then(
-  //               (result) => {
-  //                 throw new Error('unexpected ' + result);
-  //               },
-  //               () => {}))
-  //       .then(() => {
-  //         expect(errorStub).to.be.calledOnce;
-  //         errorStub.resetHistory();
-  //         expect(saveStartedStub).to.be.calledOnce;
-  //         saveStartedStub.resetHistory();
-  //         expect(saveFinishedStub).to.not.be.called;
-  //         expect(StoredShapeData.pendingWriteCount).to.eql(0);
-  //         return userShapesCollection.get();
-  //       })
-  //       .then((querySnapshot) => {
-  //         expect(querySnapshot).to.have.property('size', 0);
-  //         expect(querySnapshot.docs).to.be.empty;
-  //       });
-  // }
+  /**
+   * Tries to draw a polygon, expects failure on the save.
+   * @return {Cypress.Chainable<void>}
+   */
+  function doUnsuccessfulDraw() {
+    const errorStub = cy.stub(ErrorLib, 'showError');
+    cy.wrap(errorStub).as('errorStub');
+    return drawPolygon()
+        .then(
+            () => currentUpdatePromise.then(
+                (result) => {
+                  throw new Error('unexpected ' + result);
+                },
+                () => {}))
+        .then(() => {
+          expect(errorStub).to.be.calledOnce;
+          errorStub.resetHistory();
+          expect(saveStartedStub).to.be.calledOnce;
+          saveStartedStub.resetHistory();
+          expect(saveFinishedStub).to.not.be.called;
+          expect(StoredShapeData.pendingWriteCount).to.eql(0);
+          return userShapesCollection.get();
+        })
+        .then((querySnapshot) => {
+          expect(querySnapshot).to.have.property('size', 0);
+          expect(querySnapshot.docs).to.be.empty;
+        });
+  }
 
-  // /**
-  //  * Tries to save a polygon originally created with {@link doUnsuccessfulDraw}
-  //  * with a modified path and expects success.
-  //  */
-  // function doSuccessfulDrawAfterFailure() {
-  //   const newPath = JSON.parse(JSON.stringify(path));
-  //   cy.get('#test-map-div').click();
-  //   pressPopupButton('edit').then(() => {
-  //     // Clone path and edit.
-  //     newPath[0].lng = 0.5;
-  //     getFirstFeature().setPath(newPath);
-  //   });
-  //   pressPopupButton('save');
-  //   waitForWriteToFinish();
-  //   cy.get('@errorStub')
-  //       .then((errorStub) => expect(errorStub).to.not.be.called);
-  //   assertOnFirestoreAndPopup(newPath);
-  // }
+  /**
+   * Tries to save a polygon originally created with {@link doUnsuccessfulDraw}
+   * with a modified path and expects success.
+   */
+  function doSuccessfulDrawAfterFailure() {
+    const newPath = JSON.parse(JSON.stringify(path));
+    cy.get('#test-map-div').click();
+    pressPopupButton('edit').then(() => {
+      // Clone path and edit.
+      newPath[0].lng = 0.5;
+      getFirstFeature().setPath(newPath);
+    });
+    pressPopupButton('save');
+    waitForWriteToFinish();
+    cy.get('@errorStub')
+        .then((errorStub) => expect(errorStub).to.not.be.called);
+    assertOnFirestoreAndPopup(newPath, modifiedData);
+  }
 
-  // it('Absence of damage asset tolerated', () => {
-  //   cy.wrap(initializeAndProcessUserRegions(
-  //       map, Promise.resolve({damageAssetPath: null}), getUserFeatures()));
-  //   drawPolygon();
-  //   const expectedData = Object.assign({}, defaultData);
-  //   expectedData.damage = 'unknown';
-  //   waitForWriteToFinish();
-  //   assertOnFirestoreAndPopup(path, expectedData);
-  // });
+  it('Absence of damage asset tolerated', () => {
+    cy.wrap(initializeAndProcessUserRegions(
+        map, Promise.resolve({damageAssetPath: null}), getUserFeatures()));
+    drawPolygon();
+    const expectedData = Object.assign({}, defaultData);
+    expectedData.damage = 'unknown';
+    waitForWriteToFinish();
+    assertOnFirestoreAndPopup(path, expectedData);
+  });
 
-  // it('Hides polygon, re-shows, tries to hide during edit', () => {
-  //   const alertStub = cy.stub(window, 'alert');
-  //   drawPolygonAndClickOnIt().then(
-  //       () => expect(getFirstFeatureVisibility()).to.be.true);
-  //   pressPopupButton('edit');
-  //   cy.get('.notes').type(notes);
-  //   pressButtonAndWaitForPromise('save');
-  //   cy.get('#test-map-div').contains(notes).should('be.visible');
-  //   setUserFeatureVisibilityInCypressAndAssert(false, true);
-  //   cy.get('#test-map-div').contains(notes).should('not.be.visible');
-  //   // Notes is invisible even if we click on the polygon, so it's really gone.
-  //   cy.get('#test-map-div').click();
-  //   cy.get('#test-map-div').contains(notes).should('not.be.visible');
+  it('Hides polygon, re-shows, tries to hide during edit', () => {
+    const alertStub = cy.stub(window, 'alert');
+    drawPolygonAndClickOnIt().then(
+        () => expect(getFirstFeatureVisibility()).to.be.true);
+    pressPopupButton('edit');
+    cy.get('.notes').type(notes);
+    pressButtonAndWaitForPromise('save');
+    cy.get('#test-map-div').contains(notes).should('be.visible');
+    setUserFeatureVisibilityInCypressAndAssert(false, true);
+    cy.get('#test-map-div').contains(notes).should('not.be.visible');
+    // Notes is invisible even if we click on the polygon, so it's really gone.
+    cy.get('#test-map-div').click();
+    cy.get('#test-map-div').contains(notes).should('not.be.visible');
 
-  //   // Check box again and verify that notes box can now be brought up.
-  //   setUserFeatureVisibilityInCypressAndAssert(true, true);
-  //   // Notes not visible yet.
-  //   cy.get('#test-map-div').contains(notes).should('not.be.visible');
-  //   // Map can take a second to render polygon and send it clicks, give it time.
-  //   cy.wait(500);
-  //   cy.get('#test-map-div').click();
-  //   cy.get('#test-map-div').contains(notes).should('be.visible');
+    // Check box again and verify that notes box can now be brought up.
+    setUserFeatureVisibilityInCypressAndAssert(true, true);
+    // Notes not visible yet.
+    cy.get('#test-map-div').contains(notes).should('not.be.visible');
+    // Map can take a second to render polygon and send it clicks, give it time.
+    cy.wait(500);
+    cy.get('#test-map-div').click();
+    cy.get('#test-map-div').contains(notes).should('be.visible');
 
-  //   // Try to hide user features in the middle of editing: will fail.
-  //   pressPopupButton('edit').then(() => expect(alertStub).to.not.be.called);
-  //   setUserFeatureVisibilityInCypressAndAssert(false, false)
-  //       .then(() => expect(alertStub).to.be.calledOnce);
-  //   // Confirm that save is still around to be pressed.
-  //   const newNotes = 'new notes to force save';
-  //   cy.get('.notes').clear().type(newNotes);
-  //   pressButtonAndWaitForPromise('save');
-  //   assertOnFirestoreAndPopup(path, withNotes(newNotes));
+    // Try to hide user features in the middle of editing: will fail.
+    pressPopupButton('edit').then(() => expect(alertStub).to.not.be.called);
+    setUserFeatureVisibilityInCypressAndAssert(false, false)
+        .then(() => expect(alertStub).to.be.calledOnce);
+    // Confirm that save is still around to be pressed.
+    const newNotes = 'new notes to force save';
+    cy.get('.notes').clear().type(newNotes);
+    pressButtonAndWaitForPromise('save');
+    assertOnFirestoreAndPopup(path, withNotes(newNotes));
 
-  //   // After a save, the hide is successful.
-  //   setUserFeatureVisibilityInCypressAndAssert(false, true);
-  //   cy.get('#test-map-div').contains(newNotes);
-  //   cy.get('#test-map-div').contains(newNotes).should('not.be.visible');
-  // });
+    // After a save, the hide is successful.
+    setUserFeatureVisibilityInCypressAndAssert(false, true);
+    cy.get('#test-map-div').contains(newNotes);
+    cy.get('#test-map-div').contains(newNotes).should('not.be.visible');
+  });
 
-  // it('Hides, draws new one, tries to hide during edit, re-shows, hides', () => {
-  //   const alertStub = cy.stub(window, 'alert');
-  //   drawPolygonAndClickOnIt().then(
-  //       () => expect(getFirstFeatureVisibility()).to.be.true);
-  //   pressPopupButton('edit');
-  //   cy.get('.notes').type(notes);
-  //   pressButtonAndWaitForPromise('save');
-  //   cy.get('#test-map-div').contains(notes).should('be.visible');
-  //   setUserFeatureVisibilityInCypressAndAssert(false, true);
-  //   const otherPath =
-  //       [{lng: -0.5, lat: 0.5}, {lng: -0.25, lat: 0}, {lng: -0.25, lat: 0.5}];
-  //   drawPolygon(otherPath);
-  //   waitForWriteToFinish();
-  //   cy.get('#test-map-div').click(200, 300);
-  //   pressPopupButton('edit');
-  //   const newNotes = 'new notes';
-  //   cy.get('.notes').type(newNotes);
-  //   // Try to re-check the box. It will fail because we're editing.
-  //   setUserFeatureVisibilityInCypressAndAssert(true, false).then(() => {
-  //     expect(alertStub).to.be.calledOnce;
-  //     alertStub.resetHistory();
-  //     expect([...userRegionData.keys()][1].getVisible()).to.be.true;
-  //   });
+  it('Hides, draws new one, tries to hide during edit, re-shows, hides', () => {
+    const alertStub = cy.stub(window, 'alert');
+    drawPolygonAndClickOnIt().then(
+        () => expect(getFirstFeatureVisibility()).to.be.true);
+    pressPopupButton('edit');
+    cy.get('.notes').type(notes);
+    pressButtonAndWaitForPromise('save');
+    cy.get('#test-map-div').contains(notes).should('be.visible');
+    setUserFeatureVisibilityInCypressAndAssert(false, true);
+    const otherPath =
+        [{lng: -0.5, lat: 0.5}, {lng: -0.25, lat: 0}, {lng: -0.25, lat: 0.5}];
+    drawPolygon(otherPath);
+    waitForWriteToFinish();
+    cy.get('#test-map-div').click(200, 300);
+    pressPopupButton('edit');
+    const newNotes = 'new notes';
+    cy.get('.notes').type(newNotes);
+    // Try to re-check the box. It will fail because we're editing.
+    setUserFeatureVisibilityInCypressAndAssert(true, false).then(() => {
+      expect(alertStub).to.be.calledOnce;
+      alertStub.resetHistory();
+      expect([...userRegionData.keys()][1].getVisible()).to.be.true;
+    });
 
-  //   // Save the new notes and check the box, this time it succeeds.
-  //   pressButtonAndWaitForPromise('save');
-  //   setUserFeatureVisibilityInCypressAndAssert(true, true).then(() => {
-  //     expect(alertStub).to.not.be.called;
-  //     for (const polygon of userRegionData.keys()) {
-  //       expect(polygon.getVisible()).to.be.true;
-  //     }
-  //   });
-  //   // We can click on the old polygon and view its notes,
-  //   cy.get('#test-map-div').click();
-  //   cy.get('#test-map-div').contains(notes).should('be.visible');
-  //   // And the new polygon and view its notes.
-  //   cy.get('#test-map-div').click(200, 300);
-  //   cy.get('#test-map-div').contains(newNotes).should('be.visible');
+    // Save the new notes and check the box, this time it succeeds.
+    pressButtonAndWaitForPromise('save');
+    setUserFeatureVisibilityInCypressAndAssert(true, true).then(() => {
+      expect(alertStub).to.not.be.called;
+      for (const polygon of userRegionData.keys()) {
+        expect(polygon.getVisible()).to.be.true;
+      }
+    });
+    // We can click on the old polygon and view its notes,
+    cy.get('#test-map-div').click();
+    cy.get('#test-map-div').contains(notes).should('be.visible');
+    // And the new polygon and view its notes.
+    cy.get('#test-map-div').click(200, 300);
+    cy.get('#test-map-div').contains(newNotes).should('be.visible');
 
-  //   // Now hide both polygons, and verify that they're really gone.
-  //   setUserFeatureVisibilityInCypressAndAssert(false, true);
-  //   cy.get('#test-map-div').contains(notes).should('not.be.visible');
-  //   // Notes is invisible even if we click on the polygon, so it's really gone.
-  //   cy.get('#test-map-div').click(200, 300);
-  //   cy.get('#test-map-div').contains(newNotes).should('not.be.visible');
-  // });
+    // Now hide both polygons, and verify that they're really gone.
+    setUserFeatureVisibilityInCypressAndAssert(false, true);
+    cy.get('#test-map-div').contains(notes).should('not.be.visible');
+    // Notes is invisible even if we click on the polygon, so it's really gone.
+    cy.get('#test-map-div').click(200, 300);
+    cy.get('#test-map-div').contains(newNotes).should('not.be.visible');
+  });
 
   /**
    * Draws a polygon with the given path, waits for it to save to Firestore,
@@ -678,7 +681,6 @@ describe('Unit test for ShapeData', () => {
       // notes to do comparison with Firestore data.
       const calculatedData = Object.assign({}, expectedData);
       delete calculatedData.notes;
-      console.log(polygonDoc.get('calculatedData'), calculatedData);
       expect(polygonDoc.get('calculatedData')).to.eql(calculatedData);
       expect(polygonDoc.get('notes')).to.eql(expectedData.notes);
       expect(userRegionData).to.have.property('size', 1);

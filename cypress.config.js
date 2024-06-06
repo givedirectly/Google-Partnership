@@ -1,5 +1,6 @@
 import {defineConfig} from 'cypress';
 import firebase from 'firebase';
+import fs from 'fs';
 import admin from 'firebase-admin';
 import {firebaseConfigProd, firebaseConfigTest} from './docs/authenticate.js';
 import {generateEarthEngineToken} from './token_server/ee_token_creator.js';
@@ -24,27 +25,26 @@ let firestoreUserToken;
 
 export default defineConfig({
   projectId: 'jr8ks8',
-    e2e: {
-      baseUrl: 'http://localhost:8080/',
-      specPattern: 'cypress/integration/**/*.js',
-      defaultCommandTimeout: 30000,
-      setupNodeEvents(on, config) {
-        console.log(config); // see everything in here!
+  e2e: {
+    baseUrl: 'http://localhost:8080/',
+    specPattern: 'cypress/integration/**/*.js',
+    setupNodeEvents(on, config) {
+      console.log(config); // see everything in here!
   
-    /**
-   * Sets code that runs before browser is launched. We use this to enable GPU
-   * acceleration for Chromium and make sure developer console is open so errors
-   * are visible.
-   */
-    on('before:browser:launch', (browser = {}, args) => {
-        if (browser.name === 'chromium' || browser.name === 'chrome') {
-          const newArgs = args.filter((arg) => arg !== '--disable-gpu');
-          newArgs.push('--ignore-gpu-blacklist');
-          newArgs.push('--start-maximized');
-          newArgs.push('--auto-open-devtools-for-tabs');
-          return newArgs;
-        }
-      });
+      /**
+       * Sets code that runs before browser is launched. We use this to enable GPU
+       * acceleration for Chromium and make sure developer console is open so errors
+       * are visible.
+       */
+      on('before:browser:launch', (browser = {}, args) => {
+          if (browser.name === 'chromium' || browser.name === 'chrome') {
+            const newArgs = args.filter((arg) => arg !== '--disable-gpu');
+            newArgs.push('--ignore-gpu-blacklist');
+            newArgs.push('--start-maximized');
+            newArgs.push('--auto-open-devtools-for-tabs');
+            return newArgs;
+          }
+        });
   /**
    * Defines "tasks" that can be run using cy.task(). The name of each task is
    * the function name. These tasks are invoked in cypress/support/index.js in a
@@ -151,6 +151,22 @@ export default defineConfig({
     },
   });
     
+  on(
+    'after:spec',
+    (spec, results) => {
+      if (results && results.video) {
+        // Do we have failures for any retry attempts?
+        const failures = results.tests.some((test) =>
+          test.attempts.some((attempt) => attempt.state === 'failed')
+        )
+        if (!failures) {
+          // delete the video if the spec passed and no tests retried
+          fs.unlinkSync(results.video)
+        }
+      }
+    }
+  );
+
     // IMPORTANT return the updated config object
     return config;
       },

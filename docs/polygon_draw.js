@@ -17,12 +17,9 @@ import {userRegionData} from './user_region_data.js';
 export {
   displayCalculatedData,
   initializeAndProcessUserRegions,
-  userFeaturesColor,
-};
-// For testing.
-export {
   StoredShapeData,
   transformGeoPointArrayToLatLng,
+  userFeaturesColor,
   userShapesCollection,
 };
 
@@ -142,22 +139,17 @@ class StoredShapeData {
     this.popup.setPendingCalculation();
 
     const points = [];
-    feature.getPath().forEach((elt) => console.log('elt', elt.lng(), elt.lat()));
     feature.getPath().forEach((elt) => points.push(elt.lng(), elt.lat()));
     const polygon = ee.Geometry.Polygon(points);
     const numDamagePoints = StoredShapeData.prepareDamageCalculation(polygon);
-    console.log('damage', await convertEeObjectToPromise(numDamagePoints));
     const intersectingBlockGroups =
         StoredShapeData.getIntersectingBlockGroups(polygon);
-    console.log('intersecting', await convertEeObjectToPromise(intersectingBlockGroups));
     // TODO(janakr): with arbitrary data, only a "poverty percentage" may be
     //  available, as opposed to underlying totals. This won't work then.
     const weightedSnapHouseholds = StoredShapeData.calculateWeightedTotal(
         intersectingBlockGroups, povertyHouseholdsTag);
-    console.log('weighted', await convertEeObjectToPromise(weightedSnapHouseholds));
     const weightedTotalHouseholds = StoredShapeData.calculateWeightedTotal(
         intersectingBlockGroups, totalHouseholdsTag);
-    console.log('weighted total', await convertEeObjectToPromise(weightedTotalHouseholds));
     let eeResult;
     try {
       eeResult = await convertEeObjectToPromise(ee.List([
@@ -168,7 +160,6 @@ class StoredShapeData {
     } catch (err) {
       this.terminateWriteWithError(err, 'calculating data for polygon');
     }
-    console.log('result', eeResult);
     const calculatedData = {
       damage: eeResult[0],
       snapFraction:

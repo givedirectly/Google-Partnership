@@ -294,6 +294,7 @@ async function getAssetsAndSetOptionsForSelect(
   // getDisasterAssetsFromEe caches the result.
   const isCurrent = getIsCurrentDisasterChecker();
   const disasterAssets = await getDisasterAssetsFromEe(getDisaster());
+  console.log(disasterAssets);
   if (!isCurrent()) {
     return false;
   }

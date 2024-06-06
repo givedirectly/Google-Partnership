@@ -4,8 +4,6 @@ import * as Resources from '../../../docs/resources.js';
 import {resolveScoreAsset} from '../../../docs/run.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader.js';
 
-const waitForPromiseToResolve = 3000;
-
 describe('Unit test for run.js', () => {
   loadScriptsBeforeForUnitTests('ee');
   let errorStub;
@@ -15,8 +13,6 @@ describe('Unit test for run.js', () => {
     const assetName = 'TIGER/2018/States';
     cy.stub(Resources, 'getScoreAssetPath').returns(assetName);
     const backupStub = cy.stub(Resources, 'getBackupScoreAssetPath');
-    // TODO(https://github.com/cypress-io/cypress/issues/5980): Remove
-    cy.wait(waitForPromiseToResolve);
     cy.wrap(resolveScoreAsset()).then((result) => {
       expect(result).to.equal(assetName);
       expect(backupStub).to.not.be.called;
@@ -29,8 +25,6 @@ describe('Unit test for run.js', () => {
         .returns('nonexistent/feature/collection');
     const backupName = 'TIGER/2018/States';
     cy.stub(Resources, 'getBackupScoreAssetPath').returns(backupName);
-    // TODO(https://github.com/cypress-io/cypress/issues/5980): Remove
-    cy.wait(waitForPromiseToResolve);
     cy.wrap(resolveScoreAsset()).then((result) => {
       expect(result).to.equal(backupName);
       expect(errorStub).to.be.calledOnce;
@@ -49,8 +43,6 @@ describe('Unit test for run.js', () => {
               'another/bad/asset');
           expect(err).to.have.property('message').that.contains('not found.');
         });
-    // TODO(https://github.com/cypress-io/cypress/issues/5980): Remove
-    cy.wait(waitForPromiseToResolve);
     cy.wrap(promise).then(() => expect(errorStub).to.be.calledOnce);
   });
 });

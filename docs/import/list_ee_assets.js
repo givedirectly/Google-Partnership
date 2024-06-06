@@ -36,6 +36,7 @@ function getStateAssetsFromEe(state) {
                              for (const attributes of assetMap.values()) {
                                attributes.disabled = attributes.type !==
                                    LayerType.FEATURE_COLLECTION;
+                               console.log(attributes);
                              }
                              return assetMap;
                            });
