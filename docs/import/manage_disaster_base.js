@@ -18,7 +18,6 @@ export {
   createSelect,
   createSelectListItemFromColumnInfo,
   createSelectWithSimpleWriteOnChange,
-  DAMAGE_PROPERTY_PATH,
   damageAssetPresent,
   disasterData,
   getAssetsAndSetOptionsForSelect,
@@ -35,7 +34,6 @@ export {
   NODAMAGE_VALUE_INFO,
   noteNewDisaster,
   onAssetSelect,
-  scoreBoundsMap,
   setExplanationSpanTextForColumn,
   setOptionsForSelect,
   setUpScoreBoundsMap,
@@ -48,6 +46,9 @@ export {
   writeAssetDataLocally,
   writeSelectAndGetPropertyNames,
 };
+
+// For testing.
+export {DAMAGE_PROPERTY_PATH, scoreBoundsMap};
 
 /**
  * @type {Map<string, Object>} Disaster id to disaster data, corresponding to
@@ -294,7 +295,6 @@ async function getAssetsAndSetOptionsForSelect(
   // getDisasterAssetsFromEe caches the result.
   const isCurrent = getIsCurrentDisasterChecker();
   const disasterAssets = await getDisasterAssetsFromEe(getDisaster());
-  console.log(disasterAssets);
   if (!isCurrent()) {
     return false;
   }
