@@ -605,7 +605,7 @@ describe('Unit test for toggleLayerOn', () => {
               eeName: 'tile_asset',
               assetType: LayerType.MAP_TILES,
               urls: [
-                'https://storms.ngs.noaa.gov/storms/nicole/services/index.json'
+                'https://storms.ngs.noaa.gov/storms/nicole/services/index.json',
               ],
               displayName: 'tiles',
               displayOnLoad: true,

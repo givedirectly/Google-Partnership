@@ -141,12 +141,18 @@ it('has some disabled options', () => {
     ['state1', {disabled: true}],
   ])));
   callEnableWhenReady(createDisasterData(['NY']));
-  getSelectForScoreAssetIndex(SNAP_INDEX).find('option')
-    .eq(2).should('be.disabled')
-    .prev().should('not.be.disabled');
-  getDamageSelect().find('option')
-    .eq(2).should('be.disabled')
-    .prev().should('not.be.disabled');
+  getSelectForScoreAssetIndex(SNAP_INDEX)
+      .find('option')
+      .eq(2)
+      .should('be.disabled')
+      .prev()
+      .should('not.be.disabled');
+  getDamageSelect()
+      .find('option')
+      .eq(2)
+      .should('be.disabled')
+      .prev()
+      .should('not.be.disabled');
 });
 
 it('Handles assets with and without geometries', () => {
@@ -1469,6 +1475,8 @@ function appendElement(id, doc, tag = 'div') {
 /**
  * Injects necessary data (stubs EE function, adds state data manually) and
  * returns default data to be passed to {@link callEnableWhenReady}.
+ * @param {Array<firebase.firestore.GeoPoint>} scoreBoundsCoordinates bounds for
+ *     map
  * @return {Object} equivalent of fetch from Firestore for a single disaster
  */
 function setUpDefaultData(
@@ -1481,7 +1489,12 @@ function setUpDefaultData(
   return createDefaultStateBasedFirestoreData(scoreBoundsCoordinates);
 }
 
-/** @return {{assetData: AssetData, layerArray: Array<*>}} */
+/**
+ * Creates fake state-based firestore data for NY.
+ * @param {Array<firebase.firestore.GeoPoint>} scoreBoundsCoordinates bounds for
+ *     map
+ * @return {{assetData: AssetData, layerArray: Array<*>}}
+ */
 function createDefaultStateBasedFirestoreData(
     scoreBoundsCoordinates = defaultScoreBoundsCoordinates) {
   const currentData = createDisasterData(['NY']);

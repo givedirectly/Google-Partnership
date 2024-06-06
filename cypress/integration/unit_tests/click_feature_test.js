@@ -58,7 +58,7 @@ describe('Unit tests for click_feature.js with map and table', () => {
           return true;
         }
         return oldHasInstance(elt);
-      }
+      },
     });
   });
 

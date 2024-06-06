@@ -1,12 +1,10 @@
 export {
   AssetNotFoundError,
+  clearPromiseCacheForTesting,
   convertEeObjectToPromise,
   getEePromiseForFeatureCollection,
   transformEarthEngineFailureMessage,
 };
-
-// For testing only.
-export {clearPromiseCacheForTesting};
 
 // 6M objects in a FeatureCollection should be enough: if this number is too
 // big, EarthEngine won't construct a list even if the FeatureCollection itself
@@ -60,7 +58,9 @@ class AssetNotFoundError extends Error {
  * @return {Error}
  */
 function transformEarthEngineFailureMessage(error) {
-  console.log('We have error', error, error instanceof Error, typeof(error) === 'string');
+  console.log(
+      'We have error', error, error instanceof Error,
+      typeof (error) === 'string');
   if (error instanceof Error) {
     // Useful if this is called recursively. EarthEngine never passes Errors.
     return error;

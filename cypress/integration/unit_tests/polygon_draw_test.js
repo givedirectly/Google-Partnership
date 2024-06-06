@@ -278,6 +278,11 @@ describe('Unit test for ShapeData', () => {
     // Replace ee.List so that we can have access to the returned object and
     // change its evaluate call.
     const oldList = ee.List;
+    /**
+     * New ee.List function that delays evaluate and replaces itself.
+     * @param {Array<Object>} list objects to wrap
+     * @return {ee.List}
+     */
     function List(list) {
       ee.List = oldList;
       const returnValue = ee.List(list);
@@ -427,6 +432,11 @@ describe('Unit test for ShapeData', () => {
       // Wrap ee.List so that we can track that it was called. Sadly cy.spy is
       // not delicate enough for this.
       const oldList = ee.List;
+      /**
+       * New ee.List function that notes it was called.
+       * @param {Array<Object>} list objects to wrap
+       * @return {ee.List}
+       */
       function List(list) {
         ee.List = oldList;
         dummyObjectForSpyAssertions.eeListCall(list);
