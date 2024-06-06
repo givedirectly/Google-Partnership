@@ -1,9 +1,22 @@
-import {defineConfig} from 'cypress';
-import firebase from 'firebase';
-import fs from 'fs';
-import admin from 'firebase-admin';
-import {firebaseConfigProd, firebaseConfigTest} from './docs/authenticate.js';
-import {generateEarthEngineToken} from './token_server/ee_token_creator.js';
+/**
+ * Separate file from plugins/index.js so that we can transpile it using babel
+ * and thus use ES6 modules, and refer to the rest of our codebase. Suggested
+ * workaround from https://github.com/cypress-io/cypress/issues/1247, updated to
+ * modern versions of Babel.
+ *
+ * Note that even though this file appears to be written in ES6 style, it is
+ * transpiled using Babel, so there may be subtle language incompatibilities.
+ * Errors can usually be fixed by searching them and adding the necessary
+ * Babel plugin to the section in plugins/index.js.
+ *
+ * More about Cypress plugins here: https://on.cypress.io/plugins-guide
+ */
+import * as firebase from 'firebase';
+import * as firebaseAdmin from 'firebase-admin';
+import {firebaseConfigProd, firebaseConfigTest} from '../../docs/authenticate.js';
+import {generateEarthEngineToken} from '../../token_server/ee_token_creator.js';
+
+export {onFunction};
 
 // Keep in sync with firestore_rules/test.rules.
 const TEST_FIRESTORE_USER = 'cypress-firestore-test-user';
@@ -23,28 +36,28 @@ let perTestFirestoreData;
  */
 let firestoreUserToken;
 
-export default defineConfig({
-  projectId: 'jr8ks8',
-  e2e: {
-    baseUrl: 'http://localhost:8080/',
-    specPattern: 'cypress/integration/**/*.js',
-    setupNodeEvents(on, config) {
-      console.log(config); // see everything in here!
-  
-      /**
-       * Sets code that runs before browser is launched. We use this to enable GPU
-       * acceleration for Chromium and make sure developer console is open so errors
-       * are visible.
-       */
-      on('before:browser:launch', (browser = {}, args) => {
-          if (browser.name === 'chromium' || browser.name === 'chrome') {
-            const newArgs = args.filter((arg) => arg !== '--disable-gpu');
-            newArgs.push('--ignore-gpu-blacklist');
-            newArgs.push('--start-maximized');
-            newArgs.push('--auto-open-devtools-for-tabs');
-            return newArgs;
-          }
-        });
+/**
+ * This function is called when a project is opened or re-opened (e.g. due to
+ * the project's config changing).
+ *
+ * @param {Function} on
+ * @param {Object} config
+ */
+function onFunction(on, config) {
+  /**
+   * Sets code that runs before browser is launched. We use this to enable GPU
+   * acceleration for Chromium and make sure developer console is open so errors
+   * are visible.
+   */
+  on('before:browser:launch', (browser = {}, args) => {
+    if (browser.name === 'chromium' || browser.name === 'chrome') {
+      const newArgs = args.filter((arg) => arg !== '--disable-gpu');
+      newArgs.push('--ignore-gpu-blacklist');
+      newArgs.push('--start-maximized');
+      newArgs.push('--auto-open-devtools-for-tabs');
+      return newArgs;
+    }
+  });
   /**
    * Defines "tasks" that can be run using cy.task(). The name of each task is
    * the function name. These tasks are invoked in cypress/support/index.js in a
@@ -78,7 +91,7 @@ export default defineConfig({
      * days, so there isn't indefinite build-up if tests are frequently aborted
      * before they clean up.
      *
-    //  * See https://firebase.google.com/docs/auth/admin/create-custom-tokens.
+     * See https://firebase.google.com/docs/auth/admin/create-custom-tokens.
      * @return {Promise<string>} The token to be used
      */
     initializeTestFirebase() {
@@ -150,30 +163,9 @@ export default defineConfig({
       return null;
     },
   });
-    
-  on(
-    'after:spec',
-    (spec, results) => {
-      if (results && results.video) {
-        // Do we have failures for any retry attempts?
-        const failures = results.tests.some((test) =>
-          test.attempts.some((attempt) => attempt.state === 'failed')
-        )
-        if (!failures) {
-          // delete the video if the spec passed and no tests retried
-          fs.unlinkSync(results.video)
-        }
-      }
-    }
-  );
+}
 
-    // IMPORTANT return the updated config object
-    return config;
-      },
-    },
-  });
-
-  /**
+/**
  * Creates a Firebase admin app for use in a test method. The app roughly
  * corresponds to a handle to Firebase, allowing us to do things like log in and
  * modify data. No more than one app with a given name can be active, so make
@@ -181,114 +173,113 @@ export default defineConfig({
  * @return {admin.app.App}
  */
 function createTestFirebaseAdminApp() {
-    return admin.initializeApp(
-        {
-          credential: admin.credential.applicationDefault(),
-          databaseURL: 'https://mapping-test-data.firebaseio.com',
-        },
-        'testAdminApp');
-  }
-  
-  /**
-   * Recursively deletes all test data, under the test/currentTestRoot root.
-   * @param {string} currentTestRoot document name directly underneath test/
-   * @param {admin.app.App} app
-   * @return {Promise} Promise that resolves when all deletions are
-   *     complete
-   */
-  function deleteTestData(currentTestRoot, app) {
-    return deleteDocRecursively(
-        app.firestore().doc(testPrefix + currentTestRoot));
-  }
-  
-  const millisecondsIn7Days = 7 * 60 * 60 * 24 * 1000;
-  
-  /**
-   * Recursively deletes all test data older than 7 days, under the assumption
-   * that no test runs for that long, and that older data is unnecessary for
-   * backups. This prevents old unfinished tests from using too much quota. Note
-   * that documents must have a field set to show up in a listing of the parent
-   * collection
-   * (https://stackoverflow.com/questions/47043651/this-document-does-not-exist-and-will-not-appear-in-queries-or-snapshots-but-id).
-   * That field is set in {@link populateTestFirestoreData}.
-   * @param {admin.app.App} app
-   * @return {Promise} Promise that completes when all deletions are finished
-   */
-  function deleteAllOldTestData(app) {
-    const currentDate = new Date();
-    const querySnapshotPromise = app.firestore().collection(testPrefix).get();
-    return querySnapshotPromise.then((queryResult) => {
-      const promises = [];
-      queryResult.forEach((doc) => {
-        const ref = doc.ref;
-        const testRunName = ref.id;
-        const dateElement = testRunName.split('-')[0];
-        const date = new Date(parseInt(dateElement, 10));
-        if (currentDate - date > millisecondsIn7Days) {
-          promises.push(deleteDocRecursively(ref));
-        }
-      });
-      return Promise.all(promises);
-    });
-  }
-  
-  /**
-   * Recursively deletes the given document and the documents under its
-   * subcollections, etc.
-   * @param {admin.firestore.DocumentReference} doc
-   * @return {Promise} Promise that resolves when all deletions are complete
-   */
-  function deleteDocRecursively(doc) {
+  return firebaseAdmin.initializeApp(
+      {
+        credential: firebaseAdmin.credential.applicationDefault(),
+        databaseURL: 'https://mapping-test-data.firebaseio.com',
+      },
+      'testAdminApp');
+}
+
+/**
+ * Recursively deletes all test data, under the test/currentTestRoot root.
+ * @param {string} currentTestRoot document name directly underneath test/
+ * @param {admin.app.App} app
+ * @return {Promise} Promise that resolves when all deletions are
+ *     complete
+ */
+function deleteTestData(currentTestRoot, app) {
+  return deleteDocRecursively(
+      app.firestore().doc(testPrefix + currentTestRoot));
+}
+
+const millisecondsIn7Days = 7 * 60 * 60 * 24 * 1000;
+
+/**
+ * Recursively deletes all test data older than 7 days, under the assumption
+ * that no test runs for that long, and that older data is unnecessary for
+ * backups. This prevents old unfinished tests from using too much quota. Note
+ * that documents must have a field set to show up in a listing of the parent
+ * collection
+ * (https://stackoverflow.com/questions/47043651/this-document-does-not-exist-and-will-not-appear-in-queries-or-snapshots-but-id).
+ * That field is set in {@link populateTestFirestoreData}.
+ * @param {admin.app.App} app
+ * @return {Promise} Promise that completes when all deletions are finished
+ */
+function deleteAllOldTestData(app) {
+  const currentDate = new Date();
+  const querySnapshotPromise = app.firestore().collection(testPrefix).get();
+  return querySnapshotPromise.then((queryResult) => {
     const promises = [];
-    promises.push(doc.delete());
-    promises.push(doc.listCollections().then((collections) => {
-      const collectionPromises = [];
-      for (const collection of collections) {
-        collectionPromises.push(deleteCollectionRecursively(collection));
+    queryResult.forEach((doc) => {
+      const ref = doc.ref;
+      const testRunName = ref.id;
+      const dateElement = testRunName.split('-')[0];
+      const date = new Date(parseInt(dateElement, 10));
+      if (currentDate - date > millisecondsIn7Days) {
+        promises.push(deleteDocRecursively(ref));
       }
-      return Promise.all(collectionPromises);
-    }));
-    return Promise.all(promises);
-  }
-  
-  /**
-   * Recursively deletes all documents under a collection (and the documents under
-   * their subcollections, etc.).
-   * @param {admin.firestore.CollectionReference} collection
-   * @return {Promise} Promise that resolves when all deletions are complete
-   */
-  function deleteCollectionRecursively(collection) {
-    return collection.get().then((queryResult) => {
-      const promises = [];
-      queryResult.forEach((doc) => promises.push(deleteDocRecursively(doc.ref)));
-      return Promise.all(promises);
     });
-  }
-  
-  /**
-   * Retrieves necessary data for tests to consume from prod Firebase. Called
-   * once at the start of all tests in a single test file. We add a dummy field at
-   * the top level of the document so that Firestore will deign to list this
-   * document later
-   * (https://stackoverflow.com/questions/47043651/this-document-does-not-exist-and-will-not-appear-in-queries-or-snapshots-but-id)
-   * @return {Promise<null>} Promise that completes when retrieval is done
-   */
-  function retrieveFirestoreDataForTest() {
-    const prodApp = firebase.initializeApp(firebaseConfigProd, 'prodapp');
-    const readPromises = [];
-    for (const disaster of ['2017-harvey', '2018-michael']) {
-      const documentPath = 'disaster-metadata/' + disaster;
-      const prodDisasterDoc = prodApp.firestore().doc(documentPath);
-      readPromises.push(prodDisasterDoc.get().then((result) => {
-        result.data().dummy = true;
-        return {disaster, data: result.data()};
-      }));
+    return Promise.all(promises);
+  });
+}
+
+/**
+ * Recursively deletes the given document and the documents under its
+ * subcollections, etc.
+ * @param {admin.firestore.DocumentReference} doc
+ * @return {Promise} Promise that resolves when all deletions are complete
+ */
+function deleteDocRecursively(doc) {
+  const promises = [];
+  promises.push(doc.delete());
+  promises.push(doc.listCollections().then((collections) => {
+    const collectionPromises = [];
+    for (const collection of collections) {
+      collectionPromises.push(deleteCollectionRecursively(collection));
     }
-    return Promise.all(readPromises)
-        .then((result) => perTestFirestoreData = result)
-        .then(() => null)
-        .finally(() => prodApp.delete());
+    return Promise.all(collectionPromises);
+  }));
+  return Promise.all(promises);
+}
+
+/**
+ * Recursively deletes all documents under a collection (and the documents under
+ * their subcollections, etc.).
+ * @param {admin.firestore.CollectionReference} collection
+ * @return {Promise} Promise that resolves when all deletions are complete
+ */
+function deleteCollectionRecursively(collection) {
+  return collection.get().then((queryResult) => {
+    const promises = [];
+    queryResult.forEach((doc) => promises.push(deleteDocRecursively(doc.ref)));
+    return Promise.all(promises);
+  });
+}
+
+/**
+ * Retrieves necessary data for tests to consume from prod Firebase. Called
+ * once at the start of all tests in a single test file. We add a dummy field at
+ * the top level of the document so that Firestore will deign to list this
+ * document later
+ * (https://stackoverflow.com/questions/47043651/this-document-does-not-exist-and-will-not-appear-in-queries-or-snapshots-but-id)
+ * @return {Promise<null>} Promise that completes when retrieval is done
+ */
+function retrieveFirestoreDataForTest() {
+  const prodApp = firebase.initializeApp(firebaseConfigProd, 'prodapp');
+  const readPromises = [];
+  for (const disaster of ['2017-harvey', '2018-michael']) {
+    const documentPath = 'disaster-metadata/' + disaster;
+    const prodDisasterDoc = prodApp.firestore().doc(documentPath);
+    readPromises.push(prodDisasterDoc.get().then((result) => {
+      result.data().dummy = true;
+      return {disaster, data: result.data()};
+    }));
   }
-  
-  const testPrefix = 'test/';
-  
+  return Promise.all(readPromises)
+      .then((result) => perTestFirestoreData = result)
+      .then(() => null)
+      .finally(() => prodApp.delete());
+}
+
+const testPrefix = 'test/';
