@@ -19,9 +19,10 @@ export {
   toggleLayerOff,
   toggleLayerOn,
 };
+// clang-format off
 // @VisibleForTesting
-// eslint-disable-next-line group-exports
 export {deckGlArray, layerArray, LayerDisplayData};
+// clang-format on
 
 const scoreLayerName = 'score';
 
