@@ -17,9 +17,12 @@ import {userRegionData} from './user_region_data.js';
 export {
   displayCalculatedData,
   initializeAndProcessUserRegions,
+  userFeaturesColor,
+};
+// For testing.
+export {
   StoredShapeData,
   transformGeoPointArrayToLatLng,
-  userFeaturesColor,
   userShapesCollection,
 };
 

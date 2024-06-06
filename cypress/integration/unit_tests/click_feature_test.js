@@ -87,7 +87,6 @@ describe('Unit tests for click_feature.js with map and table', () => {
       cy.stub(document, 'createElement').callsFake((tag) => {
         const result = doc.createElement(tag);
         elementsCreated.add(result);
-        // result.prototype = document.createElement(tag).prototype;
         return result;
       });
       const containerDiv = doc.createElement('div');
@@ -220,7 +219,6 @@ describe('Unit tests for click_feature.js with map and table', () => {
    * @return {Cypress.Chainable}
    */
   function assertFeatureShownOnMap(expectedFeatureCorners) {
-    cy.wait(500);
     return getDataFeatures().then((features) => {
       expect(features).to.have.length(1);
       const feature = features[0];
