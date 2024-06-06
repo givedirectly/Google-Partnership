@@ -46,7 +46,6 @@ export {
   writeAssetDataLocally,
   writeSelectAndGetPropertyNames,
 };
-
 // For testing.
 export {DAMAGE_PROPERTY_PATH, scoreBoundsMap};
 
