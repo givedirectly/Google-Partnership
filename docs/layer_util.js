@@ -11,10 +11,7 @@ export {
   addLayer,
   addNullLayer,
   addScoreLayer,
-  deckGlArray,
   DeckParams,
-  layerArray,
-  LayerDisplayData,
   redrawLayers,
   removeScoreLayer,
   scoreLayerName,
@@ -22,6 +19,9 @@ export {
   toggleLayerOff,
   toggleLayerOn,
 };
+// @VisibleForTesting
+// eslint-disable-next-line group-exports
+export {deckGlArray, layerArray, LayerDisplayData};
 
 const scoreLayerName = 'score';
 
