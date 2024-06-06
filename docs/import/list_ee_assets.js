@@ -1,7 +1,6 @@
 import {eeLegacyPathPrefix, legacyStateDir} from '../ee_paths.js';
 import {convertEeObjectToPromise} from '../ee_promise_cache.js';
 import {LayerType} from '../firebase_layers.js';
-
 import {listEeAssets} from './ee_utils.js';
 
 export {
@@ -37,7 +36,6 @@ function getStateAssetsFromEe(state) {
                              for (const attributes of assetMap.values()) {
                                attributes.disabled = attributes.type !==
                                    LayerType.FEATURE_COLLECTION;
-                               console.log(attributes);
                              }
                              return assetMap;
                            });
