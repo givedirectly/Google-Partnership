@@ -30,10 +30,9 @@ Cypress has a few very specific quirks.
     [`script_loader.js](./support/script_loader.js).
 
 *   Work that cannot be done in a browser environment can be done in a separate
-    Node environment, entered via [`plugins/index.js`](./plugins/index.js) which
-    calls into [`plugins/main.js`](./plugins/main.js). Things like reading test
-    credentials, minting tokens, etc. is done there, and propagated out to test
-    code using the `cy.task` command.
+    Node environment, entered via [`cypress.config.js`](../cypress.config.js).
+    Things like reading test credentials, minting tokens, etc. is done there,
+    and propagated out to test code using the `cy.task` command.
 
 ## Communicating with remote services
 

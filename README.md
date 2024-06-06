@@ -32,7 +32,8 @@ Repository to store the work done by Google Fellows during 2019
 *   Install `clang-format`, probably using
     [`brew install clang-format`](https://brew.sh).
 
-*   Set up auto-lint: `echo ./pre-push-hook.sh > .git/hooks/pre-push`
+*   Set up auto-lint:
+    `echo ./pre-push-hook.sh > .git/hooks/pre-push && chmod +x ./git/hooks/pre-push`
 
 *   *[Optional]* Run `./lint.sh --fix` to run clang-format and eslint on all
     relevant files and (with `--fix`) format in place. Clang-format checking and
@@ -41,10 +42,9 @@ Repository to store the work done by Google Fellows during 2019
 
 ## Running tests
 
-*   [Node](https://nodejs.org/) 12 is required to run tests. You can install it
+*   [Node](https://nodejs.org/) 20 is required to run tests. You can install it
     on Macs in various ways. The [nvm](https://github.com/nvm-sh/nvm) manager is
-    recommended. Be sure to use Node 12, not Node 13 or higher! Our test runner
-    Cypress is not compatible with Node 13.
+    recommended.
 
 *   A service account secret .json file is used to credential the test runner.
     Get the file either from a collaborator or by logging into the
@@ -61,10 +61,11 @@ Repository to store the work done by Google Fellows during 2019
 
 *   Start the local web server as described above.
 
-*   Test changes locally.
+*   Test changes locally. (`ELECTRON_ENABLE_LOGGING=1` prints the Javascript
+    console log to your terminal when running the Electron browser.)
 
     ```shell
-    yarn run cypress run # --browser chrome ## (only needed on Linux)
+    ELECTRON_ENABLE_LOGGING=1 yarn run cypress run # --browser chrome ## (only needed on Linux)
     ```
 
 *   *[Optional]* Travis CI runs on each push to a PR, unless the commit message
@@ -73,7 +74,7 @@ Repository to store the work done by Google Fellows during 2019
     Runs are recorded to the
     [Cypress dashboard](https://www.cypress.io/dashboard/).
 
-*   *[Optional]* Ask a collaborator to add you to the existing cypress dashboard
+*   *[Optional]* Ask a collaborator to add you to the existing Cypress dashboard
     for this project. The dashboard tracks Travis CI runs and provides easy
     access to output files, footage of the test being run, etc.
 
