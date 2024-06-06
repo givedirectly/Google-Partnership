@@ -47,6 +47,7 @@ export {
   writeSelectAndGetPropertyNames,
 };
 // For testing.
+// eslint-disable-next-line group-exports
 export {DAMAGE_PROPERTY_PATH, scoreBoundsMap};
 
 /**
