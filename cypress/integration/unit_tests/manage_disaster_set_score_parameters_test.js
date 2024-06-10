@@ -14,10 +14,9 @@ import {cyQueue} from '../../support/commands.js';
 import {getConvertEeObjectToPromiseRelease, setUpSavingStubs} from '../../support/import_test_util.js';
 import {loadScriptsBeforeForUnitTests} from '../../support/script_loader';
 
-// Triangle goes up into Canada, past default map of basic_map.js.
-const scoreBoundsCoordinates = [
+const defaultScoreBoundsCoordinates = [
   {lng: -95, lat: 30},
-  {lng: -90, lat: 50},
+  {lng: -90, lat: 31},
   {lng: -90, lat: 30},
 ];
 
@@ -134,7 +133,7 @@ const allMissingText = allMandatoryMissingText +
 
 it('has some disabled options', () => {
   disasterStub.returns(Promise.resolve(new Map([
-    ['asset1', {type: 1, disabled: false}],
+    ['asset1', ENABLED_COLLECTION],
     ['asset2', {type: 2, disabled: true}],
   ])));
   stateStub.withArgs('NY').returns(Promise.resolve(new Map([
@@ -142,12 +141,18 @@ it('has some disabled options', () => {
     ['state1', {disabled: true}],
   ])));
   callEnableWhenReady(createDisasterData(['NY']));
-  const stateSelector = getSelectForScoreAssetIndex(SNAP_INDEX).get('option');
-  stateSelector.eq(2).should('be.disabled');
-  stateSelector.eq(1).should('not.be.disabled');
-  const disasterSelector = getDamageSelect().get('option');
-  disasterSelector.eq(2).should('be.disabled');
-  disasterSelector.eq(1).should('not.be.disabled');
+  getSelectForScoreAssetIndex(SNAP_INDEX)
+      .find('option')
+      .eq(2)
+      .should('be.disabled')
+      .prev()
+      .should('not.be.disabled');
+  getDamageSelect()
+      .find('option')
+      .eq(2)
+      .should('be.disabled')
+      .prev()
+      .should('not.be.disabled');
 });
 
 it('Handles assets with and without geometries', () => {
@@ -211,7 +216,13 @@ it('validates asset data', () => {
       resolve();
     });
   });
-  callEnableWhenReady(setUpDefaultData());
+  // Triangle goes up into Canada, past default map of basic_map.js.
+  const scoreBoundsCoordinates = [
+    {lng: -95, lat: 30},
+    {lng: -90, lat: 50},
+    {lng: -90, lat: 30},
+  ];
+  callEnableWhenReady(setUpDefaultData(scoreBoundsCoordinates));
   // Check table is properly initialized, then do validation.
   cy.get('#asset-selection-table-body')
       .find('tr')
@@ -328,7 +339,7 @@ it('validates asset data', () => {
 it('multistate displays properly', () => {
   const assets = new Map();
   for (let i = 0; i <= 4; i++) {
-    assets.set('wy' + i, {disabled: false});
+    assets.set('wy' + i, ENABLED_COLLECTION);
   }
   stateStub.withArgs('WY').returns(Promise.resolve(assets));
   setUpDefaultData();
@@ -1464,19 +1475,28 @@ function appendElement(id, doc, tag = 'div') {
 /**
  * Injects necessary data (stubs EE function, adds state data manually) and
  * returns default data to be passed to {@link callEnableWhenReady}.
+ * @param {Array<firebase.firestore.GeoPoint>} scoreBoundsCoordinates bounds for
+ *     map
  * @return {Object} equivalent of fetch from Firestore for a single disaster
  */
-function setUpDefaultData() {
+function setUpDefaultData(
+    scoreBoundsCoordinates = defaultScoreBoundsCoordinates) {
   const assets = new Map();
   for (let i = 0; i <= 4; i++) {
     assets.set('state' + i, {disabled: false, hasGeometry: true});
   }
   stateStub.withArgs('NY').returns(Promise.resolve(assets));
-  return createDefaultStateBasedFirestoreData();
+  return createDefaultStateBasedFirestoreData(scoreBoundsCoordinates);
 }
 
-/** @return {{assetData: AssetData, layerArray: Array<*>}} */
-function createDefaultStateBasedFirestoreData() {
+/**
+ * Creates fake state-based firestore data for NY.
+ * @param {Array<firebase.firestore.GeoPoint>} scoreBoundsCoordinates bounds for
+ *     map
+ * @return {{assetData: AssetData, layerArray: Array<*>}}
+ */
+function createDefaultStateBasedFirestoreData(
+    scoreBoundsCoordinates = defaultScoreBoundsCoordinates) {
   const currentData = createDisasterData(['NY']);
   currentData.assetData.scoreBoundsCoordinates = scoreBoundsCoordinates.map(
       (latlng) => new firebase.firestore.GeoPoint(latlng.lat, latlng.lng));

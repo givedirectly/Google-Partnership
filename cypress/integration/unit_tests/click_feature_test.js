@@ -24,6 +24,7 @@ describe('Unit tests for click_feature.js with map and table', () => {
   let features;
   let scoredFeatures;
   let map;
+  const elementsCreated = new Set();
 
   before(() => {
     const feature1 = createFeatureFromCorners(...feature1Corners)
@@ -50,6 +51,20 @@ describe('Unit tests for click_feature.js with map and table', () => {
       zeroFeature.set(scoreTag, 0),
       missingPropertiesFeature.set(scoreTag, 4),
     ]);
+    // We fake out element access below using cy.document(), but cy.document()
+    // doesn't return an HTMLDocument (and its elements aren't HTMLElements)
+    // for some reason (https://github.com/cypress-io/cypress/issues/29569).
+    // To work around that, we make `instanceof HTMLElement` return true for
+    // the elements we've created.
+    const oldHasInstance = HTMLElement[Symbol.hasInstance];
+    Object.defineProperty(HTMLElement, Symbol.hasInstance, {
+      value: (elt) => {
+        if (elementsCreated.has(elt)) {
+          return true;
+        }
+        return oldHasInstance(elt);
+      },
+    });
   });
 
   beforeEach(() => {
@@ -74,8 +89,11 @@ describe('Unit tests for click_feature.js with map and table', () => {
       // Lightly fake out prod document access.
       cy.stub(document, 'getElementById')
           .callsFake((id) => doc.getElementById(id));
-      cy.stub(document, 'createElement')
-          .callsFake((tag) => doc.createElement(tag));
+      cy.stub(document, 'createElement').callsFake((tag) => {
+        const result = doc.createElement(tag);
+        elementsCreated.add(result);
+        return result;
+      });
       const containerDiv = doc.createElement('div');
       containerDiv.id = 'tableContainer';
       doc.body.appendChild(containerDiv);

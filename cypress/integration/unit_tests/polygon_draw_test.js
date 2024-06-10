@@ -26,7 +26,14 @@ const path = [{lat: 0, lng: 0}, {lat: 4, lng: 2}, {lat: 0, lng: 2}];
 const defaultData = {
   damage: 1,
   snapFraction: 0.1,
-  totalHouseholds: 1,
+  totalHouseholds: 4,
+  notes: '',
+};
+
+const modifiedData = {
+  damage: 1,
+  snapFraction: 0.1,
+  totalHouseholds: 3,
   notes: '',
 };
 
@@ -61,10 +68,10 @@ describe('Unit test for ShapeData', () => {
     saveFinishedStub = cy.stub(Toast, 'showSavedToast');
     // Default polygon intersects feature1 and feature2, not feature3.
     const feature1 = ee.Feature(
-        ee.Geometry.Polygon(0, 0, 0, 10, 10, 10, 10, 0),
+        ee.Geometry.Polygon(0, 0, 0, 10, 1.9, 10, 1.9, 0),
         {'SNAP HOUSEHOLDS': 1, 'TOTAL HOUSEHOLDS': 20});
     const feature2 = ee.Feature(
-        ee.Geometry.Polygon(10, 0, 10, 10, 20, 10, 20, 0),
+        ee.Geometry.Polygon(1.9, 0, 1.9, 10, 20, 10, 20, 0),
         {'SNAP HOUSEHOLDS': 3, 'TOTAL HOUSEHOLDS': 40});
     const feature3 = ee.Feature(
         ee.Geometry.Polygon(20, 0, 20, 10, 30, 10, 30, 0),
@@ -118,7 +125,9 @@ describe('Unit test for ShapeData', () => {
     newPath[0].lng = 0.5;
     cy.get('.notes').type(notes).then(() => getFirstFeature().setPath(newPath));
     pressButtonAndWaitForPromise('save');
-    assertOnFirestoreAndPopup(newPath, withNotes(notes));
+    const expectedData = withNotes(notes);
+    expectedData.totalHouseholds = 3;
+    assertOnFirestoreAndPopup(newPath, expectedData);
   });
 
   it('Deletes polygon', () => {
@@ -269,7 +278,12 @@ describe('Unit test for ShapeData', () => {
     // Replace ee.List so that we can have access to the returned object and
     // change its evaluate call.
     const oldList = ee.List;
-    ee.List = (list) => {
+    /**
+     * New ee.List function that delays evaluate and replaces itself.
+     * @param {Array<Object>} list objects to wrap
+     * @return {ee.List}
+     */
+    function List(list) {
       ee.List = oldList;
       const returnValue = ee.List(list);
       // Replace returnValue.evaluate so that we can delay calling the callback
@@ -282,7 +296,8 @@ describe('Unit test for ShapeData', () => {
         returnValue.evaluate(latch.delayedCallback(callback));
       };
       return returnValue;
-    };
+    }
+    ee.List = List;
     drawPolygon();
     cy.get('.popup-calculated-data').contains('calculating');
     cy.get('.popup-calculated-data')
@@ -389,7 +404,7 @@ describe('Unit test for ShapeData', () => {
       expect(this.spyResult.eeSpy).to.be.called;
       expect(this.spyResult.firestoreSpy).to.be.calledOnce;
     });
-    assertOnFirestoreAndPopup(newPath);
+    assertOnFirestoreAndPopup(newPath, modifiedData);
   });
 
   /**
@@ -417,14 +432,19 @@ describe('Unit test for ShapeData', () => {
       // Wrap ee.List so that we can track that it was called. Sadly cy.spy is
       // not delicate enough for this.
       const oldList = ee.List;
-      const trackingFunction = (list) => {
+      /**
+       * New ee.List function that notes it was called.
+       * @param {Array<Object>} list objects to wrap
+       * @return {ee.List}
+       */
+      function List(list) {
         ee.List = oldList;
         dummyObjectForSpyAssertions.eeListCall(list);
         const returnValue = ee.List(list);
-        ee.List = trackingFunction;
+        ee.List = List;
         return returnValue;
       };
-      ee.List = trackingFunction;
+      ee.List = List;
     });
     return pressPopupButton('edit').then(() => ({
                                            popupPendingCalculationSpy,
@@ -528,7 +548,7 @@ describe('Unit test for ShapeData', () => {
     waitForWriteToFinish();
     cy.get('@errorStub')
         .then((errorStub) => expect(errorStub).to.not.be.called);
-    assertOnFirestoreAndPopup(newPath);
+    assertOnFirestoreAndPopup(newPath, modifiedData);
   }
 
   it('Absence of damage asset tolerated', () => {

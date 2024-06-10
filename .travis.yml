@@ -1,6 +1,7 @@
 language: node_js
 node_js:
-  - 12.15
+# Untested with Travis, but working locally.
+  - 20.14.0
 # Dist needed for services: xvfb, which allows us to run Chromium in a "GUI".
 dist: xenial
 services:

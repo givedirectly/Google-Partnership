@@ -45,8 +45,8 @@ describe('Unit tests for ScoreBoundsMap class', () => {
           (data) =>
               storedSaves.push(data ? data.map((ll) => ll.toJSON()) : data));
     });
-    beforeEach(() => storedSaves.length = 0);
   });
+  beforeEach(() => storedSaves.length = 0);
 
   it('tests ScoreBoundsMap class', () => {
     const deleteConfirmStub = cy.stub(window, 'confirm').returns(true);
