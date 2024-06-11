@@ -1,8 +1,8 @@
 name: Presubmit
 
 on:
-  push
-  workflow_dispatch
+  push:
+  workflow_dispatch:
 jobs:
   cypress-run:
     runs-on: ubuntu-latest
