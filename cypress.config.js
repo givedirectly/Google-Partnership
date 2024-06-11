@@ -40,6 +40,7 @@ export default defineConfig({
             newArgs.push('--ignore-gpu-blacklist');
             newArgs.push('--start-maximized');
             newArgs.push('--auto-open-devtools-for-tabs');
+            newArgs.push('--enable-logging=stderr');
             launchOptions.args = newArgs;
             return launchOptions;
           }

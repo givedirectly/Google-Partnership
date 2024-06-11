@@ -25,4 +25,5 @@ jobs:
           # Prints Javascript console messages to GitHub workflow terminal.
           ELECTRON_ENABLE_LOGGING: 1
           GITHUB_WORKFLOW: 1
-        
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
