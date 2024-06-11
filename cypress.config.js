@@ -34,18 +34,18 @@ export default defineConfig({
        * acceleration for Chromium and make sure developer console is open so errors
        * are visible.
        */
-      // on('before:browser:launch', (browser = {}, launchOptions) => {
-      //     if (browser.name === 'chromium' || browser.name === 'chrome') {
-      //       const newArgs = launchOptions.args.filter((arg) => arg !== '--disable-gpu');
-      //       newArgs.push('--ignore-gpu-blacklist');
-      //       newArgs.push('--start-maximized');
-      //       newArgs.push('--auto-open-devtools-for-tabs');
-      //       // TODO(janak): Doesn't actually enable logging to the terminal.
-      //       newArgs.push('--enable-logging=stderr');
-      //       launchOptions.args = newArgs;
-      //       return launchOptions;
-      //     }
-      //   });
+      on('before:browser:launch', (browser = {}, launchOptions) => {
+          if (browser.name === 'chromium' || browser.name === 'chrome') {
+            const newArgs = launchOptions.args.filter((arg) => arg !== '--disable-gpu');
+            newArgs.push('--ignore-gpu-blacklist');
+            newArgs.push('--start-maximized');
+            newArgs.push('--auto-open-devtools-for-tabs');
+            // TODO(janak): Doesn't actually enable logging to the terminal.
+            newArgs.push('--enable-logging=stderr');
+            launchOptions.args = newArgs;
+            return launchOptions;
+          }
+        });
   /**
    * Defines "tasks" that can be run using cy.task(). The name of each task is
    * the function name. These tasks are invoked in cypress/support/index.js in a
