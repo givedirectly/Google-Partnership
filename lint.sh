@@ -12,7 +12,7 @@ readonly first_arg="$1"
 readonly modified_js_files="$(git diff --diff-filter=d --name-only master \
     'admin_utils/*.js' 'docs/*.js' 'token_server/*.js' \
     'cypress/integration/*.js' 'cypress/support/*.js' 'cypress/plugins/*.js' \
-    ':!docs/external_libs')"
+    '*.js' ':!docs/external_libs')"
 if [[ "$modified_js_files" ]]; then
   if clang-format --style=Google -output-replacements-xml $modified_js_files \
       | grep -c '<replacement ' >/dev/null; then
