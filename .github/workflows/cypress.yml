@@ -7,7 +7,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Populate service account
+      - name: Populate service account file
         run: |
           cat <<EOF > service_account.json
           ${{ secrets.TESTING_SERVICE_ACCOUNT_SECRET_JSON }}
