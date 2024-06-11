@@ -19,7 +19,7 @@ jobs:
         with:
           record: true
           parallel: true
-          container: [1, 2, 3, 4, 5]
+          containers: [1, 2, 3, 4, 5]
           build: yarn install
           start: yarn run ws --directory docs --port 8080
         env:
