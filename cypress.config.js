@@ -85,6 +85,7 @@ export default defineConfig({
       const currentApp = createTestFirebaseAdminApp();
       const deleteOldPromise = deleteAllOldTestData(currentApp);
       const result = currentApp.auth().createCustomToken(TEST_FIRESTORE_USER);
+      cy.task('logg', 'here we go initialize');
       return Promise
           .all([result, deleteOldPromise, retrieveFirestoreDataForTest()])
           .then((list) => firestoreUserToken = list[0])
@@ -138,6 +139,16 @@ export default defineConfig({
       const currentApp = createTestFirebaseAdminApp();
       const result = deleteTestData(currentTestRoot, currentApp);
       return result.then(() => null).finally(() => currentApp.delete());
+    },
+    /**
+     * Debugging function that allows us to see output from Cypress in the
+     * (Travis) console versus in the browser.
+     * @param {string} str
+     * @return {null}
+     */
+    logg(str) {
+      console.log(str);
+      return null;
     },
   });
     
