@@ -85,7 +85,6 @@ export default defineConfig({
       const currentApp = createTestFirebaseAdminApp();
       const deleteOldPromise = deleteAllOldTestData(currentApp);
       const result = currentApp.auth().createCustomToken(TEST_FIRESTORE_USER);
-      cy.task('logg', 'here we go initialize');
       return Promise
           .all([result, deleteOldPromise, retrieveFirestoreDataForTest()])
           .then((list) => firestoreUserToken = list[0])
