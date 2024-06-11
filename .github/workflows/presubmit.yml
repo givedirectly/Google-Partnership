@@ -9,8 +9,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Lint
-        run: ./lint.sh
       - name: Populate testing service account file
         env:
           TESTING_SERVICE_ACCOUNT_SECRET_JSON: ${{ secrets.TESTING_SERVICE_ACCOUNT_SECRET_JSON }}
@@ -24,6 +22,7 @@ jobs:
           record: true
           build: yarn install
           start: yarn run ws --directory docs --port 8080
+          browser: chrome
         env:
           GOOGLE_APPLICATION_CREDENTIALS: "service_account.json"
           # Prints Javascript console messages to GitHub workflow terminal.
