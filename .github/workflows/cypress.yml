@@ -10,7 +10,7 @@ jobs:
       - name: Populate service account
         run: |
           cat <<EOF > service_account.json
-          ${{ secrets.TESTING_SERVICE_ACCOUNT_SECRET_JSON }}
+          ${{ secrets.TESTSECRET }}
           EOF
       - name: Cypress run
         uses: cypress-io/github-action@v6
