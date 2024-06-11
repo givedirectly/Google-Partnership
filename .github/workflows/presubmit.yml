@@ -10,6 +10,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - Install modules
+        run: yarn
       - name: Lint
         run: |
           git fetch origin master --depth 1
@@ -27,7 +29,6 @@ jobs:
         uses: cypress-io/github-action@v6
         with:
           record: true
-          build: yarn install
           start: yarn run ws --directory docs --port 8080
         env:
           GOOGLE_APPLICATION_CREDENTIALS: "service_account.json"
