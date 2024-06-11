@@ -12,8 +12,9 @@ jobs:
         uses: actions/checkout@v4
       - name: Lint
         run: |
-          git fetch origin master
+          git fetch origin master --depth 1
           git checkout master
+          git checkout '@{-1}'
           ./lint.sh
       - name: Populate testing service account file
         env:
