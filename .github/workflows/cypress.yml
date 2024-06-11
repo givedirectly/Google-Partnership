@@ -8,7 +8,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Populate service account
-        run: echo hi
+        run: echo ${{ secrets.TESTING_SERVICE_ACCOUNT_SECRET_JSON}}
       - name: Cypress run
         uses: cypress-io/github-action@v6
         with:
