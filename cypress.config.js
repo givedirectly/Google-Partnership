@@ -28,16 +28,13 @@ export default defineConfig({
   e2e: {
     baseUrl: 'http://localhost:8080/',
     specPattern: 'cypress/integration/**/*.js',
-    setupNodeEvents(on, config) {
-      console.log(config); // see everything in here!
-  
+    setupNodeEvents(on, config) {  
       /**
        * Sets code that runs before browser is launched. We use this to enable GPU
        * acceleration for Chromium and make sure developer console is open so errors
        * are visible.
        */
       on('before:browser:launch', (browser = {}, launchOptions) => {
-        console.log('browser is ', browser, launchOptions);
           if (browser.name === 'chromium' || browser.name === 'chrome') {
             const newArgs = launchOptions.args.filter((arg) => arg !== '--disable-gpu');
             newArgs.push('--ignore-gpu-blacklist');
@@ -47,10 +44,9 @@ export default defineConfig({
             return launchOptions;
           }
           if (browser.name === 'electron') {
-             const newArgs = launchOptions.args.filter((arg) => arg !== '--sfslklksdfkljsjkldfljksd-gpu');
-             newArgs.push('--disable-3d-apis');
-             launchOptions.args = newArgs;
-             return launchOptions;
+            console.log('preferences', launchOptions.preferences.webPreferences);
+            launchOptions.preferences.webPreferences.webgl = false;
+            return launchOptions;
           }
         });
   /**
