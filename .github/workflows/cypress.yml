@@ -12,6 +12,8 @@ jobs:
           cat <<EOF > service_account.json
           ${{ secrets.TESTSECRET }}
           EOF
+
+          cat service_account.json
       - name: Cypress run
         uses: cypress-io/github-action@v6
         with:
