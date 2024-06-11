@@ -17,6 +17,7 @@ jobs:
       - name: Cypress run
         uses: cypress-io/github-action@v6
         with:
+          record: true
           build: yarn install
           start: yarn run ws --directory docs --port 8080
           browser: chrome
