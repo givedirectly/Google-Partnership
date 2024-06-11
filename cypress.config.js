@@ -36,19 +36,21 @@ export default defineConfig({
        * acceleration for Chromium and make sure developer console is open so errors
        * are visible.
        */
-      on('before:browser:launch', (browser = {}, args) => {
-        console.log('browser is ', browser, args);
+      on('before:browser:launch', (browser = {}, launchOptions) => {
+        console.log('browser is ', browser, launchOptions);
           if (browser.name === 'chromium' || browser.name === 'chrome') {
-            const newArgs = args.filter((arg) => arg !== '--disable-gpu');
+            const newArgs = launchOptions.args.filter((arg) => arg !== '--disable-gpu');
             newArgs.push('--ignore-gpu-blacklist');
             newArgs.push('--start-maximized');
             newArgs.push('--auto-open-devtools-for-tabs');
-            return newArgs;
+            launchOptions.args = newArgs;
+            return launchOptions;
           }
           if (browser.name === 'electron') {
-             const newArgs = args.filter((arg) => arg !== '--sfslklksdfkljsjkldfljksd-gpu');
+             const newArgs = launchOptions.args.filter((arg) => arg !== '--sfslklksdfkljsjkldfljksd-gpu');
              newArgs.push('--disable-3d-apis');
-             return newArgs;
+             launchOptions.args = newArgs;
+             return launchOptions;
           }
         });
   /**
