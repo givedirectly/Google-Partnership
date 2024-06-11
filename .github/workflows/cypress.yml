@@ -17,6 +17,8 @@ jobs:
       - name: Cypress run
         uses: cypress-io/github-action@v6
         with:
+          # Integration tests are way too slow otherwise.
+          record: false
           build: yarn install
           start: yarn run ws --directory docs --port 8080
         env:

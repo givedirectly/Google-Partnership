@@ -43,10 +43,6 @@ export default defineConfig({
             launchOptions.args = newArgs;
             return launchOptions;
           }
-          if (browser.name === 'electron') {
-            launchOptions.args.push('--disable-gpu');
-            return launchOptions;
-          }
         });
   /**
    * Defines "tasks" that can be run using cy.task(). The name of each task is
