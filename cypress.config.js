@@ -37,12 +37,18 @@ export default defineConfig({
        * are visible.
        */
       on('before:browser:launch', (browser = {}, args) => {
+        console.log('browser is ', browser, args);
           if (browser.name === 'chromium' || browser.name === 'chrome') {
             const newArgs = args.filter((arg) => arg !== '--disable-gpu');
             newArgs.push('--ignore-gpu-blacklist');
             newArgs.push('--start-maximized');
             newArgs.push('--auto-open-devtools-for-tabs');
             return newArgs;
+          }
+          if (browser.name === 'electron') {
+             const newArgs = args.filter((arg) => arg !== '--sfslklksdfkljsjkldfljksd-gpu');
+             newArgs.push('--disable-3d-apis');
+             return newArgs;
           }
         });
   /**
@@ -138,16 +144,6 @@ export default defineConfig({
       const currentApp = createTestFirebaseAdminApp();
       const result = deleteTestData(currentTestRoot, currentApp);
       return result.then(() => null).finally(() => currentApp.delete());
-    },
-    /**
-     * Debugging function that allows us to see output from Cypress in the
-     * (Travis) console versus in the browser.
-     * @param {string} str
-     * @return {null}
-     */
-    logg(str) {
-      console.log(str);
-      return null;
     },
   });
     

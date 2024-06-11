@@ -68,15 +68,9 @@ Repository to store the work done by Google Fellows during 2019
     ELECTRON_ENABLE_LOGGING=1 yarn run cypress run # --browser chrome ## (only needed on Linux)
     ```
 
-*   *[Optional]* Travis CI runs on each push to a PR, unless the commit message
-    has '[skip ci]' inside it. You can trigger a run manually from the
-    [Travis main page](https://travis-ci.com/givedirectly/Google-Partnership).
-    Runs are recorded to the
-    [Cypress dashboard](https://www.cypress.io/dashboard/).
-
 *   *[Optional]* Ask a collaborator to add you to the existing Cypress dashboard
-    for this project. The dashboard tracks Travis CI runs and provides easy
-    access to output files, footage of the test being run, etc.
+    for this project. The dashboard provides easy access to output files,
+    footage of the test being run, etc.
 
 *   *[Optional]* If you are running on Linux and seeing issues with Chrome, or
     working on a Google internal machine, install and use

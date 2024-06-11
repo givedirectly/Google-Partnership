@@ -146,10 +146,9 @@ assert against it.
 
 ### Set up test account
 
-In order to successfully run tests, locally or on
-[Travis CI](https://travis-ci.com/givedirectly/Google-Partnership/), a Test
-account must be set up, and developers and Travis must have access to its
-credentials. The current Test account is
+In order to successfully run tests, locally or on a GitHub workflow, a Test
+account must be set up, and developers and the GitHub workflow must have access
+to its credentials. The current Test account is
 `gd-earthengine-test-user@givedirectly.org`.
 
 -  If you need to create a new Test account, follow the first four steps of

@@ -7,11 +7,12 @@ global.tableClass = '.google-visualization-table-table';
 // specific block groups and damage points.
 beforeEach(() => window.localStorage.setItem('disaster', '2017-harvey'));
 
-// On Travis, the "runner" screenshot only has the error message, not the page.
-// Grab a screenshot of the page as well.
+// If the  "runner" screenshot only has the error message, not the page,
+// grab a screenshot of the page as well.
+// TODO(janak): is this actually necessary/useful still?
 afterEach(function() {
   // eslint-disable-next-line no-invalid-this
-  if (this.currentTest.state === 'failed' && Cypress.env('ON_TRAVIS') &&
+  if (this.currentTest.state === 'failed' && Cypress.env('GITHUB_WORKFLOW') &&
       Cypress.browser.name !== 'electron') {
     cy.screenshot({capture: 'viewport'});
   }

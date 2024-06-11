@@ -23,4 +23,5 @@ jobs:
           GOOGLE_APPLICATION_CREDENTIALS: "service_account.json"
           # Prints Javascript console messages to GitHub workflow terminal.
           ELECTRON_ENABLE_LOGGING: 1
+          GITHUB_WORKFLOW: 1
         
