@@ -17,9 +17,6 @@ jobs:
       - name: Cypress run
         uses: cypress-io/github-action@v6
         with:
-          record: true
-          parallel: true
-          containers: [1, 2, 3, 4, 5]
           build: yarn install
           start: yarn run ws --directory docs --port 8080
         env:
