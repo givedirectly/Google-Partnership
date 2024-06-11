@@ -179,7 +179,6 @@ function addFirebaseHooks() {
   });
   let currentTestRoot = null;
   beforeEach(() => {
-    cy.task('logg', 'here we go again');
     currentTestRoot = testPrefix + Math.random();
     cy.task('populateTestFirestoreData', currentTestRoot);
     window.localStorage.setItem(cypressTestPropertyName, currentTestRoot);
