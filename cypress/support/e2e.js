@@ -11,7 +11,6 @@ beforeEach(() => window.localStorage.setItem('disaster', '2017-harvey'));
 // grab a screenshot of the page as well.
 // TODO(janak): is this actually necessary/useful still?
 afterEach(function() {
-  cy.task('logg', 'here we go after each');
   // eslint-disable-next-line no-invalid-this
   if (this.currentTest.state === 'failed' && Cypress.env('GITHUB_WORKFLOW') &&
       Cypress.browser.name !== 'electron') {

@@ -141,7 +141,7 @@ export default defineConfig({
     },
     /**
      * Debugging function that allows us to see output from Cypress in the
-     * (Travis) console versus in the browser.
+     * CI console versus in the browser.
      * @param {string} str
      * @return {null}
      */
