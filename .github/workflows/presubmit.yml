@@ -5,7 +5,7 @@ on:
   # Can be triggered manually.
   workflow_dispatch:
 jobs:
-  cypress-run:
+  presubmit:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

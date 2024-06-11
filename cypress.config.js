@@ -29,7 +29,7 @@ export default defineConfig({
   e2e: {
     baseUrl: 'http://localhost:8080/',
     specPattern: 'cypress/integration/**/*.js',
-  setupNodeEvents(on, config) {
+    setupNodeEvents(on, config) {
       /**
        * Sets code that runs before browser is launched. We use this to enable
        * GPU acceleration for Chromium and make sure developer console is open
