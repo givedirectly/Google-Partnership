@@ -13,6 +13,8 @@ jobs:
       - name: Install modules
         run: yarn
       - name: Lint
+        # This is ugly, but seems like the easiest way to just fetch 'master'
+        # and then run the linter, which diffs against the master branch.
         run: |
           git fetch origin master --depth 1
           git checkout master
