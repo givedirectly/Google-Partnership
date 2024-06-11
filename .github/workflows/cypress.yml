@@ -7,7 +7,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Populate service account file
+      - name: Populate testing service account file
         env:
           TESTING_SERVICE_ACCOUNT_SECRET_JSON: ${{ secrets.TESTING_SERVICE_ACCOUNT_SECRET_JSON }}
         run: |
