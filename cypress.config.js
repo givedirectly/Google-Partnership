@@ -44,8 +44,7 @@ export default defineConfig({
             return launchOptions;
           }
           if (browser.name === 'electron') {
-            console.log('preferences', launchOptions.preferences.webPreferences);
-            launchOptions.preferences.webPreferences.webgl = false;
+            launchOptions.args.push('--disable-gpu');
             return launchOptions;
           }
         });
