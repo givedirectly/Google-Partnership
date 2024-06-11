@@ -8,7 +8,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Populate service account
-        run: cat <<EOF > service_account.json
+        run: |
+          cat <<EOF > service_account.json
           ${{ secrets.TESTING_SERVICE_ACCOUNT_SECRET_JSON}}
           EOF
       - name: Cypress run
