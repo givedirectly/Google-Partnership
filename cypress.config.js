@@ -170,10 +170,10 @@ export default defineConfig({
           // Do we have failures for any retry attempts?
           const failures = results.tests.some(
               (test) =>
-                  test.attempts.some((attempt) => attempt.state === 'failed'))
+                  test.attempts.some((attempt) => attempt.state === 'failed'));
           if (!failures) {
             // delete the video if the spec passed and no tests retried
-            fs.unlinkSync(results.video)
+            fs.unlinkSync(results.video);
           }
         }
       });
