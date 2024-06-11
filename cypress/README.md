@@ -38,9 +38,9 @@ Cypress has a few very specific quirks.
 
 Our tests have to communicate with production services: Firestore, EarthEngine,
 Google Maps. In order to authenticate, we store credentials for a test user
-(`gd-earthengine-test-user@givedirectly.org`) on Travis and locally on developer
-workstations. During the test, we mint access tokens using these credentials and
-use them in tests.
+(`gd-earthengine-test-user@givedirectly.org`) as a GitHub secret and locally on
+developer workstations. During the test, we mint access tokens using these
+credentials and use them in tests.
 
 For Firestore access, we copy production Firestore data for 2017-harvey and
 2018-michael to a test database. This depends on the production database being

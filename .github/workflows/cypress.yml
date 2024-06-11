@@ -21,4 +21,6 @@ jobs:
           start: yarn run ws --directory docs --port 8080
         env:
           GOOGLE_APPLICATION_CREDENTIALS: "service_account.json"
+          # Prints Javascript console messages to GitHub workflow terminal.
+          ELECTRON_ENABLE_LOGGING: 1
         
