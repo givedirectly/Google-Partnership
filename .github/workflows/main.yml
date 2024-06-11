@@ -7,14 +7,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Populate service account
-        env:
-        run: cat <<EOF > service_account.json
-        ${{ secrets.TESTING_SERVICE_ACCOUNT_SECRET_JSON}}
-        EOF
-
-        echo "cat service_account.json"
-        cat service_account.json
       - name: Cypress run
         uses: cypress-io/github-action@v6
         with:
