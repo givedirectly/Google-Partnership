@@ -25,7 +25,9 @@ let firestoreUserToken;
 
 export default defineConfig({
   projectId: 'jr8ks8',
+  record: false,
   e2e: {
+    record: false,
     baseUrl: 'http://localhost:8080/',
     specPattern: 'cypress/integration/**/*.js',
     setupNodeEvents(on, config) {  
