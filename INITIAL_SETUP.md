@@ -146,10 +146,9 @@ assert against it.
 
 ### Set up test account
 
-In order to successfully run tests, locally or on
-[Travis CI](https://travis-ci.com/givedirectly/Google-Partnership/), a Test
-account must be set up, and developers and Travis must have access to its
-credentials. The current Test account is
+In order to successfully run tests, locally or on a GitHub workflow, a Test
+account must be set up, and developers and the GitHub workflow must have access
+to its credentials. The current Test account is
 `gd-earthengine-test-user@givedirectly.org`.
 
 -  If you need to create a new Test account, follow the first four steps of
@@ -175,23 +174,34 @@ credentials. The current Test account is
 -  Distribute the downloaded JSON file to team members. Alternately, each of
    them can generate their own.
 
--  Generate another private key, and temporarily move it into the root of the
-   repository (as a sibling of this file), and name it `service_account.json`.
+-  Generate another private key.
 
--  Set up the
-   [`travis` command-line tool](https://github.com/travis-ci/travis.rb#readme).
-   (`janakr@` found it easier to install it on a Mac than (Google-issued) Linux
-   machine.)
+-  If you are an administrator of the repository, put the contents of the private
+  key (as JSON) in a secret named `TESTING_SERVICE_ACCOUNT_SECRET_JSON`
+  following
+  [these instructions](https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions#creating-secrets-for-a-repository).
 
--  Run the command `travis encrypt-file ./service_account.json --com`.
+-  If you are not an administrator, but only a collaborator, then set up the
+   [`gh` command-line tool](https://cli.github.com/). Follow the standard
+   instructions there to authenticate.
 
--  Edit the [.travis.yml](./.travis.yml) file. Add the line output by the last
-   command to the `before_install` section, but edited so that instead of
-   `-out ./service_account.json`, it reads
-   `-out $GOOGLE_APPLICATION_CREDENTIALS`.
+   -  Get the organization public key following
+      [these instructions](https://docs.github.com/en/rest/actions/secrets#get-an-organization-public-key).
+      Also note the `key_id` returned here.
 
--  Commit, push, and merge this change, including the new file
-   `service_account.json.enc`.
+   -  Encrypt the private key generated above using [these instructions](https://docs.github.com/en/rest/guides/encrypting-secrets-for-the-rest-api#example-encrypting-a-secret-using-python),
+      with the public key you retrieved just now.
+
+   -  Create a repository secret called `TESTING_SERVICE_ACCOUNT_SECRET_JSON`
+      using [these instructions](https://docs.github.com/en/rest/actions/secrets#create-or-update-a-repository-secret),
+      with `key_id` the id that was returned along with the public key above and
+      value the encrypted private key.
+
+-  To record GitHub workflow runs to the Cypress Cloud dashboard, go to
+   https://cloud.cypress.io/projects/jr8ks8/settings/general (or the settings
+   of the project if you've created a new one) and copy a "record key". Store it
+   as a GitHub secret called `CYPRESS_RECORD_KEY`, following the instructions
+   above.
 
 -  [Enable EarthEngine API](https://console.cloud.google.com/apis/api/earthengine.googleapis.com/overview)
    for Test account in the developer console.

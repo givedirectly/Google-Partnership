@@ -59,7 +59,7 @@ function drawPolygonAndClickOnIt() {
   // string was derived by inspecting the page after starting to draw a polygon.
   cy.get(
       'div[style*="cursor: url(\\"https://maps.gstatic.com/mapfiles/crosshair.cur\\") 7 7, crosshair;"]');
-  // Without this, seeing flaky failures on Travis where first point is off map.
+  // Without this, seeing flaky failures on CI where first point is off map.
   cy.wait(hackyWaitTime);
   drawPointAndPrepareForNext(150, 650);
   cy.wait(hackyWaitTime);
