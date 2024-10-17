@@ -65,6 +65,9 @@ function combineWithDamage(
     let damageForDistrict =
         ee.FeatureCollection(damage).filterBounds(f.geometry());
     if (noDamageKey) {
+      const buildingCountFromDamage = damageForDistrict.size();
+      const originalBuildingCount = f.getNumber(buildingKey);
+      f.set(buildingKey, ee.Algorithms.If(buildingCountFromDamage.gt(originalBuildingCount), buildingCountFromDamage, originalBuildingCount));
       damageForDistrict = damageForDistrict.filterMetadata(
           noDamageKey, 'not_equals', noDamageValue);
     }
