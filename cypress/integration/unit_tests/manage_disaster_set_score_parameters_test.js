@@ -412,44 +412,59 @@ it('does column verification', () => {
       {'GEOid': 0, 'GEOdisplay-label': 0, 'HD01_VD01': 0, 'HD01_VD02': 0})]);
   const goodNewSnapFeature = ee.FeatureCollection([ee.Feature(
       null, {'GEO_ID': 0, 'NAME': 0, 'B22010_001E': 0, 'B22010_002E': 0})]);
+  // U+200C: zero-width character, doesn't print as anything.
+  const nonAsciiColumnFeature = ee.FeatureCollection([ee.Feature(
+      null, {'\u200CGEO_ID': 0, 'NAME': 0, 'B22010_001E': 0, 'B22010_002E': 0})]);
 
   const featureCollectionStub = cy.stub(ee, 'FeatureCollection');
   featureCollectionStub.withArgs('state0').returns(goodIncomeBadSnapFeature);
   featureCollectionStub.withArgs('state1').returns(goodNewIncomeBadSnapFeature);
+  // featureCollectionStub.withArgs('state2').returns(goodIncomeBadSnapFeature);
   featureCollectionStub.withArgs('state2').returns(goodSnapFeature);
   featureCollectionStub.withArgs('state3').returns(goodNewSnapFeature);
+  featureCollectionStub.withArgs('state4').returns(nonAsciiColumnFeature);
 
   // None -> bad
   setSelectWithDelayedEvaluate(0, 'state0', 'NY');
   checkSelectBorder(SNAP_INDEX, 'rgb(255, 0, 0)');
   checkHoverText(
       SNAP_INDEX,
-      'Error! asset does not have all expected columns: ' +
-          '[GEO_ID,NAME,B22010_002E,B22010_001E] or ' +
-          '[GEOid,GEOdisplay-label,HD01_VD02,HD01_VD01]');
+      'Error! asset is missing columns for all 2 possibilities ' +
+          'for valid columns:\n' +
+          '* [GEOid,GEOdisplay-label,HD01_VD02,HD01_VD01] ' +
+          '(missing GEOdisplay-label,HD01_VD02)\n' +
+          '* [GEO_ID,NAME,B22010_002E,B22010_001E] ' +
+          '(missing GEO_ID,NAME,B22010_002E,B22010_001E)\n');
 
   // bad -> bad
   setSelectWithDelayedEvaluate(0, 'state1', 'NY');
   checkSelectBorder(SNAP_INDEX, 'rgb(255, 0, 0)');
   checkHoverText(
       SNAP_INDEX,
-      'Error! asset does not have all expected columns: ' +
-          '[GEO_ID,NAME,B22010_002E,B22010_001E] or ' +
-          '[GEOid,GEOdisplay-label,HD01_VD02,HD01_VD01]');
+      'Error! asset is missing columns for all 2 possibilities ' +
+          'for valid columns:\n' +
+          '* [GEO_ID,NAME,B22010_002E,B22010_001E] ' +
+          '(missing NAME,B22010_002E,B22010_001E)\n' +
+          '* [GEOid,GEOdisplay-label,HD01_VD02,HD01_VD01] ' +
+          '(missing GEOid,GEOdisplay-label,HD01_VD02,HD01_VD01)\n');
 
   // bad -> good
   setSelectWithDelayedEvaluate(0, 'state2', 'NY');
   checkSelectBorder(SNAP_INDEX, 'rgb(0, 255, 0)');
   checkHoverText(SNAP_INDEX, 'Success! asset has all expected columns');
 
-  // good -> bad
-  setSelectWithDelayedEvaluate(0, 'state0', 'NY');
+  // good -> bad, non-ascii
+  setSelectWithDelayedEvaluate(0, 'state4', 'NY');
   checkSelectBorder(SNAP_INDEX, 'rgb(255, 0, 0)');
   checkHoverText(
       SNAP_INDEX,
-      'Error! asset does not have all expected columns: ' +
-          '[GEO_ID,NAME,B22010_002E,B22010_001E] or ' +
-          '[GEOid,GEOdisplay-label,HD01_VD02,HD01_VD01]');
+     'Error! asset is missing columns for all 2 possibilities ' +
+     'for valid columns:\n' +
+     '* [GEO_ID,NAME,B22010_002E,B22010_001E] ' +
+     '(missing GEO_ID)\n' +
+     '* [GEOid,GEOdisplay-label,HD01_VD02,HD01_VD01] ' +
+     '(missing GEOid,GEOdisplay-label,HD01_VD02,HD01_VD01)\n' +
+     'Columns with non-ascii characters: \u200CGEO_ID');
 
   // new good
   setSelectWithDelayedEvaluate(0, 'state3', 'NY');
@@ -474,8 +489,6 @@ it('does column verification', () => {
 
 
   // No expected rows
-  featureCollectionStub.withArgs('state4').callsFake(
-      () => goodIncomeBadSnapFeature);
   setSelectWithDelayedEvaluate(4, 'state0', 'NY');
 
   checkSelectBorder(BUILDINGS_INDEX, 'rgb(0, 255, 0)');
@@ -524,9 +537,12 @@ it('has two racing sets on same selector', () => {
   checkSelectBorder(SNAP_INDEX, 'rgb(255, 0, 0)');
   checkHoverText(
       SNAP_INDEX,
-      'Error! asset does not have all expected columns: ' +
-          '[GEO_ID,NAME,B22010_002E,B22010_001E] or ' +
-          '[GEOid,GEOdisplay-label,HD01_VD02,HD01_VD01]');
+      'Error! asset is missing columns for all 2 possibilities ' +
+      'for valid columns:\n' +
+      '* [GEOid,GEOdisplay-label,HD01_VD02,HD01_VD01] ' +
+      '(missing GEOdisplay-label,HD01_VD02)\n' +
+      '* [GEO_ID,NAME,B22010_002E,B22010_001E] ' +
+      '(missing GEO_ID,NAME,B22010_002E,B22010_001E)\n');
 
   // now do opposite order
   cyQueue(() => {
@@ -543,16 +559,22 @@ it('has two racing sets on same selector', () => {
   checkSelectBorder(SNAP_INDEX, 'rgb(255, 0, 0)');
   checkHoverText(
       SNAP_INDEX,
-      'Error! asset does not have all expected columns: ' +
-          '[GEO_ID,NAME,B22010_002E,B22010_001E] or ' +
-          '[GEOid,GEOdisplay-label,HD01_VD02,HD01_VD01]')
+          'Error! asset is missing columns for all 2 possibilities ' +
+          'for valid columns:\n' +
+          '* [GEOid,GEOdisplay-label,HD01_VD02,HD01_VD01] ' +
+          '(missing GEOdisplay-label,HD01_VD02)\n' +
+          '* [GEO_ID,NAME,B22010_002E,B22010_001E] ' +
+          '(missing GEO_ID,NAME,B22010_002E,B22010_001E)\n')
       .then(() => firstRelease());
   checkSelectBorder(SNAP_INDEX, 'rgb(255, 0, 0)');
   checkHoverText(
       SNAP_INDEX,
-      'Error! asset does not have all expected columns: ' +
-          '[GEO_ID,NAME,B22010_002E,B22010_001E] or ' +
-          '[GEOid,GEOdisplay-label,HD01_VD02,HD01_VD01]');
+          'Error! asset is missing columns for all 2 possibilities ' +
+          'for valid columns:\n' +
+          '* [GEOid,GEOdisplay-label,HD01_VD02,HD01_VD01] ' +
+          '(missing GEOdisplay-label,HD01_VD02)\n' +
+          '* [GEO_ID,NAME,B22010_002E,B22010_001E] ' +
+          '(missing GEO_ID,NAME,B22010_002E,B22010_001E)\n');
 });
 
 it('shows pending then values for state-based disaster, damage cascades',

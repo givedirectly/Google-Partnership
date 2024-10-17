@@ -69,6 +69,8 @@ const DAMAGE_PROPERTY_PATH = Object.freeze(['damageAssetPath']);
 
 const damageAssetChecker = new PendingChecker();
 
+const asciiRegex = /^[ -~]+$/;
+
 /**
  * Does all initialization for damage asset and related fields. Creates damage
  * select, no-damage column and value, puts everything in a pending state but
@@ -419,34 +421,61 @@ async function verifyAsset(propertyPath, expectedColumns) {
           select, 'green', expectedColumns ? 'No expected columns' : '');
       return result;
     }
+    const badColumns = [];
+    for (const column of result) {
+      if (!asciiRegex.test(column)) {
+        badColumns.push(column);
+      }
+    }
+    console.log(asset, result);
     const presentColumns = new Set(result);
     if (Array.isArray(expectedColumns[0])) {
-      outerLoop: for (const columns of expectedColumns) {
+      const missingColumns = [];
+      let curMissingColumns = [];
+      let i = 0;
+      for (const columns of expectedColumns) {
         for (const column of columns) {
           if (!presentColumns.has(column)) {
-            continue outerLoop;
+            curMissingColumns.push(column);
           }
         }
+        if (curMissingColumns.length == 0) {
+          updateColorAndHover(
+              select, 'green', 'Success! asset has all expected columns');
+          return result;
+        } else {
+          missingColumns.push([curMissingColumns, i++]);
+          curMissingColumns = [];
+        }
+      }
+      missingColumns.sort(function(left, right) {
+        return left[0].length < right[0].length ? -1 : 1;
+      });
+      let errStr = 'Error! asset is missing columns for all ' + expectedColumns.length + ' possibilities for valid columns:\n';
+      for (const [missing, ind] of missingColumns) {
+        errStr += '* [' + expectedColumns[ind] + '] (missing ' + missing + ')\n';
+      }
+      if (badColumns.length > 0) {
+        errStr += 'Columns with non-ascii characters: ' + badColumns;
+      }
+      updateColorAndHover(select, 'red', errStr);
+    } else {
+      const missingColumns = [];
+      for (const column of expectedColumns) {
+        if (!presentColumns.has(column)) {
+          missingColumns.push(column);
+        }
+      }
+      if (missingColumns.length == 0) {
         updateColorAndHover(
             select, 'green', 'Success! asset has all expected columns');
         return result;
       }
-      updateColorAndHover(
-          select, 'red',
-          'Error! asset does not have all expected columns: ' +
-              '[' + expectedColumns.join('] or [') + ']');
-    } else {
-      for (const column of expectedColumns) {
-        if (!presentColumns.has(column)) {
-          updateColorAndHover(
-              select, 'red',
-              'Error! asset does not have all expected columns: ' +
-                  expectedColumns);
-          return result;
-        }
+      let errStr = 'Error! asset does not have all expected columns: ' + expectedColumns + ' (missing ' + missingColumns + ')';
+      if (badColumns.length > 0) {
+        errStr += 'Columns with non-ascii characters: ' + badColumns;
       }
-      updateColorAndHover(
-          select, 'green', 'Success! asset has all expected columns');
+      updateColorAndHover(select, 'red', errStr);
       return result;
     }
   }
