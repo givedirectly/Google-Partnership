@@ -46,9 +46,8 @@ export {
   writeAssetDataLocally,
   writeSelectAndGetPropertyNames,
 };
-
 // clang-format off
-// For testing.
+// @VisibleForTesting
 export {DAMAGE_PROPERTY_PATH, scoreBoundsMap};
 // clang-format on
 
