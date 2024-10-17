@@ -3,6 +3,7 @@ import {disasterDocumentReference} from '../firestore_document.js';
 import {inProduction} from '../in_test_util.js';
 import {damageTag, geoidTag, povertyHouseholdsTag, totalHouseholdsTag} from '../property_names.js';
 import {getBackupScoreAssetPath, getDisaster, getScoreAssetPath} from '../resources.js';
+
 import {computeAndSaveBounds} from './center.js';
 import {BUILDING_COUNT_KEY, BuildingSource} from './create_disaster_lib.js';
 import {backupCensusBlockGroupKey, backupCensusGeoidKey, backupIncomeKey, backupSnapKey, backupTotalKey, cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, incomeKey, snapKey, sviKey, tigerGeoidKey, totalKey} from './state_based_key_names.js';
@@ -12,9 +13,10 @@ export {
   createScoreAssetForStateBasedDisaster,
   setStatus,
 };
-
-// For testing.
+// clang-format off
+// @VisibleForTesting
 export {backUpAssetAndStartTask, renameProperty};
+// clang-format on
 
 // State-based tags.
 
@@ -65,6 +67,15 @@ function combineWithDamage(
     let damageForDistrict =
         ee.FeatureCollection(damage).filterBounds(f.geometry());
     if (noDamageKey) {
+      // If the damage asset knows about all buildings, use it as the source of
+      // truth if it has more buildings than the buildings asset's count.
+      const buildingCountFromDamage = damageForDistrict.size();
+      const originalBuildingCount = f.getNumber(buildingKey);
+      f.set(
+          buildingKey,
+          ee.Algorithms.If(
+              buildingCountFromDamage.gt(originalBuildingCount),
+              buildingCountFromDamage, originalBuildingCount));
       damageForDistrict = damageForDistrict.filterMetadata(
           noDamageKey, 'not_equals', noDamageValue);
     }
