@@ -18,6 +18,7 @@ export {
   createSelect,
   createSelectListItemFromColumnInfo,
   createSelectWithSimpleWriteOnChange,
+  DAMAGE_PROPERTY_PATH,
   damageAssetPresent,
   disasterData,
   getAssetsAndSetOptionsForSelect,
@@ -34,6 +35,7 @@ export {
   NODAMAGE_VALUE_INFO,
   noteNewDisaster,
   onAssetSelect,
+  scoreBoundsMap,
   setExplanationSpanTextForColumn,
   setOptionsForSelect,
   setUpScoreBoundsMap,
@@ -46,8 +48,6 @@ export {
   writeAssetDataLocally,
   writeSelectAndGetPropertyNames,
 };
-// For testing.
-export {DAMAGE_PROPERTY_PATH, scoreBoundsMap};
 
 /**
  * @type {Map<string, Object>} Disaster id to disaster data, corresponding to
@@ -453,7 +453,8 @@ async function verifyAsset(propertyPath, expectedColumns) {
       let errStr = 'Error! asset is missing columns for all ' +
           expectedColumns.length + ' possibilities for valid columns:\n';
       for (const [missing, ind] of missingColumns) {
-        errStr += '* [' + expectedColumns[ind] + '] (missing ' + missing + ')\n';
+        errStr +=
+            '* [' + expectedColumns[ind] + '] (missing ' + missing + ')\n';
       }
       if (badColumns.length > 0) {
         errStr += 'Columns with non-ascii characters: ' + badColumns;
