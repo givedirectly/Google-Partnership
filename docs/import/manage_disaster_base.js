@@ -427,7 +427,6 @@ async function verifyAsset(propertyPath, expectedColumns) {
         badColumns.push(column);
       }
     }
-    console.log(asset, result);
     const presentColumns = new Set(result);
     if (Array.isArray(expectedColumns[0])) {
       const missingColumns = [];
@@ -451,7 +450,8 @@ async function verifyAsset(propertyPath, expectedColumns) {
       missingColumns.sort(function(left, right) {
         return left[0].length < right[0].length ? -1 : 1;
       });
-      let errStr = 'Error! asset is missing columns for all ' + expectedColumns.length + ' possibilities for valid columns:\n';
+      let errStr = 'Error! asset is missing columns for all ' +
+          expectedColumns.length + ' possibilities for valid columns:\n';
       for (const [missing, ind] of missingColumns) {
         errStr += '* [' + expectedColumns[ind] + '] (missing ' + missing + ')\n';
       }
@@ -471,7 +471,8 @@ async function verifyAsset(propertyPath, expectedColumns) {
             select, 'green', 'Success! asset has all expected columns');
         return result;
       }
-      let errStr = 'Error! asset does not have all expected columns: ' + expectedColumns + ' (missing ' + missingColumns + ')';
+      let errStr = 'Error! asset does not have all expected columns: ' +
+          expectedColumns + ' (missing ' + missingColumns + ')';
       if (badColumns.length > 0) {
         errStr += 'Columns with non-ascii characters: ' + badColumns;
       }
