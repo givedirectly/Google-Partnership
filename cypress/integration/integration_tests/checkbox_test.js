@@ -4,8 +4,7 @@
  */
 describe('Integration test', () => {
   it('Checks threshold update checks score box', () => {
-    cy.visit('');
-    cy.awaitLoad();
+    cy.visit('').then(() => cy.awaitLoad());
 
     cy.get('#sidebar-toggle-datasets').click();
 
