@@ -47,8 +47,10 @@ export {
   writeSelectAndGetPropertyNames,
 };
 
+// clang-format off
 // For testing.
 export {DAMAGE_PROPERTY_PATH, scoreBoundsMap};
+// clang-format on
 
 /**
  * @type {Map<string, Object>} Disaster id to disaster data, corresponding to
