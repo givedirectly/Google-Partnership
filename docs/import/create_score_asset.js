@@ -67,6 +67,8 @@ function combineWithDamage(
     let damageForDistrict =
         ee.FeatureCollection(damage).filterBounds(f.geometry());
     if (noDamageKey) {
+      // If the damage asset knows about all buildings, use it as the source of
+      // truth if it has more buildings than the buildings asset's count.
       const buildingCountFromDamage = damageForDistrict.size();
       const originalBuildingCount = f.getNumber(buildingKey);
       f.set(
