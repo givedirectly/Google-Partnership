@@ -419,7 +419,6 @@ it('does column verification', () => {
   const featureCollectionStub = cy.stub(ee, 'FeatureCollection');
   featureCollectionStub.withArgs('state0').returns(goodIncomeBadSnapFeature);
   featureCollectionStub.withArgs('state1').returns(goodNewIncomeBadSnapFeature);
-  // featureCollectionStub.withArgs('state2').returns(goodIncomeBadSnapFeature);
   featureCollectionStub.withArgs('state2').returns(goodSnapFeature);
   featureCollectionStub.withArgs('state3').returns(goodNewSnapFeature);
   featureCollectionStub.withArgs('state4').returns(nonAsciiColumnFeature);
