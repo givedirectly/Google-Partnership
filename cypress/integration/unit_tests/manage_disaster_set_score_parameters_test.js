@@ -414,7 +414,8 @@ it('does column verification', () => {
       null, {'GEO_ID': 0, 'NAME': 0, 'B22010_001E': 0, 'B22010_002E': 0})]);
   // U+200C: zero-width character, doesn't print as anything.
   const nonAsciiColumnFeature = ee.FeatureCollection([ee.Feature(
-      null, {'\u200CGEO_ID': 0, 'NAME': 0, 'B22010_001E': 0, 'B22010_002E': 0})]);
+      null,
+      {'\u200CGEO_ID': 0, 'NAME': 0, 'B22010_001E': 0, 'B22010_002E': 0})]);
 
   const featureCollectionStub = cy.stub(ee, 'FeatureCollection');
   featureCollectionStub.withArgs('state0').returns(goodIncomeBadSnapFeature);
@@ -457,13 +458,13 @@ it('does column verification', () => {
   checkSelectBorder(SNAP_INDEX, 'rgb(255, 0, 0)');
   checkHoverText(
       SNAP_INDEX,
-     'Error! asset is missing columns for all 2 possibilities ' +
-     'for valid columns:\n' +
-     '* [GEO_ID,NAME,B22010_002E,B22010_001E] ' +
-     '(missing GEO_ID)\n' +
-     '* [GEOid,GEOdisplay-label,HD01_VD02,HD01_VD01] ' +
-     '(missing GEOid,GEOdisplay-label,HD01_VD02,HD01_VD01)\n' +
-     'Columns with non-ascii characters: \u200CGEO_ID');
+      'Error! asset is missing columns for all 2 possibilities ' +
+          'for valid columns:\n' +
+          '* [GEO_ID,NAME,B22010_002E,B22010_001E] ' +
+          '(missing GEO_ID)\n' +
+          '* [GEOid,GEOdisplay-label,HD01_VD02,HD01_VD01] ' +
+          '(missing GEOid,GEOdisplay-label,HD01_VD02,HD01_VD01)\n' +
+          'Columns with non-ascii characters: \u200CGEO_ID');
 
   // new good
   setSelectWithDelayedEvaluate(0, 'state3', 'NY');
@@ -537,11 +538,11 @@ it('has two racing sets on same selector', () => {
   checkHoverText(
       SNAP_INDEX,
       'Error! asset is missing columns for all 2 possibilities ' +
-      'for valid columns:\n' +
-      '* [GEOid,GEOdisplay-label,HD01_VD02,HD01_VD01] ' +
-      '(missing GEOdisplay-label,HD01_VD02)\n' +
-      '* [GEO_ID,NAME,B22010_002E,B22010_001E] ' +
-      '(missing GEO_ID,NAME,B22010_002E,B22010_001E)\n');
+          'for valid columns:\n' +
+          '* [GEOid,GEOdisplay-label,HD01_VD02,HD01_VD01] ' +
+          '(missing GEOdisplay-label,HD01_VD02)\n' +
+          '* [GEO_ID,NAME,B22010_002E,B22010_001E] ' +
+          '(missing GEO_ID,NAME,B22010_002E,B22010_001E)\n');
 
   // now do opposite order
   cyQueue(() => {
@@ -558,7 +559,7 @@ it('has two racing sets on same selector', () => {
   checkSelectBorder(SNAP_INDEX, 'rgb(255, 0, 0)');
   checkHoverText(
       SNAP_INDEX,
-          'Error! asset is missing columns for all 2 possibilities ' +
+      'Error! asset is missing columns for all 2 possibilities ' +
           'for valid columns:\n' +
           '* [GEOid,GEOdisplay-label,HD01_VD02,HD01_VD01] ' +
           '(missing GEOdisplay-label,HD01_VD02)\n' +
@@ -568,7 +569,7 @@ it('has two racing sets on same selector', () => {
   checkSelectBorder(SNAP_INDEX, 'rgb(255, 0, 0)');
   checkHoverText(
       SNAP_INDEX,
-          'Error! asset is missing columns for all 2 possibilities ' +
+      'Error! asset is missing columns for all 2 possibilities ' +
           'for valid columns:\n' +
           '* [GEOid,GEOdisplay-label,HD01_VD02,HD01_VD01] ' +
           '(missing GEOdisplay-label,HD01_VD02)\n' +
