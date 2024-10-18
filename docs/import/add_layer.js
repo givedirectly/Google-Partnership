@@ -4,7 +4,18 @@ import {LayerType} from '../firebase_layers.js';
 import {createLayerRow} from './manage_layers.js';
 import {getCurrentLayers, updateLayersInFirestore} from './manage_layers_lib.js';
 
-export {processNewEeLayer, processNonEeLayer};
+export {getExemplars, processNewEeLayer, processNonEeLayer};
+
+function getExemplars(featureCollection, property) {
+  return ee.Algorithms.If(
+              ee.Number(featureCollection.aggregate_count_distinct(property))
+                  .lte(ee.Number(25)),
+              // This is annoyingly indirect, but ee aggregate_values doesn't
+              // aggregate equal values.
+              ee.Dictionary(featureCollection.aggregate_histogram(property))
+                  .keys(),
+              ee.List([]));
+}
 
 /**
  * Processes a new feature-collection-typed layer and puts its color column
@@ -29,14 +40,7 @@ function processNewEeLayer(asset, type) {
       const stats = properties.map((property) => {
         const max = featureCollection.aggregate_max(property);
         const min = featureCollection.aggregate_min(property);
-        const values = ee.Algorithms.If(
-            ee.Number(featureCollection.aggregate_count_distinct(property))
-                .lte(ee.Number(25)),
-            // This is annoyingly indirect, but ee aggregate_values doesn't
-            // aggregate equal values.
-            ee.Dictionary(featureCollection.aggregate_histogram(property))
-                .keys(),
-            ee.List([]));
+        const values = getExemplars(featureCollection, property);
         return ee.Dictionary.fromLists(
             ['max', 'min', 'values'], [max, min, values]);
       });

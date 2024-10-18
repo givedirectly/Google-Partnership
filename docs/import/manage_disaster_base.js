@@ -9,6 +9,7 @@ import {PendingChecker, useDamageForBuildings, validateFlexibleUserFields} from 
 import {validateStateBasedUserFields} from './manage_disaster_state_based.js';
 import {ScoreBoundsMap} from './score_bounds_map.js';
 import {updateDataInFirestore} from './update_firestore_disaster.js';
+import {getExemplars} from './add_layer.js';
 
 export {
   capitalizeFirstLetter,
@@ -141,7 +142,13 @@ async function displayDamageRelatedElements(propertyNamesPromise, damageAsset) {
   showHideDamageAndMapDivs(!!damageAsset);
   const propertyNames = await propertyNamesPromise;
   if (propertyNames) {
-    setNoDamageColumnAndValue(propertyNames);
+    const propertyValues = new Map();
+    // Kick off value fetches for all property names. It might be more
+    // efficient to do this as one promise, but this is easy :)
+    for (const property of propertyNames) {
+      propertyValues.set(property, getExemplars(damageAsset, propertyNames));
+    }
+    setNoDamageColumnAndValue(propertyNames, propertyValues);
   }
 }
 
@@ -159,14 +166,14 @@ function createNoDamageColumnAndValueList() {
   //  and provide a select with the available values if possible, and an input
   //  field if there are too many values (for instance, if damage is given by a
   //  percentage, with 0 meaning undamaged, there might be >25 values).
-  const noDamageValuPath = NODAMAGE_VALUE_INFO.path;
+  const noDamageValuePath = NODAMAGE_VALUE_INFO.path;
   const noDamageValueInput =
       $(document.createElement('input'))
-          .prop('id', makeInputElementIdFromPath(noDamageValuPath))
+          .prop('id', makeInputElementIdFromPath(noDamageValuePath))
           .on('blur',
               () => handleAssetDataChange(
-                  noDamageValueInput.val(), noDamageValuPath));
-  noDamageValueInput.val(getStoredValueFromPath(noDamageValuPath));
+                  noDamageValueInput.val(), noDamageValuePath));
+  noDamageValueInput.val(getStoredValueFromPath(noDamageValuePath));
   const valueSelect =
       createListItem(NODAMAGE_VALUE_INFO).append(noDamageValueInput);
   const columnSelectListItem =
@@ -190,15 +197,15 @@ const damageColumnChecker = new PendingChecker();
  * @param {?Array<EeColumn>} propertyNames If null, show "pending" selects if
  * not already pending.
  */
-function setNoDamageColumnAndValue(propertyNames) {
+function setNoDamageColumnAndValue(propertyNames, propertyValues) {
   const columnPath = NODAMAGE_COLUMN_INFO.path;
   if (propertyNames) {
     setOptionsForSelect(propertyNames, columnPath);
-    maybeShowNoDamageValueItem();
+    maybeShowNoDamageValueItem(propertyValues);
     damageColumnChecker.finishPending();
   } else if (damageColumnChecker.maybeStartPending()) {
     showSelectAsPending(columnPath);
-    maybeShowNoDamageValueItem();
+    maybeShowNoDamageValueItem(null);
   }
 }
 
@@ -212,19 +219,20 @@ function setNoDamageColumnAndValue(propertyNames) {
  * the column and value, so we show it to give the user more information about
  * what they'll have to fill in.
  */
-function maybeShowNoDamageValueItem() {
+function maybeShowNoDamageValueItem(propertyValues) {
   const noDamageValueItem =
       getInputElementFromPath(NODAMAGE_VALUE_INFO.path).parent();
-  if (useDamageForBuildings()) {
-    noDamageValueItem.show();
-    return;
-  }
   const noDamageColumnSelect =
       getInputElementFromPath(NODAMAGE_COLUMN_INFO.path);
-  const show =
+  const show = useDamageForBuildings() ||
       (!noDamageColumnSelect.length || noDamageColumnSelect.is(':disabled')) ?
       getStoredValueFromPath(NODAMAGE_COLUMN_INFO.path) :
       noDamageColumnSelect.val();
+  noDamageValueItem.on('input', function() {
+    
+  if (noDamageColumnSelect.val()) {
+    const propertyPromise = propertyValues.get(noDamageColumnSelect.val());
+  }
   if (show) {
     noDamageValueItem.show();
   } else {
