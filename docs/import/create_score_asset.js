@@ -71,7 +71,7 @@ function combineWithDamage(
       // truth if it has more buildings than the buildings asset's count.
       const buildingCountFromDamage = damageForDistrict.size();
       const originalBuildingCount = f.getNumber(buildingKey);
-      f.set(
+      f = f.set(
           buildingKey,
           ee.Algorithms.If(
               buildingCountFromDamage.gt(originalBuildingCount),
