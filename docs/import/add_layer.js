@@ -1,6 +1,7 @@
 import {eeLegacyPrefix} from '../ee_paths.js';
 import {convertEeObjectToPromise} from '../ee_promise_cache.js';
 import {LayerType} from '../firebase_layers.js';
+
 import {createLayerRow} from './manage_layers.js';
 import {getCurrentLayers, updateLayersInFirestore} from './manage_layers_lib.js';
 
@@ -8,13 +9,12 @@ export {getExemplars, processNewEeLayer, processNonEeLayer};
 
 function getExemplars(featureCollection, property) {
   return ee.Algorithms.If(
-              ee.Number(featureCollection.aggregate_count_distinct(property))
-                  .lte(ee.Number(25)),
-              // This is annoyingly indirect, but ee aggregate_values doesn't
-              // aggregate equal values.
-              ee.Dictionary(featureCollection.aggregate_histogram(property))
-                  .keys(),
-              ee.List([]));
+      ee.Number(featureCollection.aggregate_count_distinct(property))
+          .lte(ee.Number(25)),
+      // This is annoyingly indirect, but ee aggregate_values doesn't
+      // aggregate equal values.
+      ee.Dictionary(featureCollection.aggregate_histogram(property)).keys(),
+      ee.List([]));
 }
 
 /**

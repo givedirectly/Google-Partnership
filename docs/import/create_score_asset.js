@@ -3,18 +3,18 @@ import {disasterDocumentReference} from '../firestore_document.js';
 import {inProduction} from '../in_test_util.js';
 import {damageTag, geoidTag, povertyHouseholdsTag, totalHouseholdsTag} from '../property_names.js';
 import {getBackupScoreAssetPath, getDisaster, getScoreAssetPath} from '../resources.js';
+
 import {computeAndSaveBounds} from './center.js';
 import {BUILDING_COUNT_KEY, BuildingSource} from './create_disaster_lib.js';
 import {backupCensusBlockGroupKey, backupCensusGeoidKey, backupIncomeKey, backupSnapKey, backupTotalKey, cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, incomeKey, snapKey, sviKey, tigerGeoidKey, totalKey} from './state_based_key_names.js';
 
 export {
+  backUpAssetAndStartTask,
   createScoreAssetForFlexibleDisaster,
   createScoreAssetForStateBasedDisaster,
+  renameProperty,
   setStatus,
 };
-
-// For testing.
-export {backUpAssetAndStartTask, renameProperty};
 
 // State-based tags.
 
