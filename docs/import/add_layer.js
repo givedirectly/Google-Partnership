@@ -7,7 +7,12 @@ import {getCurrentLayers, updateLayersInFirestore} from './manage_layers_lib.js'
 
 export {getExemplars, processNewEeLayer, processNonEeLayer};
 
-/** Documentation */
+/**
+ * Documentation
+ * @param {ee.FeatureCollection} featureCollection feature collection
+ * @param {Object} property property
+ * @return {ee.Object}
+ * */
 function getExemplars(featureCollection, property) {
   return ee.Algorithms.If(
       ee.Number(featureCollection.aggregate_count_distinct(property))
