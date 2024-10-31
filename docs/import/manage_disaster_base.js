@@ -196,6 +196,8 @@ const damageColumnChecker = new PendingChecker();
  * and shows/hides {@link NODAMAGE_VALUE_INFO} if the column is set/unset.
  * @param {?Array<EeColumn>} propertyNames If null, show "pending" selects if
  * not already pending.
+ * @param {Array<string>} propertyNames property names
+ * @param {Array<string>} propertyValues property values
  */
 function setNoDamageColumnAndValue(propertyNames, propertyValues) {
   const columnPath = NODAMAGE_COLUMN_INFO.path;
@@ -232,6 +234,7 @@ function maybeShowNoDamageValueItem(propertyValues) {
   noDamageValueItem.on('input', function() {
     if (noDamageColumnSelect.val()) {
       const propertyPromise = propertyValues.get(noDamageColumnSelect.val());
+      console.log(propertyPromise);
     }
     if (show) {
       noDamageValueItem.show();
@@ -247,8 +250,8 @@ function maybeShowNoDamageValueItem(propertyValues) {
  * @param {boolean} damageAssetPresent
  */
 function showHideDamageAndMapDivs(damageAssetPresent) {
-  showListForAsset(!!damageAssetPresent, 'damage');
-  setMapBoundsDiv(!!damageAssetPresent);
+    showListForAsset(!!damageAssetPresent, 'damage');
+    setMapBoundsDiv(!!damageAssetPresent);
 }
 
 //                    Score-bounds-map-related functions.
@@ -259,20 +262,20 @@ function showHideDamageAndMapDivs(damageAssetPresent) {
  * @param {?Array<string>} states See {@link ScoreBoundsMap.initialize}
  */
 function initializeScoreBoundsMapFromAssetData(assetData, states = null) {
-  const {scoreBoundsCoordinates} = assetData;
-  const scoreBoundsAsLatLng = scoreBoundsCoordinates ?
-      transformGeoPointArrayToLatLng(scoreBoundsCoordinates) :
-      null;
-  scoreBoundsMap.initialize(scoreBoundsAsLatLng, states);
+    const {scoreBoundsCoordinates} = assetData;
+    const scoreBoundsAsLatLng = scoreBoundsCoordinates ?
+        transformGeoPointArrayToLatLng(scoreBoundsCoordinates) :
+        null;
+    scoreBoundsMap.initialize(scoreBoundsAsLatLng, states);
 }
 
 /** @param {HTMLDivElement} div Div to attach score bounds map to */
 function setUpScoreBoundsMap(div) {
-  scoreBoundsMap = new ScoreBoundsMap(
-      div,
-      (polygonPath) => handleAssetDataChange(
-          polygonPath ? polygonPath.map(latLngToGeoPoint) : null,
-          SCORE_COORDINATES_PATH));
+    scoreBoundsMap = new ScoreBoundsMap(
+        div,
+        (polygonPath) => handleAssetDataChange(
+            polygonPath ? polygonPath.map(latLngToGeoPoint) : null,
+            SCORE_COORDINATES_PATH));
 }
 
 /**
@@ -280,13 +283,13 @@ function setUpScoreBoundsMap(div) {
  * @param {boolean} hide If true, hide the div
  */
 function setMapBoundsDiv(hide) {
-  const mapBoundsDiv = $('#map-bounds-div');
-  if (hide) {
-    mapBoundsDiv.hide();
-  } else {
-    mapBoundsDiv.show();
-    scoreBoundsMap.onShow();
-  }
+    const mapBoundsDiv = $('#map-bounds-div');
+    if (hide) {
+      mapBoundsDiv.hide();
+    } else {
+      mapBoundsDiv.show();
+      scoreBoundsMap.onShow();
+    }
 }
 
 //                Page element creation/setting functions.
@@ -302,25 +305,25 @@ function setMapBoundsDiv(hide) {
  */
 async function getAssetsAndSetOptionsForSelect(
     propertyPath, allowFeatureCollectionsWithoutGeometries = true) {
-  // The first time this function is called, we'll wait on
-  // getDisasterAssetsFromEe. Every subsequent call will not wait, since
-  // getDisasterAssetsFromEe caches the result.
-  const isCurrent = getIsCurrentDisasterChecker();
-  const disasterAssets = await getDisasterAssetsFromEe(getDisaster());
-  if (!isCurrent()) {
-    return false;
-  }
-  const assets = new Map();
-  for (const [key, attributes] of disasterAssets) {
-    // Only enable FCs, and optionally only those with geometries.
-    const enabled = attributes.type === LayerType.FEATURE_COLLECTION &&
-        (allowFeatureCollectionsWithoutGeometries || attributes.hasGeometry);
-    const newAttributes = Object.assign({}, attributes);
-    newAttributes.disabled = !enabled;
-    assets.set(key, newAttributes);
-  }
-  setOptionsForSelect(assets, propertyPath);
-  return true;
+    // The first time this function is called, we'll wait on
+    // getDisasterAssetsFromEe. Every subsequent call will not wait, since
+    // getDisasterAssetsFromEe caches the result.
+    const isCurrent = getIsCurrentDisasterChecker();
+    const disasterAssets = await getDisasterAssetsFromEe(getDisaster());
+    if (!isCurrent()) {
+      return false;
+    }
+    const assets = new Map();
+    for (const [key, attributes] of disasterAssets) {
+      // Only enable FCs, and optionally only those with geometries.
+      const enabled = attributes.type === LayerType.FEATURE_COLLECTION &&
+          (allowFeatureCollectionsWithoutGeometries || attributes.hasGeometry);
+      const newAttributes = Object.assign({}, attributes);
+      newAttributes.disabled = !enabled;
+      assets.set(key, newAttributes);
+    }
+    setOptionsForSelect(assets, propertyPath);
+    return true;
 }
 
 /**
@@ -330,11 +333,11 @@ async function getAssetsAndSetOptionsForSelect(
  * @return {JQuery<HTMLSelectElement>}
  */
 function createSelectWithSimpleWriteOnChange(propertyPath) {
-  const select =
-      createSelect(propertyPath)
-          .on('change',
-              () => handleAssetDataChange(select.val(), propertyPath));
-  return select;
+    const select =
+        createSelect(propertyPath)
+            .on('change',
+                () => handleAssetDataChange(select.val(), propertyPath));
+    return select;
 }
 
 //                          Save-related functions.
@@ -350,8 +353,8 @@ function createSelectWithSimpleWriteOnChange(propertyPath) {
  *     changed/disaster has changed, in which case returns null
  */
 async function writeSelectAndGetPropertyNames(path) {
-  const propertyNames = await onAssetSelect(path, null);
-  return propertyNames ? propertyNames.filter(isUserProperty) : null;
+    const propertyNames = await onAssetSelect(path, null);
+    return propertyNames ? propertyNames.filter(isUserProperty) : null;
 }
 
 /**
@@ -362,8 +365,8 @@ async function writeSelectAndGetPropertyNames(path) {
  * @return {?Promise<Array<EeColumn>>} See {@link verifyAsset}
  */
 function onAssetSelect(propertyPath, expectedColumns) {
-  handleAssetDataChange(getPageValueOfPath(propertyPath), propertyPath);
-  return verifyAsset(propertyPath, expectedColumns);
+    handleAssetDataChange(getPageValueOfPath(propertyPath), propertyPath);
+    return verifyAsset(propertyPath, expectedColumns);
 }
 
 /**
@@ -386,114 +389,114 @@ function onAssetSelect(propertyPath, expectedColumns) {
  *     if select's value changed during asynchronous work
  */
 async function verifyAsset(propertyPath, expectedColumns) {
-  // TODO: disable or discourage kick off until all green?
-  const select = $('#' + makeInputElementIdFromPath(propertyPath));
-  const asset = select.val();
-  const isCurrent = getIsCurrentDisasterChecker();
-  /**
-   * @return {boolean} If disaster/select's value changed, so should abort.
-   */
-  function contextChanged() {
-    return (!isCurrent() || asset !== select.val());
-  }
-  const assetMissingErrorFunction = (err) => {
-    if (contextChanged()) {
-      return null;
+    // TODO: disable or discourage kick off until all green?
+    const select = $('#' + makeInputElementIdFromPath(propertyPath));
+    const asset = select.val();
+    const isCurrent = getIsCurrentDisasterChecker();
+    /**
+     * @return {boolean} If disaster/select's value changed, so should abort.
+     */
+    function contextChanged() {
+      return (!isCurrent() || asset !== select.val());
     }
-    const message = err.message || err;
-    if (message.includes('\'' + asset + '\' not found.')) {
-      updateColorAndHover(select, 'red', 'Error! asset could not be found.');
-    } else {
-      console.error(err);
-      updateColorAndHover(select, 'red', 'Unknown error: ' + message);
-    }
-  };
-  if (asset === '') {
-    updateColorAndHover(select, 'white', '');
-    return [];
-  } else {
-    const checkingColumns = expectedColumns && expectedColumns.length > 0;
-    if (checkingColumns) {
-      updateColorAndHover(select, 'yellow', 'Checking columns...');
-    } else {
-      updateColorAndHover(select, 'yellow', 'Checking...');
-    }
-    let result;
-    try {
-      result = await getAssetPropertyNames(asset);
-    } catch (err) {
-      assetMissingErrorFunction(err);
-      return null;
-    }
-    if (contextChanged()) {
-      return null;
-    }
-    result = result.sort();
-    if (!checkingColumns) {
-      updateColorAndHover(
-          select, 'green', expectedColumns ? 'No expected columns' : '');
-      return result;
-    }
-    const badColumns = [];
-    for (const column of result) {
-      if (!asciiRegex.test(column)) {
-        badColumns.push(column);
+    const assetMissingErrorFunction = (err) => {
+      if (contextChanged()) {
+        return null;
       }
-    }
-    const presentColumns = new Set(result);
-    if (Array.isArray(expectedColumns[0])) {
-      const missingColumns = [];
-      let curMissingColumns = [];
-      let i = 0;
-      for (const columns of expectedColumns) {
-        for (const column of columns) {
-          if (!presentColumns.has(column)) {
-            curMissingColumns.push(column);
+      const message = err.message || err;
+      if (message.includes('\'' + asset + '\' not found.')) {
+        updateColorAndHover(select, 'red', 'Error! asset could not be found.');
+      } else {
+        console.error(err);
+        updateColorAndHover(select, 'red', 'Unknown error: ' + message);
+      }
+    };
+    if (asset === '') {
+      updateColorAndHover(select, 'white', '');
+      return [];
+    } else {
+      const checkingColumns = expectedColumns && expectedColumns.length > 0;
+      if (checkingColumns) {
+        updateColorAndHover(select, 'yellow', 'Checking columns...');
+      } else {
+        updateColorAndHover(select, 'yellow', 'Checking...');
+      }
+      let result;
+      try {
+        result = await getAssetPropertyNames(asset);
+      } catch (err) {
+        assetMissingErrorFunction(err);
+        return null;
+      }
+      if (contextChanged()) {
+        return null;
+      }
+      result = result.sort();
+      if (!checkingColumns) {
+        updateColorAndHover(
+            select, 'green', expectedColumns ? 'No expected columns' : '');
+        return result;
+      }
+      const badColumns = [];
+      for (const column of result) {
+        if (!asciiRegex.test(column)) {
+          badColumns.push(column);
+        }
+      }
+      const presentColumns = new Set(result);
+      if (Array.isArray(expectedColumns[0])) {
+        const missingColumns = [];
+        let curMissingColumns = [];
+        let i = 0;
+        for (const columns of expectedColumns) {
+          for (const column of columns) {
+            if (!presentColumns.has(column)) {
+              curMissingColumns.push(column);
+            }
+          }
+          if (curMissingColumns.length == 0) {
+            updateColorAndHover(
+                select, 'green', 'Success! asset has all expected columns');
+            return result;
+          } else {
+            missingColumns.push([curMissingColumns, i++]);
+            curMissingColumns = [];
           }
         }
-        if (curMissingColumns.length == 0) {
+        missingColumns.sort(function(left, right) {
+          return left[0].length < right[0].length ? -1 : 1;
+        });
+        let errStr = 'Error! asset is missing columns for all ' +
+            expectedColumns.length + ' possibilities for valid columns:\n';
+        for (const [missing, ind] of missingColumns) {
+          errStr +=
+              '* [' + expectedColumns[ind] + '] (missing ' + missing + ')\n';
+        }
+        if (badColumns.length > 0) {
+          errStr += 'Columns with non-ascii characters: ' + badColumns;
+        }
+        updateColorAndHover(select, 'red', errStr);
+      } else {
+        const missingColumns = [];
+        for (const column of expectedColumns) {
+          if (!presentColumns.has(column)) {
+            missingColumns.push(column);
+          }
+        }
+        if (missingColumns.length == 0) {
           updateColorAndHover(
               select, 'green', 'Success! asset has all expected columns');
           return result;
-        } else {
-          missingColumns.push([curMissingColumns, i++]);
-          curMissingColumns = [];
         }
-      }
-      missingColumns.sort(function(left, right) {
-        return left[0].length < right[0].length ? -1 : 1;
-      });
-      let errStr = 'Error! asset is missing columns for all ' +
-          expectedColumns.length + ' possibilities for valid columns:\n';
-      for (const [missing, ind] of missingColumns) {
-        errStr +=
-            '* [' + expectedColumns[ind] + '] (missing ' + missing + ')\n';
-      }
-      if (badColumns.length > 0) {
-        errStr += 'Columns with non-ascii characters: ' + badColumns;
-      }
-      updateColorAndHover(select, 'red', errStr);
-    } else {
-      const missingColumns = [];
-      for (const column of expectedColumns) {
-        if (!presentColumns.has(column)) {
-          missingColumns.push(column);
+        let errStr = 'Error! asset does not have all expected columns: ' +
+            expectedColumns + ' (missing ' + missingColumns + ')';
+        if (badColumns.length > 0) {
+          errStr += 'Columns with non-ascii characters: ' + badColumns;
         }
-      }
-      if (missingColumns.length == 0) {
-        updateColorAndHover(
-            select, 'green', 'Success! asset has all expected columns');
+        updateColorAndHover(select, 'red', errStr);
         return result;
       }
-      let errStr = 'Error! asset does not have all expected columns: ' +
-          expectedColumns + ' (missing ' + missingColumns + ')';
-      if (badColumns.length > 0) {
-        errStr += 'Columns with non-ascii characters: ' + badColumns;
-      }
-      updateColorAndHover(select, 'red', errStr);
-      return result;
     }
-  }
 }
 
 /**
@@ -504,13 +507,13 @@ async function verifyAsset(propertyPath, expectedColumns) {
  *     set this value by setting the parent's attribute to the target's value
  */
 function writeAssetDataLocally(val, propertyPath) {
-  // We want to change the value, which means we have to write an expression
-  // like "parent[prop] = val". To obtain the parent object, we just follow
-  // the same path as the child's, but stop one property short. That last
-  // property is then the "prop" in the expression above.
-  const parentProperty = getStoredValueFromPath(propertyPath.slice(0, -1));
-  parentProperty[propertyPath[propertyPath.length - 1]] =
-      val !== '' ? val : null;
+    // We want to change the value, which means we have to write an expression
+    // like "parent[prop] = val". To obtain the parent object, we just follow
+    // the same path as the child's, but stop one property short. That last
+    // property is then the "prop" in the expression above.
+    const parentProperty = getStoredValueFromPath(propertyPath.slice(0, -1));
+    parentProperty[propertyPath[propertyPath.length - 1]] =
+        val !== '' ? val : null;
 }
 
 /**
@@ -521,19 +524,19 @@ function writeAssetDataLocally(val, propertyPath) {
  * @return {Promise<void>} Promise that completes when Firestore writes are done
  */
 function handleAssetDataChange(val, propertyPath) {
-  writeAssetDataLocally(val, propertyPath);
-  if (isFlexible()) {
-    // This will immediately display 'Pending...' and exit if there are any
-    // pending checks, which will be the case for EE asset changes. Column
-    // value changes won't have pending operations, though, since they don't
-    // cascade, so this will actually work.
-    validateFlexibleUserFields();
-  } else {
-    // State-based disasters have no delays in validation, will always do
-    // work.
-    validateStateBasedUserFields();
-  }
-  return updateDataInFirestore(() => disasterData.get(getDisaster()));
+    writeAssetDataLocally(val, propertyPath);
+    if (isFlexible()) {
+      // This will immediately display 'Pending...' and exit if there are any
+      // pending checks, which will be the case for EE asset changes. Column
+      // value changes won't have pending operations, though, since they don't
+      // cascade, so this will actually work.
+      validateFlexibleUserFields();
+    } else {
+      // State-based disasters have no delays in validation, will always do
+      // work.
+      validateStateBasedUserFields();
+    }
+    return updateDataInFirestore(() => disasterData.get(getDisaster()));
 }
 
 //                      Validation-related functions.
@@ -553,36 +556,37 @@ const OPTIONAL_WARNING_PREFIX = '; warning: created asset will be missing ';
  *     attributes
  */
 function checkDamageFieldsAndShowKickoffButton(message, optionalMessage) {
-  if (!damageAssetPresent() &&
-      !getStoredValueFromPath(SCORE_COORDINATES_PATH)) {
-    message = continueMessage(
-        message, 'must specify either damage asset or map bounds');
-  }
-  if (!getPageValueOfPath(NODAMAGE_VALUE_INFO.path) &&
-      getPageValueOfPath(NODAMAGE_COLUMN_INFO.path)) {
-    message = continueMessage(
-        message, 'Must specify no-damage value if no-damage column is set');
-  }
+    if (!damageAssetPresent() &&
+        !getStoredValueFromPath(SCORE_COORDINATES_PATH)) {
+      message = continueMessage(
+          message, 'must specify either damage asset or map bounds');
+    }
+    if (!getPageValueOfPath(NODAMAGE_VALUE_INFO.path) &&
+        getPageValueOfPath(NODAMAGE_COLUMN_INFO.path)) {
+      message = continueMessage(
+          message, 'Must specify no-damage value if no-damage column is set');
+    }
 
-  if (message && optionalMessage) {
-    message += OPTIONAL_WARNING_PREFIX + optionalMessage;
-  }
-  if (message) {
-    showDisabledKickoffButton(message);
-  } else {
-    $('#kickoff-button')
-        .show()
-        .text(
-            KICK_OFF_TEXT +
-            (optionalMessage ? OPTIONAL_WARNING_PREFIX + optionalMessage : ''))
-        .attr('disabled', false)
-        .css('background-color', optionalMessage ? 'rgb(150, 150, 0)' : '');
-  }
+    if (message && optionalMessage) {
+      message += OPTIONAL_WARNING_PREFIX + optionalMessage;
+    }
+    if (message) {
+      showDisabledKickoffButton(message);
+    } else {
+      $('#kickoff-button')
+          .show()
+          .text(
+              KICK_OFF_TEXT +
+              (optionalMessage ? OPTIONAL_WARNING_PREFIX + optionalMessage :
+                                 ''))
+          .attr('disabled', false)
+          .css('background-color', optionalMessage ? 'rgb(150, 150, 0)' : '');
+    }
 }
 
 /** Disables button, shows 'Pending...': use when validation waiting on EE. */
 function showPendingKickoffButton() {
-  showDisabledKickoffButton('Pending...');
+    showDisabledKickoffButton('Pending...');
 }
 
 /**
@@ -590,11 +594,11 @@ function showPendingKickoffButton() {
  * @param {string} message Error message to show on button
  */
 function showDisabledKickoffButton(message) {
-  $('#kickoff-button')
-      .show()
-      .text(message)
-      .attr('disabled', true)
-      .css('background-color', '');
+    $('#kickoff-button')
+        .show()
+        .text(message)
+        .attr('disabled', true)
+        .css('background-color', '');
 }
 
 /**
@@ -605,8 +609,8 @@ function showDisabledKickoffButton(message) {
  * @return {string} Resulting message
  */
 function continueMessage(message, addition) {
-  return message +
-      (message ? '; ' + addition : capitalizeFirstLetter(addition));
+    return message +
+        (message ? '; ' + addition : capitalizeFirstLetter(addition));
 }
 
 /**
@@ -616,17 +620,17 @@ function continueMessage(message, addition) {
  *     for use in constructing an error message.
  */
 function validateColumnPathHasValue(columnInfo) {
-  return getPageValueOfPath(columnInfo.path) ? null : columnInfo.label;
+    return getPageValueOfPath(columnInfo.path) ? null : columnInfo.label;
 }
 
 /** @return {boolean} True if user has a damage asset specified on page */
 function damageAssetPresent() {
-  return !!getPageValueOfPath(DAMAGE_PROPERTY_PATH);
+    return !!getPageValueOfPath(DAMAGE_PROPERTY_PATH);
 }
 
 /** @return {boolean} True/false for flexible/state-based current disaster */
 function isFlexible() {
-  return !!disasterData.get(getDisaster()).assetData.flexibleData;
+    return !!disasterData.get(getDisaster()).assetData.flexibleData;
 }
 
 //                    Detecting if disaster has changed.
@@ -644,8 +648,8 @@ let disasterGeneration = 0;
  * @return {function(): boolean}
  */
 function getIsCurrentDisasterChecker() {
-  const current = disasterGeneration;
-  return () => current === disasterGeneration;
+    const current = disasterGeneration;
+    return () => current === disasterGeneration;
 }
 
 /**
@@ -653,7 +657,7 @@ function getIsCurrentDisasterChecker() {
  * calls to {@link getIsCurrentDisasterChecker} will now return false.
  */
 function noteNewDisaster() {
-  disasterGeneration++;
+    disasterGeneration++;
 }
 
 //              Simpler HTML/local data-related functions.
@@ -664,7 +668,7 @@ function noteNewDisaster() {
  * @param {PropertyPath} path
  */
 function showSelectAsPending(path) {
-  stylePendingSelect(getInputElementFromPath(path));
+    stylePendingSelect(getInputElementFromPath(path));
 }
 
 /**
@@ -673,8 +677,8 @@ function showSelectAsPending(path) {
  * @return {JQuery<HTMLLIElement>} List item will have label and select
  */
 function createSelectListItemFromColumnInfo(columnInfo) {
-  return createListItem(columnInfo)
-      .append(createSelectWithSimpleWriteOnChange(columnInfo.path));
+    return createListItem(columnInfo)
+        .append(createSelectWithSimpleWriteOnChange(columnInfo.path));
 }
 
 /**
@@ -684,14 +688,14 @@ function createSelectListItemFromColumnInfo(columnInfo) {
  * @return {JQuery<HTMLLIElement>}
  */
 function createListItem(columnInfo) {
-  const labelSpan = $(document.createElement('span'));
-  labelSpan.append(capitalizeFirstLetter(columnInfo.label))
-      .append(setExplanationTextForSpan(
-          $(document.createElement('span'))
-              .prop('id', makeIdForExplanationSpan(columnInfo)),
-          columnInfo))
-      .append(': ');
-  return $(document.createElement('li')).append(labelSpan);
+    const labelSpan = $(document.createElement('span'));
+    labelSpan.append(capitalizeFirstLetter(columnInfo.label))
+        .append(setExplanationTextForSpan(
+            $(document.createElement('span'))
+                .prop('id', makeIdForExplanationSpan(columnInfo)),
+            columnInfo))
+        .append(': ');
+    return $(document.createElement('li')).append(labelSpan);
 }
 
 /**
@@ -703,8 +707,8 @@ function createListItem(columnInfo) {
  */
 function setExplanationSpanTextForColumn(
     columnInfo, text = columnInfo.explanation) {
-  setExplanationTextForSpan(
-      $('#' + makeIdForExplanationSpan(columnInfo)), columnInfo, text);
+    setExplanationTextForSpan(
+        $('#' + makeIdForExplanationSpan(columnInfo)), columnInfo, text);
 }
 
 /**
@@ -717,11 +721,11 @@ function setExplanationSpanTextForColumn(
  */
 function setExplanationTextForSpan(
     explanationSpan, columnInfo, text = columnInfo.explanation) {
-  explanationSpan.empty();
-  if (text) {
-    explanationSpan.text(' (' + text + ')');
-  }
-  return explanationSpan;
+    explanationSpan.empty();
+    if (text) {
+      explanationSpan.text(' (' + text + ')');
+    }
+    return explanationSpan;
 }
 
 /**
@@ -730,7 +734,7 @@ function setExplanationTextForSpan(
  * @return {string}
  */
 function makeIdForExplanationSpan(columnInfo) {
-  return 'explanation-span-' + makeInputElementIdFromPath(columnInfo.path);
+    return 'explanation-span-' + makeInputElementIdFromPath(columnInfo.path);
 }
 
 /**
@@ -743,29 +747,29 @@ function makeIdForExplanationSpan(columnInfo) {
  * @return {JQuery<HTMLSelectElement>}
  */
 function setOptionsForSelect(options, propertyPath) {
-  const select = getInputElementFromPath(propertyPath)
-                     .empty()
-                     .attr('disabled', false)
-                     .removeClass('just-created-select')
-                     .append(createOptionFrom('None').val(''));
-  const value = getStoredValueFromPath(propertyPath);
-  // Add assets to selector and return it.
-  for (let option of options) {
-    let disabled = false;
-    if (Array.isArray(option)) {
-      disabled = option[1].disabled;
-      option = option[0];
+    const select = getInputElementFromPath(propertyPath)
+                       .empty()
+                       .attr('disabled', false)
+                       .removeClass('just-created-select')
+                       .append(createOptionFrom('None').val(''));
+    const value = getStoredValueFromPath(propertyPath);
+    // Add assets to selector and return it.
+    for (let option of options) {
+      let disabled = false;
+      if (Array.isArray(option)) {
+        disabled = option[1].disabled;
+        option = option[0];
+      }
+      const selectOption = createOptionFrom(option);
+      if (disabled) {
+        selectOption.attr('disabled', true);
+      }
+      if (option === value) {
+        selectOption.attr('selected', true);
+      }
+      select.append(selectOption);
     }
-    const selectOption = createOptionFrom(option);
-    if (disabled) {
-      selectOption.attr('disabled', true);
-    }
-    if (option === value) {
-      selectOption.attr('selected', true);
-    }
-    select.append(selectOption);
-  }
-  return select;
+    return select;
 }
 
 /**
@@ -775,10 +779,10 @@ function setOptionsForSelect(options, propertyPath) {
  * @return {JQuery<HTMLSelectElement>}
  */
 function createSelect(propertyPath) {
-  return stylePendingSelect(
-      $(document.createElement('select'))
-          .prop('id', makeInputElementIdFromPath(propertyPath))
-          .addClass('just-created-select'));
+    return stylePendingSelect(
+        $(document.createElement('select'))
+            .prop('id', makeInputElementIdFromPath(propertyPath))
+            .addClass('just-created-select'));
 }
 
 /**
@@ -787,7 +791,8 @@ function createSelect(propertyPath) {
  * @return {JQuery<HTMLUListElement>}
  */
 function createListForAsset(idStem) {
-  return $(document.createElement('ul')).prop('id', getListForAssetId(idStem));
+    return $(document.createElement('ul'))
+        .prop('id', getListForAssetId(idStem));
 }
 
 /**
@@ -796,12 +801,12 @@ function createListForAsset(idStem) {
  * @param {string} idStem List identifier, see {@link getListForAssetId}
  */
 function showListForAsset(show, idStem) {
-  const list = $('#' + getListForAssetId(idStem));
-  if (show) {
-    list.show();
-  } else {
-    list.hide();
-  }
+    const list = $('#' + getListForAssetId(idStem));
+    if (show) {
+      list.show();
+    } else {
+      list.hide();
+    }
 }
 
 /**
@@ -811,7 +816,7 @@ function showListForAsset(show, idStem) {
  * @return {string}
  */
 function getListForAssetId(idStem) {
-  return idStem + '-attrs-ul-id';
+    return idStem + '-attrs-ul-id';
 }
 
 /**
@@ -829,11 +834,11 @@ function getListForAssetId(idStem) {
  * @return {*}
  */
 function getStoredValueFromPath(propertyPath) {
-  let element = disasterData.get(getDisaster()).assetData;
-  for (const property of propertyPath) {
-    element = element[property];
-  }
-  return element;
+    let element = disasterData.get(getDisaster()).assetData;
+    for (const property of propertyPath) {
+      element = element[property];
+    }
+    return element;
 }
 
 
@@ -844,7 +849,7 @@ function getStoredValueFromPath(propertyPath) {
  * @return {string}
  */
 function getPageValueOfPath(path) {
-  return getInputElementFromPath(path).val();
+    return getInputElementFromPath(path).val();
 }
 
 /**
@@ -857,7 +862,7 @@ function getPageValueOfPath(path) {
  * @return {JQuery<HTMLInputElement>}
  */
 function getInputElementFromPath(path) {
-  return $('#' + makeInputElementIdFromPath(path));
+    return $('#' + makeInputElementIdFromPath(path));
 }
 
 /**
@@ -867,7 +872,7 @@ function getInputElementFromPath(path) {
  * @return {string}
  */
 function makeInputElementIdFromPath(path) {
-  return 'id-from-path-' + path.join('-');
+    return 'id-from-path-' + path.join('-');
 }
 
 /**
@@ -877,7 +882,7 @@ function makeInputElementIdFromPath(path) {
  * @param {?string} title
  */
 function updateColorAndHover(select, color, title = null) {
-  select.css('border-color', colorToRgbString(color)).prop('title', title);
+    select.css('border-color', colorToRgbString(color)).prop('title', title);
 }
 
 /**
@@ -886,5 +891,5 @@ function updateColorAndHover(select, color, title = null) {
  * @return {string}
  */
 function capitalizeFirstLetter(str) {
-  return str[0].toUpperCase() + str.slice(1);
+    return str[0].toUpperCase() + str.slice(1);
 }
