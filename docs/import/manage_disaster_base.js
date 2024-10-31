@@ -196,7 +196,6 @@ const damageColumnChecker = new PendingChecker();
  * and shows/hides {@link NODAMAGE_VALUE_INFO} if the column is set/unset.
  * @param {?Array<EeColumn>} propertyNames If null, show "pending" selects if
  * not already pending.
- * @param {Array<string>} propertyNames property names
  * @param {Array<string>} propertyValues property values
  */
 function setNoDamageColumnAndValue(propertyNames, propertyValues) {
@@ -220,6 +219,7 @@ function setNoDamageColumnAndValue(propertyNames, propertyValues) {
  * flexible disaster with damage used for buildings, then the user must specify
  * the column and value, so we show it to give the user more information about
  * what they'll have to fill in.
+ * @param {Array<string>} propertyValues property values
  */
 function maybeShowNoDamageValueItem(propertyValues) {
   const noDamageValueItem =
