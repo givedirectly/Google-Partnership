@@ -238,6 +238,7 @@ function maybeShowNoDamageValueItem(propertyValues) {
     } else {
       noDamageValueItem.hide();
     }
+  });
 }
 
 /**
