@@ -80,7 +80,7 @@ function createHtmlForPopup(feature, rowData, scoreParameters, columns) {
     properties.appendChild(property);
   } else {
     const property = document.createElement('li');
-    property.innerText = 'SCORE: ' + rowData[2];
+    property.innerText = 'SCORE: ' + rowData[3];
     properties.appendChild(property);
   }
   for (const column of columns) {
