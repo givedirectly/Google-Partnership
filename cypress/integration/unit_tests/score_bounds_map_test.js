@@ -138,7 +138,7 @@ describe('Unit tests for ScoreBoundsMap class', () => {
         () => expect(underTest.map.getBounds().contains({lng: -100, lat: 41}))
                   .to.be.true);
     let zoomedBounds;
-    cy.get('[title="Zoom in"]').click().then(() => {
+    cy.get('#score-bounds-map').type('+').then(() => {
       zoomedBounds = underTest.map.getBounds();
       expect(zoomedBounds.contains({lng: -100, lat: 41})).to.be.false;
       releasePromise();
