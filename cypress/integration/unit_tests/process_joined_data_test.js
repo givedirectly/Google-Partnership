@@ -66,7 +66,7 @@ describe('Unit test for processed_joined_data.js', () => {
               .to.have.property(
                   'SCORE',
                   Math.round(100 * (0.5 * ((10 + 5) / 27) + 0.5 * (2 / 4))));
-          expect(resultProperties).to.have.property('___DISPLAYED', true)
+          expect(resultProperties).to.have.property('___DISPLAYED', true);
           assertColorAndOpacity(resultProperties, 135);
         });
   });
