@@ -30,7 +30,8 @@ function colorAndRate(
   const povertyRatio = feature.properties[povertyRateKey];
   const ratioBuildingsDamaged = hasDamage ? feature.properties[damageTag] : 0;
   let score = 0;
-  const displayed = povertyRatio >= povertyThreshold && ratioBuildingsDamaged >= damageThreshold;
+  const displayed = povertyRatio >= povertyThreshold &&
+      ratioBuildingsDamaged >= damageThreshold;
   feature.properties[displayedTag] = displayed;
   if (displayed) {
     score = Math.round(
@@ -97,8 +98,10 @@ function processJoinedData(
               },
             ]) => {
         const hasDamage = !!damageAssetPath;
-        const columnsFound = new Set(
-            [geoidTag, displayedTag, districtDescriptionKey, scoreTag, povertyRateKey]);
+        const columnsFound = new Set([
+          geoidTag, displayedTag, districtDescriptionKey, scoreTag,
+          povertyRateKey
+        ]);
         if (hasDamage) {
           columnsFound.add(damageTag);
           columnsFound.add(buildingKey);
