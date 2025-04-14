@@ -100,7 +100,7 @@ function processJoinedData(
         const hasDamage = !!damageAssetPath;
         const columnsFound = new Set([
           geoidTag, displayedTag, districtDescriptionKey, scoreTag,
-          povertyRateKey
+          povertyRateKey,
         ]);
         if (hasDamage) {
           columnsFound.add(damageTag);
