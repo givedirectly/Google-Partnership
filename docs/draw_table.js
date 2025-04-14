@@ -1,6 +1,6 @@
 import {showError} from './error.js';
 import {highlightFeatures} from './highlight_features.js';
-import {scoreTag} from './property_names.js';
+import {displayedTag} from './property_names.js';
 
 export {drawTable};
 
@@ -31,7 +31,7 @@ async function drawTable(scoredFeaturesAndColumns, map) {
   // This may throw an exception, but error reporting handled elsewhere.
   const {featuresList, columnsFound} = await scoredFeaturesAndColumns;
   const features =
-      featuresList.filter((feature) => feature.properties[scoreTag]);
+      featuresList.filter((feature) => feature.properties[displayedTag]);
   // Clone headings.
   const list = [columnsFound];
   for (const feature of features) {
@@ -57,8 +57,8 @@ async function drawTable(scoredFeaturesAndColumns, map) {
 function renderTable(list, features, map, selectorReceiver) {
   const data = google.visualization.arrayToDataTable(list, false);
   const dataView = new google.visualization.DataView(data);
-  // don't display geoid
-  dataView.hideColumns([0]);
+  // don't display geoid or displayedTag.
+  dataView.hideColumns([0, 1]);
   const table =
       new google.visualization.Table(document.getElementById('table'));
   table.draw(dataView, {
