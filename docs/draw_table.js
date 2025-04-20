@@ -1,8 +1,10 @@
 import {showError} from './error.js';
 import {highlightFeatures} from './highlight_features.js';
-import {displayedTag} from './property_names.js';
+import {displayedTag, geoidTag} from './property_names.js';
 
 export {drawTable};
+
+const hiddenColumns = new Set(geoidTag, displayedTag);
 
 /**
  * Displays a ranked table of the given features that have non-zero score. Sets
@@ -34,6 +36,15 @@ async function drawTable(scoredFeaturesAndColumns, map) {
       featuresList.filter((feature) => feature.properties[displayedTag]);
   // Clone headings.
   const list = [columnsFound];
+  const indicesToHide = [];
+  for (const [ind, col] of columnsFound.entries()) {
+    if (hiddenColumns.has(col)) {
+      indicesToHide.push(ind);
+      if (indicesToHide.length == hiddenColumns.length) {
+        break;
+      }
+    }
+  }
   for (const feature of features) {
     list.push(columnsFound.map((col) => feature.properties[col]));
   }
@@ -41,7 +52,7 @@ async function drawTable(scoredFeaturesAndColumns, map) {
   // https://developers.google.com/chart/interactive/docs/basic_load_libs#Callback
   return new Promise(
       (resolve) => google.charts.setOnLoadCallback(
-          () => renderTable(list, features, map, resolve)));
+          () => renderTable(list, indicesToHide, features, map, resolve)));
 }
 
 /**
@@ -49,16 +60,16 @@ async function drawTable(scoredFeaturesAndColumns, map) {
  * highlight features in the map if their rows are clicked on in the table.
  *
  * @param {Array} list The data to display in the chart, with headings
+ * @param {Array} indicesToHide The column indices not to show in the table
  * @param {Array} features The list of features corresponding to that data
  * @param {google.maps.Map} map
  * @param {Function} selectorReceiver receiver for the function inside the
  *     Promise returned by {@link drawTable}
  */
-function renderTable(list, features, map, selectorReceiver) {
+function renderTable(list, indicesToHide, features, map, selectorReceiver) {
   const data = google.visualization.arrayToDataTable(list, false);
   const dataView = new google.visualization.DataView(data);
-  // don't display geoid or displayedTag.
-  dataView.hideColumns([0, 1]);
+  dataView.hideColumns(indicesToHide);
   const table =
       new google.visualization.Table(document.getElementById('table'));
   table.draw(dataView, {
