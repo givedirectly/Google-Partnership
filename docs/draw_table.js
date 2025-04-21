@@ -46,8 +46,9 @@ async function drawTable(scoredFeaturesAndColumns, map) {
     }
   }
   if (indicesToHide.length != hiddenColumns.size) {
-    console.log('Not all hidden columns found: ',
-      hiddenColumns, indicesToHide, columnsFound);
+    console.log(
+        'Not all hidden columns found: ', hiddenColumns, indicesToHide,
+        columnsFound);
   }
   for (const feature of features) {
     list.push(columnsFound.map((col) => feature.properties[col]));
