@@ -4,7 +4,7 @@ import {displayedTag, geoidTag} from './property_names.js';
 
 export {drawTable};
 
-const hiddenColumns = new Set(geoidTag, displayedTag);
+const hiddenColumns = new Set([geoidTag, displayedTag]);
 
 /**
  * Displays a ranked table of the given features that have non-zero score. Sets
@@ -44,6 +44,10 @@ async function drawTable(scoredFeaturesAndColumns, map) {
         break;
       }
     }
+  }
+  if (indicesToHide.length != hiddenColumns.size) {
+    console.log('Not all hidden columns found: ',
+      hiddenColumns, indicesToHide, columnsFound);
   }
   for (const feature of features) {
     list.push(columnsFound.map((col) => feature.properties[col]));
