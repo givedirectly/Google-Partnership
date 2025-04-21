@@ -40,6 +40,7 @@ describe('Unit test for processed_joined_data.js', () => {
         .then(({featuresList, columnsFound}) => {
           expect(columnsFound).to.eql([
             '___GD_GOOGLE_DELPHI_GEOID',
+            '___DISPLAYED',
             'district descript',
             'SCORE',
             'poverty rate',
@@ -52,7 +53,7 @@ describe('Unit test for processed_joined_data.js', () => {
             'major-damage',
           ]);
           expect(featuresList).to.be.an('array');
-          expect(featuresList.length).to.equal(1);
+          expect(featuresList).to.have.length(1);
           const [returnedFeature] = featuresList;
           expect(returnedFeature).to.have.property('geometry', geometryObject);
           expect(returnedFeature).to.haveOwnProperty('properties');
@@ -65,6 +66,7 @@ describe('Unit test for processed_joined_data.js', () => {
               .to.have.property(
                   'SCORE',
                   Math.round(100 * (0.5 * ((10 + 5) / 27) + 0.5 * (2 / 4))));
+          expect(resultProperties).to.have.property('___DISPLAYED', true);
           assertColorAndOpacity(resultProperties, 135);
         });
   });
@@ -79,7 +81,7 @@ describe('Unit test for processed_joined_data.js', () => {
                 })))
         .then(({featuresList}) => {
           expect(featuresList).to.be.an('array');
-          expect(featuresList.length).to.equal(1);
+          expect(featuresList).to.have.length(1);
           const [returnedFeature] = featuresList;
           expect(returnedFeature).to.have.property('geometry', geometryObject);
           expect(returnedFeature).to.haveOwnProperty('properties');
@@ -105,6 +107,7 @@ describe('Unit test for processed_joined_data.js', () => {
         .then(({featuresList}) => {
           const resultProperties = featuresList[0].properties;
           expect(resultProperties).to.have.property('SCORE', 0);
+          expect(resultProperties).to.have.property('___DISPLAYED', false);
           assertColorAndOpacity(resultProperties, 0);
         });
   });
@@ -124,6 +127,7 @@ describe('Unit test for processed_joined_data.js', () => {
         .then(({featuresList, columnsFound}) => {
           expect(columnsFound).to.eql([
             '___GD_GOOGLE_DELPHI_GEOID',
+            '___DISPLAYED',
             'district descript',
             'SCORE',
             'poverty rate',
@@ -159,6 +163,7 @@ describe('Unit test for processed_joined_data.js', () => {
         .then(({featuresList, columnsFound}) => {
           expect(columnsFound).to.eql([
             '___GD_GOOGLE_DELPHI_GEOID',
+            '___DISPLAYED',
             'district descript',
             'SCORE',
             'poverty rate',
