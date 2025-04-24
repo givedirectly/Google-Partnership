@@ -143,8 +143,9 @@ async function displayDamageRelatedElements(propertyNamesPromise, damageAsset) {
   const propertyNames = await propertyNamesPromise;
   if (propertyNames) {
     const propertyValues = new Map();
-    // Kick off value fetches for all property names. It might be more
-    // efficient to do this as one promise, but this is easy :)
+    // Kick off value fetches for all property names. EarthEngine is much more
+    // efficient doing column-by-column counts than processing the entire
+    // collection at once.
     for (const property of propertyNames) {
       propertyValues.set(property, getExemplars(damageAsset, propertyNames));
     }
