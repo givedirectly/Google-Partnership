@@ -1,7 +1,5 @@
 import * as GoogleAuth from 'google-auth-library';
 import {createServer} from 'http';
-// TODO(janakr): this is a pretty random package. Maybe find a more popular one.
-import parseBody from 'urlencoded-body-parser';
 import {storeGoogleCredentials} from './aws_get_credentials.js';
 import {generateEarthEngineToken} from './ee_token_creator.js';
 import {TOKEN_SERVER_ORIGINS} from './origins.js';
@@ -109,14 +107,6 @@ function generateTokenPeriodically() {
       return;
     }
 
-    try {
-      const {idToken} = await parseBody(req);
-      await client.verifyIdToken({idToken: idToken, audience: CLIENT_ID});
-    } catch (err) {
-      console.warn('Error verifying id token', err, idToken);
-      fail(res);
-      return;
-    }
     const data = await currentTokenPromise;
     const headers = Object.assign({}, RESPONSE_HEADERS);
     // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Allow-Origin
