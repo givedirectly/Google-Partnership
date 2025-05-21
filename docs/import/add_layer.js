@@ -14,13 +14,26 @@ export {getExemplars, processNewEeLayer, processNonEeLayer};
  * @return {ee.Object}
  * */
 function getExemplars(featureCollection, property) {
-  const histogram = featureCollection.aggregate_histogram(property);
-  const distinctCount = ee.Dictionary(histogram).keys().length();
+  // Get the frequency histogram of the property.
+  const reduction = featureCollection.reduceColumns({
+    reducer: ee.Reducer.frequencyHistogram(),
+    selectors: [property]
+  });
+
+  // The result is a dictionary; the histogram is usually under the key 'histogram'.
+  const histogramDict = ee.Dictionary(reduction.get('histogram'));
+
+  // The distinct values are the keys of the histogram.
+  const distinctValues = histogramDict.keys();
+
+  // The count of distinct values.
+  const distinctCount = distinctValues.length(); // This is an ee.Number
+
+  // If 25 or fewer unique values, return them. Otherwise, return an empty list.
   return ee.Algorithms.If(
       distinctCount.lte(ee.Number(25)),
-      // ee.Dictionary(histogram).keys() are the distinct values
-      ee.Dictionary(histogram).keys(),
-      ee.List([])
+      distinctValues,  // ee.List of distinct values
+      ee.List([])      // Empty ee.List
   );
 }
 
