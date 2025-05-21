@@ -14,13 +14,14 @@ export {getExemplars, processNewEeLayer, processNonEeLayer};
  * @return {ee.Object}
  * */
 function getExemplars(featureCollection, property) {
+  const histogram = featureCollection.aggregate_histogram(property);
+  const distinctCount = ee.Dictionary(histogram).keys().length();
   return ee.Algorithms.If(
-      ee.Number(featureCollection.aggregate_count_distinct(property))
-          .lte(ee.Number(25)),
-      // This is annoyingly indirect, but ee aggregate_values doesn't
-      // aggregate equal values.
-      ee.Dictionary(featureCollection.aggregate_histogram(property)).keys(),
-      ee.List([]));
+      distinctCount.lte(ee.Number(25)),
+      // ee.Dictionary(histogram).keys() are the distinct values
+      ee.Dictionary(histogram).keys(),
+      ee.List([])
+  );
 }
 
 /**
