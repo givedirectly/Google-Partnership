@@ -138,7 +138,8 @@ const NODAMAGE_VALUE_INFO = {
  * @return {Promise<void>}
  */
 async function displayDamageRelatedElements(propertyNamesPromise, damageAsset) {
-  setNoDamageColumnAndValue(null);
+  handleAssetDataChange(null, NODAMAGE_VALUE_INFO.path);
+  setNoDamageColumnAndValue(null, null, null);
   showHideDamageAndMapDivs(!!damageAsset);
   const propertyNames = await propertyNamesPromise;
   if (propertyNames) {
@@ -147,9 +148,9 @@ async function displayDamageRelatedElements(propertyNamesPromise, damageAsset) {
     // efficient doing column-by-column counts than processing the entire
     // collection at once.
     for (const property of propertyNames) {
-      propertyValues.set(property, getExemplars(damageAsset, propertyNames));
+      propertyValues.set(property, getExemplars(damageAsset, property.name));
     }
-    setNoDamageColumnAndValue(propertyNames, propertyValues);
+    setNoDamageColumnAndValue(damageAsset, propertyNames, propertyValues);
   }
 }
 
@@ -182,12 +183,14 @@ function createNoDamageColumnAndValueList() {
   // Firestore writes will happen with the default change handler, this new one
   // will run as well.
   columnSelectListItem.children('select').on(
-      'change', maybeShowNoDamageValueItem);
+      'change',
+      () => maybeShowNoDamageValueItem(
+          getPageValueOfPath(DAMAGE_PROPERTY_PATH), null));
   $('#damage-asset-div')
       .append(createListForAsset('damage')
                   .append(columnSelectListItem)
                   .append(valueSelect));
-  maybeShowNoDamageValueItem();
+  maybeShowNoDamageValueItem(getPageValueOfPath(DAMAGE_PROPERTY_PATH), null);
 }
 
 const damageColumnChecker = new PendingChecker();
@@ -195,19 +198,21 @@ const damageColumnChecker = new PendingChecker();
 /**
  * Sets options for damage-related column input ({@link NODAMAGE_COLUMN_INFO})
  * and shows/hides {@link NODAMAGE_VALUE_INFO} if the column is set/unset.
+ * @param {?EeFC} damageAsset Value of damage asset, from page
  * @param {?Array<EeColumn>} propertyNames If null, show "pending" selects if
  * not already pending.
- * @param {Array<string>} propertyValues property values
+ * @param {Map<string, Promise<Array<string>>>} propertyValues Map of property
+ *     names to promises of their unique values.
  */
-function setNoDamageColumnAndValue(propertyNames, propertyValues) {
+function setNoDamageColumnAndValue(damageAsset, propertyNames, propertyValues) {
   const columnPath = NODAMAGE_COLUMN_INFO.path;
   if (propertyNames) {
     setOptionsForSelect(propertyNames, columnPath);
-    maybeShowNoDamageValueItem(propertyValues);
+    maybeShowNoDamageValueItem(damageAsset, propertyValues);
     damageColumnChecker.finishPending();
   } else if (damageColumnChecker.maybeStartPending()) {
     showSelectAsPending(columnPath);
-    maybeShowNoDamageValueItem(null);
+    maybeShowNoDamageValueItem(damageAsset, null);
   }
 }
 
@@ -220,29 +225,140 @@ function setNoDamageColumnAndValue(propertyNames, propertyValues) {
  * flexible disaster with damage used for buildings, then the user must specify
  * the column and value, so we show it to give the user more information about
  * what they'll have to fill in.
- * @param {Array<string>} propertyValues property values
+ * @param {?EeFC} damageAsset Value of damage asset, from page
+ * @param {Map<string, Promise<Array<string>>>} propertyValues Map of property
+ *     names to promises of their unique values.
  */
-function maybeShowNoDamageValueItem(propertyValues) {
-  const noDamageValueItem =
-      getInputElementFromPath(NODAMAGE_VALUE_INFO.path).parent();
+async function maybeShowNoDamageValueItem(damageAsset, propertyValues) {
+  const noDamageValueInput =
+      getInputElementFromPath(NODAMAGE_VALUE_INFO.path);
+  const noDamageValueItem = noDamageValueInput.parent();
   const noDamageColumnSelect =
       getInputElementFromPath(NODAMAGE_COLUMN_INFO.path);
-  const show = useDamageForBuildings() ||
-          (!noDamageColumnSelect.length ||
-           noDamageColumnSelect.is(':disabled')) ?
+  const noDamageValueSelectId =
+      makeInputElementIdFromPath(NODAMAGE_VALUE_INFO.path) + '-select';
+  const existingSelect = $('#' + noDamageValueSelectId);
+
+  const showInputInitially = useDamageForBuildings() ||
+      (!noDamageColumnSelect.length || noDamageColumnSelect.is(':disabled')) ?
       getStoredValueFromPath(NODAMAGE_COLUMN_INFO.path) :
       noDamageColumnSelect.val();
-  noDamageValueItem.on('input', function() {
-    if (noDamageColumnSelect.val()) {
-      const propertyPromise = propertyValues.get(noDamageColumnSelect.val());
-      console.log(propertyPromise);
-    }
-    if (show) {
+
+  if (!damageAsset || !propertyValues || !noDamageColumnSelect.val()) {
+    // No damage asset, or propertyValues not ready, or no column selected.
+    // Show input, hide select.
+    existingSelect.remove();
+    noDamageValueInput.show();
+    noDamageValueInput.val(''); // Clear input field
+    if (showInputInitially) {
       noDamageValueItem.show();
     } else {
       noDamageValueItem.hide();
     }
-  });
+    return;
+  }
+
+  const selectedColumnName = noDamageColumnSelect.val();
+  if (!selectedColumnName) {
+    existingSelect.remove();
+    noDamageValueInput.show();
+    noDamageValueInput.val('');
+    if (showInputInitially) {
+      noDamageValueItem.show();
+    } else {
+      noDamageValueItem.hide();
+    }
+    return;
+  }
+
+  const uniqueValuesPromise = propertyValues.get(selectedColumnName);
+
+  if (!uniqueValuesPromise) {
+    console.error(
+        'Could not find promise for unique values for column: ' +
+        selectedColumnName);
+    existingSelect.remove();
+    noDamageValueInput.show();
+    if (showInputInitially) {
+      noDamageValueItem.show();
+    } else {
+      noDamageValueItem.hide();
+    }
+    return;
+  }
+
+  try {
+    const uniqueValuesObject = await uniqueValuesPromise;
+    // getExemplars returns an ee.List which needs .getInfo()
+    // For now, assuming it's already a JS array due to how it's called in
+    // displayDamageRelatedElements after `getExemplars(damageAsset, property.name)`
+    // If `getExemplars` itself returns a promise that resolves to an ee.List,
+    // then another .getInfo() would be needed here.
+    // Based on the current structure, propertyValues.get(property.name) is
+    // already the promise that will resolve to the JS array.
+    const uniqueValues = uniqueValuesObject; // Assuming this is already JS array
+
+    if (showInputInitially) {
+      noDamageValueItem.show();
+    } else {
+      noDamageValueItem.hide();
+      existingSelect.remove();
+      noDamageValueInput.show();
+      noDamageValueInput.val('');
+      return;
+    }
+
+    const numberOfUniqueValues = uniqueValues.length;
+
+    if (numberOfUniqueValues > 0 && numberOfUniqueValues <= 25) {
+      // 1-25 unique values: Show dropdown
+      noDamageValueInput.hide();
+      existingSelect.remove(); // Remove old select if any
+
+      const newSelect = $(document.createElement('select'))
+                            .prop('id', noDamageValueSelectId);
+
+      const storedValue = getStoredValueFromPath(NODAMAGE_VALUE_INFO.path);
+
+      // Add a "None" or "Select a value" option
+      const noneOption = createOptionFrom('Select a value').val('');
+      if (!storedValue) {
+        noneOption.attr('selected', true);
+      }
+      newSelect.append(noneOption);
+
+      for (const value of uniqueValues) {
+        const option = createOptionFrom(value).val(value);
+        if (value === storedValue) {
+          option.attr('selected', true);
+        }
+        newSelect.append(option);
+      }
+
+      newSelect.on(
+          'change',
+          () => handleAssetDataChange(
+              newSelect.val(), NODAMAGE_VALUE_INFO.path));
+      noDamageValueItem.append(newSelect);
+    } else {
+      // 0 or > 25 unique values: Show text input
+      existingSelect.remove();
+      noDamageValueInput.show();
+      // Value should be preserved if it was already set via input
+      // If switching from select to input, we might want to clear it
+      // or keep the last selected value. For now, let's keep it.
+      // noDamageValueInput.val(''); // Optionally clear
+    }
+  } catch (error) {
+    console.error('Error fetching or processing unique values:', error);
+    existingSelect.remove();
+    noDamageValueInput.show();
+    if (showInputInitially) {
+      noDamageValueItem.show();
+    } else {
+      noDamageValueItem.hide();
+    }
+  }
 }
 
 /**
