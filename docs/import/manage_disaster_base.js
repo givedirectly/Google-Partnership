@@ -10,6 +10,7 @@ import {PendingChecker, useDamageForBuildings, validateFlexibleUserFields} from 
 import {validateStateBasedUserFields} from './manage_disaster_state_based.js';
 import {ScoreBoundsMap} from './score_bounds_map.js';
 import {updateDataInFirestore} from './update_firestore_disaster.js';
+import {convertEeObjectToPromise} from '../ee_promise_cache.js';
 
 export {
   capitalizeFirstLetter,
@@ -148,7 +149,7 @@ async function displayDamageRelatedElements(propertyNamesPromise, damageAsset) {
     // efficient doing column-by-column counts than processing the entire
     // collection at once.
     for (const property of propertyNames) {
-      propertyValues.set(property, getExemplars(damageAsset, property.name));
+      propertyValues.set(property, getExemplars(damageAsset, property));
     }
     setNoDamageColumnAndValue(damageAsset, propertyNames, propertyValues);
   }
@@ -230,6 +231,7 @@ function setNoDamageColumnAndValue(damageAsset, propertyNames, propertyValues) {
  *     names to promises of their unique values.
  */
 async function maybeShowNoDamageValueItem(damageAsset, propertyValues) {
+  console.log('In maybe show', propertyValues);
   const noDamageValueInput =
       getInputElementFromPath(NODAMAGE_VALUE_INFO.path);
   const noDamageValueItem = noDamageValueInput.parent();
@@ -288,7 +290,8 @@ async function maybeShowNoDamageValueItem(damageAsset, propertyValues) {
   }
 
   try {
-    const uniqueValuesObject = await uniqueValuesPromise;
+    const uniqueValuesObject = await convertEeObjectToPromise(uniqueValuesPromise);
+
     // getExemplars returns an ee.List which needs .getInfo()
     // For now, assuming it's already a JS array due to how it's called in
     // displayDamageRelatedElements after `getExemplars(damageAsset, property.name)`
