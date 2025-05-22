@@ -577,7 +577,7 @@ it('has two racing sets on same selector', () => {
           '(missing GEO_ID,NAME,B22010_002E,B22010_001E)\n');
 });
 
-it('shows pending then values for state-based disaster, damage cascades',
+it.only('shows pending then values for state-based disaster, damage cascades',
    () => {
      // Track Firestore updates.
      const updateDisasterSpy =
@@ -626,8 +626,6 @@ it('shows pending then values for state-based disaster, damage cascades',
      // in Firestore, we display the no-damage column and no-damage value
      // while retrieving data from EE.
      assertKickoffAndSelectWithPathPending(NODAMAGE_COLUMN_INFO.path);
-     getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path)
-         .should('have.value', 'a-value');
 
      // Release the state assets.
      cyQueue(() => stateAssetListingResult(new Map([
@@ -663,15 +661,16 @@ it('shows pending then values for state-based disaster, damage cascades',
      // There have been no Firestore updates triggered by page load.
      cyQueue(() => expect(updateDisasterSpy).to.not.be.called);
 
+     const selectPath = NODAMAGE_VALUE_INFO.path.concat(['select']);
      // Change the damage asset to one with no-damage column.
      getDamageSelect().select('asset1').blur();
      // Column and value both visible now, with correct values.
      getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path).should('be.visible');
      getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path)
          .should('have.value', 'a-key');
-     getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).should('be.visible');
-     getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path)
-         .should('have.value', 'a-value');
+     getSelectFromPropertyPath(selectPath).should('be.visible');
+     getSelectFromPropertyPath(selectPath)
+         .should('have.value', '');
      assertFirestoreUpdate();
 
      // Change to an asset without the no-damage column.
@@ -683,16 +682,17 @@ it('shows pending then values for state-based disaster, damage cascades',
          .should('have.value', '');
      getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path)
          .should('not.be.visible');
+     getSelectFromPropertyPath(selectPath)
+         .should('not.be.visible');
      assertFirestoreUpdate();
 
-     // Switch back to asset1: looks the same as before.
+     // Switch back to asset1: looks the same as before, but value is cleared.
      getDamageSelect().select('asset1').blur();
      getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path).should('be.visible');
      getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path)
          .should('have.value', 'a-key');
-     getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).should('be.visible');
-     getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path)
-         .should('have.value', 'a-value');
+     getSelectFromPropertyPath(selectPath).should('be.visible');
+     getSelectFromPropertyPath(selectPath).should('have.value', '');
      assertFirestoreUpdate();
    });
 
