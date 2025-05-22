@@ -93,14 +93,12 @@ async function initializeDamage(assetData) {
   }
   const damageIntroSpan = $('#damage-intro-span');
   const damageDiv = $('#damage-asset-div').empty().append(damageIntroSpan);
-  const damageSelect =
-      createSelect(DAMAGE_PROPERTY_PATH)
-          .on('change',
-              () => {
-                  handleAssetDataChange(null, NODAMAGE_VALUE_INFO.path);
-                  displayDamageRelatedElements(
-                  writeSelectAndGetPropertyNames(DAMAGE_PROPERTY_PATH),
-                  damageSelect.val());});
+  const damageSelect = createSelect(DAMAGE_PROPERTY_PATH).on('change', () => {
+    handleAssetDataChange(null, NODAMAGE_VALUE_INFO.path);
+    displayDamageRelatedElements(
+        writeSelectAndGetPropertyNames(DAMAGE_PROPERTY_PATH),
+        damageSelect.val());
+  });
   damageDiv.append(damageSelect);
   createNoDamageColumnAndValueList();
   showHideDamageAndMapDivs(!!getStoredValueFromPath(DAMAGE_PROPERTY_PATH));
@@ -182,13 +180,11 @@ function createNoDamageColumnAndValueList() {
       createSelectListItemFromColumnInfo(NODAMAGE_COLUMN_INFO);
   // Firestore writes will happen with the default change handler, this new one
   // will run as well.
-  columnSelectListItem.children('select').on(
-      'change',
-      () => {
-          handleAssetDataChange(null, NODAMAGE_VALUE_INFO.path);
+  columnSelectListItem.children('select').on('change', () => {
+    handleAssetDataChange(null, NODAMAGE_VALUE_INFO.path);
 
-        maybeShowNoDamageValueItem(
-          getPageValueOfPath(DAMAGE_PROPERTY_PATH));});
+    maybeShowNoDamageValueItem(getPageValueOfPath(DAMAGE_PROPERTY_PATH));
+  });
   $('#damage-asset-div')
       .append(createListForAsset('damage')
                   .append(columnSelectListItem)
@@ -294,8 +290,7 @@ async function maybeShowNoDamageValueItem(damageAsset) {
   const storedValue = getStoredValueFromPath(NODAMAGE_VALUE_INFO.path);
 
   try {
-    const uniqueValues =
-        await convertEeObjectToPromise(uniqueValuesPromise);
+    const uniqueValues = await convertEeObjectToPromise(uniqueValuesPromise);
 
 
     if (showInputInitially) {
@@ -308,13 +303,11 @@ async function maybeShowNoDamageValueItem(damageAsset) {
       return;
     }
 
-    const numberOfUniqueValues = uniqueValues.length;
-
     if (uniqueValues.length > 0) {
       noDamageValueInput.hide();
       existingSelect.remove();  // Remove old select if any
 
-      const newSelect = 
+      const newSelect =
           $(document.createElement('select')).prop('id', noDamageValueSelectId);
 
 

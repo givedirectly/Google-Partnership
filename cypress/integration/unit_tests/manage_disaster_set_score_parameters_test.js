@@ -577,124 +577,126 @@ it('has two racing sets on same selector', () => {
           '(missing GEO_ID,NAME,B22010_002E,B22010_001E)\n');
 });
 
-it.only('shows pending then values for state-based disaster, damage cascades',
-   () => {
-     // Track Firestore updates.
-     const updateDisasterSpy =
-         cy.spy(UpdateFirestoreDisaster, 'updateDataInFirestore');
-     let callCount = 1;
-     /** Asserts there has been exactly one Firestore update since last call. */
-     function assertFirestoreUpdate() {
-       const expectedCalls = callCount++;
-       cyQueue(
-           () => expect(updateDisasterSpy).to.have.callCount(expectedCalls));
-     }
+it.only(
+    'shows pending then values for state-based disaster, damage cascades',
+    () => {
+      // Track Firestore updates.
+      const updateDisasterSpy =
+          cy.spy(UpdateFirestoreDisaster, 'updateDataInFirestore');
+      let callCount = 1;
+      /**
+       * Asserts there has been exactly one Firestore update since last call.
+       */
+      function assertFirestoreUpdate() {
+        const expectedCalls = callCount++;
+        cyQueue(
+            () => expect(updateDisasterSpy).to.have.callCount(expectedCalls));
+      }
 
-     // Delay results until we're ready, for both state and disaster.
-     let stateAssetListingResult;
-     stateStub.returns(
-         new Promise((resolve) => stateAssetListingResult = resolve));
-     const asset1 = ee.FeatureCollection([ee.Feature(null, {'a-key': 0})]);
-     const asset2 = ee.FeatureCollection([ee.Feature(null, {'b-key': 0})]);
+      // Delay results until we're ready, for both state and disaster.
+      let stateAssetListingResult;
+      stateStub.returns(
+          new Promise((resolve) => stateAssetListingResult = resolve));
+      const asset1 = ee.FeatureCollection([ee.Feature(null, {'a-key': 0})]);
+      const asset2 = ee.FeatureCollection([ee.Feature(null, {'b-key': 0})]);
 
-     let disasterAssetListingResult;
-     disasterStub.returns(
-         new Promise((resolve) => disasterAssetListingResult = resolve));
+      let disasterAssetListingResult;
+      disasterStub.returns(
+          new Promise((resolve) => disasterAssetListingResult = resolve));
 
-     // We'll cascade damage asset properties.
-     const featureCollectionStub = cy.stub(ee, 'FeatureCollection');
-     featureCollectionStub.withArgs('asset1').returns(asset1);
-     featureCollectionStub.withArgs('found-asset').returns(asset1);
-     featureCollectionStub.withArgs('asset2').returns(asset2);
+      // We'll cascade damage asset properties.
+      const featureCollectionStub = cy.stub(ee, 'FeatureCollection');
+      featureCollectionStub.withArgs('asset1').returns(asset1);
+      featureCollectionStub.withArgs('found-asset').returns(asset1);
+      featureCollectionStub.withArgs('asset2').returns(asset2);
 
-     // Set properties up so that poverty asset is found, income asset is not
-     // found, and svi is never set.
-     const currentData = createDefaultStateBasedFirestoreData();
-     currentData.assetData.stateBasedData.snapData.paths.NY = 'found-asset';
-     currentData.assetData.stateBasedData.incomeAssetPaths.NY = 'missing-asset';
-     currentData.assetData.damageAssetPath = 'missing-asset';
-     currentData.assetData.noDamageKey = 'a-key';
-     currentData.assetData.noDamageValue = 'a-value';
-     const initializationDone =
-         enableWhenFirestoreReady(new Map([[getDisaster(), currentData]]));
-     // Give promise a chance to start running.
-     cy.wait(0);
+      // Set properties up so that poverty asset is found, income asset is not
+      // found, and svi is never set.
+      const currentData = createDefaultStateBasedFirestoreData();
+      currentData.assetData.stateBasedData.snapData.paths.NY = 'found-asset';
+      currentData.assetData.stateBasedData.incomeAssetPaths.NY =
+          'missing-asset';
+      currentData.assetData.damageAssetPath = 'missing-asset';
+      currentData.assetData.noDamageKey = 'a-key';
+      currentData.assetData.noDamageValue = 'a-value';
+      const initializationDone =
+          enableWhenFirestoreReady(new Map([[getDisaster(), currentData]]));
+      // Give promise a chance to start running.
+      cy.wait(0);
 
-     assertKickoffAndSelectPending(getSelectForScoreAssetIndex(SNAP_INDEX));
-     assertKickoffAndSelectPending(getDamageSelect());
-     // Because damage asset is set in Firestore, and column key is also set
-     // in Firestore, we display the no-damage column and no-damage value
-     // while retrieving data from EE.
-     assertKickoffAndSelectWithPathPending(NODAMAGE_COLUMN_INFO.path);
+      assertKickoffAndSelectPending(getSelectForScoreAssetIndex(SNAP_INDEX));
+      assertKickoffAndSelectPending(getDamageSelect());
+      // Because damage asset is set in Firestore, and column key is also set
+      // in Firestore, we display the no-damage column and no-damage value
+      // while retrieving data from EE.
+      assertKickoffAndSelectWithPathPending(NODAMAGE_COLUMN_INFO.path);
 
-     // Release the state assets.
-     cyQueue(() => stateAssetListingResult(new Map([
-               ['found-asset', ENABLED_COLLECTION],
-               ['other-asset', ENABLED_COLLECTION],
-             ])));
-     // SNAP is set as expected.
-     getSelectForScoreAssetIndex(SNAP_INDEX).should('not.be.disabled');
-     getSelectForScoreAssetIndex(SNAP_INDEX)
-         .should('have.value', 'found-asset');
-     // Income doesn't have a value because its value was not in asset list.
-     getSelectForScoreAssetIndex(INCOME_INDEX).should('not.be.disabled');
-     getSelectForScoreAssetIndex(INCOME_INDEX).should('have.value', '');
-     // SVI has nothing.
-     getSelectForScoreAssetIndex(SVI_INDEX).should('not.be.disabled');
-     getSelectForScoreAssetIndex(SVI_INDEX).should('have.value', '');
-     // Damage is still pending.
-     assertKickoffAndSelectPending(getDamageSelect());
-     // Release the disaster assets.
-     cyQueue(() => disasterAssetListingResult(new Map([
-               ['asset1', ENABLED_COLLECTION],
-               ['asset2', ENABLED_COLLECTION],
-             ])));
-     // Initialization can now complete.
-     cy.wrap(initializationDone);
-     // Damage asset was not found.
-     getDamageSelect().should('have.value', '');
-     // Since damage has no value on page, no-damage column/value are hidden.
-     getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path)
-         .should('not.be.visible');
-     getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path)
-         .should('not.be.visible');
-     // There have been no Firestore updates triggered by page load.
-     cyQueue(() => expect(updateDisasterSpy).to.not.be.called);
+      // Release the state assets.
+      cyQueue(() => stateAssetListingResult(new Map([
+                ['found-asset', ENABLED_COLLECTION],
+                ['other-asset', ENABLED_COLLECTION],
+              ])));
+      // SNAP is set as expected.
+      getSelectForScoreAssetIndex(SNAP_INDEX).should('not.be.disabled');
+      getSelectForScoreAssetIndex(SNAP_INDEX)
+          .should('have.value', 'found-asset');
+      // Income doesn't have a value because its value was not in asset list.
+      getSelectForScoreAssetIndex(INCOME_INDEX).should('not.be.disabled');
+      getSelectForScoreAssetIndex(INCOME_INDEX).should('have.value', '');
+      // SVI has nothing.
+      getSelectForScoreAssetIndex(SVI_INDEX).should('not.be.disabled');
+      getSelectForScoreAssetIndex(SVI_INDEX).should('have.value', '');
+      // Damage is still pending.
+      assertKickoffAndSelectPending(getDamageSelect());
+      // Release the disaster assets.
+      cyQueue(() => disasterAssetListingResult(new Map([
+                ['asset1', ENABLED_COLLECTION],
+                ['asset2', ENABLED_COLLECTION],
+              ])));
+      // Initialization can now complete.
+      cy.wrap(initializationDone);
+      // Damage asset was not found.
+      getDamageSelect().should('have.value', '');
+      // Since damage has no value on page, no-damage column/value are hidden.
+      getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path)
+          .should('not.be.visible');
+      getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path)
+          .should('not.be.visible');
+      // There have been no Firestore updates triggered by page load.
+      cyQueue(() => expect(updateDisasterSpy).to.not.be.called);
 
-     const selectPath = NODAMAGE_VALUE_INFO.path.concat(['select']);
-     // Change the damage asset to one with no-damage column.
-     getDamageSelect().select('asset1').blur();
-     // Column and value both visible now, with correct values.
-     getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path).should('be.visible');
-     getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path)
-         .should('have.value', 'a-key');
-     getSelectFromPropertyPath(selectPath).should('be.visible');
-     getSelectFromPropertyPath(selectPath)
-         .should('have.value', '');
-     assertFirestoreUpdate();
+      const selectPath = NODAMAGE_VALUE_INFO.path.concat(['select']);
+      // Change the damage asset to one with no-damage column.
+      getDamageSelect().select('asset1').blur();
+      // Column and value both visible now, with correct values.
+      getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path).should('be.visible');
+      getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path)
+          .should('have.value', 'a-key');
+      getSelectFromPropertyPath(selectPath).should('be.visible');
+      getSelectFromPropertyPath(selectPath).should('have.value', '');
+      assertFirestoreUpdate();
 
-     // Change to an asset without the no-damage column.
-     getDamageSelect().select('asset2').blur();
-     // Since there is an asset, column select is visible.
-     getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path).should('be.visible');
-     // But it has no selection, and the value input is hidden.
-     getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path)
-         .should('have.value', '');
-     getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path)
-         .should('not.be.visible');
-     getSelectFromPropertyPath(selectPath)
-         .should('not.be.visible');
-     assertFirestoreUpdate();
+      // Change to an asset without the no-damage column.
+      getDamageSelect().select('asset2').blur();
+      // Since there is an asset, column select is visible.
+      getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path).should('be.visible');
+      // But it has no selection, and the value input is hidden.
+      getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path)
+          .should('have.value', '');
+      getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path)
+          .should('not.be.visible');
+      getSelectFromPropertyPath(selectPath).should('not.be.visible');
+      assertFirestoreUpdate();
 
-     // Switch back to asset1: looks the same as before, but value is cleared.
-     getDamageSelect().select('asset1').blur();
-     getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path).should('be.visible');
-     getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path)
-         .should('have.value', 'a-key');
-     getSelectFromPropertyPath(selectPath).should('be.visible');
-     getSelectFromPropertyPath(selectPath).should('have.value', '');
-     assertFirestoreUpdate();
-   });
+      // Switch back to asset1: looks the same as before, but value is cleared.
+      getDamageSelect().select('asset1').blur();
+      getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path).should('be.visible');
+      getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path)
+          .should('have.value', 'a-key');
+      getSelectFromPropertyPath(selectPath).should('be.visible');
+      getSelectFromPropertyPath(selectPath).should('have.value', '');
+      assertFirestoreUpdate();
+    });
 
 describe('Tests for flexible disasters', () => {
   it('does basic interactions for flexible', () => {
