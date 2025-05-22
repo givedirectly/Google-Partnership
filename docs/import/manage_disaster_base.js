@@ -1,3 +1,4 @@
+import {convertEeObjectToPromise} from '../ee_promise_cache.js';
 import {colorToRgbString, LayerType} from '../firebase_layers.js';
 import {latLngToGeoPoint, transformGeoPointArrayToLatLng} from '../map_util.js';
 import {isUserProperty} from '../property_names.js';
@@ -10,7 +11,6 @@ import {PendingChecker, useDamageForBuildings, validateFlexibleUserFields} from 
 import {validateStateBasedUserFields} from './manage_disaster_state_based.js';
 import {ScoreBoundsMap} from './score_bounds_map.js';
 import {updateDataInFirestore} from './update_firestore_disaster.js';
-import {convertEeObjectToPromise} from '../ee_promise_cache.js';
 
 export {
   capitalizeFirstLetter,
@@ -232,8 +232,7 @@ function setNoDamageColumnAndValue(damageAsset, propertyNames, propertyValues) {
  */
 async function maybeShowNoDamageValueItem(damageAsset, propertyValues) {
   console.log('In maybe show', propertyValues);
-  const noDamageValueInput =
-      getInputElementFromPath(NODAMAGE_VALUE_INFO.path);
+  const noDamageValueInput = getInputElementFromPath(NODAMAGE_VALUE_INFO.path);
   const noDamageValueItem = noDamageValueInput.parent();
   const noDamageColumnSelect =
       getInputElementFromPath(NODAMAGE_COLUMN_INFO.path);
@@ -242,7 +241,8 @@ async function maybeShowNoDamageValueItem(damageAsset, propertyValues) {
   const existingSelect = $('#' + noDamageValueSelectId);
 
   const showInputInitially = useDamageForBuildings() ||
-      (!noDamageColumnSelect.length || noDamageColumnSelect.is(':disabled')) ?
+          (!noDamageColumnSelect.length ||
+           noDamageColumnSelect.is(':disabled')) ?
       getStoredValueFromPath(NODAMAGE_COLUMN_INFO.path) :
       noDamageColumnSelect.val();
 
@@ -251,7 +251,7 @@ async function maybeShowNoDamageValueItem(damageAsset, propertyValues) {
     // Show input, hide select.
     existingSelect.remove();
     noDamageValueInput.show();
-    noDamageValueInput.val(''); // Clear input field
+    noDamageValueInput.val('');  // Clear input field
     if (showInputInitially) {
       noDamageValueItem.show();
     } else {
@@ -290,16 +290,18 @@ async function maybeShowNoDamageValueItem(damageAsset, propertyValues) {
   }
 
   try {
-    const uniqueValuesObject = await convertEeObjectToPromise(uniqueValuesPromise);
+    const uniqueValuesObject =
+        await convertEeObjectToPromise(uniqueValuesPromise);
 
     // getExemplars returns an ee.List which needs .getInfo()
     // For now, assuming it's already a JS array due to how it's called in
-    // displayDamageRelatedElements after `getExemplars(damageAsset, property.name)`
-    // If `getExemplars` itself returns a promise that resolves to an ee.List,
-    // then another .getInfo() would be needed here.
-    // Based on the current structure, propertyValues.get(property.name) is
-    // already the promise that will resolve to the JS array.
-    const uniqueValues = uniqueValuesObject; // Assuming this is already JS array
+    // displayDamageRelatedElements after `getExemplars(damageAsset,
+    // property.name)` If `getExemplars` itself returns a promise that resolves
+    // to an ee.List, then another .getInfo() would be needed here. Based on the
+    // current structure, propertyValues.get(property.name) is already the
+    // promise that will resolve to the JS array.
+    const uniqueValues =
+        uniqueValuesObject;  // Assuming this is already JS array
 
     if (showInputInitially) {
       noDamageValueItem.show();
@@ -316,10 +318,10 @@ async function maybeShowNoDamageValueItem(damageAsset, propertyValues) {
     if (numberOfUniqueValues > 0 && numberOfUniqueValues <= 25) {
       // 1-25 unique values: Show dropdown
       noDamageValueInput.hide();
-      existingSelect.remove(); // Remove old select if any
+      existingSelect.remove();  // Remove old select if any
 
-      const newSelect = $(document.createElement('select'))
-                            .prop('id', noDamageValueSelectId);
+      const newSelect =
+          $(document.createElement('select')).prop('id', noDamageValueSelectId);
 
       const storedValue = getStoredValueFromPath(NODAMAGE_VALUE_INFO.path);
 
@@ -340,8 +342,8 @@ async function maybeShowNoDamageValueItem(damageAsset, propertyValues) {
 
       newSelect.on(
           'change',
-          () => handleAssetDataChange(
-              newSelect.val(), NODAMAGE_VALUE_INFO.path));
+          () =>
+              handleAssetDataChange(newSelect.val(), NODAMAGE_VALUE_INFO.path));
       noDamageValueItem.append(newSelect);
     } else {
       // 0 or > 25 unique values: Show text input
