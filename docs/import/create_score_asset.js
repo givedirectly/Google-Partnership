@@ -11,12 +11,12 @@ import {backupCensusBlockGroupKey, backupCensusGeoidKey, backupIncomeKey, backup
 export {
   createScoreAssetForFlexibleDisaster,
   createScoreAssetForStateBasedDisaster,
-  setStatus
+  setStatus,
 };
 // clang-format off
 // @VisibleForTesting
 export {backUpAssetAndStartTask, renameProperty};
-// clang-format on 
+// clang-format on
 
 // State-based tags.
 
