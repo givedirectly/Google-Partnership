@@ -718,8 +718,8 @@ it.only('select for no-damage value', () => {
     featureList.push(ee.Feature(null, {
       'string-key': i.toString(),
       'int-key': i,
-      'limited-string': (i % 10).toString()
-    }))
+      'limited-string': (i % 10).toString(),
+    }));
   }
   const asset1 = ee.FeatureCollection(featureList);
   const asset2 = ee.FeatureCollection(featureList);
@@ -806,7 +806,7 @@ it.only('select for no-damage value', () => {
       .blur();
   getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).should('not.be.visible');
   getSelectFromPropertyPath(selectPath).should('be.visible');
-  getSelectFromPropertyPath(selectPath).should('have.value', '3')
+  getSelectFromPropertyPath(selectPath).should('have.value', '3');
   assertFirestoreUpdate();
 
   getSelectFromPropertyPath(selectPath).select('8').blur();
@@ -850,7 +850,7 @@ it.only('select for no-damage value', () => {
       .blur();
   getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).should('not.be.visible');
   getSelectFromPropertyPath(selectPath).should('be.visible');
-  getSelectFromPropertyPath(selectPath).should('have.value', '')
+  getSelectFromPropertyPath(selectPath).should('have.value', '');
   assertFirestoreUpdate();
 
   getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path).select('int-key').blur();
