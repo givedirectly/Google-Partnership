@@ -197,7 +197,7 @@ const damageColumnChecker = new PendingChecker();
  * Sets options for damage-related column input ({@link NODAMAGE_COLUMN_INFO})
  * and shows/hides {@link NODAMAGE_VALUE_INFO} if the column is set/unset.
  * @param {?EeFC} damageAsset Value of damage asset, from page
- * @param {bool} haveProperties TODO
+ * @param {bool} haveProperties Whether property columns/values are available
  */
 async function setNoDamageColumnAndValue(damageAsset, haveProperties) {
   const columnPath = NODAMAGE_COLUMN_INFO.path;
