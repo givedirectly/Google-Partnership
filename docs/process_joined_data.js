@@ -1,4 +1,4 @@
-import {damageTag, geoidTag, isUserProperty, scoreTag} from './property_names.js';
+import {damageTag, displayedTag, geoidTag, isUserProperty, scoreTag} from './property_names.js';
 
 export {processJoinedData};
 
@@ -30,8 +30,10 @@ function colorAndRate(
   const povertyRatio = feature.properties[povertyRateKey];
   const ratioBuildingsDamaged = hasDamage ? feature.properties[damageTag] : 0;
   let score = 0;
-  if (povertyRatio >= povertyThreshold &&
-      ratioBuildingsDamaged >= damageThreshold) {
+  const displayed = povertyRatio >= povertyThreshold &&
+      ratioBuildingsDamaged >= damageThreshold;
+  feature.properties[displayedTag] = displayed;
+  if (displayed) {
     score = Math.round(
         scalingFactor *
         (ratioBuildingsDamaged * (1 - povertyWeight) +
@@ -55,8 +57,8 @@ function colorAndRate(
  * Processes the provided Promise. The returned Promise has the same underlying
  * data as the original Promise. In other words, this method will mutate the
  * underlying data of the original Promise. This is acceptable, because it only
- * adds/overwrites the computed attributes of score and color. We avoid doing a
- * full copy because it would unnecessarily copy a lot of data.
+ * adds/overwrites the computed attributes of score, displayed, and color. We
+ * avoid doing a full copy because it would unnecessarily copy a lot of data.
  *
  * @param {Promise<Array<GeoJsonFeature>>} dataPromise
  * @param {number} scalingFactor multiplies the raw score, it can be
@@ -70,11 +72,11 @@ function colorAndRate(
  *     Array<EeColumn>}>} Resolved scored features, together with all columns
  *     found in features (and the additional {@link scoreTag} and
  *     {@link COLOR_TAG} columns). The first four columns are: {@link geoidTag},
- *     `districtDescriptionKey` from {@link ScoreParameters},
- *     {@link scoreTag}, and then `povertyRateKey` from
- *     {@link ScoreParameters}. If damage is present in the features,
- *     {@link damageTag} is next, followed by `buildingKey` from
- *     {@link ScoreParameters}. If damage is absent, `buildingKey` is last.
+ *     `displayedTag`, `districtDescriptionKey` from {@link ScoreParameters},
+ *     {@link scoreTag}, and then `povertyRateKey` from {@link ScoreParameters}.
+ *     If damage is present in the features, {@link damageTag} is next, followed
+ *     by `buildingKey` from {@link ScoreParameters}. If damage is absent,
+ *     `buildingKey` is last.
  *     Remaining columns are sorted by order encountered in the feature, which
  *     generally means alphabetically, since EarthEngine always sorts them.
  */
@@ -96,8 +98,13 @@ function processJoinedData(
               },
             ]) => {
         const hasDamage = !!damageAssetPath;
-        const columnsFound = new Set(
-            [geoidTag, districtDescriptionKey, scoreTag, povertyRateKey]);
+        const columnsFound = new Set([
+          geoidTag,
+          displayedTag,
+          districtDescriptionKey,
+          scoreTag,
+          povertyRateKey,
+        ]);
         if (hasDamage) {
           columnsFound.add(damageTag);
           columnsFound.add(buildingKey);

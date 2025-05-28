@@ -1,6 +1,6 @@
 import {showError} from './error.js';
 import {currentFeatures, highlightFeatures} from './highlight_features.js';
-import {geoidTag, scoreTag} from './property_names.js';
+import {displayedTag, geoidTag, scoreTag} from './property_names.js';
 
 export {clickFeature, selectHighlightedFeatures};
 
@@ -52,6 +52,7 @@ function clickFeature(
 }
 
 const HIDDEN_PROPERTIES = Object.freeze(new Set([
+  displayedTag,
   geoidTag,
   scoreTag,
 ]));
@@ -79,7 +80,7 @@ function createHtmlForPopup(feature, rowData, scoreParameters, columns) {
     properties.appendChild(property);
   } else {
     const property = document.createElement('li');
-    property.innerText = 'SCORE: ' + rowData[2];
+    property.innerText = 'SCORE: ' + rowData[3];
     properties.appendChild(property);
   }
   for (const column of columns) {

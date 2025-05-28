@@ -2,7 +2,7 @@ import {tableContainerId} from '../../../docs/dom_constants.js';
 import {convertEeObjectToPromise} from '../../../docs/ee_promise_cache.js';
 import {currentFeatures} from '../../../docs/highlight_features';
 import * as loading from '../../../docs/loading.js';
-import {geoidTag, scoreTag} from '../../../docs/property_names.js';
+import {displayedTag, geoidTag, scoreTag} from '../../../docs/property_names.js';
 import * as Resources from '../../../docs/resources.js';
 import {drawTableAndSetUpHandlers, resolveScoreAsset} from '../../../docs/run.js';
 import {cyQueue} from '../../support/commands.js';
@@ -45,11 +45,11 @@ describe('Unit tests for click_feature.js with map and table', () => {
       missingPropertiesFeature,
     ]);
     scoredFeatures = ee.FeatureCollection([
-      feature1.set(scoreTag, 1),
-      feature2.set(scoreTag, 3),
-      offMapFeature.set(scoreTag, 2),
-      zeroFeature.set(scoreTag, 0),
-      missingPropertiesFeature.set(scoreTag, 4),
+      feature1.set(scoreTag, 1).set(displayedTag, true),
+      feature2.set(scoreTag, 3).set(displayedTag, true),
+      offMapFeature.set(scoreTag, 2).set(displayedTag, true),
+      zeroFeature.set(scoreTag, 0).set(displayedTag, false),
+      missingPropertiesFeature.set(scoreTag, 4).set(displayedTag, true),
     ]);
     // We fake out element access below using cy.document(), but cy.document()
     // doesn't return an HTMLDocument (and its elements aren't HTMLElements)
@@ -106,6 +106,7 @@ describe('Unit tests for click_feature.js with map and table', () => {
                                                               fc.features,
                                                           columnsFound: [
                                                             geoidTag,
+                                                            displayedTag,
                                                             blockGroupTag,
                                                             scoreTag,
                                                             'SOME PROPERTY',
