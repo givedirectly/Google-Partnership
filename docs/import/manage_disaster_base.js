@@ -93,10 +93,12 @@ async function initializeDamage(assetData) {
   }
   const damageIntroSpan = $('#damage-intro-span');
   const damageDiv = $('#damage-asset-div').empty().append(damageIntroSpan);
-  const damageSelect = createSelect(DAMAGE_PROPERTY_PATH).on('change', () => 
-    displayDamageRelatedElements(
-        writeSelectAndGetPropertyNames(DAMAGE_PROPERTY_PATH),
-        damageSelect.val()));
+  const damageSelect =
+      createSelect(DAMAGE_PROPERTY_PATH)
+          .on('change',
+              () => displayDamageRelatedElements(
+                  writeSelectAndGetPropertyNames(DAMAGE_PROPERTY_PATH),
+                  damageSelect.val()));
   damageDiv.append(damageSelect);
   createNoDamageColumnAndValueList();
   showHideDamageAndMapDivs(!!getStoredValueFromPath(DAMAGE_PROPERTY_PATH));
@@ -178,7 +180,10 @@ function createNoDamageColumnAndValueList() {
       createSelectListItemFromColumnInfo(NODAMAGE_COLUMN_INFO);
   // Firestore writes will happen with the default change handler, this new one
   // will run as well.
-  columnSelectListItem.children('select').on('change', () => maybeShowNoDamageValueItem(getPageValueOfPath(DAMAGE_PROPERTY_PATH)));
+  columnSelectListItem.children('select').on(
+      'change',
+      () =>
+          maybeShowNoDamageValueItem(getPageValueOfPath(DAMAGE_PROPERTY_PATH)));
   $('#damage-asset-div')
       .append(createListForAsset('damage')
                   .append(columnSelectListItem)
@@ -232,10 +237,9 @@ async function maybeShowNoDamageValueItem(damageAsset) {
   const existingSelect = $('#' + noDamageValueSelectId);
 
   const showInputInitially = useDamageForBuildings() ||
-          ((!noDamageColumnSelect.length ||
-           noDamageColumnSelect.is(':disabled')) ?
-      getStoredValueFromPath(NODAMAGE_COLUMN_INFO.path) :
-      noDamageColumnSelect.val());
+      ((!noDamageColumnSelect.length || noDamageColumnSelect.is(':disabled')) ?
+           getStoredValueFromPath(NODAMAGE_COLUMN_INFO.path) :
+           noDamageColumnSelect.val());
 
   if (!damageAsset || !propertyValues || !noDamageColumnSelect.val()) {
     // No damage asset, or propertyValues not ready, or no column selected.
