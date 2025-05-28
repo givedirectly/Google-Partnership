@@ -577,7 +577,7 @@ it('has two racing sets on same selector', () => {
           '(missing GEO_ID,NAME,B22010_002E,B22010_001E)\n');
 });
 
-it.only(
+it(
     'shows pending then values for state-based disaster, damage cascades',
     () => {
       // Track Firestore updates.
@@ -685,7 +685,7 @@ it.only(
           .should('have.value', '');
       getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path)
           .should('not.be.visible');
-      getSelectFromPropertyPath(selectPath).should('not.be.visible');
+      getSelectFromPropertyPath(selectPath).should('not.exist');
       assertFirestoreUpdate();
 
       // Switch back to asset1: looks the same as before, but value is cleared.
@@ -698,6 +698,161 @@ it.only(
       assertFirestoreUpdate();
     });
 
+it.only(
+    'select for no-damage value',
+    () => {
+        // Track Firestore updates.
+        const updateDisasterSpy =
+            cy.spy(UpdateFirestoreDisaster, 'updateDataInFirestore');
+        let callCount = 1;
+        /**
+         * Asserts there has been exactly one Firestore update since last call.
+         */
+        function assertFirestoreUpdate() {
+        const expectedCalls = callCount++;
+        cyQueue(
+            () => expect(updateDisasterSpy).to.have.callCount(expectedCalls));
+        }
+
+        // Delay results until we're ready, for both state and disaster.
+        let stateAssetListingResult;
+        stateStub.returns(
+            new Promise((resolve) => stateAssetListingResult = resolve));
+        const featureList = []
+        for (let i = 0; i < 30; i++) {
+            featureList.push(ee.Feature(null, {'string-key': i.toString(), 'int-key': i, 'limited-string': (i % 10).toString()}))
+        }
+        const asset1 = ee.FeatureCollection(featureList);
+        const asset2 = ee.FeatureCollection(featureList);
+
+        let disasterAssetListingResult;
+        disasterStub.returns(
+            new Promise((resolve) => disasterAssetListingResult = resolve));
+
+        // We'll cascade damage asset properties.
+        const featureCollectionStub = cy.stub(ee, 'FeatureCollection');
+        featureCollectionStub.withArgs('asset1').returns(asset1);
+        featureCollectionStub.withArgs('found-asset').returns(asset1);
+        featureCollectionStub.withArgs('asset2').returns(asset2);
+
+        // Set properties up so that poverty asset is found, income asset is not
+        // found, and svi is never set.
+        const currentData = createDefaultStateBasedFirestoreData();
+        const initializationDone =
+            enableWhenFirestoreReady(new Map([[getDisaster(), currentData]]));
+        // Give promise a chance to start running.
+        cy.wait(0);
+
+        assertKickoffAndSelectPending(getDamageSelect());
+        // Release the state assets.
+        cyQueue(() => stateAssetListingResult(new Map([
+            ['found-asset', ENABLED_COLLECTION],
+            ['other-asset', ENABLED_COLLECTION],
+        ])));
+
+        // Release the disaster assets.
+        cyQueue(() => disasterAssetListingResult(new Map([
+                ['asset1', ENABLED_COLLECTION],
+                ['asset2', ENABLED_COLLECTION],
+                ])));
+        // Initialization can now complete.
+        cy.wrap(initializationDone);
+        // Damage asset was not found.
+        getDamageSelect().should('have.value', '');
+        // Since damage has no value on page, no-damage column/value are hidden.
+        getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path)
+            .should('not.be.visible');
+        getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path)
+            .should('not.be.visible');
+        // There have been no Firestore updates triggered by page load.
+        cyQueue(() => expect(updateDisasterSpy).to.not.be.called);
+
+        const selectPath = NODAMAGE_VALUE_INFO.path.concat(['select']);
+        // Change the damage asset to one with no-damage column.
+        getDamageSelect().select('asset1').blur();
+        // Column and value both visible now, with correct values.
+        getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path).should('be.visible');
+        getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path)
+            .should('have.value', '');
+        getSelectFromPropertyPath(selectPath).should('not.exist');
+        assertFirestoreUpdate();
+
+        // Change to a column with too many values.
+        getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path).select('int-key').blur();
+        getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path)
+            .should('be.visible');
+        getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).should('have.value', '');
+        assertFirestoreUpdate();
+        
+        // Set the value to one that's a valid value for another column.
+        getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).type('1').blur();
+        assertFirestoreUpdate();
+
+        getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path).select('string-key').blur();
+        getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).should('have.value', '1');
+        assertFirestoreUpdate();
+
+        cy.wait(500);
+        getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).click().clear().clear();
+        // getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).should('have.value', '');
+
+        // Set the value to one that's a valid value for another column.
+        
+        getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).type('{selectAll}{selectAll}3').blur();
+        assertFirestoreUpdate();
+
+        getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path).select('limited-string').blur();
+        getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).should('not.be.visible');
+        getSelectFromPropertyPath(selectPath).should('be.visible');
+        getSelectFromPropertyPath(selectPath).should('have.value', '3')
+        assertFirestoreUpdate();
+
+        getSelectFromPropertyPath(selectPath).select('8').blur();
+        assertFirestoreUpdate();
+
+        getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path).select('string-key').blur();
+        getSelectFromPropertyPath(selectPath).should('not.exist');
+        getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).should('be.visible');
+        getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).should('have.value', '8');
+        assertFirestoreUpdate();
+
+        // Change to another asset with the same columns, but we don't keep them.
+        getDamageSelect().select('asset2').blur();
+        // Since there is an asset, column select is visible.
+        getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path).should('be.visible');
+        // But it has no selection, and the value input is hidden.
+        getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path)
+            .should('have.value', 'string-key');
+        getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path)
+            .should('be.visible');
+        getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path)
+            .should('have.value', '8');
+        getSelectFromPropertyPath(selectPath).should('not.exist');
+        assertFirestoreUpdate();
+
+        cy.wait(500);
+        getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).click().clear().clear();
+        // getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).should('have.value', '');
+
+        getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).type('{selectAll}{selectAll}20');
+        getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).should('have.value', '20');
+        getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).blur();
+
+        assertFirestoreUpdate();
+
+        getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path).select('limited-string').blur();
+        getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).should('not.be.visible');
+        getSelectFromPropertyPath(selectPath).should('be.visible');
+        getSelectFromPropertyPath(selectPath).should('have.value', '')
+        assertFirestoreUpdate();
+
+        getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path).select('int-key').blur();
+        getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path)
+            .should('be.visible');
+        getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).should('have.value', '20');
+        assertFirestoreUpdate();
+    });
+    
 describe('Tests for flexible disasters', () => {
   it('does basic interactions for flexible', () => {
     // Track Firestore updates.
@@ -712,7 +867,7 @@ describe('Tests for flexible disasters', () => {
     }
 
     // Delay results until we're ready.
-    const asset1 = ee.FeatureCollection([ee.Feature(null, {'a-key': 0})]);
+    const asset1 = ee.FeatureCollection([ee.Feature(null, {'a-key': 'a-value'})]);
     const asset2 = ee.FeatureCollection([ee.Feature(null, {'b-key': 0})]);
     const noGeoAsset =
         ee.FeatureCollection([ee.Feature(null, {'a-key': 0, 'b-key': 1})]);

@@ -93,12 +93,10 @@ async function initializeDamage(assetData) {
   }
   const damageIntroSpan = $('#damage-intro-span');
   const damageDiv = $('#damage-asset-div').empty().append(damageIntroSpan);
-  const damageSelect = createSelect(DAMAGE_PROPERTY_PATH).on('change', () => {
-    handleAssetDataChange(null, NODAMAGE_VALUE_INFO.path);
+  const damageSelect = createSelect(DAMAGE_PROPERTY_PATH).on('change', () => 
     displayDamageRelatedElements(
         writeSelectAndGetPropertyNames(DAMAGE_PROPERTY_PATH),
-        damageSelect.val());
-  });
+        damageSelect.val()));
   damageDiv.append(damageSelect);
   createNoDamageColumnAndValueList();
   showHideDamageAndMapDivs(!!getStoredValueFromPath(DAMAGE_PROPERTY_PATH));
@@ -141,7 +139,7 @@ const propertyValues = new Map();
  * @return {Promise<void>}
  */
 async function displayDamageRelatedElements(propertyNamesPromise, damageAsset) {
-  setNoDamageColumnAndValue(null, null, null);
+  setNoDamageColumnAndValue(null, false);
   showHideDamageAndMapDivs(!!damageAsset);
   propertyValues.clear();
   const propertyNames = await propertyNamesPromise;
@@ -153,7 +151,7 @@ async function displayDamageRelatedElements(propertyNamesPromise, damageAsset) {
       propertyValues.set(property, getExemplars(damageAsset, property));
     }
   }
-  setNoDamageColumnAndValue(damageAsset);
+  setNoDamageColumnAndValue(damageAsset, true);
 }
 
 /**
@@ -180,11 +178,7 @@ function createNoDamageColumnAndValueList() {
       createSelectListItemFromColumnInfo(NODAMAGE_COLUMN_INFO);
   // Firestore writes will happen with the default change handler, this new one
   // will run as well.
-  columnSelectListItem.children('select').on('change', () => {
-    handleAssetDataChange(null, NODAMAGE_VALUE_INFO.path);
-
-    maybeShowNoDamageValueItem(getPageValueOfPath(DAMAGE_PROPERTY_PATH));
-  });
+  columnSelectListItem.children('select').on('change', () => maybeShowNoDamageValueItem(getPageValueOfPath(DAMAGE_PROPERTY_PATH)));
   $('#damage-asset-div')
       .append(createListForAsset('damage')
                   .append(columnSelectListItem)
@@ -203,11 +197,10 @@ const damageColumnChecker = new PendingChecker();
  * @param {Map<string, Promise<Array<string>>>} propertyValues Map of property
  *     names to promises of their unique values.
  */
-async function setNoDamageColumnAndValue(damageAsset) {
+async function setNoDamageColumnAndValue(damageAsset, haveProperties) {
   const columnPath = NODAMAGE_COLUMN_INFO.path;
-  const propertyNames = propertyValues.keys();
-  if (propertyNames) {
-    setOptionsForSelect(propertyNames, columnPath);
+  if (haveProperties) {
+    setOptionsForSelect(propertyValues.keys(), columnPath);
     maybeShowNoDamageValueItem(damageAsset);
     damageColumnChecker.finishPending();
   } else if (damageColumnChecker.maybeStartPending()) {
@@ -239,17 +232,16 @@ async function maybeShowNoDamageValueItem(damageAsset) {
   const existingSelect = $('#' + noDamageValueSelectId);
 
   const showInputInitially = useDamageForBuildings() ||
-          (!noDamageColumnSelect.length ||
+          ((!noDamageColumnSelect.length ||
            noDamageColumnSelect.is(':disabled')) ?
       getStoredValueFromPath(NODAMAGE_COLUMN_INFO.path) :
-      noDamageColumnSelect.val();
+      noDamageColumnSelect.val());
 
   if (!damageAsset || !propertyValues || !noDamageColumnSelect.val()) {
     // No damage asset, or propertyValues not ready, or no column selected.
     // Show input, hide select.
     existingSelect.remove();
     noDamageValueInput.show();
-    noDamageValueInput.val('');  // Clear input field
     if (showInputInitially) {
       noDamageValueItem.show();
     } else {
@@ -632,7 +624,6 @@ function writeAssetDataLocally(val, propertyPath) {
  * @return {Promise<void>} Promise that completes when Firestore writes are done
  */
 function handleAssetDataChange(val, propertyPath) {
-  console.log('In handleAssetDataChange', val, propertyPath);
   writeAssetDataLocally(val, propertyPath);
   if (isFlexible()) {
     // This will immediately display 'Pending...' and exit if there are any
