@@ -713,7 +713,8 @@ it.only('select for no-damage value', () => {
   let stateAssetListingResult;
   stateStub.returns(
       new Promise((resolve) => stateAssetListingResult = resolve));
-  const featureList = [] for (let i = 0; i < 30; i++) {
+  const featureList = [];
+  for (let i = 0; i < 30; i++) {
     featureList.push(ee.Feature(null, {
       'string-key': i.toString(),
       'int-key': i,
