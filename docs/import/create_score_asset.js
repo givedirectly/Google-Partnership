@@ -8,12 +8,15 @@ import {computeAndSaveBounds} from './center.js';
 import {BUILDING_COUNT_KEY, BuildingSource} from './create_disaster_lib.js';
 import {backupCensusBlockGroupKey, backupCensusGeoidKey, backupIncomeKey, backupSnapKey, backupTotalKey, cdcGeoidKey, censusBlockGroupKey, censusGeoidKey, incomeKey, snapKey, sviKey, tigerGeoidKey, totalKey} from './state_based_key_names.js';
 
-export {createScoreAssetForFlexibleDisaster, createScoreAssetForStateBasedDisaster, setStatus};
-
+export {
+  createScoreAssetForFlexibleDisaster,
+  createScoreAssetForStateBasedDisaster,
+  setStatus
+};
 // clang-format off
 // @VisibleForTesting
 export {backUpAssetAndStartTask, renameProperty};
-// clang-format on
+// clang-format on 
 
 // State-based tags.
 
