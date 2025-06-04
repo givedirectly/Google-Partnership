@@ -98,7 +98,7 @@ async function initializeDamage(assetData) {
           .on('change',
               () => displayDamageRelatedElements(
                   writeSelectAndGetPropertyNames(DAMAGE_PROPERTY_PATH),
-                  damageSelect.val()));
+                  damageSelect));
   damageDiv.append(damageSelect);
   createNoDamageColumnAndValueList();
   showHideDamageAndMapDivs(!!getStoredValueFromPath(DAMAGE_PROPERTY_PATH));
@@ -107,7 +107,7 @@ async function initializeDamage(assetData) {
   }
   damageAssetChecker.finishPending();
   return displayDamageRelatedElements(
-      verifyAsset(DAMAGE_PROPERTY_PATH, []), damageSelect.val());
+      verifyAsset(DAMAGE_PROPERTY_PATH, []), damageSelect);
 }
 
 /** @type {ColumnInfo} */
@@ -137,24 +137,30 @@ const propertyValues = new Map();
  * @param {Promise<?Array<EeColumn>>} propertyNamesPromise Promise that will
  *     contain columns of damage asset. Created via {@link verifyAsset} or
  *     {@link writeSelectAndGetPropertyNames}
- * @param {?string} damageAsset Name of damage asset, from page
+ * @param {JQuery<InputElement>} damageAsset Select element for damage asset.
  * @return {Promise<void>}
  */
 async function displayDamageRelatedElements(propertyNamesPromise, damageAsset) {
   setNoDamageColumnAndValue(null, false);
-  showHideDamageAndMapDivs(!!damageAsset);
+  const damageAssetName = damageAsset.val();
+  showHideDamageAndMapDivs(!!damageAssetName);
   propertyValues.clear();
   const propertyNames = await propertyNamesPromise;
+  const currentName = damageAsset.val();
+  if (currentName !== damageAssetName) {
+    // User changed value while we were waiting: we're stale.
+    return;
+  }
   if (propertyNames) {
     // Kick off value fetches for all property names. EarthEngine is much more
     // efficient doing column-by-column counts than processing the entire
     // collection at once.
     for (const property of propertyNames) {
       propertyValues.set(
-          property, getExemplars(ee.FeatureCollection(damageAsset), property));
+          property, getExemplars(ee.FeatureCollection(damageAssetName), property));
     }
   }
-  setNoDamageColumnAndValue(damageAsset, true);
+  setNoDamageColumnAndValue(!!damageAssetName, true);
 }
 
 /**
@@ -197,18 +203,18 @@ const damageColumnChecker = new PendingChecker();
 /**
  * Sets options for damage-related column input ({@link NODAMAGE_COLUMN_INFO})
  * and shows/hides {@link NODAMAGE_VALUE_INFO} if the column is set/unset.
- * @param {?EeFC} damageAsset Value of damage asset, from page
+ * @param {bool} damageAssetPresent True if there is a damage asset.
  * @param {bool} haveProperties Whether property columns/values are available
  */
-async function setNoDamageColumnAndValue(damageAsset, haveProperties) {
+async function setNoDamageColumnAndValue(damageAssetPresent, haveProperties) {
   const columnPath = NODAMAGE_COLUMN_INFO.path;
   if (haveProperties) {
     setOptionsForSelect(propertyValues.keys(), columnPath);
-    maybeShowNoDamageValueItem(damageAsset);
+    maybeShowNoDamageValueItem(damageAssetPresent);
     damageColumnChecker.finishPending();
   } else if (damageColumnChecker.maybeStartPending()) {
     showSelectAsPending(columnPath);
-    maybeShowNoDamageValueItem(damageAsset);
+    maybeShowNoDamageValueItem(damageAssetPresent);
   }
 }
 
@@ -221,11 +227,9 @@ async function setNoDamageColumnAndValue(damageAsset, haveProperties) {
  * flexible disaster with damage used for buildings, then the user must specify
  * the column and value, so we show it to give the user more information about
  * what they'll have to fill in.
- * @param {?EeFC} damageAsset Value of damage asset, from page
- * @param {Map<string, Promise<Array<string>>>} propertyValues Map of property
- *     names to promises of their unique values.
+ * @param {boolean} damageAssetPresent True if there is a damage asset.
  */
-async function maybeShowNoDamageValueItem(damageAsset) {
+async function maybeShowNoDamageValueItem(damageAssetPresent) {
   const noDamageValueInput = getInputElementFromPath(NODAMAGE_VALUE_INFO.path);
   const noDamageValueItem = noDamageValueInput.parent();
   const noDamageColumnSelect =
@@ -239,7 +243,7 @@ async function maybeShowNoDamageValueItem(damageAsset) {
            getStoredValueFromPath(NODAMAGE_COLUMN_INFO.path) :
            noDamageColumnSelect.val());
 
-  if (!damageAsset || !propertyValues || !noDamageColumnSelect.val()) {
+  if (!damageAssetPresent || !propertyValues || !noDamageColumnSelect.val()) {
     // No damage asset, or propertyValues not ready, or no column selected.
     // Show input, hide select.
     existingSelect.remove();
@@ -338,10 +342,6 @@ async function maybeShowNoDamageValueItem(damageAsset) {
       existingSelect.remove();
       noDamageValueInput.show();
       noDamageValueInput.val(storedValue);
-
-      // Value should be preserved if it was already set via input
-      // If switching from select to input, we might want to clear it
-      // or keep the last selected value. For now, let's keep it.
     }
   } catch (error) {
     console.error('Error fetching or processing unique values:', error);
@@ -619,9 +619,9 @@ async function verifyAsset(propertyPath, expectedColumns) {
  */
 function writeAssetDataLocally(val, propertyPath) {
   // We want to change the value, which means we have to write an expression
-  // like "parent[prop] = val". To obtain the parent object, we just follow
-  // the same path as the child's, but stop one property short. That last
-  // property is then the "prop" in the expression above.
+  // like "parent[prop] = val". To obtain the parent object, we just follow the
+  // same path as the child's, but stop one property short. That last property
+  // is then the "prop" in the expression above.
   const parentProperty = getStoredValueFromPath(propertyPath.slice(0, -1));
   parentProperty[propertyPath[propertyPath.length - 1]] =
       val !== '' ? val : null;
@@ -638,9 +638,9 @@ function handleAssetDataChange(val, propertyPath) {
   writeAssetDataLocally(val, propertyPath);
   if (isFlexible()) {
     // This will immediately display 'Pending...' and exit if there are any
-    // pending checks, which will be the case for EE asset changes. Column
-    // value changes won't have pending operations, though, since they don't
-    // cascade, so this will actually work.
+    // pending checks, which will be the case for EE asset changes. Column value
+    // changes won't have pending operations, though, since they don't cascade,
+    // so this will actually work.
     validateFlexibleUserFields();
   } else {
     // State-based disasters have no delays in validation, will always do

@@ -583,9 +583,7 @@ it('shows pending then values for state-based disaster, damage cascades',
      const updateDisasterSpy =
          cy.spy(UpdateFirestoreDisaster, 'updateDataInFirestore');
      let callCount = 1;
-     /**
-      * Asserts there has been exactly one Firestore update since last call.
-      */
+     /** Asserts there has been exactly one Firestore update since last call. */
      function assertFirestoreUpdate() {
        const expectedCalls = callCount++;
        cyQueue(
@@ -596,8 +594,8 @@ it('shows pending then values for state-based disaster, damage cascades',
      let stateAssetListingResult;
      stateStub.returns(
          new Promise((resolve) => stateAssetListingResult = resolve));
-     const asset1 = ee.FeatureCollection([ee.Feature(null, {'a-key': 0})]);
-     const asset2 = ee.FeatureCollection([ee.Feature(null, {'b-key': 0})]);
+     const asset1 = ee.FeatureCollection([ee.Feature(null, {'a-key': 'a-value'})]);
+     const asset2 = ee.FeatureCollection([ee.Feature(null, {'b-key': 'b-value'})]);
 
      let disasterAssetListingResult;
      disasterStub.returns(
@@ -671,7 +669,7 @@ it('shows pending then values for state-based disaster, damage cascades',
      getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path)
          .should('have.value', 'a-key');
      getSelectFromPropertyPath(selectPath).should('be.visible');
-     getSelectFromPropertyPath(selectPath).should('have.value', '');
+     getSelectFromPropertyPath(selectPath).should('have.value', 'a-value');
      assertFirestoreUpdate();
 
      // Change to an asset without the no-damage column.
@@ -686,13 +684,13 @@ it('shows pending then values for state-based disaster, damage cascades',
      getSelectFromPropertyPath(selectPath).should('not.exist');
      assertFirestoreUpdate();
 
-     // Switch back to asset1: looks the same as before, but value is cleared.
+     // Switch back to asset1: looks the same as before.
      getDamageSelect().select('asset1').blur();
      getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path).should('be.visible');
      getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path)
          .should('have.value', 'a-key');
      getSelectFromPropertyPath(selectPath).should('be.visible');
-     getSelectFromPropertyPath(selectPath).should('have.value', '');
+     getSelectFromPropertyPath(selectPath).should('have.value', 'a-value');
      assertFirestoreUpdate();
    });
 
@@ -734,8 +732,6 @@ it('select for no-damage value', () => {
   featureCollectionStub.withArgs('found-asset').returns(asset1);
   featureCollectionStub.withArgs('asset2').returns(asset2);
 
-  // Set properties up so that poverty asset is found, income asset is not
-  // found, and svi is never set.
   const currentData = createDefaultStateBasedFirestoreData();
   const initializationDone =
       enableWhenFirestoreReady(new Map([[getDisaster(), currentData]]));
@@ -821,11 +817,10 @@ it('select for no-damage value', () => {
   getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).should('have.value', '8');
   assertFirestoreUpdate();
 
-  // Change to another asset with the same columns, but we don't keep them.
+  // Change to another asset with the same columns.
   getDamageSelect().select('asset2').blur();
   // Since there is an asset, column select is visible.
   getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path).should('be.visible');
-  // But it has no selection, and the value input is hidden.
   getSelectFromPropertyPath(NODAMAGE_COLUMN_INFO.path)
       .should('have.value', 'string-key');
   getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).should('be.visible');
