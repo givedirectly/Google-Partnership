@@ -150,7 +150,8 @@ async function displayDamageRelatedElements(propertyNamesPromise, damageAsset) {
     // efficient doing column-by-column counts than processing the entire
     // collection at once.
     for (const property of propertyNames) {
-      propertyValues.set(property, getExemplars(ee.FeatureCollection(damageAsset), property));
+      propertyValues.set(
+          property, getExemplars(ee.FeatureCollection(damageAsset), property));
     }
   }
   setNoDamageColumnAndValue(damageAsset, true);
