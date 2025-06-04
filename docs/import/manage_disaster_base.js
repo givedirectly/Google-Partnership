@@ -137,7 +137,7 @@ const propertyValues = new Map();
  * @param {Promise<?Array<EeColumn>>} propertyNamesPromise Promise that will
  *     contain columns of damage asset. Created via {@link verifyAsset} or
  *     {@link writeSelectAndGetPropertyNames}
- * @param {?EeFC} damageAsset Value of damage asset, from page
+ * @param {?string} damageAsset Name of damage asset, from page
  * @return {Promise<void>}
  */
 async function displayDamageRelatedElements(propertyNamesPromise, damageAsset) {
@@ -150,7 +150,7 @@ async function displayDamageRelatedElements(propertyNamesPromise, damageAsset) {
     // efficient doing column-by-column counts than processing the entire
     // collection at once.
     for (const property of propertyNames) {
-      propertyValues.set(property, getExemplars(damageAsset, property));
+      propertyValues.set(property, getExemplars(ee.FeatureCollection(damageAsset), property));
     }
   }
   setNoDamageColumnAndValue(damageAsset, true);
@@ -284,7 +284,16 @@ async function maybeShowNoDamageValueItem(damageAsset) {
 
   try {
     const uniqueValues = await convertEeObjectToPromise(uniqueValuesPromise);
-
+    const currentColumnName = noDamageColumnSelect.val();
+    if (currentColumnName != selectedColumnName) {
+      // User changed value while we were waiting: we're stale.
+      return;
+    }
+    const currentPromise = propertyValues.get(selectedColumnName);
+    if (currentPromise !== uniqueValuesPromise) {
+      // User changed value while we were waiting: we're stale.
+      return;
+    }
 
     if (showInputInitially) {
       noDamageValueItem.show();

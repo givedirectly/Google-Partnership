@@ -14,7 +14,6 @@ export {getExemplars, processNewEeLayer, processNonEeLayer};
  * @return {ee.Object}
  * */
 function getExemplars(featureCollection, property) {
-  featureCollection = ee.FeatureCollection(featureCollection);
   return ee.Algorithms.If(
       ee.Number(featureCollection.aggregate_count_distinct(property))
           .lte(ee.Number(25)),

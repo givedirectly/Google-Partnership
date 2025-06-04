@@ -696,7 +696,7 @@ it('shows pending then values for state-based disaster, damage cascades',
      assertFirestoreUpdate();
    });
 
-it.only('select for no-damage value', () => {
+it('select for no-damage value', () => {
   // Track Firestore updates.
   const updateDisasterSpy =
       cy.spy(UpdateFirestoreDisaster, 'updateDataInFirestore');
@@ -789,10 +789,11 @@ it.only('select for no-damage value', () => {
   getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).should('have.value', '1');
   assertFirestoreUpdate();
 
+  // Sadly, we need to wait for the value to settle before clearing it.
+  // Otherwise, the value can overwrite the clear.
   cy.wait(500);
   getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).click().clear().clear();
-  // getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).should('have.value',
-  // '');
+  getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).should('have.value', '');
 
   // Set the value to one that's a valid value for another column.
 
@@ -834,8 +835,7 @@ it.only('select for no-damage value', () => {
 
   cy.wait(500);
   getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).click().clear().clear();
-  // getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).should('have.value',
-  // '');
+  getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path).should('have.value', '');
 
   getSelectFromPropertyPath(NODAMAGE_VALUE_INFO.path)
       .type('{selectAll}{selectAll}20');
