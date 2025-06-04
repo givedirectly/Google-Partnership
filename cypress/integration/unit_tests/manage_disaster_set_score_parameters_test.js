@@ -594,8 +594,10 @@ it('shows pending then values for state-based disaster, damage cascades',
      let stateAssetListingResult;
      stateStub.returns(
          new Promise((resolve) => stateAssetListingResult = resolve));
-     const asset1 = ee.FeatureCollection([ee.Feature(null, {'a-key': 'a-value'})]);
-     const asset2 = ee.FeatureCollection([ee.Feature(null, {'b-key': 'b-value'})]);
+     const asset1 =
+         ee.FeatureCollection([ee.Feature(null, {'a-key': 'a-value'})]);
+     const asset2 =
+         ee.FeatureCollection([ee.Feature(null, {'b-key': 'b-value'})]);
 
      let disasterAssetListingResult;
      disasterStub.returns(
