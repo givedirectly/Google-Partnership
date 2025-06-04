@@ -141,7 +141,7 @@ const propertyValues = new Map();
  * @return {Promise<void>}
  */
 async function displayDamageRelatedElements(propertyNamesPromise, damageAsset) {
-  setNoDamageColumnAndValue(null, false);
+  await setNoDamageColumnAndValue(/*damageAssetPresent*/ false, /*haveProperties*/ false);
   const damageAssetName = damageAsset.val();
   showHideDamageAndMapDivs(!!damageAssetName);
   propertyValues.clear();
@@ -161,7 +161,7 @@ async function displayDamageRelatedElements(propertyNamesPromise, damageAsset) {
           getExemplars(ee.FeatureCollection(damageAssetName), property));
     }
   }
-  setNoDamageColumnAndValue(!!damageAssetName, true);
+  await setNoDamageColumnAndValue(!!damageAssetName, true);
 }
 
 /**
@@ -211,11 +211,11 @@ async function setNoDamageColumnAndValue(damageAssetPresent, haveProperties) {
   const columnPath = NODAMAGE_COLUMN_INFO.path;
   if (haveProperties) {
     setOptionsForSelect(propertyValues.keys(), columnPath);
-    maybeShowNoDamageValueItem(damageAssetPresent);
+    await maybeShowNoDamageValueItem(damageAssetPresent);
     damageColumnChecker.finishPending();
   } else if (damageColumnChecker.maybeStartPending()) {
     showSelectAsPending(columnPath);
-    maybeShowNoDamageValueItem(damageAssetPresent);
+    await maybeShowNoDamageValueItem(damageAssetPresent);
   }
 }
 
