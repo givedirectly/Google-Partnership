@@ -157,7 +157,8 @@ async function displayDamageRelatedElements(propertyNamesPromise, damageAsset) {
     // collection at once.
     for (const property of propertyNames) {
       propertyValues.set(
-          property, getExemplars(ee.FeatureCollection(damageAssetName), property));
+          property,
+          getExemplars(ee.FeatureCollection(damageAssetName), property));
     }
   }
   setNoDamageColumnAndValue(!!damageAssetName, true);
