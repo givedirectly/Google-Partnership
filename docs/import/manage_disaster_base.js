@@ -141,8 +141,7 @@ const propertyValues = new Map();
  * @return {Promise<void>}
  */
 async function displayDamageRelatedElements(propertyNamesPromise, damageAsset) {
-  await setNoDamageColumnAndValue(/* damageAssetPresent */ false,
-                                  /* haveProperties */ false);
+  await setNoDamageColumnAndValue(false, /* haveProperties */ false);
   const damageAssetName = damageAsset.val();
   showHideDamageAndMapDivs(!!damageAssetName);
   propertyValues.clear();
