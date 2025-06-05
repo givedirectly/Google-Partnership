@@ -1,8 +1,10 @@
+import {convertEeObjectToPromise} from '../ee_promise_cache.js';
 import {colorToRgbString, LayerType} from '../firebase_layers.js';
 import {latLngToGeoPoint, transformGeoPointArrayToLatLng} from '../map_util.js';
 import {isUserProperty} from '../property_names.js';
 import {getDisaster} from '../resources.js';
 
+import {getExemplars} from './add_layer.js';
 import {getAssetPropertyNames, getDisasterAssetsFromEe} from './list_ee_assets.js';
 import {createOptionFrom, stylePendingSelect} from './manage_common.js';
 import {PendingChecker, useDamageForBuildings, validateFlexibleUserFields} from './manage_disaster_flexible.js';
@@ -96,7 +98,7 @@ async function initializeDamage(assetData) {
           .on('change',
               () => displayDamageRelatedElements(
                   writeSelectAndGetPropertyNames(DAMAGE_PROPERTY_PATH),
-                  damageSelect.val()));
+                  damageSelect));
   damageDiv.append(damageSelect);
   createNoDamageColumnAndValueList();
   showHideDamageAndMapDivs(!!getStoredValueFromPath(DAMAGE_PROPERTY_PATH));
@@ -105,7 +107,7 @@ async function initializeDamage(assetData) {
   }
   damageAssetChecker.finishPending();
   return displayDamageRelatedElements(
-      verifyAsset(DAMAGE_PROPERTY_PATH, []), damageSelect.val());
+      verifyAsset(DAMAGE_PROPERTY_PATH, []), damageSelect);
 }
 
 /** @type {ColumnInfo} */
@@ -126,6 +128,8 @@ const NODAMAGE_VALUE_INFO = {
   path: ['noDamageValue'],
 };
 
+const propertyValues = new Map();
+
 /**
  * Displays all damage-related elements based on current value of damage asset
  * select. Invoked both during initialization and on damage asset change. Will
@@ -133,16 +137,32 @@ const NODAMAGE_VALUE_INFO = {
  * @param {Promise<?Array<EeColumn>>} propertyNamesPromise Promise that will
  *     contain columns of damage asset. Created via {@link verifyAsset} or
  *     {@link writeSelectAndGetPropertyNames}
- * @param {?EeFC} damageAsset Value of damage asset, from page
+ * @param {JQuery<InputElement>} damageAsset Select element for damage asset.
  * @return {Promise<void>}
  */
 async function displayDamageRelatedElements(propertyNamesPromise, damageAsset) {
-  setNoDamageColumnAndValue(null);
-  showHideDamageAndMapDivs(!!damageAsset);
+  await setNoDamageColumnAndValue(
+      /* damageAssetPresent */ false, /* haveProperties */ false);
+  const damageAssetName = damageAsset.val();
+  showHideDamageAndMapDivs(!!damageAssetName);
+  propertyValues.clear();
   const propertyNames = await propertyNamesPromise;
-  if (propertyNames) {
-    setNoDamageColumnAndValue(propertyNames);
+  const currentName = damageAsset.val();
+  if (currentName !== damageAssetName) {
+    // User changed value while we were waiting: we're stale.
+    return;
   }
+  if (propertyNames) {
+    // Kick off value fetches for all property names. EarthEngine is much more
+    // efficient doing column-by-column counts than processing the entire
+    // collection at once.
+    for (const property of propertyNames) {
+      propertyValues.set(
+          property,
+          getExemplars(ee.FeatureCollection(damageAssetName), property));
+    }
+  }
+  await setNoDamageColumnAndValue(!!damageAssetName, true);
 }
 
 /**
@@ -155,18 +175,14 @@ async function displayDamageRelatedElements(propertyNamesPromise, damageAsset) {
  * disaster case.
  */
 function createNoDamageColumnAndValueList() {
-  // TODO(janakr): do an add_layer-style lookup of the columns of this asset,
-  //  and provide a select with the available values if possible, and an input
-  //  field if there are too many values (for instance, if damage is given by a
-  //  percentage, with 0 meaning undamaged, there might be >25 values).
-  const noDamageValuPath = NODAMAGE_VALUE_INFO.path;
+  const noDamageValuePath = NODAMAGE_VALUE_INFO.path;
   const noDamageValueInput =
       $(document.createElement('input'))
-          .prop('id', makeInputElementIdFromPath(noDamageValuPath))
+          .prop('id', makeInputElementIdFromPath(noDamageValuePath))
           .on('blur',
               () => handleAssetDataChange(
-                  noDamageValueInput.val(), noDamageValuPath));
-  noDamageValueInput.val(getStoredValueFromPath(noDamageValuPath));
+                  noDamageValueInput.val(), noDamageValuePath));
+  noDamageValueInput.val(getStoredValueFromPath(noDamageValuePath));
   const valueSelect =
       createListItem(NODAMAGE_VALUE_INFO).append(noDamageValueInput);
   const columnSelectListItem =
@@ -174,12 +190,14 @@ function createNoDamageColumnAndValueList() {
   // Firestore writes will happen with the default change handler, this new one
   // will run as well.
   columnSelectListItem.children('select').on(
-      'change', maybeShowNoDamageValueItem);
+      'change',
+      () =>
+          maybeShowNoDamageValueItem(getPageValueOfPath(DAMAGE_PROPERTY_PATH)));
   $('#damage-asset-div')
       .append(createListForAsset('damage')
                   .append(columnSelectListItem)
                   .append(valueSelect));
-  maybeShowNoDamageValueItem();
+  maybeShowNoDamageValueItem(getPageValueOfPath(DAMAGE_PROPERTY_PATH));
 }
 
 const damageColumnChecker = new PendingChecker();
@@ -187,18 +205,18 @@ const damageColumnChecker = new PendingChecker();
 /**
  * Sets options for damage-related column input ({@link NODAMAGE_COLUMN_INFO})
  * and shows/hides {@link NODAMAGE_VALUE_INFO} if the column is set/unset.
- * @param {?Array<EeColumn>} propertyNames If null, show "pending" selects if
- * not already pending.
+ * @param {bool} damageAssetPresent True if there is a damage asset.
+ * @param {bool} haveProperties Whether property columns/values are available
  */
-function setNoDamageColumnAndValue(propertyNames) {
+async function setNoDamageColumnAndValue(damageAssetPresent, haveProperties) {
   const columnPath = NODAMAGE_COLUMN_INFO.path;
-  if (propertyNames) {
-    setOptionsForSelect(propertyNames, columnPath);
-    maybeShowNoDamageValueItem();
+  if (haveProperties) {
+    setOptionsForSelect(propertyValues.keys(), columnPath);
+    await maybeShowNoDamageValueItem(damageAssetPresent);
     damageColumnChecker.finishPending();
   } else if (damageColumnChecker.maybeStartPending()) {
     showSelectAsPending(columnPath);
-    maybeShowNoDamageValueItem();
+    await maybeShowNoDamageValueItem(damageAssetPresent);
   }
 }
 
@@ -211,24 +229,131 @@ function setNoDamageColumnAndValue(propertyNames) {
  * flexible disaster with damage used for buildings, then the user must specify
  * the column and value, so we show it to give the user more information about
  * what they'll have to fill in.
+ * @param {boolean} damageAssetPresent True if there is a damage asset.
  */
-function maybeShowNoDamageValueItem() {
-  const noDamageValueItem =
-      getInputElementFromPath(NODAMAGE_VALUE_INFO.path).parent();
-  if (useDamageForBuildings()) {
-    noDamageValueItem.show();
-    return;
-  }
+async function maybeShowNoDamageValueItem(damageAssetPresent) {
+  const noDamageValueInput = getInputElementFromPath(NODAMAGE_VALUE_INFO.path);
+  const noDamageValueItem = noDamageValueInput.parent();
   const noDamageColumnSelect =
       getInputElementFromPath(NODAMAGE_COLUMN_INFO.path);
-  const show =
-      (!noDamageColumnSelect.length || noDamageColumnSelect.is(':disabled')) ?
-      getStoredValueFromPath(NODAMAGE_COLUMN_INFO.path) :
-      noDamageColumnSelect.val();
-  if (show) {
-    noDamageValueItem.show();
-  } else {
-    noDamageValueItem.hide();
+  const noDamageValueSelectId =
+      makeInputElementIdFromPath(NODAMAGE_VALUE_INFO.path) + '-select';
+  const existingSelect = $('#' + noDamageValueSelectId);
+
+  const showInputInitially = useDamageForBuildings() ||
+      ((!noDamageColumnSelect.length || noDamageColumnSelect.is(':disabled')) ?
+           getStoredValueFromPath(NODAMAGE_COLUMN_INFO.path) :
+           noDamageColumnSelect.val());
+
+  if (!damageAssetPresent || !propertyValues || !noDamageColumnSelect.val()) {
+    // No damage asset, or propertyValues not ready, or no column selected.
+    // Show input, hide select.
+    existingSelect.remove();
+    noDamageValueInput.show();
+    if (showInputInitially) {
+      noDamageValueItem.show();
+    } else {
+      noDamageValueItem.hide();
+    }
+    return;
+  }
+
+  const selectedColumnName = noDamageColumnSelect.val();
+  if (!selectedColumnName) {
+    existingSelect.remove();
+    noDamageValueInput.show();
+    noDamageValueInput.val('');
+    if (showInputInitially) {
+      noDamageValueItem.show();
+    } else {
+      noDamageValueItem.hide();
+    }
+    return;
+  }
+
+  const uniqueValuesPromise = propertyValues.get(selectedColumnName);
+
+  if (!uniqueValuesPromise) {
+    console.error(
+        'Could not find promise for unique values for column: ' +
+        selectedColumnName);
+    existingSelect.remove();
+    noDamageValueInput.show();
+    if (showInputInitially) {
+      noDamageValueItem.show();
+    } else {
+      noDamageValueItem.hide();
+    }
+    return;
+  }
+
+  const storedValue = getStoredValueFromPath(NODAMAGE_VALUE_INFO.path);
+
+  try {
+    const uniqueValues = await convertEeObjectToPromise(uniqueValuesPromise);
+    const currentColumnName = noDamageColumnSelect.val();
+    if (currentColumnName != selectedColumnName) {
+      // User changed value while we were waiting: we're stale.
+      return;
+    }
+    const currentPromise = propertyValues.get(selectedColumnName);
+    if (currentPromise !== uniqueValuesPromise) {
+      // User changed value while we were waiting: we're stale.
+      return;
+    }
+
+    if (showInputInitially) {
+      noDamageValueItem.show();
+    } else {
+      noDamageValueItem.hide();
+      existingSelect.remove();
+      noDamageValueInput.show();
+      noDamageValueInput.val('');
+      return;
+    }
+
+    if (uniqueValues.length > 0) {
+      noDamageValueInput.hide();
+      existingSelect.remove();  // Remove old select if any
+
+      const newSelect =
+          $(document.createElement('select')).prop('id', noDamageValueSelectId);
+
+
+      const noneOption = createOptionFrom('Select a value').val('');
+      if (!storedValue) {
+        noneOption.attr('selected', true);
+      }
+      newSelect.append(noneOption);
+
+      for (const value of uniqueValues) {
+        const option = createOptionFrom(value).val(value);
+        if (value === storedValue) {
+          option.attr('selected', true);
+        }
+        newSelect.append(option);
+      }
+
+      newSelect.on(
+          'change',
+          () =>
+              handleAssetDataChange(newSelect.val(), NODAMAGE_VALUE_INFO.path));
+      noDamageValueItem.append(newSelect);
+    } else {
+      // 0 or >max unique values: Show text input
+      existingSelect.remove();
+      noDamageValueInput.show();
+      noDamageValueInput.val(storedValue);
+    }
+  } catch (error) {
+    console.error('Error fetching or processing unique values:', error);
+    existingSelect.remove();
+    noDamageValueInput.show();
+    if (showInputInitially) {
+      noDamageValueItem.show();
+    } else {
+      noDamageValueItem.hide();
+    }
   }
 }
 
@@ -381,7 +506,9 @@ async function verifyAsset(propertyPath, expectedColumns) {
   const select = $('#' + makeInputElementIdFromPath(propertyPath));
   const asset = select.val();
   const isCurrent = getIsCurrentDisasterChecker();
-  /** @return {boolean} If disaster/select's value changed, so should abort. */
+  /**
+   * @return {boolean} If disaster/select's value changed, so should abort.
+   */
   function contextChanged() {
     return (!isCurrent() || asset !== select.val());
   }
@@ -518,7 +645,8 @@ function handleAssetDataChange(val, propertyPath) {
     // so this will actually work.
     validateFlexibleUserFields();
   } else {
-    // State-based disasters have no delays in validation, will always do work.
+    // State-based disasters have no delays in validation, will always do
+    // work.
     validateStateBasedUserFields();
   }
   return updateDataInFirestore(() => disasterData.get(getDisaster()));
